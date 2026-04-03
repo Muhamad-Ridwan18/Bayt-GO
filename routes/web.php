@@ -1,0 +1,138 @@
+<?php
+
+use App\Enums\MuthowifVerificationStatus;
+use App\Http\Controllers\Admin\FinanceController;
+use App\Http\Controllers\Admin\WithdrawalsController;
+use App\Http\Controllers\Admin\LogsController;
+use App\Http\Controllers\Admin\MuthowifVerificationController;
+use App\Http\Controllers\Customer\BookingController as CustomerBookingController;
+use App\Http\Controllers\MidtransPayoutNotificationController;
+use App\Http\Controllers\MidtransNotificationController;
+use App\Http\Controllers\Muthowif\BookingController as MuthowifBookingController;
+use App\Http\Controllers\Muthowif\MuthowifScheduleController;
+use App\Http\Controllers\Muthowif\MuthowifServiceController;
+use App\Http\Controllers\Muthowif\WithdrawController as MuthowifWithdrawController;
+use App\Http\Controllers\ProfileController;
+use App\Http\Controllers\Public\MuthowifDirectoryController;
+use App\Http\Middleware\EnsureUserRole;
+use App\Models\MuthowifBlockedDate;
+use App\Models\MuthowifProfile;
+use Illuminate\Support\Facades\Route;
+
+Route::bind('publicProfile', function (string $value) {
+    return MuthowifProfile::query()
+        ->whereKey($value)
+        ->where('verification_status', MuthowifVerificationStatus::Approved)
+        ->firstOrFail();
+});
+
+Route::bind('blockedDate', function (string $value) {
+    $row = MuthowifBlockedDate::query()->whereKey($value)->firstOrFail();
+    $user = auth()->user();
+    if (! $user?->muthowifProfile || $row->muthowif_profile_id !== $user->muthowifProfile->id) {
+        abort(403);
+    }
+
+    return $row;
+});
+
+// Xendit payment callback (re-uses controller that delegates to SnapPaymentProviderInterface).
+Route::post('/payments/xendit/notification', [MidtransNotificationController::class, 'handle'])
+    ->name('payments.xendit.notification');
+
+// Legacy Midtrans callback endpoint (can be removed once Midtrans is fully off).
+Route::post('/payments/midtrans/notification', [MidtransNotificationController::class, 'handle'])
+    ->name('payments.midtrans.notification');
+
+Route::post('/payments/midtrans/payout/notification', [MidtransPayoutNotificationController::class, 'handle'])
+    ->name('payments.midtrans.payout.notification');
+
+// Xendit payout/disbursement callback (reuse same controller file for now).
+Route::post('/payments/xendit/payout/notification', [MidtransPayoutNotificationController::class, 'handle'])
+    ->name('payments.xendit.payout.notification');
+
+Route::get('/layanan', [MuthowifDirectoryController::class, 'index'])->name('layanan.index');
+Route::get('/layanan/{publicProfile}/foto', [MuthowifDirectoryController::class, 'photo'])->name('layanan.photo');
+Route::get('/layanan/{publicProfile}', [MuthowifDirectoryController::class, 'show'])->name('layanan.show');
+
+Route::get('/', function () {
+    return view('welcome');
+});
+
+Route::get('/muthowif/daftar/menunggu', function () {
+    return view('auth.muthowif-registration-pending');
+})->name('muthowif.registration.pending');
+
+Route::get('/dashboard', function () {
+    return view('dashboard');
+})->middleware(['auth'])->name('dashboard');
+
+Route::get('/logs', [LogsController::class, 'index'])
+    ->middleware(['auth', EnsureUserRole::class.':admin'])
+    ->name('admin.logs.index');
+
+Route::post('/logs/clear', [LogsController::class, 'clear'])
+    ->middleware(['auth', EnsureUserRole::class.':admin'])
+    ->name('admin.logs.clear');
+
+Route::middleware('guest')->get('/masuk/setelah', function (\Illuminate\Http\Request $request) {
+    $next = $request->query('next');
+    if (is_string($next) && str_starts_with($next, '/') && ! str_starts_with($next, '//') && strlen($next) < 2048) {
+        $base = rtrim((string) config('app.url'), '/');
+        session(['url.intended' => $base.$next]);
+    }
+
+    return redirect()->route('login');
+})->name('login.intended');
+
+Route::middleware('auth')->group(function () {
+    Route::get('/profile', [ProfileController::class, 'edit'])->name('profile.edit');
+    Route::patch('/profile', [ProfileController::class, 'update'])->name('profile.update');
+    Route::delete('/profile', [ProfileController::class, 'destroy'])->name('profile.destroy');
+
+    Route::middleware([EnsureUserRole::class.':customer'])->prefix('bookings')->name('bookings.')->group(function () {
+        Route::get('/', [CustomerBookingController::class, 'index'])->name('index');
+        Route::post('/', [CustomerBookingController::class, 'store'])->name('store');
+        Route::get('{booking}/pembayaran', [CustomerBookingController::class, 'payment'])->name('payment');
+        Route::get('{booking}/invoice', [CustomerBookingController::class, 'invoice'])->name('invoice');
+        Route::post('{booking}/midtrans/finalize', [CustomerBookingController::class, 'midtransFinalize'])->name('midtrans.finalize');
+        Route::post('{booking}/selesaikan', [CustomerBookingController::class, 'complete'])->name('complete');
+        Route::get('{booking}', [CustomerBookingController::class, 'show'])->name('show');
+        Route::post('{booking}/cancel', [CustomerBookingController::class, 'cancel'])->name('cancel');
+    });
+
+    Route::middleware([EnsureUserRole::class.':muthowif', 'verified.muthowif'])
+        ->prefix('muthowif')
+        ->name('muthowif.')
+        ->group(function () {
+            Route::get('pelayanan', [MuthowifServiceController::class, 'edit'])->name('pelayanan.edit');
+            Route::put('pelayanan/group', [MuthowifServiceController::class, 'updateGroup'])->name('pelayanan.group');
+            Route::put('pelayanan/private', [MuthowifServiceController::class, 'updatePrivate'])->name('pelayanan.private');
+
+            Route::get('jadwal', [MuthowifScheduleController::class, 'index'])->name('jadwal.index');
+            Route::post('jadwal', [MuthowifScheduleController::class, 'store'])->name('jadwal.store');
+            Route::delete('jadwal/{blockedDate}', [MuthowifScheduleController::class, 'destroy'])->name('jadwal.destroy');
+
+            Route::get('bookings', [MuthowifBookingController::class, 'index'])->name('bookings.index');
+            Route::post('bookings/{booking}/confirm', [MuthowifBookingController::class, 'confirm'])->name('bookings.confirm');
+            Route::post('bookings/{booking}/cancel', [MuthowifBookingController::class, 'cancel'])->name('bookings.cancel');
+
+            Route::get('withdrawals', [MuthowifWithdrawController::class, 'index'])->name('withdrawals.index');
+            Route::post('withdrawals', [MuthowifWithdrawController::class, 'store'])->name('withdrawals.store');
+        });
+
+    Route::middleware([EnsureUserRole::class.':admin'])->prefix('admin')->name('admin.')->group(function () {
+        Route::get('keuangan', [FinanceController::class, 'index'])->name('finance.index');
+        Route::get('withdrawals', [WithdrawalsController::class, 'index'])->name('withdrawals.index');
+        Route::post('withdrawals/{withdrawal}/approve', [WithdrawalsController::class, 'approve'])->name('withdrawals.approve');
+        Route::get('muthowif', [MuthowifVerificationController::class, 'index'])->name('muthowif.index');
+        Route::get('muthowif/{profile}/photo', [MuthowifVerificationController::class, 'photo'])->name('muthowif.photo');
+        Route::get('muthowif/{profile}/ktp', [MuthowifVerificationController::class, 'ktp'])->name('muthowif.ktp');
+        Route::get('muthowif/{profile}/documents/{document}', [MuthowifVerificationController::class, 'supportingDocument'])->name('muthowif.document');
+        Route::post('muthowif/{profile}/approve', [MuthowifVerificationController::class, 'approve'])->name('muthowif.approve');
+        Route::post('muthowif/{profile}/reject', [MuthowifVerificationController::class, 'reject'])->name('muthowif.reject');
+        Route::get('muthowif/{profile}', [MuthowifVerificationController::class, 'show'])->name('muthowif.show');
+    });
+});
+
+require __DIR__.'/auth.php';

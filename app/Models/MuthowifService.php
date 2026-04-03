@@ -1,0 +1,67 @@
+<?php
+
+namespace App\Models;
+
+use App\Enums\MuthowifServiceType;
+use Illuminate\Database\Eloquent\Concerns\HasUuids;
+use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Database\Eloquent\Relations\HasMany;
+
+class MuthowifService extends Model
+{
+    use HasUuids;
+
+    protected $fillable = [
+        'muthowif_profile_id',
+        'type',
+        'name',
+        'daily_price',
+        'min_pilgrims',
+        'max_pilgrims',
+        'description',
+        'stays_at_same_hotel',
+        'includes_transport',
+    ];
+
+    protected function casts(): array
+    {
+        return [
+            'type' => MuthowifServiceType::class,
+            'daily_price' => 'decimal:2',
+            'stays_at_same_hotel' => 'boolean',
+            'includes_transport' => 'boolean',
+        ];
+    }
+
+    public function muthowifProfile(): BelongsTo
+    {
+        return $this->belongsTo(MuthowifProfile::class);
+    }
+
+    public function addOns(): HasMany
+    {
+        return $this->hasMany(MuthowifServiceAddOn::class)->orderBy('sort_order');
+    }
+
+    public static function ensurePairForProfile(MuthowifProfile $profile): array
+    {
+        $group = static::firstOrCreate(
+            [
+                'muthowif_profile_id' => $profile->id,
+                'type' => MuthowifServiceType::Group,
+            ],
+            []
+        );
+
+        $private = static::firstOrCreate(
+            [
+                'muthowif_profile_id' => $profile->id,
+                'type' => MuthowifServiceType::PrivateJamaah,
+            ],
+            []
+        );
+
+        return [$group, $private];
+    }
+}
