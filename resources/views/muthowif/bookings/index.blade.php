@@ -56,17 +56,6 @@
                                         <span class="mt-1.5 inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-semibold ring-1 {{ $booking->payment_status === PaymentStatus::Paid ? 'bg-brand-50 text-brand-900 ring-brand-200' : 'bg-orange-50 text-orange-900 ring-orange-200' }}">
                                             Pembayaran: {{ $booking->payment_status->label() }}
                                         </span>
-                                        <p class="mt-1 text-sm font-semibold text-slate-800">
-                                            Tagihan jamaah: Rp {{ IndonesianNumber::formatThousands((string) (int) round($booking->resolvedAmountDue())) }}
-                                        </p>
-                                        @if ($booking->payment_status === PaymentStatus::Paid)
-                                            @php $sp = $booking->settledBookingPayment(); @endphp
-                                            @if ($sp)
-                                                <p class="mt-1 text-xs text-emerald-800">
-                                                    Pendapatan bersih Anda (setelah biaya platform 7,5%): Rp {{ IndonesianNumber::formatThousands((string) (int) round((float) $sp->muthowif_net_amount)) }}
-                                                </p>
-                                            @endif
-                                        @endif
                                     @elseif ($st === BookingStatus::Completed)
                                         @if ($booking->payment_status === PaymentStatus::Paid)
                                             <p class="mt-1 text-sm font-semibold text-emerald-800">Booking selesai. Invoice sudah dapat dicetak customer.</p>
