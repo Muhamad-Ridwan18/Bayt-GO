@@ -29,6 +29,7 @@
     $selectedService = old('service_type', $defaultService);
     $oldWithSameHotel = old('with_same_hotel', false);
     $oldWithTransport = old('with_transport', false);
+    $oldAddOnIds = collect(old('add_on_ids', []))->map(fn ($id) => (string) $id)->all();
 @endphp
 
 <section class="relative overflow-hidden rounded-3xl border border-slate-200/90 bg-white shadow-market">
@@ -225,6 +226,63 @@
                                     <span class="text-sm text-slate-700">
                                         @if ($groupTransportAvailable)
                                             Termasuk transportasi (+Rp {{ IndonesianNumber::formatThousands((string) (int) $group->transport_price_flat) }})
+                                        @else
+                                            Termasuk transportasi (belum tersedia)
+                                        @endif
+                                    </span>
+                                </label>
+                            </div>
+                        @endif
+
+                        @if ($private)
+                            <div x-show="serviceType === 'private'" class="rounded-2xl border border-amber-200 bg-amber-50/40 p-5 shadow-sm space-y-3">
+                                <h3 class="text-sm font-bold text-slate-900">Add-on private</h3>
+                                @php
+                                    $privateHotelAvailable = ($private->same_hotel_price_per_day ?? null) !== null && (float) $private->same_hotel_price_per_day > 0;
+                                    $privateTransportAvailable = ($private->transport_price_flat ?? null) !== null && (float) $private->transport_price_flat > 0;
+                                @endphp
+
+                                @if ($private->addOns->isNotEmpty())
+                                    @foreach ($private->addOns as $addon)
+                                        <label class="flex items-start gap-3 cursor-pointer">
+                                            <input type="checkbox" name="add_on_ids[]" value="{{ $addon->id }}"
+                                                class="mt-1 rounded border-slate-300 text-amber-600 shadow-sm focus:ring-amber-500"
+                                                x-bind:disabled="serviceType !== 'private'"
+                                                @checked(in_array((string) $addon->id, $oldAddOnIds, true))>
+                                            <span class="text-sm text-slate-700">
+                                                {{ $addon->name }}
+                                                <span class="font-semibold text-amber-800">(+Rp {{ IndonesianNumber::formatThousands((string) (int) $addon->price) }})</span>
+                                            </span>
+                                        </label>
+                                    @endforeach
+                                @else
+                                    <p class="text-sm text-slate-600">Belum ada add-on private tersedia.</p>
+                                @endif
+
+                                <label class="flex items-start gap-3 {{ $privateHotelAvailable ? 'cursor-pointer' : 'opacity-60 cursor-not-allowed' }}">
+                                    <input type="checkbox" name="with_same_hotel" value="1"
+                                        class="mt-1 rounded border-slate-300 text-amber-600 shadow-sm focus:ring-amber-500"
+                                        x-bind:disabled="serviceType !== 'private'"
+                                        @disabled(! $privateHotelAvailable)
+                                        @checked($privateHotelAvailable && $oldWithSameHotel)>
+                                    <span class="text-sm text-slate-700">
+                                        @if ($privateHotelAvailable)
+                                            Muthowif tidak tinggal di hotel yang sama (+Rp {{ IndonesianNumber::formatThousands((string) (int) $private->same_hotel_price_per_day) }}/hari)
+                                        @else
+                                            Muthowif tidak tinggal di hotel yang sama (belum tersedia)
+                                        @endif
+                                    </span>
+                                </label>
+
+                                <label class="flex items-start gap-3 {{ $privateTransportAvailable ? 'cursor-pointer' : 'opacity-60 cursor-not-allowed' }}">
+                                    <input type="checkbox" name="with_transport" value="1"
+                                        class="mt-1 rounded border-slate-300 text-amber-600 shadow-sm focus:ring-amber-500"
+                                        x-bind:disabled="serviceType !== 'private'"
+                                        @disabled(! $privateTransportAvailable)
+                                        @checked($privateTransportAvailable && $oldWithTransport)>
+                                    <span class="text-sm text-slate-700">
+                                        @if ($privateTransportAvailable)
+                                            Termasuk transportasi (+Rp {{ IndonesianNumber::formatThousands((string) (int) $private->transport_price_flat) }})
                                         @else
                                             Termasuk transportasi (belum tersedia)
                                         @endif

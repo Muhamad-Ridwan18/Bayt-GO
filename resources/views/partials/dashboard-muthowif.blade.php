@@ -1,5 +1,6 @@
 @php
     use App\Enums\BookingStatus;
+    use App\Enums\MuthowifServiceType;
     use Carbon\Carbon;
     use App\Support\IndonesianNumber;
 
@@ -45,6 +46,11 @@
             $calendarDetails[$dateKey]['bookings'][] = [
                 'name' => $bookingRow->customer?->name ?? 'Jamaah',
                 'service' => $bookingRow->service_type?->label() ?? 'Layanan',
+                'service_short' => match ($bookingRow->service_type) {
+                    MuthowifServiceType::Group => 'Group',
+                    MuthowifServiceType::PrivateJamaah => 'Private',
+                    default => 'Layanan',
+                },
             ];
             $cursor->addDay();
         }
@@ -174,7 +180,7 @@
                         $isToday = $day->isToday();
                         $hasBooking = $bookingSet->has($dateKey);
                         $isBlocked = $blockedSet->has($dateKey);
-                        $bookingsOnDay = collect($calendarDetails[$dateKey]['bookings'] ?? [])->unique(fn ($row) => ($row['name'] ?? '').'|'.($row['service'] ?? ''))->values();
+                        $bookingsOnDay = collect($calendarDetails[$dateKey]['bookings'] ?? [])->unique(fn ($row) => ($row['name'] ?? '').'|'.($row['service_short'] ?? $row['service'] ?? ''))->values();
                         $blockedOnDay = collect($calendarDetails[$dateKey]['blocked'] ?? [])->unique()->values();
                         $dayCardClass = match (true) {
                             $hasBooking && $isBlocked => 'border-violet-200 bg-violet-100',
@@ -183,16 +189,24 @@
                             default => $isCurrentMonth ? 'border-slate-200 bg-white' : 'border-slate-100 bg-slate-50 text-slate-400',
                         };
                     @endphp
-                    <div class="group relative min-h-16 rounded-lg border px-2 py-1.5 {{ $dayCardClass }}">
-                        <div class="text-xs font-semibold {{ $isToday ? 'text-brand-700' : 'text-slate-700' }}">{{ $day->day }}</div>
-                        @if ($hasBooking || $isBlocked)
-                            <div class="mt-1 space-y-0.5">
-                                @if ($hasBooking)
-                                    <span class="inline-block rounded bg-white/80 px-1.5 py-0.5 text-[10px] font-semibold text-brand-700">Booking</span>
+                    <div class="group relative flex flex-col rounded-lg border px-1.5 py-1 {{ $hasBooking && $bookingsOnDay->isNotEmpty() ? 'min-h-[5.25rem]' : 'min-h-16' }} {{ $dayCardClass }}">
+                        <div class="shrink-0 text-xs font-semibold {{ $isToday ? 'text-brand-700' : 'text-slate-700' }}">{{ $day->day }}</div>
+                        @if ($hasBooking && $bookingsOnDay->isNotEmpty())
+                            <div class="mt-0.5 min-h-0 flex-1 space-y-0.5 overflow-hidden text-left">
+                                @foreach ($bookingsOnDay->take(2) as $row)
+                                    <div class="truncate rounded bg-white/75 px-1 py-0.5 leading-tight ring-1 ring-white/40">
+                                        <p class="truncate text-[9px] font-semibold text-brand-900" title="{{ $row['name'] }} ({{ $row['service'] }})">{{ \Illuminate\Support\Str::limit($row['name'], 16) }}</p>
+                                        <p class="truncate text-[8px] font-medium text-brand-700">{{ $row['service_short'] ?? $row['service'] }}</p>
+                                    </div>
+                                @endforeach
+                                @if ($bookingsOnDay->count() > 2)
+                                    <p class="truncate pl-0.5 text-[8px] font-semibold text-brand-800">+{{ $bookingsOnDay->count() - 2 }} lainnya</p>
                                 @endif
-                                @if ($isBlocked)
-                                    <span class="inline-block rounded bg-white/80 px-1.5 py-0.5 text-[10px] font-semibold text-amber-700">Libur</span>
-                                @endif
+                            </div>
+                        @endif
+                        @if ($isBlocked)
+                            <div class="mt-auto shrink-0 pt-0.5">
+                                <span class="inline-block max-w-full truncate rounded bg-white/80 px-1 py-0.5 text-[9px] font-semibold text-amber-800">Libur</span>
                             </div>
                         @endif
 
