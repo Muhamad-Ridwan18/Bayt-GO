@@ -40,6 +40,7 @@
                                 <th class="px-4 py-3 whitespace-nowrap">Nominal</th>
                                 <th class="px-4 py-3 whitespace-nowrap">Tujuan</th>
                                 <th class="px-4 py-3 whitespace-nowrap">Status</th>
+                                <th class="px-4 py-3 whitespace-nowrap">Bukti</th>
                                 <th class="px-4 py-3 text-right whitespace-nowrap">Aksi</th>
                             </tr>
                         </thead>
@@ -74,9 +75,18 @@
                                             {{ $w->status }}
                                         </span>
                                     </td>
+                                    <td class="px-4 py-3 whitespace-nowrap">
+                                        @if ($w->transfer_proof_path)
+                                            <a href="{{ asset('storage/'.$w->transfer_proof_path) }}" target="_blank" rel="noopener noreferrer" class="text-xs font-semibold text-brand-700 hover:text-brand-800 underline">
+                                                Lihat bukti
+                                            </a>
+                                        @else
+                                            <span class="text-xs text-slate-400">Belum ada</span>
+                                        @endif
+                                    </td>
                                     <td class="px-4 py-3 text-right whitespace-nowrap">
                                         @if ($w->status === 'pending_approval')
-                                            <form method="POST" action="{{ route('admin.withdrawals.approve', $w) }}" onsubmit="return confirm('Setujui withdraw ini? Saldo muthowif akan didebit; Anda perlu mentransfer dana ke rekening tujuan lalu menandai selesai.');">
+                                            <form method="POST" action="{{ route('admin.withdrawals.approve', $w) }}" onsubmit="return confirm('Setujui withdraw ini? Saldo muthowif akan didebit, lalu Anda bisa menyelesaikan transfer.');">
                                                 @csrf
                                                 <button type="submit" class="inline-flex items-center justify-center rounded-xl bg-brand-600 px-3 py-2 text-sm font-semibold text-white hover:bg-brand-700">
                                                     Approve
@@ -84,12 +94,16 @@
                                             </form>
                                         @elseif ($w->status === 'processing')
                                             <div class="flex flex-col items-end gap-2">
-                                                <form method="POST" action="{{ route('admin.withdrawals.mark_transferred', $w) }}" onsubmit="return confirm('Tandai transfer ke rekening muthowif sudah selesai?');">
-                                                    @csrf
-                                                    <button type="submit" class="inline-flex items-center justify-center rounded-xl bg-emerald-600 px-3 py-2 text-sm font-semibold text-white hover:bg-emerald-700">
-                                                        Tandai transfer selesai
-                                                    </button>
-                                                </form>
+                                                <button
+                                                    type="button"
+                                                    class="inline-flex items-center justify-center rounded-xl bg-emerald-600 px-3 py-2 text-sm font-semibold text-white hover:bg-emerald-700"
+                                                    data-proof-button
+                                                    data-action="{{ route('admin.withdrawals.mark_transferred', $w) }}"
+                                                    data-name="{{ $user?->name ?? 'Muthowif' }}"
+                                                    data-amount="Rp {{ \App\Support\IndonesianNumber::formatThousands((string) $w->amount) }}"
+                                                >
+                                                    Tandai transfer selesai
+                                                </button>
                                                 <form method="POST" action="{{ route('admin.withdrawals.mark_transfer_failed', $w) }}" onsubmit="return confirm('Transfer gagal? Saldo akan dikembalikan ke wallet muthowif.');">
                                                     @csrf
                                                     <button type="submit" class="text-xs font-semibold text-red-700 hover:text-red-900 underline">
@@ -104,7 +118,7 @@
                                 </tr>
                             @empty
                                 <tr>
-                                    <td colspan="6" class="px-4 py-6 text-center text-sm text-slate-500">
+                                    <td colspan="7" class="px-4 py-6 text-center text-sm text-slate-500">
                                         Belum ada data withdraw.
                                     </td>
                                 </tr>
@@ -119,5 +133,72 @@
             </div>
         </div>
     </div>
+
+    <div id="proof-modal" class="fixed inset-0 z-50 hidden items-center justify-center bg-slate-900/50 p-4">
+        <div class="w-full max-w-md rounded-2xl bg-white p-5 shadow-xl">
+            <div class="flex items-start justify-between gap-3">
+                <div>
+                    <h3 class="text-base font-semibold text-slate-900">Tandai transfer selesai</h3>
+                    <p id="proof-modal-subtitle" class="mt-1 text-sm text-slate-600">Upload bukti transfer untuk menyelesaikan withdraw.</p>
+                </div>
+                <button type="button" id="proof-modal-close" class="rounded-lg px-2 py-1 text-slate-500 hover:bg-slate-100 hover:text-slate-700">✕</button>
+            </div>
+
+            <form id="proof-modal-form" method="POST" action="" enctype="multipart/form-data" class="mt-4 space-y-3">
+                @csrf
+                <div>
+                    <label for="transfer_proof" class="block text-xs font-semibold uppercase tracking-wide text-slate-500">Upload bukti transfer</label>
+                    <input id="transfer_proof" type="file" name="transfer_proof" accept="image/png,image/jpeg,image/webp" required class="mt-2 block w-full text-xs text-slate-600 file:mr-2 file:rounded-lg file:border-0 file:bg-slate-100 file:px-2 file:py-1 file:font-semibold file:text-slate-700">
+                    <p class="mt-1 text-xs text-slate-500">Format: JPG/JPEG/PNG/WEBP (maks 4MB)</p>
+                </div>
+                <div class="flex gap-2">
+                    <button type="button" id="proof-modal-cancel" class="inline-flex w-full items-center justify-center rounded-xl border border-slate-200 bg-white px-3 py-2 text-sm font-semibold text-slate-700 hover:bg-slate-50">
+                        Batal
+                    </button>
+                    <button type="submit" class="inline-flex w-full items-center justify-center rounded-xl bg-brand-600 px-3 py-2 text-sm font-semibold text-white hover:bg-brand-700">
+                        Simpan & tandai selesai
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
 </x-app-layout>
 
+<script>
+    (() => {
+        const modal = document.getElementById('proof-modal');
+        const form = document.getElementById('proof-modal-form');
+        const subtitle = document.getElementById('proof-modal-subtitle');
+        const closeBtn = document.getElementById('proof-modal-close');
+        const cancelBtn = document.getElementById('proof-modal-cancel');
+        const fileInput = document.getElementById('transfer_proof');
+
+        function closeModal() {
+            modal.classList.add('hidden');
+            modal.classList.remove('flex');
+            form.reset();
+        }
+
+        document.querySelectorAll('[data-proof-button]').forEach((button) => {
+            button.addEventListener('click', () => {
+                const action = button.getAttribute('data-action');
+                const name = button.getAttribute('data-name') || 'Muthowif';
+                const amount = button.getAttribute('data-amount') || '';
+                form.setAttribute('action', action || '');
+                subtitle.textContent = `${name} • ${amount}. Upload bukti transfer sebelum menandai selesai.`;
+                modal.classList.remove('hidden');
+                modal.classList.add('flex');
+                setTimeout(() => fileInput.focus(), 50);
+            });
+        });
+
+        closeBtn.addEventListener('click', closeModal);
+        cancelBtn.addEventListener('click', closeModal);
+        modal.addEventListener('click', (event) => {
+            if (event.target === modal) closeModal();
+        });
+        document.addEventListener('keydown', (event) => {
+            if (event.key === 'Escape' && !modal.classList.contains('hidden')) closeModal();
+        });
+    })();
+</script>

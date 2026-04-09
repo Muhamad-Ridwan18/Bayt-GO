@@ -1,5 +1,6 @@
 @php
     use App\Enums\BookingStatus;
+    use Carbon\Carbon;
     use App\Support\IndonesianNumber;
 
     $mp = Auth::user()->muthowifProfile;
@@ -9,6 +10,48 @@
     ]);
     $balance = (float) ($mp->wallet_balance ?? 0);
     $balanceFormatted = IndonesianNumber::formatThousands((string) (int) round($balance));
+
+    $calendarMonth = now()->startOfMonth();
+    $calendarStart = $calendarMonth->copy()->startOfWeek(Carbon::MONDAY);
+    $calendarEnd = $calendarMonth->copy()->endOfMonth()->endOfWeek(Carbon::SUNDAY);
+
+    $upcomingBookings = $mp->bookings()
+        ->whereIn('status', [BookingStatus::Pending, BookingStatus::Confirmed, BookingStatus::Completed])
+        ->whereDate('ends_on', '>=', now()->toDateString())
+        ->orderBy('starts_on')
+        ->limit(8)
+        ->get(['id', 'starts_on', 'ends_on', 'status', 'customer_id']);
+    $upcomingBookings->load('customer:id,name');
+
+    $blockedDates = $mp->blockedDates()
+        ->whereBetween('blocked_on', [$calendarStart->toDateString(), $calendarEnd->toDateString()])
+        ->orderBy('blocked_on')
+        ->get(['id', 'blocked_on', 'note']);
+
+    $blockedSet = $blockedDates
+        ->pluck('blocked_on')
+        ->map(fn ($date) => Carbon::parse($date)->toDateString())
+        ->flip();
+
+    $bookingSet = collect();
+    $calendarDetails = [];
+    foreach ($upcomingBookings as $bookingRow) {
+        $cursor = Carbon::parse($bookingRow->starts_on)->startOfDay();
+        $end = Carbon::parse($bookingRow->ends_on)->startOfDay();
+        while ($cursor->lte($end)) {
+            $dateKey = $cursor->toDateString();
+            $bookingSet->put($dateKey, true);
+            $calendarDetails[$dateKey]['bookings'] ??= [];
+            $calendarDetails[$dateKey]['bookings'][] = $bookingRow->customer?->name ?? 'Jamaah';
+            $cursor->addDay();
+        }
+    }
+
+    foreach ($blockedDates as $blockedRow) {
+        $dateKey = Carbon::parse($blockedRow->blocked_on)->toDateString();
+        $calendarDetails[$dateKey]['blocked'] ??= [];
+        $calendarDetails[$dateKey]['blocked'][] = $blockedRow->note ?: 'Libur';
+    }
 @endphp
 
 <div class="space-y-6">
@@ -72,6 +115,117 @@
                 <svg class="h-4 w-4 transition group-hover:translate-x-0.5" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M3 10a.75.75 0 01.75-.75h10.638L10.23 5.29a.75.75 0 111.04-1.08l5.5 5.25a.75.75 0 010 1.08l-5.5 5.25a.75.75 0 11-1.04-1.08l4.158-3.96H3.75A.75.75 0 013 10z" clip-rule="evenodd" /></svg>
             </span>
         </a>
+    </div>
+
+    {{-- Kalender ringkas --}}
+    <div class="grid grid-cols-1 gap-5 lg:grid-cols-12">
+        <div class="rounded-2xl border border-slate-200/90 bg-white p-5 shadow-sm ring-1 ring-slate-100 lg:col-span-7">
+            <div class="flex items-center justify-between">
+                <h3 class="text-base font-semibold text-slate-900">Kalender {{ $calendarMonth->translatedFormat('F Y') }}</h3>
+                <div class="flex items-center gap-3 text-xs">
+                    <span class="inline-flex items-center gap-1.5 text-slate-600"><span class="h-2.5 w-2.5 rounded-full bg-brand-500"></span> Booking</span>
+                    <span class="inline-flex items-center gap-1.5 text-slate-600"><span class="h-2.5 w-2.5 rounded-full bg-amber-500"></span> Libur</span>
+                </div>
+            </div>
+
+            <div class="mt-4 grid grid-cols-7 gap-1 text-center text-xs font-semibold text-slate-500">
+                @foreach (['Sen', 'Sel', 'Rab', 'Kam', 'Jum', 'Sab', 'Min'] as $dow)
+                    <div class="py-1">{{ $dow }}</div>
+                @endforeach
+            </div>
+
+            <div class="mt-1 grid grid-cols-7 gap-1">
+                @for ($day = $calendarStart->copy(); $day->lte($calendarEnd); $day->addDay())
+                    @php
+                        $dateKey = $day->toDateString();
+                        $isCurrentMonth = $day->month === $calendarMonth->month;
+                        $isToday = $day->isToday();
+                        $hasBooking = $bookingSet->has($dateKey);
+                        $isBlocked = $blockedSet->has($dateKey);
+                        $bookingsOnDay = collect($calendarDetails[$dateKey]['bookings'] ?? [])->unique()->values();
+                        $blockedOnDay = collect($calendarDetails[$dateKey]['blocked'] ?? [])->unique()->values();
+                        $dayCardClass = match (true) {
+                            $hasBooking && $isBlocked => 'border-violet-200 bg-violet-100',
+                            $hasBooking => 'border-brand-200 bg-brand-100',
+                            $isBlocked => 'border-amber-200 bg-amber-100',
+                            default => $isCurrentMonth ? 'border-slate-200 bg-white' : 'border-slate-100 bg-slate-50 text-slate-400',
+                        };
+                    @endphp
+                    <div class="group relative min-h-16 rounded-lg border px-2 py-1.5 {{ $dayCardClass }}">
+                        <div class="text-xs font-semibold {{ $isToday ? 'text-brand-700' : 'text-slate-700' }}">{{ $day->day }}</div>
+                        @if ($hasBooking || $isBlocked)
+                            <div class="mt-1 space-y-0.5">
+                                @if ($hasBooking)
+                                    <span class="inline-block rounded bg-white/80 px-1.5 py-0.5 text-[10px] font-semibold text-brand-700">Booking</span>
+                                @endif
+                                @if ($isBlocked)
+                                    <span class="inline-block rounded bg-white/80 px-1.5 py-0.5 text-[10px] font-semibold text-amber-700">Libur</span>
+                                @endif
+                            </div>
+                        @endif
+
+                        @if (($hasBooking || $isBlocked) && $isCurrentMonth)
+                            <div class="absolute left-1/2 top-full z-20 mt-1 hidden w-52 -translate-x-1/2 rounded-lg border border-slate-200 bg-white p-2 text-left shadow-lg group-hover:block group-focus-within:block">
+                                <p class="text-[11px] font-semibold text-slate-900">{{ $day->translatedFormat('d M Y') }}</p>
+                                @if ($bookingsOnDay->isNotEmpty())
+                                    <p class="mt-1 text-[10px] font-semibold uppercase tracking-wide text-brand-700">Booking</p>
+                                    <ul class="text-[11px] text-slate-700">
+                                        @foreach ($bookingsOnDay as $name)
+                                            <li>• {{ $name }}</li>
+                                        @endforeach
+                                    </ul>
+                                @endif
+                                @if ($blockedOnDay->isNotEmpty())
+                                    <p class="mt-1 text-[10px] font-semibold uppercase tracking-wide text-amber-700">Libur</p>
+                                    <ul class="text-[11px] text-slate-700">
+                                        @foreach ($blockedOnDay as $note)
+                                            <li>• {{ $note }}</li>
+                                        @endforeach
+                                    </ul>
+                                @endif
+                                <p class="mt-1 text-[10px] text-slate-400">Hover/klik tanggal untuk lihat detail</p>
+                            </div>
+                        @endif
+                    </div>
+                @endfor
+            </div>
+        </div>
+
+        <div class="space-y-5 lg:col-span-5">
+            <div class="rounded-2xl border border-slate-200/90 bg-white p-5 shadow-sm ring-1 ring-slate-100">
+                <h4 class="text-sm font-semibold text-slate-900">Booking mendatang</h4>
+                @if ($upcomingBookings->isEmpty())
+                    <p class="mt-3 text-sm text-slate-500">Belum ada booking aktif.</p>
+                @else
+                    <ul class="mt-3 space-y-2.5 text-sm">
+                        @foreach ($upcomingBookings as $row)
+                            <li class="rounded-xl border border-slate-200 bg-slate-50/70 px-3 py-2">
+                                <p class="font-medium text-slate-900">{{ $row->customer?->name ?? 'Jamaah' }}</p>
+                                <p class="text-xs text-slate-600">
+                                    {{ Carbon::parse($row->starts_on)->format('d/m') }} - {{ Carbon::parse($row->ends_on)->format('d/m') }} · {{ $row->status->label() }}
+                                </p>
+                            </li>
+                        @endforeach
+                    </ul>
+                @endif
+            </div>
+
+            <div class="rounded-2xl border border-slate-200/90 bg-white p-5 shadow-sm ring-1 ring-slate-100">
+                <h4 class="text-sm font-semibold text-slate-900">Jadwal libur bulan ini</h4>
+                @if ($blockedDates->isEmpty())
+                    <p class="mt-3 text-sm text-slate-500">Belum ada tanggal libur di bulan ini.</p>
+                @else
+                    <ul class="mt-3 space-y-2.5 text-sm">
+                        @foreach ($blockedDates as $row)
+                            <li class="rounded-xl border border-amber-200 bg-amber-50/80 px-3 py-2">
+                                <p class="font-medium text-slate-900">{{ Carbon::parse($row->blocked_on)->format('d M Y') }}</p>
+                                <p class="text-xs text-slate-600">{{ $row->note ?: 'Libur' }}</p>
+                            </li>
+                        @endforeach
+                    </ul>
+                @endif
+            </div>
+        </div>
     </div>
 
     {{-- Aksi cepat --}}

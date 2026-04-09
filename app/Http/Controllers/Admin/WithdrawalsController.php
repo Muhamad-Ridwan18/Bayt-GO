@@ -6,6 +6,7 @@ use App\Http\Controllers\Controller;
 use App\Models\MuthowifProfile;
 use App\Models\MuthowifWithdrawal;
 use Illuminate\Http\RedirectResponse;
+use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\View\View;
 use RuntimeException;
@@ -38,7 +39,7 @@ class WithdrawalsController extends Controller
      * Approve: debit saldo muthowif, status processing.
      * Admin menyelesaikan transfer ke rekening tujuan (mis. lewat DOKU Kirim / bank), lalu menandai lewat markTransferred.
      */
-    public function approve(MuthowifWithdrawal $withdrawal): RedirectResponse
+    public function approve(Request $request, MuthowifWithdrawal $withdrawal): RedirectResponse
     {
         abort_unless($withdrawal->status === 'pending_approval', 409);
 
@@ -82,13 +83,20 @@ class WithdrawalsController extends Controller
             ->with('status', 'Withdraw disetujui. Lakukan transfer ke rekening tujuan, lalu klik "Tandai transfer selesai".');
     }
 
-    public function markTransferred(MuthowifWithdrawal $withdrawal): RedirectResponse
+    public function markTransferred(Request $request, MuthowifWithdrawal $withdrawal): RedirectResponse
     {
         abort_unless($withdrawal->status === 'processing', 409);
+
+        $validated = $request->validate([
+            'transfer_proof' => ['required', 'image', 'mimes:jpg,jpeg,png,webp', 'max:4096'],
+        ]);
+
+        $proofPath = $validated['transfer_proof']->store('withdrawals/proofs', 'public');
 
         $withdrawal->update([
             'status' => 'succeeded',
             'completed_at' => now(),
+            'transfer_proof_path' => $proofPath,
         ]);
 
         return redirect()

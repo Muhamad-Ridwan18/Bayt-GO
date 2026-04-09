@@ -27,10 +27,34 @@
 
     <div class="py-8 sm:py-12">
         <div class="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8">
-            <div class="grid grid-cols-1 lg:grid-cols-2 gap-6 lg:gap-8">
+            <div x-data="{ activeTab: 'group' }" class="space-y-5">
+                <div class="rounded-2xl border border-slate-200 bg-white p-3 shadow-sm">
+                    <div class="grid grid-cols-2 gap-2">
+                        <button
+                            type="button"
+                            @click="activeTab = 'group'"
+                            class="inline-flex items-center justify-center rounded-xl px-3 py-2.5 text-sm font-semibold transition"
+                            :class="activeTab === 'group' ? 'bg-brand-600 text-white shadow-sm' : 'bg-slate-50 text-slate-700 hover:bg-slate-100'"
+                        >
+                            Layanan Group
+                        </button>
+                        <button
+                            type="button"
+                            @click="activeTab = 'private'"
+                            class="inline-flex items-center justify-center rounded-xl px-3 py-2.5 text-sm font-semibold transition"
+                            :class="activeTab === 'private' ? 'bg-brand-600 text-white shadow-sm' : 'bg-slate-50 text-slate-700 hover:bg-slate-100'"
+                        >
+                            Layanan Private
+                        </button>
+                    </div>
+                </div>
 
                 {{-- Group --}}
-                <div class="rounded-2xl border border-slate-200 bg-white shadow-sm overflow-hidden flex flex-col">
+                <div
+                    x-show="activeTab === 'group'"
+                    x-transition.opacity.duration.150ms
+                    class="rounded-2xl border border-slate-200 bg-white shadow-sm overflow-hidden flex flex-col"
+                >
                     <div class="border-b border-slate-100 bg-slate-50/80 px-5 py-4">
                         <h3 class="text-base font-semibold text-slate-900">Form Tambah Layanan – Group</h3>
                         <p class="mt-1 text-xs text-slate-600">Layanan untuk jemaah bertipe rombongan (group)</p>
@@ -121,7 +145,11 @@
                 </div>
 
                 {{-- Private --}}
-                <div class="rounded-2xl border border-slate-200 bg-white shadow-sm overflow-hidden flex flex-col">
+                <div
+                    x-show="activeTab === 'private'"
+                    x-transition.opacity.duration.150ms
+                    class="rounded-2xl border border-slate-200 bg-white shadow-sm overflow-hidden flex flex-col"
+                >
                     <div class="border-b border-slate-100 bg-slate-50/80 px-5 py-4">
                         <h3 class="text-base font-semibold text-slate-900">Form Tambah Layanan – Private</h3>
                         <p class="mt-1 text-xs text-slate-600">Layanan untuk jemaah bertipe privat / keluarga</p>
@@ -250,7 +278,6 @@
                         </div>
                     </form>
                 </div>
-
             </div>
         </div>
     </div>

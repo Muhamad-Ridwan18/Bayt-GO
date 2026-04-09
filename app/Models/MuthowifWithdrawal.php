@@ -27,6 +27,7 @@ class MuthowifWithdrawal extends Model
         'completed_at',
         'failed_at',
         'failed_reason',
+        'transfer_proof_path',
         'midtrans_notification_payload',
     ];
 
