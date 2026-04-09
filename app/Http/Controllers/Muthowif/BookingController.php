@@ -23,7 +23,7 @@ class BookingController extends Controller
 
         $bookings = MuthowifBooking::query()
             ->where('muthowif_profile_id', $profile->id)
-            ->with(['customer'])
+            ->with(['customer', 'muthowifProfile.services'])
             ->orderByRaw("CASE status WHEN 'pending' THEN 0 WHEN 'confirmed' THEN 1 ELSE 2 END")
             ->orderByDesc('starts_on')
             ->orderByDesc('created_at')

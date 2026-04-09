@@ -18,6 +18,16 @@
                     @foreach ($bookings as $booking)
                         @php
                             $st = $booking->status;
+                            $nights = $booking->billingNightsInclusive();
+                            $service = $booking->muthowifProfile?->services?->firstWhere('type', $booking->service_type);
+                            $sameHotelLine = 0.0;
+                            if ($booking->with_same_hotel && $service && $service->same_hotel_price_per_day !== null) {
+                                $sameHotelLine = $nights * (float) $service->same_hotel_price_per_day;
+                            }
+                            $transportLine = 0.0;
+                            if ($booking->with_transport && $service && $service->transport_price_flat !== null) {
+                                $transportLine = (float) $service->transport_price_flat;
+                            }
                             $badgeClass = match ($st) {
                                 BookingStatus::Pending => 'bg-amber-100 text-amber-900 ring-amber-200',
                                 BookingStatus::Confirmed => 'bg-emerald-100 text-emerald-900 ring-emerald-200',
@@ -47,6 +57,16 @@
                                                     <li>+ {{ $ad->name }} (Rp {{ IndonesianNumber::formatThousands((string) (int) $ad->price) }})</li>
                                                 @endif
                                             @endforeach
+                                        </ul>
+                                    @endif
+                                    @if ($sameHotelLine > 0 || $transportLine > 0)
+                                        <ul class="mt-2 text-xs text-slate-600 space-y-0.5">
+                                            @if ($sameHotelLine > 0)
+                                                <li>+ Hotel sama ({{ $nights }} hari) (Rp {{ IndonesianNumber::formatThousands((string) (int) round($sameHotelLine)) }})</li>
+                                            @endif
+                                            @if ($transportLine > 0)
+                                                <li>+ Transportasi (Rp {{ IndonesianNumber::formatThousands((string) (int) round($transportLine)) }})</li>
+                                            @endif
                                         </ul>
                                     @endif
                                     <span class="mt-2 inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-semibold ring-1 {{ $badgeClass }}">
