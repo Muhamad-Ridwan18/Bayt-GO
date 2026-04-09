@@ -32,7 +32,7 @@
                     <div class="w-full sm:w-72 rounded-xl bg-slate-50 border border-slate-200 p-4">
                         <p class="text-xs font-semibold uppercase tracking-wide text-slate-500">Catatan</p>
                         <p class="mt-2 text-sm text-slate-600 leading-relaxed">
-                            Isi `beneficiary_bank` dan `beneficiary_account` sesuai tujuan payout.
+                            Pilih nama bank dan isi nomor rekening tujuan payout.
                         </p>
                     </div>
                 </div>
@@ -70,10 +70,16 @@
 
                     <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
                         <div>
-                            <x-input-label for="beneficiary_bank" value="Channel code (mis. ID_BCA)" />
-                            <input id="beneficiary_bank" name="beneficiary_bank" type="text" required maxlength="64"
-                                   class="mt-1 block w-full rounded-xl border border-slate-200 px-4 py-3 text-sm"
-                                   value="{{ old('beneficiary_bank') }}" />
+                            <x-input-label for="beneficiary_bank" value="Nama bank" />
+                            <select id="beneficiary_bank" name="beneficiary_bank" required
+                                    class="mt-1 block w-full rounded-xl border border-slate-200 px-4 py-3 text-sm bg-white">
+                                <option value="">Pilih bank</option>
+                                @foreach (($bankOptions ?? []) as $bankValue => $bankLabel)
+                                    <option value="{{ $bankValue }}" @selected(old('beneficiary_bank') === $bankValue)>
+                                        {{ $bankLabel }}
+                                    </option>
+                                @endforeach
+                            </select>
                             @error('beneficiary_bank')
                                 <p class="mt-2 text-sm text-red-600">{{ $message }}</p>
                             @enderror

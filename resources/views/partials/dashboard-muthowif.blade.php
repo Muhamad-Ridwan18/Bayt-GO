@@ -60,16 +60,45 @@
         <div class="absolute inset-0 bg-[url('data:image/svg+xml,%3Csvg width=\'60\' height=\'60\' viewBox=\'0 0 60 60\' xmlns=\'http://www.w3.org/2000/svg\'%3E%3Cg fill=\'none\' fill-rule=\'evenodd\'%3E%3Cg fill=\'%23ffffff\' fill-opacity=\'0.05\'%3E%3Cpath d=\'M36 34v-4h-2v4h-4v2h4v4h2v-4h4v-2h-4zm0-30V0h-2v4h-4v2h4v4h2V6h4V4h-4zM6 34v-4H4v4H0v2h4v4h2v-4h4v-2H6zM6 4V0H4v4H0v2h4v4h2V6h4V4H6z\'/%3E%3C/g%3E%3C/g%3E%3C/svg%3E')] opacity-40"></div>
         <div class="absolute -right-20 top-0 h-64 w-64 rounded-full bg-emerald-400/15 blur-3xl pointer-events-none"></div>
         <div class="relative px-5 py-8 sm:px-8 sm:py-10 lg:px-10">
-            <div class="flex flex-col gap-6 lg:flex-row lg:items-start lg:justify-between">
-                <div class="max-w-xl">
-                    <p class="text-sm font-medium text-emerald-200/90">Selamat datang,</p>
-                    <p class="mt-1 text-2xl sm:text-3xl font-bold tracking-tight">{{ Auth::user()->name }}</p>
-                    <span class="mt-3 inline-flex items-center rounded-full bg-white/10 px-3 py-1 text-xs font-semibold text-emerald-100 ring-1 ring-white/20">
-                        Muthowif terverifikasi
-                    </span>
-                    <p class="mt-4 text-sm text-emerald-100/90 leading-relaxed">
-                        Kelola layanan, jadwal, dan permintaan jamaah dari satu dasbor. Saldo mencerminkan dana yang siap dicairkan (diperbarui sesuai kebijakan pembayaran).
-                    </p>
+            <div class="space-y-6">
+                <div class="flex flex-col gap-5 sm:flex-row sm:items-start">
+                    <img
+                        src="{{ route('layanan.photo', $mp) }}"
+                        alt="Foto {{ Auth::user()->name }}"
+                        class="mx-auto sm:mx-0 h-28 w-28 sm:h-32 sm:w-32 lg:h-36 lg:w-36 rounded-3xl object-cover border-2 border-white/30 bg-white/10 shadow-lg"
+                        onerror="this.onerror=null; this.src='data:image/svg+xml,%3Csvg xmlns=%22http://www.w3.org/2000/svg%22 width=%22128%22 height=%22128%22%3E%3Crect fill=%22%230f172a%22 width=%22128%22 height=%22128%22/%3E%3Ctext x=%2250%25%22 y=%2255%25%22 dominant-baseline=%22middle%22 text-anchor=%22middle%22 font-size=%2248%22 fill=%22%23ffffff%22%3E{{ mb_substr(Auth::user()->name, 0, 1) }}%3C/text%3E%3C/svg%3E'"
+                    >
+                    <div class="max-w-2xl">
+                        <p class="text-sm font-medium text-emerald-200/90">Selamat datang,</p>
+                        <p class="mt-1 text-2xl sm:text-3xl font-bold tracking-tight">{{ Auth::user()->name }}</p>
+                        <span class="mt-3 inline-flex items-center rounded-full bg-white/10 px-3 py-1 text-xs font-semibold text-emerald-100 ring-1 ring-white/20">
+                            Muthowif terverifikasi
+                        </span>
+                        <p class="mt-4 text-sm text-emerald-100/90 leading-relaxed">
+                            Kelola layanan, jadwal, dan permintaan jamaah dari satu dasbor. Saldo mencerminkan dana yang siap dicairkan (diperbarui sesuai kebijakan pembayaran).
+                        </p>
+                    </div>
+                </div>
+
+                <div class="grid grid-cols-1 gap-3 md:grid-cols-3">
+                    <div class="rounded-2xl border border-white/20 bg-white/10 p-4 backdrop-blur-sm">
+                        <p class="text-[11px] font-semibold uppercase tracking-wide text-emerald-100/80">Bahasa</p>
+                        <p class="mt-2 text-sm text-white/95 leading-relaxed">
+                            {{ $mp->languagesForDisplay() !== [] ? implode(', ', $mp->languagesForDisplay()) : 'Belum diisi' }}
+                        </p>
+                    </div>
+                    <div class="rounded-2xl border border-white/20 bg-white/10 p-4 backdrop-blur-sm">
+                        <p class="text-[11px] font-semibold uppercase tracking-wide text-emerald-100/80">Studi / pendidikan</p>
+                        <p class="mt-2 text-sm text-white/95 leading-relaxed">
+                            {{ $mp->educationsForDisplay() !== [] ? implode(', ', $mp->educationsForDisplay()) : 'Belum diisi' }}
+                        </p>
+                    </div>
+                    <div class="rounded-2xl border border-white/20 bg-white/10 p-4 backdrop-blur-sm">
+                        <p class="text-[11px] font-semibold uppercase tracking-wide text-emerald-100/80">Pengalaman</p>
+                        <p class="mt-2 text-sm text-white/95 leading-relaxed">
+                            {{ $mp->workExperiencesForDisplay() !== [] ? implode(', ', $mp->workExperiencesForDisplay()) : 'Belum diisi' }}
+                        </p>
+                    </div>
                 </div>
             </div>
         </div>
@@ -278,22 +307,4 @@
         </ul>
     </div>
 
-    {{-- Ringkasan profil (tanpa jargon teknis) --}}
-    <div class="rounded-2xl border border-slate-200/90 bg-white p-6 shadow-sm ring-1 ring-slate-100">
-        <div class="flex flex-col gap-1 sm:flex-row sm:items-center sm:justify-between">
-            <h3 class="text-base font-semibold text-slate-900">Ringkasan profil publik</h3>
-            <span class="text-xs text-slate-500">Tampil di halaman pencarian &amp; profil</span>
-        </div>
-        <div class="mt-5 space-y-5 border-t border-slate-100 pt-5">
-            <x-line-list label="Bahasa" :items="$mp->languagesForDisplay()" />
-            <x-line-list label="Studi / pendidikan" :items="$mp->educationsForDisplay()" />
-            <x-line-list label="Pengalaman" :items="$mp->workExperiencesForDisplay()" />
-            @if (filled($mp->reference_text))
-                <div>
-                    <p class="text-sm font-medium text-slate-900">Referensi</p>
-                    <p class="mt-1 text-sm text-slate-700 whitespace-pre-line leading-relaxed">{{ $mp->reference_text }}</p>
-                </div>
-            @endif
-        </div>
-    </div>
 </div>
