@@ -222,31 +222,6 @@
                             <x-input-error class="mt-2" :messages="$errors->get('private_description')" />
                         </div>
 
-                        <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                            <div>
-                                <x-input-label for="private_same_hotel_price_per_day" value="Harga Hotel Sama (per hari)" />
-                                <x-indonesian-number-input
-                                    name="private_same_hotel_price_per_day"
-                                    id="private_same_hotel_price_per_day"
-                                    :value="old('private_same_hotel_price_per_day', $privateService->same_hotel_price_per_day !== null ? (string) (int) $privateService->same_hotel_price_per_day : '')"
-                                    placeholder="Contoh: 100.000"
-                                    :prefix="true"
-                                />
-                                <x-input-error class="mt-2" :messages="$errors->get('private_same_hotel_price_per_day')" />
-                            </div>
-                            <div>
-                                <x-input-label for="private_transport_price_flat" value="Harga Transportasi (flat)" />
-                                <x-indonesian-number-input
-                                    name="private_transport_price_flat"
-                                    id="private_transport_price_flat"
-                                    :value="old('private_transport_price_flat', $privateService->transport_price_flat !== null ? (string) (int) $privateService->transport_price_flat : '')"
-                                    placeholder="Contoh: 300.000"
-                                    :prefix="true"
-                                />
-                                <x-input-error class="mt-2" :messages="$errors->get('private_transport_price_flat')" />
-                            </div>
-                        </div>
-
                         <div class="rounded-xl border-2 border-dashed border-slate-200 bg-slate-50/50 p-4 space-y-4">
                             <div class="flex items-start justify-between gap-2">
                                 <div>
