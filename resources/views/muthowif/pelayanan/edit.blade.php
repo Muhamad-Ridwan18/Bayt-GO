@@ -24,14 +24,6 @@
 @endphp
 
 <x-app-layout>
-    <x-slot name="header">
-        <div>
-            <h2 class="font-semibold text-xl text-slate-800 leading-tight">
-                Pelayanan muthowif
-            </h2>
-            <p class="mt-1 text-sm text-slate-500">Anda memiliki dua layanan tetap: <strong>group</strong> dan <strong>private</strong>. Simpan masing-masing form secara terpisah.</p>
-        </div>
-    </x-slot>
 
     <div class="py-8 sm:py-12">
         <div class="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8">

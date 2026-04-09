@@ -1,12 +1,5 @@
 <x-app-layout>
-    <x-slot name="header">
-        <div>
-            <h2 class="font-semibold text-xl text-slate-800 leading-tight">
-                Jadwal libur
-            </h2>
-            <p class="mt-1 text-sm text-slate-500">Tandai tanggal Anda tidak menerima pendampingan. Jamaah akan melihat daftar ini di profil publik Anda.</p>
-        </div>
-    </x-slot>
+
 
     <div class="py-8 sm:py-12">
         <div class="max-w-3xl mx-auto px-4 sm:px-6 lg:px-8 space-y-8">

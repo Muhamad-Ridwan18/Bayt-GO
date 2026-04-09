@@ -1,14 +1,4 @@
 <x-app-layout>
-    <x-slot name="header">
-        <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
-            <h2 class="font-semibold text-xl text-slate-800 leading-tight">
-                Detail pendaftar muthowif
-            </h2>
-            <a href="{{ route('admin.muthowif.index') }}" class="text-sm font-medium text-brand-700 hover:text-brand-800">
-                ← Kembali ke daftar
-            </a>
-        </div>
-    </x-slot>
 
     <div class="py-8 sm:py-10">
         <div class="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 space-y-6">
