@@ -4,11 +4,11 @@ namespace App\Http\Controllers\Auth;
 
 use App\Http\Controllers\Controller;
 use App\Models\User;
+use App\Services\PasswordResetOtpService;
 use Illuminate\Auth\Events\PasswordReset;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Hash;
-use Illuminate\Support\Facades\Password;
 use Illuminate\Support\Str;
 use Illuminate\Validation\Rules;
 use Illuminate\Validation\ValidationException;
@@ -16,6 +16,10 @@ use Illuminate\View\View;
 
 class NewPasswordController extends Controller
 {
+    public function __construct(
+        private readonly PasswordResetOtpService $passwordResetOtp
+    ) {}
+
     /**
      * Display the password reset view.
      */
@@ -33,31 +37,36 @@ class NewPasswordController extends Controller
     {
         $request->validate([
             'token' => ['required'],
-            'email' => ['required', 'email'],
+            'phone' => ['required', 'string', 'min:10', 'max:20'],
+            'otp' => ['required', 'string', 'size:6', 'regex:/^\d{6}$/'],
             'password' => ['required', 'confirmed', Rules\Password::defaults()],
         ]);
 
-        // Here we will attempt to reset the user's password. If it is successful we
-        // will update the password on an actual user model and persist it to the
-        // database. Otherwise we will parse the error and return the response.
-        $status = Password::reset(
-            $request->only('email', 'password', 'password_confirmation', 'token'),
-            function (User $user) use ($request) {
-                $user->forceFill([
-                    'password' => Hash::make($request->password),
-                    'remember_token' => Str::random(60),
-                ])->save();
+        try {
+            $normalizedPhone = $this->passwordResetOtp->consumeAndValidate(
+                $request->string('token')->toString(),
+                $request->string('phone')->toString(),
+                $request->string('otp')->toString()
+            );
+        } catch (ValidationException $e) {
+            return back()->withInput($request->only('phone'))
+                ->withErrors($e->errors());
+        }
 
-                event(new PasswordReset($user));
-            }
-        );
+        /** @var User|null $user */
+        $user = User::query()->where('phone', $normalizedPhone)->first();
+        if (! $user) {
+            return back()->withInput($request->only('phone'))
+                ->withErrors(['phone' => 'Akun dengan nomor WhatsApp ini tidak ditemukan.']);
+        }
 
-        // If the password was successfully reset, we will redirect the user back to
-        // the application's home authenticated view. If there is an error we can
-        // redirect them back to where they came from with their error message.
-        return $status == Password::PASSWORD_RESET
-                    ? redirect()->route('login')->with('status', __($status))
-                    : back()->withInput($request->only('email'))
-                        ->withErrors(['email' => __($status)]);
+        $user->forceFill([
+            'password' => Hash::make($request->string('password')->toString()),
+            'remember_token' => Str::random(60),
+        ])->save();
+
+        event(new PasswordReset($user));
+
+        return redirect()->route('login')->with('status', 'Password berhasil direset. Silakan login.');
     }
 }

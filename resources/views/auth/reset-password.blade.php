@@ -2,14 +2,24 @@
     <form method="POST" action="{{ route('password.store') }}">
         @csrf
 
-        <!-- Password Reset Token -->
+        <x-auth-session-status class="mb-4" :status="session('status')" />
+
+        <!-- Password Reset Session Token -->
         <input type="hidden" name="token" value="{{ $request->route('token') }}">
 
-        <!-- Email Address -->
+        <!-- WhatsApp Number -->
         <div>
-            <x-input-label for="email" :value="__('Email')" />
-            <x-text-input id="email" class="block mt-1 w-full" type="email" name="email" :value="old('email', $request->email)" required autofocus autocomplete="username" />
-            <x-input-error :messages="$errors->get('email')" class="mt-2" />
+            <x-input-label for="phone" value="Nomor WhatsApp" />
+            <x-text-input id="phone" class="block mt-1 w-full" type="text" name="phone" :value="old('phone')" required autofocus placeholder="Contoh: 081234567890" />
+            <x-input-error :messages="$errors->get('phone')" class="mt-2" />
+        </div>
+
+        <!-- OTP -->
+        <div class="mt-4">
+            <x-input-label for="otp" value="Kode OTP" />
+            <x-text-input id="otp" class="block mt-1 w-full" type="text" name="otp" :value="old('otp')" required maxlength="6" inputmode="numeric" placeholder="6 digit kode" />
+            <x-input-error :messages="$errors->get('otp')" class="mt-2" />
+            <x-input-error :messages="$errors->get('token')" class="mt-2" />
         </div>
 
         <!-- Password -->
@@ -28,7 +38,7 @@
 
         <div class="flex items-center justify-end mt-4">
             <x-primary-button>
-                {{ __('Reset Password') }}
+                Reset Password
             </x-primary-button>
         </div>
     </form>
