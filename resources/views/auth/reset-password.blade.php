@@ -7,17 +7,10 @@
         <!-- Password Reset Session Token -->
         <input type="hidden" name="token" value="{{ $request->route('token') }}">
 
-        <!-- WhatsApp Number -->
-        <div>
-            <x-input-label for="phone" value="Nomor WhatsApp" />
-            <x-text-input id="phone" class="block mt-1 w-full" type="text" name="phone" :value="old('phone')" required autofocus placeholder="Contoh: 081234567890" />
-            <x-input-error :messages="$errors->get('phone')" class="mt-2" />
-        </div>
-
         <!-- OTP -->
-        <div class="mt-4">
+        <div>
             <x-input-label for="otp" value="Kode OTP" />
-            <x-text-input id="otp" class="block mt-1 w-full" type="text" name="otp" :value="old('otp')" required maxlength="6" inputmode="numeric" placeholder="6 digit kode" />
+            <x-text-input id="otp" class="block mt-1 w-full" type="text" name="otp" :value="old('otp')" required maxlength="6" inputmode="numeric" autofocus placeholder="6 digit kode" />
             <x-input-error :messages="$errors->get('otp')" class="mt-2" />
             <x-input-error :messages="$errors->get('token')" class="mt-2" />
         </div>

@@ -13,6 +13,7 @@ use Illuminate\Support\Str;
 use Illuminate\Validation\Rules;
 use Illuminate\Validation\ValidationException;
 use Illuminate\View\View;
+use App\Support\PhoneNumber;
 
 class NewPasswordController extends Controller
 {
@@ -37,7 +38,6 @@ class NewPasswordController extends Controller
     {
         $request->validate([
             'token' => ['required'],
-            'phone' => ['required', 'string', 'min:10', 'max:20'],
             'otp' => ['required', 'string', 'size:6', 'regex:/^\d{6}$/'],
             'password' => ['required', 'confirmed', Rules\Password::defaults()],
         ]);
@@ -45,19 +45,33 @@ class NewPasswordController extends Controller
         try {
             $normalizedPhone = $this->passwordResetOtp->consumeAndValidate(
                 $request->string('token')->toString(),
-                $request->string('phone')->toString(),
                 $request->string('otp')->toString()
             );
         } catch (ValidationException $e) {
-            return back()->withInput($request->only('phone'))
+            return back()
                 ->withErrors($e->errors());
         }
 
+        $local08 = str_starts_with($normalizedPhone, '62') ? '0'.substr($normalizedPhone, 2) : $normalizedPhone;
+        $local8 = str_starts_with($local08, '0') ? substr($local08, 1) : $local08;
         /** @var User|null $user */
-        $user = User::query()->where('phone', $normalizedPhone)->first();
+        $user = User::query()
+            ->whereIn('phone', array_values(array_unique([$normalizedPhone, $local08, $local8])))
+            ->first();
         if (! $user) {
-            return back()->withInput($request->only('phone'))
-                ->withErrors(['phone' => 'Akun dengan nomor WhatsApp ini tidak ditemukan.']);
+            $suffix = substr($normalizedPhone, -9);
+            if ($suffix !== false && $suffix !== '') {
+                $candidates = User::query()->where('phone', 'like', '%'.$suffix)->limit(50)->get(['id', 'phone']);
+                foreach ($candidates as $candidate) {
+                    if (PhoneNumber::normalize($candidate->phone) === $normalizedPhone) {
+                        $user = $candidate;
+                        break;
+                    }
+                }
+            }
+        }
+        if (! $user) {
+            return back()->withErrors(['token' => 'Akun untuk sesi reset ini tidak ditemukan.']);
         }
 
         $user->forceFill([

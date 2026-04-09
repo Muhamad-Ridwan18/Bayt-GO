@@ -108,27 +108,15 @@ class PasswordResetOtpService
     /**
      * @throws ValidationException
      */
-    public function consumeAndValidate(string $resetToken, string $phoneInput, string $otp): string
+    public function consumeAndValidate(string $resetToken, string $otp): string
     {
-        $normalized = PhoneNumber::normalize($phoneInput);
-        if ($normalized === null) {
-            throw ValidationException::withMessages([
-                'phone' => ['Nomor WhatsApp tidak valid.'],
-            ]);
-        }
-
         $mappedPhone = Cache::get($this->cacheResetPhoneKey($resetToken));
-        if (! is_string($mappedPhone) || $mappedPhone === '') {
+        if (! is_string($mappedPhone) || $mappedPhone === '' || PhoneNumber::normalize($mappedPhone) === null) {
             throw ValidationException::withMessages([
                 'token' => ['Sesi reset tidak valid atau kedaluwarsa.'],
             ]);
         }
-
-        if (! hash_equals($mappedPhone, $normalized)) {
-            throw ValidationException::withMessages([
-                'phone' => ['Nomor WhatsApp tidak sesuai dengan permintaan reset.'],
-            ]);
-        }
+        $normalized = (string) PhoneNumber::normalize($mappedPhone);
 
         $stored = Cache::get($this->cacheCodeKey($normalized));
         if ($stored === null || ! is_string($stored)) {
