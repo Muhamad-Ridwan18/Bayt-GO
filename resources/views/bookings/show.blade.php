@@ -139,7 +139,7 @@
                             </div>
                         @endif
                         <div class="flex justify-between gap-4 border-t border-slate-100 pt-3">
-                            <dt class="text-slate-600">Biaya platform (7,5%)</dt>
+                            <dt class="text-slate-600">Biaya platform</dt>
                             <dd class="font-medium text-slate-900">Rp {{ $fmt($customerPlatformFee) }}</dd>
                         </div>
                         <div class="flex justify-between gap-4 border-t border-slate-200 pt-3 text-base">
