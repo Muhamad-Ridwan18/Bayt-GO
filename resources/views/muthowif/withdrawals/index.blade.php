@@ -31,7 +31,7 @@
                             Rp {{ \App\Support\IndonesianNumber::formatThousands((string) (int) round($balance)) }}
                         </p>
                         <p class="mt-2 text-sm text-slate-600 leading-relaxed">
-                            Withdraw akan diproses setelah admin approve, lalu sistem kirim request disbursement Xendit.
+                            Withdraw akan diproses setelah admin menyetujui dan menyelesaikan transfer manual ke rekening Anda.
                         </p>
                     </div>
                     <div class="w-full sm:w-72 rounded-xl bg-slate-50 border border-slate-200 p-4">

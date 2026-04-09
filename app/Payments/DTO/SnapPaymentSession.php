@@ -5,13 +5,14 @@ namespace App\Payments\DTO;
 final class SnapPaymentSession
 {
     public function __construct(
-        // Untuk Midtrans Snap (legacy). Untuk Xendit, field ini bisa null.
+        // DOKU Checkout: null. (Field dipertahankan untuk kompatibilitas kontrak.)
         public readonly ?string $snapToken,
         public readonly ?string $clientKey,
         public readonly ?string $snapJsUrl,
-        // Untuk Xendit payment/invoice.
         public readonly ?string $paymentUrl = null,
         public readonly ?string $providerReferenceId = null,
+        /** @var array<string, mixed>|null */
+        public readonly ?array $instructions = null,
     ) {}
 }
 

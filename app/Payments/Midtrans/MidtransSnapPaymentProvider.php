@@ -27,28 +27,34 @@ class MidtransSnapPaymentProvider implements SnapPaymentProviderInterface
         return $this->midtrans->isConfigured();
     }
 
-    public function createPaymentSession(BookingPayment $payment): SnapPaymentSession
+    public function createPaymentSession(BookingPayment $payment, ?string $method = null): SnapPaymentSession
     {
-        $token = $this->midtrans->createSnapToken($payment);
+        $selectedMethod = $method ?? 'va_bca';
+        $session = $this->midtrans->createCoreChargeSession($payment, $selectedMethod);
 
         return new SnapPaymentSession(
-            snapToken: $token,
-            clientKey: (string) config('services.midtrans.client_key'),
-            snapJsUrl: $this->midtrans->snapJsUrl(),
+            snapToken: null,
+            clientKey: null,
+            snapJsUrl: null,
             paymentUrl: null,
-            providerReferenceId: $payment->order_id,
+            providerReferenceId: $session['transaction_id'] ?? $payment->order_id,
+            instructions: [
+                'method' => $selectedMethod,
+                'payment_type' => $session['payment_type'] ?? 'bank_transfer',
+                'va_bank' => $session['va_bank'] ?? null,
+                'va_number' => $session['va_number'] ?? null,
+                'bill_key' => $session['bill_key'] ?? null,
+                'biller_code' => $session['biller_code'] ?? null,
+                'qr_string' => $session['qr_string'] ?? null,
+                'deeplink_url' => $session['deeplink_url'] ?? null,
+                'checkout_url' => $session['checkout_url'] ?? null,
+                'expiry_time' => $session['expiry_time'] ?? null,
+            ],
         );
     }
 
     public function handleNotification(Request $request): Response
     {
-        Log::debug('Midtrans notification endpoint hit', [
-            'order_id' => $request->input('order_id'),
-            'status_code' => $request->input('status_code'),
-            'transaction_status' => $request->input('transaction_status'),
-            'gross_amount' => $request->input('gross_amount'),
-        ]);
-
         $serverKey = config('services.midtrans.server_key');
         if (! is_string($serverKey) || $serverKey === '') {
             Log::warning('Midtrans notification: server key kosong');
@@ -66,8 +72,8 @@ class MidtransSnapPaymentProvider implements SnapPaymentProviderInterface
             return response('Bad request', 400);
         }
 
-        $expectedSig = hash('sha512', $orderId.$statusCode.$grossAmount.$serverKey);
-        if (! hash_equals($expectedSig, $signatureKey)) {
+        $expectedSignature = hash('sha512', $orderId.$statusCode.$grossAmount.$serverKey);
+        if (! hash_equals($expectedSignature, $signatureKey)) {
             Log::warning('Midtrans notification: signature tidak cocok', ['order_id' => $orderId]);
 
             return response('Invalid signature', 403);
@@ -77,9 +83,19 @@ class MidtransSnapPaymentProvider implements SnapPaymentProviderInterface
         $shouldNotifyMuthowif = false;
 
         try {
-                $shouldNotifyMuthowif = DB::transaction(function () use ($orderId, $payload, $statusCode, $transactionStatus, $grossAmount, $request): bool {
+            $shouldNotifyMuthowif = DB::transaction(function () use (
+                $orderId,
+                $payload,
+                $statusCode,
+                $transactionStatus,
+                $grossAmount,
+                $request
+            ): bool {
                 /** @var BookingPayment|null $payment */
-                $payment = BookingPayment::query()->where('order_id', $orderId)->lockForUpdate()->first();
+                $payment = BookingPayment::query()
+                    ->where('order_id', $orderId)
+                    ->lockForUpdate()
+                    ->first();
                 if ($payment === null) {
                     Log::warning('Midtrans notification: order_id tidak dikenal', ['order_id' => $orderId]);
 
@@ -87,7 +103,10 @@ class MidtransSnapPaymentProvider implements SnapPaymentProviderInterface
                 }
 
                 /** @var MuthowifBooking $booking */
-                $booking = MuthowifBooking::query()->whereKey($payment->muthowif_booking_id)->lockForUpdate()->firstOrFail();
+                $booking = MuthowifBooking::query()
+                    ->whereKey($payment->muthowif_booking_id)
+                    ->lockForUpdate()
+                    ->firstOrFail();
 
                 $payment->midtrans_notification_payload = $payload;
                 if ($request->filled('transaction_id')) {
@@ -165,7 +184,6 @@ class MidtransSnapPaymentProvider implements SnapPaymentProviderInterface
         }
 
         if ($shouldNotifyMuthowif) {
-            // Dispatch job agar kirim WA tidak memperlambat webhook.
             $payment = BookingPayment::query()->where('order_id', $orderId)->first();
             if ($payment) {
                 NotifyMuthowifOfPaidBooking::dispatchAfterResponse((string) $payment->muthowif_booking_id);

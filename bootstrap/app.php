@@ -17,9 +17,7 @@ return Application::configure(basePath: dirname(__DIR__))
         $middleware->redirectGuestsTo(fn () => route('login'));
         $middleware->validateCsrfTokens(except: [
             'payments/midtrans/notification',
-            'payments/xendit/notification',
-            'payments/midtrans/payout/notification',
-            'payments/xendit/payout/notification',
+            'payments/doku/notification',
         ]);
         $middleware->alias([
             'role' => \App\Http\Middleware\EnsureUserRole::class,

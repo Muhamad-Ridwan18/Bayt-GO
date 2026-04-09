@@ -6,7 +6,7 @@ use App\Payments\Contracts\SnapPaymentProviderInterface;
 use Illuminate\Http\Request;
 use Illuminate\Http\Response;
 
-class MidtransNotificationController extends Controller
+class PaymentWebhookController extends Controller
 {
     public function handle(Request $request, SnapPaymentProviderInterface $provider): Response
     {

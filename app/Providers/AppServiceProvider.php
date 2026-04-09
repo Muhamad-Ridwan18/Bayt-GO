@@ -3,7 +3,7 @@
 namespace App\Providers;
 
 use App\Payments\Contracts\SnapPaymentProviderInterface;
-use App\Payments\Xendit\XenditInvoicePaymentProvider;
+use App\Payments\Midtrans\MidtransSnapPaymentProvider;
 use Illuminate\Pagination\Paginator;
 use Illuminate\Support\ServiceProvider;
 
@@ -14,7 +14,7 @@ class AppServiceProvider extends ServiceProvider
      */
     public function register(): void
     {
-        $this->app->bind(SnapPaymentProviderInterface::class, XenditInvoicePaymentProvider::class);
+        $this->app->bind(SnapPaymentProviderInterface::class, MidtransSnapPaymentProvider::class);
     }
 
     /**

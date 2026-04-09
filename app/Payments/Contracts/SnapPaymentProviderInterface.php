@@ -12,11 +12,11 @@ interface SnapPaymentProviderInterface
     public function isConfigured(): bool;
 
     /**
-     * Buat session pembayaran (snap token) untuk booking tertentu.
+     * Buat session pembayaran untuk booking tertentu.
      *
      * @throws \RuntimeException
      */
-    public function createPaymentSession(BookingPayment $payment): SnapPaymentSession;
+    public function createPaymentSession(BookingPayment $payment, ?string $method = null): SnapPaymentSession;
 
     /**
      * Proses notification/webhook dari provider.

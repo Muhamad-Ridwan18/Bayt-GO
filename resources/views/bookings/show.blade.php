@@ -127,28 +127,28 @@
                             <dt class="text-slate-600">Biaya platform total</dt>
                             <dd class="font-medium text-slate-900">Rp {{ $fmt($platformFeeTotal) }}</dd>
                         </div>
-                        <div class="flex justify-between gap-4 pt-2 text-sm">
+                        {{-- <div class="flex justify-between gap-4 pt-2 text-sm">
                             <dt class="text-slate-600">Diterima muthowif (net)</dt>
                             <dd class="font-medium text-slate-900">Rp {{ $fmt($muthowifNet) }}</dd>
-                        </div>
+                        </div> --}}
                     </dl>
 
                     @if ($b->isAwaitingPayment())
                         @php $paymentQuery = request()->query('payment'); @endphp
                         @if ($paymentQuery === 'success')
                             <p class="mt-4 text-xs text-slate-600 leading-relaxed">
-                                Terima kasih! Kami sedang menunggu konfirmasi dari <strong>Xendit</strong>.
+                                Terima kasih! Kami sedang menunggu konfirmasi pembayaran dari <strong>Midtrans</strong>.
                                 Jika invoice sudah berstatus lunas, tombol <em>cetak invoice</em> akan muncul otomatis.
                             </p>
                         @else
                             <p class="mt-4 text-xs text-slate-600 leading-relaxed">
-                                Pembayaran aman lewat <strong>Xendit</strong>. Total yang Anda bayarkan sudah termasuk biaya platform.
+                                Pembayaran aman lewat <strong>Midtrans</strong>. Total yang Anda bayarkan sudah termasuk biaya platform.
                                 Biaya platform total {{ (int) round(\App\Support\PlatformFee::TOTAL_RATE * 100) }}% (7,5% dari customer + 7,5% dari muthowif).
                             </p>
                         @endif
 
                         <a href="{{ route('bookings.payment', $b) }}" class="mt-4 inline-flex justify-center items-center gap-2 rounded-xl bg-brand-600 px-6 py-3 text-sm font-semibold text-white shadow-md hover:bg-brand-700">
-                            Bayar dengan Xendit
+                            Bayar dengan Midtrans
                         </a>
                     @elseif ($b->isPaid() && $b->paid_at)
                         <p class="mt-4 text-sm text-emerald-800">
@@ -158,14 +158,6 @@
                             Cetak invoice
                             <svg class="h-4 w-4" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true"><path fill-rule="evenodd" d="M5 4v3H4a2 2 0 00-2 2v3a2 2 0 002 2h1v2a2 2 0 002 2h6a2 2 0 002-2v-2h1a2 2 0 002-2V9a2 2 0 00-2-2h-1V4a2 2 0 00-2-2H7a2 2 0 00-2 2zm8 0H7v3h6V4zm0 8H7v4h6v-4z" clip-rule="evenodd" /></svg>
                         </a>
-                        @if ($st === BookingStatus::Confirmed)
-                            <form method="POST" action="{{ route('bookings.complete', $b) }}" class="mt-4">
-                                @csrf
-                                <button type="submit" class="w-full rounded-xl bg-emerald-600 px-6 py-3 text-sm font-semibold text-white shadow-md hover:bg-emerald-700">
-                                    Selesaikan layanan & tambah saldo
-                                </button>
-                            </form>
-                        @endif
                     @endif
                 </div>
             @endif
@@ -183,3 +175,11 @@
         </div>
     </div>
 </x-app-layout>
+
+@if ($b->isAwaitingPayment())
+    <script>
+        setInterval(() => {
+            window.location.reload();
+        }, 10000);
+    </script>
+@endif

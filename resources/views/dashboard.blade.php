@@ -1,13 +1,5 @@
-<x-app-layout>
-    <x-slot name="header">
-        @unless(Auth::user()?->isAdmin())
-            <h2 class="font-semibold text-xl text-slate-800 leading-tight">
-                Beranda
-            </h2>
-        @endunless
-    </x-slot>
-
-    <div class="py-8 sm:py-12">
+<x-app-layout style="background-color: #650a0a;">
+    <div class="py-8 sm:py-12" style="background-image: url('{{ asset('images/bg-01.jpeg') }}');">
                         <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 space-y-6">
 
             @if (Auth::user()->isCustomer())
@@ -130,7 +122,7 @@
                         <div class="lg:col-span-12">
                             <p class="text-sm font-medium text-emerald-200/90">Dashboard admin</p>
                             <h3 class="mt-1 text-2xl font-bold tracking-tight">
-                                Pantau platform &amp; transaksi Xendit
+                                Pantau platform &amp; transaksi Midtrans
                             </h3>
                             <p class="mt-2 text-sm text-white/80 leading-relaxed">
                                 Ringkasan pembayaran yang sudah settlement, termasuk biaya platform (15% total).

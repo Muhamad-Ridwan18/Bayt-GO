@@ -1,7 +1,7 @@
 <x-app-layout>
     <x-slot name="header">
         <h2 class="font-semibold text-xl text-slate-800 leading-tight">
-            Withdraw / Disbursement Xendit
+            Withdraw / transfer manual
         </h2>
     </x-slot>
 
@@ -30,7 +30,7 @@
                         <p class="mt-2 text-2xl font-bold text-slate-900 tabular-nums">
                             Rp {{ \App\Support\IndonesianNumber::formatThousands((string) $pendingAmount) }}
                         </p>
-                        <p class="mt-1 text-xs text-slate-600">Menunggu admin untuk approve dan buat disbursement Xendit.</p>
+                        <p class="mt-1 text-xs text-slate-600">Menunggu admin menyetujui withdraw; setelah itu saldo didebit dan admin menyelesaikan transfer manual ke bank, lalu menandai selesai.</p>
                     </div>
                 </div>
             </div>
@@ -82,12 +82,27 @@
                                     </td>
                                     <td class="px-4 py-3 text-right whitespace-nowrap">
                                         @if ($w->status === 'pending_approval')
-                                            <form method="POST" action="{{ route('admin.withdrawals.approve', $w) }}" onsubmit="return confirm('Approve withdraw ini dan kirim disbursement Xendit?');">
+                                            <form method="POST" action="{{ route('admin.withdrawals.approve', $w) }}" onsubmit="return confirm('Setujui withdraw ini? Saldo muthowif akan didebit; Anda perlu mentransfer dana ke rekening tujuan lalu menandai selesai.');">
                                                 @csrf
                                                 <button type="submit" class="inline-flex items-center justify-center rounded-xl bg-brand-600 px-3 py-2 text-sm font-semibold text-white hover:bg-brand-700">
                                                     Approve
                                                 </button>
                                             </form>
+                                        @elseif ($w->status === 'processing')
+                                            <div class="flex flex-col items-end gap-2">
+                                                <form method="POST" action="{{ route('admin.withdrawals.mark_transferred', $w) }}" onsubmit="return confirm('Tandai transfer ke rekening muthowif sudah selesai?');">
+                                                    @csrf
+                                                    <button type="submit" class="inline-flex items-center justify-center rounded-xl bg-emerald-600 px-3 py-2 text-sm font-semibold text-white hover:bg-emerald-700">
+                                                        Tandai transfer selesai
+                                                    </button>
+                                                </form>
+                                                <form method="POST" action="{{ route('admin.withdrawals.mark_transfer_failed', $w) }}" onsubmit="return confirm('Transfer gagal? Saldo akan dikembalikan ke wallet muthowif.');">
+                                                    @csrf
+                                                    <button type="submit" class="text-xs font-semibold text-red-700 hover:text-red-900 underline">
+                                                        Tandai gagal (kembalikan saldo)
+                                                    </button>
+                                                </form>
+                                            </div>
                                         @else
                                             <span class="text-xs text-slate-500">—</span>
                                         @endif

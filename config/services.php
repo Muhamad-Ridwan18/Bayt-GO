@@ -42,7 +42,7 @@ return [
         'country_code' => env('FONNTE_COUNTRY_CODE', '62'),
         /** Notifikasi WhatsApp ke muthowif saat ada booking masuk (perlu FONNTE_TOKEN). */
         'booking_notify_enabled' => env('FONNTE_BOOKING_NOTIFY_ENABLED', true),
-        /** WhatsApp ke muthowif setelah jamaah lunas (Xendit). */
+        /** WhatsApp ke muthowif setelah jamaah lunas (payment gateway). */
         'payment_notify_enabled' => env('FONNTE_PAYMENT_NOTIFY_ENABLED', true),
     ],
 
@@ -50,15 +50,14 @@ return [
         'server_key' => env('MIDTRANS_SERVER_KEY'),
         'client_key' => env('MIDTRANS_CLIENT_KEY'),
         'is_production' => env('MIDTRANS_IS_PRODUCTION', false),
-        // Iris Merchant Key dipakai untuk verifikasi webhook Payout (disbursement).
-        'iris_merchant_key' => env('MIDTRANS_IRIS_MERCHANT_KEY'),
+        'core_payment_expire_minutes' => env('MIDTRANS_CORE_PAYMENT_EXPIRE_MINUTES', 60),
     ],
 
-    'xendit' => [
-        'api_key' => env('XENDIT_API_KEY'),
-        'base_url' => env('XENDIT_BASE_URL', 'https://api.xendit.co'),
-        // Token webhook yang ada di Xendit Dashboard (header: x-callback-token)
-        'webhook_token' => env('XENDIT_WEBHOOK_TOKEN'),
+    'doku' => [
+        'checkout_client_id' => env('DOKU_CHECKOUT_CLIENT_ID'),
+        'checkout_shared_key' => env('DOKU_CHECKOUT_SHARED_KEY'),
+        'checkout_is_sandbox' => env('DOKU_CHECKOUT_IS_SANDBOX', true),
+        'checkout_payment_due_minutes' => env('DOKU_CHECKOUT_PAYMENT_DUE_MINUTES', 1440),
     ],
 
 ];

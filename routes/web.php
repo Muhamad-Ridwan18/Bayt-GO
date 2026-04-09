@@ -6,8 +6,7 @@ use App\Http\Controllers\Admin\WithdrawalsController;
 use App\Http\Controllers\Admin\LogsController;
 use App\Http\Controllers\Admin\MuthowifVerificationController;
 use App\Http\Controllers\Customer\BookingController as CustomerBookingController;
-use App\Http\Controllers\MidtransPayoutNotificationController;
-use App\Http\Controllers\MidtransNotificationController;
+use App\Http\Controllers\PaymentWebhookController;
 use App\Http\Controllers\Muthowif\BookingController as MuthowifBookingController;
 use App\Http\Controllers\Muthowif\MuthowifScheduleController;
 use App\Http\Controllers\Muthowif\MuthowifServiceController;
@@ -36,20 +35,8 @@ Route::bind('blockedDate', function (string $value) {
     return $row;
 });
 
-// Xendit payment callback (re-uses controller that delegates to SnapPaymentProviderInterface).
-Route::post('/payments/xendit/notification', [MidtransNotificationController::class, 'handle'])
-    ->name('payments.xendit.notification');
-
-// Legacy Midtrans callback endpoint (can be removed once Midtrans is fully off).
-Route::post('/payments/midtrans/notification', [MidtransNotificationController::class, 'handle'])
+Route::post('/payments/midtrans/notification', [PaymentWebhookController::class, 'handle'])
     ->name('payments.midtrans.notification');
-
-Route::post('/payments/midtrans/payout/notification', [MidtransPayoutNotificationController::class, 'handle'])
-    ->name('payments.midtrans.payout.notification');
-
-// Xendit payout/disbursement callback (reuse same controller file for now).
-Route::post('/payments/xendit/payout/notification', [MidtransPayoutNotificationController::class, 'handle'])
-    ->name('payments.xendit.payout.notification');
 
 Route::get('/layanan', [MuthowifDirectoryController::class, 'index'])->name('layanan.index');
 Route::get('/layanan/{publicProfile}/foto', [MuthowifDirectoryController::class, 'photo'])->name('layanan.photo');
@@ -94,8 +81,8 @@ Route::middleware('auth')->group(function () {
         Route::get('/', [CustomerBookingController::class, 'index'])->name('index');
         Route::post('/', [CustomerBookingController::class, 'store'])->name('store');
         Route::get('{booking}/pembayaran', [CustomerBookingController::class, 'payment'])->name('payment');
+        Route::get('{booking}/payment-status', [CustomerBookingController::class, 'paymentStatus'])->name('payment.status');
         Route::get('{booking}/invoice', [CustomerBookingController::class, 'invoice'])->name('invoice');
-        Route::post('{booking}/midtrans/finalize', [CustomerBookingController::class, 'midtransFinalize'])->name('midtrans.finalize');
         Route::post('{booking}/selesaikan', [CustomerBookingController::class, 'complete'])->name('complete');
         Route::get('{booking}', [CustomerBookingController::class, 'show'])->name('show');
         Route::post('{booking}/cancel', [CustomerBookingController::class, 'cancel'])->name('cancel');
@@ -125,6 +112,8 @@ Route::middleware('auth')->group(function () {
         Route::get('keuangan', [FinanceController::class, 'index'])->name('finance.index');
         Route::get('withdrawals', [WithdrawalsController::class, 'index'])->name('withdrawals.index');
         Route::post('withdrawals/{withdrawal}/approve', [WithdrawalsController::class, 'approve'])->name('withdrawals.approve');
+        Route::post('withdrawals/{withdrawal}/selesai-transfer', [WithdrawalsController::class, 'markTransferred'])->name('withdrawals.mark_transferred');
+        Route::post('withdrawals/{withdrawal}/gagal-transfer', [WithdrawalsController::class, 'markTransferFailed'])->name('withdrawals.mark_transfer_failed');
         Route::get('muthowif', [MuthowifVerificationController::class, 'index'])->name('muthowif.index');
         Route::get('muthowif/{profile}/photo', [MuthowifVerificationController::class, 'photo'])->name('muthowif.photo');
         Route::get('muthowif/{profile}/ktp', [MuthowifVerificationController::class, 'ktp'])->name('muthowif.ktp');

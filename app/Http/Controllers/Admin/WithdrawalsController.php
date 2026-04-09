@@ -5,11 +5,8 @@ namespace App\Http\Controllers\Admin;
 use App\Http\Controllers\Controller;
 use App\Models\MuthowifProfile;
 use App\Models\MuthowifWithdrawal;
-use App\Services\XenditDisbursementService;
 use Illuminate\Http\RedirectResponse;
-use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
-use Illuminate\Support\Facades\Log;
 use Illuminate\View\View;
 use RuntimeException;
 use Throwable;
@@ -37,16 +34,14 @@ class WithdrawalsController extends Controller
         ]);
     }
 
-    public function approve(Request $request, MuthowifWithdrawal $withdrawal, XenditDisbursementService $payout): RedirectResponse
+    /**
+     * Approve: debit saldo muthowif, status processing.
+     * Admin menyelesaikan transfer ke rekening tujuan (mis. lewat DOKU Kirim / bank), lalu menandai lewat markTransferred.
+     */
+    public function approve(MuthowifWithdrawal $withdrawal): RedirectResponse
     {
         abort_unless($withdrawal->status === 'pending_approval', 409);
 
-        if (! $payout->isConfigured()) {
-            return back()->with('error', 'Xendit disbursement belum terkonfigurasi di server.');
-        }
-
-        // Reserve dana terlebih dulu (debit wallet) supaya tidak bisa ada payout ganda
-        // saat saldo berubah di sela request API Xendit disbursement.
         $reservedAmount = (float) $withdrawal->amount;
 
         try {
@@ -82,67 +77,52 @@ class WithdrawalsController extends Controller
                 ->with('error', 'Saldo tidak cukup untuk approve payout.');
         }
 
-        $payoutResult = null;
-        try {
-            $payoutResult = $payout->createDisbursement($withdrawal);
-        } catch (Throwable $e) {
-            // Refund saat request disbursement Xendit gagal dibuat.
-            DB::transaction(function () use ($withdrawal, $reservedAmount, $e): void {
-                $profile = MuthowifProfile::query()
-                    ->whereKey($withdrawal->muthowif_profile_id)
-                    ->lockForUpdate()
-                    ->firstOrFail();
+        return redirect()
+            ->route('admin.withdrawals.index')
+            ->with('status', 'Withdraw disetujui. Lakukan transfer ke rekening tujuan, lalu klik "Tandai transfer selesai".');
+    }
 
-                $profile->wallet_balance = round((float) $profile->wallet_balance + $reservedAmount, 2);
-                $profile->save();
-
-                $withdrawal->update([
-                    'status' => 'failed',
-                    'failed_at' => now(),
-                    'failed_reason' => $e->getMessage(),
-                ]);
-            });
-
-            Log::error('Xendit disbursement create error', [
-                'withdrawal_id' => (string) $withdrawal->getKey(),
-                'error' => $e->getMessage(),
-            ]);
-
-            return redirect()
-                ->route('admin.withdrawals.index')
-                ->with('error', 'Gagal membuat payout Xendit: '.$e->getMessage());
-        }
-
-        $referenceNo = $payoutResult['id'] ?? null;
-        $initialStatus = $payoutResult['status'] ?? null;
-
-        // Update status sesuai respons awal payout/disbursement.
-        $newStatus = 'processing';
-        $initialStatusLower = is_string($initialStatus) ? strtolower($initialStatus) : '';
-        if (str_contains($initialStatusLower, 'success')
-            || str_contains($initialStatusLower, 'completed')
-            || str_contains($initialStatusLower, 'succeeded')
-        ) {
-            $newStatus = 'succeeded';
-        } elseif (
-            str_contains($initialStatusLower, 'failed')
-            || str_contains($initialStatusLower, 'rejected')
-        ) {
-            $newStatus = 'failed';
-        }
+    public function markTransferred(MuthowifWithdrawal $withdrawal): RedirectResponse
+    {
+        abort_unless($withdrawal->status === 'processing', 409);
 
         $withdrawal->update([
-            'midtrans_reference_no' => $referenceNo,
-            'midtrans_initial_status' => $initialStatus,
-            'status' => $newStatus,
-            'processing_at' => $newStatus === 'processing' ? now() : $withdrawal->processing_at,
-            'completed_at' => $newStatus === 'succeeded' ? now() : $withdrawal->completed_at,
-            'failed_at' => $newStatus === 'failed' ? now() : $withdrawal->failed_at,
+            'status' => 'succeeded',
+            'completed_at' => now(),
         ]);
 
         return redirect()
             ->route('admin.withdrawals.index')
-            ->with('status', 'Withdraw disetujui dan payout Xendit diproses.');
+            ->with('status', 'Transfer withdraw dicatat selesai.');
+    }
+
+    /**
+     * Gagal transfer: kembalikan saldo ke wallet muthowif.
+     */
+    public function markTransferFailed(MuthowifWithdrawal $withdrawal): RedirectResponse
+    {
+        abort_unless($withdrawal->status === 'processing', 409);
+
+        $amount = (float) $withdrawal->amount;
+
+        DB::transaction(function () use ($withdrawal, $amount): void {
+            $profile = MuthowifProfile::query()
+                ->whereKey($withdrawal->muthowif_profile_id)
+                ->lockForUpdate()
+                ->firstOrFail();
+
+            $profile->wallet_balance = round((float) $profile->wallet_balance + $amount, 2);
+            $profile->save();
+
+            $withdrawal->update([
+                'status' => 'failed',
+                'failed_at' => now(),
+                'failed_reason' => 'Transfer gagal atau dibatalkan (saldo dikembalikan).',
+            ]);
+        });
+
+        return redirect()
+            ->route('admin.withdrawals.index')
+            ->with('status', 'Withdraw ditandai gagal; saldo muthowif dikembalikan.');
     }
 }
-

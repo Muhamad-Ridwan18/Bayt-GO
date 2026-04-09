@@ -7,7 +7,6 @@ use App\Enums\MuthowifServiceType;
 use App\Enums\MuthowifVerificationStatus;
 use App\Enums\PaymentStatus;
 use App\Http\Controllers\Controller;
-use App\Jobs\NotifyMuthowifOfPaidBooking;
 use App\Jobs\NotifyMuthowifOfNewBooking;
 use App\Models\BookingPayment;
 use App\Models\MuthowifBooking;
@@ -17,22 +16,31 @@ use App\Models\MuthowifServiceAddOn;
 use App\Support\PlatformFee;
 use App\Payments\Contracts\SnapPaymentProviderInterface;
 use Carbon\Carbon;
+use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Pagination\LengthAwarePaginator;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\DB;
-use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Str;
 use Illuminate\Validation\Rule;
 use Illuminate\Validation\ValidationException;
 use Illuminate\View\View;
-use Illuminate\Http\JsonResponse;
 use RuntimeException;
 
 class BookingController extends Controller
 {
     private const MAX_RANGE_DAYS = 90;
+    private const CORE_PAYMENT_METHODS = [
+        'va_bca',
+        'va_bni',
+        'va_bri',
+        'va_permata',
+        'va_mandiri_bill',
+        'qris',
+        'gopay',
+        'shopeepay',
+    ];
 
     public function index(Request $request): View
     {
@@ -70,6 +78,12 @@ class BookingController extends Controller
     {
         $this->authorize('pay', $booking);
 
+        if ($booking->isPaid()) {
+            return redirect()
+                ->route('bookings.show', $booking)
+                ->with('status', 'Pembayaran sudah diterima. Anda bisa cek invoice dari detail booking.');
+        }
+
         if (! $provider->isConfigured()) {
             return view('bookings.payment-unconfigured', [
                 'booking' => $booking,
@@ -83,6 +97,13 @@ class BookingController extends Controller
                 ->with('error', 'Total tagihan tidak valid. Hubungi muthowif atau admin.');
         }
 
+        $selectedMethod = (string) $request->query('method', '');
+        if ($selectedMethod !== '' && ! in_array($selectedMethod, self::CORE_PAYMENT_METHODS, true)) {
+            return redirect()
+                ->route('bookings.payment', $booking)
+                ->with('error', 'Metode pembayaran tidak didukung.');
+        }
+
         $split = PlatformFee::split((float) $baseInt);
 
         $booking->bookingPayments()->where('status', 'pending')->delete();
@@ -92,7 +113,7 @@ class BookingController extends Controller
         $payment = BookingPayment::query()->create([
             'muthowif_booking_id' => $booking->getKey(),
             'order_id' => $orderId,
-            // Midtrans charge = nominal yang dibayar customer (base + fee customer).
+            // Nominal yang dibayar customer (base + fee customer).
             'gross_amount' => (int) round($split['customer_gross']),
             // Total biaya platform = fee customer + fee muthowif (masing-masing 7,5% dari base).
             'platform_fee_amount' => $split['platform_fee_total'],
@@ -101,21 +122,30 @@ class BookingController extends Controller
             'status' => 'pending',
         ]);
 
+        $session = null;
+
         try {
-            $session = $provider->createPaymentSession($payment);
-
-            $update = [];
-            if (! empty($session->snapToken)) {
-                $update['snap_token'] = $session->snapToken;
+            if ($selectedMethod !== '') {
+                $session = $provider->createPaymentSession($payment, $selectedMethod);
             }
 
-            if (! empty($session->providerReferenceId)) {
-                $update['midtrans_transaction_id'] = $session->providerReferenceId;
-                $update['payment_type'] = 'xendit_invoice';
-            }
+            if ($session !== null) {
+                $update = [];
+                if (! empty($session->snapToken)) {
+                    $update['snap_token'] = $session->snapToken;
+                }
 
-            if ($update !== []) {
-                $payment->update($update);
+                if (! empty($session->providerReferenceId)) {
+                    $update['midtrans_transaction_id'] = $session->providerReferenceId;
+                }
+
+                if (is_string($selectedMethod) && $selectedMethod !== '') {
+                    $update['payment_type'] = $selectedMethod;
+                }
+
+                if ($update !== []) {
+                    $payment->update($update);
+                }
             }
         } catch (RuntimeException $e) {
             return redirect()
@@ -126,7 +156,9 @@ class BookingController extends Controller
         return view('bookings.payment', [
             'booking' => $booking,
             'payment' => $payment->fresh(),
-            'paymentUrl' => $session->paymentUrl,
+            'selectedMethod' => $selectedMethod,
+            'methods' => self::CORE_PAYMENT_METHODS,
+            'instructions' => $session?->instructions,
         ]);
     }
 
@@ -143,118 +175,15 @@ class BookingController extends Controller
         ]);
     }
 
-    /**
-     * Finalize pembayaran dari callback frontend (snap) sebagai fallback dari webhook.
-     *
-     * Penting: ini tetap memverifikasi gross_amount & transaction_status (settlement/capture).
-     */
-    public function midtransFinalize(Request $request, MuthowifBooking $booking): JsonResponse
+    public function paymentStatus(Request $request, MuthowifBooking $booking): JsonResponse
     {
-        // Izinkan idempotensi: kalau sudah Paid, jangan hard-fail.
         $this->authorize('view', $booking);
 
-        Log::debug('Midtrans finalize endpoint hit', [
-            'booking_id' => (string) $booking->getKey(),
-            'payment_status' => (string) (string) $booking->payment_status?->value,
-        ]);
-
-        if ($booking->payment_status === PaymentStatus::Paid) {
-            return response()->json([
-                'ok' => true,
-                'paid' => true,
-            ]);
-        }
-
-        if ($booking->status !== BookingStatus::Confirmed || $booking->payment_status !== PaymentStatus::Pending) {
-            return response()->json([
-                'ok' => false,
-                'paid' => false,
-                'reason' => 'booking not ready for payment finalization',
-            ]);
-        }
-
-        $payload = $request->validate([
-            'order_id' => ['required', 'string', 'max:128'],
-            'status_code' => ['required'],
-            'gross_amount' => ['required'],
-            'transaction_status' => ['required', 'string'],
-            'transaction_id' => ['nullable', 'string'],
-            'payment_type' => ['nullable', 'string'],
-        ]);
-
-        $statusCode = (string) $payload['status_code'];
-        $grossInt = (int) round((float) $payload['gross_amount']);
-        $transactionStatus = (string) $payload['transaction_status'];
-
-        if (! in_array($transactionStatus, ['settlement', 'capture'], true) || $statusCode !== '200') {
-            return response()->json([
-                'ok' => false,
-                'paid' => false,
-                'reason' => 'transaction not settled/captured yet',
-            ]);
-        }
-
-        $orderId = $payload['order_id'];
-        $transactionId = $payload['transaction_id'] ?? null;
-        $paymentType = $payload['payment_type'] ?? null;
-
-        $finalized = false;
-
-        DB::transaction(function () use (
-            $booking,
-            $orderId,
-            $grossInt,
-            $transactionStatus,
-            $transactionId,
-            $paymentType,
-            &$finalized
-        ): void {
-            /** @var BookingPayment|null $payment */
-            $payment = $booking->bookingPayments()
-                ->where('order_id', $orderId)
-                ->lockForUpdate()
-                ->first();
-
-            if ($payment === null) {
-                return;
-            }
-
-            // Pastikan booking & payment masih pending.
-            $booking->refresh();
-            if ($booking->payment_status === PaymentStatus::Paid) {
-                return;
-            }
-            if ($payment->status !== 'pending') {
-                return;
-            }
-
-            if ((int) $payment->gross_amount !== $grossInt) {
-                return;
-            }
-
-            // Update booking payment.
-            $booking->update([
-                'payment_status' => PaymentStatus::Paid,
-                'paid_at' => now(),
-            ]);
-
-            $payment->update([
-                'status' => $transactionStatus,
-                'midtrans_transaction_id' => $transactionId ? (string) $transactionId : $payment->midtrans_transaction_id,
-                'payment_type' => $paymentType ? (string) $paymentType : $payment->payment_type,
-                'settled_at' => now(),
-            ]);
-
-            $finalized = true;
-        });
-
-        if ($finalized) {
-            NotifyMuthowifOfPaidBooking::dispatchAfterResponse((string) $booking->getKey());
-        }
-
         return response()->json([
-            'ok' => true,
-            'paid' => $booking->refresh()->payment_status === PaymentStatus::Paid,
+            'booking_status' => $booking->status->value,
+            'payment_status' => $booking->payment_status->value,
+            'is_paid' => $booking->isPaid(),
+            'paid_at' => $booking->paid_at?->timezone(config('app.timezone'))?->toIso8601String(),
         ]);
     }
 

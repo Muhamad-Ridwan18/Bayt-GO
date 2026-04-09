@@ -13,7 +13,7 @@
     <div class="py-8 sm:py-12">
         <div class="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 space-y-8">
             <p class="text-sm text-slate-600">
-                Ringkasan biaya platform ({{ \App\Support\PlatformFee::TOTAL_RATE * 100 }}% total) dan riwayat transaksi Xendit untuk pembayaran yang sudah settlement.
+                Ringkasan biaya platform ({{ \App\Support\PlatformFee::TOTAL_RATE * 100 }}% total) dan riwayat transaksi Midtrans untuk pembayaran yang sudah settlement.
             </p>
 
             <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">

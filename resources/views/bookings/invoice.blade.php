@@ -72,7 +72,7 @@
                 </div>
                 @if ($payment)
                     <p class="mt-3 text-xs text-slate-500 leading-relaxed">
-                        Pembayaran melalui Xendit
+                        Pembayaran melalui Midtrans
                         @if ($payment->payment_type)
                             ({{ $payment->payment_type }})
                         @endif

@@ -7,17 +7,12 @@
 @endphp
 
 <x-app-layout>
-    <x-slot name="header">
-        <h2 class="font-semibold text-xl text-slate-800 leading-tight">
-            Booking saya
-        </h2>
-    </x-slot>
 
     <div class="py-8 sm:py-12">
         <div class="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 space-y-6">
     <div class="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
                 <p class="text-sm text-slate-600">
-            Setelah muthowif <strong>menyetujui</strong>, lakukan pembayaran lewat <strong>Xendit</strong> dari menu detail / Bayar Xendit.
+            Setelah muthowif <strong>menyetujui</strong>, lakukan pembayaran lewat <strong>Midtrans</strong> dari menu detail / Bayar Midtrans.
                     Permintaan <strong>Menunggu</strong> bisa dibatalkan kapan saja sebelum disetujui; setelah disetujui Anda masih bisa batalkan sebelum membayar.
                 </p>
                 <a href="{{ route('layanan.index') }}" class="mt-3 inline-flex text-sm font-semibold text-brand-700 hover:text-brand-800">
@@ -81,7 +76,7 @@
                                 </a>
                                 @if ($st === BookingStatus::Confirmed && $booking->payment_status === PaymentStatus::Pending)
                                     <a href="{{ route('bookings.payment', $booking) }}" class="inline-flex justify-center items-center px-4 py-2 rounded-xl bg-brand-600 text-white text-sm font-semibold hover:bg-brand-700 text-center">
-                                    Bayar Xendit
+                                    Bayar Midtrans
                                     </a>
                                 @endif
                                     @if ($st === BookingStatus::Confirmed && $booking->payment_status === PaymentStatus::Paid)
