@@ -32,7 +32,7 @@
     $baseTotal = $b->resolvedAmountDue();
     $split = \App\Support\PlatformFee::split((float) $baseTotal);
     $customerTotal = (float) ($split['customer_gross'] ?? $baseTotal);
-    $platformFeeTotal = (float) ($split['platform_fee_total'] ?? 0.0);
+    $customerPlatformFee = (float) ($split['customer_fee'] ?? 0.0);
     $muthowifNet = (float) ($split['muthowif_net'] ?? 0.0);
     $fmt = fn (float $n) => IndonesianNumber::formatThousands((string) (int) round($n));
 @endphp
@@ -139,13 +139,13 @@
                                 <dd class="font-medium text-slate-900">Rp {{ $fmt($transportLine) }}</dd>
                             </div>
                         @endif
+                        <div class="flex justify-between gap-4 border-t border-slate-100 pt-3">
+                            <dt class="text-slate-600">Biaya platform (7,5%)</dt>
+                            <dd class="font-medium text-slate-900">Rp {{ $fmt($customerPlatformFee) }}</dd>
+                        </div>
                         <div class="flex justify-between gap-4 border-t border-slate-200 pt-3 text-base">
                             <dt class="font-semibold text-slate-900">Total dibayar (customer)</dt>
                             <dd class="font-bold text-brand-700">Rp {{ $fmt($customerTotal) }}</dd>
-                        </div>
-                        <div class="flex justify-between gap-4 pt-2 text-sm">
-                            <dt class="text-slate-600">Biaya platform total</dt>
-                            <dd class="font-medium text-slate-900">Rp {{ $fmt($platformFeeTotal) }}</dd>
                         </div>
                         {{-- <div class="flex justify-between gap-4 pt-2 text-sm">
                             <dt class="text-slate-600">Diterima muthowif (net)</dt>
@@ -163,7 +163,7 @@
                         @else
                             <p class="mt-4 text-xs text-slate-600 leading-relaxed">
                                 Pembayaran aman lewat <strong>Midtrans</strong>. Total yang Anda bayarkan sudah termasuk biaya platform.
-                                Biaya platform total {{ (int) round(\App\Support\PlatformFee::TOTAL_RATE * 100) }}% (7,5% dari customer + 7,5% dari muthowif).
+                                Biaya platform untuk customer adalah {{ (int) round(\App\Support\PlatformFee::RATE * 100) }}% dari subtotal layanan.
                             </p>
                         @endif
 

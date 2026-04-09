@@ -1,7 +1,11 @@
 @php
     use Carbon\Carbon;
+    use App\Support\PlatformFee;
 
     $isWaitingConfirmation = $selectedMethod !== '' && is_array($instructions);
+    $split = PlatformFee::split((float) $booking->resolvedAmountDue());
+    $customerPlatformFee = (float) ($split['customer_fee'] ?? 0.0);
+    $customerTotal = (float) ($split['customer_gross'] ?? 0.0);
     $methodsUi = [
         [
             'id' => 'va_bca',
@@ -209,12 +213,12 @@
                             </dd>
                         </div>
                         <div class="flex justify-between gap-3 border-t border-slate-100 pt-3">
-                            <dt class="text-slate-500">Biaya platform</dt>
-                            <dd class="font-medium text-slate-900 text-right">Rp {{ number_format((float) $payment->platform_fee_amount, 0, ',', '.') }}</dd>
+                            <dt class="text-slate-500">Biaya platform (7,5%)</dt>
+                            <dd class="font-medium text-slate-900 text-right">Rp {{ number_format($customerPlatformFee, 0, ',', '.') }}</dd>
                         </div>
                         <div class="flex justify-between gap-3">
                             <dt class="font-semibold text-slate-900">Total dibayar</dt>
-                            <dd class="text-lg font-bold text-brand-700 text-right">Rp {{ number_format($payment->gross_amount, 0, ',', '.') }}</dd>
+                            <dd class="text-lg font-bold text-brand-700 text-right">Rp {{ number_format($customerTotal, 0, ',', '.') }}</dd>
                         </div>
                     </dl>
                 </div>

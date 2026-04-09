@@ -1,9 +1,13 @@
 @php
     use App\Support\IndonesianNumber;
+    use App\Support\PlatformFee;
     use Carbon\Carbon;
 
     $fmt = fn (float|int $n) => IndonesianNumber::formatThousands((string) (int) round((float) $n));
-    $gross = $payment ? (int) $payment->gross_amount : (int) round($booking->resolvedAmountDue());
+    $split = PlatformFee::split((float) $booking->resolvedAmountDue());
+    $base = (float) ($split['base'] ?? 0.0);
+    $customerPlatformFee = (float) ($split['customer_fee'] ?? 0.0);
+    $gross = (float) ($split['customer_gross'] ?? 0.0);
 @endphp
 <!DOCTYPE html>
 <html lang="id">
@@ -65,8 +69,16 @@
                 <p class="text-slate-600">{{ $booking->service_type?->label() ?? '—' }} · {{ $booking->pilgrim_count }} jemaah</p>
             </div>
 
-            <div class="mt-8 border-t border-slate-200 pt-6">
-                <div class="flex justify-between text-base">
+            <div class="mt-8 border-t border-slate-200 pt-6 space-y-2 text-sm">
+                <div class="flex justify-between">
+                    <span class="text-slate-600">Subtotal layanan</span>
+                    <span class="font-medium text-slate-900">Rp {{ $fmt($base) }}</span>
+                </div>
+                <div class="flex justify-between">
+                    <span class="text-slate-600">Biaya platform (7,5%)</span>
+                    <span class="font-medium text-slate-900">Rp {{ $fmt($customerPlatformFee) }}</span>
+                </div>
+                <div class="flex justify-between border-t border-slate-200 pt-3 text-base">
                     <span class="font-semibold text-slate-900">Total dibayar</span>
                     <span class="font-bold text-brand-700">Rp {{ $fmt($gross) }}</span>
                 </div>
@@ -76,7 +88,7 @@
                         @if ($payment->payment_type)
                             ({{ $payment->payment_type }})
                         @endif
-                        . Biaya platform {{ (int) round(\App\Support\PlatformFee::TOTAL_RATE * 100) }}% total (7,5% dari customer + 7,5% dari muthowif) sesuai ketentuan {{ config('app.name') }}.
+                        . Biaya platform untuk customer adalah {{ (int) round(PlatformFee::RATE * 100) }}% dari subtotal layanan.
                     </p>
                 @endif
             </div>
