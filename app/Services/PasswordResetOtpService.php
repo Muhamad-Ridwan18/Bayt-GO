@@ -49,7 +49,7 @@ class PasswordResetOtpService
         }
 
         /** @var User|null $user */
-        $user = User::query()->where('phone', $normalized)->first();
+        $user = $this->findUserByPhone($normalized, $phoneInput);
         if (! $user) {
             throw ValidationException::withMessages([
                 'phone' => ['Nomor WhatsApp tidak terdaftar.'],
@@ -188,5 +188,38 @@ class PasswordResetOtpService
         }
 
         return substr($normalized, 0, 4).'****'.substr($normalized, -4);
+    }
+
+    private function findUserByPhone(string $normalized, string $phoneInput): ?User
+    {
+        $inputTrimmed = trim($phoneInput);
+        $local08 = str_starts_with($normalized, '62') ? '0'.substr($normalized, 2) : $normalized;
+        $local8 = str_starts_with($local08, '0') ? substr($local08, 1) : $local08;
+
+        $direct = User::query()
+            ->whereIn('phone', array_values(array_unique([$normalized, $inputTrimmed, $local08, $local8])))
+            ->first();
+        if ($direct) {
+            return $direct;
+        }
+
+        // Fallback: ambil kandidat berdasar suffix lalu cocokkan via normalisasi PHP.
+        $suffix = substr($normalized, -9);
+        if ($suffix === false || $suffix === '') {
+            return null;
+        }
+
+        $candidates = User::query()
+            ->where('phone', 'like', '%'.$suffix)
+            ->limit(50)
+            ->get(['id', 'phone']);
+
+        foreach ($candidates as $candidate) {
+            if (PhoneNumber::normalize($candidate->phone) === $normalized) {
+                return $candidate;
+            }
+        }
+
+        return null;
     }
 }
