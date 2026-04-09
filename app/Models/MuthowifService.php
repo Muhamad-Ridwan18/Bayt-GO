@@ -20,8 +20,8 @@ class MuthowifService extends Model
         'min_pilgrims',
         'max_pilgrims',
         'description',
-        'stays_at_same_hotel',
-        'includes_transport',
+        'same_hotel_price_per_day',
+        'transport_price_flat',
     ];
 
     protected function casts(): array
@@ -29,8 +29,8 @@ class MuthowifService extends Model
         return [
             'type' => MuthowifServiceType::class,
             'daily_price' => 'decimal:2',
-            'stays_at_same_hotel' => 'boolean',
-            'includes_transport' => 'boolean',
+            'same_hotel_price_per_day' => 'decimal:2',
+            'transport_price_flat' => 'decimal:2',
         ];
     }
 

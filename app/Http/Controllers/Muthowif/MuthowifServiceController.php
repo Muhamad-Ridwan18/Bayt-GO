@@ -66,7 +66,7 @@ class MuthowifServiceController extends Controller
     }
 
     /**
-     * @return array{name: string, daily_price: float|int, min_pilgrims: int, max_pilgrims: int, description: ?string}
+     * @return array{name: string, daily_price: float|int, min_pilgrims: int, max_pilgrims: int, description: ?string, same_hotel_price_per_day: float|int|null, transport_price_flat: float|int|null}
      */
     private function validatedServicePayload(Request $request, string $prefix): array
     {
@@ -78,8 +78,8 @@ class MuthowifServiceController extends Controller
             "{$prefix}_min_pilgrims" => ['required', 'integer', 'min:1', 'max:9999'],
             "{$prefix}_max_pilgrims" => ['required', 'integer', 'min:1', 'max:9999'],
             "{$prefix}_description" => ['nullable', 'string', 'max:5000'],
-            "{$prefix}_stays_at_same_hotel" => ['sometimes', 'boolean'],
-            "{$prefix}_includes_transport" => ['sometimes', 'boolean'],
+            "{$prefix}_same_hotel_price_per_day" => ['nullable', 'numeric', 'min:0'],
+            "{$prefix}_transport_price_flat" => ['nullable', 'numeric', 'min:0'],
         ]);
 
         if ($validated["{$prefix}_max_pilgrims"] < $validated["{$prefix}_min_pilgrims"]) {
@@ -94,6 +94,8 @@ class MuthowifServiceController extends Controller
             'min_pilgrims' => $validated["{$prefix}_min_pilgrims"],
             'max_pilgrims' => $validated["{$prefix}_max_pilgrims"],
             'description' => $validated["{$prefix}_description"] ?? null,
+            'same_hotel_price_per_day' => $validated["{$prefix}_same_hotel_price_per_day"] ?? null,
+            'transport_price_flat' => $validated["{$prefix}_transport_price_flat"] ?? null,
         ];
     }
 
@@ -153,7 +155,7 @@ class MuthowifServiceController extends Controller
     }
 
     /**
-     * @param  array{name: string, daily_price: float|int, min_pilgrims: int, max_pilgrims: int, description: ?string}  $validated
+     * @param  array{name: string, daily_price: float|int, min_pilgrims: int, max_pilgrims: int, description: ?string, same_hotel_price_per_day: float|int|null, transport_price_flat: float|int|null}  $validated
      * @return array<string, mixed>
      */
     private function serviceAttributesFromValidated(Request $request, array $validated, string $prefix): array
@@ -164,15 +166,19 @@ class MuthowifServiceController extends Controller
             'min_pilgrims' => $validated['min_pilgrims'],
             'max_pilgrims' => $validated['max_pilgrims'],
             'description' => $validated['description'],
-            'stays_at_same_hotel' => $request->boolean("{$prefix}_stays_at_same_hotel"),
-            'includes_transport' => $request->boolean("{$prefix}_includes_transport"),
+            'same_hotel_price_per_day' => $validated['same_hotel_price_per_day'] !== null
+                ? (string) $validated['same_hotel_price_per_day']
+                : null,
+            'transport_price_flat' => $validated['transport_price_flat'] !== null
+                ? (string) $validated['transport_price_flat']
+                : null,
         ];
     }
 
     private function normalizeNumericInputs(Request $request, string $prefix): void
     {
         $merge = [];
-        foreach (['daily_price', 'min_pilgrims', 'max_pilgrims'] as $key) {
+        foreach (['daily_price', 'min_pilgrims', 'max_pilgrims', 'same_hotel_price_per_day', 'transport_price_flat'] as $key) {
             $field = "{$prefix}_{$key}";
             $val = $request->input($field);
             if ($val === null || $val === '') {

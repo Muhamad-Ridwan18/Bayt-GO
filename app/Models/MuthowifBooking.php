@@ -20,6 +20,8 @@ class MuthowifBooking extends Model
         'service_type',
         'pilgrim_count',
         'selected_add_on_ids',
+        'with_same_hotel',
+        'with_transport',
         'starts_on',
         'ends_on',
         'status',
@@ -36,6 +38,8 @@ class MuthowifBooking extends Model
             'status' => BookingStatus::class,
             'service_type' => MuthowifServiceType::class,
             'selected_add_on_ids' => 'array',
+            'with_same_hotel' => 'boolean',
+            'with_transport' => 'boolean',
             'payment_status' => PaymentStatus::class,
             'total_amount' => 'decimal:2',
             'paid_at' => 'datetime',
@@ -91,7 +95,7 @@ class MuthowifBooking extends Model
     }
 
     /**
-     * Hitung total dari tarif harian × malam + add-on (snapshot logika harga saat ini).
+     * Hitung total dari tarif harian × malam + add-on + opsi tambahan.
      */
     public function computeTotalAmount(): float
     {
@@ -113,7 +117,17 @@ class MuthowifBooking extends Model
             }
         }
 
-        return round($base + $addons, 2);
+        $sameHotel = 0.0;
+        if ($this->with_same_hotel && $service && $service->same_hotel_price_per_day !== null) {
+            $sameHotel = $nights * (float) $service->same_hotel_price_per_day;
+        }
+
+        $transport = 0.0;
+        if ($this->with_transport && $service && $service->transport_price_flat !== null) {
+            $transport = (float) $service->transport_price_flat;
+        }
+
+        return round($base + $addons + $sameHotel + $transport, 2);
     }
 
     /**

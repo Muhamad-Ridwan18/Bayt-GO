@@ -21,6 +21,14 @@
         }
     }
     $addonsSum = $addonLines->sum(fn ($a) => (float) $a->price);
+    $sameHotelLine = 0.0;
+    if ($b->with_same_hotel && $service && $service->same_hotel_price_per_day !== null) {
+        $sameHotelLine = $nights * (float) $service->same_hotel_price_per_day;
+    }
+    $transportLine = 0.0;
+    if ($b->with_transport && $service && $service->transport_price_flat !== null) {
+        $transportLine = (float) $service->transport_price_flat;
+    }
     $baseTotal = $b->resolvedAmountDue();
     $split = \App\Support\PlatformFee::split((float) $baseTotal);
     $customerTotal = (float) ($split['customer_gross'] ?? $baseTotal);
@@ -91,7 +99,7 @@
             @if (in_array($st, [BookingStatus::Confirmed, BookingStatus::Completed], true))
                 <div class="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm">
                     <h3 class="font-semibold text-slate-900">Rincian pembayaran</h3>
-                    <p class="mt-1 text-xs text-slate-500">Total dihitung dari tarif harian × jumlah hari + add-on (sesuai paket saat disetujui).</p>
+                    <p class="mt-1 text-xs text-slate-500">Total dihitung dari tarif harian × jumlah hari + add-on + opsi tambahan.</p>
                     <dl class="mt-4 space-y-3 text-sm">
                         <div class="flex justify-between gap-4">
                             <dt class="text-slate-600">Tarif / hari</dt>
@@ -118,6 +126,18 @@
                                     <dd class="font-medium text-slate-900">Rp {{ $fmt((float) $ad->price) }}</dd>
                                 </div>
                             @endforeach
+                        @endif
+                        @if ($sameHotelLine > 0)
+                            <div class="flex justify-between gap-4">
+                                <dt class="text-slate-600">+ Hotel sama ({{ $nights }} hari)</dt>
+                                <dd class="font-medium text-slate-900">Rp {{ $fmt($sameHotelLine) }}</dd>
+                            </div>
+                        @endif
+                        @if ($transportLine > 0)
+                            <div class="flex justify-between gap-4">
+                                <dt class="text-slate-600">+ Transportasi</dt>
+                                <dd class="font-medium text-slate-900">Rp {{ $fmt($transportLine) }}</dd>
+                            </div>
                         @endif
                         <div class="flex justify-between gap-4 border-t border-slate-200 pt-3 text-base">
                             <dt class="font-semibold text-slate-900">Total dibayar (customer)</dt>

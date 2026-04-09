@@ -117,19 +117,29 @@
                             <x-input-error class="mt-2" :messages="$errors->get('group_description')" />
                         </div>
 
-                        <div class="space-y-3">
-                            <label class="flex items-start gap-3 cursor-pointer">
-                                <input type="checkbox" name="group_stays_at_same_hotel" value="1"
-                                       class="mt-1 rounded border-slate-300 text-brand-600 shadow-sm focus:ring-brand-500"
-                                       @checked(old('group_stays_at_same_hotel', $groupService->stays_at_same_hotel)) />
-                                <span class="text-sm text-slate-700">Muthowif tinggal di hotel yang sama dengan jemaah</span>
-                            </label>
-                            <label class="flex items-start gap-3 cursor-pointer">
-                                <input type="checkbox" name="group_includes_transport" value="1"
-                                       class="mt-1 rounded border-slate-300 text-brand-600 shadow-sm focus:ring-brand-500"
-                                       @checked(old('group_includes_transport', $groupService->includes_transport)) />
-                                <span class="text-sm text-slate-700">Termasuk transportasi selama di Tanah Suci</span>
-                            </label>
+                        <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                            <div>
+                                <x-input-label for="group_same_hotel_price_per_day" value="Harga Hotel Sama (per hari)" />
+                                <x-indonesian-number-input
+                                    name="group_same_hotel_price_per_day"
+                                    id="group_same_hotel_price_per_day"
+                                    :value="old('group_same_hotel_price_per_day', $groupService->same_hotel_price_per_day !== null ? (string) (int) $groupService->same_hotel_price_per_day : '')"
+                                    placeholder="Contoh: 100.000"
+                                    :prefix="true"
+                                />
+                                <x-input-error class="mt-2" :messages="$errors->get('group_same_hotel_price_per_day')" />
+                            </div>
+                            <div>
+                                <x-input-label for="group_transport_price_flat" value="Harga Transportasi (flat)" />
+                                <x-indonesian-number-input
+                                    name="group_transport_price_flat"
+                                    id="group_transport_price_flat"
+                                    :value="old('group_transport_price_flat', $groupService->transport_price_flat !== null ? (string) (int) $groupService->transport_price_flat : '')"
+                                    placeholder="Contoh: 300.000"
+                                    :prefix="true"
+                                />
+                                <x-input-error class="mt-2" :messages="$errors->get('group_transport_price_flat')" />
+                            </div>
                         </div>
 
                         <div class="pt-2 mt-auto">
@@ -212,19 +222,29 @@
                             <x-input-error class="mt-2" :messages="$errors->get('private_description')" />
                         </div>
 
-                        <div class="space-y-3">
-                            <label class="flex items-start gap-3 cursor-pointer">
-                                <input type="checkbox" name="private_stays_at_same_hotel" value="1"
-                                       class="mt-1 rounded border-slate-300 text-brand-600 shadow-sm focus:ring-brand-500"
-                                       @checked(old('private_stays_at_same_hotel', $privateService->stays_at_same_hotel)) />
-                                <span class="text-sm text-slate-700">Muthowif tinggal di hotel yang sama dengan jemaah</span>
-                            </label>
-                            <label class="flex items-start gap-3 cursor-pointer">
-                                <input type="checkbox" name="private_includes_transport" value="1"
-                                       class="mt-1 rounded border-slate-300 text-brand-600 shadow-sm focus:ring-brand-500"
-                                       @checked(old('private_includes_transport', $privateService->includes_transport)) />
-                                <span class="text-sm text-slate-700">Termasuk transportasi selama di Tanah Suci</span>
-                            </label>
+                        <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                            <div>
+                                <x-input-label for="private_same_hotel_price_per_day" value="Harga Hotel Sama (per hari)" />
+                                <x-indonesian-number-input
+                                    name="private_same_hotel_price_per_day"
+                                    id="private_same_hotel_price_per_day"
+                                    :value="old('private_same_hotel_price_per_day', $privateService->same_hotel_price_per_day !== null ? (string) (int) $privateService->same_hotel_price_per_day : '')"
+                                    placeholder="Contoh: 100.000"
+                                    :prefix="true"
+                                />
+                                <x-input-error class="mt-2" :messages="$errors->get('private_same_hotel_price_per_day')" />
+                            </div>
+                            <div>
+                                <x-input-label for="private_transport_price_flat" value="Harga Transportasi (flat)" />
+                                <x-indonesian-number-input
+                                    name="private_transport_price_flat"
+                                    id="private_transport_price_flat"
+                                    :value="old('private_transport_price_flat', $privateService->transport_price_flat !== null ? (string) (int) $privateService->transport_price_flat : '')"
+                                    placeholder="Contoh: 300.000"
+                                    :prefix="true"
+                                />
+                                <x-input-error class="mt-2" :messages="$errors->get('private_transport_price_flat')" />
+                            </div>
                         </div>
 
                         <div class="rounded-xl border-2 border-dashed border-slate-200 bg-slate-50/50 p-4 space-y-4">

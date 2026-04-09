@@ -85,8 +85,12 @@
                             <p class="mt-3 text-sm text-slate-600 leading-relaxed whitespace-pre-line">{{ $group->description }}</p>
                         @endif
                         <ul class="mt-4 flex flex-wrap gap-2 text-xs">
-                            <span class="inline-flex items-center gap-1 rounded-full bg-slate-50 px-2.5 py-1 text-slate-700 ring-1 ring-slate-200/80">{{ $group->stays_at_same_hotel ? '✓' : '—' }} Satu hotel</span>
-                            <span class="inline-flex items-center gap-1 rounded-full bg-slate-50 px-2.5 py-1 text-slate-700 ring-1 ring-slate-200/80">{{ $group->includes_transport ? '✓' : '—' }} Transport</span>
+                            @if (($group->same_hotel_price_per_day ?? null) !== null && (float) $group->same_hotel_price_per_day > 0)
+                                <span class="inline-flex items-center gap-1 rounded-full bg-slate-50 px-2.5 py-1 text-slate-700 ring-1 ring-slate-200/80">Hotel sama: Rp {{ IndonesianNumber::formatThousands((string) (int) $group->same_hotel_price_per_day) }}/hari</span>
+                            @endif
+                            @if (($group->transport_price_flat ?? null) !== null && (float) $group->transport_price_flat > 0)
+                                <span class="inline-flex items-center gap-1 rounded-full bg-slate-50 px-2.5 py-1 text-slate-700 ring-1 ring-slate-200/80">Transport: Rp {{ IndonesianNumber::formatThousands((string) (int) $group->transport_price_flat) }}</span>
+                            @endif
                         </ul>
                     </article>
                 @endif
@@ -119,8 +123,12 @@
                             <p class="mt-3 text-sm text-slate-600 leading-relaxed whitespace-pre-line">{{ $private->description }}</p>
                         @endif
                         <ul class="mt-4 flex flex-wrap gap-2 text-xs">
-                            <span class="inline-flex items-center gap-1 rounded-full bg-slate-50 px-2.5 py-1 text-slate-700 ring-1 ring-slate-200/80">{{ $private->stays_at_same_hotel ? '✓' : '—' }} Satu hotel</span>
-                            <span class="inline-flex items-center gap-1 rounded-full bg-slate-50 px-2.5 py-1 text-slate-700 ring-1 ring-slate-200/80">{{ $private->includes_transport ? '✓' : '—' }} Transport</span>
+                            @if (($private->same_hotel_price_per_day ?? null) !== null && (float) $private->same_hotel_price_per_day > 0)
+                                <span class="inline-flex items-center gap-1 rounded-full bg-slate-50 px-2.5 py-1 text-slate-700 ring-1 ring-slate-200/80">Hotel sama: Rp {{ IndonesianNumber::formatThousands((string) (int) $private->same_hotel_price_per_day) }}/hari</span>
+                            @endif
+                            @if (($private->transport_price_flat ?? null) !== null && (float) $private->transport_price_flat > 0)
+                                <span class="inline-flex items-center gap-1 rounded-full bg-slate-50 px-2.5 py-1 text-slate-700 ring-1 ring-slate-200/80">Transport: Rp {{ IndonesianNumber::formatThousands((string) (int) $private->transport_price_flat) }}</span>
+                            @endif
                         </ul>
                         @if ($private->addOns->isNotEmpty())
                             <div class="mt-5 border-t border-slate-100 pt-4">

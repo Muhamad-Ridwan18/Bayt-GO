@@ -279,6 +279,8 @@ class BookingController extends Controller
             'pilgrim_count' => ['required', 'integer', 'min:1', 'max:500'],
             'add_on_ids' => ['nullable', 'array'],
             'add_on_ids.*' => ['uuid'],
+            'with_same_hotel' => ['sometimes', 'boolean'],
+            'with_transport' => ['sometimes', 'boolean'],
         ]);
 
         $start = Carbon::parse($validated['start_date'])->startOfDay();
@@ -342,12 +344,29 @@ class BookingController extends Controller
                 $selectedAddOnIds = $ids;
             }
 
+            $withSameHotel = $request->boolean('with_same_hotel');
+            $withTransport = $request->boolean('with_transport');
+
+            if ($withSameHotel && (($service->same_hotel_price_per_day ?? null) === null || (float) $service->same_hotel_price_per_day <= 0)) {
+                throw ValidationException::withMessages([
+                    'with_same_hotel' => ['Opsi hotel tidak tersedia untuk layanan ini.'],
+                ]);
+            }
+
+            if ($withTransport && (($service->transport_price_flat ?? null) === null || (float) $service->transport_price_flat <= 0)) {
+                throw ValidationException::withMessages([
+                    'with_transport' => ['Opsi transportasi tidak tersedia untuk layanan ini.'],
+                ]);
+            }
+
             return MuthowifBooking::query()->create([
                 'muthowif_profile_id' => $profile->id,
                 'customer_id' => $request->user()->id,
                 'service_type' => $serviceType,
                 'pilgrim_count' => $count,
                 'selected_add_on_ids' => $selectedAddOnIds,
+                'with_same_hotel' => $withSameHotel,
+                'with_transport' => $withTransport,
                 'starts_on' => $start->toDateString(),
                 'ends_on' => $end->toDateString(),
                 'status' => BookingStatus::Pending,
