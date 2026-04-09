@@ -237,55 +237,46 @@
                             </div>
                         @endif
 
-                        <div class="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm space-y-3">
-                            <h3 class="text-sm font-bold text-slate-900">Opsi tambahan</h3>
+                        @if ($group)
+                            <div x-show="serviceType === 'group'" class="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm space-y-3">
+                                <h3 class="text-sm font-bold text-slate-900">Opsi tambahan (Group)</h3>
 
-                            @if ($group)
-                                <div x-show="serviceType === 'group'" class="space-y-2">
-                                    @if (($group->same_hotel_price_per_day ?? null) !== null && (float) $group->same_hotel_price_per_day > 0)
-                                        <label class="flex items-start gap-3 cursor-pointer">
-                                            <input type="checkbox" name="with_same_hotel" value="1"
-                                                class="mt-1 rounded border-slate-300 text-brand-600 shadow-sm focus:ring-brand-500"
-                                                x-bind:disabled="serviceType !== 'group'"
-                                                @checked($oldWithSameHotel)>
-                                            <span class="text-sm text-slate-700">Muthowif tinggal di hotel yang sama (+Rp {{ IndonesianNumber::formatThousands((string) (int) $group->same_hotel_price_per_day) }}/hari)</span>
-                                        </label>
-                                    @endif
-                                    @if (($group->transport_price_flat ?? null) !== null && (float) $group->transport_price_flat > 0)
-                                        <label class="flex items-start gap-3 cursor-pointer">
-                                            <input type="checkbox" name="with_transport" value="1"
-                                                class="mt-1 rounded border-slate-300 text-brand-600 shadow-sm focus:ring-brand-500"
-                                                x-bind:disabled="serviceType !== 'group'"
-                                                @checked($oldWithTransport)>
-                                            <span class="text-sm text-slate-700">Termasuk transportasi (+Rp {{ IndonesianNumber::formatThousands((string) (int) $group->transport_price_flat) }})</span>
-                                        </label>
-                                    @endif
-                                </div>
-                            @endif
+                                @php
+                                    $groupHotelAvailable = ($group->same_hotel_price_per_day ?? null) !== null && (float) $group->same_hotel_price_per_day > 0;
+                                    $groupTransportAvailable = ($group->transport_price_flat ?? null) !== null && (float) $group->transport_price_flat > 0;
+                                @endphp
 
-                            @if ($private)
-                                <div x-show="serviceType === 'private'" class="space-y-2">
-                                    @if (($private->same_hotel_price_per_day ?? null) !== null && (float) $private->same_hotel_price_per_day > 0)
-                                        <label class="flex items-start gap-3 cursor-pointer">
-                                            <input type="checkbox" name="with_same_hotel" value="1"
-                                                class="mt-1 rounded border-slate-300 text-brand-600 shadow-sm focus:ring-brand-500"
-                                                x-bind:disabled="serviceType !== 'private'"
-                                                @checked($oldWithSameHotel)>
-                                            <span class="text-sm text-slate-700">Muthowif tinggal di hotel yang sama (+Rp {{ IndonesianNumber::formatThousands((string) (int) $private->same_hotel_price_per_day) }}/hari)</span>
-                                        </label>
-                                    @endif
-                                    @if (($private->transport_price_flat ?? null) !== null && (float) $private->transport_price_flat > 0)
-                                        <label class="flex items-start gap-3 cursor-pointer">
-                                            <input type="checkbox" name="with_transport" value="1"
-                                                class="mt-1 rounded border-slate-300 text-brand-600 shadow-sm focus:ring-brand-500"
-                                                x-bind:disabled="serviceType !== 'private'"
-                                                @checked($oldWithTransport)>
-                                            <span class="text-sm text-slate-700">Termasuk transportasi (+Rp {{ IndonesianNumber::formatThousands((string) (int) $private->transport_price_flat) }})</span>
-                                        </label>
-                                    @endif
-                                </div>
-                            @endif
-                        </div>
+                                <label class="flex items-start gap-3 {{ $groupHotelAvailable ? 'cursor-pointer' : 'opacity-60 cursor-not-allowed' }}">
+                                    <input type="checkbox" name="with_same_hotel" value="1"
+                                        class="mt-1 rounded border-slate-300 text-brand-600 shadow-sm focus:ring-brand-500"
+                                        x-bind:disabled="serviceType !== 'group'"
+                                        @disabled(! $groupHotelAvailable)
+                                        @checked($groupHotelAvailable && $oldWithSameHotel)>
+                                    <span class="text-sm text-slate-700">
+                                        @if ($groupHotelAvailable)
+                                            Muthowif tinggal di hotel yang sama (+Rp {{ IndonesianNumber::formatThousands((string) (int) $group->same_hotel_price_per_day) }}/hari)
+                                        @else
+                                            Muthowif tinggal di hotel yang sama (belum tersedia)
+                                        @endif
+                                    </span>
+                                </label>
+
+                                <label class="flex items-start gap-3 {{ $groupTransportAvailable ? 'cursor-pointer' : 'opacity-60 cursor-not-allowed' }}">
+                                    <input type="checkbox" name="with_transport" value="1"
+                                        class="mt-1 rounded border-slate-300 text-brand-600 shadow-sm focus:ring-brand-500"
+                                        x-bind:disabled="serviceType !== 'group'"
+                                        @disabled(! $groupTransportAvailable)
+                                        @checked($groupTransportAvailable && $oldWithTransport)>
+                                    <span class="text-sm text-slate-700">
+                                        @if ($groupTransportAvailable)
+                                            Termasuk transportasi (+Rp {{ IndonesianNumber::formatThousands((string) (int) $group->transport_price_flat) }})
+                                        @else
+                                            Termasuk transportasi (belum tersedia)
+                                        @endif
+                                    </span>
+                                </label>
+                            </div>
+                        @endif
 
                         <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 pt-2 border-t border-slate-200">
                             <p class="text-xs text-slate-500 max-w-md">
