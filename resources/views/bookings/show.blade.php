@@ -99,7 +99,6 @@
             @if (in_array($st, [BookingStatus::Confirmed, BookingStatus::Completed], true))
                 <div class="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm">
                     <h3 class="font-semibold text-slate-900">Rincian pembayaran</h3>
-                    <p class="mt-1 text-xs text-slate-500">Total dihitung dari tarif harian × jumlah hari + add-on + opsi tambahan.</p>
                     <dl class="mt-4 space-y-3 text-sm">
                         <div class="flex justify-between gap-4">
                             <dt class="text-slate-600">Tarif / hari</dt>
@@ -162,13 +161,12 @@
                             </p>
                         @else
                             <p class="mt-4 text-xs text-slate-600 leading-relaxed">
-                                Pembayaran aman lewat <strong>Midtrans</strong>. Total yang Anda bayarkan sudah termasuk biaya platform.
-                                Biaya platform untuk customer adalah {{ (int) round(\App\Support\PlatformFee::RATE * 100) }}% dari subtotal layanan.
+                                Total yang Anda bayarkan sudah termasuk biaya platform.
                             </p>
                         @endif
 
                         <a href="{{ route('bookings.payment', $b) }}" class="mt-4 inline-flex justify-center items-center gap-2 rounded-xl bg-brand-600 px-6 py-3 text-sm font-semibold text-white shadow-md hover:bg-brand-700">
-                            Bayar dengan Midtrans
+                            Bayar
                         </a>
                     @elseif ($b->isPaid() && $b->paid_at)
                         <p class="mt-4 text-sm text-emerald-800">
