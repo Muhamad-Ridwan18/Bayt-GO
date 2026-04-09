@@ -107,6 +107,59 @@ class MuthowifBookingWhatsAppNotifier
         $this->sendToTarget($target, implode("\n", $lines), $booking->id);
     }
 
+    /**
+     * Saat booking disetujui muthowif, kirim WA ke customer.
+     */
+    public function notifyCustomerApproved(MuthowifBooking $booking): void
+    {
+        if (! config('services.fonnte.customer_booking_approved_notify_enabled', true)) {
+            return;
+        }
+
+        $token = config('services.fonnte.token');
+        if ($token === null || $token === '') {
+            Log::debug('WhatsApp notify customer skipped: FONNTE_TOKEN kosong.');
+
+            return;
+        }
+
+        $booking->loadMissing(['customer', 'muthowifProfile.user']);
+        $customer = $booking->customer;
+        if ($customer === null) {
+            return;
+        }
+
+        $target = PhoneNumber::forFonnte($customer->phone);
+        if ($target === null || $target === '') {
+            Log::warning('WhatsApp notify customer skipped: nomor customer kosong atau tidak valid.', [
+                'customer_id' => $customer->id,
+                'booking_id' => $booking->id,
+            ]);
+
+            return;
+        }
+
+        $muthowifName = $booking->muthowifProfile?->user?->name ?? 'Muthowif';
+        $start = $booking->starts_on->format('d/m/Y');
+        $end = $booking->ends_on->format('d/m/Y');
+        $appName = config('app.name', 'BaytGo');
+        $url = route('bookings.show', $booking);
+
+        $lines = [
+            "*{$appName}* — booking disetujui",
+            '',
+            "Booking Anda dengan *{$muthowifName}* sudah disetujui.",
+            '',
+            "*Tanggal layanan:* {$start} – {$end}",
+            '*Status:* Menunggu pembayaran',
+            '',
+            '*Lanjutkan pembayaran di:*',
+            $url,
+        ];
+
+        $this->sendToTarget($target, implode("\n", $lines), $booking->id);
+    }
+
     private function resolveTarget(string $phone, string $profileId, string $bookingId): ?string
     {
         $token = config('services.fonnte.token');

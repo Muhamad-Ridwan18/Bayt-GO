@@ -5,6 +5,7 @@ namespace App\Http\Controllers\Muthowif;
 use App\Enums\BookingStatus;
 use App\Enums\PaymentStatus;
 use App\Http\Controllers\Controller;
+use App\Jobs\NotifyCustomerOfApprovedBooking;
 use App\Models\MuthowifBooking;
 use App\Models\MuthowifServiceAddOn;
 use Illuminate\Http\RedirectResponse;
@@ -60,6 +61,7 @@ class BookingController extends Controller
             'payment_status' => PaymentStatus::Pending,
             'total_amount' => $total,
         ]);
+        NotifyCustomerOfApprovedBooking::dispatchAfterResponse((string) $booking->getKey());
 
         return redirect()
             ->route('muthowif.bookings.index')

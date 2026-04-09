@@ -44,6 +44,8 @@ return [
         'booking_notify_enabled' => env('FONNTE_BOOKING_NOTIFY_ENABLED', true),
         /** WhatsApp ke muthowif setelah jamaah lunas (payment gateway). */
         'payment_notify_enabled' => env('FONNTE_PAYMENT_NOTIFY_ENABLED', true),
+        /** WhatsApp ke customer setelah booking disetujui muthowif. */
+        'customer_booking_approved_notify_enabled' => env('FONNTE_CUSTOMER_BOOKING_APPROVED_NOTIFY_ENABLED', true),
     ],
 
     'midtrans' => [
