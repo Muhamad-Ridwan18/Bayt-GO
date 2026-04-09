@@ -85,7 +85,7 @@ class NewPasswordController extends Controller
         Auth::login($user, true);
         $request->session()->regenerate();
 
-        return redirect()->intended(route('dashboard', absolute: false))
+        return redirect()->route('dashboard')
             ->with('status', 'Password berhasil direset. Anda sudah login.');
     }
 }
