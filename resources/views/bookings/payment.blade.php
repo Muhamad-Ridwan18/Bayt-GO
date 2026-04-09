@@ -213,7 +213,7 @@
                             </dd>
                         </div>
                         <div class="flex justify-between gap-3 border-t border-slate-100 pt-3">
-                            <dt class="text-slate-500">Biaya platform (7,5%)</dt>
+                            <dt class="text-slate-500">Biaya platform</dt>
                             <dd class="font-medium text-slate-900 text-right">Rp {{ number_format($customerPlatformFee, 0, ',', '.') }}</dd>
                         </div>
                         <div class="flex justify-between gap-3">
