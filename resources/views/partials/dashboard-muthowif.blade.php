@@ -20,7 +20,7 @@
         ->whereDate('ends_on', '>=', now()->toDateString())
         ->orderBy('starts_on')
         ->limit(8)
-        ->get(['id', 'starts_on', 'ends_on', 'status', 'customer_id']);
+        ->get(['id', 'starts_on', 'ends_on', 'status', 'customer_id', 'service_type']);
     $upcomingBookings->load('customer:id,name');
 
     $blockedDates = $mp->blockedDates()
@@ -42,7 +42,10 @@
             $dateKey = $cursor->toDateString();
             $bookingSet->put($dateKey, true);
             $calendarDetails[$dateKey]['bookings'] ??= [];
-            $calendarDetails[$dateKey]['bookings'][] = $bookingRow->customer?->name ?? 'Jamaah';
+            $calendarDetails[$dateKey]['bookings'][] = [
+                'name' => $bookingRow->customer?->name ?? 'Jamaah',
+                'service' => $bookingRow->service_type?->label() ?? 'Layanan',
+            ];
             $cursor->addDay();
         }
     }
@@ -171,7 +174,7 @@
                         $isToday = $day->isToday();
                         $hasBooking = $bookingSet->has($dateKey);
                         $isBlocked = $blockedSet->has($dateKey);
-                        $bookingsOnDay = collect($calendarDetails[$dateKey]['bookings'] ?? [])->unique()->values();
+                        $bookingsOnDay = collect($calendarDetails[$dateKey]['bookings'] ?? [])->unique(fn ($row) => ($row['name'] ?? '').'|'.($row['service'] ?? ''))->values();
                         $blockedOnDay = collect($calendarDetails[$dateKey]['blocked'] ?? [])->unique()->values();
                         $dayCardClass = match (true) {
                             $hasBooking && $isBlocked => 'border-violet-200 bg-violet-100',
@@ -199,8 +202,8 @@
                                 @if ($bookingsOnDay->isNotEmpty())
                                     <p class="mt-1 text-[10px] font-semibold uppercase tracking-wide text-brand-700">Booking</p>
                                     <ul class="text-[11px] text-slate-700">
-                                        @foreach ($bookingsOnDay as $name)
-                                            <li>• {{ $name }}</li>
+                                        @foreach ($bookingsOnDay as $row)
+                                            <li>• {{ $row['name'] }} ({{ $row['service'] }})</li>
                                         @endforeach
                                     </ul>
                                 @endif
