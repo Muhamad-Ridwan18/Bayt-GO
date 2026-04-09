@@ -26,12 +26,7 @@
     $pBounds = $pilgrimBounds($private ?? null);
     $defaultService = $group ? 'group' : 'private';
     $defaultPilgrim = old('pilgrim_count', ($defaultService === 'private') ? $pBounds['min'] : $gBounds['min']);
-    $oldAddOns = old('add_on_ids', []);
-    if (! is_array($oldAddOns)) {
-        $oldAddOns = [];
-    }
     $selectedService = old('service_type', $defaultService);
-    $addonsVisible = $selectedService === 'private';
     $oldWithSameHotel = old('with_same_hotel', false);
     $oldWithTransport = old('with_transport', false);
 @endphp
@@ -43,7 +38,7 @@
         <div>
             <p class="text-xs font-semibold uppercase tracking-wider text-brand-200/90">Checkout</p>
             <h2 class="mt-1 text-xl sm:text-2xl font-bold text-white tracking-tight">Ajukan booking</h2>
-            <p class="mt-1 text-sm text-brand-100/90 max-w-xl">Satu formulir — pilih paket, jumlah jemaah, dan add-on (private) lalu kirim permintaan.</p>
+            <p class="mt-1 text-sm text-brand-100/90 max-w-xl">Satu formulir — pilih paket dan jumlah jemaah, lalu kirim permintaan.</p>
         </div>
         <div class="mt-4 sm:mt-0 shrink-0 flex items-center gap-2 rounded-2xl bg-white/10 px-4 py-2.5 ring-1 ring-white/20 backdrop-blur-sm">
             <svg class="h-5 w-5 text-amber-300 shrink-0" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" aria-hidden="true">
@@ -197,46 +192,6 @@
                             @endif
                         </div>
 
-                        @if ($private)
-                            <div
-                                id="booking-addon-box-{{ $profile->id }}"
-                                data-booking-addon-box
-                                class="rounded-2xl border border-amber-200/80 bg-gradient-to-br from-amber-50/60 via-white to-white p-5 shadow-inner {{ $addonsVisible ? '' : 'hidden' }}"
-                            >
-                                <div class="flex items-start justify-between gap-3">
-                                    <div>
-                                        <h3 class="text-sm font-bold text-slate-900">Tambahan layanan</h3>
-                                        <p class="mt-0.5 text-xs text-slate-600">Centang seperti memilih di keranjang — ikut dalam pengajuan ini.</p>
-                                    </div>
-                                    <span class="shrink-0 rounded-full bg-amber-100 text-amber-900 text-[10px] font-bold uppercase px-2 py-1">Private</span>
-                                </div>
-                                @if ($private->addOns->isEmpty())
-                                    <p class="mt-4 text-sm text-slate-500">Belum ada add-on untuk paket ini.</p>
-                                @else
-                                    <ul class="mt-4 grid grid-cols-1 sm:grid-cols-2 gap-3" data-booking-addon-list>
-                                        @foreach ($private->addOns as $addon)
-                                            <li>
-                                                <label class="relative flex h-full cursor-pointer flex-col rounded-2xl border-2 border-slate-200 bg-white p-4 shadow-sm transition hover:border-amber-300 hover:shadow-md has-[:checked]:border-amber-500 has-[:checked]:bg-amber-50/50 has-[:checked]:shadow-md has-[:disabled]:opacity-45 has-[:disabled]:cursor-not-allowed">
-                                                    <input
-                                                        type="checkbox"
-                                                        name="add_on_ids[]"
-                                                        value="{{ $addon->id }}"
-                                                        data-booking-addon-cb
-                                                        class="absolute right-3 top-3 h-4 w-4 rounded border-slate-300 text-amber-600 focus:ring-amber-500"
-                                                        @disabled(! $addonsVisible)
-                                                        @checked(in_array($addon->id, $oldAddOns, true))
-                                                    >
-                                                    <span class="pr-8 text-sm font-semibold text-slate-900 leading-snug">{{ $addon->name }}</span>
-                                                    <span class="mt-2 text-lg font-bold text-amber-900">Rp {{ IndonesianNumber::formatThousands((string) (int) $addon->price) }}</span>
-                                                    <span class="mt-1 text-[11px] font-medium uppercase tracking-wide text-slate-400">per item</span>
-                                                </label>
-                                            </li>
-                                        @endforeach
-                                    </ul>
-                                @endif
-                            </div>
-                        @endif
-
                         @if ($group)
                             <div x-show="serviceType === 'group'" class="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm space-y-3">
                                 <h3 class="text-sm font-bold text-slate-900">Opsi tambahan (Group)</h3>
@@ -254,9 +209,9 @@
                                         @checked($groupHotelAvailable && $oldWithSameHotel)>
                                     <span class="text-sm text-slate-700">
                                         @if ($groupHotelAvailable)
-                                            Muthowif tinggal di hotel yang sama (+Rp {{ IndonesianNumber::formatThousands((string) (int) $group->same_hotel_price_per_day) }}/hari)
+                                            Muthowif tidak tinggal di hotel yang sama (+Rp {{ IndonesianNumber::formatThousands((string) (int) $group->same_hotel_price_per_day) }}/hari)
                                         @else
-                                            Muthowif tinggal di hotel yang sama (belum tersedia)
+                                            Muthowif tidaktinggal di hotel yang sama (belum tersedia)
                                         @endif
                                     </span>
                                 </label>
@@ -289,31 +244,6 @@
                         </div>
                     </form>
                 </div>
-                <script>
-                    document.addEventListener('DOMContentLoaded', function () {
-                        const form = document.getElementById('booking-form-{{ $profile->id }}');
-                        const box = document.getElementById('booking-addon-box-{{ $profile->id }}');
-                        if (! form || ! box) {
-                            return;
-                        }
-                        const radios = form.querySelectorAll('input[name="service_type"]');
-                        function syncBookingAddons() {
-                            const checked = form.querySelector('input[name="service_type"]:checked');
-                            const isPrivate = checked && checked.value === 'private';
-                            box.classList.toggle('hidden', ! isPrivate);
-                            box.querySelectorAll('[data-booking-addon-cb]').forEach(function (cb) {
-                                cb.disabled = ! isPrivate;
-                                if (! isPrivate) {
-                                    cb.checked = false;
-                                }
-                            });
-                        }
-                        radios.forEach(function (r) {
-                            r.addEventListener('change', syncBookingAddons);
-                        });
-                        syncBookingAddons();
-                    });
-                </script>
             @endif
         @endif
     </div>
