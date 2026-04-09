@@ -8,6 +8,7 @@ use App\Services\PasswordResetOtpService;
 use Illuminate\Auth\Events\PasswordReset;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Str;
 use Illuminate\Validation\Rules;
@@ -81,6 +82,10 @@ class NewPasswordController extends Controller
 
         event(new PasswordReset($user));
 
-        return redirect()->route('login')->with('status', 'Password berhasil direset. Silakan login.');
+        Auth::login($user, true);
+        $request->session()->regenerate();
+
+        return redirect()->intended(route('dashboard', absolute: false))
+            ->with('status', 'Password berhasil direset. Anda sudah login.');
     }
 }
