@@ -48,7 +48,7 @@ class BookingController extends Controller
 
         $bookings = $request->user()
             ->customerBookings()
-            ->with(['muthowifProfile.user'])
+            ->with(['muthowifProfile.user', 'muthowifProfile.services'])
             ->orderByDesc('starts_on')
             ->orderByDesc('created_at')
             ->paginate(15);

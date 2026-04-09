@@ -117,6 +117,8 @@
                             <x-input-error class="mt-2" :messages="$errors->get('group_description')" />
                         </div>
 
+                        <p class="text-xs text-slate-500">Harga hotel &amp; transport di bawah ini hanya dipakai untuk booking <strong>group</strong> (bisa berbeda dari private).</p>
+
                         <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
                             <div>
                                 <x-input-label for="group_same_hotel_price_per_day" value="Harga Hotel Sama (per hari)" />
@@ -220,6 +222,33 @@
                                       class="mt-1 block w-full rounded-xl border-slate-300 shadow-sm focus:border-brand-500 focus:ring-brand-500 text-sm"
                                       placeholder="Jelaskan layanan, fasilitas, pendampingan, dll.">{{ old('private_description', $privateService->description) }}</textarea>
                             <x-input-error class="mt-2" :messages="$errors->get('private_description')" />
+                        </div>
+
+                        <p class="text-xs text-slate-500">Harga hotel &amp; transport di bawah ini hanya dipakai untuk booking <strong>private</strong> (bisa berbeda dari group).</p>
+
+                        <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                            <div>
+                                <x-input-label for="private_same_hotel_price_per_day" value="Harga Hotel Sama (per hari)" />
+                                <x-indonesian-number-input
+                                    name="private_same_hotel_price_per_day"
+                                    id="private_same_hotel_price_per_day"
+                                    :value="old('private_same_hotel_price_per_day', $privateService->same_hotel_price_per_day !== null ? (string) (int) $privateService->same_hotel_price_per_day : '')"
+                                    placeholder="Contoh: 120.000"
+                                    :prefix="true"
+                                />
+                                <x-input-error class="mt-2" :messages="$errors->get('private_same_hotel_price_per_day')" />
+                            </div>
+                            <div>
+                                <x-input-label for="private_transport_price_flat" value="Harga Transportasi (flat)" />
+                                <x-indonesian-number-input
+                                    name="private_transport_price_flat"
+                                    id="private_transport_price_flat"
+                                    :value="old('private_transport_price_flat', $privateService->transport_price_flat !== null ? (string) (int) $privateService->transport_price_flat : '')"
+                                    placeholder="Contoh: 400.000"
+                                    :prefix="true"
+                                />
+                                <x-input-error class="mt-2" :messages="$errors->get('private_transport_price_flat')" />
+                            </div>
                         </div>
 
                         <div class="rounded-xl border-2 border-dashed border-slate-200 bg-slate-50/50 p-4 space-y-4">
