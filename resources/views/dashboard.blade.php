@@ -1,5 +1,6 @@
 <x-app-layout style="background-color: #650a0a;">
-    <div class="py-8 sm:py-12" style="background-image: url('{{ asset('images/bg-01.jpeg') }}');">
+    {{-- <div class="py-8 sm:py-12" style="background-image: url('{{ asset('images/bg-01.jpeg') }}');"> --}}
+    <div class="py-8 sm:py-12">
                         <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 space-y-6">
 
             @if (Auth::user()->isCustomer())
