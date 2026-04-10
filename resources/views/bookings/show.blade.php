@@ -34,6 +34,7 @@
     $customerTotal = (float) ($split['customer_gross'] ?? $baseTotal);
     $customerPlatformFee = (float) ($split['customer_fee'] ?? 0.0);
     $muthowifNet = (float) ($split['muthowif_net'] ?? 0.0);
+    $review = $b->review;
     $fmt = fn (float $n) => IndonesianNumber::formatThousands((string) (int) round($n));
 @endphp
 
@@ -180,6 +181,45 @@
                 </div>
             @endif
 
+            @if ($st === BookingStatus::Confirmed && $b->payment_status === PaymentStatus::Paid)
+                <div class="rounded-2xl border border-brand-200 bg-brand-50/40 p-6 shadow-sm">
+                    <h3 class="font-semibold text-slate-900">Selesaikan layanan</h3>
+                    <p class="mt-1 text-sm text-slate-600">
+                        Untuk menyelesaikan layanan, beri rating terlebih dahulu. Review bersifat opsional.
+                    </p>
+
+                    <form method="POST" action="{{ route('bookings.complete', $b) }}" class="mt-4 space-y-4" onsubmit="return confirm('Yakin layanan sudah selesai?');">
+                        @csrf
+                        <div>
+                            <label class="block text-sm font-medium text-slate-700 mb-2">Rating <span class="text-red-600">*</span></label>
+                            <div class="flex flex-wrap gap-3">
+                                @for ($i = 1; $i <= 5; $i++)
+                                    <label class="inline-flex items-center gap-2 text-sm text-slate-700">
+                                        <input type="radio" name="rating" value="{{ $i }}" class="rounded border-slate-300 text-brand-600 focus:ring-brand-500" @checked((int) old('rating', 5) === $i) required>
+                                        <span>{{ $i }} ★</span>
+                                    </label>
+                                @endfor
+                            </div>
+                            @error('rating')
+                                <p class="mt-1 text-xs text-red-700">{{ $message }}</p>
+                            @enderror
+                        </div>
+
+                        <div>
+                            <label for="complete_review" class="block text-sm font-medium text-slate-700 mb-2">Review (opsional)</label>
+                            <textarea id="complete_review" name="review" rows="4" maxlength="2000" class="w-full rounded-xl border-slate-300 text-sm focus:border-brand-500 focus:ring-brand-500" placeholder="Tulis pengalaman Anda (opsional)">{{ old('review') }}</textarea>
+                            @error('review')
+                                <p class="mt-1 text-xs text-red-700">{{ $message }}</p>
+                            @enderror
+                        </div>
+
+                        <button type="submit" class="inline-flex items-center justify-center rounded-xl bg-emerald-600 px-5 py-2.5 text-sm font-semibold text-white hover:bg-emerald-700">
+                            Selesaikan layanan
+                        </button>
+                    </form>
+                </div>
+            @endif
+
             @if ($st === BookingStatus::Pending || $b->isAwaitingPayment())
                 <form method="POST" action="{{ route('bookings.cancel', $b) }}" class="rounded-2xl border border-red-100 bg-red-50/50 p-4" onsubmit="return confirm('Batalkan booking ini?');">
                     @csrf
@@ -189,6 +229,43 @@
                         Ya, batalkan
                     </button>
                 </form>
+            @endif
+
+            @if ($st === BookingStatus::Completed)
+                <div class="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm">
+                    <h3 class="font-semibold text-slate-900">Rating & review</h3>
+                    <p class="mt-1 text-sm text-slate-600">Bagikan pengalaman Anda menggunakan layanan muthowif ini.</p>
+
+                    <form method="POST" action="{{ route('bookings.review', $b) }}" class="mt-4 space-y-4">
+                        @csrf
+                        <div>
+                            <label class="block text-sm font-medium text-slate-700 mb-2">Rating</label>
+                            <div class="flex flex-wrap gap-3">
+                                @for ($i = 1; $i <= 5; $i++)
+                                    <label class="inline-flex items-center gap-2 text-sm text-slate-700">
+                                        <input type="radio" name="rating" value="{{ $i }}" class="rounded border-slate-300 text-brand-600 focus:ring-brand-500" @checked((int) old('rating', $review?->rating ?? 5) === $i)>
+                                        <span>{{ $i }} ★</span>
+                                    </label>
+                                @endfor
+                            </div>
+                            @error('rating')
+                                <p class="mt-1 text-xs text-red-700">{{ $message }}</p>
+                            @enderror
+                        </div>
+
+                        <div>
+                            <label for="review" class="block text-sm font-medium text-slate-700 mb-2">Review (opsional)</label>
+                            <textarea id="review" name="review" rows="4" maxlength="2000" class="w-full rounded-xl border-slate-300 text-sm focus:border-brand-500 focus:ring-brand-500" placeholder="Ceritakan pengalaman Anda...">{{ old('review', $review?->review) }}</textarea>
+                            @error('review')
+                                <p class="mt-1 text-xs text-red-700">{{ $message }}</p>
+                            @enderror
+                        </div>
+
+                        <button type="submit" class="inline-flex items-center justify-center rounded-xl bg-brand-600 px-5 py-2.5 text-sm font-semibold text-white hover:bg-brand-700">
+                            {{ $review ? 'Perbarui review' : 'Kirim review' }}
+                        </button>
+                    </form>
+                </div>
             @endif
         </div>
     </div>

@@ -8,6 +8,7 @@ use App\Enums\MuthowifVerificationStatus;
 use App\Enums\PaymentStatus;
 use App\Http\Controllers\Controller;
 use App\Jobs\NotifyMuthowifOfNewBooking;
+use App\Models\BookingReview;
 use App\Models\BookingPayment;
 use App\Models\MuthowifBooking;
 use App\Models\MuthowifProfile;
@@ -48,7 +49,7 @@ class BookingController extends Controller
 
         $bookings = $request->user()
             ->customerBookings()
-            ->with(['muthowifProfile.user', 'muthowifProfile.services'])
+            ->with(['muthowifProfile.user', 'muthowifProfile.services', 'review'])
             ->orderByDesc('starts_on')
             ->orderByDesc('created_at')
             ->paginate(15);
@@ -65,7 +66,7 @@ class BookingController extends Controller
     {
         $this->authorize('view', $booking);
 
-        $booking->load(['muthowifProfile.user', 'muthowifProfile.services.addOns']);
+        $booking->load(['muthowifProfile.user', 'muthowifProfile.services.addOns', 'review']);
         $addonsById = $this->addOnsKeyByIdForBooking($booking);
 
         return view('bookings.show', [
@@ -195,6 +196,11 @@ class BookingController extends Controller
     {
         $this->authorize('complete', $booking);
 
+        $validated = $request->validate([
+            'rating' => ['required', 'integer', 'min:1', 'max:5'],
+            'review' => ['nullable', 'string', 'max:2000'],
+        ]);
+
         $completed = false;
         $credited = false;
         $error = null;
@@ -244,6 +250,16 @@ class BookingController extends Controller
                 $booking->status = BookingStatus::Completed;
                 $booking->save();
 
+                BookingReview::query()->updateOrCreate(
+                    ['muthowif_booking_id' => $booking->getKey()],
+                    [
+                        'muthowif_profile_id' => $booking->muthowif_profile_id,
+                        'customer_id' => (string) $booking->customer_id,
+                        'rating' => (int) $validated['rating'],
+                        'review' => filled($validated['review'] ?? null) ? trim((string) $validated['review']) : null,
+                    ]
+                );
+
                 $completed = true;
             });
         } catch (\Throwable $e) {
@@ -258,7 +274,31 @@ class BookingController extends Controller
 
         return redirect()
             ->route('bookings.show', $booking)
-            ->with('status', $credited ? 'Layanan selesai. Saldo muthowif Anda sudah diperbarui.' : 'Layanan selesai.');
+            ->with('status', $credited ? 'Layanan selesai dan rating tersimpan. Saldo muthowif sudah diperbarui.' : 'Layanan selesai dan rating tersimpan.');
+    }
+
+    public function review(Request $request, MuthowifBooking $booking): RedirectResponse
+    {
+        $this->authorize('review', $booking);
+
+        $validated = $request->validate([
+            'rating' => ['required', 'integer', 'min:1', 'max:5'],
+            'review' => ['nullable', 'string', 'max:2000'],
+        ]);
+
+        BookingReview::query()->updateOrCreate(
+            ['muthowif_booking_id' => $booking->getKey()],
+            [
+                'muthowif_profile_id' => $booking->muthowif_profile_id,
+                'customer_id' => $request->user()->id,
+                'rating' => (int) $validated['rating'],
+                'review' => filled($validated['review'] ?? null) ? trim((string) $validated['review']) : null,
+            ]
+        );
+
+        return redirect()
+            ->route('bookings.show', $booking)
+            ->with('status', 'Terima kasih! Rating dan review berhasil disimpan.');
     }
 
     public function store(Request $request): RedirectResponse

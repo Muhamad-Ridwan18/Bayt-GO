@@ -89,6 +89,11 @@ class MuthowifProfile extends Model
         return $this->hasMany(MuthowifBooking::class);
     }
 
+    public function bookingReviews(): HasMany
+    {
+        return $this->hasMany(BookingReview::class, 'muthowif_profile_id');
+    }
+
     /**
      * Apakah slot [starts_on, ends_on] masih bisa dipesan (tidak bentrok libur / booking blocking).
      */

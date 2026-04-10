@@ -37,6 +37,8 @@
     }
     $minPrice = count($prices) > 0 ? min($prices) : null;
     $confirmed = (int) ($profile->confirmed_bookings_count ?? 0);
+    $reviewsCount = (int) ($profile->booking_reviews_count ?? 0);
+    $avgRating = $profile->average_rating !== null ? round((float) $profile->average_rating, 1) : null;
 @endphp
 
 <li class="h-full">
@@ -100,6 +102,9 @@
                         <p class="mt-1 text-xs text-slate-500">{{ $confirmed }} booking terkonfirmasi lewat BaytGo</p>
                     @else
                         <p class="mt-1 text-xs text-slate-500">Baru di marketplace · siap mendampingi</p>
+                    @endif
+                    @if ($reviewsCount > 0 && $avgRating !== null)
+                        <p class="mt-1 text-xs text-amber-700 font-medium">{{ $avgRating }} ★ · {{ $reviewsCount }} review</p>
                     @endif
                 </div>
                 <span class="inline-flex shrink-0 items-center gap-1 rounded-xl bg-brand-600 px-3 py-2 text-sm font-semibold text-white shadow-sm transition group-hover:bg-brand-700">

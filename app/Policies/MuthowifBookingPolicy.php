@@ -51,6 +51,13 @@ class MuthowifBookingPolicy
             && $booking->payment_status === PaymentStatus::Paid;
     }
 
+    public function review(User $user, MuthowifBooking $booking): bool
+    {
+        return $user->isCustomer()
+            && $booking->customer_id === $user->id
+            && $booking->status === BookingStatus::Completed;
+    }
+
     public function cancelAsCustomer(User $user, MuthowifBooking $booking): bool
     {
         if (! $user->isCustomer() || $booking->customer_id !== $user->id) {

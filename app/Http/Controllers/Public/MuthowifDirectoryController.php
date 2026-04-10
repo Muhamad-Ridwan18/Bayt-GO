@@ -106,7 +106,9 @@ class MuthowifDirectoryController extends Controller
             ->with(['user', 'services'])
             ->withCount([
                 'bookings as confirmed_bookings_count' => static fn ($q) => $q->where('status', BookingStatus::Confirmed),
+                'bookingReviews',
             ])
+            ->withAvg('bookingReviews as average_rating', 'rating')
             ->where('verification_status', MuthowifVerificationStatus::Approved)
             ->whereDoesntHave('blockedDates', function ($q) use ($startStr, $endStr) {
                 $q->whereBetween('blocked_on', [$startStr, $endStr]);
@@ -139,11 +141,17 @@ class MuthowifDirectoryController extends Controller
         $publicProfile->load([
             'user',
             'services.addOns',
+            'bookingReviews' => fn ($q) => $q
+                ->with('customer')
+                ->latest()
+                ->limit(10),
             'blockedDates' => fn ($q) => $q
                 ->where('blocked_on', '>=', now()->toDateString())
                 ->orderBy('blocked_on')
                 ->limit(120),
         ]);
+        $publicProfile->loadCount('bookingReviews');
+        $publicProfile->loadAvg('bookingReviews', 'rating');
 
         $startDate = (string) $request->query('start_date', '');
         $endDate = (string) $request->query('end_date', '');

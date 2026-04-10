@@ -129,12 +129,15 @@
                                     @endif
 
                                     @if ($st === BookingStatus::Confirmed && $booking->payment_status === PaymentStatus::Paid)
-                                        <form method="POST" action="{{ route('bookings.complete', $booking) }}" onsubmit="return confirm('Apakah layanan sudah selesai?');">
-                                            @csrf
-                                            <button type="submit" class="w-full inline-flex justify-center items-center px-4 py-2.5 rounded-xl bg-emerald-600 text-white text-sm font-semibold hover:bg-emerald-700">
-                                                Selesaikan layanan
-                                            </button>
-                                        </form>
+                                        <a href="{{ route('bookings.show', $booking) }}" class="inline-flex justify-center items-center px-4 py-2.5 rounded-xl bg-emerald-600 text-white text-sm font-semibold hover:bg-emerald-700">
+                                            Selesaikan + beri rating
+                                        </a>
+                                    @endif
+
+                                    @if ($st === BookingStatus::Completed)
+                                        <a href="{{ route('bookings.show', $booking) }}" class="inline-flex justify-center items-center px-4 py-2.5 rounded-xl border border-brand-200 bg-brand-50 text-brand-800 text-sm font-semibold hover:bg-brand-100">
+                                            {{ $booking->review ? 'Lihat review Anda' : 'Beri rating & review' }}
+                                        </a>
                                     @endif
 
                                     @if ($st === BookingStatus::Pending)

@@ -3,6 +3,8 @@
     use App\Support\IndonesianNumber;
     $group = $profile->services->firstWhere('type', MuthowifServiceType::Group);
     $private = $profile->services->firstWhere('type', MuthowifServiceType::PrivateJamaah);
+    $reviewsCount = (int) ($profile->booking_reviews_count ?? 0);
+    $avgRating = $profile->booking_reviews_avg_rating !== null ? round((float) $profile->booking_reviews_avg_rating, 1) : null;
 @endphp
 
 <x-marketplace-layout :title="$profile->user->name">
@@ -31,6 +33,9 @@
                 <div class="min-w-0 flex-1 text-center sm:text-left">
                     <h1 class="text-2xl sm:text-3xl font-bold text-slate-900 tracking-tight">{{ $profile->user->name }}</h1>
                     <p class="mt-1 text-sm text-slate-500">Pendamping umrah · layanan di Tanah Suci</p>
+                    @if ($reviewsCount > 0 && $avgRating !== null)
+                        <p class="mt-2 text-sm font-medium text-amber-700">{{ $avgRating }} ★ · {{ $reviewsCount }} review jamaah</p>
+                    @endif
                     @if ($profile->languagesForDisplay() !== [])
                         <p class="mt-4 inline-flex flex-wrap items-center justify-center sm:justify-start gap-2">
                             @foreach ($profile->languagesForDisplay() as $lang)
@@ -156,6 +161,32 @@
             'startDate' => $startDate,
             'endDate' => $endDate,
         ])
+
+        <section class="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm">
+            <h2 class="text-lg font-semibold text-slate-900">Rating & review jamaah</h2>
+            @if ($reviewsCount > 0 && $avgRating !== null)
+                <p class="mt-1 text-sm text-slate-600">Rata-rata {{ $avgRating }} dari {{ $reviewsCount }} review.</p>
+            @endif
+
+            @if ($profile->bookingReviews->isEmpty())
+                <p class="mt-4 text-sm text-slate-600">Belum ada review untuk muthowif ini.</p>
+            @else
+                <div class="mt-4 space-y-3">
+                    @foreach ($profile->bookingReviews as $review)
+                        <article class="rounded-xl border border-slate-200 bg-slate-50/60 p-4">
+                            <div class="flex items-center justify-between gap-3">
+                                <p class="text-sm font-semibold text-slate-900">{{ $review->customer?->name ?? 'Jamaah' }}</p>
+                                <p class="text-xs font-medium text-amber-700">{{ $review->rating }} ★</p>
+                            </div>
+                            @if (filled($review->review))
+                                <p class="mt-2 text-sm text-slate-700 leading-relaxed whitespace-pre-line">{{ $review->review }}</p>
+                            @endif
+                            <p class="mt-2 text-xs text-slate-500">{{ $review->created_at?->format('d/m/Y') }}</p>
+                        </article>
+                    @endforeach
+                </div>
+            @endif
+        </section>
 
         <section class="rounded-2xl border border-amber-200/80 bg-gradient-to-br from-amber-50/90 to-white p-6 shadow-sm">
             <h2 class="text-lg font-semibold text-slate-900">Jadwal tidak tersedia (libur)</h2>

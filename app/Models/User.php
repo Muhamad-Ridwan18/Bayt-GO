@@ -65,6 +65,11 @@ class User extends Authenticatable
         return $this->hasMany(MuthowifBooking::class, 'customer_id');
     }
 
+    public function bookingReviews(): HasMany
+    {
+        return $this->hasMany(BookingReview::class, 'customer_id');
+    }
+
     public function isVerifiedMuthowif(): bool
     {
         return $this->isMuthowif()

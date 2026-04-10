@@ -9,6 +9,7 @@ use Illuminate\Database\Eloquent\Concerns\HasUuids;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
+use Illuminate\Database\Eloquent\Relations\HasOne;
 
 class MuthowifBooking extends Model
 {
@@ -54,6 +55,11 @@ class MuthowifBooking extends Model
     public function customer(): BelongsTo
     {
         return $this->belongsTo(User::class, 'customer_id');
+    }
+
+    public function review(): HasOne
+    {
+        return $this->hasOne(BookingReview::class, 'muthowif_booking_id');
     }
 
     /**

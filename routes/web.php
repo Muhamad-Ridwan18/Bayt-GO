@@ -85,6 +85,7 @@ Route::middleware('auth')->group(function () {
         Route::get('{booking}/payment-status', [CustomerBookingController::class, 'paymentStatus'])->name('payment.status');
         Route::get('{booking}/invoice', [CustomerBookingController::class, 'invoice'])->name('invoice');
         Route::post('{booking}/selesaikan', [CustomerBookingController::class, 'complete'])->name('complete');
+        Route::post('{booking}/review', [CustomerBookingController::class, 'review'])->name('review');
         Route::get('{booking}', [CustomerBookingController::class, 'show'])->name('show');
         Route::post('{booking}/cancel', [CustomerBookingController::class, 'cancel'])->name('cancel');
     });
