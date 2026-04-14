@@ -1,5 +1,10 @@
 <!DOCTYPE html>
 <html lang="{{ str_replace('_', '-', app()->getLocale()) }}">
+@php
+    $contactRaw = (string) (config('app.contact_whatsapp') ?: config('app.contact_phone'));
+    $contactDigits = preg_replace('/\D+/', '', $contactRaw ?? '') ?? '';
+    $contactLink = $contactDigits !== '' ? 'https://wa.me/'.$contactDigits : null;
+@endphp
     <head>
         <meta charset="utf-8">
         <meta name="viewport" content="width=device-width, initial-scale=1">
@@ -19,6 +24,9 @@
                     </a>
                     <nav class="flex items-center gap-1 sm:gap-2 text-sm flex-wrap justify-end">
                         <a href="{{ route('layanan.index') }}" class="px-3 sm:px-4 py-2 rounded-xl font-medium text-white/90 hover:bg-white/10 transition">Cari muthowif</a>
+                        @if ($contactLink)
+                            <a href="{{ $contactLink }}" target="_blank" rel="noopener noreferrer" class="px-3 sm:px-4 py-2 rounded-xl font-medium text-brand-100 hover:bg-white/10 transition">Contact us</a>
+                        @endif
                         @auth
                             <a href="{{ route('dashboard') }}" class="px-3 sm:px-4 py-2 rounded-xl font-medium text-white/90 hover:bg-white/10 transition">Beranda</a>
                         @else
@@ -133,7 +141,14 @@
             <footer class="border-t border-slate-200 bg-white mt-auto">
                 <div class="max-w-6xl mx-auto px-4 sm:px-6 py-8 flex flex-col sm:flex-row items-center justify-between gap-4 text-sm text-slate-500">
                     <span>&copy; {{ date('Y') }} {{ config('app.name') }}</span>
-                    <span class="text-xs text-slate-400">Marketplace umrah — jamaah &amp; muthowif</span>
+                    <div class="flex flex-col items-center gap-1 sm:items-end">
+                        <span class="text-xs text-slate-400">Marketplace umrah — jamaah &amp; muthowif</span>
+                        @if ($contactLink)
+                            <a href="{{ $contactLink }}" target="_blank" rel="noopener noreferrer" class="text-xs font-medium text-brand-700 hover:text-brand-800">
+                                Contact us: {{ $contactRaw }}
+                            </a>
+                        @endif
+                    </div>
                 </div>
             </footer>
         </div>

@@ -53,6 +53,8 @@ return [
     */
 
     'url' => env('APP_URL', 'http://localhost'),
+    'contact_phone' => env('CONTACT_US_PHONE', ''),
+    'contact_whatsapp' => env('CONTACT_US_WHATSAPP', ''),
 
     /*
     |--------------------------------------------------------------------------

@@ -1,0 +1,7 @@
+﻿<svg xmlns="http://www.w3.org/2000/svg" width="240" height="80" viewBox="0 0 240 80" role="img" aria-label="QRIS">
+  <rect width="240" height="80" rx="12" fill="#111827"/>
+  <rect x="14" y="14" width="52" height="52" rx="8" fill="#fff"/>
+  <path d="M26 26h12v12H26zM42 26h12v12H42zM26 42h12v12H26z" fill="#111827"/>
+  <text x="82" y="36" font-family="Arial, sans-serif" font-size="18" font-weight="700" fill="#fff">QRIS</text>
+  <text x="82" y="56" font-family="Arial, sans-serif" font-size="11" fill="#cbd5e1">Quick Response Indonesia Standard</text>
+</svg>

@@ -6,60 +6,83 @@
     $split = PlatformFee::split((float) $booking->resolvedAmountDue());
     $customerPlatformFee = (float) ($split['customer_fee'] ?? 0.0);
     $customerTotal = (float) ($split['customer_gross'] ?? 0.0);
+    $methodGroups = [
+        'bank' => [
+            'title' => 'Transfer bank',
+            'description' => 'Virtual account dari bank partner.',
+        ],
+        'ewallet' => [
+            'title' => 'E-wallet',
+            'description' => 'Pembayaran langsung lewat aplikasi wallet.',
+        ],
+        'qris' => [
+            'title' => 'QRIS',
+            'description' => 'Scan QR dari mobile banking atau e-wallet.',
+        ],
+    ];
+
     $methodsUi = [
         [
             'id' => 'va_bca',
+            'group' => 'bank',
             'name' => 'BCA Virtual Account',
-            'logo' => 'BCA',
+            'logo_path' => asset('images/payments/va_bca.svg'),
             'description' => 'Transfer via m-BCA, klikBCA, atau ATM.',
             'enabled' => in_array('va_bca', $methods, true),
         ],
         [
             'id' => 'va_bni',
+            'group' => 'bank',
             'name' => 'BNI Virtual Account',
-            'logo' => 'BNI',
+            'logo_path' => asset('images/payments/va_bni.svg'),
             'description' => 'Transfer via Wondr BNI, ATM, atau iBanking.',
             'enabled' => in_array('va_bni', $methods, true),
         ],
         [
             'id' => 'va_bri',
+            'group' => 'bank',
             'name' => 'BRI Virtual Account',
-            'logo' => 'BRI',
+            'logo_path' => asset('images/payments/va_bri.svg'),
             'description' => 'Transfer via BRImo, ATM, atau internet banking.',
             'enabled' => in_array('va_bri', $methods, true),
         ],
         [
             'id' => 'va_permata',
+            'group' => 'bank',
             'name' => 'Permata Virtual Account',
-            'logo' => 'PMT',
+            'logo_path' => asset('images/payments/va_permata.svg'),
             'description' => 'Pembayaran via channel Permata Bank.',
             'enabled' => in_array('va_permata', $methods, true),
         ],
         [
             'id' => 'va_mandiri_bill',
+            'group' => 'bank',
             'name' => 'Mandiri Bill Payment',
-            'logo' => 'MDR',
+            'logo_path' => asset('images/payments/va_mandiri_bill.svg'),
             'description' => 'Bayar via Livin atau ATM Mandiri.',
             'enabled' => in_array('va_mandiri_bill', $methods, true),
         ],
         [
             'id' => 'qris',
+            'group' => 'qris',
             'name' => 'QRIS',
-            'logo' => 'QRIS',
+            'logo_path' => asset('images/payments/qris.svg'),
             'description' => 'Scan QR pakai e-wallet atau mobile banking.',
             'enabled' => in_array('qris', $methods, true),
         ],
         [
             'id' => 'gopay',
+            'group' => 'ewallet',
             'name' => 'GoPay',
-            'logo' => 'GP',
+            'logo_path' => asset('images/payments/gopay.svg'),
             'description' => 'Bayar langsung dari aplikasi GoPay.',
             'enabled' => in_array('gopay', $methods, true),
         ],
         [
             'id' => 'shopeepay',
+            'group' => 'ewallet',
             'name' => 'ShopeePay',
-            'logo' => 'SP',
+            'logo_path' => asset('images/payments/shopeepay.svg'),
             'description' => 'Bayar langsung dari aplikasi ShopeePay.',
             'enabled' => in_array('shopeepay', $methods, true),
         ],
@@ -83,53 +106,61 @@
                         <span class="text-xs font-semibold text-slate-500">Secure payment by Midtrans</span>
                     </div>
 
-                    <div class="mt-4 space-y-4">
-                        <div class="rounded-xl border border-slate-200 p-4">
-                            <p class="text-sm font-semibold text-slate-900">1) Pilih kategori pembayaran</p>
-                            <div class="mt-3 space-y-2">
-                                <label class="flex items-center justify-between rounded-lg border border-brand-300 bg-brand-50 px-3 py-2">
-                                    <span class="text-sm font-semibold text-slate-900">Transfer Bank</span>
-                                    <span class="text-xs font-semibold text-brand-700">Aktif</span>
-                                </label>
-                                <div class="flex items-center justify-between rounded-lg border border-slate-200 bg-slate-50 px-3 py-2 opacity-75">
-                                    <span class="text-sm font-semibold text-slate-700">E-Wallet</span>
-                                    <span class="text-xs font-semibold text-slate-500">Segera hadir</span>
-                                </div>
-                                <div class="flex items-center justify-between rounded-lg border border-slate-200 bg-slate-50 px-3 py-2 opacity-75">
-                                    <span class="text-sm font-semibold text-slate-700">QRIS</span>
-                                    <span class="text-xs font-semibold text-slate-500">Segera hadir</span>
-                                </div>
-                            </div>
+                    <form method="GET" action="{{ route('bookings.payment', $booking) }}" class="mt-4 rounded-xl border border-slate-200 p-4">
+                        <p class="text-sm font-semibold text-slate-900">Pilih metode pembayaran</p>
+                        <p class="mt-1 text-xs text-slate-500">Metode dikelompokkan supaya lebih ringkas.</p>
+
+                        <div class="mt-4 space-y-4">
+                            @foreach ($methodGroups as $groupId => $groupMeta)
+                                @php
+                                    $groupMethods = array_values(array_filter(
+                                        $methodsUi,
+                                        fn (array $item): bool => $item['enabled'] && $item['group'] === $groupId
+                                    ));
+                                    $shouldOpen = $selectedMethod !== '' && in_array($selectedMethod, array_map(fn ($m) => $m['id'], $groupMethods), true);
+                                @endphp
+                                @if ($groupMethods !== [])
+                                    <details class="group rounded-xl border border-slate-200 bg-slate-50/40" {{ $shouldOpen ? 'open' : '' }}>
+                                        <summary class="flex cursor-pointer list-none items-center justify-between gap-3 rounded-xl px-4 py-3 hover:bg-slate-50">
+                                            <span class="min-w-0">
+                                                <span class="block text-sm font-semibold text-slate-900">{{ $groupMeta['title'] }}</span>
+                                                <span class="block text-xs text-slate-500">{{ $groupMeta['description'] }}</span>
+                                            </span>
+                                            <span class="inline-flex items-center gap-2 text-xs font-semibold text-slate-600">
+                                                <span class="rounded-full bg-white px-2 py-0.5 ring-1 ring-slate-200">{{ count($groupMethods) }} opsi</span>
+                                                <svg class="h-4 w-4 text-slate-500 transition-transform group-open:rotate-180" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true">
+                                                    <path fill-rule="evenodd" d="M5.23 7.21a.75.75 0 011.06.02L10 10.94l3.71-3.71a.75.75 0 111.06 1.06l-4.24 4.24a.75.75 0 01-1.06 0L5.21 8.29a.75.75 0 01.02-1.08z" clip-rule="evenodd" />
+                                                </svg>
+                                            </span>
+                                        </summary>
+                                        <div class="px-3 pb-3">
+                                            <div class="space-y-2">
+                                                @foreach ($groupMethods as $method)
+                                                    <label class="group flex cursor-pointer items-center justify-between rounded-xl border px-4 py-3 transition {{ $selectedMethod === $method['id'] ? 'border-brand-300 bg-brand-50' : 'border-slate-200 bg-white hover:bg-slate-50' }}">
+                                                        <span class="flex items-center gap-3 min-w-0">
+                                                            <img src="{{ $method['logo_path'] }}" alt="{{ $method['name'] }}" class="h-10 w-16 rounded-md border border-slate-200 bg-white object-contain p-1">
+                                                            <span class="min-w-0">
+                                                                <span class="block text-sm font-semibold text-slate-900">{{ $method['name'] }}</span>
+                                                                <span class="block truncate text-xs text-slate-500">{{ $method['description'] }}</span>
+                                                            </span>
+                                                        </span>
+                                                        <input type="radio" name="method" value="{{ $method['id'] }}" class="h-4 w-4 border-slate-300 text-brand-600 focus:ring-brand-500" {{ $selectedMethod === $method['id'] ? 'checked' : '' }}>
+                                                    </label>
+                                                @endforeach
+                                            </div>
+                                        </div>
+                                    </details>
+                                @endif
+                            @endforeach
                         </div>
 
-                        <form method="GET" action="{{ route('bookings.payment', $booking) }}" class="rounded-xl border border-slate-200 p-4">
-                            <p class="text-sm font-semibold text-slate-900">2) Pilih metode transfer bank</p>
-                            <div class="mt-3 space-y-2">
-                                @foreach ($methodsUi as $method)
-                                    @if ($method['enabled'])
-                                        <label class="group flex cursor-pointer items-center justify-between rounded-xl border px-4 py-3 transition {{ $selectedMethod === $method['id'] ? 'border-brand-300 bg-brand-50' : 'border-slate-200 hover:bg-slate-50' }}">
-                                            <span class="flex items-center gap-3 min-w-0">
-                                                <span class="inline-flex h-10 w-10 items-center justify-center rounded-lg bg-slate-900 text-[11px] font-bold text-white">
-                                                    {{ $method['logo'] }}
-                                                </span>
-                                                <span class="min-w-0">
-                                                    <span class="block text-sm font-semibold text-slate-900">{{ $method['name'] }}</span>
-                                                    <span class="block truncate text-xs text-slate-500">{{ $method['description'] }}</span>
-                                                </span>
-                                            </span>
-                                            <input type="radio" name="method" value="{{ $method['id'] }}" class="h-4 w-4 border-slate-300 text-brand-600 focus:ring-brand-500" {{ $selectedMethod === $method['id'] ? 'checked' : '' }}>
-                                        </label>
-                                    @endif
-                                @endforeach
-                            </div>
-                            <button type="submit" class="mt-4 inline-flex w-full items-center justify-center rounded-xl bg-brand-600 px-4 py-2.5 text-sm font-semibold text-white hover:bg-brand-700">
-                                Bayar sekarang
-                            </button>
-                            <p class="mt-2 text-[11px] text-slate-500">
-                                VA akan dibuat setelah kamu klik tombol Bayar sekarang.
-                            </p>
-                        </form>
-                    </div>
+                        <button type="submit" class="mt-4 inline-flex w-full items-center justify-center rounded-xl bg-brand-600 px-4 py-2.5 text-sm font-semibold text-white hover:bg-brand-700">
+                            Bayar sekarang
+                        </button>
+                        <p class="mt-2 text-[11px] text-slate-500">
+                            Instruksi pembayaran akan ditampilkan setelah metode dipilih.
+                        </p>
+                    </form>
                 </div>
 
                 @if ($selectedMethod !== '' && is_array($instructions))

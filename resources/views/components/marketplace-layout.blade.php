@@ -1,4 +1,9 @@
 @props(['title' => null])
+@php
+    $contactRaw = (string) (config('app.contact_whatsapp') ?: config('app.contact_phone'));
+    $contactDigits = preg_replace('/\D+/', '', $contactRaw ?? '') ?? '';
+    $contactLink = $contactDigits !== '' ? 'https://wa.me/'.$contactDigits : null;
+@endphp
 
 <!DOCTYPE html>
 <html lang="{{ str_replace('_', '-', app()->getLocale()) }}">
@@ -26,6 +31,11 @@
                             <a href="{{ route('layanan.index') }}" class="px-3 py-2 rounded-xl font-medium text-slate-700 hover:bg-slate-100 transition {{ request()->routeIs('layanan.*') ? 'bg-brand-50 text-brand-800' : '' }}">
                                 Cari muthowif
                             </a>
+                            @if ($contactLink)
+                                <a href="{{ $contactLink }}" target="_blank" rel="noopener noreferrer" class="px-3 py-2 rounded-xl font-medium text-brand-700 hover:bg-slate-100 transition">
+                                    Contact us
+                                </a>
+                            @endif
                             @if (Route::has('login'))
                                 <a href="{{ route('login') }}" class="px-3 py-2 rounded-xl font-medium text-slate-700 hover:bg-slate-100 transition">Masuk</a>
                             @endif
@@ -42,8 +52,13 @@
             </main>
 
             <footer class="border-t border-slate-200/80 bg-white/60 mt-auto">
-                <div class="max-w-6xl mx-auto px-4 sm:px-6 py-6 text-center text-xs text-slate-500">
-                    &copy; {{ date('Y') }} {{ config('app.name') }}
+                <div class="max-w-6xl mx-auto px-4 sm:px-6 py-6 flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between text-xs text-slate-500">
+                    <span>&copy; {{ date('Y') }} {{ config('app.name') }}</span>
+                    @if ($contactLink)
+                        <a href="{{ $contactLink }}" target="_blank" rel="noopener noreferrer" class="font-medium text-brand-700 hover:text-brand-800">
+                            Contact us: {{ $contactRaw }}
+                        </a>
+                    @endif
                 </div>
             </footer>
         </div>

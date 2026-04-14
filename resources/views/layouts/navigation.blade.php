@@ -1,3 +1,9 @@
+@php
+    $contactRaw = (string) (config('app.contact_whatsapp') ?: config('app.contact_phone'));
+    $contactDigits = preg_replace('/\D+/', '', $contactRaw ?? '') ?? '';
+    $contactLink = $contactDigits !== '' ? 'https://wa.me/'.$contactDigits : null;
+@endphp
+
 <nav x-data="{ open: false }" class="relative z-[90] bg-white/90 backdrop-blur border-b border-slate-200/80 shadow-sm">
     <!-- Primary Navigation Menu -->
     <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
@@ -45,6 +51,11 @@
                         <x-nav-link :href="route('muthowif.bookings.index')" :active="request()->routeIs('muthowif.bookings.*')">
                             Permintaan booking
                         </x-nav-link>
+                    @endif
+                    @if ($contactLink)
+                        <a href="{{ $contactLink }}" target="_blank" rel="noopener noreferrer" class="inline-flex items-center text-sm font-medium text-brand-700 hover:text-brand-800">
+                            Contact us
+                        </a>
                     @endif
                 </div>
             </div>
@@ -127,6 +138,11 @@
                 <x-responsive-nav-link :href="route('muthowif.bookings.index')" :active="request()->routeIs('muthowif.bookings.*')">
                     Permintaan booking
                 </x-responsive-nav-link>
+            @endif
+            @if ($contactLink)
+                <a href="{{ $contactLink }}" target="_blank" rel="noopener noreferrer" class="block px-4 py-2 text-sm font-medium text-brand-700 hover:bg-slate-50">
+                    Contact us
+                </a>
             @endif
         </div>
 
