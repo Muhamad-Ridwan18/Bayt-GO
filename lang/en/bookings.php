@@ -29,6 +29,7 @@ return [
         'new_range_max' => 'Service range exceeds the maximum (:days calendar days).',
         'new_slot_unavailable' => 'The new date range is not available (leave or another booking).',
         'refund_account_number_format' => 'Account number may only contain digits, spaces, or hyphens (at least one digit).',
+        'itinerary_required_group' => 'Itinerary upload is required for group service.',
     ],
 
     'refund_eligibility' => [

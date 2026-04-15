@@ -329,8 +329,14 @@
                                     @enderror
                                 </div>
                                 <div>
-                                    <label for="itinerary_{{ $profile->id }}" class="block text-sm font-medium text-slate-800">{{ __('marketplace.panel.doc_itinerary') }} <span class="text-slate-400">({{ __('marketplace.panel.doc_optional') }})</span></label>
+                                    <label for="itinerary_{{ $profile->id }}" class="block text-sm font-medium text-slate-800">
+                                        {{ __('marketplace.panel.doc_itinerary') }}
+                                        <span x-show="serviceType === 'group'" class="text-red-600">*</span>
+                                        <span x-show="serviceType === 'private'" class="font-normal text-slate-400">({{ __('marketplace.panel.doc_optional') }})</span>
+                                    </label>
+                                    <p class="mt-0.5 text-xs text-slate-500">{{ __('marketplace.panel.doc_itinerary_help') }}</p>
                                     <input id="itinerary_{{ $profile->id }}" type="file" name="itinerary" accept=".pdf,.jpg,.jpeg,.png,application/pdf,image/jpeg,image/png"
+                                           x-bind:required="serviceType === 'group'"
                                            class="mt-2 block w-full text-sm text-slate-600 file:mr-4 file:rounded-lg file:border-0 file:bg-slate-100 file:px-4 file:py-2 file:text-sm file:font-semibold file:text-slate-700 hover:file:bg-slate-200" />
                                     @error('itinerary')
                                         <p class="mt-1 text-xs text-red-600">{{ $message }}</p>

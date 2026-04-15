@@ -357,9 +357,17 @@ class BookingController extends Controller
             'with_transport' => ['sometimes', 'boolean'],
             'ticket_outbound' => ['required', 'file', 'mimes:pdf,jpeg,jpg,png', 'max:10240'],
             'ticket_return' => ['required', 'file', 'mimes:pdf,jpeg,jpg,png', 'max:10240'],
-            'itinerary' => ['nullable', 'file', 'mimes:pdf,jpeg,jpg,png', 'max:10240'],
+            'itinerary' => [
+                Rule::requiredIf(fn () => $request->input('service_type') === 'group'),
+                'nullable',
+                'file',
+                'mimes:pdf,jpeg,jpg,png',
+                'max:10240',
+            ],
             'visa' => ['nullable', 'file', 'mimes:pdf,jpeg,jpg,png', 'max:10240'],
-        ], [], [
+        ], [
+            'itinerary.required' => __('bookings.validation.itinerary_required_group'),
+        ], [
             'ticket_outbound' => __('marketplace.panel.doc_ticket_outbound'),
             'ticket_return' => __('marketplace.panel.doc_ticket_return'),
             'itinerary' => __('marketplace.panel.doc_itinerary'),

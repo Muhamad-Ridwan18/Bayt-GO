@@ -29,6 +29,7 @@ return [
         'new_range_max' => 'Rentang layanan melebihi batas maksimal (:days hari kalender).',
         'new_slot_unavailable' => 'Slot tanggal baru tidak tersedia (bentrok libur atau booking lain).',
         'refund_account_number_format' => 'Nomor rekening hanya boleh angka, spasi, atau tanda hubung (minimal satu digit).',
+        'itinerary_required_group' => 'Itinerary wajib diunggah untuk layanan group.',
     ],
 
     'refund_eligibility' => [
