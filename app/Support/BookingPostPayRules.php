@@ -8,9 +8,15 @@ use App\Models\MuthowifBooking;
 
 final class BookingPostPayRules
 {
-    public const REFUND_MIN_DAYS_BEFORE_SERVICE = 60;
+    public static function refundMinDaysBeforeService(): int
+    {
+        return max(0, (int) config('booking.refund_min_days_before_service', 60));
+    }
 
-    public const RESCHEDULE_MIN_DAYS_BEFORE_SERVICE = 30;
+    public static function rescheduleMinDaysBeforeService(): int
+    {
+        return max(0, (int) config('booking.reschedule_min_days_before_service', 30));
+    }
 
     public static function canRequestRefund(MuthowifBooking $booking): ?string
     {
@@ -41,8 +47,9 @@ final class BookingPostPayRules
         }
 
         $daysUntil = $today->diffInDays($serviceStart, false);
-        if ($daysUntil < self::REFUND_MIN_DAYS_BEFORE_SERVICE) {
-            return 'Pengajuan refund hanya sampai H-'.self::REFUND_MIN_DAYS_BEFORE_SERVICE.' sebelum tanggal mulai layanan.';
+        $minDays = self::refundMinDaysBeforeService();
+        if ($daysUntil < $minDays) {
+            return 'Pengajuan refund hanya sampai H-'.$minDays.' sebelum tanggal mulai layanan.';
         }
 
         return null;
@@ -69,8 +76,9 @@ final class BookingPostPayRules
         }
 
         $daysUntil = $today->diffInDays($serviceStart, false);
-        if ($daysUntil < self::RESCHEDULE_MIN_DAYS_BEFORE_SERVICE) {
-            return 'Reschedule hanya sampai H-'.self::RESCHEDULE_MIN_DAYS_BEFORE_SERVICE.' sebelum tanggal mulai layanan.';
+        $minDays = self::rescheduleMinDaysBeforeService();
+        if ($daysUntil < $minDays) {
+            return 'Reschedule hanya sampai H-'.$minDays.' sebelum tanggal mulai layanan.';
         }
 
         return null;

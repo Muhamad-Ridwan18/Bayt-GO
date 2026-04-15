@@ -192,8 +192,8 @@
                     <div>
                         <h3 class="font-semibold text-slate-900">Refund & reschedule</h3>
                         <p class="mt-1 text-xs text-slate-600 leading-relaxed">
-                            Refund: paling lambat <strong>H-{{ BookingPostPayRules::REFUND_MIN_DAYS_BEFORE_SERVICE }}</strong> sebelum tanggal mulai layanan. Biaya admin: <strong>2,5%</strong> + <strong>1%</strong> dari harga dasar layanan. Setelah Anda mengajukan, <strong>admin mentransfer secara manual</strong> nominal bersih ke rekening Anda.
-                            Reschedule: <strong>H-{{ BookingPostPayRules::RESCHEDULE_MIN_DAYS_BEFORE_SERVICE }}</strong>, jumlah hari sama, <strong>perlu persetujuan muthowif</strong>.
+                            Refund: paling lambat <strong>H-{{ BookingPostPayRules::refundMinDaysBeforeService() }}</strong> sebelum tanggal mulai layanan. Biaya admin: <strong>2,5%</strong> + <strong>1%</strong> dari harga dasar layanan. Setelah Anda mengajukan, <strong>admin mentransfer secara manual</strong> nominal bersih ke rekening Anda.
+                            Reschedule: <strong>H-{{ BookingPostPayRules::rescheduleMinDaysBeforeService() }}</strong>, jumlah hari sama, <strong>perlu persetujuan muthowif</strong>.
                         </p>
                     </div>
 
