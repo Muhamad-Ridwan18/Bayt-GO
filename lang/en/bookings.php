@@ -152,7 +152,9 @@ return [
         'loading' => 'Loading messages…',
         'load_error' => 'Could not load messages.',
         'send_error' => 'Message could not be sent. Try again.',
-        'empty_body' => 'Message cannot be empty.',
+        'empty_body' => 'Type a message or attach an image.',
+        'image_hint' => 'Photo: JPG, PNG, GIF, or WebP (max 5 MB). You can add a caption in the text box.',
+        'remove_image' => 'Remove photo',
     ],
 
     'payment' => [

@@ -37,6 +37,8 @@ document.addEventListener('alpine:init', () => {
     Alpine.data('bookingChatPanel', (config) => ({
         messages: [],
         body: '',
+        imageFile: null,
+        imagePreviewUrl: null,
         chatOpen: config.initialOpen,
         loading: false,
         sending: false,
@@ -48,6 +50,27 @@ document.addEventListener('alpine:init', () => {
         introClosed: config.introClosed,
         labels: config.labels,
         pollTimer: null,
+        pickImage(event) {
+            const input = event.target;
+            const file = input.files && input.files[0] ? input.files[0] : null;
+            if (this.imagePreviewUrl) {
+                URL.revokeObjectURL(this.imagePreviewUrl);
+                this.imagePreviewUrl = null;
+            }
+            this.imageFile = file;
+            this.imagePreviewUrl = file ? URL.createObjectURL(file) : null;
+        },
+        clearImage() {
+            this.imageFile = null;
+            if (this.imagePreviewUrl) {
+                URL.revokeObjectURL(this.imagePreviewUrl);
+                this.imagePreviewUrl = null;
+            }
+            const input = this.$refs.chatImageInput;
+            if (input) {
+                input.value = '';
+            }
+        },
         formatTime(iso) {
             if (!iso) {
                 return '';
@@ -66,12 +89,35 @@ document.addEventListener('alpine:init', () => {
         csrf() {
             return document.querySelector('meta[name="csrf-token"]')?.getAttribute('content') ?? '';
         },
+        scrollToLatest(options = {}) {
+            const force = options.force === true;
+            const el = this.$refs.chatScroll;
+            if (!el || this.messages.length === 0) {
+                return;
+            }
+            const threshold = 120;
+            const atBottom = el.scrollHeight - el.scrollTop - el.clientHeight <= threshold;
+            if (!force && !atBottom) {
+                return;
+            }
+            this.$nextTick(() => {
+                requestAnimationFrame(() => {
+                    requestAnimationFrame(() => {
+                        const box = this.$refs.chatScroll;
+                        if (box) {
+                            box.scrollTop = box.scrollHeight;
+                        }
+                    });
+                });
+            });
+        },
         async load() {
             if (this.loading) {
                 return;
             }
             this.loading = true;
             this.error = '';
+            const prevLastId = this.messages.length ? this.messages[this.messages.length - 1].id : null;
             try {
                 const r = await fetch(this.fetchUrl, {
                     headers: {
@@ -86,6 +132,9 @@ document.addEventListener('alpine:init', () => {
                 const data = await r.json();
                 this.messages = data.messages ?? [];
                 this.chatOpen = !!data.chat_open;
+                const nextLastId = this.messages.length ? this.messages[this.messages.length - 1].id : null;
+                const hasNewMessage = nextLastId !== prevLastId && this.messages.length > 0;
+                this.scrollToLatest({ force: hasNewMessage });
             } catch (e) {
                 this.error = e instanceof Error ? e.message : this.labels.loadError;
             } finally {
@@ -94,29 +143,54 @@ document.addEventListener('alpine:init', () => {
         },
         async send() {
             const text = this.body.trim();
-            if (!text || !this.chatOpen || this.sending) {
+            const hasImage = !!this.imageFile;
+            if ((!text && !hasImage) || !this.chatOpen || this.sending) {
                 return;
             }
             this.sending = true;
             this.error = '';
             try {
-                const r = await fetch(this.storeUrl, {
-                    method: 'POST',
-                    headers: {
-                        Accept: 'application/json',
-                        'Content-Type': 'application/json',
-                        'X-CSRF-TOKEN': this.csrf(),
-                        'X-Requested-With': 'XMLHttpRequest',
-                    },
-                    credentials: 'same-origin',
-                    body: JSON.stringify({ body: text }),
-                });
+                let r;
+                if (hasImage) {
+                    const fd = new FormData();
+                    if (text) {
+                        fd.append('body', text);
+                    }
+                    fd.append('image', this.imageFile);
+                    r = await fetch(this.storeUrl, {
+                        method: 'POST',
+                        headers: {
+                            Accept: 'application/json',
+                            'X-CSRF-TOKEN': this.csrf(),
+                            'X-Requested-With': 'XMLHttpRequest',
+                        },
+                        credentials: 'same-origin',
+                        body: fd,
+                    });
+                } else {
+                    r = await fetch(this.storeUrl, {
+                        method: 'POST',
+                        headers: {
+                            Accept: 'application/json',
+                            'Content-Type': 'application/json',
+                            'X-CSRF-TOKEN': this.csrf(),
+                            'X-Requested-With': 'XMLHttpRequest',
+                        },
+                        credentials: 'same-origin',
+                        body: JSON.stringify({ body: text }),
+                    });
+                }
                 const data = await r.json().catch(() => ({}));
                 if (!r.ok) {
-                    const msg = data.message ?? data.errors?.body?.[0] ?? this.labels.sendError;
+                    const msg =
+                        data.message ??
+                        data.errors?.image?.[0] ??
+                        data.errors?.body?.[0] ??
+                        this.labels.sendError;
                     throw new Error(typeof msg === 'string' ? msg : this.labels.sendError);
                 }
                 this.body = '';
+                this.clearImage();
                 this.chatOpen = !!data.chat_open;
                 await this.load();
             } catch (e) {

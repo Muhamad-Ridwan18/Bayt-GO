@@ -97,6 +97,7 @@ Route::middleware('auth')->group(function () {
         Route::post('{booking}/reschedule-request', [CustomerBookingController::class, 'storeRescheduleRequest'])->name('reschedule_request.store');
         Route::get('{booking}/chat/messages', [BookingChatController::class, 'index'])->name('chat.messages');
         Route::post('{booking}/chat/messages', [BookingChatController::class, 'store'])->name('chat.messages.store');
+        Route::get('{booking}/chat/messages/{message}/image', [BookingChatController::class, 'image'])->name('chat.messages.image');
         Route::get('{booking}', [CustomerBookingController::class, 'show'])->name('show');
         Route::post('{booking}/cancel', [CustomerBookingController::class, 'cancel'])->name('cancel');
     });
@@ -116,6 +117,7 @@ Route::middleware('auth')->group(function () {
             Route::get('bookings', [MuthowifBookingController::class, 'index'])->name('bookings.index');
             Route::get('bookings/{booking}/chat/messages', [BookingChatController::class, 'index'])->name('bookings.chat.messages');
             Route::post('bookings/{booking}/chat/messages', [BookingChatController::class, 'store'])->name('bookings.chat.messages.store');
+            Route::get('bookings/{booking}/chat/messages/{message}/image', [BookingChatController::class, 'image'])->name('bookings.chat.messages.image');
             Route::get('bookings/{booking}', [MuthowifBookingController::class, 'show'])->name('bookings.show');
             Route::post('bookings/{booking}/confirm', [MuthowifBookingController::class, 'confirm'])->name('bookings.confirm');
             Route::post('bookings/{booking}/cancel', [MuthowifBookingController::class, 'cancel'])->name('bookings.cancel');

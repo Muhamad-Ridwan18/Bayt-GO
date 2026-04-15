@@ -7,7 +7,7 @@ use Illuminate\Database\Eloquent\Concerns\HasUuids;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
-#[Fillable(['muthowif_booking_id', 'user_id', 'body'])]
+#[Fillable(['muthowif_booking_id', 'user_id', 'body', 'image_path'])]
 class BookingChatMessage extends Model
 {
     use HasUuids;

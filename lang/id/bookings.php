@@ -152,7 +152,9 @@ return [
         'loading' => 'Memuat pesan…',
         'load_error' => 'Gagal memuat pesan.',
         'send_error' => 'Pesan tidak terkirim. Coba lagi.',
-        'empty_body' => 'Isi pesan tidak boleh kosong.',
+        'empty_body' => 'Tulis pesan atau pilih gambar.',
+        'image_hint' => 'Foto: JPG, PNG, GIF, atau WebP (maks. 5 MB). Bisa dikombinasikan dengan teks.',
+        'remove_image' => 'Hapus foto',
     ],
 
     'payment' => [
