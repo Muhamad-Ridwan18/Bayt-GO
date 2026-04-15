@@ -117,7 +117,7 @@
                         </ul>
                     @endif
 
-                    <form id="booking-form-{{ $profile->id }}" method="POST" action="{{ route('bookings.store') }}" class="space-y-5">
+                    <form id="booking-form-{{ $profile->id }}" method="POST" action="{{ route('bookings.store') }}" enctype="multipart/form-data" class="space-y-5">
                         @csrf
                         <input type="hidden" name="muthowif_profile_id" value="{{ $profile->id }}">
                         <input type="hidden" name="start_date" value="{{ $intent['start'] }}">
@@ -286,6 +286,48 @@
                                 </label>
                             </div>
                         @endif
+
+                        <fieldset class="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm ring-1 ring-slate-100/80">
+                            <legend class="text-sm font-semibold text-slate-900">{{ __('marketplace.panel.docs_heading') }}</legend>
+                            <p class="mt-1 text-xs text-slate-500">{{ __('marketplace.panel.docs_intro') }}</p>
+
+                            <div class="mt-4 space-y-4">
+                                <div>
+                                    <label for="ticket_outbound_{{ $profile->id }}" class="block text-sm font-medium text-slate-800">{{ __('marketplace.panel.doc_ticket_outbound') }} <span class="text-red-600">*</span></label>
+                                    <p class="mt-0.5 text-xs text-slate-500">{{ __('marketplace.panel.doc_ticket_outbound_help') }}</p>
+                                    <input id="ticket_outbound_{{ $profile->id }}" type="file" name="ticket_outbound" required accept=".pdf,.jpg,.jpeg,.png,application/pdf,image/jpeg,image/png"
+                                           class="mt-2 block w-full text-sm text-slate-600 file:mr-4 file:rounded-lg file:border-0 file:bg-brand-50 file:px-4 file:py-2 file:text-sm file:font-semibold file:text-brand-800 hover:file:bg-brand-100" />
+                                    @error('ticket_outbound')
+                                        <p class="mt-1 text-xs text-red-600">{{ $message }}</p>
+                                    @enderror
+                                </div>
+                                <div>
+                                    <label for="ticket_return_{{ $profile->id }}" class="block text-sm font-medium text-slate-800">{{ __('marketplace.panel.doc_ticket_return') }} <span class="text-red-600">*</span></label>
+                                    <p class="mt-0.5 text-xs text-slate-500">{{ __('marketplace.panel.doc_ticket_return_help') }}</p>
+                                    <input id="ticket_return_{{ $profile->id }}" type="file" name="ticket_return" required accept=".pdf,.jpg,.jpeg,.png,application/pdf,image/jpeg,image/png"
+                                           class="mt-2 block w-full text-sm text-slate-600 file:mr-4 file:rounded-lg file:border-0 file:bg-brand-50 file:px-4 file:py-2 file:text-sm file:font-semibold file:text-brand-800 hover:file:bg-brand-100" />
+                                    @error('ticket_return')
+                                        <p class="mt-1 text-xs text-red-600">{{ $message }}</p>
+                                    @enderror
+                                </div>
+                                <div>
+                                    <label for="itinerary_{{ $profile->id }}" class="block text-sm font-medium text-slate-800">{{ __('marketplace.panel.doc_itinerary') }} <span class="text-slate-400">({{ __('marketplace.panel.doc_optional') }})</span></label>
+                                    <input id="itinerary_{{ $profile->id }}" type="file" name="itinerary" accept=".pdf,.jpg,.jpeg,.png,application/pdf,image/jpeg,image/png"
+                                           class="mt-2 block w-full text-sm text-slate-600 file:mr-4 file:rounded-lg file:border-0 file:bg-slate-100 file:px-4 file:py-2 file:text-sm file:font-semibold file:text-slate-700 hover:file:bg-slate-200" />
+                                    @error('itinerary')
+                                        <p class="mt-1 text-xs text-red-600">{{ $message }}</p>
+                                    @enderror
+                                </div>
+                                <div>
+                                    <label for="visa_{{ $profile->id }}" class="block text-sm font-medium text-slate-800">{{ __('marketplace.panel.doc_visa') }} <span class="text-slate-400">({{ __('marketplace.panel.doc_optional') }})</span></label>
+                                    <input id="visa_{{ $profile->id }}" type="file" name="visa" accept=".pdf,.jpg,.jpeg,.png,application/pdf,image/jpeg,image/png"
+                                           class="mt-2 block w-full text-sm text-slate-600 file:mr-4 file:rounded-lg file:border-0 file:bg-slate-100 file:px-4 file:py-2 file:text-sm file:font-semibold file:text-slate-700 hover:file:bg-slate-200" />
+                                    @error('visa')
+                                        <p class="mt-1 text-xs text-red-600">{{ $message }}</p>
+                                    @enderror
+                                </div>
+                            </div>
+                        </fieldset>
 
                         <div class="flex flex-col gap-3 border-t border-slate-200 pt-4 sm:flex-row sm:items-center sm:justify-between sm:gap-4 sm:pt-3">
                             <button type="submit"

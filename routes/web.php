@@ -103,6 +103,9 @@ Route::middleware('auth')->group(function () {
         Route::get('{booking}/chat/messages', [BookingChatController::class, 'index'])->name('chat.messages');
         Route::post('{booking}/chat/messages', [BookingChatController::class, 'store'])->name('chat.messages.store');
         Route::get('{booking}/chat/messages/{message}/image', [BookingChatController::class, 'image'])->name('chat.messages.image');
+        Route::get('{booking}/documents/{type}', [CustomerBookingController::class, 'downloadDocument'])
+            ->where('type', 'outbound|return|itinerary|visa')
+            ->name('documents.show');
         Route::get('{booking}', [CustomerBookingController::class, 'show'])->name('show');
         Route::post('{booking}/cancel', [CustomerBookingController::class, 'cancel'])->name('cancel');
     });
@@ -123,6 +126,9 @@ Route::middleware('auth')->group(function () {
             Route::get('bookings/{booking}/chat/messages', [BookingChatController::class, 'index'])->name('bookings.chat.messages');
             Route::post('bookings/{booking}/chat/messages', [BookingChatController::class, 'store'])->name('bookings.chat.messages.store');
             Route::get('bookings/{booking}/chat/messages/{message}/image', [BookingChatController::class, 'image'])->name('bookings.chat.messages.image');
+            Route::get('bookings/{booking}/documents/{type}', [CustomerBookingController::class, 'downloadDocument'])
+                ->where('type', 'outbound|return|itinerary|visa')
+                ->name('bookings.documents.show');
             Route::get('bookings/{booking}', [MuthowifBookingController::class, 'show'])->name('bookings.show');
             Route::post('bookings/{booking}/confirm', [MuthowifBookingController::class, 'confirm'])->name('bookings.confirm');
             Route::post('bookings/{booking}/cancel', [MuthowifBookingController::class, 'cancel'])->name('bookings.cancel');

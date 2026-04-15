@@ -12,6 +12,7 @@ use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\Relations\HasOne;
+use Illuminate\Support\Collection;
 
 class MuthowifBooking extends Model
 {
@@ -32,6 +33,10 @@ class MuthowifBooking extends Model
         'payment_status',
         'total_amount',
         'paid_at',
+        'ticket_outbound_path',
+        'ticket_return_path',
+        'itinerary_path',
+        'visa_path',
     ];
 
     protected function casts(): array
@@ -230,9 +235,9 @@ class MuthowifBooking extends Model
     }
 
     /**
-     * @return \Illuminate\Support\Collection<int, MuthowifServiceAddOn>
+     * @return Collection<int, MuthowifServiceAddOn>
      */
-    public function resolvedAddOns(): \Illuminate\Support\Collection
+    public function resolvedAddOns(): Collection
     {
         $ids = $this->selected_add_on_ids;
         if (! is_array($ids) || $ids === [] || $this->service_type !== MuthowifServiceType::PrivateJamaah) {

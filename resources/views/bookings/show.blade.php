@@ -158,6 +158,8 @@
                                 <p class="mt-1 text-xs text-slate-500">{{ __('bookings.index.pilgrims_count', ['count' => $b->pilgrim_count, 'pilgrims_word' => __('common.pilgrims')]) }}</p>
                             </div>
                         </div>
+
+                        @include('bookings.partials.booking-documents', ['booking' => $b, 'routeName' => 'bookings.documents.show'])
                     </div>
                 </div>
             </article>

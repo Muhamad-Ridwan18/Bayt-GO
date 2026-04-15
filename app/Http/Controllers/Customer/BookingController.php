@@ -30,11 +30,13 @@ use Illuminate\Http\Request;
 use Illuminate\Pagination\LengthAwarePaginator;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Str;
 use Illuminate\Validation\Rule;
 use Illuminate\Validation\ValidationException;
 use Illuminate\View\View;
 use RuntimeException;
+use Symfony\Component\HttpFoundation\Response;
 
 class BookingController extends Controller
 {
@@ -353,6 +355,15 @@ class BookingController extends Controller
             'add_on_ids.*' => ['uuid'],
             'with_same_hotel' => ['sometimes', 'boolean'],
             'with_transport' => ['sometimes', 'boolean'],
+            'ticket_outbound' => ['required', 'file', 'mimes:pdf,jpeg,jpg,png', 'max:10240'],
+            'ticket_return' => ['required', 'file', 'mimes:pdf,jpeg,jpg,png', 'max:10240'],
+            'itinerary' => ['nullable', 'file', 'mimes:pdf,jpeg,jpg,png', 'max:10240'],
+            'visa' => ['nullable', 'file', 'mimes:pdf,jpeg,jpg,png', 'max:10240'],
+        ], [], [
+            'ticket_outbound' => __('marketplace.panel.doc_ticket_outbound'),
+            'ticket_return' => __('marketplace.panel.doc_ticket_return'),
+            'itinerary' => __('marketplace.panel.doc_itinerary'),
+            'visa' => __('marketplace.panel.doc_visa'),
         ]);
 
         $start = Carbon::parse($validated['start_date'])->startOfDay();
@@ -433,7 +444,7 @@ class BookingController extends Controller
 
             $bookingCode = app(BookingOrderCodeService::class)->allocateNextWithinTransaction();
 
-            return MuthowifBooking::query()->create([
+            $booking = MuthowifBooking::query()->create([
                 'booking_code' => $bookingCode,
                 'muthowif_profile_id' => $profile->id,
                 'customer_id' => $request->user()->id,
@@ -446,6 +457,21 @@ class BookingController extends Controller
                 'ends_on' => $end->toDateString(),
                 'status' => BookingStatus::Pending,
             ]);
+
+            $dir = 'booking-documents/'.$booking->getKey();
+            $ticketOutbound = $request->file('ticket_outbound')->store($dir, 'local');
+            $ticketReturn = $request->file('ticket_return')->store($dir, 'local');
+            $itineraryPath = $request->file('itinerary')?->store($dir, 'local');
+            $visaPath = $request->file('visa')?->store($dir, 'local');
+
+            $booking->update([
+                'ticket_outbound_path' => $ticketOutbound,
+                'ticket_return_path' => $ticketReturn,
+                'itinerary_path' => $itineraryPath,
+                'visa_path' => $visaPath,
+            ]);
+
+            return $booking->fresh();
         });
 
         NotifyMuthowifOfNewBooking::dispatchAfterResponse((string) $booking->getKey());
@@ -453,6 +479,35 @@ class BookingController extends Controller
         return redirect()
             ->route('bookings.index')
             ->with('status', __('bookings.flash.booking_submitted'));
+    }
+
+    public function downloadDocument(MuthowifBooking $booking, string $type): Response
+    {
+        $this->authorize('view', $booking);
+
+        $column = match ($type) {
+            'outbound' => 'ticket_outbound_path',
+            'return' => 'ticket_return_path',
+            'itinerary' => 'itinerary_path',
+            'visa' => 'visa_path',
+            default => null,
+        };
+
+        if ($column === null) {
+            abort(404);
+        }
+
+        $path = $booking->{$column};
+        if ($path === null || $path === '') {
+            abort(404);
+        }
+
+        $disk = Storage::disk('local');
+        if (! $disk->exists($path)) {
+            abort(404);
+        }
+
+        return $disk->response($path, basename($path));
     }
 
     public function storeRefundRequest(Request $request, MuthowifBooking $booking): RedirectResponse
