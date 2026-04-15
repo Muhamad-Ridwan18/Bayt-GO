@@ -12,9 +12,30 @@
     $balance = (float) ($mp->wallet_balance ?? 0);
     $balanceFormatted = IndonesianNumber::formatThousands((string) (int) round($balance));
 
-    $calendarMonth = now()->startOfMonth();
+    $monthParam = request()->query('month');
+    try {
+        if (is_string($monthParam) && preg_match('/^\d{4}-\d{2}$/', $monthParam)) {
+            $calendarMonth = Carbon::createFromFormat('Y-m', $monthParam)->startOfMonth();
+        } else {
+            $calendarMonth = now()->startOfMonth();
+        }
+    } catch (\Throwable) {
+        $calendarMonth = now()->startOfMonth();
+    }
+    $calendarMonthMin = now()->copy()->subYears(2)->startOfMonth();
+    $calendarMonthMax = now()->copy()->addYears(2)->startOfMonth();
+    if ($calendarMonth->lt($calendarMonthMin)) {
+        $calendarMonth = $calendarMonthMin->copy();
+    }
+    if ($calendarMonth->gt($calendarMonthMax)) {
+        $calendarMonth = $calendarMonthMax->copy();
+    }
+
     $calendarStart = $calendarMonth->copy()->startOfWeek(Carbon::MONDAY);
     $calendarEnd = $calendarMonth->copy()->endOfMonth()->endOfWeek(Carbon::SUNDAY);
+
+    $monthStartStr = $calendarMonth->copy()->startOfMonth()->toDateString();
+    $monthEndStr = $calendarMonth->copy()->endOfMonth()->toDateString();
 
     $upcomingBookings = $mp->bookings()
         ->whereIn('status', [BookingStatus::Pending, BookingStatus::Confirmed, BookingStatus::Completed])
@@ -24,8 +45,21 @@
         ->get(['id', 'starts_on', 'ends_on', 'status', 'customer_id', 'service_type']);
     $upcomingBookings->load('customer:id,name');
 
+    $calendarBookings = $mp->bookings()
+        ->whereIn('status', [BookingStatus::Pending, BookingStatus::Confirmed, BookingStatus::Completed])
+        ->whereDate('starts_on', '<=', $monthEndStr)
+        ->whereDate('ends_on', '>=', $monthStartStr)
+        ->orderBy('starts_on')
+        ->get(['id', 'starts_on', 'ends_on', 'status', 'customer_id', 'service_type']);
+    $calendarBookings->load('customer:id,name');
+
     $blockedDates = $mp->blockedDates()
         ->whereBetween('blocked_on', [$calendarStart->toDateString(), $calendarEnd->toDateString()])
+        ->orderBy('blocked_on')
+        ->get(['id', 'blocked_on', 'note']);
+
+    $blockedDatesThisMonth = $mp->blockedDates()
+        ->whereBetween('blocked_on', [$monthStartStr, $monthEndStr])
         ->orderBy('blocked_on')
         ->get(['id', 'blocked_on', 'note']);
 
@@ -36,7 +70,7 @@
 
     $bookingSet = collect();
     $calendarDetails = [];
-    foreach ($upcomingBookings as $bookingRow) {
+    foreach ($calendarBookings as $bookingRow) {
         $cursor = Carbon::parse($bookingRow->starts_on)->startOfDay();
         $end = Carbon::parse($bookingRow->ends_on)->startOfDay();
         while ($cursor->lte($end)) {
@@ -249,13 +283,36 @@
     <div class="grid grid-cols-1 gap-4 lg:grid-cols-12 lg:gap-5">
         <div class="min-w-0 rounded-2xl border border-slate-200/80 bg-gradient-to-b from-white to-slate-50/80 p-4 shadow-sm ring-1 ring-slate-100 lg:col-span-7">
             <div class="flex flex-col gap-2 border-b border-slate-200/80 pb-3 sm:flex-row sm:items-center sm:justify-between">
-                <div class="flex items-start gap-2">
+                <div class="flex min-w-0 flex-1 items-start gap-2">
                     <span class="mt-0.5 flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-brand-100 text-brand-800 ring-1 ring-brand-200/60" aria-hidden="true">
                         <svg class="h-4 w-4" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M6 2a1 1 0 00-1 1v1H4a2 2 0 00-2 2v10a2 2 0 002 2h12a2 2 0 002-2V6a2 2 0 00-2-2h-1V3a1 1 0 10-2 0v1H7V3a1 1 0 00-1-1zm0 5a1 1 0 000 2h8a1 1 0 100-2H6z" clip-rule="evenodd" /></svg>
                     </span>
-                    <div>
-                        <h3 class="text-sm font-bold tracking-tight text-slate-900 sm:text-base">{{ __('dashboard_muthowif.calendar_title', ['month' => $calendarMonth->translatedFormat('F Y')]) }}</h3>
-                        <p class="text-[11px] text-slate-500">{{ __('dashboard_muthowif.tooltip_hint') }}</p>
+                    <div class="min-w-0 flex-1">
+                        <div class="flex flex-wrap items-center gap-2">
+                            <a
+                                href="{{ route('dashboard', ['month' => $calendarMonth->copy()->subMonth()->format('Y-m')]) }}"
+                                class="inline-flex h-9 w-9 shrink-0 items-center justify-center rounded-lg border border-slate-200 bg-white text-slate-700 shadow-sm ring-1 ring-slate-100 transition hover:border-brand-200 hover:bg-brand-50/80 hover:text-brand-900"
+                                title="{{ __('dashboard_muthowif.calendar_prev') }}"
+                                aria-label="{{ __('dashboard_muthowif.calendar_prev') }}"
+                            >
+                                <svg class="h-5 w-5" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true"><path fill-rule="evenodd" d="M12.79 5.23a.75.75 0 01-.02 1.06L8.832 10l3.938 3.71a.75.75 0 11-1.04 1.08l-4.5-4.25a.75.75 0 010-1.08l4.5-4.25a.75.75 0 011.06.02z" clip-rule="evenodd" /></svg>
+                            </a>
+                            <h3 class="min-w-0 flex-1 text-sm font-bold tracking-tight text-slate-900 sm:text-base">{{ __('dashboard_muthowif.calendar_title', ['month' => $calendarMonth->translatedFormat('F Y')]) }}</h3>
+                            <a
+                                href="{{ route('dashboard', ['month' => $calendarMonth->copy()->addMonth()->format('Y-m')]) }}"
+                                class="inline-flex h-9 w-9 shrink-0 items-center justify-center rounded-lg border border-slate-200 bg-white text-slate-700 shadow-sm ring-1 ring-slate-100 transition hover:border-brand-200 hover:bg-brand-50/80 hover:text-brand-900"
+                                title="{{ __('dashboard_muthowif.calendar_next') }}"
+                                aria-label="{{ __('dashboard_muthowif.calendar_next') }}"
+                            >
+                                <svg class="h-5 w-5" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true"><path fill-rule="evenodd" d="M7.21 14.77a.75.75 0 01.02-1.06L11.168 10 7.23 6.29a.75.75 0 111.04-1.08l4.5 4.25a.75.75 0 010 1.08l-4.5 4.25a.75.75 0 01-1.06-.02z" clip-rule="evenodd" /></svg>
+                            </a>
+                        </div>
+                        <div class="mt-1 flex flex-wrap items-center gap-x-3 gap-y-1">
+                            @if (! $calendarMonth->isSameMonth(now()))
+                                <a href="{{ route('dashboard') }}" class="text-[11px] font-semibold text-brand-700 hover:text-brand-800 hover:underline">{{ __('dashboard_muthowif.calendar_today') }}</a>
+                            @endif
+                            <p class="text-[11px] text-slate-500">{{ __('dashboard_muthowif.tooltip_hint') }}</p>
+                        </div>
                     </div>
                 </div>
                 <div class="flex flex-wrap items-center gap-3 text-xs font-medium">
@@ -385,15 +442,15 @@
                 <div class="flex flex-wrap items-center justify-between gap-2 border-b border-amber-200/60 pb-2">
                     <div class="flex items-center gap-2">
                         <span class="h-8 w-1 rounded-full bg-gradient-to-b from-amber-400 to-orange-500" aria-hidden="true"></span>
-                        <h4 class="text-sm font-bold text-slate-900">{{ __('dashboard_muthowif.blocked_month') }}</h4>
+                        <h4 class="text-sm font-bold text-slate-900">{{ __('dashboard_muthowif.blocked_month', ['month' => $calendarMonth->translatedFormat('F Y')]) }}</h4>
                     </div>
                     <a href="{{ route('muthowif.jadwal.index') }}" class="shrink-0 rounded-full bg-amber-100/90 px-3 py-1.5 text-xs font-semibold text-amber-950 ring-1 ring-amber-200/80 transition hover:bg-amber-200/80">{{ __('dashboard_muthowif.nav_time_off') }}</a>
                 </div>
-                @if ($blockedDates->isEmpty())
+                @if ($blockedDatesThisMonth->isEmpty())
                     <p class="mt-3 text-sm text-slate-500">{{ __('dashboard_muthowif.no_blocked') }}</p>
                 @else
                     <ul class="mt-3 space-y-2 text-sm">
-                        @foreach ($blockedDates as $row)
+                        @foreach ($blockedDatesThisMonth as $row)
                             <li class="rounded-xl border border-amber-200/80 bg-white/90 px-3 py-2 shadow-sm ring-1 ring-amber-100/60">
                                 <p class="font-semibold text-slate-900">{{ Carbon::parse($row->blocked_on)->format('d M Y') }}</p>
                                 <p class="mt-0.5 text-xs text-slate-600">{{ $row->note ?: __('dashboard_muthowif.default_off_note') }}</p>
