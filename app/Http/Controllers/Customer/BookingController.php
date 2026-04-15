@@ -18,6 +18,7 @@ use App\Models\MuthowifProfile;
 use App\Models\MuthowifService;
 use App\Models\MuthowifServiceAddOn;
 use App\Payments\Contracts\SnapPaymentProviderInterface;
+use App\Services\BookingCompletionService;
 use App\Services\BookingOrderCodeService;
 use App\Services\BookingRefundExecutor;
 use App\Support\BookingPostPayRules;
@@ -223,7 +224,7 @@ class BookingController extends Controller
      * Customer menandai bahwa layanan sudah selesai.
      * Di titik ini barulah saldo muthowif ditambahkan (sekali saja).
      */
-    public function complete(Request $request, MuthowifBooking $booking): RedirectResponse
+    public function complete(Request $request, MuthowifBooking $booking, BookingCompletionService $completion): RedirectResponse
     {
         $this->authorize('complete', $booking);
 
@@ -232,83 +233,21 @@ class BookingController extends Controller
             'review' => ['nullable', 'string', 'max:2000'],
         ]);
 
-        $completed = false;
-        $credited = false;
-        $error = null;
+        $result = $completion->complete(
+            $booking,
+            (int) $validated['rating'],
+            filled($validated['review'] ?? null) ? trim((string) $validated['review']) : null
+        );
 
-        try {
-            DB::transaction(function () use (
-                $booking,
-                $validated,
-                &$completed,
-                &$credited,
-                &$error
-            ): void {
-                $booking->refresh();
-
-                if ($booking->status === BookingStatus::Completed) {
-                    $completed = true;
-
-                    return;
-                }
-
-                /** @var BookingPayment|null $payment */
-                $payment = BookingPayment::query()
-                    ->where('muthowif_booking_id', $booking->getKey())
-                    ->whereIn('status', ['settlement', 'capture'])
-                    ->orderByDesc('settled_at')
-                    ->lockForUpdate()
-                    ->first();
-
-                if ($payment === null) {
-                    $error = __('bookings.flash.payment_tx_not_found');
-
-                    return;
-                }
-
-                if ($payment->wallet_credited_at === null) {
-                    /** @var MuthowifProfile $profile */
-                    $profile = MuthowifProfile::query()
-                        ->whereKey($booking->muthowif_profile_id)
-                        ->lockForUpdate()
-                        ->firstOrFail();
-
-                    $profile->wallet_balance = round((float) $profile->wallet_balance + (float) $payment->muthowif_net_amount, 2);
-                    $profile->save();
-
-                    $payment->wallet_credited_at = now();
-                    $payment->save();
-                    $credited = true;
-                }
-
-                $booking->status = BookingStatus::Completed;
-                $booking->save();
-
-                BookingReview::query()->updateOrCreate(
-                    ['muthowif_booking_id' => $booking->getKey()],
-                    [
-                        'muthowif_profile_id' => $booking->muthowif_profile_id,
-                        'customer_id' => (string) $booking->customer_id,
-                        'rating' => (int) $validated['rating'],
-                        'review' => filled($validated['review'] ?? null) ? trim((string) $validated['review']) : null,
-                    ]
-                );
-
-                $completed = true;
-            });
-        } catch (\Throwable $e) {
-            $error = $e->getMessage();
-        }
-
-        if (! $completed) {
+        if (! $result['completed']) {
             return redirect()
                 ->route('bookings.show', $booking)
-                ->with('error', $error ?? __('bookings.flash.complete_error'));
+                ->with('error', $result['error'] ?? __('bookings.flash.complete_error'));
         }
 
         return redirect()
             ->route('bookings.show', $booking)
-            ->with('status', $credited ? __('bookings.flash.complete_credited') : __('bookings.flash.complete_ok'));
+            ->with('status', $result['credited'] ? __('bookings.flash.complete_credited') : __('bookings.flash.complete_ok'));
     }
 
     public function review(Request $request, MuthowifBooking $booking): RedirectResponse

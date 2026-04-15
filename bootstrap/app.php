@@ -16,6 +16,7 @@ return Application::configure(basePath: dirname(__DIR__))
     )
     ->withSchedule(function (Schedule $schedule): void {
         $schedule->command('bookings:process-timeouts')->everyFiveMinutes();
+        $schedule->command('bookings:auto-complete-service')->everyMinute();
     })
     ->withMiddleware(function (Middleware $middleware): void {
         $middleware->web(append: [
