@@ -37,5 +37,5 @@ return [
     'guest_header_login' => 'Log in',
     'guest_header_register' => 'Register',
     'customer_bookings_heading' => 'My bookings',
-    'customer_bookings_intro' => 'After the muthowif <strong>approves</strong>, pay via <strong>Midtrans</strong> from the detail page. <strong>Pending</strong> requests can be cancelled before approval.',
+    'customer_bookings_intro' => 'After the muthowif approves, complete payment using the payment method you chose. Pending requests can be cancelled before approval.',
 ];

@@ -37,5 +37,5 @@ return [
     'guest_header_login' => 'Masuk',
     'guest_header_register' => 'Daftar',
     'customer_bookings_heading' => 'Booking saya',
-    'customer_bookings_intro' => 'Setelah muthowif <strong>menyetujui</strong>, lakukan pembayaran lewat <strong>Midtrans</strong> dari menu detail. Permintaan <strong>Menunggu</strong> bisa dibatalkan sebelum disetujui.',
+    'customer_bookings_intro' => 'Setelah muthowif menyetujui, silahkan untuk melakukan proses pembayaran sesuai metode pembayaran yang Anda pilih. Permintaan Menunggu bisa dibatalkan sebelum disetujui.',
 ];
