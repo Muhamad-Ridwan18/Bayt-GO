@@ -538,24 +538,17 @@ class BookingController extends Controller
 
         $start = Carbon::parse($validated['new_start_date'])->startOfDay();
         $end = $start->copy()->addDays($oldNights - 1)->startOfDay();
+        $submittedAt = now();
 
-        if ($start->lt(now()->startOfDay())) {
+        if ($start->lt($submittedAt->copy()->startOfDay())) {
             throw ValidationException::withMessages([
                 'new_start_date' => __('bookings.validation.new_start_past'),
             ]);
         }
 
-        if (! BookingPostPayRules::newStartMeetsRescheduleMinDays($start)) {
+        if (! BookingPostPayRules::newStartMeetsRescheduleMinDays($start, $submittedAt)) {
             throw ValidationException::withMessages([
                 'new_start_date' => __('bookings.validation.reschedule_new_start_too_soon', [
-                    'days' => BookingPostPayRules::rescheduleMinDaysBeforeService(),
-                ]),
-            ]);
-        }
-
-        if (! BookingPostPayRules::newStartMeetsMinShiftFromOriginal($booking, $start)) {
-            throw ValidationException::withMessages([
-                'new_start_date' => __('bookings.validation.reschedule_new_start_too_close_to_original', [
                     'days' => BookingPostPayRules::rescheduleMinDaysBeforeService(),
                 ]),
             ]);

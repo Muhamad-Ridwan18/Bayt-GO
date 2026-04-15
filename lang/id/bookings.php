@@ -28,8 +28,7 @@ return [
         'new_start_past' => 'Tanggal mulai baru tidak boleh sebelum hari ini.',
         'new_range_max' => 'Rentang layanan melebihi batas maksimal (:days hari kalender).',
         'new_slot_unavailable' => 'Slot tanggal baru tidak tersedia (bentrok libur atau booking lain).',
-        'reschedule_new_start_too_soon' => 'Tanggal mulai baru harus minimal :days hari penuh dari hari ini (aturan H-:days).',
-        'reschedule_new_start_too_close_to_original' => 'Tanggal mulai baru harus berjarak minimal :days hari kalender dari tanggal mulai booking Anda saat ini (bukan geser hanya beberapa hari).',
+        'reschedule_new_start_too_soon' => 'Tanggal mulai baru harus minimal :days hari kalender penuh setelah hari Anda mengajukan permintaan ini (aturan H-:days).',
         'refund_account_number_format' => 'Nomor rekening hanya boleh angka, spasi, atau tanda hubung (minimal satu digit).',
         'itinerary_required_group' => 'Itinerary wajib diunggah untuk layanan group.',
     ],
@@ -48,7 +47,7 @@ return [
         'only_confirmed' => 'Reschedule hanya untuk booking terkonfirmasi yang belum selesai.',
         'pending_exists' => 'Anda sudah memiliki pengajuan reschedule yang menunggu keputusan muthowif.',
         'service_started' => 'Tanggal mulai layanan sudah lewat atau hari ini.',
-        'too_late' => 'Reschedule hanya sampai H-:days sebelum tanggal mulai layanan baru yang Anda pilih.',
+        'too_late' => 'Reschedule hanya bisa diajukan paling lambat H-:days sebelum tanggal mulai layanan Anda saat ini.',
     ],
 
     'index_page' => [
@@ -116,7 +115,7 @@ return [
         'paid_at' => 'Dibayar pada :datetime.',
         'print_invoice' => 'Cetak invoice',
         'refund_reschedule_heading' => 'Refund & reschedule',
-        'refund_reschedule_intro_html' => 'Refund: paling lambat <strong>H-:refund_days</strong> sebelum tanggal mulai layanan. Biaya admin: <strong>2,5%</strong> + <strong>1%</strong> dari harga dasar layanan. Anda wajib mengisi <strong>bank dan nomor rekening penerima</strong>; admin mentransfer nominal bersih ke rekening tersebut. Reschedule: tanggal mulai <strong>baru</strong> harus minimal <strong>H-:reschedule_days</strong> dari hari ini <strong>dan</strong> minimal <strong>:reschedule_days</strong> hari kalender dari tanggal mulai booking sekarang, lama menginap sama, <strong>perlu persetujuan muthowif</strong>.',
+        'refund_reschedule_intro_html' => 'Refund: paling lambat <strong>H-:refund_days</strong> sebelum tanggal mulai layanan. Biaya admin: <strong>2,5%</strong> + <strong>1%</strong> dari harga dasar layanan. Anda wajib mengisi <strong>bank dan nomor rekening penerima</strong>; admin mentransfer nominal bersih ke rekening tersebut. Reschedule: pengajuan paling lambat <strong>H-:reschedule_days</strong> sebelum mulai layanan Anda sekarang, dan tanggal mulai <strong>baru</strong> minimal <strong>H-:reschedule_days</strong> dari hari Anda mengajukan, lama menginap sama, <strong>perlu persetujuan muthowif</strong>.',
         'refund_estimate_html' => 'Perkiraan dana kembali ke rekening Anda: <strong>Rp :amount</strong> (setelah potongan admin).',
         'refund_breakdown_html' => 'Total dibayar Rp :paid, potongan platform Rp :platform, muthowif Rp :muthowif.',
         'refund_confirm' => 'Booking akan dibatalkan dan admin akan mentransfer refund (nominal bersih setelah potongan). Lanjutkan?',

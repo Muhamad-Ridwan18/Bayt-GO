@@ -28,8 +28,7 @@ return [
         'new_start_past' => 'New start date cannot be before today.',
         'new_range_max' => 'Service range exceeds the maximum (:days calendar days).',
         'new_slot_unavailable' => 'The new date range is not available (leave or another booking).',
-        'reschedule_new_start_too_soon' => 'The new start date must be at least :days full days from today (H-:days rule).',
-        'reschedule_new_start_too_close_to_original' => 'The new start date must be at least :days calendar days away from your current booking start date (not a small shift of a few days).',
+        'reschedule_new_start_too_soon' => 'The new start date must be at least :days full calendar days after the day you submit this request (H-:days rule).',
         'refund_account_number_format' => 'Account number may only contain digits, spaces, or hyphens (at least one digit).',
         'itinerary_required_group' => 'Itinerary upload is required for group service.',
     ],
@@ -48,7 +47,7 @@ return [
         'only_confirmed' => 'Reschedule is only for confirmed bookings that are not yet completed.',
         'pending_exists' => 'You already have a reschedule request awaiting muthowif decision.',
         'service_started' => 'Service start date has passed or is today.',
-        'too_late' => 'Reschedule is only allowed up to H-:days before the service start date.',
+        'too_late' => 'Reschedule is only allowed up to H-:days before your current service start date.',
     ],
 
     'index_page' => [
@@ -116,7 +115,7 @@ return [
         'paid_at' => 'Paid on :datetime.',
         'print_invoice' => 'Print invoice',
         'refund_reschedule_heading' => 'Refund & reschedule',
-        'refund_reschedule_intro_html' => 'Refund: latest <strong>H-:refund_days</strong> before service start. Admin fees: <strong>2.5%</strong> + <strong>1%</strong> of the base service price. You must enter <strong>bank details and receiving account</strong>; admin transfers the net amount there. Reschedule: the <strong>new</strong> start must be at least <strong>H-:reschedule_days</strong> from today <strong>and</strong> at least <strong>:reschedule_days</strong> calendar days from your current start date, same length of stay, <strong>requires muthowif approval</strong>.',
+        'refund_reschedule_intro_html' => 'Refund: latest <strong>H-:refund_days</strong> before service start. Admin fees: <strong>2.5%</strong> + <strong>1%</strong> of the base service price. You must enter <strong>bank details and receiving account</strong>; admin transfers the net amount there. Reschedule: you must submit <strong>before H-:reschedule_days</strong> of your current start, and the <strong>new</strong> start must be at least <strong>H-:reschedule_days</strong> from the day you submit, same length of stay, <strong>requires muthowif approval</strong>.',
         'refund_estimate_html' => 'Estimated refund to your account: <strong>Rp :amount</strong> (after admin deductions).',
         'refund_breakdown_html' => 'Total paid Rp :paid, platform deduction Rp :platform, muthowif deduction Rp :muthowif.',
         'refund_confirm' => 'The booking will be cancelled and admin will transfer the refund (net after deductions). Continue?',
