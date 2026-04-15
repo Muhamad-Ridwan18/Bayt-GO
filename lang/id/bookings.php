@@ -80,7 +80,7 @@ return [
     ],
 
     'show' => [
-        'back_to_bookings' => '← Booking saya',
+        'back_to_bookings' => 'Booking saya',
         'detail_kicker' => 'Detail booking',
         'booking_code' => 'Kode booking',
         'muthowif' => 'Muthowif',
