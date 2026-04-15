@@ -285,8 +285,31 @@
                                 'muthowif' => $fmt((float) $refundPreview['refund_fee_muthowif']),
                             ]) }}</p>
                         </div>
-                        <form method="POST" action="{{ route('bookings.refund_request.store', $b) }}" class="space-y-3" onsubmit="return confirm(@json(__('bookings.show.refund_confirm')));">
+                        <form method="POST" action="{{ route('bookings.refund_request.store', $b) }}" class="space-y-4" onsubmit="return confirm(@json(__('bookings.show.refund_confirm')));">
                             @csrf
+                            <div class="grid grid-cols-1 gap-3 sm:grid-cols-2">
+                                <div class="sm:col-span-2">
+                                    <label for="refund_bank_name" class="mb-1 block text-sm font-medium text-slate-700">{{ __('bookings.show.refund_bank_name') }} <span class="text-red-600">*</span></label>
+                                    <input id="refund_bank_name" type="text" name="refund_bank_name" value="{{ old('refund_bank_name') }}" required maxlength="100" autocomplete="off" class="w-full rounded-xl border-slate-300 text-sm shadow-sm focus:border-brand-500 focus:ring-brand-500" placeholder="{{ __('bookings.show.refund_bank_name_placeholder') }}" />
+                                    @error('refund_bank_name')
+                                        <p class="mt-1 text-xs text-red-700">{{ $message }}</p>
+                                    @enderror
+                                </div>
+                                <div>
+                                    <label for="refund_account_holder" class="mb-1 block text-sm font-medium text-slate-700">{{ __('bookings.show.refund_account_holder') }} <span class="text-red-600">*</span></label>
+                                    <input id="refund_account_holder" type="text" name="refund_account_holder" value="{{ old('refund_account_holder') }}" required maxlength="255" autocomplete="name" class="w-full rounded-xl border-slate-300 text-sm shadow-sm focus:border-brand-500 focus:ring-brand-500" placeholder="{{ __('bookings.show.refund_account_holder_placeholder') }}" />
+                                    @error('refund_account_holder')
+                                        <p class="mt-1 text-xs text-red-700">{{ $message }}</p>
+                                    @enderror
+                                </div>
+                                <div>
+                                    <label for="refund_account_number" class="mb-1 block text-sm font-medium text-slate-700">{{ __('bookings.show.refund_account_number') }} <span class="text-red-600">*</span></label>
+                                    <input id="refund_account_number" type="text" name="refund_account_number" value="{{ old('refund_account_number') }}" required maxlength="64" inputmode="numeric" autocomplete="off" class="w-full rounded-xl border-slate-300 text-sm shadow-sm focus:border-brand-500 focus:ring-brand-500" placeholder="{{ __('bookings.show.refund_account_number_placeholder') }}" />
+                                    @error('refund_account_number')
+                                        <p class="mt-1 text-xs text-red-700">{{ $message }}</p>
+                                    @enderror
+                                </div>
+                            </div>
                             <div>
                                 <label for="refund_note" class="mb-1 block text-sm font-medium text-slate-700">{{ __('bookings.show.note_optional') }}</label>
                                 <textarea id="refund_note" name="customer_note" rows="2" maxlength="2000" class="w-full rounded-xl border-slate-300 text-sm shadow-sm focus:border-brand-500 focus:ring-brand-500">{{ old('customer_note') }}</textarea>
@@ -366,6 +389,13 @@
                             @foreach ($b->refundRequests as $req)
                                 <p class="rounded-lg bg-slate-50/80 px-3 py-2">
                                     {{ __('bookings.show.timeline_refund', ['status' => $req->status->label(), 'datetime' => $req->created_at?->timezone(config('app.timezone'))->format('d/m/Y H:i')]) }}
+                                    @if ($req->refund_bank_name || $req->refund_account_holder || $req->refund_account_number)
+                                        <br><span class="text-slate-600">{{ __('bookings.show.timeline_refund_bank', [
+                                            'bank' => $req->refund_bank_name ?: '—',
+                                            'holder' => $req->refund_account_holder ?: '—',
+                                            'number' => $req->refund_account_number ?: '—',
+                                        ]) }}</span>
+                                    @endif
                                     @if ($req->customer_note)
                                         <br><span class="text-slate-500">{{ __('bookings.show.timeline_refund_note', ['note' => $req->customer_note]) }}</span>
                                     @endif

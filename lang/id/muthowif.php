@@ -34,6 +34,7 @@ return [
         'refund_title' => 'Riwayat refund',
         'refund_intro' => 'Jamaah mengajukan refund di aplikasi; admin mentransfer nominal bersih ke jamaah.',
         'refund_net_prefix' => 'Net refund jamaah (estimasi):',
+        'refund_bank_label' => 'Rekening penerima refund',
         'refund_fees' => 'Potongan admin: platform Rp :platform, muthowif Rp :muthowif (dari harga dasar layanan).',
         'role_pilgrim' => 'Jamaah:',
         'role_muthowif' => 'Muthowif:',

@@ -19,8 +19,14 @@ final class BookingRefundExecutor
      *
      * @throws RuntimeException
      */
-    public function execute(MuthowifBooking $booking, User $customer, ?string $customerNote): void
-    {
+    public function execute(
+        MuthowifBooking $booking,
+        User $customer,
+        ?string $customerNote,
+        string $refundBankName,
+        string $refundAccountHolder,
+        string $refundAccountNumber,
+    ): void {
         $payment = $booking->settledBookingPayment();
         if ($payment === null) {
             throw new RuntimeException('Data pembayaran tidak ditemukan.');
@@ -32,8 +38,11 @@ final class BookingRefundExecutor
             $booking,
             $customer,
             $customerNote,
-            $snapshot
-        ): void {
+            $refundBankName,
+            $refundAccountHolder,
+            $refundAccountNumber,
+            $snapshot,
+        ) {
             $booking->refresh()->lockForUpdate();
 
             if (! $booking->isPaid() || $booking->status !== BookingStatus::Confirmed) {
@@ -50,6 +59,9 @@ final class BookingRefundExecutor
                 'customer_id' => $customer->id,
                 'status' => BookingChangeRequestStatus::Pending,
                 'customer_note' => filled($customerNote) ? trim($customerNote) : null,
+                'refund_bank_name' => $refundBankName,
+                'refund_account_holder' => $refundAccountHolder,
+                'refund_account_number' => $refundAccountNumber,
                 'service_base_amount' => $snapshot['service_base_amount'],
                 'customer_paid_amount' => $snapshot['customer_paid_amount'],
                 'refund_fee_platform' => $snapshot['refund_fee_platform'],

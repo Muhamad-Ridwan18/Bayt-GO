@@ -72,6 +72,7 @@ return [
         'pilgrim_col' => 'Jamaah',
         'muthowif_col' => 'Muthowif',
         'net_refund' => 'Net refund',
+        'bank_destination' => 'Rekening tujuan',
         'customer_note' => 'Catatan jamaah',
         'admin_placeholder' => 'Catatan internal (opsional)',
         'confirm_complete' => 'Tandai transfer refund ke jamaah sudah selesai?',

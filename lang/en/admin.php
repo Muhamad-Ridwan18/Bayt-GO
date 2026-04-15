@@ -72,6 +72,7 @@ return [
         'pilgrim_col' => 'Pilgrim',
         'muthowif_col' => 'Chaperone',
         'net_refund' => 'Net refund',
+        'bank_destination' => 'Destination account',
         'customer_note' => 'Pilgrim note',
         'admin_placeholder' => 'Internal note (optional)',
         'confirm_complete' => 'Mark this refund transfer to the pilgrim as complete?',

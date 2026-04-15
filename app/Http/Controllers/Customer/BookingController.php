@@ -6,24 +6,23 @@ use App\Enums\BookingChangeRequestStatus;
 use App\Enums\BookingStatus;
 use App\Enums\MuthowifServiceType;
 use App\Enums\MuthowifVerificationStatus;
-use App\Enums\PaymentStatus;
 use App\Http\Controllers\Controller;
 use App\Jobs\NotifyCustomerOfRescheduleSubmitted;
 use App\Jobs\NotifyMuthowifOfNewBooking;
 use App\Jobs\NotifyMuthowifOfRescheduleRequest;
+use App\Models\BookingPayment;
 use App\Models\BookingRescheduleRequest;
 use App\Models\BookingReview;
-use App\Models\BookingPayment;
 use App\Models\MuthowifBooking;
 use App\Models\MuthowifProfile;
 use App\Models\MuthowifService;
 use App\Models\MuthowifServiceAddOn;
+use App\Payments\Contracts\SnapPaymentProviderInterface;
 use App\Services\BookingOrderCodeService;
 use App\Services\BookingRefundExecutor;
 use App\Support\BookingPostPayRules;
 use App\Support\BookingRefundFee;
 use App\Support\PlatformFee;
-use App\Payments\Contracts\SnapPaymentProviderInterface;
 use Carbon\Carbon;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
@@ -40,6 +39,7 @@ use RuntimeException;
 class BookingController extends Controller
 {
     private const MAX_RANGE_DAYS = 90;
+
     private const CORE_PAYMENT_METHODS = [
         'va_bca',
         'va_bni',
@@ -246,6 +246,7 @@ class BookingController extends Controller
 
                 if ($booking->status === BookingStatus::Completed) {
                     $completed = true;
+
                     return;
                 }
 
@@ -259,6 +260,7 @@ class BookingController extends Controller
 
                 if ($payment === null) {
                     $error = __('bookings.flash.payment_tx_not_found');
+
                     return;
                 }
 
@@ -459,6 +461,11 @@ class BookingController extends Controller
 
         $validated = $request->validate([
             'customer_note' => ['nullable', 'string', 'max:2000'],
+            'refund_bank_name' => ['required', 'string', 'max:100'],
+            'refund_account_holder' => ['required', 'string', 'max:255'],
+            'refund_account_number' => ['required', 'string', 'max:64', 'regex:/^[\d\s\-]+$/'],
+        ], [
+            'refund_account_number.regex' => __('bookings.validation.refund_account_number_format'),
         ]);
 
         $block = BookingPostPayRules::canRequestRefund($booking);
@@ -469,9 +476,25 @@ class BookingController extends Controller
         }
 
         $note = filled($validated['customer_note'] ?? null) ? trim((string) $validated['customer_note']) : null;
+        $bankName = trim((string) $validated['refund_bank_name']);
+        $accountHolder = trim((string) $validated['refund_account_holder']);
+        $accountNumber = preg_replace('/\D+/', '', (string) $validated['refund_account_number']) ?? '';
+
+        if ($accountNumber === '') {
+            throw ValidationException::withMessages([
+                'refund_account_number' => __('bookings.validation.refund_account_number_format'),
+            ]);
+        }
 
         try {
-            app(BookingRefundExecutor::class)->execute($booking, $request->user(), $note);
+            app(BookingRefundExecutor::class)->execute(
+                $booking,
+                $request->user(),
+                $note,
+                $bankName,
+                $accountHolder,
+                $accountNumber,
+            );
         } catch (\Throwable $e) {
             return redirect()
                 ->route('bookings.show', $booking)

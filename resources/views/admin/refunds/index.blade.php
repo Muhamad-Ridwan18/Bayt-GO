@@ -35,6 +35,7 @@
                                     <th class="px-4 py-3">{{ __('admin.refunds.pilgrim_col') }}</th>
                                     <th class="px-4 py-3">{{ __('admin.refunds.muthowif_col') }}</th>
                                     <th class="px-4 py-3 text-right">{{ __('admin.refunds.net_refund') }}</th>
+                                    <th class="px-4 py-3">{{ __('admin.refunds.bank_destination') }}</th>
                                     <th class="px-4 py-3">{{ __('admin.refunds.customer_note') }}</th>
                                     <th class="px-4 py-3 w-48"></th>
                                 </tr>
@@ -57,6 +58,15 @@
                                         </td>
                                         <td class="px-4 py-3 text-right font-semibold text-slate-900">
                                             Rp {{ $fmt((float) $refund->net_refund_customer) }}
+                                        </td>
+                                        <td class="px-4 py-3 text-xs text-slate-700 max-w-[14rem]">
+                                            @if ($refund->refund_bank_name || $refund->refund_account_holder || $refund->refund_account_number)
+                                                <p class="font-medium text-slate-900">{{ $refund->refund_bank_name ?: '—' }}</p>
+                                                <p>{{ $refund->refund_account_holder ?: '—' }}</p>
+                                                <p class="font-mono tabular-nums">{{ $refund->refund_account_number ?: '—' }}</p>
+                                            @else
+                                                <span class="text-slate-400">—</span>
+                                            @endif
                                         </td>
                                         <td class="px-4 py-3 text-slate-600 text-xs max-w-xs">
                                             {{ $refund->customer_note ?: '—' }}
