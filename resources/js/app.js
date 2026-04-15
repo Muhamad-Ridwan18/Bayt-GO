@@ -209,6 +209,77 @@ document.addEventListener('alpine:init', () => {
             }
         },
     }));
+
+    Alpine.data('muthowifDashboardCalendar', (config) => ({
+        url: config.url,
+        dashboardUrl: config.dashboardUrl,
+        month: config.month,
+        loading: false,
+        syncUrl(data) {
+            const u = new URL(window.location.href);
+            if (data.is_current_month) {
+                u.searchParams.delete('month');
+            } else {
+                u.searchParams.set('month', data.month);
+            }
+            history.replaceState({}, '', u.pathname + u.search + u.hash);
+        },
+        async loadMonth(targetMonth) {
+            if (this.loading) {
+                return;
+            }
+            this.loading = true;
+            const url = new URL(this.url, window.location.origin);
+            if (targetMonth) {
+                url.searchParams.set('month', targetMonth);
+            } else {
+                url.searchParams.delete('month');
+            }
+            try {
+                const res = await fetch(url.toString(), {
+                    credentials: 'same-origin',
+                    headers: {
+                        Accept: 'application/json',
+                        'X-Requested-With': 'XMLHttpRequest',
+                    },
+                });
+                if (!res.ok) {
+                    throw new Error('calendar');
+                }
+                const data = await res.json();
+                const cal = document.getElementById('muthowif-schedule-calendar');
+                const blk = document.getElementById('muthowif-schedule-blocked');
+                if (cal) {
+                    cal.outerHTML = data.calendar;
+                }
+                if (blk) {
+                    blk.outerHTML = data.blocked;
+                }
+                this.month = data.month;
+                this.syncUrl(data);
+            } catch {
+                const fallback = new URL(this.dashboardUrl, window.location.origin);
+                if (targetMonth) {
+                    fallback.searchParams.set('month', targetMonth);
+                }
+                window.location.assign(fallback.toString());
+            } finally {
+                this.loading = false;
+            }
+        },
+        onCalendarNavClick(e) {
+            if (e.target.closest('a[data-cal-today]')) {
+                e.preventDefault();
+                this.loadMonth(null);
+                return;
+            }
+            const nav = e.target.closest('a[data-cal-month]');
+            if (nav?.dataset.calMonth) {
+                e.preventDefault();
+                this.loadMonth(nav.dataset.calMonth);
+            }
+        },
+    }));
 });
 
 window.Alpine = Alpine;

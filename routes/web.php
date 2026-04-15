@@ -11,6 +11,7 @@ use App\Http\Controllers\BookingChatController;
 use App\Http\Controllers\Customer\BookingController as CustomerBookingController;
 use App\Http\Controllers\LocaleController;
 use App\Http\Controllers\Muthowif\BookingController as MuthowifBookingController;
+use App\Http\Controllers\Muthowif\MuthowifDashboardCalendarController;
 use App\Http\Controllers\Muthowif\MuthowifScheduleController;
 use App\Http\Controllers\Muthowif\MuthowifServiceController;
 use App\Http\Controllers\Muthowif\WithdrawController as MuthowifWithdrawController;
@@ -60,6 +61,10 @@ Route::get('/muthowif/daftar/menunggu', function () {
 Route::get('/dashboard', function () {
     return view('dashboard');
 })->middleware(['auth'])->name('dashboard');
+
+Route::get('/dashboard/muthowif-calendar', MuthowifDashboardCalendarController::class)
+    ->middleware(['auth'])
+    ->name('dashboard.muthowif-calendar');
 
 Route::get('/logs', [LogsController::class, 'index'])
     ->middleware(['auth', EnsureUserRole::class.':admin'])
