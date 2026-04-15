@@ -40,30 +40,8 @@
 @endphp
 
 <x-app-layout>
-    <x-slot name="header">
-        <div class="flex flex-col gap-1 sm:flex-row sm:items-center sm:justify-between">
-            <h2 class="font-semibold text-xl text-slate-800 leading-tight">
-                Detail booking
-            </h2>
-            <a href="{{ route('bookings.index') }}" class="text-sm font-semibold text-brand-700 hover:text-brand-800">
-                ← Kembali ke daftar
-            </a>
-        </div>
-    </x-slot>
-
     <div class="py-8 sm:py-12">
         <div class="max-w-2xl mx-auto px-4 sm:px-6 lg:px-8 space-y-6">
-            @if (session('status'))
-                <div class="rounded-xl border border-emerald-200 bg-emerald-50 px-4 py-3 text-sm text-emerald-900">
-                    {{ session('status') }}
-                </div>
-            @endif
-            @if (session('error'))
-                <div class="rounded-xl border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-900">
-                    {{ session('error') }}
-                </div>
-            @endif
-
             <div class="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm space-y-4">
                 @if (filled($b->booking_code))
                     <div class="rounded-xl border border-slate-100 bg-slate-50/80 px-3 py-2 text-sm">

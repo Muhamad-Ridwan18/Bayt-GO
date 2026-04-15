@@ -1,22 +1,4 @@
 <x-app-layout>
-    <x-slot name="header">
-        <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2">
-            <h2 class="font-semibold text-xl text-slate-800 leading-tight">Log viewer</h2>
-            <div class="text-sm text-slate-500">
-                Tail terakhir {{ $n }} baris
-                <a href="{{ url('/logs?n=300') }}" class="underline ml-2 hover:text-slate-700">default</a>
-            </div>
-            <form method="POST" action="{{ route('admin.logs.clear', ['n' => $n]) }}" class="sm:ml-auto">
-                @csrf
-                <button
-                    type="submit"
-                    onclick="return confirm('Yakin ingin membersihkan laravel.log?');"
-                    class="inline-flex items-center gap-2 rounded-xl border border-slate-200 bg-white px-3 py-2 text-sm font-semibold text-slate-700 shadow-sm hover:bg-slate-50">
-                    Clear log
-                </button>
-            </form>
-        </div>
-    </x-slot>
 
     <div class="py-8 sm:py-12">
         <div class="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 space-y-4">

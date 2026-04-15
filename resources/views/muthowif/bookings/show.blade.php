@@ -16,17 +16,6 @@
 <x-app-layout>
     <div class="py-8 sm:py-12">
         <div class="max-w-3xl mx-auto px-4 sm:px-6 lg:px-8 space-y-6">
-            @if (session('status'))
-                <div class="rounded-xl border border-emerald-200 bg-emerald-50 px-4 py-3 text-sm text-emerald-900">
-                    {{ session('status') }}
-                </div>
-            @endif
-            @if (session('error'))
-                <div class="rounded-xl border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-900">
-                    {{ session('error') }}
-                </div>
-            @endif
-
             <div class="flex items-center justify-between gap-4">
                 <a href="{{ route('muthowif.bookings.index') }}" class="text-sm font-semibold text-brand-700 hover:text-brand-800">← Kembali ke daftar</a>
             </div>

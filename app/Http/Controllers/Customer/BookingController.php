@@ -225,6 +225,7 @@ class BookingController extends Controller
         try {
             DB::transaction(function () use (
                 $booking,
+                $validated,
                 &$completed,
                 &$credited,
                 &$error

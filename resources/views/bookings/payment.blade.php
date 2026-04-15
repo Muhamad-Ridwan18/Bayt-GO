@@ -90,13 +90,6 @@
 @endphp
 
 <x-app-layout>
-    <x-slot name="header">
-        <div class="flex flex-col gap-1 sm:flex-row sm:items-center sm:justify-between">
-            <h2 class="font-semibold text-xl text-slate-800 leading-tight">Pembayaran Midtrans</h2>
-            <a href="{{ route('bookings.show', $booking) }}" class="text-sm font-semibold text-brand-700 hover:text-brand-800">Kembali ke detail</a>
-        </div>
-    </x-slot>
-
     <div class="py-8 sm:py-12 bg-slate-50/70">
         <div class="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 grid grid-cols-1 lg:grid-cols-3 gap-5">
             <section class="lg:col-span-2 space-y-5">
