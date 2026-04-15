@@ -334,6 +334,12 @@
                                             </span>
                                             <span class="text-xs font-semibold leading-tight">{{ __('dashboard.verify') }}</span>
                                         </a>
+                                        <a href="{{ route('admin.users.index') }}" class="group flex flex-col items-center gap-2 rounded-2xl border border-white/20 bg-white/5 px-3 py-4 text-center text-white transition hover:scale-[1.02] hover:bg-white/10">
+                                            <span class="flex h-11 w-11 items-center justify-center rounded-xl bg-cyan-500/30 text-cyan-100" aria-hidden="true">
+                                                <svg class="h-5 w-5" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M15 19.128a9.38 9.38 0 002.625.372 9.337 9.337 0 004.121-.952 4.125 4.125 0 00-7.813-2.387M15 19.128v-.003c0-1.113-.285-2.16-.786-3.07M15 19.128v.106A12.318 12.318 0 018.624 21c-2.331 0-4.512-.645-6.374-1.766l-.001-.109a6.375 6.375 0 0111.964-3.07M12 6.375a3.375 3.375 0 11-6.75 0 3.375 3.375 0 016.75 0zm8.25 2.25a2.625 2.625 0 11-5.25 0 2.625 2.625 0 015.25 0z" /></svg>
+                                            </span>
+                                            <span class="text-xs font-semibold leading-tight">{{ __('dashboard.users') }}</span>
+                                        </a>
                                         <a href="{{ route('admin.logs.index') }}" class="group col-span-2 flex flex-col items-center gap-2 rounded-2xl border border-white/20 bg-white/5 px-3 py-4 text-center text-white transition hover:scale-[1.01] hover:bg-white/10">
                                             <span class="flex h-11 w-11 items-center justify-center rounded-xl bg-slate-500/35 text-slate-100" aria-hidden="true">
                                                 <svg class="h-5 w-5" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M3.75 6.75h16.5M3.75 12h16.5m-16.5 5.25H12" /></svg>

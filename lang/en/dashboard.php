@@ -51,6 +51,7 @@ return [
     'refund' => 'Refund',
     'withdraw' => 'Withdraw',
     'verify' => 'Verify',
+    'users' => 'Users',
     'logs_webhook' => 'Webhook logs',
     'platform_fee_note_title' => 'Platform fee note',
     'platform_fee_note_body' => '7.5% from customer + 7.5% from muthowif (15% total). Muthowif balance is credited when the customer completes the service.',

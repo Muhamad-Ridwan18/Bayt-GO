@@ -5,6 +5,7 @@ use App\Http\Controllers\Admin\BookingRefundController;
 use App\Http\Controllers\Admin\FinanceController;
 use App\Http\Controllers\Admin\LogsController;
 use App\Http\Controllers\Admin\MuthowifVerificationController;
+use App\Http\Controllers\Admin\UserManagementController;
 use App\Http\Controllers\Admin\WithdrawalsController;
 use App\Http\Controllers\Customer\BookingController as CustomerBookingController;
 use App\Http\Controllers\LocaleController;
@@ -121,6 +122,9 @@ Route::middleware('auth')->group(function () {
         });
 
     Route::middleware([EnsureUserRole::class.':admin'])->prefix('admin')->name('admin.')->group(function () {
+        Route::get('pengguna', [UserManagementController::class, 'index'])->name('users.index');
+        Route::get('pengguna/{user}/ubah', [UserManagementController::class, 'edit'])->name('users.edit');
+        Route::patch('pengguna/{user}', [UserManagementController::class, 'update'])->name('users.update');
         Route::get('refund-menunggu', [BookingRefundController::class, 'index'])->name('refunds.index');
         Route::post('refund-menunggu/{refund}/selesai', [BookingRefundController::class, 'complete'])->name('refunds.complete');
         Route::get('keuangan', [FinanceController::class, 'index'])->name('finance.index');

@@ -43,6 +43,9 @@
                         <x-nav-link :href="route('admin.muthowif.index')" :active="request()->routeIs('admin.muthowif.*')">
                             {{ __('nav.verify_muthowif') }}
                         </x-nav-link>
+                        <x-nav-link :href="route('admin.users.index')" :active="request()->routeIs('admin.users.*')">
+                            {{ __('nav.users') }}
+                        </x-nav-link>
                     @endif
                     @if (Auth::user()->isVerifiedMuthowif())
                         <x-nav-link :href="route('muthowif.pelayanan.edit')" :active="request()->routeIs('muthowif.pelayanan.*')">
@@ -138,6 +141,9 @@
                 </x-responsive-nav-link>
                 <x-responsive-nav-link :href="route('admin.muthowif.index')" :active="request()->routeIs('admin.muthowif.*')">
                     {{ __('nav.verify_muthowif') }}
+                </x-responsive-nav-link>
+                <x-responsive-nav-link :href="route('admin.users.index')" :active="request()->routeIs('admin.users.*')">
+                    {{ __('nav.users') }}
                 </x-responsive-nav-link>
             @endif
             @if (Auth::user()->isVerifiedMuthowif())

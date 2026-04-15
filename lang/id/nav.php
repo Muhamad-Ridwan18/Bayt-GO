@@ -10,6 +10,7 @@ return [
     'refund' => 'Refund',
     'withdraw' => 'Withdraw',
     'verify_muthowif' => 'Verifikasi muthowif',
+    'users' => 'Pengguna',
     'services' => 'Pelayanan',
     'day_off' => 'Jadwal libur',
     'booking_requests' => 'Permintaan booking',

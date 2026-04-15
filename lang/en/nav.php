@@ -10,6 +10,7 @@ return [
     'refund' => 'Refund',
     'withdraw' => 'Withdraw',
     'verify_muthowif' => 'Verify muthowif',
+    'users' => 'Users',
     'services' => 'Services',
     'day_off' => 'Time off',
     'booking_requests' => 'Booking requests',

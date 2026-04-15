@@ -51,6 +51,7 @@ return [
     'refund' => 'Refund',
     'withdraw' => 'Withdraw',
     'verify' => 'Verifikasi',
+    'users' => 'Pengguna',
     'logs_webhook' => 'Logs webhook',
     'platform_fee_note_title' => 'Catatan biaya platform',
     'platform_fee_note_body' => '7,5% dari customer + 7,5% dari muthowif (total 15%). Saldo muthowif masuk saat layanan diselesaikan customer.',
