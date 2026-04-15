@@ -40,8 +40,12 @@
                     <p class="mt-2 text-sm text-slate-500">Untuk pembayaran pendampingan umrah</p>
                 </div>
                 <div class="text-right text-sm">
+                    @if (filled($booking->booking_code))
+                        <p class="text-slate-500">Kode booking</p>
+                        <p class="font-mono text-xs font-semibold text-slate-800">{{ $booking->booking_code }}</p>
+                    @endif
                     @if ($payment)
-                        <p class="text-slate-500">No. order</p>
+                        <p class="{{ filled($booking->booking_code) ? 'mt-2' : '' }} text-slate-500">No. order pembayaran</p>
                         <p class="font-mono text-xs text-slate-800 break-all">{{ $payment->order_id }}</p>
                     @endif
                     <p class="mt-2 text-slate-500">Tanggal</p>

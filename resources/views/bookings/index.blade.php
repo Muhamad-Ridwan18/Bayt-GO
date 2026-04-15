@@ -61,6 +61,9 @@
                                     >
                                     <div class="min-w-0">
                                         <p class="font-semibold text-slate-900">{{ $booking->muthowifProfile->user->name }}</p>
+                                        @if (filled($booking->booking_code))
+                                            <p class="mt-0.5 font-mono text-xs font-medium text-slate-600">{{ $booking->booking_code }}</p>
+                                        @endif
                                     <p class="mt-1 text-sm text-slate-600">
                                         {{ Carbon::parse($booking->starts_on)->format('d/m/Y') }}
                                         –

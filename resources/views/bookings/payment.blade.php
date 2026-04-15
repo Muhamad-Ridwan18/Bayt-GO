@@ -229,6 +229,12 @@
                 <div class="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm">
                     <h3 class="font-semibold text-slate-900">Ringkasan pesanan</h3>
                     <dl class="mt-4 space-y-3 text-sm">
+                        @if (filled($booking->booking_code))
+                            <div class="flex justify-between gap-3">
+                                <dt class="text-slate-500">Kode booking</dt>
+                                <dd class="font-mono text-xs font-semibold text-slate-800 text-right">{{ $booking->booking_code }}</dd>
+                            </div>
+                        @endif
                         <div class="flex justify-between gap-3">
                             <dt class="text-slate-500">Order ID</dt>
                             <dd class="font-mono text-xs text-slate-700 text-right">{{ $payment->order_id }}</dd>

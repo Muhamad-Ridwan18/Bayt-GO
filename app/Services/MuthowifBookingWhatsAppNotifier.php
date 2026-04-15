@@ -47,15 +47,23 @@ class MuthowifBookingWhatsAppNotifier
             '',
             "Ada jamaah *{$customerName}* yang mengajukan pendampingan.",
             '',
-            "*Tanggal:* {$start} – {$end}",
-            "*Layanan:* {$serviceLabel}",
-            $countLine,
         ];
+
+        if (filled($booking->booking_code)) {
+            $lines[] = '*Kode booking:* '.$booking->booking_code;
+            $lines[] = '';
+        }
+
+        $lines[] = "*Tanggal:* {$start} - {$end}";
+        $lines[] = "*Layanan:* {$serviceLabel}";
+        $lines[] = $countLine;
 
         $addOnLines = $booking->resolvedAddOns()->map(fn ($addon) => '• '.$addon->name)->all();
         if ($addOnLines !== []) {
             $lines[] = '*Add-on:*';
-            $lines = array_merge($lines, $addOnLines);
+            foreach ($addOnLines as $addOnLine) {
+                $lines[] = $addOnLine;
+            }
         }
 
         $lines[] = '';
@@ -98,12 +106,18 @@ class MuthowifBookingWhatsAppNotifier
             '',
             "Booking dari *{$customerName}* sudah dibayar.",
             '',
-            "*Tanggal layanan:* {$start} – {$end}",
-            '*Status:* Siap Anda proses / dampingi sesuai kesepakatan.',
-            '',
-            '*Buka panel booking:*',
-            $url,
         ];
+
+        if (filled($booking->booking_code)) {
+            $lines[] = '*Kode booking:* '.$booking->booking_code;
+            $lines[] = '';
+        }
+
+        $lines[] = "*Tanggal layanan:* {$start} - {$end}";
+        $lines[] = '*Status:* Siap Anda proses / dampingi sesuai kesepakatan.';
+        $lines[] = '';
+        $lines[] = '*Buka panel booking:*';
+        $lines[] = $url;
 
         $this->sendToTarget($target, implode("\n", $lines), $booking->id);
     }
@@ -151,12 +165,18 @@ class MuthowifBookingWhatsAppNotifier
             '',
             "Booking Anda dengan *{$muthowifName}* sudah disetujui.",
             '',
-            "*Tanggal layanan:* {$start} – {$end}",
-            '*Status:* Menunggu pembayaran',
-            '',
-            '*Lanjutkan pembayaran di:*',
-            $url,
         ];
+
+        if (filled($booking->booking_code)) {
+            $lines[] = '*Kode booking:* '.$booking->booking_code;
+            $lines[] = '';
+        }
+
+        $lines[] = "*Tanggal layanan:* {$start} - {$end}";
+        $lines[] = '*Status:* Menunggu pembayaran';
+        $lines[] = '';
+        $lines[] = '*Lanjutkan pembayaran di:*';
+        $lines[] = $url;
 
         $this->sendToTarget($target, implode("\n", $lines), $booking->id);
     }
@@ -190,14 +210,20 @@ class MuthowifBookingWhatsAppNotifier
             '',
             "*{$customerName}* mengajukan pergantian tanggal layanan.",
             '',
-            "*Tanggal saat ini:* {$prevStart} – {$prevEnd}",
-            "*Tanggal diajukan:* {$newStart} – {$newEnd}",
-            '',
-            '*Status:* Menunggu keputusan Anda',
-            '',
-            '*Buka detail booking:*',
-            $url,
         ];
+
+        if (filled($booking->booking_code)) {
+            $lines[] = '*Kode booking:* '.$booking->booking_code;
+            $lines[] = '';
+        }
+
+        $lines[] = "*Tanggal saat ini:* {$prevStart} - {$prevEnd}";
+        $lines[] = "*Tanggal diajukan:* {$newStart} - {$newEnd}";
+        $lines[] = '';
+        $lines[] = '*Status:* Menunggu keputusan Anda';
+        $lines[] = '';
+        $lines[] = '*Buka detail booking:*';
+        $lines[] = $url;
 
         $this->sendToTarget($target, implode("\n", $lines), $booking->id);
     }
@@ -241,13 +267,19 @@ class MuthowifBookingWhatsAppNotifier
             '',
             'Pengajuan pergantian tanggal Anda sudah kami teruskan ke *'.$muthowifName.'*.',
             '',
-            "*Tanggal yang diajukan:* {$newStart} – {$newEnd}",
-            '',
-            'Anda akan mendapat notifikasi lagi setelah muthowif memutuskan.',
-            '',
-            '*Lihat detail booking:*',
-            $url,
         ];
+
+        if (filled($booking->booking_code)) {
+            $lines[] = '*Kode booking:* '.$booking->booking_code;
+            $lines[] = '';
+        }
+
+        $lines[] = "*Tanggal yang diajukan:* {$newStart} - {$newEnd}";
+        $lines[] = '';
+        $lines[] = 'Anda akan mendapat notifikasi lagi setelah muthowif memutuskan.';
+        $lines[] = '';
+        $lines[] = '*Lihat detail booking:*';
+        $lines[] = $url;
 
         $this->sendToTarget($target, implode("\n", $lines), $booking->id);
     }
@@ -291,11 +323,17 @@ class MuthowifBookingWhatsAppNotifier
             '',
             "Muthowif *{$muthowifName}* menyetujui pergantian tanggal layanan Anda.",
             '',
-            "*Tanggal layanan baru:* {$start} – {$end}",
-            '',
-            '*Lihat detail booking:*',
-            $url,
         ];
+
+        if (filled($booking->booking_code)) {
+            $lines[] = '*Kode booking:* '.$booking->booking_code;
+            $lines[] = '';
+        }
+
+        $lines[] = "*Tanggal layanan baru:* {$start} - {$end}";
+        $lines[] = '';
+        $lines[] = '*Lihat detail booking:*';
+        $lines[] = $url;
 
         $note = $rescheduleRequest->muthowif_note;
         if (filled($note)) {
@@ -346,11 +384,17 @@ class MuthowifBookingWhatsAppNotifier
             '',
             "Muthowif *{$muthowifName}* tidak menyetujui pergantian tanggal.",
             '',
-            "*Tetap berlaku:* {$unchangedStart} – {$unchangedEnd}",
-            '',
-            '*Lihat detail booking:*',
-            $url,
         ];
+
+        if (filled($booking->booking_code)) {
+            $lines[] = '*Kode booking:* '.$booking->booking_code;
+            $lines[] = '';
+        }
+
+        $lines[] = "*Tetap berlaku:* {$unchangedStart} - {$unchangedEnd}";
+        $lines[] = '';
+        $lines[] = '*Lihat detail booking:*';
+        $lines[] = $url;
 
         $note = $rescheduleRequest->muthowif_note;
         if (filled($note)) {

@@ -39,6 +39,9 @@
                             <div class="flex flex-col lg:flex-row lg:items-start lg:justify-between gap-4">
                                 <div class="min-w-0">
                                     <p class="font-semibold text-slate-900">{{ $booking->customer->name }}</p>
+                                    @if (filled($booking->booking_code))
+                                        <p class="mt-0.5 font-mono text-xs font-medium text-slate-600">{{ $booking->booking_code }}</p>
+                                    @endif
                                     <p class="mt-0.5 text-sm text-slate-500">{{ $booking->customer->email }}</p>
                                     <p class="mt-2 text-sm text-slate-700">
                                         {{ Carbon::parse($booking->starts_on)->format('d/m/Y') }}

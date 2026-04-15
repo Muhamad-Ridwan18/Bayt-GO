@@ -18,6 +18,7 @@ use App\Models\MuthowifBooking;
 use App\Models\MuthowifProfile;
 use App\Models\MuthowifService;
 use App\Models\MuthowifServiceAddOn;
+use App\Services\BookingOrderCodeService;
 use App\Services\BookingRefundExecutor;
 use App\Support\BookingPostPayRules;
 use App\Support\BookingRefundFee;
@@ -415,7 +416,10 @@ class BookingController extends Controller
                 ]);
             }
 
+            $bookingCode = app(BookingOrderCodeService::class)->allocateNextWithinTransaction();
+
             return MuthowifBooking::query()->create([
+                'booking_code' => $bookingCode,
                 'muthowif_profile_id' => $profile->id,
                 'customer_id' => $request->user()->id,
                 'service_type' => $serviceType,

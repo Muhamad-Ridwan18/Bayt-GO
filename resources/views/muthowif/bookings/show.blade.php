@@ -32,6 +32,12 @@
             </div>
 
             <div class="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm space-y-4">
+                @if (filled($b->booking_code))
+                    <div class="rounded-xl border border-slate-100 bg-slate-50/80 px-3 py-2 text-sm">
+                        <p class="text-xs font-medium text-slate-500">Kode booking</p>
+                        <p class="font-mono font-semibold tracking-tight text-slate-900">{{ $b->booking_code }}</p>
+                    </div>
+                @endif
                 <div>
                     <p class="text-sm text-slate-500">Jamaah</p>
                     <p class="text-lg font-semibold text-slate-900">{{ $b->customer->name }}</p>

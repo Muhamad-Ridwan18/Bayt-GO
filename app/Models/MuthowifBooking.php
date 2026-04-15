@@ -18,6 +18,7 @@ class MuthowifBooking extends Model
     use HasUuids;
 
     protected $fillable = [
+        'booking_code',
         'muthowif_profile_id',
         'customer_id',
         'service_type',
