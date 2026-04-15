@@ -245,6 +245,8 @@
                                                     </div>
                                                 @endif
 
+                                                @include('bookings.partials.booking-documents', ['booking' => $booking, 'routeName' => 'bookings.documents.show', 'compact' => true])
+
                                                 @if ($booking->payment_status === PaymentStatus::Paid && $booking->total_amount !== null)
                                                     <p class="text-sm font-semibold tabular-nums text-slate-800">
                                                         {{ __('bookings.index.total_line', ['amount' => IndonesianNumber::formatThousands((string) (int) round((float) $booking->total_amount))]) }}

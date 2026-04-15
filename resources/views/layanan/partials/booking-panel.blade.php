@@ -96,10 +96,28 @@
                             group: { min: {{ (int) $gBounds['min'] }}, max: {{ (int) $gBounds['max'] }} },
                             private: { min: {{ (int) $pBounds['min'] }}, max: {{ (int) $pBounds['max'] }} },
                         },
+                        tcOpen: false,
+                        tcAgree: false,
                         currentBounds() {
                             return this.serviceType === 'group' ? this.bounds.group : this.bounds.private;
                         },
+                        openBookingTc() {
+                            if (! this.$refs.bookingForm.checkValidity()) {
+                                this.$refs.bookingForm.reportValidity();
+                                return;
+                            }
+                            this.tcAgree = false;
+                            this.tcOpen = true;
+                        },
+                        submitAfterTc() {
+                            if (! this.tcAgree) {
+                                return;
+                            }
+                            this.tcOpen = false;
+                            this.$nextTick(() => this.$refs.bookingForm.requestSubmit());
+                        },
                     }"
+                    @keydown.escape.window="if (tcOpen) tcOpen = false"
                 >
                     <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 rounded-2xl border border-slate-200 bg-white px-4 py-3 shadow-sm">
                         <div>
@@ -117,7 +135,7 @@
                         </ul>
                     @endif
 
-                    <form id="booking-form-{{ $profile->id }}" method="POST" action="{{ route('bookings.store') }}" enctype="multipart/form-data" class="space-y-5">
+                    <form id="booking-form-{{ $profile->id }}" x-ref="bookingForm" method="POST" action="{{ route('bookings.store') }}" enctype="multipart/form-data" class="space-y-5">
                         @csrf
                         <input type="hidden" name="muthowif_profile_id" value="{{ $profile->id }}">
                         <input type="hidden" name="start_date" value="{{ $intent['start'] }}">
@@ -330,7 +348,8 @@
                         </fieldset>
 
                         <div class="flex flex-col gap-3 border-t border-slate-200 pt-4 sm:flex-row sm:items-center sm:justify-between sm:gap-4 sm:pt-3">
-                            <button type="submit"
+                            <button type="button"
+                                    @click="openBookingTc()"
                                     class="order-1 inline-flex w-full items-center justify-center rounded-2xl bg-gradient-to-r from-brand-600 to-brand-700 px-8 py-4 text-base font-bold text-white shadow-lg shadow-brand-900/20 transition hover:from-brand-500 hover:to-brand-600 focus:outline-none focus:ring-2 focus:ring-brand-500 focus:ring-offset-2 sm:order-2 sm:w-auto sm:py-3.5 sm:text-sm">
                                 {{ __('marketplace.panel.submit') }}
                             </button>
@@ -339,6 +358,52 @@
                             </p>
                         </div>
                     </form>
+
+                    <div
+                        x-show="tcOpen"
+                        x-cloak
+                        x-transition:enter="ease-out duration-200"
+                        x-transition:enter-start="opacity-0"
+                        x-transition:enter-end="opacity-100"
+                        x-transition:leave="ease-in duration-150"
+                        x-transition:leave-start="opacity-100"
+                        x-transition:leave-end="opacity-0"
+                        class="fixed inset-0 z-[100] flex items-end justify-center p-4 sm:items-center"
+                        role="dialog"
+                        aria-modal="true"
+                        :aria-labelledby="'tc-title-{{ $profile->id }}'"
+                    >
+                        <div class="absolute inset-0 bg-slate-900/60 backdrop-blur-sm" @click="tcOpen = false" aria-hidden="true"></div>
+                        <div
+                            class="relative z-10 flex max-h-[min(90vh,40rem)] w-full max-w-lg flex-col overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-2xl ring-1 ring-slate-900/10 sm:rounded-3xl"
+                            @click.stop
+                        >
+                            <div class="border-b border-slate-100 bg-gradient-to-r from-slate-50 to-white px-5 py-4 sm:px-6">
+                                <h3 id="tc-title-{{ $profile->id }}" class="text-base font-bold text-slate-900">{{ __('marketplace.panel.tc_title') }}</h3>
+                            </div>
+                            <div class="min-h-0 flex-1 overflow-y-auto px-5 py-4 text-sm leading-relaxed text-slate-600 sm:px-6">
+                                {!! __('marketplace.panel.tc_body_html') !!}
+                                <label class="mt-5 flex cursor-pointer items-start gap-3 rounded-xl border border-slate-200 bg-slate-50/80 p-3 ring-1 ring-slate-100">
+                                    <input type="checkbox" x-model="tcAgree" class="mt-0.5 rounded border-slate-300 text-brand-600 focus:ring-brand-500" />
+                                    <span class="text-sm font-medium text-slate-800">{{ __('marketplace.panel.tc_checkbox') }}</span>
+                                </label>
+                            </div>
+                            <div class="flex flex-col-reverse gap-2 border-t border-slate-100 bg-slate-50/80 px-5 py-4 sm:flex-row sm:justify-end sm:gap-3 sm:px-6">
+                                <button type="button" @click="tcOpen = false" class="inline-flex w-full items-center justify-center rounded-xl border border-slate-200 bg-white px-4 py-3 text-sm font-semibold text-slate-800 shadow-sm transition hover:bg-slate-50 sm:w-auto sm:py-2.5">
+                                    {{ __('marketplace.panel.tc_cancel') }}
+                                </button>
+                                <button
+                                    type="button"
+                                    @click="submitAfterTc()"
+                                    :disabled="!tcAgree"
+                                    :class="tcAgree ? 'bg-gradient-to-r from-brand-600 to-brand-700 hover:from-brand-500 hover:to-brand-600' : 'cursor-not-allowed bg-slate-300 text-slate-500'"
+                                    class="inline-flex w-full items-center justify-center rounded-xl px-4 py-3 text-sm font-bold text-white shadow-md transition sm:w-auto sm:py-2.5"
+                                >
+                                    {{ __('marketplace.panel.tc_submit') }}
+                                </button>
+                            </div>
+                        </div>
+                    </div>
                 </div>
             @endif
         @endif

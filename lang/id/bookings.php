@@ -89,6 +89,8 @@ return [
         'service' => 'Layanan',
         'documents_heading' => 'Dokumen perjalanan',
         'documents_intro' => 'Berkas yang Anda lampirkan saat mengajukan booking.',
+        'documents_intro_inline' => 'Pratinjau tampil di bawah (gambar atau PDF). Tautan di kanan untuk mengunduh berkas.',
+        'doc_open_tab' => 'Buka di tab baru',
         'doc_outbound' => 'Tiket pesawat (berangkat)',
         'doc_return' => 'Tiket pesawat (pulang)',
         'doc_itinerary' => 'Itinerary',

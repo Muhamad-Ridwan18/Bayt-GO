@@ -129,6 +129,8 @@
                                                 </ul>
                                             @endif
 
+                                            @include('bookings.partials.booking-documents', ['booking' => $booking, 'routeName' => 'muthowif.bookings.documents.show', 'compact' => true])
+
                                             <div class="flex flex-wrap items-center gap-2">
                                                 @if ($st === BookingStatus::Confirmed)
                                                     <span class="inline-flex items-center rounded-full px-2.5 py-1 text-xs font-semibold ring-1 {{ $booking->payment_status === PaymentStatus::Paid ? 'bg-brand-50 text-brand-900 ring-brand-200/90' : 'bg-orange-50 text-orange-900 ring-orange-200/90' }}">

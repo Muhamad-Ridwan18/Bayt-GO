@@ -481,7 +481,7 @@ class BookingController extends Controller
             ->with('status', __('bookings.flash.booking_submitted'));
     }
 
-    public function downloadDocument(MuthowifBooking $booking, string $type): Response
+    public function downloadDocument(Request $request, MuthowifBooking $booking, string $type): Response
     {
         $this->authorize('view', $booking);
 
@@ -507,7 +507,9 @@ class BookingController extends Controller
             abort(404);
         }
 
-        return $disk->response($path, basename($path));
+        $disposition = $request->boolean('download') ? 'attachment' : 'inline';
+
+        return $disk->response($path, basename($path), [], $disposition);
     }
 
     public function storeRefundRequest(Request $request, MuthowifBooking $booking): RedirectResponse

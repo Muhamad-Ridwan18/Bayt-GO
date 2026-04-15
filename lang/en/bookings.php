@@ -89,6 +89,8 @@ return [
         'service' => 'Service',
         'documents_heading' => 'Travel documents',
         'documents_intro' => 'Files you attached when submitting this booking.',
+        'documents_intro_inline' => 'Preview below (image or PDF). Use the link on the right to download the file.',
+        'doc_open_tab' => 'Open in new tab',
         'doc_outbound' => 'Flight ticket (outbound)',
         'doc_return' => 'Flight ticket (return)',
         'doc_itinerary' => 'Itinerary',
