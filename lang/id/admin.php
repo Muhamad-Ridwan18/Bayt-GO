@@ -65,7 +65,7 @@ return [
     ],
     'refunds' => [
         'title' => 'Refund menunggu transfer manual',
-        'subtitle' => 'Jamaah sudah mengajukan refund; transfer nominal bersih ke rekening jamaah lalu tandai selesai.',
+        'subtitle' => 'Transfer nominal bersih, unggah bukti, lalu tandai selesai. Bukti dikirim ke WhatsApp jamaah.',
         'back_finance' => '← Keuangan',
         'empty' => 'Tidak ada refund yang menunggu transfer.',
         'submitted' => 'Diajukan',
@@ -75,7 +75,8 @@ return [
         'bank_destination' => 'Rekening tujuan',
         'customer_note' => 'Catatan jamaah',
         'admin_placeholder' => 'Catatan internal (opsional)',
-        'confirm_complete' => 'Tandai transfer refund ke jamaah sudah selesai?',
+        'transfer_proof_label' => 'Bukti transfer (wajib)',
+        'confirm_complete' => 'Tandai refund selesai? Berkas bukti akan dikirim ke WhatsApp jamaah.',
         'mark_complete' => 'Tandai transfer selesai',
     ],
     'withdrawals' => [

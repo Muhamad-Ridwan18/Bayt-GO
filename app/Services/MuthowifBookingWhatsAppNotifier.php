@@ -2,10 +2,14 @@
 
 namespace App\Services;
 
+use App\Models\BookingRefundRequest;
 use App\Models\BookingRescheduleRequest;
 use App\Models\MuthowifBooking;
+use App\Models\MuthowifWithdrawal;
+use App\Support\IndonesianNumber;
 use App\Support\PhoneNumber;
 use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Facades\Storage;
 use RuntimeException;
 
 class MuthowifBookingWhatsAppNotifier
@@ -432,6 +436,145 @@ class MuthowifBookingWhatsAppNotifier
 
             $this->sendToTarget($target, implode("\n", $lines), $booking->id);
         });
+    }
+
+    /**
+     * Admin menandai refund selesai + bukti transfer — kirim WA ke jamaah dengan lampiran.
+     */
+    public function notifyCustomerRefundTransferCompleted(BookingRefundRequest $refund): void
+    {
+        if (! config('services.fonnte.refund_transfer_proof_notify_enabled', true)) {
+            return;
+        }
+
+        $token = config('services.fonnte.token');
+        if ($token === null || $token === '') {
+            Log::debug('WhatsApp refund proof skipped: FONNTE_TOKEN kosong.');
+
+            return;
+        }
+
+        if ($refund->transfer_proof_path === null || $refund->transfer_proof_path === '') {
+            return;
+        }
+
+        $refund->loadMissing(['muthowifBooking', 'customer']);
+        $booking = $refund->muthowifBooking;
+        $customer = $refund->customer;
+        if ($customer === null || $booking === null) {
+            return;
+        }
+
+        $target = PhoneNumber::forFonnte($customer->phone);
+        if ($target === null || $target === '') {
+            Log::warning('WhatsApp refund proof skipped: nomor customer kosong atau tidak valid.', [
+                'customer_id' => $customer->id,
+                'refund_id' => $refund->id,
+            ]);
+
+            return;
+        }
+
+        $locale = $this->localeForUser($customer->locale);
+        $proofUrl = url(Storage::disk('public')->url($refund->transfer_proof_path));
+        $ext = strtolower((string) pathinfo($refund->transfer_proof_path, PATHINFO_EXTENSION));
+        $filename = $ext === 'pdf' ? basename($refund->transfer_proof_path) : null;
+        $amountFmt = IndonesianNumber::formatThousands((string) (int) round((float) $refund->net_refund_customer));
+        $appName = config('app.name', 'BaytGo');
+        $detailUrl = route('bookings.show', $booking);
+
+        $this->withLocale($locale, function () use ($refund, $booking, $target, $locale, $proofUrl, $filename, $amountFmt, $appName, $detailUrl): void {
+            $lines = [
+                __('whatsapp.customer.refund_transfer_done.headline', ['app' => $appName], $locale),
+                '',
+                __('whatsapp.customer.refund_transfer_done.body', [], $locale),
+                '',
+                __('whatsapp.customer.refund_transfer_done.amount', ['amount' => $amountFmt], $locale),
+            ];
+
+            if (filled($booking->booking_code)) {
+                $lines[] = __('whatsapp.customer.refund_transfer_done.booking_code', ['code' => $booking->booking_code], $locale);
+            }
+
+            $lines[] = '';
+            $lines[] = __('whatsapp.customer.refund_transfer_done.view_detail', [], $locale);
+            $lines[] = $detailUrl;
+            $lines[] = '';
+            $lines[] = __('whatsapp.customer.refund_transfer_done.attachment_caption', [], $locale);
+
+            $message = implode("\n", $lines);
+            $this->sendFileProofToTarget($target, $message, $proofUrl, $filename, (string) $refund->getKey());
+        });
+    }
+
+    /**
+     * Admin menandai withdraw selesai + bukti — kirim WA ke muthowif dengan lampiran.
+     */
+    public function notifyMuthowifWithdrawalTransferCompleted(MuthowifWithdrawal $withdrawal): void
+    {
+        if (! config('services.fonnte.withdrawal_transfer_proof_notify_enabled', true)) {
+            return;
+        }
+
+        $token = config('services.fonnte.token');
+        if ($token === null || $token === '') {
+            Log::debug('WhatsApp withdrawal proof skipped: FONNTE_TOKEN kosong.');
+
+            return;
+        }
+
+        if ($withdrawal->transfer_proof_path === null || $withdrawal->transfer_proof_path === '') {
+            return;
+        }
+
+        $withdrawal->loadMissing(['muthowifProfile.user']);
+        $profile = $withdrawal->muthowifProfile;
+        if ($profile === null) {
+            return;
+        }
+
+        $target = $this->resolveTarget($profile->phone, $profile->id, (string) $withdrawal->getKey());
+        if ($target === null) {
+            return;
+        }
+
+        $locale = $this->localeForUser($profile->user?->locale);
+        $proofUrl = url(Storage::disk('public')->url($withdrawal->transfer_proof_path));
+        $ext = strtolower((string) pathinfo($withdrawal->transfer_proof_path, PATHINFO_EXTENSION));
+        $filename = $ext === 'pdf' ? basename($withdrawal->transfer_proof_path) : null;
+        $amountFmt = IndonesianNumber::formatThousands((string) (int) round((float) $withdrawal->amount));
+        $appName = config('app.name', 'BaytGo');
+        $panelUrl = route('muthowif.withdrawals.index');
+
+        $this->withLocale($locale, function () use ($withdrawal, $target, $locale, $proofUrl, $filename, $amountFmt, $appName, $panelUrl): void {
+            $lines = [
+                __('whatsapp.muthowif.withdrawal_transfer_done.headline', ['app' => $appName], $locale),
+                '',
+                __('whatsapp.muthowif.withdrawal_transfer_done.body', [], $locale),
+                '',
+                __('whatsapp.muthowif.withdrawal_transfer_done.amount', ['amount' => $amountFmt], $locale),
+                '',
+                __('whatsapp.muthowif.withdrawal_transfer_done.open_panel', [], $locale),
+                $panelUrl,
+                '',
+                __('whatsapp.muthowif.withdrawal_transfer_done.attachment_caption', [], $locale),
+            ];
+
+            $message = implode("\n", $lines);
+            $this->sendFileProofToTarget($target, $message, $proofUrl, $filename, (string) $withdrawal->getKey());
+        });
+    }
+
+    private function sendFileProofToTarget(string $target, string $message, string $proofPublicUrl, ?string $filenameForNonImage, string $contextId): void
+    {
+        try {
+            $this->fonnte->sendMessageWithPublicFileUrl($target, $message, $proofPublicUrl, $filenameForNonImage);
+        } catch (RuntimeException $e) {
+            Log::warning('WhatsApp notify with attachment failed', [
+                'context_id' => $contextId,
+                'error' => $e->getMessage(),
+            ]);
+        }
     }
 
     private function localeForUser(?string $locale): string

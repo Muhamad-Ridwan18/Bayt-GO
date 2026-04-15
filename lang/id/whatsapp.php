@@ -34,6 +34,13 @@ return [
             'status' => '*Status:* Menunggu keputusan Anda',
             'open_detail' => '*Buka detail booking:*',
         ],
+        'withdrawal_transfer_done' => [
+            'headline' => '*:app* — withdraw sudah ditransfer',
+            'body' => 'Pencairan withdraw Anda sudah diproses. Lampiran: bukti transfer.',
+            'amount' => '*Nominal:* Rp :amount',
+            'open_panel' => '*Withdraw:*',
+            'attachment_caption' => '_(Bukti transfer terlampir di atas.)_',
+        ],
     ],
     'customer' => [
         'approved' => [
@@ -67,6 +74,14 @@ return [
             'still' => '*Tetap berlaku:* :start - :end',
             'view_detail' => '*Lihat detail booking:*',
             'note_heading' => '*Catatan muthowif:*',
+        ],
+        'refund_transfer_done' => [
+            'headline' => '*:app* — refund sudah ditransfer',
+            'body' => 'Transfer refund Anda sudah selesai. Lampiran: bukti transfer.',
+            'amount' => '*Nominal bersih:* Rp :amount',
+            'booking_code' => '*Kode booking:* :code',
+            'view_detail' => '*Riwayat booking:*',
+            'attachment_caption' => '_(Bukti transfer terlampir di atas.)_',
         ],
     ],
 ];

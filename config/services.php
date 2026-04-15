@@ -46,6 +46,10 @@ return [
         'payment_notify_enabled' => env('FONNTE_PAYMENT_NOTIFY_ENABLED', true),
         /** WhatsApp ke customer setelah booking disetujui muthowif. */
         'customer_booking_approved_notify_enabled' => env('FONNTE_CUSTOMER_BOOKING_APPROVED_NOTIFY_ENABLED', true),
+        /** WA ke jamaah: bukti transfer refund (setelah admin upload + tandai selesai). */
+        'refund_transfer_proof_notify_enabled' => env('FONNTE_REFUND_TRANSFER_PROOF_NOTIFY_ENABLED', true),
+        /** WA ke muthowif: bukti transfer withdraw (setelah admin tandai selesai). */
+        'withdrawal_transfer_proof_notify_enabled' => env('FONNTE_WITHDRAWAL_TRANSFER_PROOF_NOTIFY_ENABLED', true),
     ],
 
     'midtrans' => [

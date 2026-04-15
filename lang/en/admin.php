@@ -65,7 +65,7 @@ return [
     ],
     'refunds' => [
         'title' => 'Refunds awaiting manual transfer',
-        'subtitle' => 'Pilgrims have requested refunds; transfer the net amount to their account then mark complete.',
+        'subtitle' => 'Transfer the net amount, upload proof, then mark complete. Proof is sent to the pilgrim on WhatsApp.',
         'back_finance' => '← Finance',
         'empty' => 'No refunds are waiting for transfer.',
         'submitted' => 'Submitted',
@@ -75,7 +75,8 @@ return [
         'bank_destination' => 'Destination account',
         'customer_note' => 'Pilgrim note',
         'admin_placeholder' => 'Internal note (optional)',
-        'confirm_complete' => 'Mark this refund transfer to the pilgrim as complete?',
+        'transfer_proof_label' => 'Transfer proof (required)',
+        'confirm_complete' => 'Mark this refund complete? The proof file will be sent to the pilgrim via WhatsApp.',
         'mark_complete' => 'Mark transfer complete',
     ],
     'withdrawals' => [

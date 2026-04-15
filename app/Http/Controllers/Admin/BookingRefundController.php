@@ -5,10 +5,12 @@ namespace App\Http\Controllers\Admin;
 use App\Enums\BookingChangeRequestStatus;
 use App\Enums\PaymentStatus;
 use App\Http\Controllers\Controller;
+use App\Jobs\NotifyCustomerOfRefundTransferProof;
 use App\Models\BookingRefundRequest;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Storage;
 use Illuminate\View\View;
 
 class BookingRefundController extends Controller
@@ -38,6 +40,7 @@ class BookingRefundController extends Controller
 
         $validated = $request->validate([
             'admin_note' => ['nullable', 'string', 'max:2000'],
+            'transfer_proof' => ['required', 'file', 'mimes:jpg,jpeg,png,webp,pdf', 'max:4096'],
         ]);
 
         if (! $refund->isPending()) {
@@ -59,8 +62,10 @@ class BookingRefundController extends Controller
                 ->with('error', 'Status pembayaran booking tidak menunggu refund.');
         }
 
+        $proofPath = $request->file('transfer_proof')->store('refunds/proofs', 'public');
+
         try {
-            DB::transaction(function () use ($refund, $booking, $request, $validated): void {
+            DB::transaction(function () use ($refund, $booking, $request, $validated, $proofPath): void {
                 $refund->refresh()->lockForUpdate();
                 $booking->refresh()->lockForUpdate();
 
@@ -77,6 +82,7 @@ class BookingRefundController extends Controller
                     'decided_at' => now(),
                     'decided_by' => $request->user()->id,
                     'admin_note' => filled($validated['admin_note'] ?? null) ? trim((string) $validated['admin_note']) : null,
+                    'transfer_proof_path' => $proofPath,
                 ]);
 
                 $booking->update([
@@ -84,13 +90,18 @@ class BookingRefundController extends Controller
                 ]);
             });
         } catch (\Throwable $e) {
+            Storage::disk('public')->delete($proofPath);
+
             return redirect()
                 ->route('admin.refunds.index')
+                ->withInput()
                 ->with('error', $e->getMessage());
         }
 
+        NotifyCustomerOfRefundTransferProof::dispatchAfterResponse((string) $refund->getKey());
+
         return redirect()
             ->route('admin.refunds.index')
-            ->with('status', 'Transfer refund dicatat selesai.');
+            ->with('status', 'Transfer refund dicatat selesai. Bukti akan dikirim ke WhatsApp jamaah jika nomor valid.');
     }
 }

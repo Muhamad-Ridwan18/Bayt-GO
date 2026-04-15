@@ -34,6 +34,13 @@ return [
             'status' => '*Status:* Awaiting your decision',
             'open_detail' => '*Open booking details:*',
         ],
+        'withdrawal_transfer_done' => [
+            'headline' => '*:app* — withdrawal payout sent',
+            'body' => 'Your withdrawal has been paid. Attachment: transfer proof.',
+            'amount' => '*Amount:* Rp :amount',
+            'open_panel' => '*Withdrawals:*',
+            'attachment_caption' => '_(Proof of transfer is attached above.)_',
+        ],
     ],
     'customer' => [
         'approved' => [
@@ -67,6 +74,14 @@ return [
             'still' => '*Still scheduled:* :start - :end',
             'view_detail' => '*View booking:*',
             'note_heading' => '*Guide note:*',
+        ],
+        'refund_transfer_done' => [
+            'headline' => '*:app* — refund transfer completed',
+            'body' => 'Your refund transfer has been completed. Attachment: transfer proof.',
+            'amount' => '*Net amount:* Rp :amount',
+            'booking_code' => '*Booking code:* :code',
+            'view_detail' => '*Booking record:*',
+            'attachment_caption' => '_(Proof of transfer is attached above.)_',
         ],
     ],
 ];

@@ -29,6 +29,7 @@ class BookingRefundRequest extends Model
         'midtrans_refund_key',
         'midtrans_refunded_at',
         'midtrans_refund_response',
+        'transfer_proof_path',
         'decided_at',
         'decided_by',
     ];

@@ -148,7 +148,7 @@
                 @csrf
                 <div>
                     <label for="transfer_proof" class="block text-xs font-semibold uppercase tracking-wide text-slate-500">{{ __('admin.withdrawals.upload_label') }}</label>
-                    <input id="transfer_proof" type="file" name="transfer_proof" accept="image/png,image/jpeg,image/webp" required class="mt-2 block w-full text-xs text-slate-600 file:mr-2 file:rounded-lg file:border-0 file:bg-slate-100 file:px-2 file:py-1 file:font-semibold file:text-slate-700">
+                    <input id="transfer_proof" type="file" name="transfer_proof" accept="image/png,image/jpeg,image/webp,application/pdf" required class="mt-2 block w-full text-xs text-slate-600 file:mr-2 file:rounded-lg file:border-0 file:bg-slate-100 file:px-2 file:py-1 file:font-semibold file:text-slate-700">
                     <p class="mt-1 text-xs text-slate-500">{{ __('admin.withdrawals.upload_hint') }}</p>
                 </div>
                 <div class="flex gap-2">

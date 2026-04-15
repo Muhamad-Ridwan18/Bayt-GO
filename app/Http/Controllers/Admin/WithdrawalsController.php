@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
+use App\Jobs\NotifyMuthowifOfWithdrawalTransferProof;
 use App\Models\MuthowifProfile;
 use App\Models\MuthowifWithdrawal;
 use Illuminate\Http\RedirectResponse;
@@ -88,7 +89,7 @@ class WithdrawalsController extends Controller
         abort_unless($withdrawal->status === 'processing', 409);
 
         $validated = $request->validate([
-            'transfer_proof' => ['required', 'image', 'mimes:jpg,jpeg,png,webp', 'max:4096'],
+            'transfer_proof' => ['required', 'file', 'mimes:jpg,jpeg,png,webp,pdf', 'max:4096'],
         ]);
 
         $proofPath = $validated['transfer_proof']->store('withdrawals/proofs', 'public');
@@ -99,9 +100,11 @@ class WithdrawalsController extends Controller
             'transfer_proof_path' => $proofPath,
         ]);
 
+        NotifyMuthowifOfWithdrawalTransferProof::dispatchAfterResponse((string) $withdrawal->getKey());
+
         return redirect()
             ->route('admin.withdrawals.index')
-            ->with('status', 'Transfer withdraw dicatat selesai.');
+            ->with('status', 'Transfer withdraw dicatat selesai. Bukti akan dikirim ke WhatsApp muthowif jika nomor valid.');
     }
 
     /**
