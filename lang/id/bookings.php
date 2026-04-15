@@ -140,6 +140,21 @@ return [
         'submit_review' => 'Kirim review',
     ],
 
+    'chat' => [
+        'title' => 'Obrolan booking',
+        'intro_open' => 'Ngobrol dengan pihak lain tentang layanan ini. Chat aktif setelah pembayaran lunas sampai layanan diselesaikan.',
+        'intro_closed' => 'Riwayat obrolan untuk booking ini. Obrolan ditutup otomatis setelah layanan selesai.',
+        'placeholder' => 'Tulis pesan…',
+        'send' => 'Kirim',
+        'sending' => 'Mengirim…',
+        'closed_banner' => 'Pesan baru tidak bisa dikirim — layanan booking ini sudah selesai.',
+        'empty' => 'Belum ada pesan. Mulai percakapan.',
+        'loading' => 'Memuat pesan…',
+        'load_error' => 'Gagal memuat pesan.',
+        'send_error' => 'Pesan tidak terkirim. Coba lagi.',
+        'empty_body' => 'Isi pesan tidak boleh kosong.',
+    ],
+
     'payment' => [
         'page_kicker' => 'Checkout',
         'page_title' => 'Selesaikan pembayaran',

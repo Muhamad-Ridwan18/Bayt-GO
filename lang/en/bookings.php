@@ -140,6 +140,21 @@ return [
         'submit_review' => 'Submit review',
     ],
 
+    'chat' => [
+        'title' => 'Booking chat',
+        'intro_open' => 'Message the other party about this service. Chat is available after payment until the service is marked complete.',
+        'intro_closed' => 'Message history for this booking. Chat closed automatically when the service was completed.',
+        'placeholder' => 'Type a message…',
+        'send' => 'Send',
+        'sending' => 'Sending…',
+        'closed_banner' => 'You cannot send new messages — this booking is already completed.',
+        'empty' => 'No messages yet. Start the conversation.',
+        'loading' => 'Loading messages…',
+        'load_error' => 'Could not load messages.',
+        'send_error' => 'Message could not be sent. Try again.',
+        'empty_body' => 'Message cannot be empty.',
+    ],
+
     'payment' => [
         'page_kicker' => 'Checkout',
         'page_title' => 'Complete your payment',

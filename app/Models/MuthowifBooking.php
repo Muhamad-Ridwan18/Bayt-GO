@@ -89,6 +89,22 @@ class MuthowifBooking extends Model
         return $this->hasMany(BookingRescheduleRequest::class, 'muthowif_booking_id');
     }
 
+    /**
+     * @return HasMany<BookingChatMessage, $this>
+     */
+    public function chatMessages(): HasMany
+    {
+        return $this->hasMany(BookingChatMessage::class, 'muthowif_booking_id');
+    }
+
+    /**
+     * Obrolan aktif: pembayaran sudah lunas dan layanan belum diselesaikan jamaah.
+     */
+    public function isBookingChatOpen(): bool
+    {
+        return $this->status === BookingStatus::Confirmed && $this->isPaid();
+    }
+
     public function pendingRefundRequest(): ?BookingRefundRequest
     {
         return $this->refundRequests()

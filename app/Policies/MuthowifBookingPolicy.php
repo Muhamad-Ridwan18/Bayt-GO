@@ -112,6 +112,33 @@ class MuthowifBookingPolicy
         return $this->muthowifOwns($user, $booking);
     }
 
+    public function viewBookingChat(User $user, MuthowifBooking $booking): bool
+    {
+        if (! $this->bookingChatParticipant($user, $booking)) {
+            return false;
+        }
+
+        if ($booking->isBookingChatOpen()) {
+            return true;
+        }
+
+        return $booking->status === BookingStatus::Completed && $booking->isPaid();
+    }
+
+    public function sendBookingChat(User $user, MuthowifBooking $booking): bool
+    {
+        return $this->bookingChatParticipant($user, $booking) && $booking->isBookingChatOpen();
+    }
+
+    private function bookingChatParticipant(User $user, MuthowifBooking $booking): bool
+    {
+        if ($user->isCustomer() && (string) $booking->customer_id === (string) $user->id) {
+            return true;
+        }
+
+        return $this->muthowifOwns($user, $booking);
+    }
+
     private function muthowifOwns(User $user, MuthowifBooking $booking): bool
     {
         if (! $user->isVerifiedMuthowif() || ! $user->muthowifProfile) {

@@ -7,6 +7,7 @@ use App\Http\Controllers\Admin\LogsController;
 use App\Http\Controllers\Admin\MuthowifVerificationController;
 use App\Http\Controllers\Admin\UserManagementController;
 use App\Http\Controllers\Admin\WithdrawalsController;
+use App\Http\Controllers\BookingChatController;
 use App\Http\Controllers\Customer\BookingController as CustomerBookingController;
 use App\Http\Controllers\LocaleController;
 use App\Http\Controllers\Muthowif\BookingController as MuthowifBookingController;
@@ -94,6 +95,8 @@ Route::middleware('auth')->group(function () {
         Route::post('{booking}/review', [CustomerBookingController::class, 'review'])->name('review');
         Route::post('{booking}/refund-request', [CustomerBookingController::class, 'storeRefundRequest'])->name('refund_request.store');
         Route::post('{booking}/reschedule-request', [CustomerBookingController::class, 'storeRescheduleRequest'])->name('reschedule_request.store');
+        Route::get('{booking}/chat/messages', [BookingChatController::class, 'index'])->name('chat.messages');
+        Route::post('{booking}/chat/messages', [BookingChatController::class, 'store'])->name('chat.messages.store');
         Route::get('{booking}', [CustomerBookingController::class, 'show'])->name('show');
         Route::post('{booking}/cancel', [CustomerBookingController::class, 'cancel'])->name('cancel');
     });
@@ -111,6 +114,8 @@ Route::middleware('auth')->group(function () {
             Route::delete('jadwal/{blockedDate}', [MuthowifScheduleController::class, 'destroy'])->name('jadwal.destroy');
 
             Route::get('bookings', [MuthowifBookingController::class, 'index'])->name('bookings.index');
+            Route::get('bookings/{booking}/chat/messages', [BookingChatController::class, 'index'])->name('bookings.chat.messages');
+            Route::post('bookings/{booking}/chat/messages', [BookingChatController::class, 'store'])->name('bookings.chat.messages.store');
             Route::get('bookings/{booking}', [MuthowifBookingController::class, 'show'])->name('bookings.show');
             Route::post('bookings/{booking}/confirm', [MuthowifBookingController::class, 'confirm'])->name('bookings.confirm');
             Route::post('bookings/{booking}/cancel', [MuthowifBookingController::class, 'cancel'])->name('bookings.cancel');

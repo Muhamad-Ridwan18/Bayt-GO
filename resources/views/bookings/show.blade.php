@@ -256,6 +256,14 @@
                 </div>
             @endif
 
+            @if ($b->isBookingChatOpen() || ($st === BookingStatus::Completed && $b->isPaid()))
+                @include('bookings.partials.booking-chat', [
+                    'booking' => $b,
+                    'fetchUrl' => route('bookings.chat.messages', $b),
+                    'storeUrl' => route('bookings.chat.messages.store', $b),
+                ])
+            @endif
+
             @if ($st === BookingStatus::Confirmed && $b->isPaid())
                 <div class="mt-8 space-y-6 rounded-3xl border border-slate-200/80 bg-white p-6 shadow-md shadow-slate-900/5 sm:p-8">
                     <div>
