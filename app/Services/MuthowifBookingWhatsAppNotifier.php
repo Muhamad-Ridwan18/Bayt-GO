@@ -2,6 +2,7 @@
 
 namespace App\Services;
 
+use App\Models\BookingRescheduleRequest;
 use App\Models\MuthowifBooking;
 use App\Support\PhoneNumber;
 use Illuminate\Support\Facades\Log;
@@ -156,6 +157,207 @@ class MuthowifBookingWhatsAppNotifier
             '*Lanjutkan pembayaran di:*',
             $url,
         ];
+
+        $this->sendToTarget($target, implode("\n", $lines), $booking->id);
+    }
+
+    /**
+     * Jamaah mengajukan reschedule — beri tahu muthowif (panel booking).
+     */
+    public function notifyMuthowifRescheduleRequested(MuthowifBooking $booking, BookingRescheduleRequest $rescheduleRequest): void
+    {
+        $booking->loadMissing(['muthowifProfile.user', 'customer']);
+        $profile = $booking->muthowifProfile;
+        if ($profile === null) {
+            return;
+        }
+
+        $target = $this->resolveTarget($profile->phone, $profile->id, $booking->id);
+        if ($target === null) {
+            return;
+        }
+
+        $customerName = $booking->customer?->name ?? 'Jamaah';
+        $prevStart = $rescheduleRequest->previous_starts_on->format('d/m/Y');
+        $prevEnd = $rescheduleRequest->previous_ends_on->format('d/m/Y');
+        $newStart = $rescheduleRequest->new_starts_on->format('d/m/Y');
+        $newEnd = $rescheduleRequest->new_ends_on->format('d/m/Y');
+        $appName = config('app.name', 'BaytGo');
+        $url = route('muthowif.bookings.show', $booking);
+
+        $lines = [
+            "*{$appName}* — pengajuan reschedule",
+            '',
+            "*{$customerName}* mengajukan pergantian tanggal layanan.",
+            '',
+            "*Tanggal saat ini:* {$prevStart} – {$prevEnd}",
+            "*Tanggal diajukan:* {$newStart} – {$newEnd}",
+            '',
+            '*Status:* Menunggu keputusan Anda',
+            '',
+            '*Buka detail booking:*',
+            $url,
+        ];
+
+        $this->sendToTarget($target, implode("\n", $lines), $booking->id);
+    }
+
+    /**
+     * Konfirmasi ke jamaah: pengajuan reschedule sudah masuk.
+     */
+    public function notifyCustomerRescheduleSubmitted(MuthowifBooking $booking, BookingRescheduleRequest $rescheduleRequest): void
+    {
+        $token = config('services.fonnte.token');
+        if ($token === null || $token === '') {
+            Log::debug('WhatsApp reschedule submitted skipped: FONNTE_TOKEN kosong.');
+
+            return;
+        }
+
+        $booking->loadMissing(['customer', 'muthowifProfile.user']);
+        $customer = $booking->customer;
+        if ($customer === null) {
+            return;
+        }
+
+        $target = PhoneNumber::forFonnte($customer->phone);
+        if ($target === null || $target === '') {
+            Log::warning('WhatsApp reschedule submitted skipped: nomor customer kosong atau tidak valid.', [
+                'customer_id' => $customer->id,
+                'booking_id' => $booking->id,
+            ]);
+
+            return;
+        }
+
+        $muthowifName = $booking->muthowifProfile?->user?->name ?? 'Muthowif';
+        $newStart = $rescheduleRequest->new_starts_on->format('d/m/Y');
+        $newEnd = $rescheduleRequest->new_ends_on->format('d/m/Y');
+        $appName = config('app.name', 'BaytGo');
+        $url = route('bookings.show', $booking);
+
+        $lines = [
+            "*{$appName}* — pengajuan reschedule",
+            '',
+            'Pengajuan pergantian tanggal Anda sudah kami teruskan ke *'.$muthowifName.'*.',
+            '',
+            "*Tanggal yang diajukan:* {$newStart} – {$newEnd}",
+            '',
+            'Anda akan mendapat notifikasi lagi setelah muthowif memutuskan.',
+            '',
+            '*Lihat detail booking:*',
+            $url,
+        ];
+
+        $this->sendToTarget($target, implode("\n", $lines), $booking->id);
+    }
+
+    /**
+     * Muthowif menyetujui reschedule — beri tahu jamaah (tanggal booking sudah diperbarui).
+     */
+    public function notifyCustomerRescheduleApproved(MuthowifBooking $booking, BookingRescheduleRequest $rescheduleRequest): void
+    {
+        $token = config('services.fonnte.token');
+        if ($token === null || $token === '') {
+            Log::debug('WhatsApp reschedule approved skipped: FONNTE_TOKEN kosong.');
+
+            return;
+        }
+
+        $booking->loadMissing(['customer', 'muthowifProfile.user']);
+        $customer = $booking->customer;
+        if ($customer === null) {
+            return;
+        }
+
+        $target = PhoneNumber::forFonnte($customer->phone);
+        if ($target === null || $target === '') {
+            Log::warning('WhatsApp reschedule approved skipped: nomor customer kosong atau tidak valid.', [
+                'customer_id' => $customer->id,
+                'booking_id' => $booking->id,
+            ]);
+
+            return;
+        }
+
+        $muthowifName = $booking->muthowifProfile?->user?->name ?? 'Muthowif';
+        $start = $booking->starts_on->format('d/m/Y');
+        $end = $booking->ends_on->format('d/m/Y');
+        $appName = config('app.name', 'BaytGo');
+        $url = route('bookings.show', $booking);
+
+        $lines = [
+            "*{$appName}* — reschedule disetujui",
+            '',
+            "Muthowif *{$muthowifName}* menyetujui pergantian tanggal layanan Anda.",
+            '',
+            "*Tanggal layanan baru:* {$start} – {$end}",
+            '',
+            '*Lihat detail booking:*',
+            $url,
+        ];
+
+        $note = $rescheduleRequest->muthowif_note;
+        if (filled($note)) {
+            $lines[] = '';
+            $lines[] = '*Catatan muthowif:*';
+            $lines[] = $note;
+        }
+
+        $this->sendToTarget($target, implode("\n", $lines), $booking->id);
+    }
+
+    /**
+     * Muthowif menolak reschedule — jamaah tetap pada jadwal lama.
+     */
+    public function notifyCustomerRescheduleRejected(MuthowifBooking $booking, BookingRescheduleRequest $rescheduleRequest): void
+    {
+        $token = config('services.fonnte.token');
+        if ($token === null || $token === '') {
+            Log::debug('WhatsApp reschedule rejected skipped: FONNTE_TOKEN kosong.');
+
+            return;
+        }
+
+        $booking->loadMissing(['customer', 'muthowifProfile.user']);
+        $customer = $booking->customer;
+        if ($customer === null) {
+            return;
+        }
+
+        $target = PhoneNumber::forFonnte($customer->phone);
+        if ($target === null || $target === '') {
+            Log::warning('WhatsApp reschedule rejected skipped: nomor customer kosong atau tidak valid.', [
+                'customer_id' => $customer->id,
+                'booking_id' => $booking->id,
+            ]);
+
+            return;
+        }
+
+        $muthowifName = $booking->muthowifProfile?->user?->name ?? 'Muthowif';
+        $unchangedStart = $booking->starts_on->format('d/m/Y');
+        $unchangedEnd = $booking->ends_on->format('d/m/Y');
+        $appName = config('app.name', 'BaytGo');
+        $url = route('bookings.show', $booking);
+
+        $lines = [
+            "*{$appName}* — pengajuan reschedule ditolak",
+            '',
+            "Muthowif *{$muthowifName}* tidak menyetujui pergantian tanggal.",
+            '',
+            "*Tetap berlaku:* {$unchangedStart} – {$unchangedEnd}",
+            '',
+            '*Lihat detail booking:*',
+            $url,
+        ];
+
+        $note = $rescheduleRequest->muthowif_note;
+        if (filled($note)) {
+            $lines[] = '';
+            $lines[] = '*Catatan muthowif:*';
+            $lines[] = $note;
+        }
 
         $this->sendToTarget($target, implode("\n", $lines), $booking->id);
     }

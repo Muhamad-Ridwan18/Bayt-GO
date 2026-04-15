@@ -34,6 +34,9 @@
                         <x-nav-link :href="route('admin.finance.index')" :active="request()->routeIs('admin.finance.*')">
                             Keuangan
                         </x-nav-link>
+                        <x-nav-link :href="route('admin.refunds.index')" :active="request()->routeIs('admin.refunds.*')">
+                            Refund
+                        </x-nav-link>
                         <x-nav-link :href="route('admin.withdrawals.index')" :active="request()->routeIs('admin.withdrawals.*')">
                             Withdraw
                         </x-nav-link>
@@ -123,6 +126,12 @@
             @if (Auth::user()->isAdmin())
                 <x-responsive-nav-link :href="route('admin.finance.index')" :active="request()->routeIs('admin.finance.*')">
                     Keuangan
+                </x-responsive-nav-link>
+                <x-responsive-nav-link :href="route('admin.refunds.index')" :active="request()->routeIs('admin.refunds.*')">
+                    Refund
+                </x-responsive-nav-link>
+                <x-responsive-nav-link :href="route('admin.withdrawals.index')" :active="request()->routeIs('admin.withdrawals.*')">
+                    Withdraw
                 </x-responsive-nav-link>
                 <x-responsive-nav-link :href="route('admin.muthowif.index')" :active="request()->routeIs('admin.muthowif.*')">
                     Verifikasi muthowif

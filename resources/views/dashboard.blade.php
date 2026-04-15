@@ -116,6 +116,9 @@
                         $pendingWithdrawCount = (int) \App\Models\MuthowifWithdrawal::query()
                             ->where('status', 'pending_approval')
                             ->count();
+                        $pendingRefundCount = (int) \App\Models\BookingRefundRequest::query()
+                            ->where('status', \App\Enums\BookingChangeRequestStatus::Pending)
+                            ->count();
                         $fmt = fn (float|int $n) => \App\Support\IndonesianNumber::formatThousands((string) (int) round((float) $n));
                     @endphp
 
@@ -200,10 +203,14 @@
                                     </p>
                                     <p class="mt-2 text-xs text-white/70 leading-relaxed">
                                         Pending withdraw: <span class="font-semibold text-white">{{ $pendingWithdrawCount }}</span>
+                                        · Refund menunggu: <span class="font-semibold text-white">{{ $pendingRefundCount }}</span>
                                     </p>
                                     <div class="mt-4 flex flex-col gap-2">
                                         <a href="{{ route('admin.finance.index') }}" class="inline-flex items-center justify-center rounded-xl bg-white text-slate-900 text-sm font-semibold hover:bg-slate-100 py-2.5">
                                             Keuangan
+                                        </a>
+                                        <a href="{{ route('admin.refunds.index') }}" class="inline-flex items-center justify-center rounded-xl border border-amber-300/50 bg-amber-400/20 text-white text-sm font-semibold hover:bg-amber-400/30 py-2.5">
+                                            Refund ({{ $pendingRefundCount }})
                                         </a>
                                         <div class="flex gap-2">
                                             <a href="{{ route('admin.logs.index') }}" class="inline-flex flex-1 items-center justify-center rounded-xl border border-white/20 text-white text-sm font-semibold hover:bg-white/10 py-2.5">

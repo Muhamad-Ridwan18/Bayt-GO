@@ -1,6 +1,7 @@
 <?php
 
 use App\Enums\MuthowifVerificationStatus;
+use App\Http\Controllers\Admin\BookingRefundController;
 use App\Http\Controllers\Admin\FinanceController;
 use App\Http\Controllers\Admin\WithdrawalsController;
 use App\Http\Controllers\Admin\LogsController;
@@ -86,6 +87,8 @@ Route::middleware('auth')->group(function () {
         Route::get('{booking}/invoice', [CustomerBookingController::class, 'invoice'])->name('invoice');
         Route::post('{booking}/selesaikan', [CustomerBookingController::class, 'complete'])->name('complete');
         Route::post('{booking}/review', [CustomerBookingController::class, 'review'])->name('review');
+        Route::post('{booking}/refund-request', [CustomerBookingController::class, 'storeRefundRequest'])->name('refund_request.store');
+        Route::post('{booking}/reschedule-request', [CustomerBookingController::class, 'storeRescheduleRequest'])->name('reschedule_request.store');
         Route::get('{booking}', [CustomerBookingController::class, 'show'])->name('show');
         Route::post('{booking}/cancel', [CustomerBookingController::class, 'cancel'])->name('cancel');
     });
@@ -103,14 +106,19 @@ Route::middleware('auth')->group(function () {
             Route::delete('jadwal/{blockedDate}', [MuthowifScheduleController::class, 'destroy'])->name('jadwal.destroy');
 
             Route::get('bookings', [MuthowifBookingController::class, 'index'])->name('bookings.index');
+            Route::get('bookings/{booking}', [MuthowifBookingController::class, 'show'])->name('bookings.show');
             Route::post('bookings/{booking}/confirm', [MuthowifBookingController::class, 'confirm'])->name('bookings.confirm');
             Route::post('bookings/{booking}/cancel', [MuthowifBookingController::class, 'cancel'])->name('bookings.cancel');
+            Route::post('bookings/{booking}/reschedule-requests/{rescheduleRequest}/approve', [MuthowifBookingController::class, 'approveReschedule'])->name('bookings.reschedule_requests.approve');
+            Route::post('bookings/{booking}/reschedule-requests/{rescheduleRequest}/reject', [MuthowifBookingController::class, 'rejectReschedule'])->name('bookings.reschedule_requests.reject');
 
             Route::get('withdrawals', [MuthowifWithdrawController::class, 'index'])->name('withdrawals.index');
             Route::post('withdrawals', [MuthowifWithdrawController::class, 'store'])->name('withdrawals.store');
         });
 
     Route::middleware([EnsureUserRole::class.':admin'])->prefix('admin')->name('admin.')->group(function () {
+        Route::get('refund-menunggu', [BookingRefundController::class, 'index'])->name('refunds.index');
+        Route::post('refund-menunggu/{refund}/selesai', [BookingRefundController::class, 'complete'])->name('refunds.complete');
         Route::get('keuangan', [FinanceController::class, 'index'])->name('finance.index');
         Route::get('withdrawals', [WithdrawalsController::class, 'index'])->name('withdrawals.index');
         Route::post('withdrawals/{withdrawal}/approve', [WithdrawalsController::class, 'approve'])->name('withdrawals.approve');

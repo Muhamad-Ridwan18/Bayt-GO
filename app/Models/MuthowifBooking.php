@@ -2,9 +2,11 @@
 
 namespace App\Models;
 
+use App\Enums\BookingChangeRequestStatus;
 use App\Enums\BookingStatus;
 use App\Enums\MuthowifServiceType;
 use App\Enums\PaymentStatus;
+use Carbon\CarbonInterface;
 use Illuminate\Database\Eloquent\Concerns\HasUuids;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
@@ -70,6 +72,36 @@ class MuthowifBooking extends Model
         return $this->hasMany(BookingPayment::class, 'muthowif_booking_id');
     }
 
+    /**
+     * @return HasMany<BookingRefundRequest, $this>
+     */
+    public function refundRequests(): HasMany
+    {
+        return $this->hasMany(BookingRefundRequest::class, 'muthowif_booking_id');
+    }
+
+    /**
+     * @return HasMany<BookingRescheduleRequest, $this>
+     */
+    public function rescheduleRequests(): HasMany
+    {
+        return $this->hasMany(BookingRescheduleRequest::class, 'muthowif_booking_id');
+    }
+
+    public function pendingRefundRequest(): ?BookingRefundRequest
+    {
+        return $this->refundRequests()
+            ->where('status', BookingChangeRequestStatus::Pending)
+            ->first();
+    }
+
+    public function pendingRescheduleRequest(): ?BookingRescheduleRequest
+    {
+        return $this->rescheduleRequests()
+            ->where('status', BookingChangeRequestStatus::Pending)
+            ->first();
+    }
+
     public function latestBookingPayment(): ?BookingPayment
     {
         return $this->bookingPayments()->latest()->first();
@@ -89,6 +121,17 @@ class MuthowifBooking extends Model
     }
 
     /**
+     * Jumlah hari layanan inklusif (tanggal mulai & selesai dihitung sebagai hari).
+     */
+    public static function inclusiveSpanDays(CarbonInterface $start, CarbonInterface $end): int
+    {
+        $s = $start->copy()->startOfDay();
+        $e = $end->copy()->startOfDay();
+
+        return (int) max(1, $s->diffInDays($e) + 1);
+    }
+
+    /**
      * Jumlah malam menginap (inklusif tanggal mulai & selesai).
      */
     public function billingNightsInclusive(): int
@@ -97,7 +140,7 @@ class MuthowifBooking extends Model
             return 0;
         }
 
-        return max(1, $this->starts_on->diffInDays($this->ends_on) + 1);
+        return self::inclusiveSpanDays($this->starts_on, $this->ends_on);
     }
 
     /**
@@ -157,6 +200,16 @@ class MuthowifBooking extends Model
     public function isPaid(): bool
     {
         return $this->payment_status === PaymentStatus::Paid;
+    }
+
+    public function isRefunded(): bool
+    {
+        return $this->payment_status === PaymentStatus::Refunded;
+    }
+
+    public function isRefundPending(): bool
+    {
+        return $this->payment_status === PaymentStatus::RefundPending;
     }
 
     /**

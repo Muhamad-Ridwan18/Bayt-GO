@@ -149,6 +149,13 @@ class MidtransSnapPaymentProvider implements SnapPaymentProviderInterface
                     throw new RuntimeException('Gross mismatch');
                 }
 
+                if (in_array($booking->payment_status, [PaymentStatus::RefundPending, PaymentStatus::Refunded], true)) {
+                    $payment->status = is_string($transactionStatus) ? $transactionStatus : $payment->status;
+                    $payment->save();
+
+                    return false;
+                }
+
                 if ($booking->payment_status === PaymentStatus::Paid) {
                     $payment->status = is_string($transactionStatus) ? $transactionStatus : $payment->status;
                     $payment->settled_at = $payment->settled_at ?? now();

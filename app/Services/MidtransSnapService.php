@@ -185,6 +185,78 @@ class MidtransSnapService
      * @param  mixed  $actions
      * @param  array<int, string>  $names
      */
+    /**
+     * Refund transaksi yang sudah settlement. Endpoint: POST /v2/{order_id|transaction_id}/refund
+     *
+     * @return array<string, mixed>
+     *
+     * @throws RuntimeException
+     */
+    public function refundTransaction(
+        BookingPayment $payment,
+        int $refundAmountIdr,
+        string $refundKey,
+        string $reason
+    ): array {
+        $serverKey = config('services.midtrans.server_key');
+        if (! is_string($serverKey) || $serverKey === '') {
+            throw new RuntimeException('MIDTRANS_SERVER_KEY belum diatur.');
+        }
+
+        if ($refundAmountIdr < 1) {
+            throw new RuntimeException('Nominal refund tidak valid.');
+        }
+
+        $chargeId = $this->refundPathIdentifier($payment);
+
+        $payload = [
+            'refund_key' => $refundKey,
+            'amount' => $refundAmountIdr,
+            'reason' => $reason !== '' ? $reason : 'Refund booking BaytGo',
+        ];
+
+        $encoded = rawurlencode($chargeId);
+        $response = Http::timeout(60)
+            ->withBasicAuth($serverKey, '')
+            ->acceptJson()
+            ->post($this->apiBaseUrl().'/v2/'.$encoded.'/refund', $payload);
+
+        $body = $response->json();
+        if (! is_array($body)) {
+            Log::warning('Midtrans refund: respons bukan JSON', ['status' => $response->status(), 'body' => $response->body()]);
+            throw new RuntimeException('Respons Midtrans refund tidak valid. Coba lagi atau hubungi admin.');
+        }
+
+        $statusCode = $body['status_code'] ?? null;
+        if ($statusCode === '200') {
+            return $body;
+        }
+
+        $message = is_string($body['status_message'] ?? null) ? $body['status_message'] : 'Refund ditolak Midtrans.';
+        Log::warning('Midtrans refund gagal', [
+            'http_status' => $response->status(),
+            'midtrans_status' => $statusCode,
+            'message' => $message,
+            'order_id' => $payment->order_id,
+        ]);
+
+        throw new RuntimeException($message);
+    }
+
+    /**
+     * Midtrans menerima order_id atau transaction_id di path. Untuk QRIS (terutama GoPay), gunakan transaction_id jika ada.
+     */
+    private function refundPathIdentifier(BookingPayment $payment): string
+    {
+        $type = strtolower((string) ($payment->payment_type ?? ''));
+
+        if ($type === 'qris' && is_string($payment->midtrans_transaction_id) && $payment->midtrans_transaction_id !== '') {
+            return $payment->midtrans_transaction_id;
+        }
+
+        return (string) $payment->order_id;
+    }
+
     private function findActionUrl(mixed $actions, array $names): ?string
     {
         if (! is_array($actions)) {

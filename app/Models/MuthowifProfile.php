@@ -97,7 +97,7 @@ class MuthowifProfile extends Model
     /**
      * Apakah slot [starts_on, ends_on] masih bisa dipesan (tidak bentrok libur / booking blocking).
      */
-    public function isSlotAvailableForRange(CarbonInterface $start, CarbonInterface $end): bool
+    public function isSlotAvailableForRange(CarbonInterface $start, CarbonInterface $end, ?string $exceptBookingId = null): bool
     {
         if (! $this->isApproved()) {
             return false;
@@ -118,11 +118,16 @@ class MuthowifProfile extends Model
             BookingStatus::blocksAvailability()
         );
 
-        return ! $this->bookings()
+        $query = $this->bookings()
             ->whereIn('status', $blocking)
             ->where('starts_on', '<=', $endStr)
-            ->where('ends_on', '>=', $startStr)
-            ->exists();
+            ->where('ends_on', '>=', $startStr);
+
+        if ($exceptBookingId !== null && $exceptBookingId !== '') {
+            $query->whereKeyNot($exceptBookingId);
+        }
+
+        return ! $query->exists();
     }
 
     public function isPending(): bool

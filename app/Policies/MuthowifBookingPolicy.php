@@ -38,9 +38,15 @@ class MuthowifBookingPolicy
 
     public function invoice(User $user, MuthowifBooking $booking): bool
     {
-        return $user->isCustomer()
-            && $booking->customer_id === $user->id
-            && $booking->payment_status === PaymentStatus::Paid;
+        if (! $user->isCustomer() || $booking->customer_id !== $user->id) {
+            return false;
+        }
+
+        return in_array($booking->payment_status, [
+            PaymentStatus::Paid,
+            PaymentStatus::RefundPending,
+            PaymentStatus::Refunded,
+        ], true);
     }
 
     public function complete(User $user, MuthowifBooking $booking): bool
@@ -89,6 +95,21 @@ class MuthowifBookingPolicy
         }
 
         return in_array($booking->status, [BookingStatus::Pending, BookingStatus::Confirmed], true);
+    }
+
+    public function requestPostPayRefund(User $user, MuthowifBooking $booking): bool
+    {
+        return $user->isCustomer() && $booking->customer_id === $user->id;
+    }
+
+    public function requestPostPayReschedule(User $user, MuthowifBooking $booking): bool
+    {
+        return $user->isCustomer() && $booking->customer_id === $user->id;
+    }
+
+    public function decidePostPayChange(User $user, MuthowifBooking $booking): bool
+    {
+        return $this->muthowifOwns($user, $booking);
     }
 
     private function muthowifOwns(User $user, MuthowifBooking $booking): bool

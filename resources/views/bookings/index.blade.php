@@ -96,8 +96,13 @@
                                         <span class="inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-semibold ring-1 {{ $badgeClass }}">
                                             {{ $st->label() }}
                                         </span>
-                                        @if (in_array($st, [BookingStatus::Confirmed, BookingStatus::Completed], true))
-                                            <span class="inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-semibold ring-1 {{ $booking->payment_status === PaymentStatus::Paid ? 'bg-brand-50 text-brand-900 ring-brand-200' : 'bg-orange-50 text-orange-900 ring-orange-200' }}">
+                                        @if (in_array($st, [BookingStatus::Confirmed, BookingStatus::Completed], true) || ($st === BookingStatus::Cancelled && in_array($booking->payment_status, [PaymentStatus::RefundPending, PaymentStatus::Refunded], true)))
+                                            <span class="inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-semibold ring-1 {{ match ($booking->payment_status) {
+                                                PaymentStatus::Paid => 'bg-brand-50 text-brand-900 ring-brand-200',
+                                                PaymentStatus::RefundPending => 'bg-amber-50 text-amber-900 ring-amber-200',
+                                                PaymentStatus::Refunded => 'bg-slate-100 text-slate-700 ring-slate-200',
+                                                default => 'bg-orange-50 text-orange-900 ring-orange-200',
+                                            } }}">
                                                 {{ $booking->payment_status->label() }}
                                             </span>
                                         @endif
@@ -122,7 +127,7 @@
                                         </a>
                                     @endif
 
-                                    @if ($booking->payment_status === PaymentStatus::Paid)
+                                    @if (in_array($booking->payment_status, [PaymentStatus::Paid, PaymentStatus::RefundPending, PaymentStatus::Refunded], true))
                                         <a href="{{ route('bookings.invoice', $booking) }}" target="_blank" rel="noopener noreferrer" class="inline-flex justify-center items-center px-4 py-2.5 rounded-xl border border-slate-200 bg-white text-slate-700 text-sm font-semibold hover:bg-slate-50">
                                             Cetak invoice
                                         </a>

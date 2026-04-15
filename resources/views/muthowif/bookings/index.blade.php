@@ -76,6 +76,14 @@
                                         <span class="mt-1.5 inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-semibold ring-1 {{ $booking->payment_status === PaymentStatus::Paid ? 'bg-brand-50 text-brand-900 ring-brand-200' : 'bg-orange-50 text-orange-900 ring-orange-200' }}">
                                             Pembayaran: {{ $booking->payment_status->label() }}
                                         </span>
+                                    @elseif ($st === BookingStatus::Cancelled && in_array($booking->payment_status, [PaymentStatus::RefundPending, PaymentStatus::Refunded], true))
+                                        <span class="mt-1.5 inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-semibold ring-1 {{ match ($booking->payment_status) {
+                                            PaymentStatus::RefundPending => 'bg-amber-50 text-amber-900 ring-amber-200',
+                                            PaymentStatus::Refunded => 'bg-slate-100 text-slate-700 ring-slate-200',
+                                            default => 'bg-orange-50 text-orange-900 ring-orange-200',
+                                        } }}">
+                                            Pembayaran: {{ $booking->payment_status->label() }}
+                                        </span>
                                     @elseif ($st === BookingStatus::Completed)
                                         @if ($booking->payment_status === PaymentStatus::Paid)
                                             <p class="mt-1 text-sm font-semibold text-emerald-800">Booking selesai. Invoice sudah dapat dicetak customer.</p>
@@ -104,7 +112,24 @@
                                             </button>
                                         </form>
                                     @elseif ($st === BookingStatus::Confirmed && $booking->payment_status === PaymentStatus::Paid)
-                                        <p class="text-xs text-slate-500 max-w-xs">Booking sudah dibayar jamaah. Pembatalan hanya lewat admin / dukungan.</p>
+                                        <div class="flex flex-col items-start gap-2">
+                                            @if (($booking->pending_reschedule_requests_count ?? 0) > 0)
+                                                <span class="inline-flex rounded-full px-2 py-0.5 text-xs font-semibold bg-amber-50 text-amber-900 ring-1 ring-amber-200">
+                                                    Reschedule menunggu
+                                                </span>
+                                            @endif
+                                            <a href="{{ route('muthowif.bookings.show', $booking) }}" class="inline-flex justify-center items-center px-4 py-2 rounded-xl bg-brand-600 text-white text-sm font-semibold shadow-sm hover:bg-brand-700">
+                                                Detail & pengajuan
+                                            </a>
+                                        </div>
+                                    @elseif ($st === BookingStatus::Cancelled && $booking->payment_status === PaymentStatus::RefundPending)
+                                        <a href="{{ route('muthowif.bookings.show', $booking) }}" class="inline-flex justify-center items-center px-4 py-2 rounded-xl border border-amber-200 bg-amber-50 text-amber-900 text-sm font-semibold hover:bg-amber-100">
+                                            Refund menunggu admin
+                                        </a>
+                                    @elseif ($st === BookingStatus::Cancelled && $booking->payment_status === PaymentStatus::Refunded)
+                                        <a href="{{ route('muthowif.bookings.show', $booking) }}" class="inline-flex justify-center items-center px-4 py-2 rounded-xl border border-slate-300 text-slate-800 text-sm font-semibold hover:bg-slate-50">
+                                            Riwayat refund
+                                        </a>
                                     @endif
                                 </div>
                             </div>

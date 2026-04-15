@@ -7,9 +7,14 @@
 
     <div class="py-8 sm:py-12">
         <div class="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 space-y-8">
-            <p class="text-sm text-slate-600">
-                Ringkasan biaya platform ({{ \App\Support\PlatformFee::TOTAL_RATE * 100 }}% total) dan riwayat transaksi Midtrans untuk pembayaran yang sudah settlement.
-            </p>
+            <div class="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+                <p class="text-sm text-slate-600">
+                    Ringkasan biaya platform ({{ \App\Support\PlatformFee::TOTAL_RATE * 100 }}% total) dan riwayat transaksi Midtrans untuk pembayaran yang sudah settlement.
+                </p>
+                <a href="{{ route('admin.refunds.index') }}" class="inline-flex items-center justify-center rounded-xl border border-amber-200 bg-amber-50 px-4 py-2 text-sm font-semibold text-amber-900 hover:bg-amber-100">
+                    Refund menunggu transfer
+                </a>
+            </div>
 
             <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <div class="rounded-2xl border border-brand-200 bg-gradient-to-br from-brand-50 to-white p-6 shadow-sm">
