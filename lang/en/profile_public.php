@@ -1,0 +1,27 @@
+<?php
+
+return [
+    'title' => 'Public muthowif profile',
+    'subtitle' => 'Edit your public muthowif profile from this page.',
+    'phone' => 'Phone / WhatsApp',
+    'passport' => 'Passport number',
+    'birth_date' => 'Date of birth',
+    'address' => 'Full address',
+    'photo' => 'Profile photo (optional)',
+    'photo_hint' => 'JPG, PNG, or WebP. Maximum 5 MB.',
+    'languages' => 'Languages',
+    'language_item' => 'Language',
+    'language_placeholder' => 'e.g. Arabic (fluent), English',
+    'language_add' => 'Add language',
+    'education' => 'Education',
+    'education_item' => 'Education',
+    'education_placeholder' => 'Education history',
+    'education_add' => 'Add education',
+    'work' => 'Work experience',
+    'work_item' => 'Experience',
+    'work_placeholder' => 'Describe your work experience',
+    'work_add' => 'Add experience',
+    'reference' => 'Muthowif reference (optional)',
+    'save' => 'Save public profile',
+    'saved' => 'Saved.',
+];

@@ -1,0 +1,72 @@
+<?php
+
+return [
+    'fallback_pilgrim' => 'Jamaah',
+    'fallback_muthowif' => 'Muthowif',
+    'fallback_service' => 'Layanan',
+    'muthowif' => [
+        'new_booking' => [
+            'headline' => '*:app* — permintaan booking baru',
+            'body' => 'Ada jamaah *:customer* yang mengajukan pendampingan.',
+            'dates' => '*Tanggal:* :start - :end',
+            'service' => '*Layanan:* :service',
+            'pilgrim_count' => '*Jumlah jemaah:* :count',
+            'addon_heading' => '*Add-on:*',
+            'addon_bullet' => '• :name',
+            'status' => '*Status:* Menunggu persetujuan Anda',
+            'open_panel' => '*Buka panel:*',
+            'booking_code' => '*Kode booking:* :code',
+        ],
+        'payment_settled' => [
+            'headline' => '*:app* — pembayaran lunas',
+            'body' => 'Booking dari *:customer* sudah dibayar.',
+            'service_dates' => '*Tanggal layanan:* :start - :end',
+            'status' => '*Status:* Siap Anda proses / dampingi sesuai kesepakatan.',
+            'open' => '*Buka panel booking:*',
+            'booking_code' => '*Kode booking:* :code',
+        ],
+        'reschedule_requested' => [
+            'headline' => '*:app* — pengajuan reschedule',
+            'body' => '*:customer* mengajukan pergantian tanggal layanan.',
+            'booking_code' => '*Kode booking:* :code',
+            'current' => '*Tanggal saat ini:* :start - :end',
+            'requested' => '*Tanggal diajukan:* :start - :end',
+            'status' => '*Status:* Menunggu keputusan Anda',
+            'open_detail' => '*Buka detail booking:*',
+        ],
+    ],
+    'customer' => [
+        'approved' => [
+            'headline' => '*:app* — booking disetujui',
+            'body' => 'Booking Anda dengan *:muthowif* sudah disetujui.',
+            'booking_code' => '*Kode booking:* :code',
+            'service_dates' => '*Tanggal layanan:* :start - :end',
+            'status' => '*Status:* Menunggu pembayaran',
+            'pay_at' => '*Lanjutkan pembayaran di:*',
+        ],
+        'reschedule_submitted' => [
+            'headline' => '*:app* — pengajuan reschedule',
+            'body' => 'Pengajuan pergantian tanggal Anda sudah kami teruskan ke *:muthowif*.',
+            'booking_code' => '*Kode booking:* :code',
+            'requested_dates' => '*Tanggal yang diajukan:* :start - :end',
+            'followup' => 'Anda akan mendapat notifikasi lagi setelah muthowif memutuskan.',
+            'view_detail' => '*Lihat detail booking:*',
+        ],
+        'reschedule_approved' => [
+            'headline' => '*:app* — reschedule disetujui',
+            'body' => 'Muthowif *:muthowif* menyetujui pergantian tanggal layanan Anda.',
+            'booking_code' => '*Kode booking:* :code',
+            'new_dates' => '*Tanggal layanan baru:* :start - :end',
+            'view_detail' => '*Lihat detail booking:*',
+            'note_heading' => '*Catatan muthowif:*',
+        ],
+        'reschedule_rejected' => [
+            'headline' => '*:app* — pengajuan reschedule ditolak',
+            'body' => 'Muthowif *:muthowif* tidak menyetujui pergantian tanggal.',
+            'booking_code' => '*Kode booking:* :code',
+            'still' => '*Tetap berlaku:* :start - :end',
+            'view_detail' => '*Lihat detail booking:*',
+            'note_heading' => '*Catatan muthowif:*',
+        ],
+    ],
+];

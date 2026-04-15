@@ -9,7 +9,12 @@
             @endif
 
             <div class="flex flex-wrap gap-2">
-                @foreach (['pending' => 'Menunggu', 'approved' => 'Disetujui', 'rejected' => 'Ditolak', 'all' => 'Semua'] as $key => $label)
+                @foreach ([
+                    'pending' => __('admin.muthowif.tab_pending'),
+                    'approved' => __('admin.muthowif.tab_approved'),
+                    'rejected' => __('admin.muthowif.tab_rejected'),
+                    'all' => __('admin.muthowif.tab_all'),
+                ] as $key => $label)
                     <a
                         href="{{ route('admin.muthowif.index', ['status' => $key]) }}"
                         class="inline-flex items-center rounded-lg px-3 py-1.5 text-sm font-medium transition
@@ -36,7 +41,7 @@
                         <div>
                             <p class="font-semibold text-slate-900">{{ $p->user->name }}</p>
                             <p class="text-sm text-slate-500">{{ $p->user->email }} · {{ $p->phone }}</p>
-                            <p class="text-xs text-slate-400 mt-1">Daftar {{ $p->created_at->translatedFormat('d M Y H:i') }}</p>
+                            <p class="text-xs text-slate-400 mt-1">{{ __('admin.muthowif.registered_at', ['datetime' => $p->created_at->translatedFormat('d M Y H:i')]) }}</p>
                         </div>
                         <span class="inline-flex shrink-0 rounded-lg px-2.5 py-1 text-xs font-medium
                             @switch($p->verification_status)
@@ -54,7 +59,7 @@
                         </span>
                     </a>
                 @empty
-                    <p class="px-4 py-10 text-center text-sm text-slate-500">Tidak ada data untuk filter ini.</p>
+                    <p class="px-4 py-10 text-center text-sm text-slate-500">{{ __('admin.muthowif.empty_filter') }}</p>
                 @endforelse
             </div>
 

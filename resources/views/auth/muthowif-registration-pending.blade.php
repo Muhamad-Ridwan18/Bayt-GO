@@ -5,16 +5,16 @@
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
             </svg>
         </div>
-        <h1 class="text-xl font-semibold text-slate-900">Pendaftaran muthowif terkirim</h1>
+        <h1 class="text-xl font-semibold text-slate-900">{{ __('auth_custom.muthowif_pending_title') }}</h1>
         <p class="text-sm text-slate-600 leading-relaxed">
-            Dokumen dan foto Anda sedang ditinjau oleh admin. Anda <strong>belum dapat masuk</strong> ke akun sampai pendaftaran disetujui.
+            {!! __('auth_custom.muthowif_pending_body_html') !!}
         </p>
         <p class="text-xs text-slate-500">
-            Setelah disetujui, gunakan email dan password yang Anda daftarkan untuk masuk.
+            {{ __('auth_custom.muthowif_pending_hint') }}
         </p>
         <div class="pt-2">
             <a href="{{ route('login') }}" class="inline-flex items-center justify-center rounded-xl bg-brand-600 px-5 py-2.5 text-sm font-semibold text-white shadow-sm hover:bg-brand-700 transition">
-                Ke halaman masuk
+                {{ __('auth_custom.muthowif_pending_login') }}
             </a>
         </div>
     </div>

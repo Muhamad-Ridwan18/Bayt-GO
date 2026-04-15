@@ -13,35 +13,35 @@
             @endif
 
             <div class="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
-                <h3 class="font-semibold text-slate-900">Ringkasan</h3>
+                <h3 class="font-semibold text-slate-900">{{ __('admin.withdrawals.summary') }}</h3>
                 <div class="mt-3 grid grid-cols-1 sm:grid-cols-3 gap-3">
                     <div class="rounded-xl bg-slate-50 border border-slate-200 p-4">
-                        <p class="text-xs font-semibold uppercase tracking-wide text-slate-500">Pending count</p>
+                        <p class="text-xs font-semibold uppercase tracking-wide text-slate-500">{{ __('admin.withdrawals.pending_count') }}</p>
                         <p class="mt-2 text-2xl font-bold text-slate-900 tabular-nums">{{ $pendingCount }}</p>
                     </div>
                     <div class="rounded-xl bg-slate-50 border border-slate-200 p-4 sm:col-span-2">
-                        <p class="text-xs font-semibold uppercase tracking-wide text-slate-500">Pending amount</p>
+                        <p class="text-xs font-semibold uppercase tracking-wide text-slate-500">{{ __('admin.withdrawals.pending_amount') }}</p>
                         <p class="mt-2 text-2xl font-bold text-slate-900 tabular-nums">
                             Rp {{ \App\Support\IndonesianNumber::formatThousands((string) $pendingAmount) }}
                         </p>
-                        <p class="mt-1 text-xs text-slate-600">Menunggu admin menyetujui withdraw; setelah itu saldo didebit dan admin menyelesaikan transfer manual ke bank, lalu menandai selesai.</p>
+                        <p class="mt-1 text-xs text-slate-600">{{ __('admin.withdrawals.pending_hint') }}</p>
                     </div>
                 </div>
             </div>
 
             <div class="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
-                <h3 class="font-semibold text-slate-900">Daftar withdraw</h3>
+                <h3 class="font-semibold text-slate-900">{{ __('admin.withdrawals.list_title') }}</h3>
                 <div class="mt-4 overflow-x-auto">
                     <table class="min-w-full text-sm">
                         <thead class="bg-slate-50 text-left text-xs font-semibold uppercase text-slate-500">
                             <tr>
-                                <th class="px-4 py-3 whitespace-nowrap">Waktu</th>
-                                <th class="px-4 py-3 whitespace-nowrap">Muthowif</th>
-                                <th class="px-4 py-3 whitespace-nowrap">Nominal</th>
-                                <th class="px-4 py-3 whitespace-nowrap">Tujuan</th>
-                                <th class="px-4 py-3 whitespace-nowrap">Status</th>
-                                <th class="px-4 py-3 whitespace-nowrap">Bukti</th>
-                                <th class="px-4 py-3 text-right whitespace-nowrap">Aksi</th>
+                                <th class="px-4 py-3 whitespace-nowrap">{{ __('admin.withdrawals.time') }}</th>
+                                <th class="px-4 py-3 whitespace-nowrap">{{ __('admin.withdrawals.muthowif') }}</th>
+                                <th class="px-4 py-3 whitespace-nowrap">{{ __('admin.withdrawals.amount') }}</th>
+                                <th class="px-4 py-3 whitespace-nowrap">{{ __('admin.withdrawals.destination') }}</th>
+                                <th class="px-4 py-3 whitespace-nowrap">{{ __('admin.withdrawals.status') }}</th>
+                                <th class="px-4 py-3 whitespace-nowrap">{{ __('admin.withdrawals.proof') }}</th>
+                                <th class="px-4 py-3 text-right whitespace-nowrap">{{ __('admin.withdrawals.actions') }}</th>
                             </tr>
                         </thead>
                         <tbody class="divide-y divide-slate-100">
@@ -78,18 +78,18 @@
                                     <td class="px-4 py-3 whitespace-nowrap">
                                         @if ($w->transfer_proof_path)
                                             <a href="{{ asset('storage/'.$w->transfer_proof_path) }}" target="_blank" rel="noopener noreferrer" class="text-xs font-semibold text-brand-700 hover:text-brand-800 underline">
-                                                Lihat bukti
+                                                {{ __('admin.withdrawals.view_proof') }}
                                             </a>
                                         @else
-                                            <span class="text-xs text-slate-400">Belum ada</span>
+                                            <span class="text-xs text-slate-400">{{ __('admin.withdrawals.proof_missing') }}</span>
                                         @endif
                                     </td>
                                     <td class="px-4 py-3 text-right whitespace-nowrap">
                                         @if ($w->status === 'pending_approval')
-                                            <form method="POST" action="{{ route('admin.withdrawals.approve', $w) }}" onsubmit="return confirm('Setujui withdraw ini? Saldo muthowif akan didebit, lalu Anda bisa menyelesaikan transfer.');">
+                                            <form method="POST" action="{{ route('admin.withdrawals.approve', $w) }}" onsubmit="return confirm(@json(__('admin.withdrawals.approve_confirm')));">
                                                 @csrf
                                                 <button type="submit" class="inline-flex items-center justify-center rounded-xl bg-brand-600 px-3 py-2 text-sm font-semibold text-white hover:bg-brand-700">
-                                                    Approve
+                                                    {{ __('admin.withdrawals.approve') }}
                                                 </button>
                                             </form>
                                         @elseif ($w->status === 'processing')
@@ -102,12 +102,12 @@
                                                     data-name="{{ $user?->name ?? 'Muthowif' }}"
                                                     data-amount="Rp {{ \App\Support\IndonesianNumber::formatThousands((string) $w->amount) }}"
                                                 >
-                                                    Tandai transfer selesai
+                                                    {{ __('admin.withdrawals.mark_transferred') }}
                                                 </button>
-                                                <form method="POST" action="{{ route('admin.withdrawals.mark_transfer_failed', $w) }}" onsubmit="return confirm('Transfer gagal? Saldo akan dikembalikan ke wallet muthowif.');">
+                                                <form method="POST" action="{{ route('admin.withdrawals.mark_transfer_failed', $w) }}" onsubmit="return confirm(@json(__('admin.withdrawals.fail_confirm')));">
                                                     @csrf
                                                     <button type="submit" class="text-xs font-semibold text-red-700 hover:text-red-900 underline">
-                                                        Tandai gagal (kembalikan saldo)
+                                                        {{ __('admin.withdrawals.mark_failed') }}
                                                     </button>
                                                 </form>
                                             </div>
@@ -119,7 +119,7 @@
                             @empty
                                 <tr>
                                     <td colspan="7" class="px-4 py-6 text-center text-sm text-slate-500">
-                                        Belum ada data withdraw.
+                                        {{ __('admin.withdrawals.empty_table') }}
                                     </td>
                                 </tr>
                             @endforelse
@@ -138,8 +138,8 @@
         <div class="w-full max-w-md rounded-2xl bg-white p-5 shadow-xl">
             <div class="flex items-start justify-between gap-3">
                 <div>
-                    <h3 class="text-base font-semibold text-slate-900">Tandai transfer selesai</h3>
-                    <p id="proof-modal-subtitle" class="mt-1 text-sm text-slate-600">Upload bukti transfer untuk menyelesaikan withdraw.</p>
+                    <h3 class="text-base font-semibold text-slate-900">{{ __('admin.withdrawals.modal_title') }}</h3>
+                    <p id="proof-modal-subtitle" class="mt-1 text-sm text-slate-600">{{ __('admin.withdrawals.modal_subtitle') }}</p>
                 </div>
                 <button type="button" id="proof-modal-close" class="rounded-lg px-2 py-1 text-slate-500 hover:bg-slate-100 hover:text-slate-700">✕</button>
             </div>
@@ -147,16 +147,16 @@
             <form id="proof-modal-form" method="POST" action="" enctype="multipart/form-data" class="mt-4 space-y-3">
                 @csrf
                 <div>
-                    <label for="transfer_proof" class="block text-xs font-semibold uppercase tracking-wide text-slate-500">Upload bukti transfer</label>
+                    <label for="transfer_proof" class="block text-xs font-semibold uppercase tracking-wide text-slate-500">{{ __('admin.withdrawals.upload_label') }}</label>
                     <input id="transfer_proof" type="file" name="transfer_proof" accept="image/png,image/jpeg,image/webp" required class="mt-2 block w-full text-xs text-slate-600 file:mr-2 file:rounded-lg file:border-0 file:bg-slate-100 file:px-2 file:py-1 file:font-semibold file:text-slate-700">
-                    <p class="mt-1 text-xs text-slate-500">Format: JPG/JPEG/PNG/WEBP (maks 4MB)</p>
+                    <p class="mt-1 text-xs text-slate-500">{{ __('admin.withdrawals.upload_hint') }}</p>
                 </div>
                 <div class="flex gap-2">
                     <button type="button" id="proof-modal-cancel" class="inline-flex w-full items-center justify-center rounded-xl border border-slate-200 bg-white px-3 py-2 text-sm font-semibold text-slate-700 hover:bg-slate-50">
-                        Batal
+                        {{ __('admin.withdrawals.cancel') }}
                     </button>
                     <button type="submit" class="inline-flex w-full items-center justify-center rounded-xl bg-brand-600 px-3 py-2 text-sm font-semibold text-white hover:bg-brand-700">
-                        Simpan & tandai selesai
+                        {{ __('admin.withdrawals.submit') }}
                     </button>
                 </div>
             </form>
@@ -172,6 +172,7 @@
         const closeBtn = document.getElementById('proof-modal-close');
         const cancelBtn = document.getElementById('proof-modal-cancel');
         const fileInput = document.getElementById('transfer_proof');
+        const proofSubtitleTemplate = @json(__('admin.withdrawals.proof_subtitle_template'));
 
         function closeModal() {
             modal.classList.add('hidden');
@@ -185,7 +186,7 @@
                 const name = button.getAttribute('data-name') || 'Muthowif';
                 const amount = button.getAttribute('data-amount') || '';
                 form.setAttribute('action', action || '');
-                subtitle.textContent = `${name} • ${amount}. Upload bukti transfer sebelum menandai selesai.`;
+                subtitle.textContent = proofSubtitleTemplate.replace('__NAME__', name).replace('__AMOUNT__', amount);
                 modal.classList.remove('hidden');
                 modal.classList.add('flex');
                 setTimeout(() => fileInput.focus(), 50);

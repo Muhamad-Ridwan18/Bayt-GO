@@ -34,45 +34,49 @@ class MuthowifBookingWhatsAppNotifier
             return;
         }
 
-        $customerName = $booking->customer?->name ?? 'Jamaah';
-        $start = $booking->starts_on->format('d/m/Y');
-        $end = $booking->ends_on->format('d/m/Y');
-        $appName = config('app.name', 'BaytGo');
-        $url = route('muthowif.bookings.index');
+        $locale = $this->localeForUser($profile->user?->locale);
 
-        $serviceLabel = $booking->service_type?->label() ?? 'Layanan';
-        $countLine = '*Jumlah jemaah:* '.$booking->pilgrim_count;
-        $lines = [
-            "*{$appName}* — permintaan booking baru",
-            '',
-            "Ada jamaah *{$customerName}* yang mengajukan pendampingan.",
-            '',
-        ];
+        $this->withLocale($locale, function () use ($booking, $target, $locale): void {
+            $customerName = $booking->customer?->name ?? __('whatsapp.fallback_pilgrim', [], $locale);
+            $start = $booking->starts_on->format('d/m/Y');
+            $end = $booking->ends_on->format('d/m/Y');
+            $appName = config('app.name', 'BaytGo');
+            $url = route('muthowif.bookings.index');
 
-        if (filled($booking->booking_code)) {
-            $lines[] = '*Kode booking:* '.$booking->booking_code;
-            $lines[] = '';
-        }
+            $serviceLabel = $booking->service_type?->label() ?? __('whatsapp.fallback_service', [], $locale);
+            $countLine = __('whatsapp.muthowif.new_booking.pilgrim_count', ['count' => $booking->pilgrim_count], $locale);
+            $lines = [
+                __('whatsapp.muthowif.new_booking.headline', ['app' => $appName], $locale),
+                '',
+                __('whatsapp.muthowif.new_booking.body', ['customer' => $customerName], $locale),
+                '',
+            ];
 
-        $lines[] = "*Tanggal:* {$start} - {$end}";
-        $lines[] = "*Layanan:* {$serviceLabel}";
-        $lines[] = $countLine;
-
-        $addOnLines = $booking->resolvedAddOns()->map(fn ($addon) => '• '.$addon->name)->all();
-        if ($addOnLines !== []) {
-            $lines[] = '*Add-on:*';
-            foreach ($addOnLines as $addOnLine) {
-                $lines[] = $addOnLine;
+            if (filled($booking->booking_code)) {
+                $lines[] = __('whatsapp.muthowif.new_booking.booking_code', ['code' => $booking->booking_code], $locale);
+                $lines[] = '';
             }
-        }
 
-        $lines[] = '';
-        $lines[] = '*Status:* Menunggu persetujuan Anda';
-        $lines[] = '';
-        $lines[] = '*Buka panel:*';
-        $lines[] = $url;
+            $lines[] = __('whatsapp.muthowif.new_booking.dates', ['start' => $start, 'end' => $end], $locale);
+            $lines[] = __('whatsapp.muthowif.new_booking.service', ['service' => $serviceLabel], $locale);
+            $lines[] = $countLine;
 
-        $this->sendToTarget($target, implode("\n", $lines), $booking->id);
+            $addOnLines = $booking->resolvedAddOns()->map(fn ($addon) => __('whatsapp.muthowif.new_booking.addon_bullet', ['name' => $addon->name], $locale))->all();
+            if ($addOnLines !== []) {
+                $lines[] = __('whatsapp.muthowif.new_booking.addon_heading', [], $locale);
+                foreach ($addOnLines as $addOnLine) {
+                    $lines[] = $addOnLine;
+                }
+            }
+
+            $lines[] = '';
+            $lines[] = __('whatsapp.muthowif.new_booking.status', [], $locale);
+            $lines[] = '';
+            $lines[] = __('whatsapp.muthowif.new_booking.open_panel', [], $locale);
+            $lines[] = $url;
+
+            $this->sendToTarget($target, implode("\n", $lines), $booking->id);
+        });
     }
 
     /**
@@ -95,31 +99,35 @@ class MuthowifBookingWhatsAppNotifier
             return;
         }
 
-        $customerName = $booking->customer?->name ?? 'Jamaah';
-        $start = $booking->starts_on->format('d/m/Y');
-        $end = $booking->ends_on->format('d/m/Y');
-        $appName = config('app.name', 'BaytGo');
-        $url = route('muthowif.bookings.index');
+        $locale = $this->localeForUser($profile->user?->locale);
 
-        $lines = [
-            "*{$appName}* — pembayaran lunas",
-            '',
-            "Booking dari *{$customerName}* sudah dibayar.",
-            '',
-        ];
+        $this->withLocale($locale, function () use ($booking, $target, $locale): void {
+            $customerName = $booking->customer?->name ?? __('whatsapp.fallback_pilgrim', [], $locale);
+            $start = $booking->starts_on->format('d/m/Y');
+            $end = $booking->ends_on->format('d/m/Y');
+            $appName = config('app.name', 'BaytGo');
+            $url = route('muthowif.bookings.index');
 
-        if (filled($booking->booking_code)) {
-            $lines[] = '*Kode booking:* '.$booking->booking_code;
+            $lines = [
+                __('whatsapp.muthowif.payment_settled.headline', ['app' => $appName], $locale),
+                '',
+                __('whatsapp.muthowif.payment_settled.body', ['customer' => $customerName], $locale),
+                '',
+            ];
+
+            if (filled($booking->booking_code)) {
+                $lines[] = __('whatsapp.muthowif.payment_settled.booking_code', ['code' => $booking->booking_code], $locale);
+                $lines[] = '';
+            }
+
+            $lines[] = __('whatsapp.muthowif.payment_settled.service_dates', ['start' => $start, 'end' => $end], $locale);
+            $lines[] = __('whatsapp.muthowif.payment_settled.status', [], $locale);
             $lines[] = '';
-        }
+            $lines[] = __('whatsapp.muthowif.payment_settled.open', [], $locale);
+            $lines[] = $url;
 
-        $lines[] = "*Tanggal layanan:* {$start} - {$end}";
-        $lines[] = '*Status:* Siap Anda proses / dampingi sesuai kesepakatan.';
-        $lines[] = '';
-        $lines[] = '*Buka panel booking:*';
-        $lines[] = $url;
-
-        $this->sendToTarget($target, implode("\n", $lines), $booking->id);
+            $this->sendToTarget($target, implode("\n", $lines), $booking->id);
+        });
     }
 
     /**
@@ -154,31 +162,35 @@ class MuthowifBookingWhatsAppNotifier
             return;
         }
 
-        $muthowifName = $booking->muthowifProfile?->user?->name ?? 'Muthowif';
-        $start = $booking->starts_on->format('d/m/Y');
-        $end = $booking->ends_on->format('d/m/Y');
-        $appName = config('app.name', 'BaytGo');
-        $url = route('bookings.show', $booking);
+        $locale = $this->localeForUser($customer->locale);
 
-        $lines = [
-            "*{$appName}* — booking disetujui",
-            '',
-            "Booking Anda dengan *{$muthowifName}* sudah disetujui.",
-            '',
-        ];
+        $this->withLocale($locale, function () use ($booking, $target, $locale): void {
+            $muthowifName = $booking->muthowifProfile?->user?->name ?? __('whatsapp.fallback_muthowif', [], $locale);
+            $start = $booking->starts_on->format('d/m/Y');
+            $end = $booking->ends_on->format('d/m/Y');
+            $appName = config('app.name', 'BaytGo');
+            $url = route('bookings.show', $booking);
 
-        if (filled($booking->booking_code)) {
-            $lines[] = '*Kode booking:* '.$booking->booking_code;
+            $lines = [
+                __('whatsapp.customer.approved.headline', ['app' => $appName], $locale),
+                '',
+                __('whatsapp.customer.approved.body', ['muthowif' => $muthowifName], $locale),
+                '',
+            ];
+
+            if (filled($booking->booking_code)) {
+                $lines[] = __('whatsapp.customer.approved.booking_code', ['code' => $booking->booking_code], $locale);
+                $lines[] = '';
+            }
+
+            $lines[] = __('whatsapp.customer.approved.service_dates', ['start' => $start, 'end' => $end], $locale);
+            $lines[] = __('whatsapp.customer.approved.status', [], $locale);
             $lines[] = '';
-        }
+            $lines[] = __('whatsapp.customer.approved.pay_at', [], $locale);
+            $lines[] = $url;
 
-        $lines[] = "*Tanggal layanan:* {$start} - {$end}";
-        $lines[] = '*Status:* Menunggu pembayaran';
-        $lines[] = '';
-        $lines[] = '*Lanjutkan pembayaran di:*';
-        $lines[] = $url;
-
-        $this->sendToTarget($target, implode("\n", $lines), $booking->id);
+            $this->sendToTarget($target, implode("\n", $lines), $booking->id);
+        });
     }
 
     /**
@@ -197,35 +209,39 @@ class MuthowifBookingWhatsAppNotifier
             return;
         }
 
-        $customerName = $booking->customer?->name ?? 'Jamaah';
-        $prevStart = $rescheduleRequest->previous_starts_on->format('d/m/Y');
-        $prevEnd = $rescheduleRequest->previous_ends_on->format('d/m/Y');
-        $newStart = $rescheduleRequest->new_starts_on->format('d/m/Y');
-        $newEnd = $rescheduleRequest->new_ends_on->format('d/m/Y');
-        $appName = config('app.name', 'BaytGo');
-        $url = route('muthowif.bookings.show', $booking);
+        $locale = $this->localeForUser($profile->user?->locale);
 
-        $lines = [
-            "*{$appName}* — pengajuan reschedule",
-            '',
-            "*{$customerName}* mengajukan pergantian tanggal layanan.",
-            '',
-        ];
+        $this->withLocale($locale, function () use ($booking, $rescheduleRequest, $target, $locale): void {
+            $customerName = $booking->customer?->name ?? __('whatsapp.fallback_pilgrim', [], $locale);
+            $prevStart = $rescheduleRequest->previous_starts_on->format('d/m/Y');
+            $prevEnd = $rescheduleRequest->previous_ends_on->format('d/m/Y');
+            $newStart = $rescheduleRequest->new_starts_on->format('d/m/Y');
+            $newEnd = $rescheduleRequest->new_ends_on->format('d/m/Y');
+            $appName = config('app.name', 'BaytGo');
+            $url = route('muthowif.bookings.show', $booking);
 
-        if (filled($booking->booking_code)) {
-            $lines[] = '*Kode booking:* '.$booking->booking_code;
+            $lines = [
+                __('whatsapp.muthowif.reschedule_requested.headline', ['app' => $appName], $locale),
+                '',
+                __('whatsapp.muthowif.reschedule_requested.body', ['customer' => $customerName], $locale),
+                '',
+            ];
+
+            if (filled($booking->booking_code)) {
+                $lines[] = __('whatsapp.muthowif.reschedule_requested.booking_code', ['code' => $booking->booking_code], $locale);
+                $lines[] = '';
+            }
+
+            $lines[] = __('whatsapp.muthowif.reschedule_requested.current', ['start' => $prevStart, 'end' => $prevEnd], $locale);
+            $lines[] = __('whatsapp.muthowif.reschedule_requested.requested', ['start' => $newStart, 'end' => $newEnd], $locale);
             $lines[] = '';
-        }
+            $lines[] = __('whatsapp.muthowif.reschedule_requested.status', [], $locale);
+            $lines[] = '';
+            $lines[] = __('whatsapp.muthowif.reschedule_requested.open_detail', [], $locale);
+            $lines[] = $url;
 
-        $lines[] = "*Tanggal saat ini:* {$prevStart} - {$prevEnd}";
-        $lines[] = "*Tanggal diajukan:* {$newStart} - {$newEnd}";
-        $lines[] = '';
-        $lines[] = '*Status:* Menunggu keputusan Anda';
-        $lines[] = '';
-        $lines[] = '*Buka detail booking:*';
-        $lines[] = $url;
-
-        $this->sendToTarget($target, implode("\n", $lines), $booking->id);
+            $this->sendToTarget($target, implode("\n", $lines), $booking->id);
+        });
     }
 
     /**
@@ -256,32 +272,36 @@ class MuthowifBookingWhatsAppNotifier
             return;
         }
 
-        $muthowifName = $booking->muthowifProfile?->user?->name ?? 'Muthowif';
-        $newStart = $rescheduleRequest->new_starts_on->format('d/m/Y');
-        $newEnd = $rescheduleRequest->new_ends_on->format('d/m/Y');
-        $appName = config('app.name', 'BaytGo');
-        $url = route('bookings.show', $booking);
+        $locale = $this->localeForUser($customer->locale);
 
-        $lines = [
-            "*{$appName}* — pengajuan reschedule",
-            '',
-            'Pengajuan pergantian tanggal Anda sudah kami teruskan ke *'.$muthowifName.'*.',
-            '',
-        ];
+        $this->withLocale($locale, function () use ($booking, $rescheduleRequest, $target, $locale): void {
+            $muthowifName = $booking->muthowifProfile?->user?->name ?? __('whatsapp.fallback_muthowif', [], $locale);
+            $newStart = $rescheduleRequest->new_starts_on->format('d/m/Y');
+            $newEnd = $rescheduleRequest->new_ends_on->format('d/m/Y');
+            $appName = config('app.name', 'BaytGo');
+            $url = route('bookings.show', $booking);
 
-        if (filled($booking->booking_code)) {
-            $lines[] = '*Kode booking:* '.$booking->booking_code;
+            $lines = [
+                __('whatsapp.customer.reschedule_submitted.headline', ['app' => $appName], $locale),
+                '',
+                __('whatsapp.customer.reschedule_submitted.body', ['muthowif' => $muthowifName], $locale),
+                '',
+            ];
+
+            if (filled($booking->booking_code)) {
+                $lines[] = __('whatsapp.customer.reschedule_submitted.booking_code', ['code' => $booking->booking_code], $locale);
+                $lines[] = '';
+            }
+
+            $lines[] = __('whatsapp.customer.reschedule_submitted.requested_dates', ['start' => $newStart, 'end' => $newEnd], $locale);
             $lines[] = '';
-        }
+            $lines[] = __('whatsapp.customer.reschedule_submitted.followup', [], $locale);
+            $lines[] = '';
+            $lines[] = __('whatsapp.customer.reschedule_submitted.view_detail', [], $locale);
+            $lines[] = $url;
 
-        $lines[] = "*Tanggal yang diajukan:* {$newStart} - {$newEnd}";
-        $lines[] = '';
-        $lines[] = 'Anda akan mendapat notifikasi lagi setelah muthowif memutuskan.';
-        $lines[] = '';
-        $lines[] = '*Lihat detail booking:*';
-        $lines[] = $url;
-
-        $this->sendToTarget($target, implode("\n", $lines), $booking->id);
+            $this->sendToTarget($target, implode("\n", $lines), $booking->id);
+        });
     }
 
     /**
@@ -312,37 +332,41 @@ class MuthowifBookingWhatsAppNotifier
             return;
         }
 
-        $muthowifName = $booking->muthowifProfile?->user?->name ?? 'Muthowif';
-        $start = $booking->starts_on->format('d/m/Y');
-        $end = $booking->ends_on->format('d/m/Y');
-        $appName = config('app.name', 'BaytGo');
-        $url = route('bookings.show', $booking);
+        $locale = $this->localeForUser($customer->locale);
 
-        $lines = [
-            "*{$appName}* — reschedule disetujui",
-            '',
-            "Muthowif *{$muthowifName}* menyetujui pergantian tanggal layanan Anda.",
-            '',
-        ];
+        $this->withLocale($locale, function () use ($booking, $rescheduleRequest, $target, $locale): void {
+            $muthowifName = $booking->muthowifProfile?->user?->name ?? __('whatsapp.fallback_muthowif', [], $locale);
+            $start = $booking->starts_on->format('d/m/Y');
+            $end = $booking->ends_on->format('d/m/Y');
+            $appName = config('app.name', 'BaytGo');
+            $url = route('bookings.show', $booking);
 
-        if (filled($booking->booking_code)) {
-            $lines[] = '*Kode booking:* '.$booking->booking_code;
+            $lines = [
+                __('whatsapp.customer.reschedule_approved.headline', ['app' => $appName], $locale),
+                '',
+                __('whatsapp.customer.reschedule_approved.body', ['muthowif' => $muthowifName], $locale),
+                '',
+            ];
+
+            if (filled($booking->booking_code)) {
+                $lines[] = __('whatsapp.customer.reschedule_approved.booking_code', ['code' => $booking->booking_code], $locale);
+                $lines[] = '';
+            }
+
+            $lines[] = __('whatsapp.customer.reschedule_approved.new_dates', ['start' => $start, 'end' => $end], $locale);
             $lines[] = '';
-        }
+            $lines[] = __('whatsapp.customer.reschedule_approved.view_detail', [], $locale);
+            $lines[] = $url;
 
-        $lines[] = "*Tanggal layanan baru:* {$start} - {$end}";
-        $lines[] = '';
-        $lines[] = '*Lihat detail booking:*';
-        $lines[] = $url;
+            $note = $rescheduleRequest->muthowif_note;
+            if (filled($note)) {
+                $lines[] = '';
+                $lines[] = __('whatsapp.customer.reschedule_approved.note_heading', [], $locale);
+                $lines[] = $note;
+            }
 
-        $note = $rescheduleRequest->muthowif_note;
-        if (filled($note)) {
-            $lines[] = '';
-            $lines[] = '*Catatan muthowif:*';
-            $lines[] = $note;
-        }
-
-        $this->sendToTarget($target, implode("\n", $lines), $booking->id);
+            $this->sendToTarget($target, implode("\n", $lines), $booking->id);
+        });
     }
 
     /**
@@ -373,37 +397,64 @@ class MuthowifBookingWhatsAppNotifier
             return;
         }
 
-        $muthowifName = $booking->muthowifProfile?->user?->name ?? 'Muthowif';
-        $unchangedStart = $booking->starts_on->format('d/m/Y');
-        $unchangedEnd = $booking->ends_on->format('d/m/Y');
-        $appName = config('app.name', 'BaytGo');
-        $url = route('bookings.show', $booking);
+        $locale = $this->localeForUser($customer->locale);
 
-        $lines = [
-            "*{$appName}* — pengajuan reschedule ditolak",
-            '',
-            "Muthowif *{$muthowifName}* tidak menyetujui pergantian tanggal.",
-            '',
-        ];
+        $this->withLocale($locale, function () use ($booking, $rescheduleRequest, $target, $locale): void {
+            $muthowifName = $booking->muthowifProfile?->user?->name ?? __('whatsapp.fallback_muthowif', [], $locale);
+            $unchangedStart = $booking->starts_on->format('d/m/Y');
+            $unchangedEnd = $booking->ends_on->format('d/m/Y');
+            $appName = config('app.name', 'BaytGo');
+            $url = route('bookings.show', $booking);
 
-        if (filled($booking->booking_code)) {
-            $lines[] = '*Kode booking:* '.$booking->booking_code;
+            $lines = [
+                __('whatsapp.customer.reschedule_rejected.headline', ['app' => $appName], $locale),
+                '',
+                __('whatsapp.customer.reschedule_rejected.body', ['muthowif' => $muthowifName], $locale),
+                '',
+            ];
+
+            if (filled($booking->booking_code)) {
+                $lines[] = __('whatsapp.customer.reschedule_rejected.booking_code', ['code' => $booking->booking_code], $locale);
+                $lines[] = '';
+            }
+
+            $lines[] = __('whatsapp.customer.reschedule_rejected.still', ['start' => $unchangedStart, 'end' => $unchangedEnd], $locale);
             $lines[] = '';
+            $lines[] = __('whatsapp.customer.reschedule_rejected.view_detail', [], $locale);
+            $lines[] = $url;
+
+            $note = $rescheduleRequest->muthowif_note;
+            if (filled($note)) {
+                $lines[] = '';
+                $lines[] = __('whatsapp.customer.reschedule_rejected.note_heading', [], $locale);
+                $lines[] = $note;
+            }
+
+            $this->sendToTarget($target, implode("\n", $lines), $booking->id);
+        });
+    }
+
+    private function localeForUser(?string $locale): string
+    {
+        if (filled($locale)) {
+            return $locale;
         }
 
-        $lines[] = "*Tetap berlaku:* {$unchangedStart} - {$unchangedEnd}";
-        $lines[] = '';
-        $lines[] = '*Lihat detail booking:*';
-        $lines[] = $url;
+        return config('app.locale');
+    }
 
-        $note = $rescheduleRequest->muthowif_note;
-        if (filled($note)) {
-            $lines[] = '';
-            $lines[] = '*Catatan muthowif:*';
-            $lines[] = $note;
+    /**
+     * @param  callable():void  $callback
+     */
+    private function withLocale(string $locale, callable $callback): void
+    {
+        $previous = app()->getLocale();
+        try {
+            app()->setLocale($locale);
+            $callback();
+        } finally {
+            app()->setLocale($previous);
         }
-
-        $this->sendToTarget($target, implode("\n", $lines), $booking->id);
     }
 
     private function resolveTarget(string $phone, string $profileId, string $bookingId): ?string

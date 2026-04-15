@@ -5,8 +5,8 @@
     x-cloak
     class="space-y-3 rounded-xl border border-brand-200/60 bg-brand-50/50 p-4"
 >
-    <p class="text-sm font-medium text-slate-800">Verifikasi WhatsApp</p>
-    <p class="text-xs text-slate-600">Kode OTP dikirim ke nomor WhatsApp di atas. Jangan bagikan kode kepada siapa pun.</p>
+    <p class="text-sm font-medium text-slate-800">{{ __('auth_otp.title') }}</p>
+    <p class="text-xs text-slate-600">{{ __('auth_otp.hint') }}</p>
 
     <div class="flex flex-col sm:flex-row gap-2 sm:items-center">
         <button
@@ -15,9 +15,9 @@
             @click="sendOtp()"
             :disabled="otpSendLoading || (resendCooldown > 0)"
         >
-            <span x-show="!otpSendLoading && resendCooldown <= 0">Kirim kode OTP</span>
-            <span x-show="otpSendLoading" x-cloak>Mengirim…</span>
-            <span x-show="!otpSendLoading && resendCooldown > 0" x-cloak x-text="'Tunggu ' + resendCooldown + ' d'"></span>
+            <span x-show="!otpSendLoading && resendCooldown <= 0">{{ __('auth_otp.send') }}</span>
+            <span x-show="otpSendLoading" x-cloak>{{ __('auth_otp.sending') }}</span>
+            <span x-show="!otpSendLoading && resendCooldown > 0" x-cloak x-text="otpWaitTpl.replace(':n', resendCooldown)"></span>
         </button>
     </div>
 
@@ -41,8 +41,8 @@
             @click="verifyOtp()"
             :disabled="otpVerifyLoading"
         >
-            <span x-show="!otpVerifyLoading">Verifikasi</span>
-            <span x-show="otpVerifyLoading" x-cloak>Memeriksa…</span>
+            <span x-show="!otpVerifyLoading">{{ __('auth_otp.verify') }}</span>
+            <span x-show="otpVerifyLoading" x-cloak>{{ __('auth_otp.verifying') }}</span>
         </button>
     </div>
 
@@ -57,6 +57,6 @@
         <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 shrink-0" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" aria-hidden="true">
             <path stroke-linecap="round" stroke-linejoin="round" d="M9 12.75L11.25 15 15 9.75M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
         </svg>
-        Nomor WhatsApp terverifikasi
+        {{ __('auth_otp.verified') }}
     </div>
 </div>

@@ -99,7 +99,7 @@ class BookingController extends Controller
         if ($booking->isPaid()) {
             return redirect()
                 ->route('bookings.show', $booking)
-                ->with('status', 'Pembayaran sudah diterima. Anda bisa cek invoice dari detail booking.');
+                ->with('status', __('bookings.flash.payment_already_received'));
         }
 
         if (! $provider->isConfigured()) {
@@ -112,14 +112,14 @@ class BookingController extends Controller
         if ($baseInt < 1) {
             return redirect()
                 ->route('bookings.show', $booking)
-                ->with('error', 'Total tagihan tidak valid. Hubungi muthowif atau admin.');
+                ->with('error', __('bookings.flash.invalid_total'));
         }
 
         $selectedMethod = (string) $request->query('method', '');
         if ($selectedMethod !== '' && ! in_array($selectedMethod, self::CORE_PAYMENT_METHODS, true)) {
             return redirect()
                 ->route('bookings.payment', $booking)
-                ->with('error', 'Metode pembayaran tidak didukung.');
+                ->with('error', __('bookings.flash.method_not_supported'));
         }
 
         $split = PlatformFee::split((float) $baseInt);
@@ -246,7 +246,7 @@ class BookingController extends Controller
                     ->first();
 
                 if ($payment === null) {
-                    $error = 'Transaksi pembayaran tidak ditemukan untuk booking ini.';
+                    $error = __('bookings.flash.payment_tx_not_found');
                     return;
                 }
 
@@ -287,12 +287,12 @@ class BookingController extends Controller
         if (! $completed) {
             return redirect()
                 ->route('bookings.show', $booking)
-                ->with('error', $error ?? 'Gagal menyelesaikan layanan. Coba lagi.');
+                ->with('error', $error ?? __('bookings.flash.complete_error'));
         }
 
         return redirect()
             ->route('bookings.show', $booking)
-            ->with('status', $credited ? 'Layanan selesai dan rating tersimpan. Saldo muthowif sudah diperbarui.' : 'Layanan selesai dan rating tersimpan.');
+            ->with('status', $credited ? __('bookings.flash.complete_credited') : __('bookings.flash.complete_ok'));
     }
 
     public function review(Request $request, MuthowifBooking $booking): RedirectResponse
@@ -316,7 +316,7 @@ class BookingController extends Controller
 
         return redirect()
             ->route('bookings.show', $booking)
-            ->with('status', 'Terima kasih! Rating dan review berhasil disimpan.');
+            ->with('status', __('bookings.flash.review_saved'));
     }
 
     public function store(Request $request): RedirectResponse
@@ -346,13 +346,13 @@ class BookingController extends Controller
 
         if ($start->lt(now()->startOfDay())) {
             throw ValidationException::withMessages([
-                'start_date' => 'Tanggal mulai tidak boleh sebelum hari ini.',
+                'start_date' => __('bookings.validation.start_past'),
             ]);
         }
 
         if ($start->diffInDays($end) > self::MAX_RANGE_DAYS) {
             throw ValidationException::withMessages([
-                'end_date' => 'Rentang maksimal '.self::MAX_RANGE_DAYS.' hari.',
+                'end_date' => __('bookings.validation.range_max', ['days' => self::MAX_RANGE_DAYS]),
             ]);
         }
 
@@ -369,14 +369,14 @@ class BookingController extends Controller
 
             if (! $profile->isSlotAvailableForRange($start, $end)) {
                 throw ValidationException::withMessages([
-                    'start_date' => 'Slot ini tidak lagi tersedia (libur atau sudah terisi). Perbarui pencarian Anda.',
+                    'start_date' => __('bookings.validation.slot_unavailable'),
                 ]);
             }
 
             $service = $profile->services->firstWhere('type', $serviceType);
             if (! $service) {
                 throw ValidationException::withMessages([
-                    'service_type' => ['Layanan yang dipilih tidak tersedia untuk muthowif ini.'],
+                    'service_type' => [__('bookings.validation.service_unavailable')],
                 ]);
             }
 
@@ -384,7 +384,7 @@ class BookingController extends Controller
             $count = (int) $validated['pilgrim_count'];
             if ($count < $min || $count > $max) {
                 throw ValidationException::withMessages([
-                    'pilgrim_count' => ["Jumlah jemaah harus antara {$min} dan {$max} untuk layanan ini."],
+                    'pilgrim_count' => [__('bookings.validation.pilgrim_count_between', ['min' => $min, 'max' => $max])],
                 ]);
             }
 
@@ -395,7 +395,7 @@ class BookingController extends Controller
                 foreach ($ids as $id) {
                     if (! in_array((string) $id, $allowed, true)) {
                         throw ValidationException::withMessages([
-                            'add_on_ids' => ['Satu atau lebih add-on tidak valid untuk layanan ini.'],
+                            'add_on_ids' => [__('bookings.validation.addon_invalid')],
                         ]);
                     }
                 }
@@ -407,13 +407,13 @@ class BookingController extends Controller
 
             if ($withSameHotel && (($service->same_hotel_price_per_day ?? null) === null || (float) $service->same_hotel_price_per_day <= 0)) {
                 throw ValidationException::withMessages([
-                    'with_same_hotel' => ['Opsi hotel tidak tersedia untuk layanan ini.'],
+                    'with_same_hotel' => [__('bookings.validation.hotel_unavailable')],
                 ]);
             }
 
             if ($withTransport && (($service->transport_price_flat ?? null) === null || (float) $service->transport_price_flat <= 0)) {
                 throw ValidationException::withMessages([
-                    'with_transport' => ['Opsi transportasi tidak tersedia untuk layanan ini.'],
+                    'with_transport' => [__('bookings.validation.transport_unavailable')],
                 ]);
             }
 
@@ -438,7 +438,7 @@ class BookingController extends Controller
 
         return redirect()
             ->route('bookings.index')
-            ->with('status', 'Permintaan booking dikirim. Tunggu persetujuan muthowif.');
+            ->with('status', __('bookings.flash.booking_submitted'));
     }
 
     public function storeRefundRequest(Request $request, MuthowifBooking $booking): RedirectResponse
@@ -468,7 +468,7 @@ class BookingController extends Controller
 
         return redirect()
             ->route('bookings.show', $booking)
-            ->with('status', 'Pengajuan refund diterima. Booking dibatalkan. Admin akan mentransfer dana ke rekening Anda sesuai nominal bersih setelah potongan biaya admin.');
+            ->with('status', __('bookings.flash.refund_submitted'));
     }
 
     public function storeRescheduleRequest(Request $request, MuthowifBooking $booking): RedirectResponse
@@ -490,7 +490,7 @@ class BookingController extends Controller
         $oldNights = $booking->billingNightsInclusive();
         if ($oldNights < 1) {
             throw ValidationException::withMessages([
-                'new_start_date' => 'Durasi booking tidak valid.',
+                'new_start_date' => __('bookings.validation.duration_invalid'),
             ]);
         }
 
@@ -499,13 +499,13 @@ class BookingController extends Controller
 
         if ($start->lt(now()->startOfDay())) {
             throw ValidationException::withMessages([
-                'new_start_date' => 'Tanggal mulai baru tidak boleh sebelum hari ini.',
+                'new_start_date' => __('bookings.validation.new_start_past'),
             ]);
         }
 
         if ($start->diffInDays($end) > self::MAX_RANGE_DAYS) {
             throw ValidationException::withMessages([
-                'new_start_date' => 'Rentang layanan melebihi batas maksimal ('.self::MAX_RANGE_DAYS.' hari kalender).',
+                'new_start_date' => __('bookings.validation.new_range_max', ['days' => self::MAX_RANGE_DAYS]),
             ]);
         }
 
@@ -513,7 +513,7 @@ class BookingController extends Controller
         $profile = $booking->muthowifProfile;
         if ($profile === null || ! $profile->isSlotAvailableForRange($start, $end, (string) $booking->getKey())) {
             throw ValidationException::withMessages([
-                'new_start_date' => 'Slot tanggal baru tidak tersedia (bentrok libur atau booking lain).',
+                'new_start_date' => __('bookings.validation.new_slot_unavailable'),
             ]);
         }
 
@@ -533,7 +533,7 @@ class BookingController extends Controller
 
         return redirect()
             ->route('bookings.show', $booking)
-            ->with('status', 'Pengajuan reschedule dikirim. Menunggu persetujuan muthowif.');
+            ->with('status', __('bookings.flash.reschedule_submitted'));
     }
 
     public function cancel(Request $request, MuthowifBooking $booking): RedirectResponse
@@ -547,7 +547,7 @@ class BookingController extends Controller
 
         return redirect()
             ->route('bookings.index')
-            ->with('status', 'Booking dibatalkan.');
+            ->with('status', __('bookings.flash.cancelled'));
     }
 
     /**

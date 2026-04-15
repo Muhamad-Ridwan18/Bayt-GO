@@ -10,11 +10,11 @@
     $gross = (float) ($split['customer_gross'] ?? 0.0);
 @endphp
 <!DOCTYPE html>
-<html lang="id">
+<html lang="{{ str_replace('_', '-', app()->getLocale()) }}">
 <head>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
-    <title>Invoice — {{ config('app.name') }}</title>
+    <title>{{ __('bookings.invoice.title', ['app' => config('app.name')]) }}</title>
     @vite(['resources/css/app.css'])
     <style>
         @media print {
@@ -36,68 +36,68 @@
             <div class="flex justify-between items-start gap-4 border-b border-slate-200 pb-6">
                 <div>
                     <p class="text-xs font-bold uppercase tracking-wide text-brand-700">{{ config('app.name') }}</p>
-                    <h1 class="mt-1 text-2xl font-bold text-slate-900">Invoice</h1>
-                    <p class="mt-2 text-sm text-slate-500">Untuk pembayaran pendampingan umrah</p>
+                    <h1 class="mt-1 text-2xl font-bold text-slate-900">{{ __('bookings.invoice.heading') }}</h1>
+                    <p class="mt-2 text-sm text-slate-500">{{ __('bookings.invoice.subtitle') }}</p>
                 </div>
                 <div class="text-right text-sm">
                     @if (filled($booking->booking_code))
-                        <p class="text-slate-500">Kode booking</p>
+                        <p class="text-slate-500">{{ __('bookings.invoice.booking_code') }}</p>
                         <p class="font-mono text-xs font-semibold text-slate-800">{{ $booking->booking_code }}</p>
                     @endif
                     @if ($payment)
-                        <p class="{{ filled($booking->booking_code) ? 'mt-2' : '' }} text-slate-500">No. order pembayaran</p>
+                        <p class="{{ filled($booking->booking_code) ? 'mt-2' : '' }} text-slate-500">{{ __('bookings.invoice.order_no') }}</p>
                         <p class="font-mono text-xs text-slate-800 break-all">{{ $payment->order_id }}</p>
                     @endif
-                    <p class="mt-2 text-slate-500">Tanggal</p>
+                    <p class="mt-2 text-slate-500">{{ __('bookings.invoice.date') }}</p>
                     <p class="font-medium text-slate-900">{{ $booking->paid_at?->timezone(config('app.timezone'))->format('d/m/Y H:i') ?? '—' }}</p>
                 </div>
             </div>
 
             <div class="mt-6 grid grid-cols-1 sm:grid-cols-2 gap-6 text-sm">
                 <div>
-                    <p class="text-xs font-semibold uppercase text-slate-500">Jamaah</p>
+                    <p class="text-xs font-semibold uppercase text-slate-500">{{ __('bookings.invoice.pilgrim') }}</p>
                     <p class="mt-1 font-medium text-slate-900">{{ $booking->customer->name }}</p>
                     <p class="text-slate-600">{{ $booking->customer->email }}</p>
                 </div>
                 <div>
-                    <p class="text-xs font-semibold uppercase text-slate-500">Muthowif</p>
+                    <p class="text-xs font-semibold uppercase text-slate-500">{{ __('bookings.invoice.muthowif') }}</p>
                     <p class="mt-1 font-medium text-slate-900">{{ $booking->muthowifProfile->user->name }}</p>
                 </div>
             </div>
 
             <div class="mt-6 text-sm">
-                <p class="text-xs font-semibold uppercase text-slate-500">Periode layanan</p>
+                <p class="text-xs font-semibold uppercase text-slate-500">{{ __('bookings.invoice.service_period') }}</p>
                 <p class="mt-1 font-medium text-slate-900">
                     {{ Carbon::parse($booking->starts_on)->format('d/m/Y') }} – {{ Carbon::parse($booking->ends_on)->format('d/m/Y') }}
                 </p>
-                <p class="text-slate-600">{{ $booking->service_type?->label() ?? '—' }} · {{ $booking->pilgrim_count }} jemaah</p>
+                <p class="text-slate-600">{{ $booking->service_type?->label() ?? __('common.em_dash') }} · {{ __('bookings.index.pilgrims_count', ['count' => $booking->pilgrim_count, 'pilgrims_word' => __('common.pilgrims')]) }}</p>
             </div>
 
             <div class="mt-8 border-t border-slate-200 pt-6 space-y-2 text-sm">
                 <div class="flex justify-between">
-                    <span class="text-slate-600">Subtotal layanan</span>
+                    <span class="text-slate-600">{{ __('bookings.invoice.subtotal') }}</span>
                     <span class="font-medium text-slate-900">Rp {{ $fmt($base) }}</span>
                 </div>
                 <div class="flex justify-between">
-                    <span class="text-slate-600">Biaya platform (7,5%)</span>
+                    <span class="text-slate-600">{{ __('bookings.invoice.platform_fee_pct') }}</span>
                     <span class="font-medium text-slate-900">Rp {{ $fmt($customerPlatformFee) }}</span>
                 </div>
                 <div class="flex justify-between border-t border-slate-200 pt-3 text-base">
-                    <span class="font-semibold text-slate-900">Total dibayar</span>
+                    <span class="font-semibold text-slate-900">{{ __('bookings.invoice.total') }}</span>
                     <span class="font-bold text-brand-700">Rp {{ $fmt($gross) }}</span>
                 </div>
                 @if ($payment)
                     <p class="mt-3 text-xs text-slate-500 leading-relaxed">
-                        Pembayaran melalui Midtrans
+                        {{ __('bookings.invoice.midtrans_via') }}
                         @if ($payment->payment_type)
                             ({{ $payment->payment_type }})
                         @endif
-                        . Biaya platform untuk customer adalah {{ (int) round(PlatformFee::RATE * 100) }}% dari subtotal layanan.
+                        . {{ __('bookings.invoice.midtrans_fee_note', ['pct' => (int) round(PlatformFee::RATE * 100)]) }}
                     </p>
                 @endif
             </div>
 
-            <p class="mt-8 text-center text-xs text-slate-400">Dokumen ini dibuat secara elektronik dan sah tanpa tanda tangan basah.</p>
+            <p class="mt-8 text-center text-xs text-slate-400">{{ __('bookings.invoice.electronic_doc') }}</p>
         </div>
     </div>
 </body>

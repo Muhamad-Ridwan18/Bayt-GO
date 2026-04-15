@@ -10,10 +10,6 @@ enum BookingChangeRequestStatus: string
 
     public function label(): string
     {
-        return match ($this) {
-            self::Pending => 'Menunggu keputusan',
-            self::Approved => 'Disetujui',
-            self::Rejected => 'Ditolak',
-        };
+        return __('enums.booking_change_request_status.'.$this->value);
     }
 }

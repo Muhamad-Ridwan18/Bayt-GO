@@ -1,0 +1,72 @@
+<?php
+
+return [
+    'fallback_pilgrim' => 'Pilgrim',
+    'fallback_muthowif' => 'Chaperone',
+    'fallback_service' => 'Service',
+    'muthowif' => [
+        'new_booking' => [
+            'headline' => '*:app* — new booking request',
+            'body' => 'Pilgrim *:customer* requested accompaniment.',
+            'dates' => '*Dates:* :start - :end',
+            'service' => '*Service:* :service',
+            'pilgrim_count' => '*Party size:* :count',
+            'addon_heading' => '*Add-ons:*',
+            'addon_bullet' => '• :name',
+            'status' => '*Status:* Awaiting your approval',
+            'open_panel' => '*Open panel:*',
+            'booking_code' => '*Booking code:* :code',
+        ],
+        'payment_settled' => [
+            'headline' => '*:app* — payment received',
+            'body' => 'Booking from *:customer* has been paid.',
+            'service_dates' => '*Service dates:* :start - :end',
+            'status' => '*Status:* Ready for you to deliver as agreed.',
+            'open' => '*Open bookings:*',
+            'booking_code' => '*Booking code:* :code',
+        ],
+        'reschedule_requested' => [
+            'headline' => '*:app* — reschedule request',
+            'body' => '*:customer* requested to change the service dates.',
+            'booking_code' => '*Booking code:* :code',
+            'current' => '*Current dates:* :start - :end',
+            'requested' => '*Requested dates:* :start - :end',
+            'status' => '*Status:* Awaiting your decision',
+            'open_detail' => '*Open booking details:*',
+        ],
+    ],
+    'customer' => [
+        'approved' => [
+            'headline' => '*:app* — booking approved',
+            'body' => 'Your booking with *:muthowif* has been approved.',
+            'booking_code' => '*Booking code:* :code',
+            'service_dates' => '*Service dates:* :start - :end',
+            'status' => '*Status:* Awaiting payment',
+            'pay_at' => '*Continue payment at:*',
+        ],
+        'reschedule_submitted' => [
+            'headline' => '*:app* — reschedule submitted',
+            'body' => 'Your date change request was forwarded to *:muthowif*.',
+            'booking_code' => '*Booking code:* :code',
+            'requested_dates' => '*Requested dates:* :start - :end',
+            'followup' => 'You will get another message after the guide decides.',
+            'view_detail' => '*View booking:*',
+        ],
+        'reschedule_approved' => [
+            'headline' => '*:app* — reschedule approved',
+            'body' => 'Chaperone *:muthowif* approved your new service dates.',
+            'booking_code' => '*Booking code:* :code',
+            'new_dates' => '*New service dates:* :start - :end',
+            'view_detail' => '*View booking:*',
+            'note_heading' => '*Guide note:*',
+        ],
+        'reschedule_rejected' => [
+            'headline' => '*:app* — reschedule declined',
+            'body' => 'Chaperone *:muthowif* did not approve the new dates.',
+            'booking_code' => '*Booking code:* :code',
+            'still' => '*Still scheduled:* :start - :end',
+            'view_detail' => '*View booking:*',
+            'note_heading' => '*Guide note:*',
+        ],
+    ],
+];

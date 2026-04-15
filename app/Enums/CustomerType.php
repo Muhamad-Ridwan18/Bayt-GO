@@ -9,9 +9,6 @@ enum CustomerType: string
 
     public function label(): string
     {
-        return match ($this) {
-            self::Personal => 'Personal',
-            self::Company => 'Perusahaan',
-        };
+        return __('enums.customer_type.'.$this->value);
     }
 }

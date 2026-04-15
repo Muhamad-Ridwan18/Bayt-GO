@@ -37,9 +37,9 @@
 
     <div class="relative bg-gradient-to-r from-slate-900 via-brand-900 to-amber-950 px-6 py-5 sm:px-8 sm:py-6 sm:flex sm:items-center sm:justify-between gap-4">
         <div>
-            <p class="text-xs font-semibold uppercase tracking-wider text-brand-200/90">Checkout</p>
-            <h2 class="mt-1 text-xl sm:text-2xl font-bold text-white tracking-tight">Ajukan booking</h2>
-            <p class="mt-1 text-sm text-brand-100/90 max-w-xl">Satu formulir — pilih paket dan jumlah jemaah, lalu kirim permintaan.</p>
+            <p class="text-xs font-semibold uppercase tracking-wider text-brand-200/90">{{ __('marketplace.panel.checkout') }}</p>
+            <h2 class="mt-1 text-xl sm:text-2xl font-bold text-white tracking-tight">{{ __('marketplace.panel.title') }}</h2>
+            <p class="mt-1 text-sm text-brand-100/90 max-w-xl">{{ __('marketplace.panel.subtitle') }}</p>
         </div>
         <div class="mt-4 sm:mt-0 shrink-0 flex items-center gap-2 rounded-2xl bg-white/10 px-4 py-2.5 ring-1 ring-white/20 backdrop-blur-sm">
             <svg class="h-5 w-5 text-amber-300 shrink-0" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" aria-hidden="true">
@@ -52,46 +52,46 @@
     <div class="relative bg-gradient-to-b from-slate-50/50 to-white px-6 py-6 sm:px-8 sm:py-8">
         @if ($intent['reason'] === 'guest')
             <div class="rounded-2xl bg-white border border-slate-200 p-5 shadow-sm">
-                <p class="text-sm text-slate-700">Masuk sebagai jamaah untuk mengajukan booking pada profil ini.</p>
+                <p class="text-sm text-slate-700">{{ __('marketplace.panel.guest_intro') }}</p>
                 <a href="{{ route('login.intended', ['next' => request()->getRequestUri()]) }}"
                    class="mt-4 inline-flex justify-center items-center px-5 py-2.5 rounded-xl bg-brand-600 text-white text-sm font-semibold shadow-md hover:bg-brand-700">
-                    Masuk untuk booking
+                    {{ __('marketplace.panel.guest_login') }}
                 </a>
                 @if (Route::has('register'))
-                    <a href="{{ route('register') }}" class="mt-2 block text-sm font-medium text-brand-700 hover:text-brand-800">Belum punya akun? Daftar</a>
+                    <a href="{{ route('register') }}" class="mt-2 block text-sm font-medium text-brand-700 hover:text-brand-800">{{ __('marketplace.panel.guest_register') }}</a>
                 @endif
             </div>
         @elseif ($intent['reason'] === 'not_customer')
             <p class="text-sm text-amber-800 bg-amber-50 border border-amber-200 rounded-2xl px-4 py-3">
-                Hanya akun <strong>jamaah</strong> yang dapat mengajukan booking lewat fitur ini.
+                {!! __('marketplace.panel.not_customer') !!}
             </p>
         @elseif ($intent['reason'] === 'missing_dates')
             <p class="text-sm text-slate-700 bg-white border border-slate-200 rounded-2xl px-4 py-3 shadow-sm">
-                Tambahkan <strong>tanggal mulai</strong> (dan selesai jika perlu) lewat halaman
-                <a href="{{ route('layanan.index') }}" class="font-semibold text-brand-700 hover:text-brand-800">Cari muthowif</a>,
-                lalu buka kembali profil ini dari hasil pencarian.
+                {!! __('marketplace.panel.missing_dates_html', ['link' => '<a href="'.e(route('layanan.index')).'" class="font-semibold text-brand-700 hover:text-brand-800">'.e(__('layanan.booking_panel_link')).'</a>']) !!}
             </p>
         @elseif ($intent['reason'] === 'invalid_dates')
             <p class="text-sm text-red-800 bg-red-50 border border-red-200 rounded-2xl px-4 py-3">
-                Tanggal di URL tidak valid. Perbaiki di halaman pencarian.
+                {{ __('marketplace.panel.invalid_dates') }}
             </p>
         @elseif ($intent['reason'] === 'past_start')
             <p class="text-sm text-red-800 bg-red-50 border border-red-200 rounded-2xl px-4 py-3">
-                Tanggal mulai tidak boleh di masa lalu. Ubah tanggal di pencarian.
+                {{ __('marketplace.panel.past_start') }}
             </p>
         @elseif ($intent['reason'] === 'range_too_long')
             <p class="text-sm text-red-800 bg-red-50 border border-red-200 rounded-2xl px-4 py-3">
-                Rentang tanggal melebihi batas yang diizinkan. Perpendek rentang di pencarian.
+                {{ __('marketplace.panel.range_too_long') }}
             </p>
         @elseif ($intent['reason'] === 'slot_unavailable')
             <p class="text-sm text-amber-900 bg-amber-50 border border-amber-200 rounded-2xl px-4 py-3">
-                Untuk rentang <strong>{{ $rangeLabel }}</strong>, slot ini tidak tersedia (libur atau sudah terisi). Ubah tanggal di
-                <a href="{{ route('layanan.index', array_filter(['start_date' => $startDate, 'end_date' => $endDate ?? null])) }}" class="font-semibold underline">Cari muthowif</a>.
+                {!! __('marketplace.panel.slot_unavailable_html', [
+                    'range' => $rangeLabel,
+                    'link' => '<a href="'.e(route('layanan.index', array_filter(['start_date' => $startDate, 'end_date' => $endDate ?? null]))).'" class="font-semibold underline">'.e(__('layanan.booking_panel_link')).'</a>',
+                ]) !!}
             </p>
         @elseif ($intent['can_submit'])
             @if (! $group && ! $private)
                 <p class="text-sm text-amber-800 bg-amber-50 border border-amber-200 rounded-2xl px-4 py-3">
-                    Layanan muthowif belum dikonfigurasi. Tidak dapat mengajukan booking.
+                    {{ __('marketplace.panel.services_unconfigured') }}
                 </p>
             @else
                 {{-- Jangan pakai @json di dalam x-data="..." — tanda kutip JSON memutus atribut HTML dan merusak Alpine. --}}
@@ -110,10 +110,10 @@
                 >
                     <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 rounded-2xl border border-slate-200 bg-white px-4 py-3 shadow-sm">
                         <div>
-                            <p class="text-xs font-semibold uppercase tracking-wide text-slate-500">Periode menginap</p>
+                            <p class="text-xs font-semibold uppercase tracking-wide text-slate-500">{{ __('marketplace.panel.stay_period') }}</p>
                             <p class="mt-0.5 text-base font-semibold text-slate-900">{{ $rangeLabel }}</p>
                         </div>
-                        <span class="inline-flex w-fit items-center rounded-full bg-brand-50 text-brand-800 text-xs font-semibold px-3 py-1 ring-1 ring-brand-200/80">Slot tersedia</span>
+                        <span class="inline-flex w-fit items-center rounded-full bg-brand-50 text-brand-800 text-xs font-semibold px-3 py-1 ring-1 ring-brand-200/80">{{ __('marketplace.panel.slot_available') }}</span>
                     </div>
 
                     @if ($errors->any())
@@ -131,7 +131,7 @@
                         <input type="hidden" name="end_date" value="{{ $intent['end'] }}">
 
                         <fieldset>
-                            <legend class="text-sm font-semibold text-slate-900">Pilih paket</legend>
+                            <legend class="text-sm font-semibold text-slate-900">{{ __('marketplace.panel.choose_package') }}</legend>
                             <div class="mt-3 grid grid-cols-1 sm:grid-cols-2 gap-3">
                                 @if ($group)
                                     <label class="relative flex cursor-pointer rounded-2xl border-2 border-slate-200 bg-white p-4 shadow-sm transition-all hover:border-brand-300 hover:shadow-md has-[:checked]:border-brand-500 has-[:checked]:bg-gradient-to-br has-[:checked]:from-brand-50 has-[:checked]:to-white has-[:checked]:shadow-md">
@@ -140,9 +140,9 @@
                                                @checked(old('service_type', $defaultService) === 'group')>
                                         <span class="flex flex-col gap-1">
                                             <span class="inline-flex w-fit rounded-lg bg-brand-100 text-brand-800 text-[10px] font-bold uppercase tracking-wide px-2 py-0.5">Group</span>
-                                            <span class="font-semibold text-slate-900">Jemaah group</span>
+                                            <span class="font-semibold text-slate-900">{{ __('marketplace.panel.group_label') }}</span>
                                             @if ($group->daily_price !== null)
-                                                <span class="text-sm text-slate-600">Mulai <span class="font-bold text-brand-700">Rp {{ IndonesianNumber::formatThousands((string) (int) $group->daily_price) }}</span>/hari</span>
+                                                <span class="text-sm text-slate-600">{{ __('marketplace.panel.from_daily') }} <span class="font-bold text-brand-700">Rp {{ IndonesianNumber::formatThousands((string) (int) $group->daily_price) }}</span>{{ __('marketplace.panel.per_day') }}</span>
                                             @endif
                                         </span>
                                         <span class="absolute top-3 right-3 flex h-5 w-5 items-center justify-center rounded-full border-2 border-slate-300 peer-checked:border-brand-600 peer-checked:bg-brand-600 peer-checked:[&_svg]:opacity-100">
@@ -157,9 +157,9 @@
                                                @checked(old('service_type', $defaultService) === 'private')>
                                         <span class="flex flex-col gap-1 pr-8">
                                             <span class="inline-flex w-fit rounded-lg bg-amber-100 text-amber-900 text-[10px] font-bold uppercase tracking-wide px-2 py-0.5">Private</span>
-                                            <span class="font-semibold text-slate-900">Jemaah private</span>
+                                            <span class="font-semibold text-slate-900">{{ __('marketplace.panel.private_label') }}</span>
                                             @if ($private->daily_price !== null)
-                                                <span class="text-sm text-slate-600">Mulai <span class="font-bold text-amber-800">Rp {{ IndonesianNumber::formatThousands((string) (int) $private->daily_price) }}</span>/hari</span>
+                                                <span class="text-sm text-slate-600">{{ __('marketplace.panel.from_daily') }} <span class="font-bold text-amber-800">Rp {{ IndonesianNumber::formatThousands((string) (int) $private->daily_price) }}</span>{{ __('marketplace.panel.per_day') }}</span>
                                             @endif
                                         </span>
                                         <span class="absolute top-3 right-3 flex h-5 w-5 items-center justify-center rounded-full border-2 border-slate-300 peer-checked:border-amber-600 peer-checked:bg-amber-600 peer-checked:[&_svg]:opacity-100">
@@ -171,7 +171,7 @@
                         </fieldset>
 
                         <div>
-                            <label for="pilgrim_count" class="text-sm font-semibold text-slate-900">Jumlah jemaah</label>
+                            <label for="pilgrim_count" class="text-sm font-semibold text-slate-900">{{ __('marketplace.panel.pilgrim_count') }}</label>
                             <div class="mt-2 flex flex-wrap items-center gap-3">
                                 <input type="number" name="pilgrim_count" id="pilgrim_count" required
                                        min="1"
@@ -179,23 +179,23 @@
                                        value="{{ $defaultPilgrim }}"
                                        x-bind:min="currentBounds().min"
                                        x-bind:max="currentBounds().max">
-                                <span class="text-sm text-slate-500">orang</span>
+                                <span class="text-sm text-slate-500">{{ __('common.people') }}</span>
                             </div>
                             @if ($group)
                                 <p class="mt-2 text-xs text-slate-500" x-show="serviceType === 'group'">
-                                    Kuota group: {{ $gBounds['min'] }}–{{ $gBounds['max'] }} orang.
+                                    {{ __('marketplace.panel.group_quota', ['min' => $gBounds['min'], 'max' => $gBounds['max'], 'people' => __('common.people')]) }}
                                 </p>
                             @endif
                             @if ($private)
                                 <p class="mt-2 text-xs text-slate-500" x-show="serviceType === 'private'">
-                                    Kuota private: {{ $pBounds['min'] }}–{{ $pBounds['max'] }} orang.
+                                    {{ __('marketplace.panel.private_quota', ['min' => $pBounds['min'], 'max' => $pBounds['max'], 'people' => __('common.people')]) }}
                                 </p>
                             @endif
                         </div>
 
                         @if ($group)
                             <div x-show="serviceType === 'group'" class="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm space-y-3">
-                                <h3 class="text-sm font-bold text-slate-900">Opsi tambahan (Group)</h3>
+                                <h3 class="text-sm font-bold text-slate-900">{{ __('marketplace.panel.addons_group') }}</h3>
 
                                 @php
                                     $groupHotelAvailable = ($group->same_hotel_price_per_day ?? null) !== null && (float) $group->same_hotel_price_per_day > 0;
@@ -210,9 +210,9 @@
                                         @checked($groupHotelAvailable && $oldWithSameHotel)>
                                     <span class="text-sm text-slate-700">
                                         @if ($groupHotelAvailable)
-                                            Muthowif tidak tinggal di hotel yang sama (+Rp {{ IndonesianNumber::formatThousands((string) (int) $group->same_hotel_price_per_day) }}/hari)
+                                            {{ __('marketplace.panel.same_hotel_yes', ['amount' => IndonesianNumber::formatThousands((string) (int) $group->same_hotel_price_per_day)]) }}
                                         @else
-                                            Muthowif tidaktinggal di hotel yang sama (belum tersedia)
+                                            {{ __('marketplace.panel.same_hotel_no') }}
                                         @endif
                                     </span>
                                 </label>
@@ -225,9 +225,9 @@
                                         @checked($groupTransportAvailable && $oldWithTransport)>
                                     <span class="text-sm text-slate-700">
                                         @if ($groupTransportAvailable)
-                                            Termasuk transportasi (+Rp {{ IndonesianNumber::formatThousands((string) (int) $group->transport_price_flat) }})
+                                            {{ __('marketplace.panel.transport_yes', ['amount' => IndonesianNumber::formatThousands((string) (int) $group->transport_price_flat)]) }}
                                         @else
-                                            Termasuk transportasi (belum tersedia)
+                                            {{ __('marketplace.panel.transport_no') }}
                                         @endif
                                     </span>
                                 </label>
@@ -236,7 +236,7 @@
 
                         @if ($private)
                             <div x-show="serviceType === 'private'" class="rounded-2xl border border-amber-200 bg-amber-50/40 p-5 shadow-sm space-y-3">
-                                <h3 class="text-sm font-bold text-slate-900">Add-on private</h3>
+                                <h3 class="text-sm font-bold text-slate-900">{{ __('marketplace.panel.addons_private') }}</h3>
                                 @php
                                     $privateHotelAvailable = ($private->same_hotel_price_per_day ?? null) !== null && (float) $private->same_hotel_price_per_day > 0;
                                     $privateTransportAvailable = ($private->transport_price_flat ?? null) !== null && (float) $private->transport_price_flat > 0;
@@ -256,7 +256,7 @@
                                         </label>
                                     @endforeach
                                 @else
-                                    <p class="text-sm text-slate-600">Belum ada add-on private tersedia.</p>
+                                    <p class="text-sm text-slate-600">{{ __('marketplace.panel.no_private_addons') }}</p>
                                 @endif
 
                                 <label class="flex items-start gap-3 {{ $privateHotelAvailable ? 'cursor-pointer' : 'opacity-60 cursor-not-allowed' }}">
@@ -267,9 +267,9 @@
                                         @checked($privateHotelAvailable && $oldWithSameHotel)>
                                     <span class="text-sm text-slate-700">
                                         @if ($privateHotelAvailable)
-                                            Muthowif tidak tinggal di hotel yang sama (+Rp {{ IndonesianNumber::formatThousands((string) (int) $private->same_hotel_price_per_day) }}/hari)
+                                            {{ __('marketplace.panel.same_hotel_yes', ['amount' => IndonesianNumber::formatThousands((string) (int) $private->same_hotel_price_per_day)]) }}
                                         @else
-                                            Muthowif tidak tinggal di hotel yang sama (belum tersedia)
+                                            {{ __('marketplace.panel.same_hotel_no') }}
                                         @endif
                                     </span>
                                 </label>
@@ -282,9 +282,9 @@
                                         @checked($privateTransportAvailable && $oldWithTransport)>
                                     <span class="text-sm text-slate-700">
                                         @if ($privateTransportAvailable)
-                                            Termasuk transportasi (+Rp {{ IndonesianNumber::formatThousands((string) (int) $private->transport_price_flat) }})
+                                            {{ __('marketplace.panel.transport_yes', ['amount' => IndonesianNumber::formatThousands((string) (int) $private->transport_price_flat)]) }}
                                         @else
-                                            Termasuk transportasi (belum tersedia)
+                                            {{ __('marketplace.panel.transport_no') }}
                                         @endif
                                     </span>
                                 </label>
@@ -293,11 +293,11 @@
 
                         <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 pt-2 border-t border-slate-200">
                             <p class="text-xs text-slate-500 max-w-md">
-                                Dengan mengajukan, Anda setuju muthowif akan meninjau permintaan (status <strong>Menunggu</strong>).
+                                {!! __('marketplace.panel.consent_html') !!}
                             </p>
                             <button type="submit"
                                     class="w-full sm:w-auto inline-flex justify-center items-center px-8 py-3.5 rounded-2xl bg-gradient-to-r from-brand-600 to-brand-700 text-white text-sm font-bold shadow-lg shadow-brand-900/20 hover:from-brand-500 hover:to-brand-600 focus:outline-none focus:ring-2 focus:ring-brand-500 focus:ring-offset-2 transition">
-                                Ajukan booking
+                                {{ __('marketplace.panel.submit') }}
                             </button>
                         </div>
                     </form>

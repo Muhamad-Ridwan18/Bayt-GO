@@ -9,42 +9,42 @@
         <div class="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 space-y-8">
             <div class="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
                 <p class="text-sm text-slate-600">
-                    Ringkasan biaya platform ({{ \App\Support\PlatformFee::TOTAL_RATE * 100 }}% total) dan riwayat transaksi Midtrans untuk pembayaran yang sudah settlement.
+                    {{ __('admin.finance.intro', ['pct' => \App\Support\PlatformFee::TOTAL_RATE * 100]) }}
                 </p>
                 <a href="{{ route('admin.refunds.index') }}" class="inline-flex items-center justify-center rounded-xl border border-amber-200 bg-amber-50 px-4 py-2 text-sm font-semibold text-amber-900 hover:bg-amber-100">
-                    Refund menunggu transfer
+                    {{ __('admin.finance.refund_cta') }}
                 </a>
             </div>
 
             <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <div class="rounded-2xl border border-brand-200 bg-gradient-to-br from-brand-50 to-white p-6 shadow-sm">
-                    <p class="text-xs font-semibold uppercase tracking-wide text-brand-800">Total biaya platform terkumpul</p>
+                    <p class="text-xs font-semibold uppercase tracking-wide text-brand-800">{{ __('admin.finance.platform_total') }}</p>
                     <p class="mt-2 text-2xl font-bold text-brand-900">Rp {{ $fmt($totalPlatformFees) }}</p>
                 </div>
                 <div class="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm">
-                    <p class="text-xs font-semibold uppercase tracking-wide text-slate-500">Volume bruto (jamaah)</p>
+                    <p class="text-xs font-semibold uppercase tracking-wide text-slate-500">{{ __('admin.finance.gross_volume') }}</p>
                     <p class="mt-2 text-2xl font-bold text-slate-900">Rp {{ $fmt($totalVolume) }}</p>
                 </div>
             </div>
 
             <div class="rounded-2xl border border-slate-200 bg-white overflow-hidden shadow-sm">
                 <div class="px-5 py-4 border-b border-slate-100">
-                    <h3 class="font-semibold text-slate-900">Transaksi</h3>
+                    <h3 class="font-semibold text-slate-900">{{ __('admin.finance.transactions') }}</h3>
                 </div>
                 @if ($payments->isEmpty())
-                    <p class="p-8 text-center text-sm text-slate-500">Belum ada pembayaran yang settlement.</p>
+                    <p class="p-8 text-center text-sm text-slate-500">{{ __('admin.finance.empty') }}</p>
                 @else
                     <div class="overflow-x-auto">
                         <table class="min-w-full text-sm">
                             <thead class="bg-slate-50 text-left text-xs font-semibold uppercase text-slate-500">
                                 <tr>
-                                    <th class="px-4 py-3">Waktu</th>
-                                    <th class="px-4 py-3">Order ID</th>
-                                    <th class="px-4 py-3">Jamaah</th>
-                                    <th class="px-4 py-3">Muthowif</th>
-                                    <th class="px-4 py-3 text-right">Bruto</th>
-                                    <th class="px-4 py-3 text-right">Fee {{ \App\Support\PlatformFee::TOTAL_RATE * 100 }}%</th>
-                                    <th class="px-4 py-3 text-right">Ke muthowif</th>
+                                    <th class="px-4 py-3">{{ __('admin.finance.time') }}</th>
+                                    <th class="px-4 py-3">{{ __('admin.finance.order_id') }}</th>
+                                    <th class="px-4 py-3">{{ __('admin.finance.pilgrim') }}</th>
+                                    <th class="px-4 py-3">{{ __('admin.finance.muthowif') }}</th>
+                                    <th class="px-4 py-3 text-right">{{ __('admin.finance.gross') }}</th>
+                                    <th class="px-4 py-3 text-right">{{ __('admin.finance.fee_pct', ['pct' => \App\Support\PlatformFee::TOTAL_RATE * 100]) }}</th>
+                                    <th class="px-4 py-3 text-right">{{ __('admin.finance.to_muthowif') }}</th>
                                 </tr>
                             </thead>
                             <tbody class="divide-y divide-slate-100">

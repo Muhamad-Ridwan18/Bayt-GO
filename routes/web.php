@@ -3,20 +3,22 @@
 use App\Enums\MuthowifVerificationStatus;
 use App\Http\Controllers\Admin\BookingRefundController;
 use App\Http\Controllers\Admin\FinanceController;
-use App\Http\Controllers\Admin\WithdrawalsController;
 use App\Http\Controllers\Admin\LogsController;
 use App\Http\Controllers\Admin\MuthowifVerificationController;
+use App\Http\Controllers\Admin\WithdrawalsController;
 use App\Http\Controllers\Customer\BookingController as CustomerBookingController;
-use App\Http\Controllers\PaymentWebhookController;
+use App\Http\Controllers\LocaleController;
 use App\Http\Controllers\Muthowif\BookingController as MuthowifBookingController;
 use App\Http\Controllers\Muthowif\MuthowifScheduleController;
 use App\Http\Controllers\Muthowif\MuthowifServiceController;
 use App\Http\Controllers\Muthowif\WithdrawController as MuthowifWithdrawController;
+use App\Http\Controllers\PaymentWebhookController;
 use App\Http\Controllers\ProfileController;
 use App\Http\Controllers\Public\MuthowifDirectoryController;
 use App\Http\Middleware\EnsureUserRole;
 use App\Models\MuthowifBlockedDate;
 use App\Models\MuthowifProfile;
+use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
 
 Route::bind('publicProfile', function (string $value) {
@@ -43,6 +45,8 @@ Route::get('/layanan', [MuthowifDirectoryController::class, 'index'])->name('lay
 Route::get('/layanan/{publicProfile}/foto', [MuthowifDirectoryController::class, 'photo'])->name('layanan.photo');
 Route::get('/layanan/{publicProfile}', [MuthowifDirectoryController::class, 'show'])->name('layanan.show');
 
+Route::get('/locale/{locale}', [LocaleController::class, 'switch'])->name('locale.switch');
+
 Route::get('/', function () {
     return view('welcome');
 });
@@ -63,7 +67,7 @@ Route::post('/logs/clear', [LogsController::class, 'clear'])
     ->middleware(['auth', EnsureUserRole::class.':admin'])
     ->name('admin.logs.clear');
 
-Route::middleware('guest')->get('/masuk/setelah', function (\Illuminate\Http\Request $request) {
+Route::middleware('guest')->get('/masuk/setelah', function (Request $request) {
     $next = $request->query('next');
     if (is_string($next) && str_starts_with($next, '/') && ! str_starts_with($next, '//') && strlen($next) < 2048) {
         $base = rtrim((string) config('app.url'), '/');

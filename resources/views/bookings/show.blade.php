@@ -37,6 +37,7 @@
     $muthowifNet = (float) ($split['muthowif_net'] ?? 0.0);
     $review = $b->review;
     $fmt = fn (float $n) => IndonesianNumber::formatThousands((string) (int) round($n));
+    $dateLocale = app()->getLocale() === 'id' ? 'id-ID' : 'en-GB';
 @endphp
 
 <x-app-layout>
@@ -45,26 +46,26 @@
             <div class="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm space-y-4">
                 @if (filled($b->booking_code))
                     <div class="rounded-xl border border-slate-100 bg-slate-50/80 px-3 py-2 text-sm">
-                        <p class="text-xs font-medium text-slate-500">Kode booking</p>
+                        <p class="text-xs font-medium text-slate-500">{{ __('bookings.show.booking_code') }}</p>
                         <p class="font-mono font-semibold tracking-tight text-slate-900">{{ $b->booking_code }}</p>
                     </div>
                 @endif
                 <div>
-                    <p class="text-sm text-slate-500">Muthowif</p>
+                    <p class="text-sm text-slate-500">{{ __('bookings.show.muthowif') }}</p>
                     <p class="text-lg font-semibold text-slate-900">{{ $b->muthowifProfile->user->name }}</p>
                 </div>
                 <div class="grid grid-cols-1 sm:grid-cols-2 gap-4 text-sm">
                     <div>
-                        <p class="text-slate-500">Periode</p>
+                        <p class="text-slate-500">{{ __('bookings.show.period') }}</p>
                         <p class="font-medium text-slate-900 mt-0.5">
                             {{ Carbon::parse($b->starts_on)->format('d/m/Y') }} – {{ Carbon::parse($b->ends_on)->format('d/m/Y') }}
                         </p>
-                        <p class="text-xs text-slate-500 mt-1">{{ $nights }} hari layanan</p>
+                        <p class="text-xs text-slate-500 mt-1">{{ __('bookings.show.service_days_line', ['count' => $nights]) }}</p>
                     </div>
                     <div>
-                        <p class="text-slate-500">Layanan</p>
+                        <p class="text-slate-500">{{ __('bookings.show.service') }}</p>
                         <p class="font-medium text-slate-900 mt-0.5">{{ $b->service_type?->label() ?? '—' }}</p>
-                        <p class="text-xs text-slate-500 mt-1">{{ $b->pilgrim_count }} jemaah</p>
+                        <p class="text-xs text-slate-500 mt-1">{{ __('bookings.index.pilgrims_count', ['count' => $b->pilgrim_count, 'pilgrims_word' => __('common.pilgrims')]) }}</p>
                     </div>
                 </div>
                 <div class="flex flex-wrap gap-2">
@@ -89,10 +90,10 @@
 
             @if (in_array($st, [BookingStatus::Confirmed, BookingStatus::Completed], true) || ($st === BookingStatus::Cancelled && $b->paid_at))
                 <div class="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm">
-                    <h3 class="font-semibold text-slate-900">Rincian pembayaran</h3>
+                    <h3 class="font-semibold text-slate-900">{{ __('bookings.show.payment_heading') }}</h3>
                     <dl class="mt-4 space-y-3 text-sm">
                         <div class="flex justify-between gap-4">
-                            <dt class="text-slate-600">Tarif / hari</dt>
+                            <dt class="text-slate-600">{{ __('bookings.show.rate_per_day') }}</dt>
                             <dd class="font-medium text-slate-900 text-right">
                                 @if ($daily !== null)
                                     Rp {{ $fmt($daily) }}
@@ -102,11 +103,11 @@
                             </dd>
                         </div>
                         <div class="flex justify-between gap-4">
-                            <dt class="text-slate-600">Jumlah hari</dt>
-                            <dd class="font-medium text-slate-900">{{ $nights }} hari</dd>
+                            <dt class="text-slate-600">{{ __('bookings.show.day_count') }}</dt>
+                            <dd class="font-medium text-slate-900">{{ __('bookings.show.days_count', ['count' => $nights]) }}</dd>
                         </div>
                         <div class="flex justify-between gap-4 border-t border-slate-100 pt-3">
-                            <dt class="text-slate-600">Subtotal layanan</dt>
+                            <dt class="text-slate-600">{{ __('bookings.show.subtotal_service') }}</dt>
                             <dd class="font-medium text-slate-900">Rp {{ $fmt($baseSubtotal) }}</dd>
                         </div>
                         @if ($addonLines->isNotEmpty())
@@ -119,22 +120,22 @@
                         @endif
                         @if ($sameHotelLine > 0)
                             <div class="flex justify-between gap-4">
-                                <dt class="text-slate-600">+ Hotel sama ({{ $nights }} hari)</dt>
+                                <dt class="text-slate-600">{{ __('bookings.show.same_hotel_label', ['nights' => $nights, 'days' => __('common.days')]) }}</dt>
                                 <dd class="font-medium text-slate-900">Rp {{ $fmt($sameHotelLine) }}</dd>
                             </div>
                         @endif
                         @if ($transportLine > 0)
                             <div class="flex justify-between gap-4">
-                                <dt class="text-slate-600">+ Transportasi</dt>
+                                <dt class="text-slate-600">{{ __('bookings.show.transport_label') }}</dt>
                                 <dd class="font-medium text-slate-900">Rp {{ $fmt($transportLine) }}</dd>
                             </div>
                         @endif
                         <div class="flex justify-between gap-4 border-t border-slate-100 pt-3">
-                            <dt class="text-slate-600">Biaya platform</dt>
+                            <dt class="text-slate-600">{{ __('bookings.show.platform_fee') }}</dt>
                             <dd class="font-medium text-slate-900">Rp {{ $fmt($customerPlatformFee) }}</dd>
                         </div>
                         <div class="flex justify-between gap-4 border-t border-slate-200 pt-3 text-base">
-                            <dt class="font-semibold text-slate-900">Total dibayar (customer)</dt>
+                            <dt class="font-semibold text-slate-900">{{ __('bookings.show.total_customer') }}</dt>
                             <dd class="font-bold text-brand-700">Rp {{ $fmt($customerTotal) }}</dd>
                         </div>
                         {{-- <div class="flex justify-between gap-4 pt-2 text-sm">
@@ -147,24 +148,23 @@
                         @php $paymentQuery = request()->query('payment'); @endphp
                         @if ($paymentQuery === 'success')
                             <p class="mt-4 text-xs text-slate-600 leading-relaxed">
-                                Terima kasih! Kami sedang menunggu konfirmasi pembayaran dari <strong>Midtrans</strong>.
-                                Jika invoice sudah berstatus lunas, tombol <em>cetak invoice</em> akan muncul otomatis.
+                                {!! __('bookings.show.midtrans_wait_html') !!}
                             </p>
                         @else
                             <p class="mt-4 text-xs text-slate-600 leading-relaxed">
-                                Total yang Anda bayarkan sudah termasuk biaya platform.
+                                {{ __('bookings.show.total_includes_fee') }}
                             </p>
                         @endif
 
                         <a href="{{ route('bookings.payment', $b) }}" class="mt-4 inline-flex justify-center items-center gap-2 rounded-xl bg-brand-600 px-6 py-3 text-sm font-semibold text-white shadow-md hover:bg-brand-700">
-                            Bayar
+                            {{ __('bookings.show.pay') }}
                         </a>
                     @elseif ($b->paid_at && ($b->isPaid() || $b->isRefundPending() || $b->isRefunded()))
                         <p class="mt-4 text-sm text-emerald-800">
-                            Dibayar pada {{ $b->paid_at->timezone(config('app.timezone'))->format('d/m/Y H:i') }}.
+                            {{ __('bookings.show.paid_at', ['datetime' => $b->paid_at->timezone(config('app.timezone'))->format('d/m/Y H:i')]) }}
                         </p>
                         <a href="{{ route('bookings.invoice', $b) }}" target="_blank" rel="noopener noreferrer" class="mt-3 inline-flex items-center gap-2 text-sm font-semibold text-brand-700 hover:text-brand-800">
-                            Cetak invoice
+                            {{ __('bookings.show.print_invoice') }}
                             <svg class="h-4 w-4" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true"><path fill-rule="evenodd" d="M5 4v3H4a2 2 0 00-2 2v3a2 2 0 002 2h1v2a2 2 0 002 2h6a2 2 0 002-2v-2h1a2 2 0 002-2V9a2 2 0 00-2-2h-1V4a2 2 0 00-2-2H7a2 2 0 00-2 2zm8 0H7v3h6V4zm0 8H7v4h6v-4z" clip-rule="evenodd" /></svg>
                         </a>
                     @endif
@@ -174,26 +174,32 @@
             @if ($st === BookingStatus::Confirmed && $b->isPaid())
                 <div class="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm space-y-6">
                     <div>
-                        <h3 class="font-semibold text-slate-900">Refund & reschedule</h3>
+                        <h3 class="font-semibold text-slate-900">{{ __('bookings.show.refund_reschedule_heading') }}</h3>
                         <p class="mt-1 text-xs text-slate-600 leading-relaxed">
-                            Refund: paling lambat <strong>H-{{ BookingPostPayRules::refundMinDaysBeforeService() }}</strong> sebelum tanggal mulai layanan. Biaya admin: <strong>2,5%</strong> + <strong>1%</strong> dari harga dasar layanan. Setelah Anda mengajukan, <strong>admin mentransfer secara manual</strong> nominal bersih ke rekening Anda.
-                            Reschedule: <strong>H-{{ BookingPostPayRules::rescheduleMinDaysBeforeService() }}</strong>, jumlah hari sama, <strong>perlu persetujuan muthowif</strong>.
+                            {!! __('bookings.show.refund_reschedule_intro_html', [
+                                'refund_days' => BookingPostPayRules::refundMinDaysBeforeService(),
+                                'reschedule_days' => BookingPostPayRules::rescheduleMinDaysBeforeService(),
+                            ]) !!}
                         </p>
                     </div>
 
                     @if ($refundEligibilityError === null && $refundPreview)
                         <div class="rounded-xl border border-slate-100 bg-slate-50/80 p-4 text-sm text-slate-700 space-y-2">
-                            <p>Perkiraan dana kembali ke rekening Anda: <strong>Rp {{ $fmt((float) $refundPreview['net_refund_customer']) }}</strong> (setelah potongan admin).</p>
-                            <p class="text-xs text-slate-600">Total dibayar Rp {{ $fmt((float) $refundPreview['customer_paid_amount']) }}, potongan platform Rp {{ $fmt((float) $refundPreview['refund_fee_platform']) }}, muthowif Rp {{ $fmt((float) $refundPreview['refund_fee_muthowif']) }}.</p>
+                            <p>{!! __('bookings.show.refund_estimate_html', ['amount' => $fmt((float) $refundPreview['net_refund_customer'])]) !!}</p>
+                            <p class="text-xs text-slate-600">{{ __('bookings.show.refund_breakdown_html', [
+                                'paid' => $fmt((float) $refundPreview['customer_paid_amount']),
+                                'platform' => $fmt((float) $refundPreview['refund_fee_platform']),
+                                'muthowif' => $fmt((float) $refundPreview['refund_fee_muthowif']),
+                            ]) }}</p>
                         </div>
-                        <form method="POST" action="{{ route('bookings.refund_request.store', $b) }}" class="space-y-3" onsubmit="return confirm('Booking akan dibatalkan dan admin akan mentransfer refund (nominal bersih setelah potongan). Lanjutkan?');">
+                        <form method="POST" action="{{ route('bookings.refund_request.store', $b) }}" class="space-y-3" onsubmit="return confirm(@json(__('bookings.show.refund_confirm')));">
                             @csrf
                             <div>
-                                <label for="refund_note" class="block text-sm font-medium text-slate-700 mb-1">Catatan (opsional)</label>
+                                <label for="refund_note" class="block text-sm font-medium text-slate-700 mb-1">{{ __('bookings.show.note_optional') }}</label>
                                 <textarea id="refund_note" name="customer_note" rows="2" maxlength="2000" class="w-full rounded-xl border-slate-300 text-sm">{{ old('customer_note') }}</textarea>
                             </div>
                             <button type="submit" class="inline-flex items-center justify-center rounded-xl border border-slate-300 bg-white px-5 py-2.5 text-sm font-semibold text-slate-800 hover:bg-slate-50">
-                                Proses refund
+                                {{ __('bookings.show.process_refund') }}
                             </button>
                         </form>
                     @else
@@ -202,29 +208,30 @@
 
                     @if ($b->pendingRescheduleRequest())
                         <div class="rounded-xl border border-amber-200 bg-amber-50/60 px-4 py-3 text-sm text-amber-900">
-                            Pengajuan reschedule Anda sedang menunggu keputusan muthowif.
+                            {{ __('bookings.show.reschedule_pending') }}
                         </div>
                     @elseif ($rescheduleEligibilityError === null)
                         <form method="POST" action="{{ route('bookings.reschedule_request.store', $b) }}" class="space-y-3 border-t border-slate-100 pt-6">
                             @csrf
-                            <p class="text-sm font-medium text-slate-800">Jadwal baru ({{ $nights }} hari, sama dengan sekarang)</p>
+                            <p class="text-sm font-medium text-slate-800">{{ __('bookings.show.new_schedule', ['nights' => $nights]) }}</p>
                             <div
                                 class="grid grid-cols-1 sm:grid-cols-2 gap-3"
                                 x-data="{
                                     nights: {{ $nights }},
-                                    endLabel: '—',
+                                    endLabel: @json(__('common.em_dash')),
+                                    dateLocale: @json($dateLocale),
                                     updateEnd() {
                                         const v = this.$refs.start?.value;
-                                        if (!v) { this.endLabel = '—'; return; }
+                                        if (!v) { this.endLabel = @json(__('common.em_dash')); return; }
                                         const d = new Date(v + 'T12:00:00');
                                         d.setDate(d.getDate() + (this.nights - 1));
-                                        this.endLabel = d.toLocaleDateString('id-ID', { day: '2-digit', month: 'long', year: 'numeric' });
+                                        this.endLabel = d.toLocaleDateString(this.dateLocale, { day: '2-digit', month: 'long', year: 'numeric' });
                                     }
                                 }"
                                 x-init="$nextTick(() => updateEnd())"
                             >
                                 <div>
-                                    <label for="new_start_date" class="block text-xs font-medium text-slate-600 mb-1">Mulai</label>
+                                    <label for="new_start_date" class="block text-xs font-medium text-slate-600 mb-1">{{ __('bookings.show.start_label') }}</label>
                                     <input
                                         type="date"
                                         id="new_start_date"
@@ -241,20 +248,20 @@
                                     @enderror
                                 </div>
                                 <div>
-                                    <p class="block text-xs font-medium text-slate-600 mb-1">Selesai (otomatis)</p>
+                                    <p class="block text-xs font-medium text-slate-600 mb-1">{{ __('bookings.show.end_auto') }}</p>
                                     <div class="flex min-h-[38px] items-center rounded-xl border border-slate-200 bg-slate-50 px-3 text-sm text-slate-800" x-text="endLabel"></div>
-                                    <p class="mt-1 text-[11px] text-slate-500">Mengikuti {{ $nights }} hari layanan seperti booking ini.</p>
+                                    <p class="mt-1 text-[11px] text-slate-500">{{ __('bookings.show.end_follows', ['nights' => $nights]) }}</p>
                                 </div>
                             </div>
                             <div>
-                                <label for="reschedule_note" class="block text-xs font-medium text-slate-600 mb-1">Catatan (opsional)</label>
+                                <label for="reschedule_note" class="block text-xs font-medium text-slate-600 mb-1">{{ __('bookings.show.note_optional') }}</label>
                                 <textarea id="reschedule_note" name="reschedule_note" rows="2" maxlength="2000" class="w-full rounded-xl border-slate-300 text-sm">{{ old('reschedule_note') }}</textarea>
                                 @error('reschedule_note')
                                     <p class="mt-1 text-xs text-red-700">{{ $message }}</p>
                                 @enderror
                             </div>
                             <button type="submit" class="inline-flex items-center justify-center rounded-xl bg-brand-600 px-5 py-2.5 text-sm font-semibold text-white hover:bg-brand-700">
-                                Ajukan reschedule
+                                {{ __('bookings.show.submit_reschedule') }}
                             </button>
                         </form>
                     @else
@@ -265,19 +272,21 @@
                         <div class="border-t border-slate-100 pt-4 space-y-3 text-xs text-slate-600">
                             @foreach ($b->refundRequests as $req)
                                 <p>
-                                    Refund {{ $req->status->label() }} — {{ $req->created_at?->timezone(config('app.timezone'))->format('d/m/Y H:i') }}
+                                    {{ __('bookings.show.timeline_refund', ['status' => $req->status->label(), 'datetime' => $req->created_at?->timezone(config('app.timezone'))->format('d/m/Y H:i')]) }}
                                     @if ($req->customer_note)
-                                        <br><span class="text-slate-500">Catatan: {{ $req->customer_note }}</span>
+                                        <br><span class="text-slate-500">{{ __('bookings.show.timeline_refund_note', ['note' => $req->customer_note]) }}</span>
                                     @endif
                                 </p>
                             @endforeach
                             @foreach ($b->rescheduleRequests as $req)
                                 <p>
-                                    Reschedule {{ $req->status->label() }} —
-                                    {{ \Carbon\Carbon::parse($req->new_starts_on)->format('d/m/Y') }} – {{ \Carbon\Carbon::parse($req->new_ends_on)->format('d/m/Y') }}
-                                    (diajukan {{ $req->created_at?->timezone(config('app.timezone'))->format('d/m/Y H:i') }})
+                                    {{ __('bookings.show.timeline_reschedule', [
+                                        'status' => $req->status->label(),
+                                        'range' => \Carbon\Carbon::parse($req->new_starts_on)->format('d/m/Y').' – '.\Carbon\Carbon::parse($req->new_ends_on)->format('d/m/Y'),
+                                        'datetime' => $req->created_at?->timezone(config('app.timezone'))->format('d/m/Y H:i'),
+                                    ]) }}
                                     @if ($req->muthowif_note)
-                                        <br><span class="text-slate-500">Muthowif: {{ $req->muthowif_note }}</span>
+                                        <br><span class="text-slate-500">{{ __('bookings.show.timeline_muthowif_note', ['note' => $req->muthowif_note]) }}</span>
                                     @endif
                                 </p>
                             @endforeach
@@ -289,31 +298,30 @@
             @if ($st === BookingStatus::Cancelled && $b->isRefundPending())
                 @php $pend = $b->pendingRefundRequest(); @endphp
                 <div class="rounded-2xl border border-amber-200 bg-amber-50/60 p-6 shadow-sm text-sm text-amber-950">
-                    <p class="font-semibold">Refund menunggu transfer admin</p>
+                    <p class="font-semibold">{{ __('bookings.show.refund_pending_title') }}</p>
                     <p class="mt-2 leading-relaxed">
-                        Nominal transfer ke Anda (perkiraan): <strong>Rp {{ $pend ? $fmt((float) $pend->net_refund_customer) : '—' }}</strong>.
-                        Admin akan mengirim ke rekening yang telah Anda gunakan atau koordinasi lewat kontak support.
+                        {!! __('bookings.show.refund_pending_body_html', ['amount' => $pend ? $fmt((float) $pend->net_refund_customer) : __('common.em_dash')]) !!}
                     </p>
                 </div>
             @endif
 
             @if ($st === BookingStatus::Cancelled && $b->isRefunded())
                 <div class="rounded-2xl border border-slate-200 bg-slate-50 p-6 shadow-sm text-sm text-slate-700">
-                    Booking dibatalkan dan refund telah ditandai selesai oleh admin. Hubungi admin jika dana belum diterima.
+                    {{ __('bookings.show.refunded_done') }}
                 </div>
             @endif
 
             @if ($st === BookingStatus::Confirmed && $b->payment_status === PaymentStatus::Paid)
                 <div class="rounded-2xl border border-brand-200 bg-brand-50/40 p-6 shadow-sm">
-                    <h3 class="font-semibold text-slate-900">Selesaikan layanan</h3>
+                    <h3 class="font-semibold text-slate-900">{{ __('bookings.show.complete_service_heading') }}</h3>
                     <p class="mt-1 text-sm text-slate-600">
-                        Untuk menyelesaikan layanan, beri rating terlebih dahulu. Review bersifat opsional.
+                        {{ __('bookings.show.complete_service_intro') }}
                     </p>
 
-                    <form method="POST" action="{{ route('bookings.complete', $b) }}" class="mt-4 space-y-4" onsubmit="return confirm('Yakin layanan sudah selesai?');">
+                    <form method="POST" action="{{ route('bookings.complete', $b) }}" class="mt-4 space-y-4" onsubmit="return confirm(@json(__('bookings.show.complete_confirm')));">
                         @csrf
                         <div>
-                            <label class="block text-sm font-medium text-slate-700 mb-2">Rating <span class="text-red-600">*</span></label>
+                            <label class="block text-sm font-medium text-slate-700 mb-2">{{ __('bookings.show.rating_required') }} <span class="text-red-600">*</span></label>
                             <div class="flex flex-wrap gap-3">
                                 @for ($i = 1; $i <= 5; $i++)
                                     <label class="inline-flex items-center gap-2 text-sm text-slate-700">
@@ -328,40 +336,40 @@
                         </div>
 
                         <div>
-                            <label for="complete_review" class="block text-sm font-medium text-slate-700 mb-2">Review (opsional)</label>
-                            <textarea id="complete_review" name="review" rows="4" maxlength="2000" class="w-full rounded-xl border-slate-300 text-sm focus:border-brand-500 focus:ring-brand-500" placeholder="Tulis pengalaman Anda (opsional)">{{ old('review') }}</textarea>
+                            <label for="complete_review" class="block text-sm font-medium text-slate-700 mb-2">{{ __('bookings.show.review_optional') }}</label>
+                            <textarea id="complete_review" name="review" rows="4" maxlength="2000" class="w-full rounded-xl border-slate-300 text-sm focus:border-brand-500 focus:ring-brand-500" placeholder="{{ __('bookings.show.review_placeholder') }}">{{ old('review') }}</textarea>
                             @error('review')
                                 <p class="mt-1 text-xs text-red-700">{{ $message }}</p>
                             @enderror
                         </div>
 
                         <button type="submit" class="inline-flex items-center justify-center rounded-xl bg-emerald-600 px-5 py-2.5 text-sm font-semibold text-white hover:bg-emerald-700">
-                            Selesaikan layanan
+                            {{ __('bookings.show.complete_submit') }}
                         </button>
                     </form>
                 </div>
             @endif
 
             @if ($st === BookingStatus::Pending || $b->isAwaitingPayment())
-                <form method="POST" action="{{ route('bookings.cancel', $b) }}" class="rounded-2xl border border-red-100 bg-red-50/50 p-4" onsubmit="return confirm('Batalkan booking ini?');">
+                <form method="POST" action="{{ route('bookings.cancel', $b) }}" class="rounded-2xl border border-red-100 bg-red-50/50 p-4" onsubmit="return confirm(@json(__('bookings.show.cancel_booking_confirm')));">
                     @csrf
-                    <p class="text-sm text-red-900 font-medium">Batalkan booking</p>
-                    <p class="mt-1 text-xs text-red-800/90">Slot akan dibuka kembali untuk muthowif lain jika belum dibayar.</p>
+                    <p class="text-sm text-red-900 font-medium">{{ __('bookings.show.cancel_section_title') }}</p>
+                    <p class="mt-1 text-xs text-red-800/90">{{ __('bookings.show.cancel_section_hint') }}</p>
                     <button type="submit" class="mt-3 text-sm font-semibold text-red-700 hover:text-red-900 underline">
-                        Ya, batalkan
+                        {{ __('bookings.show.cancel_yes') }}
                     </button>
                 </form>
             @endif
 
             @if ($st === BookingStatus::Completed)
                 <div class="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm">
-                    <h3 class="font-semibold text-slate-900">Rating & review</h3>
-                    <p class="mt-1 text-sm text-slate-600">Bagikan pengalaman Anda menggunakan layanan muthowif ini.</p>
+                    <h3 class="font-semibold text-slate-900">{{ __('bookings.show.completed_rating_heading') }}</h3>
+                    <p class="mt-1 text-sm text-slate-600">{{ __('bookings.show.completed_rating_intro') }}</p>
 
                     <form method="POST" action="{{ route('bookings.review', $b) }}" class="mt-4 space-y-4">
                         @csrf
                         <div>
-                            <label class="block text-sm font-medium text-slate-700 mb-2">Rating</label>
+                            <label class="block text-sm font-medium text-slate-700 mb-2">{{ __('bookings.show.rating_required') }}</label>
                             <div class="flex flex-wrap gap-3">
                                 @for ($i = 1; $i <= 5; $i++)
                                     <label class="inline-flex items-center gap-2 text-sm text-slate-700">
@@ -376,15 +384,15 @@
                         </div>
 
                         <div>
-                            <label for="review" class="block text-sm font-medium text-slate-700 mb-2">Review (opsional)</label>
-                            <textarea id="review" name="review" rows="4" maxlength="2000" class="w-full rounded-xl border-slate-300 text-sm focus:border-brand-500 focus:ring-brand-500" placeholder="Ceritakan pengalaman Anda...">{{ old('review', $review?->review) }}</textarea>
+                            <label for="review" class="block text-sm font-medium text-slate-700 mb-2">{{ __('bookings.show.review_label') }}</label>
+                            <textarea id="review" name="review" rows="4" maxlength="2000" class="w-full rounded-xl border-slate-300 text-sm focus:border-brand-500 focus:ring-brand-500" placeholder="{{ __('bookings.show.review_placeholder_edit') }}">{{ old('review', $review?->review) }}</textarea>
                             @error('review')
                                 <p class="mt-1 text-xs text-red-700">{{ $message }}</p>
                             @enderror
                         </div>
 
                         <button type="submit" class="inline-flex items-center justify-center rounded-xl bg-brand-600 px-5 py-2.5 text-sm font-semibold text-white hover:bg-brand-700">
-                            {{ $review ? 'Perbarui review' : 'Kirim review' }}
+                            {{ $review ? __('bookings.show.update_review') : __('bookings.show.submit_review') }}
                         </button>
                     </form>
                 </div>

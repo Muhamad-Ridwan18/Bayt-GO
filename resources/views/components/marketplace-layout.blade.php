@@ -29,18 +29,18 @@
                         </a>
                         <nav class="flex items-center gap-2 text-sm flex-wrap justify-end">
                             <a href="{{ route('layanan.index') }}" class="px-3 py-2 rounded-xl font-medium text-slate-700 hover:bg-slate-100 transition {{ request()->routeIs('layanan.*') ? 'bg-brand-50 text-brand-800' : '' }}">
-                                Cari muthowif
+                                {{ __('layanan.find_muthowif') }}
                             </a>
                             @if ($contactLink)
                                 <a href="{{ $contactLink }}" target="_blank" rel="noopener noreferrer" class="px-3 py-2 rounded-xl font-medium text-brand-700 hover:bg-slate-100 transition">
-                                    Contact us
+                                    {{ __('marketplace.layout.contact_us') }}
                                 </a>
                             @endif
                             @if (Route::has('login'))
-                                <a href="{{ route('login') }}" class="px-3 py-2 rounded-xl font-medium text-slate-700 hover:bg-slate-100 transition">Masuk</a>
+                                <a href="{{ route('login') }}" class="px-3 py-2 rounded-xl font-medium text-slate-700 hover:bg-slate-100 transition">{{ __('layanan.guest_header_login') }}</a>
                             @endif
                             @if (Route::has('register'))
-                                <a href="{{ route('register') }}" class="px-4 py-2 rounded-xl font-semibold bg-brand-600 text-white shadow-sm hover:bg-brand-700 transition">Daftar</a>
+                                <a href="{{ route('register') }}" class="px-4 py-2 rounded-xl font-semibold bg-brand-600 text-white shadow-sm hover:bg-brand-700 transition">{{ __('layanan.guest_header_register') }}</a>
                             @endif
                         </nav>
                     </div>
@@ -56,7 +56,7 @@
                     <span>&copy; {{ date('Y') }} {{ config('app.name') }}</span>
                     @if ($contactLink)
                         <a href="{{ $contactLink }}" target="_blank" rel="noopener noreferrer" class="font-medium text-brand-700 hover:text-brand-800">
-                            Contact us: {{ $contactRaw }}
+                            {{ __('marketplace.footer_contact', ['contact' => $contactRaw]) }}
                         </a>
                     @endif
                 </div>

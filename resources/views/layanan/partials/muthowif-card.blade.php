@@ -24,8 +24,8 @@
     } else {
         $langs = $profile->languagesForDisplay();
         $bio = count($langs) > 0
-            ? 'Komunikasi: '.implode(' · ', array_slice($langs, 0, 4)).(count($langs) > 4 ? '…' : '')
-            : 'Pendamping umrah berpengalaman · layanan di Tanah Suci.';
+            ? __('marketplace.card.bio_comm').implode(' · ', array_slice($langs, 0, 4)).(count($langs) > 4 ? '…' : '')
+            : __('marketplace.card.bio_fallback');
     }
 
     $prices = [];
@@ -45,7 +45,7 @@
     <a
         href="{{ $href }}"
         class="group flex h-full flex-col overflow-hidden rounded-2xl border border-slate-200/90 bg-white shadow-sm ring-1 ring-slate-100 transition hover:border-brand-200 hover:shadow-market hover:ring-brand-100/80 focus:outline-none focus-visible:ring-2 focus-visible:ring-brand-500 focus-visible:ring-offset-2"
-        aria-label="Lihat profil {{ $profile->user->name }}"
+        aria-label="{{ __('marketplace.card.view_profile_aria', ['name' => $profile->user->name]) }}"
     >
         <div class="relative flex gap-4 p-5">
             <div class="relative shrink-0">
@@ -58,9 +58,9 @@
                     loading="lazy"
                     onerror='this.onerror=null; this.src={!! json_encode($fallbackSvg) !!}'
                 >
-                <span class="absolute -bottom-1 -right-1 flex items-center gap-0.5 rounded-full bg-emerald-500 px-1.5 py-0.5 text-[10px] font-bold uppercase tracking-wide text-white shadow-md ring-2 ring-white" title="Profil terverifikasi">
+                <span class="absolute -bottom-1 -right-1 flex items-center gap-0.5 rounded-full bg-emerald-500 px-1.5 py-0.5 text-[10px] font-bold uppercase tracking-wide text-white shadow-md ring-2 ring-white" title="{{ __('marketplace.card.verified_title') }}">
                     <svg class="h-3 w-3" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true"><path fill-rule="evenodd" d="M16.704 4.153a.75.75 0 01.143 1.052l-8 10.5a.75.75 0 01-1.127.075l-4.5-4.5a.75.75 0 011.06-1.06l3.894 3.893 7.48-9.817a.75.75 0 011.05-.143z" clip-rule="evenodd" /></svg>
-                    Verified
+                    {{ __('marketplace.card.verified_badge') }}
                 </span>
             </div>
             <div class="min-w-0 flex-1">
@@ -87,28 +87,28 @@
                     <span class="inline-flex items-center rounded-lg bg-amber-100 px-2 py-0.5 text-[11px] font-bold uppercase tracking-wide text-amber-950">Private</span>
                 @endif
                 @if (! $group && ! $private)
-                    <span class="text-xs text-slate-500">Paket belum diatur</span>
+                    <span class="text-xs text-slate-500">{{ __('marketplace.card.package_unset') }}</span>
                 @endif
             </div>
             <div class="mt-3 flex flex-wrap items-end justify-between gap-3">
                 <div>
                     @if ($minPrice !== null)
-                        <p class="text-xs font-medium text-slate-500">Mulai dari</p>
-                        <p class="text-lg font-bold text-brand-700">Rp {{ IndonesianNumber::formatThousands((string) $minPrice) }}<span class="text-sm font-semibold text-slate-500">/hari</span></p>
+                        <p class="text-xs font-medium text-slate-500">{{ __('marketplace.card.from') }}</p>
+                        <p class="text-lg font-bold text-brand-700">Rp {{ IndonesianNumber::formatThousands((string) $minPrice) }}<span class="text-sm font-semibold text-slate-500">{{ __('common.per_day') }}</span></p>
                     @else
-                        <p class="text-sm text-slate-500">Harga — hubungi muthowif</p>
+                        <p class="text-sm text-slate-500">{{ __('marketplace.card.price_contact') }}</p>
                     @endif
                     @if ($confirmed > 0)
-                        <p class="mt-1 text-xs text-slate-500">{{ $confirmed }} booking terkonfirmasi lewat BaytGo</p>
+                        <p class="mt-1 text-xs text-slate-500">{{ __('marketplace.card.bookings_confirmed', ['count' => $confirmed]) }}</p>
                     @else
-                        <p class="mt-1 text-xs text-slate-500">Baru di marketplace · siap mendampingi</p>
+                        <p class="mt-1 text-xs text-slate-500">{{ __('marketplace.card.new_marketplace') }}</p>
                     @endif
                     @if ($reviewsCount > 0 && $avgRating !== null)
-                        <p class="mt-1 text-xs text-amber-700 font-medium">{{ $avgRating }} ★ · {{ $reviewsCount }} review</p>
+                        <p class="mt-1 text-xs text-amber-700 font-medium">{{ __('marketplace.card.reviews_line', ['rating' => $avgRating, 'count' => $reviewsCount]) }}</p>
                     @endif
                 </div>
                 <span class="inline-flex shrink-0 items-center gap-1 rounded-xl bg-brand-600 px-3 py-2 text-sm font-semibold text-white shadow-sm transition group-hover:bg-brand-700">
-                    Lihat profil
+                    {{ __('marketplace.card.view_profile') }}
                     <svg class="h-4 w-4 transition group-hover:translate-x-0.5" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true"><path fill-rule="evenodd" d="M3 10a.75.75 0 01.75-.75h10.638L10.23 5.29a.75.75 0 111.04-1.08l5.5 5.25a.75.75 0 010 1.08l-5.5 5.25a.75.75 0 11-1.04-1.08l4.158-3.96H3.75A.75.75 0 013 10z" clip-rule="evenodd" /></svg>
                 </span>
             </div>

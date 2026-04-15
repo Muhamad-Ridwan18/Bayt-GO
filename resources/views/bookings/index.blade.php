@@ -12,21 +12,20 @@
             <div class="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
                 <div class="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
                     <div>
-                        <h2 class="text-lg font-semibold text-slate-900">Booking saya</h2>
+                        <h2 class="text-lg font-semibold text-slate-900">{{ __('layanan.customer_bookings_heading') }}</h2>
                         <p class="mt-1 text-sm text-slate-600 leading-relaxed">
-                            Setelah muthowif <strong>menyetujui</strong>, lakukan pembayaran lewat <strong>Midtrans</strong> dari menu detail.
-                            Permintaan <strong>Menunggu</strong> bisa dibatalkan sebelum disetujui.
+                            {!! __('layanan.customer_bookings_intro') !!}
                         </p>
                     </div>
                     <a href="{{ route('layanan.index') }}" class="inline-flex items-center justify-center rounded-xl bg-brand-600 px-4 py-2.5 text-sm font-semibold text-white hover:bg-brand-700">
-                        Cari muthowif lagi
+                        {{ __('layanan.booking_search_again') }}
                     </a>
                 </div>
             </div>
 
             @if ($bookings->isEmpty())
                 <div class="rounded-2xl border border-dashed border-slate-300 bg-slate-50/80 p-10 text-center text-slate-600">
-                    Belum ada booking. Cari muthowif dan ajukan dari halaman profil setelah memilih tanggal.
+                    {{ __('layanan.booking_empty') }}
                 </div>
             @else
                 <ul class="space-y-4">
@@ -55,7 +54,7 @@
                                 <div class="min-w-0 flex items-start gap-3">
                                     <img
                                         src="{{ route('layanan.photo', $booking->muthowifProfile) }}"
-                                        alt="Foto {{ $booking->muthowifProfile->user->name }}"
+                                        alt="{{ __('bookings.index.photo_alt', ['name' => $booking->muthowifProfile->user->name]) }}"
                                         class="h-12 w-12 rounded-xl object-cover ring-1 ring-slate-200"
                                         loading="lazy"
                                     >
@@ -71,7 +70,7 @@
                                     </p>
                                     <p class="mt-1 text-sm text-slate-700">
                                         {{ $booking->service_type?->label() ?? '—' }}
-                                        · {{ $booking->pilgrim_count }} jemaah
+                                        · {{ __('bookings.index.pilgrims_count', ['count' => $booking->pilgrim_count, 'pilgrims_word' => __('common.pilgrims')]) }}
                                     </p>
 
                                     @if ($booking->service_type === MuthowifServiceType::PrivateJamaah && ! empty($booking->selected_add_on_ids))
@@ -87,10 +86,10 @@
                                     @if ($sameHotelLine > 0 || $transportLine > 0)
                                         <ul class="mt-2 text-xs text-slate-600 space-y-0.5">
                                             @if ($sameHotelLine > 0)
-                                                <li>+ Hotel sama ({{ $nights }} hari) (Rp {{ IndonesianNumber::formatThousands((string) (int) round($sameHotelLine)) }})</li>
+                                                <li>{{ __('bookings.index.line_same_hotel', ['nights' => $nights, 'days' => __('common.days'), 'amount' => IndonesianNumber::formatThousands((string) (int) round($sameHotelLine))]) }}</li>
                                             @endif
                                             @if ($transportLine > 0)
-                                                <li>+ Transportasi (Rp {{ IndonesianNumber::formatThousands((string) (int) round($transportLine)) }})</li>
+                                                <li>{{ __('bookings.index.line_transport', ['amount' => IndonesianNumber::formatThousands((string) (int) round($transportLine))]) }}</li>
                                             @endif
                                         </ul>
                                     @endif
@@ -113,7 +112,7 @@
 
                                     @if ($booking->payment_status === PaymentStatus::Paid && $booking->total_amount !== null)
                                         <p class="mt-2 text-xs text-slate-600">
-                                            Total Rp {{ IndonesianNumber::formatThousands((string) (int) round((float) $booking->total_amount)) }}
+                                            {{ __('bookings.index.total_line', ['amount' => IndonesianNumber::formatThousands((string) (int) round((float) $booking->total_amount))]) }}
                                         </p>
                                     @endif
                                     </div>
@@ -121,47 +120,47 @@
 
                                 <div class="flex w-full flex-col gap-2 sm:w-56 sm:items-stretch">
                                     <a href="{{ route('bookings.show', $booking) }}" class="inline-flex justify-center items-center px-4 py-2.5 rounded-xl bg-slate-900 text-white text-sm font-semibold hover:bg-slate-800">
-                                        Detail booking
+                                        {{ __('bookings.index.detail') }}
                                     </a>
 
                                     @if ($st === BookingStatus::Confirmed && $booking->payment_status === PaymentStatus::Pending)
                                         <a href="{{ route('bookings.payment', $booking) }}" class="inline-flex justify-center items-center px-4 py-2.5 rounded-xl bg-brand-600 text-white text-sm font-semibold hover:bg-brand-700 text-center">
-                                            Bayar Midtrans
+                                            {{ __('bookings.index.pay_midtrans') }}
                                         </a>
                                     @endif
 
                                     @if (in_array($booking->payment_status, [PaymentStatus::Paid, PaymentStatus::RefundPending, PaymentStatus::Refunded], true))
                                         <a href="{{ route('bookings.invoice', $booking) }}" target="_blank" rel="noopener noreferrer" class="inline-flex justify-center items-center px-4 py-2.5 rounded-xl border border-slate-200 bg-white text-slate-700 text-sm font-semibold hover:bg-slate-50">
-                                            Cetak invoice
+                                            {{ __('bookings.index.print_invoice') }}
                                         </a>
                                     @endif
 
                                     @if ($st === BookingStatus::Confirmed && $booking->payment_status === PaymentStatus::Paid)
                                         <a href="{{ route('bookings.show', $booking) }}" class="inline-flex justify-center items-center px-4 py-2.5 rounded-xl bg-emerald-600 text-white text-sm font-semibold hover:bg-emerald-700">
-                                            Selesaikan + beri rating
+                                            {{ __('bookings.index.complete_rate') }}
                                         </a>
                                     @endif
 
                                     @if ($st === BookingStatus::Completed)
                                         <a href="{{ route('bookings.show', $booking) }}" class="inline-flex justify-center items-center px-4 py-2.5 rounded-xl border border-brand-200 bg-brand-50 text-brand-800 text-sm font-semibold hover:bg-brand-100">
-                                            {{ $booking->review ? 'Lihat review Anda' : 'Beri rating & review' }}
+                                            {{ $booking->review ? __('bookings.index.view_review') : __('bookings.index.give_review') }}
                                         </a>
                                     @endif
 
                                     @if ($st === BookingStatus::Pending)
-                                        <form method="POST" action="{{ route('bookings.cancel', $booking) }}" onsubmit="return confirm('Batalkan permintaan booking ini?');">
+                                        <form method="POST" action="{{ route('bookings.cancel', $booking) }}" onsubmit="return confirm(@json(__('bookings.index.cancel_confirm')));">
                                             @csrf
                                             <button type="submit" class="w-full text-sm font-semibold text-red-700 hover:text-red-800 px-3 py-2.5 rounded-xl border border-red-200 hover:bg-red-50">
-                                                Batalkan
+                                                {{ __('bookings.index.cancel') }}
                                             </button>
                                         </form>
                                     @endif
 
                                     @if ($st === BookingStatus::Confirmed && $booking->payment_status === PaymentStatus::Pending)
-                                        <form method="POST" action="{{ route('bookings.cancel', $booking) }}" onsubmit="return confirm('Batalkan booking yang sudah disetujui? (belum dibayar)');">
+                                        <form method="POST" action="{{ route('bookings.cancel', $booking) }}" onsubmit="return confirm(@json(__('bookings.index.cancel_confirm_confirmed')));">
                                             @csrf
                                             <button type="submit" class="w-full text-sm font-semibold text-slate-600 hover:text-red-800 px-3 py-2.5 rounded-xl border border-slate-200 hover:bg-slate-50">
-                                                Batalkan sebelum bayar
+                                                {{ __('bookings.index.cancel_before_pay') }}
                                             </button>
                                         </form>
                                     @endif

@@ -17,7 +17,7 @@
                 <div class="px-4 py-3 border-b border-slate-100 bg-slate-50 flex items-center justify-between">
                     <p class="text-sm font-semibold text-slate-800">storage/logs/laravel.log</p>
                     <a href="{{ url('/logs?n=800') }}" class="text-sm font-semibold text-brand-700 hover:text-brand-800 underline">
-                        Lihat 800 baris
+                        {{ __('admin.logs.view_lines') }}
                     </a>
                 </div>
 

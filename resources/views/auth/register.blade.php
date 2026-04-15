@@ -244,6 +244,15 @@
         function registerFormData() {
             return {
                 otpRoutes: @json($registerOtpRoutes),
+                otpWaitTpl: @json(__('auth_otp.wait')),
+                otpJs: {
+                    phoneRequired: @json(__('auth_otp.js_phone_required')),
+                    sendFailed: @json(__('auth_otp.js_send_failed_fallback')),
+                    sendOk: @json(__('auth_otp.js_send_ok_fallback')),
+                    codeDigits: @json(__('auth_otp.js_code_digits')),
+                    verifyFailed: @json(__('auth_otp.js_verify_failed_fallback')),
+                    verifyOk: @json(__('auth_otp.js_verify_ok_fallback')),
+                },
                 role: @json(old('role', 'customer')),
                 customerType: @json(old('customer_type', 'personal')),
                 otpEnabled: @json($otpEnabled),
@@ -266,7 +275,7 @@
                     this.otpFeedback = '';
                     const phone = this.phoneValue();
                     if (phone.length < 10) {
-                        this.otpFeedback = 'Isi nomor WhatsApp yang valid terlebih dahulu.';
+                        this.otpFeedback = this.otpJs.phoneRequired;
                         return;
                     }
                     this.otpSendLoading = true;
@@ -284,14 +293,14 @@
                         });
                         const data = await res.json().catch(() => ({}));
                         if (!res.ok) {
-                            const msg = data.errors?.phone?.[0] || data.message || 'Gagal mengirim OTP.';
+                            const msg = data.errors?.phone?.[0] || data.message || this.otpJs.sendFailed;
                             throw new Error(msg);
                         }
-                        this.otpFeedback = data.message || 'Kode OTP dikirim.';
+                        this.otpFeedback = data.message || this.otpJs.sendOk;
                         this.phoneVerified = false;
                         this.startResendCooldown();
                     } catch (e) {
-                        this.otpFeedback = e.message || 'Gagal mengirim OTP.';
+                        this.otpFeedback = e.message || this.otpJs.sendFailed;
                     } finally {
                         this.otpSendLoading = false;
                     }
@@ -316,7 +325,7 @@
                     const phone = this.phoneValue();
                     const otp = String(this.otpCode).replace(/\D/g, '');
                     if (otp.length !== 6) {
-                        this.otpFeedback = 'Masukkan 6 digit kode OTP.';
+                        this.otpFeedback = this.otpJs.codeDigits;
                         return;
                     }
                     this.otpVerifyLoading = true;
@@ -334,13 +343,13 @@
                         });
                         const data = await res.json().catch(() => ({}));
                         if (!res.ok) {
-                            const msg = data.errors?.otp?.[0] || data.message || 'Verifikasi gagal.';
+                            const msg = data.errors?.otp?.[0] || data.message || this.otpJs.verifyFailed;
                             throw new Error(msg);
                         }
                         this.phoneVerified = true;
-                        this.otpFeedback = data.message || 'Nomor terverifikasi.';
+                        this.otpFeedback = data.message || this.otpJs.verifyOk;
                     } catch (e) {
-                        this.otpFeedback = e.message || 'Verifikasi gagal.';
+                        this.otpFeedback = e.message || this.otpJs.verifyFailed;
                     } finally {
                         this.otpVerifyLoading = false;
                     }

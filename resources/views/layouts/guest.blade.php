@@ -21,13 +21,13 @@
                 </a>
                 <nav class="flex items-center gap-2 text-sm">
                     @auth
-                        <a href="{{ route('dashboard') }}" class="text-slate-600 hover:text-brand-700 font-medium transition">Beranda</a>
+                        <a href="{{ route('dashboard') }}" class="text-slate-600 hover:text-brand-700 font-medium transition">{{ __('nav.home') }}</a>
                     @else
                         @if (Route::has('login'))
-                            <a href="{{ route('login') }}" class="px-3 py-1.5 rounded-lg text-slate-600 hover:bg-white/80 font-medium transition">Masuk</a>
+                            <a href="{{ route('login') }}" class="px-3 py-1.5 rounded-lg text-slate-600 hover:bg-white/80 font-medium transition">{{ __('layanan.guest_header_login') }}</a>
                         @endif
                         @if (Route::has('register'))
-                            <a href="{{ route('register') }}" class="px-3 py-1.5 rounded-lg bg-brand-600 text-white font-medium shadow-sm hover:bg-brand-700 transition">Daftar</a>
+                            <a href="{{ route('register') }}" class="px-3 py-1.5 rounded-lg bg-brand-600 text-white font-medium shadow-sm hover:bg-brand-700 transition">{{ __('layanan.guest_header_register') }}</a>
                         @endif
                     @endauth
                 </nav>
@@ -39,7 +39,7 @@
                         {{ $slot }}
                     </div>
                     <p class="mt-6 text-center text-xs text-slate-500">
-                        Marketplace umrah — jamaah &amp; muthowif dalam satu platform.
+                        {{ __('guest.footer_tagline') }}
                     </p>
                 </div>
             </main>

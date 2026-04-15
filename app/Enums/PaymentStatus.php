@@ -12,11 +12,6 @@ enum PaymentStatus: string
 
     public function label(): string
     {
-        return match ($this) {
-            self::Pending => 'Menunggu pembayaran',
-            self::Paid => 'Lunas',
-            self::RefundPending => 'Refund menunggu transfer admin',
-            self::Refunded => 'Dikembalikan (refund)',
-        };
+        return __('enums.payment_status.'.$this->value);
     }
 }

@@ -9,9 +9,6 @@ enum MuthowifServiceType: string
 
     public function label(): string
     {
-        return match ($this) {
-            self::Group => 'Jemaah Group',
-            self::PrivateJamaah => 'Jemaah Private',
-        };
+        return __('enums.muthowif_service_type.'.$this->value);
     }
 }

@@ -21,35 +21,35 @@ final class BookingPostPayRules
     public static function canRequestRefund(MuthowifBooking $booking): ?string
     {
         if (! $booking->isPaid()) {
-            return 'Refund hanya setelah pembayaran lunas.';
+            return __('bookings.refund_eligibility.not_paid');
         }
 
         if ($booking->status !== BookingStatus::Confirmed) {
-            return 'Refund hanya untuk booking terkonfirmasi yang belum selesai.';
+            return __('bookings.refund_eligibility.only_confirmed');
         }
 
         if ($booking->payment_status === PaymentStatus::Refunded) {
-            return 'Booking ini sudah direfund.';
+            return __('bookings.refund_eligibility.already_refunded');
         }
 
         if ($booking->payment_status === PaymentStatus::RefundPending) {
-            return 'Refund sudah diajukan dan menunggu transfer dari admin.';
+            return __('bookings.refund_eligibility.refund_pending');
         }
 
         if ($booking->settledBookingPayment() === null) {
-            return 'Data pembayaran tidak ditemukan.';
+            return __('bookings.refund_eligibility.payment_missing');
         }
 
         $today = now()->startOfDay();
         $serviceStart = $booking->starts_on->copy()->startOfDay();
         if ($serviceStart->lte($today)) {
-            return 'Tanggal mulai layanan sudah lewat atau hari ini. Pengajuan refund tidak dapat diproses.';
+            return __('bookings.refund_eligibility.service_started');
         }
 
         $daysUntil = $today->diffInDays($serviceStart, false);
         $minDays = self::refundMinDaysBeforeService();
         if ($daysUntil < $minDays) {
-            return 'Pengajuan refund hanya sampai H-'.$minDays.' sebelum tanggal mulai layanan.';
+            return __('bookings.refund_eligibility.too_late', ['days' => $minDays]);
         }
 
         return null;
@@ -58,27 +58,27 @@ final class BookingPostPayRules
     public static function canRequestReschedule(MuthowifBooking $booking): ?string
     {
         if (! $booking->isPaid()) {
-            return 'Reschedule hanya setelah pembayaran lunas.';
+            return __('bookings.reschedule_eligibility.not_paid');
         }
 
         if ($booking->status !== BookingStatus::Confirmed) {
-            return 'Reschedule hanya untuk booking terkonfirmasi yang belum selesai.';
+            return __('bookings.reschedule_eligibility.only_confirmed');
         }
 
         if ($booking->pendingRescheduleRequest() !== null) {
-            return 'Anda sudah memiliki pengajuan reschedule yang menunggu keputusan muthowif.';
+            return __('bookings.reschedule_eligibility.pending_exists');
         }
 
         $today = now()->startOfDay();
         $serviceStart = $booking->starts_on->copy()->startOfDay();
         if ($serviceStart->lte($today)) {
-            return 'Tanggal mulai layanan sudah lewat atau hari ini.';
+            return __('bookings.reschedule_eligibility.service_started');
         }
 
         $daysUntil = $today->diffInDays($serviceStart, false);
         $minDays = self::rescheduleMinDaysBeforeService();
         if ($daysUntil < $minDays) {
-            return 'Reschedule hanya sampai H-'.$minDays.' sebelum tanggal mulai layanan.';
+            return __('bookings.reschedule_eligibility.too_late', ['days' => $minDays]);
         }
 
         return null;

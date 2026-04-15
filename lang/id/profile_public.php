@@ -1,0 +1,27 @@
+<?php
+
+return [
+    'title' => 'Profil publik muthowif',
+    'subtitle' => 'Ubah data publik muthowif dari halaman profil yang sama.',
+    'phone' => 'No. HP / WhatsApp',
+    'passport' => 'No. passport',
+    'birth_date' => 'Tanggal lahir',
+    'address' => 'Alamat lengkap',
+    'photo' => 'Foto profil (opsional)',
+    'photo_hint' => 'JPG, PNG, atau WebP. Maksimal 5 MB.',
+    'languages' => 'Penguasaan bahasa',
+    'language_item' => 'Bahasa',
+    'language_placeholder' => 'Contoh: Arab (fasih), Inggris',
+    'language_add' => 'Tambah bahasa',
+    'education' => 'Studi / pendidikan',
+    'education_item' => 'Studi',
+    'education_placeholder' => 'Riwayat studi atau pendidikan',
+    'education_add' => 'Tambah studi',
+    'work' => 'Pengalaman kerja',
+    'work_item' => 'Pengalaman',
+    'work_placeholder' => 'Masukkan pengalaman kerja',
+    'work_add' => 'Tambah pengalaman',
+    'reference' => 'Referensi muthowif (opsional)',
+    'save' => 'Simpan profil publik',
+    'saved' => 'Tersimpan.',
+];

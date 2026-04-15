@@ -10,10 +10,6 @@ enum MuthowifVerificationStatus: string
 
     public function label(): string
     {
-        return match ($this) {
-            self::Pending => 'Menunggu verifikasi',
-            self::Approved => 'Terverifikasi',
-            self::Rejected => 'Ditolak',
-        };
+        return __('enums.muthowif_verification_status.'.$this->value);
     }
 }
