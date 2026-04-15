@@ -296,6 +296,7 @@ class BookingController extends Controller
             'with_transport' => ['sometimes', 'boolean'],
             'ticket_outbound' => ['required', 'file', 'mimes:pdf,jpeg,jpg,png', 'max:10240'],
             'ticket_return' => ['required', 'file', 'mimes:pdf,jpeg,jpg,png', 'max:10240'],
+            'passport' => ['required', 'file', 'mimes:pdf,jpeg,jpg,png', 'max:10240'],
             'itinerary' => [
                 Rule::requiredIf(fn () => $request->input('service_type') === 'group'),
                 'nullable',
@@ -309,6 +310,7 @@ class BookingController extends Controller
         ], [
             'ticket_outbound' => __('marketplace.panel.doc_ticket_outbound'),
             'ticket_return' => __('marketplace.panel.doc_ticket_return'),
+            'passport' => __('marketplace.panel.doc_passport'),
             'itinerary' => __('marketplace.panel.doc_itinerary'),
             'visa' => __('marketplace.panel.doc_visa'),
         ]);
@@ -435,6 +437,7 @@ class BookingController extends Controller
         $column = match ($type) {
             'outbound' => 'ticket_outbound_path',
             'return' => 'ticket_return_path',
+            'passport' => 'passport_path',
             'itinerary' => 'itinerary_path',
             'visa' => 'visa_path',
             default => null,
@@ -539,6 +542,22 @@ class BookingController extends Controller
         if ($start->lt(now()->startOfDay())) {
             throw ValidationException::withMessages([
                 'new_start_date' => __('bookings.validation.new_start_past'),
+            ]);
+        }
+
+        if (! BookingPostPayRules::newStartMeetsRescheduleMinDays($start)) {
+            throw ValidationException::withMessages([
+                'new_start_date' => __('bookings.validation.reschedule_new_start_too_soon', [
+                    'days' => BookingPostPayRules::rescheduleMinDaysBeforeService(),
+                ]),
+            ]);
+        }
+
+        if (! BookingPostPayRules::newStartMeetsMinShiftFromOriginal($booking, $start)) {
+            throw ValidationException::withMessages([
+                'new_start_date' => __('bookings.validation.reschedule_new_start_too_close_to_original', [
+                    'days' => BookingPostPayRules::rescheduleMinDaysBeforeService(),
+                ]),
             ]);
         }
 

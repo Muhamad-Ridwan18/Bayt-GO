@@ -7,12 +7,14 @@
 @php
     $hasAny = filled($booking->ticket_outbound_path)
         || filled($booking->ticket_return_path)
+        || filled($booking->passport_path)
         || filled($booking->itinerary_path)
         || filled($booking->visa_path);
 
     $items = [
         ['type' => 'outbound', 'path' => $booking->ticket_outbound_path, 'label' => __('bookings.show.doc_outbound')],
         ['type' => 'return', 'path' => $booking->ticket_return_path, 'label' => __('bookings.show.doc_return')],
+        ['type' => 'passport', 'path' => $booking->passport_path, 'label' => __('bookings.show.doc_passport')],
         ['type' => 'itinerary', 'path' => $booking->itinerary_path, 'label' => __('bookings.show.doc_itinerary')],
         ['type' => 'visa', 'path' => $booking->visa_path, 'label' => __('bookings.show.doc_visa')],
     ];

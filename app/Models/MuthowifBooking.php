@@ -35,6 +35,7 @@ class MuthowifBooking extends Model
         'paid_at',
         'ticket_outbound_path',
         'ticket_return_path',
+        'passport_path',
         'itinerary_path',
         'visa_path',
     ];

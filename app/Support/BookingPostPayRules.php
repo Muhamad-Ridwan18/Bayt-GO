@@ -5,6 +5,7 @@ namespace App\Support;
 use App\Enums\BookingStatus;
 use App\Enums\PaymentStatus;
 use App\Models\MuthowifBooking;
+use Carbon\CarbonInterface;
 
 final class BookingPostPayRules
 {
@@ -75,12 +76,37 @@ final class BookingPostPayRules
             return __('bookings.reschedule_eligibility.service_started');
         }
 
-        $daysUntil = $today->diffInDays($serviceStart, false);
+        return null;
+    }
+
+    /**
+     * Tanggal mulai baru harus minimal H-X hari dari hari ini (zona aplikasi).
+     */
+    public static function newStartMeetsRescheduleMinDays(CarbonInterface $newStart): bool
+    {
+        $today = now()->startOfDay();
+        $start = $newStart->copy()->startOfDay();
+        $daysUntil = $today->diffInDays($start, false);
         $minDays = self::rescheduleMinDaysBeforeService();
-        if ($daysUntil < $minDays) {
-            return __('bookings.reschedule_eligibility.too_late', ['days' => $minDays]);
+
+        return $daysUntil >= $minDays;
+    }
+
+    /**
+     * Tanggal mulai baru harus berjarak minimal H-X hari kalender dari tanggal mulai booking saat ini
+     * (mis. mulai 30 Jul tidak boleh digeser hanya ke 28 Jul).
+     */
+    public static function newStartMeetsMinShiftFromOriginal(MuthowifBooking $booking, CarbonInterface $newStart): bool
+    {
+        if ($booking->starts_on === null) {
+            return false;
         }
 
-        return null;
+        $orig = $booking->starts_on->copy()->startOfDay();
+        $new = $newStart->copy()->startOfDay();
+        $minDays = self::rescheduleMinDaysBeforeService();
+        $gap = (int) $orig->diffInDays($new, true);
+
+        return $gap >= $minDays;
     }
 }

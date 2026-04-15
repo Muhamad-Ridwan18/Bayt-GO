@@ -329,6 +329,15 @@
                                     @enderror
                                 </div>
                                 <div>
+                                    <label for="passport_{{ $profile->id }}" class="block text-sm font-medium text-slate-800">{{ __('marketplace.panel.doc_passport') }} <span class="text-red-600">*</span></label>
+                                    <p class="mt-0.5 text-xs text-slate-500">{{ __('marketplace.panel.doc_passport_help') }}</p>
+                                    <input id="passport_{{ $profile->id }}" type="file" name="passport" required accept=".pdf,.jpg,.jpeg,.png,application/pdf,image/jpeg,image/png"
+                                           class="mt-2 block w-full text-sm text-slate-600 file:mr-4 file:rounded-lg file:border-0 file:bg-brand-50 file:px-4 file:py-2 file:text-sm file:font-semibold file:text-brand-800 hover:file:bg-brand-100" />
+                                    @error('passport')
+                                        <p class="mt-1 text-xs text-red-600">{{ $message }}</p>
+                                    @enderror
+                                </div>
+                                <div>
                                     <label for="itinerary_{{ $profile->id }}" class="block text-sm font-medium text-slate-800">
                                         {{ __('marketplace.panel.doc_itinerary') }}
                                         <span x-show="serviceType === 'group'" class="text-red-600">*</span>
