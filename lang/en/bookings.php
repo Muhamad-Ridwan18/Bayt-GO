@@ -47,6 +47,19 @@ return [
         'too_late' => 'Reschedule is only allowed up to H-:days before the service start date.',
     ],
 
+    'index_page' => [
+        'kicker' => 'My trips',
+        'bookings_total' => ':count bookings',
+        'stats_aria' => 'Booking counts by status',
+        'empty_title' => 'No bookings yet',
+        'empty_lead' => 'Find a muthowif that matches your dates — we only show guides who are actually available.',
+        'empty_cta' => 'Find a muthowif',
+        'card_period' => 'Service period',
+        'card_service' => 'Service',
+        'card_addons' => 'Add-ons',
+        'card_extras' => 'Options',
+        'actions_heading' => 'Actions',
+    ],
     'index' => [
         'pilgrims_count' => ':count :pilgrims_word',
         'line_same_hotel' => '+ Same hotel (:nights :days) (Rp :amount)',
@@ -67,6 +80,8 @@ return [
     ],
 
     'show' => [
+        'back_to_bookings' => '← My bookings',
+        'detail_kicker' => 'Booking details',
         'booking_code' => 'Booking code',
         'muthowif' => 'Muthowif',
         'period' => 'Period',

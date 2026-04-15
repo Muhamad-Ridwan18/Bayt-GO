@@ -64,9 +64,21 @@ class BookingController extends Controller
 
         $addonsById = $this->addOnsKeyById($bookings);
 
+        $statusAggregates = MuthowifBooking::query()
+            ->where('customer_id', $request->user()->getKey())
+            ->toBase()
+            ->selectRaw('status, COUNT(*) as aggregate')
+            ->groupBy('status')
+            ->pluck('aggregate', 'status');
+
+        $bookingStatusCounts = collect(BookingStatus::cases())->mapWithKeys(
+            fn (BookingStatus $status) => [$status->value => (int) ($statusAggregates[$status->value] ?? 0)]
+        );
+
         return view('bookings.index', [
             'bookings' => $bookings,
             'addonsById' => $addonsById,
+            'bookingStatusCounts' => $bookingStatusCounts,
         ]);
     }
 

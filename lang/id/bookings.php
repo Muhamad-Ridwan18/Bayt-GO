@@ -47,6 +47,19 @@ return [
         'too_late' => 'Reschedule hanya sampai H-:days sebelum tanggal mulai layanan.',
     ],
 
+    'index_page' => [
+        'kicker' => 'Perjalanan saya',
+        'bookings_total' => ':count booking',
+        'stats_aria' => 'Jumlah booking per status',
+        'empty_title' => 'Belum ada booking',
+        'empty_lead' => 'Cari muthowif yang cocok dengan tanggal Anda — kami hanya menampilkan pendamping yang benar-benar tersedia.',
+        'empty_cta' => 'Cari muthowif',
+        'card_period' => 'Periode layanan',
+        'card_service' => 'Layanan',
+        'card_addons' => 'Add-on',
+        'card_extras' => 'Opsi tambahan',
+        'actions_heading' => 'Aksi',
+    ],
     'index' => [
         'pilgrims_count' => ':count :pilgrims_word',
         'line_same_hotel' => '+ Hotel sama (:nights :days) (Rp :amount)',
@@ -67,6 +80,8 @@ return [
     ],
 
     'show' => [
+        'back_to_bookings' => '← Booking saya',
+        'detail_kicker' => 'Detail booking',
         'booking_code' => 'Kode booking',
         'muthowif' => 'Muthowif',
         'period' => 'Periode',
