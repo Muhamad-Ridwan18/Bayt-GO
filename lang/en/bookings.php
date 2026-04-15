@@ -141,6 +141,11 @@ return [
     ],
 
     'payment' => [
+        'page_kicker' => 'Checkout',
+        'page_title' => 'Complete your payment',
+        'page_lead' => 'Pick a payment channel below. Order summary and total are in the panel (at the top on small screens, on the right on desktop).',
+        'copy_number' => 'Copy',
+        'copy_done' => 'Copied',
         'methods_heading' => 'Payment methods',
         'midtrans_badge' => 'Secure payment by Midtrans',
         'choose_method' => 'Choose payment method',

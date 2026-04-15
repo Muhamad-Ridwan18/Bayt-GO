@@ -1,4 +1,5 @@
 @php
+    use App\Enums\MuthowifServiceType;
     use App\Support\IndonesianNumber;
     use Carbon\Carbon;
 
@@ -32,29 +33,21 @@
     $oldAddOnIds = collect(old('add_on_ids', []))->map(fn ($id) => (string) $id)->all();
 @endphp
 
-<section class="relative overflow-hidden rounded-3xl border border-slate-200/90 bg-white shadow-market">
-    <div class="absolute inset-0 bg-[url('data:image/svg+xml,%3Csvg width=\'40\' height=\'40\' viewBox=\'0 0 40 40\' xmlns=\'http://www.w3.org/2000/svg\'%3E%3Cg fill=\'%2314b8a6\' fill-opacity=\'0.04\'%3E%3Cpath d=\'M0 40L40 0H20L0 20M40 40V20L20 40\'/%3E%3C/g%3E%3C/svg%3E')] opacity-60 pointer-events-none"></div>
+<section id="booking-panel" class="relative overflow-hidden rounded-3xl border border-slate-200/90 bg-white shadow-market ring-1 ring-slate-100/80 touch-manipulation">
+    <div class="absolute inset-0 bg-[url('data:image/svg+xml,%3Csvg width=\'40\' height=\'40\' viewBox=\'0 0 40 40\' xmlns=\'http://www.w3.org/2000/svg\'%3E%3Cg fill=\'%2314b8a6\' fill-opacity=\'0.035\'%3E%3Cpath d=\'M0 40L40 0H20L0 20M40 40V20L20 40\'/%3E%3C/g%3E%3C/svg%3E')] pointer-events-none opacity-50"></div>
 
-    <div class="relative bg-gradient-to-r from-slate-900 via-brand-900 to-amber-950 px-6 py-5 sm:px-8 sm:py-6 sm:flex sm:items-center sm:justify-between gap-4">
-        <div>
-            <p class="text-xs font-semibold uppercase tracking-wider text-brand-200/90">{{ __('marketplace.panel.checkout') }}</p>
-            <h2 class="mt-1 text-xl sm:text-2xl font-bold text-white tracking-tight">{{ __('marketplace.panel.title') }}</h2>
-            <p class="mt-1 text-sm text-brand-100/90 max-w-xl">{{ __('marketplace.panel.subtitle') }}</p>
-        </div>
-        <div class="mt-4 sm:mt-0 shrink-0 flex items-center gap-2 rounded-2xl bg-white/10 px-4 py-2.5 ring-1 ring-white/20 backdrop-blur-sm">
-            <svg class="h-5 w-5 text-amber-300 shrink-0" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" aria-hidden="true">
-                <path stroke-linecap="round" stroke-linejoin="round" d="M6.75 3v2.25M17.25 3v2.25M3 18.75V7.5a2.25 2.25 0 012.25-2.25h13.5A2.25 2.25 0 0121 7.5v11.25m-18 0A2.25 2.25 0 005.25 21h13.5a2.25 2.25 0 002.25-2.25m-18 0v-7.5A2.25 2.25 0 015.25 9h13.5a2.25 2.25 0 012.25 2.25v7.5" />
-            </svg>
-            <span class="text-sm font-medium text-white">BaytGo</span>
-        </div>
+    <div class="relative bg-gradient-to-r from-slate-900 via-brand-900 to-amber-950 px-5 py-4 sm:px-6 sm:py-5">
+        <p class="text-[11px] font-semibold uppercase tracking-wider text-brand-200/90">{{ __('marketplace.panel.checkout') }}</p>
+        <h2 class="mt-0.5 text-lg sm:text-xl font-bold text-white tracking-tight">{{ __('marketplace.panel.title') }}</h2>
+        <p class="mt-1 text-sm text-brand-100/85">{{ __('marketplace.panel.subtitle') }}</p>
     </div>
 
-    <div class="relative bg-gradient-to-b from-slate-50/50 to-white px-6 py-6 sm:px-8 sm:py-8">
+    <div class="relative bg-gradient-to-b from-slate-50/50 to-white px-5 py-5 sm:px-6 sm:py-6">
         @if ($intent['reason'] === 'guest')
             <div class="rounded-2xl bg-white border border-slate-200 p-5 shadow-sm">
                 <p class="text-sm text-slate-700">{{ __('marketplace.panel.guest_intro') }}</p>
                 <a href="{{ route('login.intended', ['next' => request()->getRequestUri()]) }}"
-                   class="mt-4 inline-flex justify-center items-center px-5 py-2.5 rounded-xl bg-brand-600 text-white text-sm font-semibold shadow-md hover:bg-brand-700">
+                   class="mt-4 inline-flex w-full justify-center items-center px-5 py-3.5 rounded-xl bg-brand-600 text-white text-sm font-semibold shadow-md hover:bg-brand-700">
                     {{ __('marketplace.panel.guest_login') }}
                 </a>
                 @if (Route::has('register'))
@@ -96,7 +89,7 @@
             @else
                 {{-- Jangan pakai @json di dalam x-data="..." — tanda kutip JSON memutus atribut HTML dan merusak Alpine. --}}
                 <div
-                    class="space-y-6"
+                    class="space-y-5"
                     x-data="{
                         serviceType: '{{ old('service_type', $defaultService) }}',
                         bounds: {
@@ -124,7 +117,7 @@
                         </ul>
                     @endif
 
-                    <form id="booking-form-{{ $profile->id }}" method="POST" action="{{ route('bookings.store') }}" class="space-y-6">
+                    <form id="booking-form-{{ $profile->id }}" method="POST" action="{{ route('bookings.store') }}" class="space-y-5">
                         @csrf
                         <input type="hidden" name="muthowif_profile_id" value="{{ $profile->id }}">
                         <input type="hidden" name="start_date" value="{{ $intent['start'] }}">
@@ -132,14 +125,15 @@
 
                         <fieldset>
                             <legend class="text-sm font-semibold text-slate-900">{{ __('marketplace.panel.choose_package') }}</legend>
+                            <p class="mt-1 text-xs text-slate-500">{{ __('marketplace.panel.choose_package_help') }}</p>
                             <div class="mt-3 grid grid-cols-1 sm:grid-cols-2 gap-3">
                                 @if ($group)
-                                    <label class="relative flex cursor-pointer rounded-2xl border-2 border-slate-200 bg-white p-4 shadow-sm transition-all hover:border-brand-300 hover:shadow-md has-[:checked]:border-brand-500 has-[:checked]:bg-gradient-to-br has-[:checked]:from-brand-50 has-[:checked]:to-white has-[:checked]:shadow-md">
+                                    <label class="relative flex min-h-[5.5rem] cursor-pointer items-start rounded-2xl border-2 border-slate-200 bg-white p-4 shadow-sm transition-all active:scale-[0.99] hover:border-brand-300 hover:shadow-md has-[:checked]:border-brand-500 has-[:checked]:bg-gradient-to-br has-[:checked]:from-brand-50 has-[:checked]:to-white has-[:checked]:shadow-md">
                                         <input type="radio" name="service_type" value="group" class="sr-only peer"
                                                x-model="serviceType"
                                                @checked(old('service_type', $defaultService) === 'group')>
                                         <span class="flex flex-col gap-1">
-                                            <span class="inline-flex w-fit rounded-lg bg-brand-100 text-brand-800 text-[10px] font-bold uppercase tracking-wide px-2 py-0.5">Group</span>
+                                            <span class="inline-flex w-fit rounded-lg bg-brand-100 text-brand-800 text-[10px] font-bold uppercase tracking-wide px-2 py-0.5">{{ MuthowifServiceType::Group->label() }}</span>
                                             <span class="font-semibold text-slate-900">{{ __('marketplace.panel.group_label') }}</span>
                                             @if ($group->daily_price !== null)
                                                 <span class="text-sm text-slate-600">{{ __('marketplace.panel.from_daily') }} <span class="font-bold text-brand-700">Rp {{ IndonesianNumber::formatThousands((string) (int) $group->daily_price) }}</span>{{ __('marketplace.panel.per_day') }}</span>
@@ -151,12 +145,12 @@
                                     </label>
                                 @endif
                                 @if ($private)
-                                    <label class="relative flex cursor-pointer rounded-2xl border-2 border-slate-200 bg-white p-4 shadow-sm transition-all hover:border-amber-300 hover:shadow-md has-[:checked]:border-amber-500 has-[:checked]:bg-gradient-to-br has-[:checked]:from-amber-50 has-[:checked]:to-white has-[:checked]:shadow-md">
+                                    <label class="relative flex min-h-[5.5rem] cursor-pointer items-start rounded-2xl border-2 border-slate-200 bg-white p-4 shadow-sm transition-all active:scale-[0.99] hover:border-amber-300 hover:shadow-md has-[:checked]:border-amber-500 has-[:checked]:bg-gradient-to-br has-[:checked]:from-amber-50 has-[:checked]:to-white has-[:checked]:shadow-md">
                                         <input type="radio" name="service_type" value="private" class="sr-only peer"
                                                x-model="serviceType"
                                                @checked(old('service_type', $defaultService) === 'private')>
                                         <span class="flex flex-col gap-1 pr-8">
-                                            <span class="inline-flex w-fit rounded-lg bg-amber-100 text-amber-900 text-[10px] font-bold uppercase tracking-wide px-2 py-0.5">Private</span>
+                                            <span class="inline-flex w-fit rounded-lg bg-amber-100 text-amber-900 text-[10px] font-bold uppercase tracking-wide px-2 py-0.5">{{ MuthowifServiceType::PrivateJamaah->label() }}</span>
                                             <span class="font-semibold text-slate-900">{{ __('marketplace.panel.private_label') }}</span>
                                             @if ($private->daily_price !== null)
                                                 <span class="text-sm text-slate-600">{{ __('marketplace.panel.from_daily') }} <span class="font-bold text-amber-800">Rp {{ IndonesianNumber::formatThousands((string) (int) $private->daily_price) }}</span>{{ __('marketplace.panel.per_day') }}</span>
@@ -175,7 +169,9 @@
                             <div class="mt-2 flex flex-wrap items-center gap-3">
                                 <input type="number" name="pilgrim_count" id="pilgrim_count" required
                                        min="1"
-                                       class="block w-28 rounded-xl border-slate-300 shadow-sm focus:border-brand-500 focus:ring-brand-500 text-sm font-semibold text-center py-2.5"
+                                       inputmode="numeric"
+                                       autocomplete="off"
+                                       class="block w-[7.5rem] rounded-xl border-slate-300 text-center text-base font-semibold shadow-sm focus:border-brand-500 focus:ring-brand-500 py-3"
                                        value="{{ $defaultPilgrim }}"
                                        x-bind:min="currentBounds().min"
                                        x-bind:max="currentBounds().max">
@@ -291,14 +287,14 @@
                             </div>
                         @endif
 
-                        <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 pt-2 border-t border-slate-200">
-                            <p class="text-xs text-slate-500 max-w-md">
-                                {!! __('marketplace.panel.consent_html') !!}
-                            </p>
+                        <div class="flex flex-col gap-3 border-t border-slate-200 pt-4 sm:flex-row sm:items-center sm:justify-between sm:gap-4 sm:pt-3">
                             <button type="submit"
-                                    class="w-full sm:w-auto inline-flex justify-center items-center px-8 py-3.5 rounded-2xl bg-gradient-to-r from-brand-600 to-brand-700 text-white text-sm font-bold shadow-lg shadow-brand-900/20 hover:from-brand-500 hover:to-brand-600 focus:outline-none focus:ring-2 focus:ring-brand-500 focus:ring-offset-2 transition">
+                                    class="order-1 inline-flex w-full items-center justify-center rounded-2xl bg-gradient-to-r from-brand-600 to-brand-700 px-8 py-4 text-base font-bold text-white shadow-lg shadow-brand-900/20 transition hover:from-brand-500 hover:to-brand-600 focus:outline-none focus:ring-2 focus:ring-brand-500 focus:ring-offset-2 sm:order-2 sm:w-auto sm:py-3.5 sm:text-sm">
                                 {{ __('marketplace.panel.submit') }}
                             </button>
+                            <p class="order-2 text-center text-[11px] leading-relaxed text-slate-500 sm:order-1 sm:max-w-md sm:text-left sm:text-xs">
+                                {!! __('marketplace.panel.consent_html') !!}
+                            </p>
                         </div>
                     </form>
                 </div>

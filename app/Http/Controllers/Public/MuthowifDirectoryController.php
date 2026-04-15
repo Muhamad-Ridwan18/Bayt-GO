@@ -150,7 +150,10 @@ class MuthowifDirectoryController extends Controller
                 ->orderBy('blocked_on')
                 ->limit(120),
         ]);
-        $publicProfile->loadCount('bookingReviews');
+        $publicProfile->loadCount([
+            'bookings as confirmed_bookings_count' => static fn ($q) => $q->where('status', BookingStatus::Confirmed),
+            'bookingReviews',
+        ]);
         $publicProfile->loadAvg('bookingReviews', 'rating');
 
         $startDate = (string) $request->query('start_date', '');

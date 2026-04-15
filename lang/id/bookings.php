@@ -141,8 +141,13 @@ return [
     ],
 
     'payment' => [
+        'page_kicker' => 'Checkout',
+        'page_title' => 'Selesaikan pembayaran',
+        'page_lead' => 'Pilih channel pembayaran di bawah. Ringkasan pesanan dan total ada di panel (di atas di layar kecil, di kanan di desktop).',
+        'copy_number' => 'Salin',
+        'copy_done' => 'Tersalin',
         'methods_heading' => 'Metode pembayaran',
-        'midtrans_badge' => 'Secure payment by Midtrans',
+        'midtrans_badge' => 'Pembayaran aman via Midtrans',
         'choose_method' => 'Pilih metode pembayaran',
         'grouped_hint' => 'Metode dikelompokkan supaya lebih ringkas.',
         'options_count' => ':count opsi',
