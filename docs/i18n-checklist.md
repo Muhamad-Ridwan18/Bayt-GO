@@ -10,7 +10,7 @@ Dokumen ini memetakan **halaman / area UI** yang sudah memakai `__()` / file `la
 | 🔶 | Sebagian sudah i18n; banyak string masih hardcoded |
 | ❌ | Belum i18n (masih bahasa tunggal / campur di Blade) |
 
-**File terjemahan** (non-lengkap): `dashboard.php`, `dashboard_muthowif.php`, `nav.php`, `layanan.php`, `marketplace.php`, `welcome.php`, `guest.php`, `bookings.php`, `enums.php`, `common.php`, `muthowif.php`, `auth_custom.php`, `profile_public.php`, `admin.php`, `auth_otp.php`, `whatsapp.php`, dll.
+**File terjemahan** (non-lengkap): `dashboard.php`, `dashboard_muthowif.php`, `nav.php`, `layanan.php`, `marketplace.php`, `welcome.php`, `guest.php`, `bookings.php`, `enums.php`, `common.php`, `muthowif.php`, `auth_custom.php`, `profile.php`, `profile_public.php`, `admin.php`, `auth_otp.php`, `whatsapp.php`, dll.
 
 ---
 
@@ -46,7 +46,7 @@ Dokumen ini memetakan **halaman / area UI** yang sudah memakai `__()` / file `la
 |---------|------|--------|---------|
 | `/dashboard` | `dashboard.blade.php` + partials | ✅ | `dashboard.*` & `dashboard_muthowif.*` |
 | Semua halaman app | `layouts/navigation.blade.php` | ✅ | `nav.*` + switcher bahasa |
-| Shell app | `layouts/app.blade.php` | ✅ | Minim teks user-facing |
+| Shell app | `layouts/app.blade.php` | ✅ | Flash `status`: map kode Breeze (`profile-updated`, dll.) → `profile.*` |
 
 ---
 
@@ -54,11 +54,11 @@ Dokumen ini memetakan **halaman / area UI** yang sudah memakai `__()` / file `la
 
 | Route | View | Status | Catatan |
 |-------|------|--------|---------|
-| `/profile` | `profile/edit.blade.php` | 🔶 | |
-| | `profile/partials/update-profile-information-form.blade.php` | 🔶 | |
-| | `profile/partials/update-password-form.blade.php` | 🔶 | |
+| `/profile` | `profile/edit.blade.php` | ✅ | `profile.*` (hero + layout) |
+| | `profile/partials/update-profile-information-form.blade.php` | ✅ | `profile.*` |
+| | `profile/partials/update-password-form.blade.php` | ✅ | `profile.*` |
 | | `profile/partials/update-public-profile-form.blade.php` | ✅ | `profile_public.*` |
-| | `profile/partials/delete-user-form.blade.php` | 🔶 | |
+| | `profile/partials/delete-user-form.blade.php` | ✅ | `profile.delete.*` |
 
 ---
 
@@ -78,7 +78,7 @@ Dokumen ini memetakan **halaman / area UI** yang sudah memakai `__()` / file `la
 | Route | View | Status | Catatan |
 |-------|------|--------|---------|
 | `/muthowif/pelayanan` | `muthowif/pelayanan/edit.blade.php` | 🔶 | |
-| `/muthowif/jadwal` | `muthowif/jadwal/index.blade.php` | 🔶 | |
+| `/muthowif/jadwal` | `muthowif/jadwal/index.blade.php` | ✅ | `muthowif.jadwal.*` + `dashboard_muthowif.nav_time_off` |
 | `/muthowif/bookings` | `muthowif/bookings/index.blade.php` | ✅ | `muthowif.bookings.*` + `bookings.index.*` |
 | `/muthowif/bookings/{id}` | `muthowif/bookings/show.blade.php` | ✅ | `muthowif.booking_show.*` |
 | `/muthowif/withdrawals` | `muthowif/withdrawals/index.blade.php` | 🔶 | |

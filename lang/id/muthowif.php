@@ -2,7 +2,12 @@
 
 return [
     'bookings' => [
+        'page_title' => 'Permintaan booking',
+        'page_subtitle' => 'Tanggapi permintaan jamaah dan pantau pembayaran — yang menunggu diproses di atas.',
+        'back_dashboard' => 'Dasbor',
+        'view_detail' => 'Detail',
         'empty' => 'Belum ada permintaan booking dari jamaah.',
+        'empty_hint' => 'Saat jamaah mengajukan dari profil publik Anda, permintaan akan muncul di sini.',
         'payment_prefix' => 'Pembayaran:',
         'completed_notice' => 'Booking selesai. Invoice sudah dapat dicetak customer.',
         'approve' => 'Setujui',
@@ -16,7 +21,10 @@ return [
         'refund_history' => 'Riwayat refund',
     ],
     'booking_show' => [
+        'page_title' => 'Detail booking',
+        'page_subtitle' => 'Info jamaah, status bayar, refund, dan pengajuan reschedule dalam satu halaman.',
         'back' => '← Kembali ke daftar',
+        'back_list' => 'Semua permintaan',
         'booking_code_label' => 'Kode booking',
         'pilgrim' => 'Jamaah',
         'period' => 'Periode',
@@ -38,5 +46,22 @@ return [
         'approve_reschedule' => 'Setujui reschedule',
         'reject_short' => 'Tolak',
         'approve_reschedule_confirm' => 'Setujui pergantian tanggal ini?',
+    ],
+    'jadwal' => [
+        'page_title' => 'Jadwal libur',
+        'page_subtitle' => 'Blokir tanggal saat Anda tidak tersedia. Jamaah tidak bisa memesan rentang yang bentrok.',
+        'back_dashboard' => 'Dasbor',
+        'add_title' => 'Tambah tanggal libur',
+        'date_label' => 'Tanggal',
+        'note_label' => 'Keterangan (opsional)',
+        'note_placeholder' => 'Contoh: cuti keluarga',
+        'submit' => 'Simpan tanggal',
+        'list_title' => 'Tanggal libur mendatang',
+        'empty' => 'Belum ada tanggal libur mendatang.',
+        'empty_hint' => 'Tambahkan agar jamaah tahu kapan Anda tidak menerima booking.',
+        'delete' => 'Hapus',
+        'delete_confirm' => 'Hapus tanggal ini dari jadwal libur?',
+        'flash_added' => 'Tanggal libur disimpan.',
+        'flash_removed' => 'Tanggal libur dihapus.',
     ],
 ];

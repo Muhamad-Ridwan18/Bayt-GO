@@ -49,7 +49,7 @@ class MuthowifScheduleController extends Controller
 
         return redirect()
             ->route('muthowif.jadwal.index')
-            ->with('status', 'Tanggal libur ditambahkan.');
+            ->with('status', __('muthowif.jadwal.flash_added'));
     }
 
     public function destroy(MuthowifBlockedDate $blockedDate): RedirectResponse
@@ -60,6 +60,6 @@ class MuthowifScheduleController extends Controller
 
         return redirect()
             ->route('muthowif.jadwal.index')
-            ->with('status', 'Tanggal libur dihapus.');
+            ->with('status', __('muthowif.jadwal.flash_removed'));
     }
 }

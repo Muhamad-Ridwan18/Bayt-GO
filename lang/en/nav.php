@@ -1,6 +1,7 @@
 <?php
 
 return [
+    'profile' => 'Profile',
     'language' => 'Language',
     'home' => 'Home',
     'find_muthowif' => 'Find muthowif',

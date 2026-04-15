@@ -22,6 +22,8 @@ return [
     'work_placeholder' => 'Describe your work experience',
     'work_add' => 'Add experience',
     'reference' => 'Muthowif reference (optional)',
+    'section_cv_summary' => 'Languages, education & work',
+    'section_cv_hint' => 'Expand to edit lists — collapses to save space.',
     'save' => 'Save public profile',
     'saved' => 'Saved.',
 ];

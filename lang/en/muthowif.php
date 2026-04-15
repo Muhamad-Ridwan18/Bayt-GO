@@ -2,7 +2,12 @@
 
 return [
     'bookings' => [
+        'page_title' => 'Booking requests',
+        'page_subtitle' => 'Respond to pilgrim requests and track payment status — newest pending items appear first.',
+        'back_dashboard' => 'Dashboard',
+        'view_detail' => 'Details',
         'empty' => 'No booking requests from pilgrims yet.',
+        'empty_hint' => 'When a pilgrim submits a request from your public profile, it will show up here.',
         'payment_prefix' => 'Payment:',
         'completed_notice' => 'Booking completed. The customer can print the invoice.',
         'approve' => 'Approve',
@@ -16,7 +21,10 @@ return [
         'refund_history' => 'Refund history',
     ],
     'booking_show' => [
+        'page_title' => 'Booking detail',
+        'page_subtitle' => 'Pilgrim information, payment status, refunds, and reschedule requests in one place.',
         'back' => '← Back to list',
+        'back_list' => 'All requests',
         'booking_code_label' => 'Booking code',
         'pilgrim' => 'Pilgrim',
         'period' => 'Period',
@@ -38,5 +46,22 @@ return [
         'approve_reschedule' => 'Approve reschedule',
         'reject_short' => 'Decline',
         'approve_reschedule_confirm' => 'Approve this date change?',
+    ],
+    'jadwal' => [
+        'page_title' => 'Time off',
+        'page_subtitle' => 'Block dates when you are unavailable. Pilgrims will not be able to book overlapping trips.',
+        'back_dashboard' => 'Dashboard',
+        'add_title' => 'Add a day off',
+        'date_label' => 'Date',
+        'note_label' => 'Note (optional)',
+        'note_placeholder' => 'e.g. family leave',
+        'submit' => 'Save day off',
+        'list_title' => 'Upcoming days off',
+        'empty' => 'No upcoming days off yet.',
+        'empty_hint' => 'Add dates so pilgrims see when you are not available.',
+        'delete' => 'Remove',
+        'delete_confirm' => 'Remove this day from your time off?',
+        'flash_added' => 'Day off saved.',
+        'flash_removed' => 'Day off removed.',
     ],
 ];

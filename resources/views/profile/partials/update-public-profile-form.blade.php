@@ -1,10 +1,10 @@
 <section>
     <header>
-        <h2 class="text-lg font-medium text-gray-900">
+        <h2 class="text-lg font-semibold text-slate-900">
             {{ __('profile_public.title') }}
         </h2>
 
-        <p class="mt-1 text-sm text-gray-600">
+        <p class="mt-1 text-sm text-slate-600">
             {{ __('profile_public.subtitle') }}
         </p>
     </header>
@@ -35,14 +35,14 @@
 
         <div>
             <x-input-label for="public_address" :value="__('profile_public.address')" />
-            <textarea id="public_address" name="address" rows="3" class="mt-1 block w-full rounded-lg border-slate-300 shadow-sm focus:border-brand-500 focus:ring-brand-500 text-sm">{{ old('address', $muthowifProfile->address) }}</textarea>
+            <textarea id="public_address" name="address" rows="3" class="mt-1 block w-full rounded-lg border-slate-300 text-sm shadow-sm focus:border-brand-500 focus:ring-brand-500">{{ old('address', $muthowifProfile->address) }}</textarea>
             <x-input-error class="mt-2" :messages="$errors->get('address')" />
         </div>
 
         <div>
             <x-input-label for="public_photo" :value="__('profile_public.photo')" />
             <x-input-file id="public_photo" name="photo" accept="image/jpeg,image/png,image/webp" />
-            <p class="mt-1 text-xs text-gray-500">{{ __('profile_public.photo_hint') }}</p>
+            <p class="mt-1 text-xs text-slate-500">{{ __('profile_public.photo_hint') }}</p>
             <x-input-error class="mt-2" :messages="$errors->get('photo')" />
         </div>
 
@@ -75,19 +75,12 @@
 
         <div>
             <x-input-label for="public_reference_text" :value="__('profile_public.reference')" />
-            <textarea id="public_reference_text" name="reference_text" rows="3" class="mt-1 block w-full rounded-lg border-slate-300 shadow-sm focus:border-brand-500 focus:ring-brand-500 text-sm">{{ old('reference_text', $muthowifProfile->reference_text) }}</textarea>
+            <textarea id="public_reference_text" name="reference_text" rows="3" class="mt-1 block w-full rounded-lg border-slate-300 text-sm shadow-sm focus:border-brand-500 focus:ring-brand-500">{{ old('reference_text', $muthowifProfile->reference_text) }}</textarea>
             <x-input-error class="mt-2" :messages="$errors->get('reference_text')" />
         </div>
 
         <div class="flex items-center gap-4">
             <x-primary-button>{{ __('profile_public.save') }}</x-primary-button>
-
-            @if (session('status') === 'public-profile-updated')
-                <p x-data="{ show: true }" x-show="show" x-transition x-init="setTimeout(() => show = false, 2000)" class="text-sm text-gray-600">
-                    {{ __('profile_public.saved') }}
-                </p>
-            @endif
         </div>
     </form>
 </section>
-

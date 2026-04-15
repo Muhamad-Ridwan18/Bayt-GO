@@ -22,6 +22,8 @@ return [
     'work_placeholder' => 'Masukkan pengalaman kerja',
     'work_add' => 'Tambah pengalaman',
     'reference' => 'Referensi muthowif (opsional)',
+    'section_cv_summary' => 'Bahasa, pendidikan & pengalaman',
+    'section_cv_hint' => 'Buka untuk mengisi daftar — lipat agar halaman lebih ringkas.',
     'save' => 'Simpan profil publik',
     'saved' => 'Tersimpan.',
 ];

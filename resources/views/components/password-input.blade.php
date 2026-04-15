@@ -5,7 +5,7 @@
         type="password"
         x-bind:type="showPassword ? 'text' : 'password'"
         @disabled($disabled)
-        {{ $attributes->merge(['class' => 'border-gray-300 focus:border-brand-500 focus:ring-brand-500 rounded-lg shadow-sm pr-10']) }}
+        {{ $attributes->merge(['class' => 'border-slate-300 focus:border-brand-500 focus:ring-brand-500 rounded-lg shadow-sm pr-10']) }}
     />
     <button
         type="button"

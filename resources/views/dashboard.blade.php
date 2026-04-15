@@ -1,5 +1,5 @@
 <x-app-layout>
-    <div class="relative min-h-[calc(100vh-4rem)] overflow-hidden bg-gradient-to-b from-slate-100 via-slate-50 to-white py-8 sm:py-12">
+    <div class="relative min-h-[calc(100vh-4rem)] overflow-hidden bg-gradient-to-b from-slate-100 via-slate-50 to-white py-8 sm:py-12 @if (Auth::user()->isVerifiedMuthowif()) !py-5 sm:!py-6 @endif">
         <div class="pointer-events-none absolute inset-0 bg-[radial-gradient(ellipse_80%_50%_at_50%_-20%,rgba(120,53,15,0.08),transparent)]"></div>
         <div class="pointer-events-none absolute right-0 top-24 h-72 w-72 rounded-full bg-brand-400/5 blur-3xl"></div>
         <div class="pointer-events-none absolute -left-20 bottom-0 h-64 w-64 rounded-full bg-violet-400/5 blur-3xl"></div>
@@ -123,21 +123,6 @@
                     </div>
                 </div>
             @elseif (Auth::user()->isVerifiedMuthowif())
-                <div class="relative overflow-hidden rounded-3xl border border-slate-200/80 bg-gradient-to-r from-white via-slate-50/90 to-emerald-50/40 px-6 py-5 shadow-md shadow-slate-200/40 ring-1 ring-slate-100/80">
-                    <div class="pointer-events-none absolute -right-8 top-0 h-32 w-32 rounded-full bg-emerald-400/15 blur-2xl"></div>
-                    <div class="relative flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
-                        <div class="flex items-start gap-4">
-                            <span class="flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl bg-gradient-to-br from-emerald-500 to-emerald-700 text-white shadow-lg shadow-emerald-600/30 ring-1 ring-white/30" aria-hidden="true">
-                                <svg class="h-6 w-6" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M3.75 13.5l10.5-11.25L12 10.5h8.25L9.75 21.75 12 13.5H3.75z" /></svg>
-                            </span>
-                            <div>
-                                <p class="text-xs font-semibold uppercase tracking-wider text-emerald-700/90">{{ __('dashboard.muthowif_panel_label') }}</p>
-                                <h1 class="mt-1 text-xl font-bold tracking-tight text-slate-900 sm:text-2xl">{{ __('dashboard.muthowif_dashboard_title') }}</h1>
-                                <p class="mt-1 text-sm text-slate-600">{{ __('dashboard.muthowif_dashboard_subtitle') }}</p>
-                            </div>
-                        </div>
-                    </div>
-                </div>
                 @include('partials.dashboard-muthowif')
             @elseif (Auth::user()->isMuthowif())
                 <div class="relative overflow-hidden rounded-3xl border border-amber-200/90 bg-gradient-to-br from-amber-50 via-white to-orange-50/50 p-6 shadow-lg shadow-amber-900/5 ring-1 ring-amber-100 sm:p-8">

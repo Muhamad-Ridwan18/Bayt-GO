@@ -1,6 +1,7 @@
 <?php
 
 return [
+    'profile' => 'Profil',
     'language' => 'Bahasa',
     'home' => 'Beranda',
     'find_muthowif' => 'Cari muthowif',
