@@ -38,7 +38,7 @@ class WithdrawalsController extends Controller
 
     /**
      * Approve: debit saldo muthowif, status processing.
-     * Admin menyelesaikan transfer ke rekening tujuan (mis. lewat DOKU Kirim / bank), lalu menandai lewat markTransferred.
+     * Admin menyelesaikan transfer ke rekening tujuan (mis. lewat bank), lalu menandai lewat markTransferred.
      */
     public function approve(Request $request, MuthowifWithdrawal $withdrawal): RedirectResponse
     {

@@ -5,7 +5,6 @@ namespace App\Payments\DTO;
 final class SnapPaymentSession
 {
     public function __construct(
-        // DOKU Checkout: null. (Field dipertahankan untuk kompatibilitas kontrak.)
         public readonly ?string $snapToken,
         public readonly ?string $clientKey,
         public readonly ?string $snapJsUrl,

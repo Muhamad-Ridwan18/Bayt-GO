@@ -59,11 +59,6 @@ return [
         'core_payment_expire_minutes' => env('MIDTRANS_CORE_PAYMENT_EXPIRE_MINUTES', 60),
     ],
 
-    'doku' => [
-        'checkout_client_id' => env('DOKU_CHECKOUT_CLIENT_ID'),
-        'checkout_shared_key' => env('DOKU_CHECKOUT_SHARED_KEY'),
-        'checkout_is_sandbox' => env('DOKU_CHECKOUT_IS_SANDBOX', true),
-        'checkout_payment_due_minutes' => env('DOKU_CHECKOUT_PAYMENT_DUE_MINUTES', 1440),
-    ],
+
 
 ];
