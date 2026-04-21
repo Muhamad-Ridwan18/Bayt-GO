@@ -55,11 +55,9 @@ return [
         'reference_midtrans_order' => 'Order Midtrans: :order',
         'gross_volume' => 'Volume bruto (belum refunded)',
         'history_title' => 'Riwayat transaksi',
-        'history_grouped_note' => 'Dikelompokkan per kode booking (order & refund satu grup). Withdraw tampil terpisah per permintaan. Tabel hanya memuat transaksi dalam :months bulan terakhir (env ADMIN_FINANCE_HISTORY_MONTHS, bawaan 24); kartu ringkasan tetap akumulasi sepanjang waktu.',
         'history_group_withdraw' => 'Withdraw',
         'history_group_booking_nocode' => 'Booking :id',
         'history_group_rows' => ':count baris',
-        'history_hint' => 'Order: fee jamaah & fee muthowif masing-masing :rate% dari harga dasar; total fee = :total% dari harga dasar. Refund: potongan admin :total% dari harga dasar; bagian muthowif 1% dari harga dasar (dikreditkan ke saldo muthowif saat refund selesai). Waktu = acuan urutan + waktu terkait.',
         'history_empty' => 'Belum ada pembayaran, refund, atau withdraw yang tercatat.',
         'txn_type' => 'Jenis',
         'txn_types' => [

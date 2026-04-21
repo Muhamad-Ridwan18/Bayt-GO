@@ -55,11 +55,9 @@ return [
         'reference_midtrans_order' => 'Midtrans order: :order',
         'gross_volume' => 'Gross volume (not refunded)',
         'history_title' => 'Transaction history',
-        'history_grouped_note' => 'Grouped by booking code (order & refund together). Each withdrawal is its own group. The table only loads events from the last :months months (env ADMIN_FINANCE_HISTORY_MONTHS, default 24); summary cards still use all-time totals.',
         'history_group_withdraw' => 'Withdrawal',
         'history_group_booking_nocode' => 'Booking :id',
         'history_group_rows' => ':count rows',
-        'history_hint' => 'Order: pilgrim & chaperone fees are :rate% of base each; total fee is :total% of base. Refund: admin deduction is :total% of base; chaperone refund share is 1% of base (credited to chaperone wallet when the refund is completed). Time = sort key plus related timestamps.',
         'history_empty' => 'No payments, refunds, or withdrawals recorded yet.',
         'txn_type' => 'Type',
         'txn_types' => [

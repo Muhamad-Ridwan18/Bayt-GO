@@ -1,6 +1,5 @@
 @php
     use App\Support\IndonesianNumber;
-    use App\Support\PlatformFee;
 
     $fmt = fn (float|int $n) => IndonesianNumber::formatThousands((string) (int) round((float) $n));
 @endphp
@@ -32,11 +31,6 @@
             <div class="rounded-2xl border border-slate-200 bg-white overflow-hidden shadow-sm">
                 <div class="px-5 py-4 border-b border-slate-100">
                     <h3 class="font-semibold text-slate-900">{{ __('admin.finance.history_title') }}</h3>
-                    <p class="mt-1 text-xs text-slate-500">{{ __('admin.finance.history_hint', [
-                        'rate' => PlatformFee::RATE * 100,
-                        'total' => PlatformFee::TOTAL_RATE * 100,
-                    ]) }}</p>
-                    <p class="mt-1 text-xs text-slate-500">{{ __('admin.finance.history_grouped_note', ['months' => (int) config('admin.finance.history_months', 24)]) }}</p>
                 </div>
                 @if ($history->isEmpty())
                     <p class="p-8 text-center text-sm text-slate-500">{{ __('admin.finance.history_empty') }}</p>

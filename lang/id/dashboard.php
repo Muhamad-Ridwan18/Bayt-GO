@@ -36,7 +36,6 @@ return [
     'stat_platform_fee' => 'Platform fee',
     'stat_gross_volume' => 'Volume bruto (belum refunded)',
     'stat_transactions' => 'Settlement di periode',
-    'finance_history_preview_note' => 'Pratinjau: 5 grup terbaru — tabel sama dengan Keuangan; buka Keuangan untuk paginasi penuh.',
     'view_all' => 'Lihat semua',
     'admin_quick_title' => 'Akses cepat',
     'admin_quick_sub' => 'Modul operasional dalam satu layar.',

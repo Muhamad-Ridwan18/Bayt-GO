@@ -184,8 +184,6 @@
                         $totalPlatformFees = \App\Support\AdminFinanceSummary::totalPlatformFees();
                         $totalVolume = \App\Support\AdminFinanceSummary::grossVolumeExcludingRefundedBookings();
                         $financeHistoryMonths = (int) config('admin.finance.history_months', 24);
-                        $platformFeeRatePct = \App\Support\PlatformFee::RATE * 100;
-                        $platformFeeTotalPct = \App\Support\PlatformFee::TOTAL_RATE * 100;
                         $financeHistorySince = now()->subMonths($financeHistoryMonths)->startOfDay();
                         $settledCount = \App\Support\AdminFinanceTimeline::settlementPaymentCountSince($financeHistorySince);
                         $recentFinanceGroups = \App\Support\AdminFinanceTimeline::groupsSince($financeHistorySince)->take(5);
@@ -251,12 +249,6 @@
                                 <div class="flex flex-col gap-3 border-b border-slate-100 bg-slate-50/80 px-5 py-4 sm:flex-row sm:items-start sm:justify-between">
                                     <div class="min-w-0">
                                         <h4 class="font-semibold text-slate-900">{{ __('admin.finance.history_title') }}</h4>
-                                        <p class="mt-1 text-xs leading-relaxed text-slate-500">{{ __('admin.finance.history_hint', [
-                                            'rate' => $platformFeeRatePct,
-                                            'total' => $platformFeeTotalPct,
-                                        ]) }}</p>
-                                        <p class="mt-1 text-xs leading-relaxed text-slate-500">{{ __('admin.finance.history_grouped_note', ['months' => $financeHistoryMonths]) }}</p>
-                                        <p class="mt-1 text-[11px] font-medium text-slate-600">{{ __('dashboard.finance_history_preview_note') }}</p>
                                     </div>
                                     <a href="{{ route('admin.finance.index') }}" class="inline-flex shrink-0 items-center gap-2 rounded-xl bg-brand-600 px-3 py-2 text-sm font-semibold text-white shadow-sm transition hover:bg-brand-700">
                                         {{ __('dashboard.view_all') }}

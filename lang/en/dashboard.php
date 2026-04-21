@@ -36,7 +36,6 @@ return [
     'stat_platform_fee' => 'Platform fee',
     'stat_gross_volume' => 'Gross volume (not refunded)',
     'stat_transactions' => 'Settlements in period',
-    'finance_history_preview_note' => 'Preview: 5 most recent groups — same table as Finance; open Finance for full pagination.',
     'view_all' => 'View all',
     'admin_quick_title' => 'Quick access',
     'admin_quick_sub' => 'Operational modules in one place.',
