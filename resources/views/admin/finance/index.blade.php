@@ -32,11 +32,10 @@
                 <div class="rounded-2xl border border-brand-200 bg-gradient-to-br from-brand-50 to-white p-6 shadow-sm">
                     <p class="text-xs font-semibold uppercase tracking-wide text-brand-800">{{ __('admin.finance.platform_total') }}</p>
                     <p class="mt-2 text-2xl font-bold text-brand-900">Rp {{ $fmt($totalPlatformFees) }}</p>
-                    <p class="mt-2 text-xs leading-relaxed text-brand-900/80">
-                        {{ __('admin.finance.platform_total_breakdown', [
-                            'from_orders' => $fmt($platformFeesFromPayments),
-                            'from_refunds' => $fmt($platformFeesFromRefunds),
-                        ]) }}
+                    <p class="mt-2 space-y-1 text-xs leading-relaxed text-brand-900/80">
+                        <span class="block">{{ __('admin.finance.platform_from_orders_line', ['amount' => $fmt($platformFeesFromPayments)]) }}</span>
+                        <span class="block">{{ __('admin.finance.platform_from_refunds_line', ['amount' => $fmt($platformFeesFromRefunds)]) }}</span>
+                        <span class="block text-[11px] text-brand-900/70">{{ __('admin.finance.platform_card_note', ['pct' => PlatformFee::TOTAL_RATE * 100]) }}</span>
                     </p>
                 </div>
                 <div class="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm">

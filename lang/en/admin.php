@@ -51,12 +51,14 @@ return [
     'finance' => [
         'intro' => 'Summary of platform fees (:pct% total) and one chronological ledger: payments (orders), completed refunds, and chaperone withdrawals — so an order appears before its refund when you scroll the timeline.',
         'refund_cta' => 'Refunds pending transfer',
-        'platform_total' => 'Total platform fees collected',
-        'platform_total_breakdown' => 'From orders: Rp :from_orders · From refund admin fees: Rp :from_refunds',
+        'platform_total' => 'Total platform fees (from payments)',
+        'platform_from_orders_line' => 'Sum of fees on settled payments: Rp :amount',
+        'platform_from_refunds_line' => 'Completed refund admin deductions (separate): Rp :amount',
+        'platform_card_note' => 'Refund admin fees use :pct% of the service base — the same rate as total platform fee on the order, so amounts can match. The headline only includes payment fees to avoid double counting.',
         'reference_midtrans_order' => 'Midtrans order: :order',
         'gross_volume' => 'Gross volume (pilgrims)',
         'history_title' => 'Transaction history',
-        'history_hint' => 'Order: pilgrim & chaperone platform fees are :rate% of base each; total fee is :total% of base. Refund: first fee column is admin deduction, second is chaperone share (not the 7.5% split). Time shows the sort key plus payment created / request time when available.',
+        'history_hint' => 'Order: pilgrim & chaperone fees are :rate% of base each; total fee is :total% of base. Refund: first column is admin deduction (:total% of base, often equal to the order row «Total fees» for the same booking); second column is chaperone share. Time = sort key plus related timestamps.',
         'history_empty' => 'No payments, refunds, or withdrawals recorded yet.',
         'txn_type' => 'Type',
         'txn_types' => [

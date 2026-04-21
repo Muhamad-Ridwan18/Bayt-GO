@@ -51,12 +51,14 @@ return [
     'finance' => [
         'intro' => 'Ringkasan biaya platform (:pct% total) dan satu riwayat transaksi: pembayaran (order), refund selesai, serta withdraw muthowif — diurutkan waktu sehingga order terlihat sebelum refund pada booking yang sama.',
         'refund_cta' => 'Refund menunggu transfer',
-        'platform_total' => 'Total biaya platform terkumpul',
-        'platform_total_breakdown' => 'Dari order: Rp :from_orders · Dari potongan admin refund: Rp :from_refunds',
+        'platform_total' => 'Total fee platform (dari pembayaran)',
+        'platform_from_orders_line' => 'Jumlah fee di pembayaran settlement: Rp :amount',
+        'platform_from_refunds_line' => 'Potongan admin refund selesai (terpisah): Rp :amount',
+        'platform_card_note' => 'Potongan admin refund dihitung :pct% dari harga dasar — sama dengan total fee platform pada order untuk base yang sama, jadi nominal bisa identik. Angka besar di atas hanya dari pembayaran agar tidak dihitung dua kali.',
         'reference_midtrans_order' => 'Order Midtrans: :order',
         'gross_volume' => 'Volume bruto (jamaah)',
         'history_title' => 'Riwayat transaksi',
-        'history_hint' => 'Order: fee jamaah & fee muthowif masing-masing :rate% dari harga dasar; total fee = :total% dari harga dasar. Refund: kolom fee jamaah = potongan admin, fee muthowif = bagian muthowif (bukan persentase 7,5%). Waktu menampilkan acuan urutan + waktu pembayaran dibuat / pengajuan bila ada.',
+        'history_hint' => 'Order: fee jamaah & fee muthowif masing-masing :rate% dari harga dasar; total fee = :total% dari harga dasar. Refund: kolom pertama = potongan admin (:total% dari harga dasar, bisa sama dengan kolom total fee pada order yang sama); kolom kedua = bagian muthowif. Waktu = acuan urutan + waktu terkait.',
         'history_empty' => 'Belum ada pembayaran, refund, atau withdraw yang tercatat.',
         'txn_type' => 'Jenis',
         'txn_types' => [
