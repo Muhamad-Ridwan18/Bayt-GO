@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\Admin;
 
 use App\Enums\BookingChangeRequestStatus;
+use App\Enums\PaymentStatus;
 use App\Http\Controllers\Controller;
 use App\Models\BookingPayment;
 use App\Models\BookingRefundRequest;
@@ -18,11 +19,34 @@ class FinanceController extends Controller
     {
         $paidQuery = BookingPayment::query()->whereIn('status', ['settlement', 'capture']);
 
-        $platformFeesFromPayments = (float) (clone $paidQuery)->sum('platform_fee_amount');
+        /*
+         * Platform fee dari pembayaran: hanya booking yang BELUM refunded.
+         * Jika payment_status = refunded, transaksi dibatalkan — fee order tidak dihitung lagi;
+         * revenue platform untuk kasus itu hanya refund_fee_platform (lihat query refund di bawah).
+         *
+         * Setara SQL:
+         *   SELECT COALESCE(SUM(bp.platform_fee_amount), 0)
+         *   FROM booking_payments bp
+         *   INNER JOIN muthowif_bookings b ON b.id = bp.muthowif_booking_id
+         *   WHERE bp.status IN ('settlement','capture')
+         *     AND b.payment_status != 'refunded';
+         */
+        $platformFeesFromPayments = (float) BookingPayment::query()
+            ->whereIn('status', ['settlement', 'capture'])
+            ->whereHas('muthowifBooking', static function ($q): void {
+                $q->where('payment_status', '!=', PaymentStatus::Refunded->value);
+            })
+            ->sum('platform_fee_amount');
+
+        /*
+         * Potongan admin refund selesai (approved).
+         *   SELECT COALESCE(SUM(refund_fee_platform), 0)
+         *   FROM booking_refund_requests WHERE status = 'approved';
+         */
         $platformFeesFromRefunds = (float) BookingRefundRequest::query()
             ->where('status', BookingChangeRequestStatus::Approved)
             ->sum('refund_fee_platform');
-        // Total platform (admin): fee dari pembayaran + potongan admin refund (:pct dari harga dasar).
+
         $totalPlatformFees = $platformFeesFromPayments + $platformFeesFromRefunds;
         $totalVolume = (int) (clone $paidQuery)->sum('gross_amount');
 
