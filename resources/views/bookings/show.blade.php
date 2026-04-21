@@ -282,6 +282,7 @@
                         <div class="rounded-2xl border border-slate-100 bg-slate-50/90 p-4 text-sm text-slate-700 ring-1 ring-slate-100 space-y-2">
                             <p>{!! __('bookings.show.refund_estimate_html', ['amount' => $fmt((float) $refundPreview['net_refund_customer'])]) !!}</p>
                             <p class="text-xs text-slate-600">{{ __('bookings.show.refund_breakdown_html', [
+                                'base' => $fmt((float) $refundPreview['service_base_amount']),
                                 'paid' => $fmt((float) $refundPreview['customer_paid_amount']),
                                 'platform' => $fmt((float) $refundPreview['refund_fee_platform']),
                                 'muthowif' => $fmt((float) $refundPreview['refund_fee_muthowif']),

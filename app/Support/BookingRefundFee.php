@@ -7,6 +7,7 @@ use App\Models\MuthowifBooking;
 
 /**
  * Biaya admin refund: 15% (platform) + 1% (muthowif) dari harga dasar layanan.
+ * Dana kembali (net): harga dasar (rupiah bulat) − kedua potongan — bukan dari bruto pembayaran jamaah.
  */
 final class BookingRefundFee
 {
@@ -30,7 +31,8 @@ final class BookingRefundFee
         $feePlatform = (int) round($base * self::PLATFORM_REFUND_RATE);
         $feeMuthowif = (int) round($base * self::MUTHOWIF_RATE);
         $paid = (int) $payment->gross_amount;
-        $net = max(0, $paid - $feePlatform - $feeMuthowif);
+        $baseIdr = (int) round($base);
+        $net = max(0, $baseIdr - $feePlatform - $feeMuthowif);
 
         return [
             'service_base_amount' => round($base, 2),
