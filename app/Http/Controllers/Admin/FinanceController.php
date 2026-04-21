@@ -120,17 +120,8 @@ class FinanceController extends Controller
                         'muthowifProfile' => static function ($q2): void {
                             $q2->select(['id', 'user_id'])->with('user:id,name');
                         },
-                        'latestSettledBookingPayment' => static function ($q3): void {
-                            $q3->select([
-                                'id',
-                                'muthowif_booking_id',
-                                'order_id',
-                                'gross_amount',
-                                'status',
-                                'settled_at',
-                                'created_at',
-                            ]);
-                        },
+                        // Jangan batasi select() di sini: latestOfMany memakai join subquery; kolom tanpa prefix jadi ambiguous di MySQL.
+                        'latestSettledBookingPayment',
                     ]);
                 },
             ])
