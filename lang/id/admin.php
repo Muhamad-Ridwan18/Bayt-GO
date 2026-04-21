@@ -59,7 +59,7 @@ return [
         'history_group_withdraw' => 'Withdraw',
         'history_group_booking_nocode' => 'Booking :id',
         'history_group_rows' => ':count baris',
-        'history_hint' => 'Order: fee jamaah & fee muthowif masing-masing :rate% dari harga dasar; total fee = :total% dari harga dasar. Refund: potongan admin :total% dari harga dasar; bagian muthowif 1% dari harga dasar (mengurangi saldo muthowif saat refund selesai). Waktu = acuan urutan + waktu terkait.',
+        'history_hint' => 'Order: fee jamaah & fee muthowif masing-masing :rate% dari harga dasar; total fee = :total% dari harga dasar. Refund: potongan admin :total% dari harga dasar; bagian muthowif 1% dari harga dasar (dikreditkan ke saldo muthowif saat refund selesai). Waktu = acuan urutan + waktu terkait.',
         'history_empty' => 'Belum ada pembayaran, refund, atau withdraw yang tercatat.',
         'txn_type' => 'Jenis',
         'txn_types' => [

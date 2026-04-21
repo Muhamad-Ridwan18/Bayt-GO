@@ -64,7 +64,7 @@ return [
     'link_booking_detail' => 'Open booking',
 
     'wallet_ledger_title' => 'Balance activity',
-    'wallet_ledger_hint' => 'Credits when a booking is completed; debits when a withdrawal is approved; credits again if that transfer fails. When a pilgrim refund is completed, your balance is debited by the muthowif share (1% of the service base) stored on the request.',
+    'wallet_ledger_hint' => 'Credits when a booking is completed; debits when a withdrawal is approved; credits again if that transfer fails. When a pilgrim refund is completed, your balance is credited the muthowif share (1% of the service base) stored on the request.',
     'wallet_ledger_col_time' => 'Time',
     'wallet_ledger_col_type' => 'Type',
     'wallet_ledger_col_amount' => 'Amount',
@@ -77,5 +77,5 @@ return [
     'wallet_ledger_withdraw' => 'Withdraw • :bank · :account',
     'wallet_ledger_empty' => 'No balance movements yet.',
     'wallet_ledger_refund_caption' => 'No muthowif fee on file (older refund before the 1% rule).',
-    'wallet_ledger_refund_caption_fee' => 'Muthowif share on this refund: 1% of the service base price.',
+    'wallet_ledger_refund_caption_fee' => 'Muthowif share credited to your wallet: 1% of the service base price.',
 ];

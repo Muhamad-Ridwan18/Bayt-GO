@@ -101,7 +101,7 @@ final class MuthowifWalletLedger
             }
 
             $feeMu = (int) $refund->refund_fee_muthowif;
-            $signed = $feeMu > 0 ? -1 * (float) $feeMu : 0.0;
+            $signed = $feeMu > 0 ? (float) $feeMu : 0.0;
 
             $out->push([
                 'kind' => 'refund_completed',

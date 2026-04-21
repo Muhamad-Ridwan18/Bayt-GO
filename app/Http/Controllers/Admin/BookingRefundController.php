@@ -98,8 +98,8 @@ class BookingRefundController extends Controller
                         ->lockForUpdate()
                         ->first();
                     if ($muthowifProfile !== null) {
-                        $deduct = round((float) $feeMu, 2);
-                        $muthowifProfile->wallet_balance = round((float) $muthowifProfile->wallet_balance - $deduct, 2);
+                        $credit = round((float) $feeMu, 2);
+                        $muthowifProfile->wallet_balance = round((float) $muthowifProfile->wallet_balance + $credit, 2);
                         $muthowifProfile->save();
                     }
                 }
