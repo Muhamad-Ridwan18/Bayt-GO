@@ -32,6 +32,12 @@
                 <div class="rounded-2xl border border-brand-200 bg-gradient-to-br from-brand-50 to-white p-6 shadow-sm">
                     <p class="text-xs font-semibold uppercase tracking-wide text-brand-800">{{ __('admin.finance.platform_total') }}</p>
                     <p class="mt-2 text-2xl font-bold text-brand-900">Rp {{ $fmt($totalPlatformFees) }}</p>
+                    <p class="mt-2 text-xs leading-relaxed text-brand-900/80">
+                        {{ __('admin.finance.platform_total_breakdown', [
+                            'from_orders' => $fmt($platformFeesFromPayments),
+                            'from_refunds' => $fmt($platformFeesFromRefunds),
+                        ]) }}
+                    </p>
                 </div>
                 <div class="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm">
                     <p class="text-xs font-semibold uppercase tracking-wide text-slate-500">{{ __('admin.finance.gross_volume') }}</p>
@@ -99,8 +105,8 @@
                                                     </div>
                                                 @endif
                                             </td>
-                                            <td class="px-4 py-3 align-top font-mono text-xs text-slate-700 max-w-[12rem] truncate" title="{{ $p->order_id }}">
-                                                {{ $p->order_id }}
+                                            <td class="px-4 py-3 align-top font-mono text-xs text-slate-700 max-w-[14rem] truncate" title="{{ filled($p->order_id) ? __('admin.finance.reference_midtrans_order', ['order' => $p->order_id]) : '' }}">
+                                                {{ filled($b?->booking_code) ? $b->booking_code : ($p->order_id ?? '—') }}
                                             </td>
                                             <td class="px-4 py-3 align-top text-slate-800">{{ $b?->customer?->name ?? '—' }}</td>
                                             <td class="px-4 py-3 align-top text-slate-800">{{ $b?->muthowifProfile?->user?->name ?? '—' }}</td>
@@ -137,11 +143,8 @@
                                                     </div>
                                                 @endif
                                             </td>
-                                            <td class="px-4 py-3 align-top">
-                                                <div class="font-mono text-xs text-slate-700">{{ $b?->booking_code ?? '—' }}</div>
-                                                @if ($pay?->order_id)
-                                                    <div class="mt-0.5 font-mono text-[10px] text-slate-500 truncate max-w-[12rem]" title="{{ $pay->order_id }}">{{ $pay->order_id }}</div>
-                                                @endif
+                                            <td class="px-4 py-3 align-top font-mono text-xs text-slate-700 max-w-[14rem] truncate" title="{{ filled($pay?->order_id) ? __('admin.finance.reference_midtrans_order', ['order' => $pay->order_id]) : '' }}">
+                                                {{ filled($b?->booking_code) ? $b->booking_code : ($pay?->order_id ?? '—') }}
                                             </td>
                                             <td class="px-4 py-3 align-top text-slate-800">{{ $b?->customer?->name ?? '—' }}</td>
                                             <td class="px-4 py-3 align-top text-slate-800">{{ $b?->muthowifProfile?->user?->name ?? '—' }}</td>

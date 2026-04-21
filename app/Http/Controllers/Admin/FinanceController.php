@@ -18,7 +18,11 @@ class FinanceController extends Controller
     {
         $paidQuery = BookingPayment::query()->whereIn('status', ['settlement', 'capture']);
 
-        $totalPlatformFees = (float) (clone $paidQuery)->sum('platform_fee_amount');
+        $platformFeesFromPayments = (float) (clone $paidQuery)->sum('platform_fee_amount');
+        $platformFeesFromRefunds = (float) BookingRefundRequest::query()
+            ->where('status', BookingChangeRequestStatus::Approved)
+            ->sum('refund_fee_platform');
+        $totalPlatformFees = $platformFeesFromPayments + $platformFeesFromRefunds;
         $totalVolume = (int) (clone $paidQuery)->sum('gross_amount');
 
         $payments = BookingPayment::query()
@@ -111,6 +115,8 @@ class FinanceController extends Controller
         return view('admin.finance.index', [
             'history' => $history,
             'totalPlatformFees' => $totalPlatformFees,
+            'platformFeesFromPayments' => $platformFeesFromPayments,
+            'platformFeesFromRefunds' => $platformFeesFromRefunds,
             'totalVolume' => $totalVolume,
         ]);
     }

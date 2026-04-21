@@ -52,6 +52,8 @@ return [
         'intro' => 'Ringkasan biaya platform (:pct% total) dan satu riwayat transaksi: pembayaran (order), refund selesai, serta withdraw muthowif — diurutkan waktu sehingga order terlihat sebelum refund pada booking yang sama.',
         'refund_cta' => 'Refund menunggu transfer',
         'platform_total' => 'Total biaya platform terkumpul',
+        'platform_total_breakdown' => 'Dari order: Rp :from_orders · Dari potongan admin refund: Rp :from_refunds',
+        'reference_midtrans_order' => 'Order Midtrans: :order',
         'gross_volume' => 'Volume bruto (jamaah)',
         'history_title' => 'Riwayat transaksi',
         'history_hint' => 'Order: fee jamaah & fee muthowif masing-masing :rate% dari harga dasar; total fee = :total% dari harga dasar. Refund: kolom fee jamaah = potongan admin, fee muthowif = bagian muthowif (bukan persentase 7,5%). Waktu menampilkan acuan urutan + waktu pembayaran dibuat / pengajuan bila ada.',
