@@ -91,14 +91,14 @@ class BookingRefundController extends Controller
                     'payment_status' => PaymentStatus::Refunded,
                 ]);
 
-                $pay = $booking->settledBookingPayment();
-                if ($pay !== null && $pay->wallet_credited_at !== null) {
+                $feeMu = (int) $refund->refund_fee_muthowif;
+                if ($feeMu > 0) {
                     $muthowifProfile = MuthowifProfile::query()
                         ->whereKey($booking->muthowif_profile_id)
                         ->lockForUpdate()
                         ->first();
                     if ($muthowifProfile !== null) {
-                        $deduct = round((float) $pay->muthowif_net_amount, 2);
+                        $deduct = round((float) $feeMu, 2);
                         $muthowifProfile->wallet_balance = round((float) $muthowifProfile->wallet_balance - $deduct, 2);
                         $muthowifProfile->save();
                     }

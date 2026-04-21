@@ -64,7 +64,7 @@ return [
     'link_booking_detail' => 'Buka detail booking',
 
     'wallet_ledger_title' => 'Riwayat pergerakan saldo',
-    'wallet_ledger_hint' => 'Masuk saat booking selesai; keluar saat withdraw disetujui; masuk lagi jika transfer withdraw gagal. Refund jamaah muncul saat admin menyelesaikan transfer; saldo hanya berubah jika pendapatan booking itu sudah sempat masuk dompet.',
+    'wallet_ledger_hint' => 'Masuk saat booking selesai; keluar saat withdraw disetujui; masuk lagi jika transfer withdraw gagal. Saat refund jamaah selesai, saldo berkurang sesuai bagian muthowif (1% dari harga dasar) yang tercatat di pengajuan.',
     'wallet_ledger_col_time' => 'Waktu',
     'wallet_ledger_col_type' => 'Jenis',
     'wallet_ledger_col_amount' => 'Nominal',
@@ -76,6 +76,6 @@ return [
     'wallet_ledger_booking' => 'Booking :code',
     'wallet_ledger_withdraw' => 'Withdraw • :bank · :account',
     'wallet_ledger_empty' => 'Belum ada pergerakan saldo.',
-    'wallet_ledger_refund_caption' => 'Refund jamaah selesai. Saldo tidak berubah — pendapatan booking ini belum masuk dompet.',
-    'wallet_ledger_refund_caption_clawback' => 'Refund jamaah selesai. Pendapatan yang sudah masuk saldo dikurangi sesuai booking ini.',
+    'wallet_ledger_refund_caption' => 'Tidak ada potongan muthowif tercatat (refund lama sebelum aturan 1%).',
+    'wallet_ledger_refund_caption_fee' => 'Potongan muthowif terkait refund: 1% dari harga dasar layanan.',
 ];

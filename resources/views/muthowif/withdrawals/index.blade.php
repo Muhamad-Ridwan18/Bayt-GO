@@ -101,7 +101,7 @@
                                                     {{ __('dashboard_muthowif.wallet_ledger_booking', ['code' => $b->booking_code ?? $b->getKey()]) }}
                                                 </a>
                                                 <p class="text-xs text-slate-500 leading-snug">
-                                                    {{ $isNeutralAmount ? __('dashboard_muthowif.wallet_ledger_refund_caption') : __('dashboard_muthowif.wallet_ledger_refund_caption_clawback') }}
+                                                    {{ $isNeutralAmount ? __('dashboard_muthowif.wallet_ledger_refund_caption') : __('dashboard_muthowif.wallet_ledger_refund_caption_fee') }}
                                                 </p>
                                             </div>
                                         @elseif ($entry['withdrawal'])

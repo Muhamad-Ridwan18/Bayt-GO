@@ -88,8 +88,7 @@ final class MuthowifWalletLedger
             })
             ->with([
                 'muthowifBooking' => static function ($q): void {
-                    $q->select(['id', 'booking_code', 'muthowif_profile_id'])
-                        ->with(['bookingPayments']);
+                    $q->select(['id', 'booking_code', 'muthowif_profile_id']);
                 },
             ])
             ->get();
@@ -101,17 +100,8 @@ final class MuthowifWalletLedger
                 continue;
             }
 
-            $pay = $booking->relationLoaded('bookingPayments')
-                ? $booking->bookingPayments
-                    ->filter(static fn (BookingPayment $p): bool => in_array($p->status, ['settlement', 'capture'], true))
-                    ->sortByDesc(static fn (BookingPayment $p): int => $p->settled_at?->getTimestamp() ?? $p->created_at?->getTimestamp() ?? 0)
-                    ->first()
-                : $booking->settledBookingPayment();
-
-            $signed = 0.0;
-            if ($pay !== null && $pay->wallet_credited_at !== null) {
-                $signed = -1 * round((float) $pay->muthowif_net_amount, 2);
-            }
+            $feeMu = (int) $refund->refund_fee_muthowif;
+            $signed = $feeMu > 0 ? -1 * (float) $feeMu : 0.0;
 
             $out->push([
                 'kind' => 'refund_completed',

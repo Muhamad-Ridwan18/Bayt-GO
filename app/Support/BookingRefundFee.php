@@ -6,17 +6,16 @@ use App\Models\BookingPayment;
 use App\Models\MuthowifBooking;
 
 /**
- * Refund: layanan batal — potongan hanya untuk platform (15% dari harga dasar).
- * Bagian sisi muthowif dari transaksi (7,5% fee platform) tidak dijadikan potongan/refund tambahan ke jamaah;
- * tidak ada alokasi ke saldo muthowif dari refund. Net jamaah = harga dasar − potongan admin.
+ * Refund: layanan batal — potongan platform 15% dari harga dasar; potongan muthowif 1% dari harga dasar.
+ * Net jamaah = harga dasar − potongan admin − potongan muthowif. Potongan muthowif mengurangi saldo dompet muthowif saat refund diselesaikan admin.
  */
 final class BookingRefundFee
 {
     /** Potongan admin/platform saat refund: 15% dari harga dasar. */
     public const PLATFORM_REFUND_RATE = 0.15;
 
-    /** Di nol-kan: order tidak jadi, tidak ada potongan/pembagian ke muthowif dari refund. */
-    public const MUTHOWIF_REFUND_RATE = 0.0;
+    /** Potongan muthowif saat refund: 1% dari harga dasar (mengurangi saldo muthowif). */
+    public const MUTHOWIF_REFUND_RATE = 0.01;
 
     /**
      * @return array{

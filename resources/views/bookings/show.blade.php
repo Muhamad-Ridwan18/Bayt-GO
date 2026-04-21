@@ -285,6 +285,7 @@
                                 'base' => $fmt((float) $refundPreview['service_base_amount']),
                                 'paid' => $fmt((float) $refundPreview['customer_paid_amount']),
                                 'platform' => $fmt((float) $refundPreview['refund_fee_platform']),
+                                'muthowif' => $fmt((float) $refundPreview['refund_fee_muthowif']),
                             ]) }}</p>
                         </div>
                         <form method="POST" action="{{ route('bookings.refund_request.store', $b) }}" class="space-y-4" onsubmit="return confirm(@json(__('bookings.show.refund_confirm')));">

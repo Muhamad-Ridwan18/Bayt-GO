@@ -59,7 +59,7 @@ return [
         'history_group_withdraw' => 'Withdrawal',
         'history_group_booking_nocode' => 'Booking :id',
         'history_group_rows' => ':count rows',
-        'history_hint' => 'Order: pilgrim & chaperone fees are :rate% of base each; total fee is :total% of base. Refund: admin deduction is :total% of base; chaperone fee column is 0 (service did not complete, no chaperone share from the refund). Time = sort key plus related timestamps.',
+        'history_hint' => 'Order: pilgrim & chaperone fees are :rate% of base each; total fee is :total% of base. Refund: admin deduction is :total% of base; chaperone refund share is 1% of base (deducted from chaperone wallet when the refund is completed). Time = sort key plus related timestamps.',
         'history_empty' => 'No payments, refunds, or withdrawals recorded yet.',
         'txn_type' => 'Type',
         'txn_types' => [

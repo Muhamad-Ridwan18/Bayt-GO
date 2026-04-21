@@ -35,7 +35,7 @@ return [
         'refund_intro' => 'The pilgrim requested a refund in the app; admin transfers the net amount to the pilgrim.',
         'refund_net_prefix' => 'Net refund for pilgrim (est.):',
         'refund_bank_label' => 'Refund destination account',
-        'refund_fees' => 'Admin deduction Rp :platform from base (booking cancelled; no chaperone deduction).',
+        'refund_fees' => 'From base: admin Rp :platform and chaperone Rp :muthowif (booking cancelled).',
         'role_pilgrim' => 'Pilgrim:',
         'role_muthowif' => 'Chaperone:',
         'midtrans_refund' => 'Midtrans refund recorded :datetime.',

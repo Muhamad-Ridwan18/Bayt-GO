@@ -35,7 +35,7 @@ return [
         'refund_intro' => 'Jamaah mengajukan refund di aplikasi; admin mentransfer nominal bersih ke jamaah.',
         'refund_net_prefix' => 'Net refund jamaah (estimasi):',
         'refund_bank_label' => 'Rekening penerima refund',
-        'refund_fees' => 'Potongan admin Rp :platform dari harga dasar (order batal; tidak ada potongan muthowif).',
+        'refund_fees' => 'Dari harga dasar: admin Rp :platform dan muthowif Rp :muthowif (order batal).',
         'role_pilgrim' => 'Jamaah:',
         'role_muthowif' => 'Muthowif:',
         'midtrans_refund' => 'Refund Midtrans dicatat :datetime.',
