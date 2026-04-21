@@ -181,20 +181,46 @@
                     <div class="pointer-events-none absolute -right-20 top-1/2 h-72 w-72 -translate-y-1/2 rounded-full bg-brand-500/20 blur-3xl"></div>
 
                     @php
-                        $paidPaymentsBase = \App\Models\BookingPayment::query()->whereIn('status', ['settlement', 'capture']);
-                        $totalPlatformFees = (float) (clone $paidPaymentsBase)->sum('platform_fee_amount');
-                        $totalVolume = (int) (clone $paidPaymentsBase)->sum('gross_amount');
+                        use App\Enums\BookingChangeRequestStatus;
+                        use App\Enums\PaymentStatus;
+                        use App\Models\BookingPayment;
+                        use App\Models\BookingRefundRequest;
+                        use App\Models\MuthowifWithdrawal;
+
+                        /** Sama logika ringkasan dengan halaman admin Keuangan */
+                        $platformFeesFromPayments = (float) BookingPayment::query()
+                            ->join('muthowif_bookings as b', 'b.id', '=', 'booking_payments.muthowif_booking_id')
+                            ->whereIn('booking_payments.status', ['settlement', 'capture'])
+                            ->selectRaw(
+                                'COALESCE(SUM(CASE WHEN b.payment_status = ? THEN booking_payments.platform_fee_amount * 0.5 ELSE booking_payments.platform_fee_amount END), 0) as platform_from_payments',
+                                [PaymentStatus::Refunded->value]
+                            )
+                            ->value('platform_from_payments');
+
+                        $platformFeesFromRefunds = (float) BookingRefundRequest::query()
+                            ->where('status', BookingChangeRequestStatus::Approved)
+                            ->sum('refund_fee_platform');
+
+                        $totalPlatformFees = $platformFeesFromPayments + $platformFeesFromRefunds;
+
+                        $totalVolume = (int) BookingPayment::query()
+                            ->join('muthowif_bookings as b', 'b.id', '=', 'booking_payments.muthowif_booking_id')
+                            ->whereIn('booking_payments.status', ['settlement', 'capture'])
+                            ->where('b.payment_status', '!=', PaymentStatus::Refunded->value)
+                            ->sum('booking_payments.gross_amount');
+
+                        $paidPaymentsBase = BookingPayment::query()->whereIn('status', ['settlement', 'capture']);
                         $settledCount = (int) (clone $paidPaymentsBase)->count();
                         $latestPayments = (clone $paidPaymentsBase)
                             ->with(['muthowifBooking.customer', 'muthowifBooking.muthowifProfile.user'])
                             ->orderByDesc('settled_at')
                             ->limit(5)
                             ->get();
-                        $pendingWithdrawCount = (int) \App\Models\MuthowifWithdrawal::query()
+                        $pendingWithdrawCount = (int) MuthowifWithdrawal::query()
                             ->where('status', 'pending_approval')
                             ->count();
-                        $pendingRefundCount = (int) \App\Models\BookingRefundRequest::query()
-                            ->where('status', \App\Enums\BookingChangeRequestStatus::Pending)
+                        $pendingRefundCount = (int) BookingRefundRequest::query()
+                            ->where('status', BookingChangeRequestStatus::Pending)
                             ->count();
                         $fmt = fn (float|int $n) => \App\Support\IndonesianNumber::formatThousands((string) (int) round((float) $n));
                     @endphp
@@ -352,7 +378,10 @@
                                 <div class="overflow-visible rounded-2xl border border-white/12 bg-gradient-to-br from-white/8 to-transparent p-5">
                                     <h4 class="font-semibold text-white">{{ __('dashboard.platform_fee_note_title') }}</h4>
                                     <p class="mt-2 text-sm leading-relaxed text-white/75">
-                                        {{ __('dashboard.platform_fee_note_body') }}
+                                        {{ __('dashboard.platform_fee_note_body', [
+                                            'rate' => \App\Support\PlatformFee::RATE * 100,
+                                            'total' => \App\Support\PlatformFee::TOTAL_RATE * 100,
+                                        ]) }}
                                     </p>
                                 </div>
                             </div>
