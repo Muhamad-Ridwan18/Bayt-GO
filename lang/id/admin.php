@@ -53,7 +53,7 @@ return [
         'refund_cta' => 'Refund menunggu transfer',
         'platform_total' => 'Total fee platform (admin)',
         'reference_midtrans_order' => 'Order Midtrans: :order',
-        'gross_volume' => 'Volume bruto (jamaah)',
+        'gross_volume' => 'Volume bruto (belum refunded)',
         'history_title' => 'Riwayat transaksi',
         'history_hint' => 'Order: fee jamaah & fee muthowif masing-masing :rate% dari harga dasar; total fee = :total% dari harga dasar. Refund: potongan admin :total% dari harga dasar; kolom fee muthowif = 0 (layanan tidak jadi, tidak ada bagian muthowif dari refund). Waktu = acuan urutan + waktu terkait.',
         'history_empty' => 'Belum ada pembayaran, refund, atau withdraw yang tercatat.',

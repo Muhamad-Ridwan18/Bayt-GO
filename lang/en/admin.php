@@ -53,7 +53,7 @@ return [
         'refund_cta' => 'Refunds pending transfer',
         'platform_total' => 'Total platform fees (admin)',
         'reference_midtrans_order' => 'Midtrans order: :order',
-        'gross_volume' => 'Gross volume (pilgrims)',
+        'gross_volume' => 'Gross volume (not refunded)',
         'history_title' => 'Transaction history',
         'history_hint' => 'Order: pilgrim & chaperone fees are :rate% of base each; total fee is :total% of base. Refund: admin deduction is :total% of base; chaperone fee column is 0 (service did not complete, no chaperone share from the refund). Time = sort key plus related timestamps.',
         'history_empty' => 'No payments, refunds, or withdrawals recorded yet.',

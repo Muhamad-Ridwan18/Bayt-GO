@@ -17,8 +17,6 @@ class FinanceController extends Controller
 {
     public function index(): View
     {
-        $paidQuery = BookingPayment::query()->whereIn('status', ['settlement', 'capture']);
-
         /*
          * Fee platform dari pembayaran (settlement):
          * - Booking BUKAN refunded: jumlahkan penuh platform_fee_amount (15% dasar = 7,5% jamaah + 7,5% muthowif).
@@ -52,7 +50,16 @@ class FinanceController extends Controller
             ->sum('refund_fee_platform');
 
         $totalPlatformFees = $platformFeesFromPayments + $platformFeesFromRefunds;
-        $totalVolume = (int) (clone $paidQuery)->sum('gross_amount');
+
+        /*
+         * Bruto jamaah: hanya pembayaran settlement pada booking yang belum refunded
+         * (uang yang masih dianggap "volume" operasional; refunded = dikembalikan ke jamaah).
+         */
+        $totalVolume = (int) BookingPayment::query()
+            ->join('muthowif_bookings as b', 'b.id', '=', 'booking_payments.muthowif_booking_id')
+            ->whereIn('booking_payments.status', ['settlement', 'capture'])
+            ->where('b.payment_status', '!=', PaymentStatus::Refunded->value)
+            ->sum('booking_payments.gross_amount');
 
         $payments = BookingPayment::query()
             ->whereIn('status', ['settlement', 'capture'])
