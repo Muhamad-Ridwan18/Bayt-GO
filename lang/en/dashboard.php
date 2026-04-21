@@ -32,7 +32,7 @@ return [
     'profile_settings' => 'Profile settings',
     'admin_label' => 'Admin dashboard',
     'admin_title' => 'Monitor the platform & Midtrans',
-    'admin_subtitle' => 'Summary of settled payments, including platform fee (15% total).',
+    'admin_subtitle' => 'Settled payments: platform fee totals (same as Finance page) and gross volume excluding refunded bookings.',
     'stat_platform_fee' => 'Platform fee',
     'stat_gross_volume' => 'Gross volume (not refunded)',
     'stat_transactions' => 'Transactions',

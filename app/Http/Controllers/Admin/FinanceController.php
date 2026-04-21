@@ -3,11 +3,11 @@
 namespace App\Http\Controllers\Admin;
 
 use App\Enums\BookingChangeRequestStatus;
-use App\Enums\PaymentStatus;
 use App\Http\Controllers\Controller;
 use App\Models\BookingPayment;
 use App\Models\BookingRefundRequest;
 use App\Models\MuthowifWithdrawal;
+use App\Support\AdminFinanceSummary;
 use Carbon\CarbonInterface;
 use Illuminate\Pagination\LengthAwarePaginator;
 use Illuminate\Support\Collection;
@@ -32,35 +32,8 @@ class FinanceController extends Controller
          *   INNER JOIN muthowif_bookings b ON b.id = bp.muthowif_booking_id
          *   WHERE bp.status IN ('settlement','capture');
          */
-        $platformFeesFromPayments = (float) BookingPayment::query()
-            ->join('muthowif_bookings as b', 'b.id', '=', 'booking_payments.muthowif_booking_id')
-            ->whereIn('booking_payments.status', ['settlement', 'capture'])
-            ->selectRaw(
-                'COALESCE(SUM(CASE WHEN b.payment_status = ? THEN booking_payments.platform_fee_amount * 0.5 ELSE booking_payments.platform_fee_amount END), 0) as platform_from_payments',
-                [PaymentStatus::Refunded->value]
-            )
-            ->value('platform_from_payments');
-
-        /*
-         * Potongan admin refund selesai (approved).
-         *   SELECT COALESCE(SUM(refund_fee_platform), 0)
-         *   FROM booking_refund_requests WHERE status = 'approved';
-         */
-        $platformFeesFromRefunds = (float) BookingRefundRequest::query()
-            ->where('status', BookingChangeRequestStatus::Approved)
-            ->sum('refund_fee_platform');
-
-        $totalPlatformFees = $platformFeesFromPayments + $platformFeesFromRefunds;
-
-        /*
-         * Bruto jamaah: hanya pembayaran settlement pada booking yang belum refunded
-         * (uang yang masih dianggap "volume" operasional; refunded = dikembalikan ke jamaah).
-         */
-        $totalVolume = (int) BookingPayment::query()
-            ->join('muthowif_bookings as b', 'b.id', '=', 'booking_payments.muthowif_booking_id')
-            ->whereIn('booking_payments.status', ['settlement', 'capture'])
-            ->where('b.payment_status', '!=', PaymentStatus::Refunded->value)
-            ->sum('booking_payments.gross_amount');
+        $totalPlatformFees = AdminFinanceSummary::totalPlatformFees();
+        $totalVolume = AdminFinanceSummary::grossVolumeExcludingRefundedBookings();
 
         $historySince = now()->subMonths((int) config('admin.finance.history_months', 24))->startOfDay();
 

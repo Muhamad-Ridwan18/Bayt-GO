@@ -11,6 +11,8 @@ return [
     'empty_field' => 'Belum diisi',
     'wallet_balance' => 'Saldo dompet',
     'wallet_caption' => 'Pendapatan bersih yang tercatat untuk Anda. Penarikan mengikuti ketentuan BaytGo.',
+    'stat_gross_volume' => 'Volume bruto (belum refunded)',
+    'stat_gross_volume_caption' => 'Total pembayaran jamaah yang sudah settlement di booking Anda, tidak termasuk yang refunded.',
     'pending' => 'Menunggu',
     'new_requests' => 'Permintaan baru',
     'confirmed' => 'Terkonfirmasi',

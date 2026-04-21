@@ -11,6 +11,8 @@ return [
     'empty_field' => 'Not filled yet',
     'wallet_balance' => 'Wallet balance',
     'wallet_caption' => 'Net earnings recorded for you. Withdrawals follow BaytGo rules.',
+    'stat_gross_volume' => 'Gross volume (not refunded)',
+    'stat_gross_volume_caption' => 'Total pilgrim payments settled on your bookings, excluding refunded.',
     'pending' => 'Pending',
     'new_requests' => 'New requests',
     'confirmed' => 'Confirmed',

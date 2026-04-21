@@ -32,7 +32,7 @@ return [
     'profile_settings' => 'Pengaturan profil',
     'admin_label' => 'Dashboard admin',
     'admin_title' => 'Pantau platform & transaksi Midtrans',
-    'admin_subtitle' => 'Ringkasan pembayaran yang sudah settlement, termasuk biaya platform (15% total).',
+    'admin_subtitle' => 'Pembayaran settlement: total fee platform (sama dengan halaman Keuangan) dan volume bruto tanpa booking refunded.',
     'stat_platform_fee' => 'Platform fee',
     'stat_gross_volume' => 'Volume bruto (belum refunded)',
     'stat_transactions' => 'Transaksi',
