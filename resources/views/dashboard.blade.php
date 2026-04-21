@@ -183,16 +183,10 @@
                     @php
                         $totalPlatformFees = \App\Support\AdminFinanceSummary::totalPlatformFees();
                         $totalVolume = \App\Support\AdminFinanceSummary::grossVolumeExcludingRefundedBookings();
-
-                        $paidPaymentsBase = \App\Models\BookingPayment::query()
-                            ->whereIn('status', ['settlement', 'capture'])
-                            ->whereHas('muthowifBooking', fn ($q) => $q->where('payment_status', '!=', \App\Enums\PaymentStatus::Refunded));
-                        $settledCount = (int) (clone $paidPaymentsBase)->count();
-                        $latestPayments = (clone $paidPaymentsBase)
-                            ->with(['muthowifBooking.customer', 'muthowifBooking.muthowifProfile.user'])
-                            ->orderByDesc('settled_at')
-                            ->limit(5)
-                            ->get();
+                        $financeHistoryMonths = (int) config('admin.finance.history_months', 24);
+                        $financeHistorySince = now()->subMonths($financeHistoryMonths)->startOfDay();
+                        $settledCount = \App\Support\AdminFinanceTimeline::settlementPaymentCountSince($financeHistorySince);
+                        $recentFinanceGroups = \App\Support\AdminFinanceTimeline::groupsSince($financeHistorySince)->take(5);
                         $pendingWithdrawCount = (int) \App\Models\MuthowifWithdrawal::query()
                             ->where('status', 'pending_approval')
                             ->count();
@@ -255,7 +249,7 @@
                                 <div class="flex flex-col gap-3 border-b border-slate-100 bg-slate-50/80 px-5 py-4 sm:flex-row sm:items-start sm:justify-between">
                                     <div class="min-w-0">
                                         <h4 class="font-semibold text-slate-900">{{ __('dashboard.recent_transactions') }}</h4>
-                                        <p class="mt-1 text-xs leading-relaxed text-slate-500">{{ __('dashboard.recent_transactions_scope') }}</p>
+                                        <p class="mt-1 text-xs leading-relaxed text-slate-500">{{ __('dashboard.recent_transactions_scope', ['months' => $financeHistoryMonths]) }}</p>
                                     </div>
                                     <a href="{{ route('admin.finance.index') }}" class="inline-flex shrink-0 items-center gap-2 rounded-xl bg-brand-600 px-3 py-2 text-sm font-semibold text-white shadow-sm transition hover:bg-brand-700">
                                         {{ __('dashboard.view_all') }}
@@ -263,37 +257,27 @@
                                     </a>
                                 </div>
 
-                                @if ($latestPayments->isEmpty())
-                                    <p class="p-8 text-center text-sm text-slate-500">{{ __('dashboard.empty_settlements') }}</p>
+                                @if ($recentFinanceGroups->isEmpty())
+                                    <p class="p-8 text-center text-sm text-slate-500">{{ __('admin.finance.history_empty') }}</p>
                                 @else
                                     <div class="min-w-0 w-full overflow-x-auto">
-                                        <table class="min-w-full table-fixed text-sm">
-                                            <thead class="bg-white text-left text-[11px] font-semibold uppercase tracking-wide text-slate-500">
+                                        <table class="min-w-full text-sm">
+                                            <thead class="bg-slate-50 text-left text-[11px] font-semibold uppercase tracking-wide text-slate-500">
                                                 <tr>
-                                                    <th class="whitespace-nowrap px-4 py-3">{{ __('dashboard.table_time') }}</th>
-                                                    <th class="whitespace-nowrap px-4 py-3">{{ __('dashboard.table_order') }}</th>
-                                                    <th class="whitespace-nowrap px-4 py-3">{{ __('dashboard.table_customer') }}</th>
-                                                    <th class="whitespace-nowrap px-4 py-3">{{ __('dashboard.table_muthowif') }}</th>
-                                                    <th class="whitespace-nowrap px-4 py-3 text-right">{{ __('dashboard.table_fee') }}</th>
+                                                    <th class="whitespace-nowrap px-4 py-3">{{ __('admin.finance.txn_type') }}</th>
+                                                    <th class="whitespace-nowrap px-4 py-3">{{ __('admin.finance.time') }}</th>
+                                                    <th class="whitespace-nowrap px-4 py-3">{{ __('admin.finance.reference') }}</th>
+                                                    <th class="whitespace-nowrap px-4 py-3">{{ __('admin.finance.pilgrim') }}</th>
+                                                    <th class="whitespace-nowrap px-4 py-3">{{ __('admin.finance.muthowif') }}</th>
+                                                    <th class="whitespace-nowrap px-4 py-3 text-right">{{ __('admin.finance.gross') }}</th>
+                                                    <th class="whitespace-nowrap px-4 py-3 text-right">{{ __('admin.finance.fee_customer_side') }}</th>
+                                                    <th class="whitespace-nowrap px-4 py-3 text-right">{{ __('admin.finance.fee_muthowif_side') }}</th>
+                                                    <th class="whitespace-nowrap px-4 py-3 text-right">{{ __('admin.finance.fee_total') }}</th>
+                                                    <th class="whitespace-nowrap px-4 py-3 text-right">{{ __('admin.finance.col_net') }}</th>
                                                 </tr>
                                             </thead>
                                             <tbody class="divide-y divide-slate-100">
-                                                @foreach ($latestPayments as $p)
-                                                    @php $b = $p->muthowifBooking; @endphp
-                                                    <tr class="transition hover:bg-brand-50/40">
-                                                        <td class="whitespace-nowrap px-4 py-3 text-xs text-slate-600">
-                                                            {{ $p->settled_at?->format('d/m/Y H:i') ?? '—' }}
-                                                        </td>
-                                                        <td class="truncate whitespace-nowrap px-4 py-3 font-mono text-xs text-slate-700" title="{{ $p->order_id }}">
-                                                            {{ $p->order_id }}
-                                                        </td>
-                                                        <td class="truncate whitespace-nowrap px-4 py-3 text-slate-800">{{ $b?->customer?->name ?? '—' }}</td>
-                                                        <td class="truncate whitespace-nowrap px-4 py-3 text-slate-800">{{ $b?->muthowifProfile?->user?->name ?? '—' }}</td>
-                                                        <td class="whitespace-nowrap px-4 py-3 text-right font-medium text-brand-800">
-                                                            Rp {{ $fmt((float) $p->platform_fee_amount) }}
-                                                        </td>
-                                                    </tr>
-                                                @endforeach
+                                                @include('admin.finance.partials.history-groups-tbody', ['groups' => $recentFinanceGroups])
                                             </tbody>
                                         </table>
                                     </div>
