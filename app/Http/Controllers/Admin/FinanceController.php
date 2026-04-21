@@ -144,8 +144,6 @@ class FinanceController extends Controller
         return view('admin.finance.index', [
             'history' => $history,
             'totalPlatformFees' => $totalPlatformFees,
-            'platformFeesFromPayments' => $platformFeesFromPayments,
-            'platformFeesFromRefunds' => $platformFeesFromRefunds,
             'totalVolume' => $totalVolume,
         ]);
     }
