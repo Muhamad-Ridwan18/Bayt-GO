@@ -54,11 +54,11 @@ return [
         'platform_total' => 'Total platform fees (admin)',
         'platform_from_orders_line' => 'From orders (pilgrim + chaperone platform share, :pct% of base): Rp :amount',
         'platform_from_refunds_line' => 'From completed refunds (admin deduction :pct% of base): Rp :amount',
-        'platform_card_note' => 'The headline sums both. On refunds, the chaperone share (e.g. 1% of base) goes to the chaperone wallet, not this total.',
+        'platform_card_note' => 'The headline sums both. On refunds the booking is cancelled: no chaperone fee line from the refund; only the admin platform deduction applies.',
         'reference_midtrans_order' => 'Midtrans order: :order',
         'gross_volume' => 'Gross volume (pilgrims)',
         'history_title' => 'Transaction history',
-        'history_hint' => 'Order: pilgrim & chaperone fees are :rate% of base each; total fee is :total% of base. Refund: first column is admin deduction (:total% of base, often equal to the order row total fees for the same booking); second column is chaperone share. Time = sort key plus related timestamps.',
+        'history_hint' => 'Order: pilgrim & chaperone fees are :rate% of base each; total fee is :total% of base. Refund: admin deduction is :total% of base; chaperone fee column is 0 (service did not complete, no chaperone share from the refund). Time = sort key plus related timestamps.',
         'history_empty' => 'No payments, refunds, or withdrawals recorded yet.',
         'txn_type' => 'Type',
         'txn_types' => [

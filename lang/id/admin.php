@@ -54,11 +54,11 @@ return [
         'platform_total' => 'Total fee platform (admin)',
         'platform_from_orders_line' => 'Dari order (fee jamaah + fee muthowif ke platform, :pct% dari harga dasar): Rp :amount',
         'platform_from_refunds_line' => 'Dari refund selesai (potongan admin :pct% dari harga dasar): Rp :amount',
-        'platform_card_note' => 'Angka besar = jumlah keduanya. Pada refund, bagian muthowif (mis. 1% dari dasar) masuk saldo muthowif, bukan ke total ini.',
+        'platform_card_note' => 'Angka besar = jumlah keduanya. Pada refund, order batal: tidak ada alokasi potongan ke muthowif; hanya potongan admin platform yang tercatat.',
         'reference_midtrans_order' => 'Order Midtrans: :order',
         'gross_volume' => 'Volume bruto (jamaah)',
         'history_title' => 'Riwayat transaksi',
-        'history_hint' => 'Order: fee jamaah & fee muthowif masing-masing :rate% dari harga dasar; total fee = :total% dari harga dasar. Refund: kolom pertama = potongan admin (:total% dari harga dasar, bisa sama dengan kolom total fee pada order yang sama); kolom kedua = bagian muthowif. Waktu = acuan urutan + waktu terkait.',
+        'history_hint' => 'Order: fee jamaah & fee muthowif masing-masing :rate% dari harga dasar; total fee = :total% dari harga dasar. Refund: potongan admin :total% dari harga dasar; kolom fee muthowif = 0 (layanan tidak jadi, tidak ada bagian muthowif dari refund). Waktu = acuan urutan + waktu terkait.',
         'history_empty' => 'Belum ada pembayaran, refund, atau withdraw yang tercatat.',
         'txn_type' => 'Jenis',
         'txn_types' => [

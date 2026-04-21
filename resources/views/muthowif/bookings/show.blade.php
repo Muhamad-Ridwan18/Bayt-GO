@@ -196,7 +196,7 @@
                                     <span class="text-xs text-slate-500">{{ $req->created_at?->timezone(config('app.timezone'))->format('d/m/Y H:i') }}</span>
                                 </div>
                                 <p class="text-slate-700">{{ __('muthowif.booking_show.refund_net_prefix') }} <strong>Rp {{ $fmt((float) $req->net_refund_customer) }}</strong></p>
-                                <p class="text-xs text-slate-600">{{ __('muthowif.booking_show.refund_fees', ['platform' => $fmt((float) $req->refund_fee_platform), 'muthowif' => $fmt((float) $req->refund_fee_muthowif)]) }}</p>
+                                <p class="text-xs text-slate-600">{{ __('muthowif.booking_show.refund_fees', ['platform' => $fmt((float) $req->refund_fee_platform)]) }}</p>
                                 @if ($req->refund_bank_name || $req->refund_account_holder || $req->refund_account_number)
                                     <div class="rounded-lg border border-slate-100 bg-slate-50/80 px-3 py-2 text-xs text-slate-700">
                                         <p class="font-semibold text-slate-800">{{ __('muthowif.booking_show.refund_bank_label') }}</p>
