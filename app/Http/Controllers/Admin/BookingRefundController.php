@@ -7,11 +7,13 @@ use App\Enums\PaymentStatus;
 use App\Http\Controllers\Controller;
 use App\Jobs\NotifyCustomerOfRefundTransferProof;
 use App\Models\BookingRefundRequest;
+use App\Models\MuthowifProfile;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\View\View;
+use RuntimeException;
 
 class BookingRefundController extends Controller
 {
@@ -70,11 +72,21 @@ class BookingRefundController extends Controller
                 $booking->refresh()->lockForUpdate();
 
                 if (! $refund->isPending()) {
-                    throw new \RuntimeException('Permintaan refund sudah diproses.');
+                    throw new RuntimeException('Permintaan refund sudah diproses.');
                 }
 
                 if ($booking->payment_status !== PaymentStatus::RefundPending) {
                     throw new RuntimeException('Status pembayaran tidak valid.');
+                }
+
+                $muthowifFee = (float) $refund->refund_fee_muthowif;
+                if ($muthowifFee > 0) {
+                    $profile = MuthowifProfile::query()
+                        ->whereKey($booking->muthowif_profile_id)
+                        ->lockForUpdate()
+                        ->firstOrFail();
+                    $profile->wallet_balance = round((float) $profile->wallet_balance + $muthowifFee, 2);
+                    $profile->save();
                 }
 
                 $refund->update([

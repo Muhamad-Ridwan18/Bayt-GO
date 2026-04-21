@@ -1,6 +1,17 @@
 @php
     use App\Support\IndonesianNumber;
+    use Illuminate\Support\Str;
     $fmt = fn (float|int $n) => IndonesianNumber::formatThousands((string) (int) round((float) $n));
+    $tz = config('app.timezone');
+    $withdrawStatusLabel = function (?string $s) {
+        if ($s === null || $s === '') {
+            return '—';
+        }
+        $key = 'admin.finance.withdraw_status.'.$s;
+        $t = __($key);
+
+        return $t === $key ? $s : $t;
+    };
 @endphp
 
 <x-app-layout>
@@ -29,48 +40,112 @@
 
             <div class="rounded-2xl border border-slate-200 bg-white overflow-hidden shadow-sm">
                 <div class="px-5 py-4 border-b border-slate-100">
-                    <h3 class="font-semibold text-slate-900">{{ __('admin.finance.transactions') }}</h3>
+                    <h3 class="font-semibold text-slate-900">{{ __('admin.finance.history_title') }}</h3>
+                    <p class="mt-1 text-xs text-slate-500">{{ __('admin.finance.history_hint') }}</p>
                 </div>
-                @if ($payments->isEmpty())
-                    <p class="p-8 text-center text-sm text-slate-500">{{ __('admin.finance.empty') }}</p>
+                @if ($history->isEmpty())
+                    <p class="p-8 text-center text-sm text-slate-500">{{ __('admin.finance.history_empty') }}</p>
                 @else
                     <div class="overflow-x-auto">
                         <table class="min-w-full text-sm">
                             <thead class="bg-slate-50 text-left text-xs font-semibold uppercase text-slate-500">
                                 <tr>
+                                    <th class="px-4 py-3">{{ __('admin.finance.txn_type') }}</th>
                                     <th class="px-4 py-3">{{ __('admin.finance.time') }}</th>
-                                    <th class="px-4 py-3">{{ __('admin.finance.order_id') }}</th>
+                                    <th class="px-4 py-3">{{ __('admin.finance.reference') }}</th>
                                     <th class="px-4 py-3">{{ __('admin.finance.pilgrim') }}</th>
                                     <th class="px-4 py-3">{{ __('admin.finance.muthowif') }}</th>
-                                    <th class="px-4 py-3 text-right">{{ __('admin.finance.gross') }}</th>
-                                    <th class="px-4 py-3 text-right">{{ __('admin.finance.fee_pct', ['pct' => \App\Support\PlatformFee::TOTAL_RATE * 100]) }}</th>
-                                    <th class="px-4 py-3 text-right">{{ __('admin.finance.to_muthowif') }}</th>
+                                    <th class="px-4 py-3 text-right">{{ __('admin.finance.detail') }}</th>
                                 </tr>
                             </thead>
                             <tbody class="divide-y divide-slate-100">
-                                @foreach ($payments as $p)
-                                    @php
-                                        $b = $p->muthowifBooking;
-                                    @endphp
-                                    <tr class="hover:bg-slate-50/80">
-                                        <td class="px-4 py-3 whitespace-nowrap text-slate-600">
-                                            {{ $p->settled_at?->format('d/m/Y H:i') ?? '—' }}
-                                        </td>
-                                        <td class="px-4 py-3 font-mono text-xs text-slate-700 max-w-[10rem] truncate" title="{{ $p->order_id }}">
-                                            {{ $p->order_id }}
-                                        </td>
-                                        <td class="px-4 py-3 text-slate-800">{{ $b?->customer?->name ?? '—' }}</td>
-                                        <td class="px-4 py-3 text-slate-800">{{ $b?->muthowifProfile?->user?->name ?? '—' }}</td>
-                                        <td class="px-4 py-3 text-right font-medium">Rp {{ $fmt($p->gross_amount) }}</td>
-                                        <td class="px-4 py-3 text-right text-brand-800 font-medium">Rp {{ $fmt((float) $p->platform_fee_amount) }}</td>
-                                        <td class="px-4 py-3 text-right text-slate-600">Rp {{ $fmt((float) $p->muthowif_net_amount) }}</td>
-                                    </tr>
+                                @foreach ($history as $row)
+                                    @if ($row['kind'] === 'order')
+                                        @php
+                                            /** @var \App\Models\BookingPayment $p */
+                                            $p = $row['payment'];
+                                            $b = $p->muthowifBooking;
+                                        @endphp
+                                        <tr class="hover:bg-slate-50/80">
+                                            <td class="px-4 py-3 align-top">
+                                                <span class="inline-flex items-center rounded-full bg-emerald-50 px-2 py-0.5 text-xs font-semibold text-emerald-900 ring-1 ring-emerald-200/80">{{ __('admin.finance.txn_types.order') }}</span>
+                                            </td>
+                                            <td class="px-4 py-3 align-top whitespace-nowrap text-slate-600">
+                                                {{ $row['at']->timezone($tz)->format('d/m/Y H:i') }}
+                                            </td>
+                                            <td class="px-4 py-3 align-top font-mono text-xs text-slate-700 max-w-[12rem] truncate" title="{{ $p->order_id }}">
+                                                {{ $p->order_id }}
+                                            </td>
+                                            <td class="px-4 py-3 align-top text-slate-800">{{ $b?->customer?->name ?? '—' }}</td>
+                                            <td class="px-4 py-3 align-top text-slate-800">{{ $b?->muthowifProfile?->user?->name ?? '—' }}</td>
+                                            <td class="px-4 py-3 align-top text-right">
+                                                <div class="font-medium text-slate-900">{{ __('admin.finance.gross') }} Rp {{ $fmt($p->gross_amount) }}</div>
+                                                <div class="mt-0.5 text-xs text-slate-500">{{ __('admin.finance.fee_pct', ['pct' => \App\Support\PlatformFee::TOTAL_RATE * 100]) }} Rp {{ $fmt((float) $p->platform_fee_amount) }}</div>
+                                                <div class="text-xs text-slate-500">{{ __('admin.finance.to_muthowif') }} Rp {{ $fmt((float) $p->muthowif_net_amount) }}</div>
+                                            </td>
+                                        </tr>
+                                    @elseif ($row['kind'] === 'refund')
+                                        @php
+                                            /** @var \App\Models\BookingRefundRequest $r */
+                                            $r = $row['refund'];
+                                            $b = $r->muthowifBooking;
+                                            $pay = $b?->bookingPayments->first();
+                                        @endphp
+                                        <tr class="hover:bg-slate-50/80">
+                                            <td class="px-4 py-3 align-top">
+                                                <span class="inline-flex items-center rounded-full bg-amber-50 px-2 py-0.5 text-xs font-semibold text-amber-950 ring-1 ring-amber-200/80">{{ __('admin.finance.txn_types.refund') }}</span>
+                                            </td>
+                                            <td class="px-4 py-3 align-top whitespace-nowrap text-slate-600">
+                                                {{ $row['at']->timezone($tz)->format('d/m/Y H:i') }}
+                                            </td>
+                                            <td class="px-4 py-3 align-top">
+                                                <div class="font-mono text-xs text-slate-700">{{ $b?->booking_code ?? '—' }}</div>
+                                                @if ($pay?->order_id)
+                                                    <div class="mt-0.5 font-mono text-[10px] text-slate-500 truncate max-w-[12rem]" title="{{ $pay->order_id }}">{{ $pay->order_id }}</div>
+                                                @endif
+                                            </td>
+                                            <td class="px-4 py-3 align-top text-slate-800">{{ $b?->customer?->name ?? '—' }}</td>
+                                            <td class="px-4 py-3 align-top text-slate-800">{{ $b?->muthowifProfile?->user?->name ?? '—' }}</td>
+                                            <td class="px-4 py-3 align-top text-right">
+                                                <div class="font-medium text-slate-900">{{ __('admin.finance.net_to_pilgrim') }} Rp {{ $fmt((float) $r->net_refund_customer) }}</div>
+                                                <div class="mt-0.5 text-xs text-slate-500">{{ __('admin.finance.paid_snapshot') }} Rp {{ $fmt((float) $r->customer_paid_amount) }}</div>
+                                                <div class="text-xs text-slate-500">{{ __('admin.finance.refund_fee_platform') }} Rp {{ $fmt((float) $r->refund_fee_platform) }} · {{ __('admin.finance.refund_fee_muthowif_wallet') }} Rp {{ $fmt((float) $r->refund_fee_muthowif) }}</div>
+                                            </td>
+                                        </tr>
+                                    @else
+                                        @php
+                                            /** @var \App\Models\MuthowifWithdrawal $w */
+                                            $w = $row['withdrawal'];
+                                            $mu = $w->muthowifProfile;
+                                        @endphp
+                                        <tr class="hover:bg-slate-50/80">
+                                            <td class="px-4 py-3 align-top">
+                                                <span class="inline-flex items-center rounded-full bg-violet-50 px-2 py-0.5 text-xs font-semibold text-violet-900 ring-1 ring-violet-200/80">{{ __('admin.finance.txn_types.withdraw') }}</span>
+                                            </td>
+                                            <td class="px-4 py-3 align-top whitespace-nowrap text-slate-600">
+                                                {{ $row['at']->timezone($tz)->format('d/m/Y H:i') }}
+                                            </td>
+                                            <td class="px-4 py-3 align-top text-xs text-slate-700">
+                                                <div class="font-mono">{{ Str::limit((string) $w->getKey(), 13, '…') }}</div>
+                                                <div class="mt-0.5 text-slate-600">{{ $w->beneficiary_bank }} · {{ $w->beneficiary_account }}</div>
+                                            </td>
+                                            <td class="px-4 py-3 align-top text-slate-400">—</td>
+                                            <td class="px-4 py-3 align-top text-slate-800">{{ $mu?->user?->name ?? '—' }}</td>
+                                            <td class="px-4 py-3 align-top text-right">
+                                                <div class="font-medium text-slate-900">Rp {{ $fmt((float) $w->amount) }}</div>
+                                                <div class="mt-0.5 text-xs text-slate-600">{{ $withdrawStatusLabel($w->status) }}</div>
+                                                @if ($w->status === 'failed' && filled($w->failed_reason))
+                                                    <div class="mt-0.5 text-xs text-red-600">{{ Str::limit($w->failed_reason, 80) }}</div>
+                                                @endif
+                                            </td>
+                                        </tr>
+                                    @endif
                                 @endforeach
                             </tbody>
                         </table>
                     </div>
                     <div class="px-4 py-3 border-t border-slate-100">
-                        {{ $payments->links() }}
+                        {{ $history->withQueryString()->links() }}
                     </div>
                 @endif
             </div>
