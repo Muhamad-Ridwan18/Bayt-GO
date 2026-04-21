@@ -6,11 +6,12 @@ use App\Models\BookingPayment;
 use App\Models\MuthowifBooking;
 
 /**
- * Biaya admin refund: 2,5% + 1% dari total layanan (harga dasar, tanpa biaya platform di sisi customer).
+ * Biaya admin refund: 15% (platform) + 1% (muthowif) dari harga dasar layanan.
  */
 final class BookingRefundFee
 {
-    public const PLATFORM_RATE = 0.025;
+    /** Potongan admin/platform saat refund: 15% dari harga dasar. */
+    public const PLATFORM_REFUND_RATE = 0.15;
 
     public const MUTHOWIF_RATE = 0.01;
 
@@ -26,7 +27,7 @@ final class BookingRefundFee
     public static function snapshot(MuthowifBooking $booking, BookingPayment $payment): array
     {
         $base = (float) PlatformFee::split((float) $booking->resolvedAmountDue())['base'];
-        $feePlatform = (int) round($base * self::PLATFORM_RATE);
+        $feePlatform = (int) round($base * self::PLATFORM_REFUND_RATE);
         $feeMuthowif = (int) round($base * self::MUTHOWIF_RATE);
         $paid = (int) $payment->gross_amount;
         $net = max(0, $paid - $feePlatform - $feeMuthowif);
