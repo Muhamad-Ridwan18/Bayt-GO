@@ -184,6 +184,8 @@
                         $totalPlatformFees = \App\Support\AdminFinanceSummary::totalPlatformFees();
                         $totalVolume = \App\Support\AdminFinanceSummary::grossVolumeExcludingRefundedBookings();
                         $financeHistoryMonths = (int) config('admin.finance.history_months', 24);
+                        $platformFeeRatePct = \App\Support\PlatformFee::RATE * 100;
+                        $platformFeeTotalPct = \App\Support\PlatformFee::TOTAL_RATE * 100;
                         $financeHistorySince = now()->subMonths($financeHistoryMonths)->startOfDay();
                         $settledCount = \App\Support\AdminFinanceTimeline::settlementPaymentCountSince($financeHistorySince);
                         $recentFinanceGroups = \App\Support\AdminFinanceTimeline::groupsSince($financeHistorySince)->take(5);
@@ -248,8 +250,13 @@
                             <div class="lg:col-span-8 flex min-w-0 flex-col overflow-hidden rounded-2xl border border-white/15 bg-white text-slate-900 shadow-xl shadow-black/20">
                                 <div class="flex flex-col gap-3 border-b border-slate-100 bg-slate-50/80 px-5 py-4 sm:flex-row sm:items-start sm:justify-between">
                                     <div class="min-w-0">
-                                        <h4 class="font-semibold text-slate-900">{{ __('dashboard.recent_transactions') }}</h4>
-                                        <p class="mt-1 text-xs leading-relaxed text-slate-500">{{ __('dashboard.recent_transactions_scope', ['months' => $financeHistoryMonths]) }}</p>
+                                        <h4 class="font-semibold text-slate-900">{{ __('admin.finance.history_title') }}</h4>
+                                        <p class="mt-1 text-xs leading-relaxed text-slate-500">{{ __('admin.finance.history_hint', [
+                                            'rate' => $platformFeeRatePct,
+                                            'total' => $platformFeeTotalPct,
+                                        ]) }}</p>
+                                        <p class="mt-1 text-xs leading-relaxed text-slate-500">{{ __('admin.finance.history_grouped_note', ['months' => $financeHistoryMonths]) }}</p>
+                                        <p class="mt-1 text-[11px] font-medium text-slate-600">{{ __('dashboard.finance_history_preview_note') }}</p>
                                     </div>
                                     <a href="{{ route('admin.finance.index') }}" class="inline-flex shrink-0 items-center gap-2 rounded-xl bg-brand-600 px-3 py-2 text-sm font-semibold text-white shadow-sm transition hover:bg-brand-700">
                                         {{ __('dashboard.view_all') }}
@@ -262,20 +269,7 @@
                                 @else
                                     <div class="min-w-0 w-full overflow-x-auto">
                                         <table class="min-w-full text-sm">
-                                            <thead class="bg-slate-50 text-left text-[11px] font-semibold uppercase tracking-wide text-slate-500">
-                                                <tr>
-                                                    <th class="whitespace-nowrap px-4 py-3">{{ __('admin.finance.txn_type') }}</th>
-                                                    <th class="whitespace-nowrap px-4 py-3">{{ __('admin.finance.time') }}</th>
-                                                    <th class="whitespace-nowrap px-4 py-3">{{ __('admin.finance.reference') }}</th>
-                                                    <th class="whitespace-nowrap px-4 py-3">{{ __('admin.finance.pilgrim') }}</th>
-                                                    <th class="whitespace-nowrap px-4 py-3">{{ __('admin.finance.muthowif') }}</th>
-                                                    <th class="whitespace-nowrap px-4 py-3 text-right">{{ __('admin.finance.gross') }}</th>
-                                                    <th class="whitespace-nowrap px-4 py-3 text-right">{{ __('admin.finance.fee_customer_side') }}</th>
-                                                    <th class="whitespace-nowrap px-4 py-3 text-right">{{ __('admin.finance.fee_muthowif_side') }}</th>
-                                                    <th class="whitespace-nowrap px-4 py-3 text-right">{{ __('admin.finance.fee_total') }}</th>
-                                                    <th class="whitespace-nowrap px-4 py-3 text-right">{{ __('admin.finance.col_net') }}</th>
-                                                </tr>
-                                            </thead>
+                                            @include('admin.finance.partials.history-thead')
                                             <tbody class="divide-y divide-slate-100">
                                                 @include('admin.finance.partials.history-groups-tbody', ['groups' => $recentFinanceGroups])
                                             </tbody>
