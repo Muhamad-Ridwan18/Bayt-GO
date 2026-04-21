@@ -11,6 +11,7 @@ use App\Models\MuthowifWithdrawal;
 use Carbon\CarbonInterface;
 use Illuminate\Pagination\LengthAwarePaginator;
 use Illuminate\Support\Collection;
+use Illuminate\Support\Str;
 use Illuminate\View\View;
 
 class FinanceController extends Controller
@@ -127,14 +128,55 @@ class FinanceController extends Controller
             ]);
         }
 
-        $timeline = $timeline
-            ->sortByDesc(static fn (array $row): int => $row['at']->getTimestamp())
-            ->values();
+        $grouped = $timeline->groupBy(static function (array $row): string {
+            return match ($row['kind']) {
+                'order' => filled($row['payment']->muthowifBooking?->booking_code)
+                    ? (string) $row['payment']->muthowifBooking->booking_code
+                    : 'id:'.$row['payment']->muthowif_booking_id,
+                'refund' => filled($row['refund']->muthowifBooking?->booking_code)
+                    ? (string) $row['refund']->muthowifBooking->booking_code
+                    : 'id:'.$row['refund']->muthowif_booking_id,
+                'withdraw' => '__w:'.$row['withdrawal']->getKey(),
+                default => 'unknown',
+            };
+        });
 
-        $perPage = 25;
+        /** @var Collection<int, array{display_label: string, is_withdraw_group: bool, rows: Collection<int, array<string, mixed>>, sort_at: int}> $groups */
+        $groups = $grouped->map(static function (Collection $rows, string $key): array {
+            $sorted = $rows->sortBy([
+                static fn (array $r): int => match ($r['kind']) {
+                    'order' => 0,
+                    'refund' => 1,
+                    default => 2,
+                },
+                static fn (array $r): int => $r['at']->getTimestamp(),
+            ])->values();
+
+            $sortAt = (int) $sorted->max(static fn (array $r): int => $r['at']->getTimestamp());
+
+            $isWithdrawGroup = str_starts_with($key, '__w:');
+            $displayLabel = match (true) {
+                $isWithdrawGroup => __('admin.finance.history_group_withdraw'),
+                str_starts_with($key, 'id:') => __('admin.finance.history_group_booking_nocode', [
+                    'id' => Str::limit(substr($key, 3), 13),
+                ]),
+                default => $key,
+            };
+
+            return [
+                'display_label' => $displayLabel,
+                'is_withdraw_group' => $isWithdrawGroup,
+                'rows' => $sorted,
+                'sort_at' => $sortAt,
+            ];
+        })->values();
+
+        $groups = $groups->sortByDesc('sort_at')->values();
+
+        $perPage = 12;
         $page = max(1, (int) request()->input('history_page', 1));
-        $total = $timeline->count();
-        $slice = $timeline->slice(($page - 1) * $perPage, $perPage)->values();
+        $total = $groups->count();
+        $slice = $groups->slice(($page - 1) * $perPage, $perPage)->values();
 
         $history = new LengthAwarePaginator(
             $slice,

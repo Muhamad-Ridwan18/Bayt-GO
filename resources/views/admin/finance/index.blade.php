@@ -46,6 +46,7 @@
                         'rate' => PlatformFee::RATE * 100,
                         'total' => PlatformFee::TOTAL_RATE * 100,
                     ]) }}</p>
+                    <p class="mt-1 text-xs text-slate-500">{{ __('admin.finance.history_grouped_note') }}</p>
                 </div>
                 @if ($history->isEmpty())
                     <p class="p-8 text-center text-sm text-slate-500">{{ __('admin.finance.history_empty') }}</p>
@@ -67,7 +68,19 @@
                                 </tr>
                             </thead>
                             <tbody class="divide-y divide-slate-100">
-                                @foreach ($history as $row)
+                                @foreach ($history as $group)
+                                    <tr class="bg-slate-100/95">
+                                        <td colspan="10" class="px-4 py-2.5 text-xs font-bold tracking-wide text-slate-800">
+                                            @if ($group['is_withdraw_group'])
+                                                <span class="text-sm text-slate-900">{{ $group['display_label'] }}</span>
+                                            @else
+                                                <span class="uppercase text-[10px] text-slate-500">{{ __('admin.finance.booking_code') }}</span>
+                                                <span class="ml-2 font-mono text-sm text-slate-900">{{ $group['display_label'] }}</span>
+                                            @endif
+                                            <span class="ml-2 font-normal text-slate-500">({{ __('admin.finance.history_group_rows', ['count' => $group['rows']->count()]) }})</span>
+                                        </td>
+                                    </tr>
+                                    @foreach ($group['rows'] as $row)
                                     @if ($row['kind'] === 'order')
                                         @php
                                             /** @var \App\Models\BookingPayment $p */
@@ -189,6 +202,7 @@
                                             </td>
                                         </tr>
                                     @endif
+                                    @endforeach
                                 @endforeach
                             </tbody>
                         </table>
