@@ -1,5 +1,6 @@
 @php
     use App\Support\IndonesianNumber;
+    use App\Support\PlatformFee;
     use Illuminate\Support\Str;
     $fmt = fn (float|int $n) => IndonesianNumber::formatThousands((string) (int) round((float) $n));
     $tz = config('app.timezone');
@@ -41,7 +42,10 @@
             <div class="rounded-2xl border border-slate-200 bg-white overflow-hidden shadow-sm">
                 <div class="px-5 py-4 border-b border-slate-100">
                     <h3 class="font-semibold text-slate-900">{{ __('admin.finance.history_title') }}</h3>
-                    <p class="mt-1 text-xs text-slate-500">{{ __('admin.finance.history_hint') }}</p>
+                    <p class="mt-1 text-xs text-slate-500">{{ __('admin.finance.history_hint', [
+                        'rate' => PlatformFee::RATE * 100,
+                        'total' => PlatformFee::TOTAL_RATE * 100,
+                    ]) }}</p>
                 </div>
                 @if ($history->isEmpty())
                     <p class="p-8 text-center text-sm text-slate-500">{{ __('admin.finance.history_empty') }}</p>
@@ -55,7 +59,11 @@
                                     <th class="px-4 py-3">{{ __('admin.finance.reference') }}</th>
                                     <th class="px-4 py-3">{{ __('admin.finance.pilgrim') }}</th>
                                     <th class="px-4 py-3">{{ __('admin.finance.muthowif') }}</th>
-                                    <th class="px-4 py-3 text-right">{{ __('admin.finance.detail') }}</th>
+                                    <th class="px-4 py-3 text-right">{{ __('admin.finance.gross') }}</th>
+                                    <th class="px-4 py-3 text-right">{{ __('admin.finance.fee_customer_side') }}</th>
+                                    <th class="px-4 py-3 text-right">{{ __('admin.finance.fee_muthowif_side') }}</th>
+                                    <th class="px-4 py-3 text-right">{{ __('admin.finance.fee_total') }}</th>
+                                    <th class="px-4 py-3 text-right">{{ __('admin.finance.col_net') }}</th>
                                 </tr>
                             </thead>
                             <tbody class="divide-y divide-slate-100">
@@ -65,23 +73,44 @@
                                             /** @var \App\Models\BookingPayment $p */
                                             $p = $row['payment'];
                                             $b = $p->muthowifBooking;
+                                            $baseDue = $b !== null ? (float) $b->resolvedAmountDue() : 0.0;
+                                            $orderSplit = $baseDue > 0 ? PlatformFee::split($baseDue) : null;
+                                            if ($orderSplit === null) {
+                                                $pf = (float) $p->platform_fee_amount;
+                                                $half = round($pf / 2, 2);
+                                                $orderSplit = [
+                                                    'customer_fee' => $half,
+                                                    'muthowif_fee' => round($pf - $half, 2),
+                                                    'platform_fee_total' => $pf,
+                                                ];
+                                            }
                                         @endphp
                                         <tr class="hover:bg-slate-50/80">
                                             <td class="px-4 py-3 align-top">
                                                 <span class="inline-flex items-center rounded-full bg-emerald-50 px-2 py-0.5 text-xs font-semibold text-emerald-900 ring-1 ring-emerald-200/80">{{ __('admin.finance.txn_types.order') }}</span>
                                             </td>
-                                            <td class="px-4 py-3 align-top whitespace-nowrap text-slate-600">
-                                                {{ $row['at']->timezone($tz)->format('d/m/Y H:i') }}
+                                            <td class="px-4 py-3 align-top text-slate-600">
+                                                <div class="whitespace-nowrap font-medium text-slate-800">{{ $row['at']->timezone($tz)->format('d/m/Y H:i') }}</div>
+                                                <div class="text-[10px] font-semibold uppercase tracking-wide text-slate-500">{{ __('admin.finance.time_label_settlement') }}</div>
+                                                @if ($p->created_at)
+                                                    <div class="mt-1 text-[10px] text-slate-400">
+                                                        <span class="font-semibold text-slate-500">{{ __('admin.finance.time_label_payment_created') }}</span>
+                                                        {{ $p->created_at->timezone($tz)->format('d/m/Y H:i') }}
+                                                    </div>
+                                                @endif
                                             </td>
                                             <td class="px-4 py-3 align-top font-mono text-xs text-slate-700 max-w-[12rem] truncate" title="{{ $p->order_id }}">
                                                 {{ $p->order_id }}
                                             </td>
                                             <td class="px-4 py-3 align-top text-slate-800">{{ $b?->customer?->name ?? '—' }}</td>
                                             <td class="px-4 py-3 align-top text-slate-800">{{ $b?->muthowifProfile?->user?->name ?? '—' }}</td>
+                                            <td class="px-4 py-3 align-top text-right font-medium text-slate-900">Rp {{ $fmt($p->gross_amount) }}</td>
+                                            <td class="px-4 py-3 align-top text-right tabular-nums text-slate-800">Rp {{ $fmt((float) $orderSplit['customer_fee']) }}</td>
+                                            <td class="px-4 py-3 align-top text-right tabular-nums text-slate-800">Rp {{ $fmt((float) $orderSplit['muthowif_fee']) }}</td>
+                                            <td class="px-4 py-3 align-top text-right tabular-nums font-semibold text-brand-800">Rp {{ $fmt((float) $orderSplit['platform_fee_total']) }}</td>
                                             <td class="px-4 py-3 align-top text-right">
-                                                <div class="font-medium text-slate-900">{{ __('admin.finance.gross') }} Rp {{ $fmt($p->gross_amount) }}</div>
-                                                <div class="mt-0.5 text-xs text-slate-500">{{ __('admin.finance.fee_pct', ['pct' => \App\Support\PlatformFee::TOTAL_RATE * 100]) }} Rp {{ $fmt((float) $p->platform_fee_amount) }}</div>
-                                                <div class="text-xs text-slate-500">{{ __('admin.finance.to_muthowif') }} Rp {{ $fmt((float) $p->muthowif_net_amount) }}</div>
+                                                <div class="font-medium text-slate-900">Rp {{ $fmt((float) $p->muthowif_net_amount) }}</div>
+                                                <div class="text-[10px] text-slate-500">{{ __('admin.finance.to_muthowif') }}</div>
                                             </td>
                                         </tr>
                                     @elseif ($row['kind'] === 'refund')
@@ -90,13 +119,23 @@
                                             $r = $row['refund'];
                                             $b = $r->muthowifBooking;
                                             $pay = $b?->bookingPayments->first();
+                                            $rfPlat = (float) $r->refund_fee_platform;
+                                            $rfMu = (float) $r->refund_fee_muthowif;
+                                            $rfTotal = $rfPlat + $rfMu;
                                         @endphp
                                         <tr class="hover:bg-slate-50/80">
                                             <td class="px-4 py-3 align-top">
                                                 <span class="inline-flex items-center rounded-full bg-amber-50 px-2 py-0.5 text-xs font-semibold text-amber-950 ring-1 ring-amber-200/80">{{ __('admin.finance.txn_types.refund') }}</span>
                                             </td>
-                                            <td class="px-4 py-3 align-top whitespace-nowrap text-slate-600">
-                                                {{ $row['at']->timezone($tz)->format('d/m/Y H:i') }}
+                                            <td class="px-4 py-3 align-top text-slate-600">
+                                                <div class="whitespace-nowrap font-medium text-slate-800">{{ $row['at']->timezone($tz)->format('d/m/Y H:i') }}</div>
+                                                <div class="text-[10px] font-semibold uppercase tracking-wide text-slate-500">{{ __('admin.finance.time_label_refund') }}</div>
+                                                @if ($r->created_at)
+                                                    <div class="mt-1 text-[10px] text-slate-400">
+                                                        <span class="font-semibold text-slate-500">{{ __('admin.finance.refund_requested_at') }}</span>
+                                                        {{ $r->created_at->timezone($tz)->format('d/m/Y H:i') }}
+                                                    </div>
+                                                @endif
                                             </td>
                                             <td class="px-4 py-3 align-top">
                                                 <div class="font-mono text-xs text-slate-700">{{ $b?->booking_code ?? '—' }}</div>
@@ -106,10 +145,13 @@
                                             </td>
                                             <td class="px-4 py-3 align-top text-slate-800">{{ $b?->customer?->name ?? '—' }}</td>
                                             <td class="px-4 py-3 align-top text-slate-800">{{ $b?->muthowifProfile?->user?->name ?? '—' }}</td>
+                                            <td class="px-4 py-3 align-top text-right font-medium text-slate-900">Rp {{ $fmt((float) $r->customer_paid_amount) }}</td>
+                                            <td class="px-4 py-3 align-top text-right tabular-nums text-slate-800">Rp {{ $fmt($rfPlat) }}</td>
+                                            <td class="px-4 py-3 align-top text-right tabular-nums text-slate-800">Rp {{ $fmt($rfMu) }}</td>
+                                            <td class="px-4 py-3 align-top text-right tabular-nums font-semibold text-brand-800">Rp {{ $fmt($rfTotal) }}</td>
                                             <td class="px-4 py-3 align-top text-right">
-                                                <div class="font-medium text-slate-900">{{ __('admin.finance.net_to_pilgrim') }} Rp {{ $fmt((float) $r->net_refund_customer) }}</div>
-                                                <div class="mt-0.5 text-xs text-slate-500">{{ __('admin.finance.paid_snapshot') }} Rp {{ $fmt((float) $r->customer_paid_amount) }}</div>
-                                                <div class="text-xs text-slate-500">{{ __('admin.finance.refund_fee_platform') }} Rp {{ $fmt((float) $r->refund_fee_platform) }} · {{ __('admin.finance.refund_fee_muthowif_wallet') }} Rp {{ $fmt((float) $r->refund_fee_muthowif) }}</div>
+                                                <div class="font-medium text-slate-900">Rp {{ $fmt((float) $r->net_refund_customer) }}</div>
+                                                <div class="text-[10px] text-slate-500">{{ __('admin.finance.net_to_pilgrim') }}</div>
                                             </td>
                                         </tr>
                                     @else
@@ -122,8 +164,15 @@
                                             <td class="px-4 py-3 align-top">
                                                 <span class="inline-flex items-center rounded-full bg-violet-50 px-2 py-0.5 text-xs font-semibold text-violet-900 ring-1 ring-violet-200/80">{{ __('admin.finance.txn_types.withdraw') }}</span>
                                             </td>
-                                            <td class="px-4 py-3 align-top whitespace-nowrap text-slate-600">
-                                                {{ $row['at']->timezone($tz)->format('d/m/Y H:i') }}
+                                            <td class="px-4 py-3 align-top text-slate-600">
+                                                <div class="whitespace-nowrap font-medium text-slate-800">{{ $row['at']->timezone($tz)->format('d/m/Y H:i') }}</div>
+                                                <div class="text-[10px] font-semibold uppercase tracking-wide text-slate-500">{{ __('admin.finance.time_label_withdraw') }}</div>
+                                                @if ($w->requested_at)
+                                                    <div class="mt-1 text-[10px] text-slate-400">
+                                                        <span class="font-semibold text-slate-500">{{ __('admin.finance.withdraw_requested_at') }}</span>
+                                                        {{ $w->requested_at->timezone($tz)->format('d/m/Y H:i') }}
+                                                    </div>
+                                                @endif
                                             </td>
                                             <td class="px-4 py-3 align-top text-xs text-slate-700">
                                                 <div class="font-mono">{{ Str::limit((string) $w->getKey(), 13, '…') }}</div>
@@ -131,9 +180,12 @@
                                             </td>
                                             <td class="px-4 py-3 align-top text-slate-400">—</td>
                                             <td class="px-4 py-3 align-top text-slate-800">{{ $mu?->user?->name ?? '—' }}</td>
+                                            <td class="px-4 py-3 align-top text-right font-medium text-slate-900">Rp {{ $fmt((float) $w->amount) }}</td>
+                                            <td class="px-4 py-3 align-top text-right text-slate-400">—</td>
+                                            <td class="px-4 py-3 align-top text-right text-slate-400">—</td>
+                                            <td class="px-4 py-3 align-top text-right text-slate-400">—</td>
                                             <td class="px-4 py-3 align-top text-right">
-                                                <div class="font-medium text-slate-900">Rp {{ $fmt((float) $w->amount) }}</div>
-                                                <div class="mt-0.5 text-xs text-slate-600">{{ $withdrawStatusLabel($w->status) }}</div>
+                                                <div class="text-xs font-medium text-slate-800">{{ $withdrawStatusLabel($w->status) }}</div>
                                                 @if ($w->status === 'failed' && filled($w->failed_reason))
                                                     <div class="mt-0.5 text-xs text-red-600">{{ Str::limit($w->failed_reason, 80) }}</div>
                                                 @endif
