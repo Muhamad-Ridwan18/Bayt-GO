@@ -18,21 +18,23 @@ class WithdrawalsController extends Controller
     public function index(): View
     {
         $withdrawals = MuthowifWithdrawal::query()
+            ->with([
+                'muthowifProfile' => static function ($q): void {
+                    $q->select(['id', 'user_id'])->with('user:id,name');
+                },
+            ])
             ->orderByDesc('requested_at')
             ->paginate(20);
 
-        $pendingCount = (int) MuthowifWithdrawal::query()
+        $pendingAgg = MuthowifWithdrawal::query()
             ->where('status', 'pending_approval')
-            ->count();
-
-        $pendingAmount = (float) MuthowifWithdrawal::query()
-            ->where('status', 'pending_approval')
-            ->sum('amount');
+            ->selectRaw('COUNT(*) as pending_count, COALESCE(SUM(amount), 0) as pending_amount')
+            ->first();
 
         return view('admin.withdrawals.index', [
             'withdrawals' => $withdrawals,
-            'pendingCount' => $pendingCount,
-            'pendingAmount' => $pendingAmount,
+            'pendingCount' => (int) ($pendingAgg->pending_count ?? 0),
+            'pendingAmount' => (float) ($pendingAgg->pending_amount ?? 0),
         ]);
     }
 

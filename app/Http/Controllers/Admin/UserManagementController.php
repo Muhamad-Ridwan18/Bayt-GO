@@ -7,6 +7,7 @@ use App\Http\Controllers\Controller;
 use App\Http\Requests\AdminUpdateUserRequest;
 use App\Models\User;
 use Illuminate\Http\RedirectResponse;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Http\Request;
 use Illuminate\View\View;
 
@@ -38,11 +39,25 @@ class UserManagementController extends Controller
         $users = $query->paginate(20)->withQueryString();
 
         $stats = [
-            'total' => User::query()->count(),
-            'admin' => User::query()->where('role', UserRole::Admin)->count(),
-            'customer' => User::query()->where('role', UserRole::Customer)->count(),
-            'muthowif' => User::query()->where('role', UserRole::Muthowif)->count(),
+            'total' => 0,
+            'admin' => 0,
+            'customer' => 0,
+            'muthowif' => 0,
         ];
+        $roleRows = User::query()
+            ->select('role', DB::raw('COUNT(*) as aggregate'))
+            ->groupBy('role')
+            ->get();
+        foreach ($roleRows as $row) {
+            $c = (int) $row->aggregate;
+            $stats['total'] += $c;
+            $role = $row->role instanceof UserRole ? $row->role : UserRole::from((string) $row->role);
+            match ($role) {
+                UserRole::Admin => $stats['admin'] += $c,
+                UserRole::Customer => $stats['customer'] += $c,
+                UserRole::Muthowif => $stats['muthowif'] += $c,
+            };
+        }
 
         return view('admin.users.index', [
             'users' => $users,

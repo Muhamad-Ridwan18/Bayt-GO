@@ -5,6 +5,7 @@ namespace App\Http\Controllers\Admin;
 use App\Enums\MuthowifVerificationStatus;
 use App\Http\Controllers\Controller;
 use App\Models\MuthowifProfile;
+use Illuminate\Support\Facades\DB;
 use App\Models\MuthowifSupportingDocument;
 use App\Services\FonnteService;
 use App\Support\PhoneNumber;
@@ -36,14 +37,29 @@ class MuthowifVerificationController extends Controller
             $query->where('verification_status', $status);
         }
 
+        $countRows = MuthowifProfile::query()
+            ->select('verification_status', DB::raw('COUNT(*) as aggregate'))
+            ->groupBy('verification_status')
+            ->get();
+
+        $counts = [
+            'pending' => 0,
+            'approved' => 0,
+            'rejected' => 0,
+        ];
+        foreach ($countRows as $row) {
+            $key = $row->verification_status instanceof MuthowifVerificationStatus
+                ? $row->verification_status->value
+                : (string) $row->verification_status;
+            if (array_key_exists($key, $counts)) {
+                $counts[$key] = (int) $row->aggregate;
+            }
+        }
+
         return view('admin.muthowif.index', [
             'profiles' => $query->paginate(15)->withQueryString(),
             'currentStatus' => $status,
-            'counts' => [
-                'pending' => MuthowifProfile::query()->where('verification_status', MuthowifVerificationStatus::Pending)->count(),
-                'approved' => MuthowifProfile::query()->where('verification_status', MuthowifVerificationStatus::Approved)->count(),
-                'rejected' => MuthowifProfile::query()->where('verification_status', MuthowifVerificationStatus::Rejected)->count(),
-            ],
+            'counts' => $counts,
         ]);
     }
 

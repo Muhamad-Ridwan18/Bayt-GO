@@ -62,26 +62,87 @@ class FinanceController extends Controller
             ->where('b.payment_status', '!=', PaymentStatus::Refunded->value)
             ->sum('booking_payments.gross_amount');
 
+        $historySince = now()->subMonths((int) config('admin.finance.history_months', 24))->startOfDay();
+
         $payments = BookingPayment::query()
+            ->select([
+                'id',
+                'muthowif_booking_id',
+                'order_id',
+                'gross_amount',
+                'platform_fee_amount',
+                'muthowif_net_amount',
+                'status',
+                'settled_at',
+                'created_at',
+            ])
             ->whereIn('status', ['settlement', 'capture'])
             ->whereNotNull('settled_at')
-            ->with(['muthowifBooking.customer', 'muthowifBooking.muthowifProfile.user'])
+            ->where('settled_at', '>=', $historySince)
+            ->with([
+                'muthowifBooking' => static function ($q): void {
+                    $q->select([
+                        'id',
+                        'booking_code',
+                        'muthowif_profile_id',
+                        'customer_id',
+                        'total_amount',
+                        'service_type',
+                        'starts_on',
+                        'ends_on',
+                        'pilgrim_count',
+                        'selected_add_on_ids',
+                        'with_same_hotel',
+                        'with_transport',
+                    ])->with([
+                        'customer:id,name',
+                        'muthowifProfile' => static function ($q2): void {
+                            $q2->select(['id', 'user_id'])->with('user:id,name');
+                        },
+                    ]);
+                },
+            ])
             ->get();
 
         $completedRefunds = BookingRefundRequest::query()
             ->where('status', BookingChangeRequestStatus::Approved)
             ->whereNotNull('decided_at')
+            ->where('decided_at', '>=', $historySince)
             ->with([
-                'muthowifBooking.customer',
-                'muthowifBooking.muthowifProfile.user',
-                'muthowifBooking.bookingPayments' => static function ($q): void {
-                    $q->whereIn('status', ['settlement', 'capture'])->orderByDesc('settled_at');
+                'muthowifBooking' => static function ($q): void {
+                    $q->select([
+                        'id',
+                        'booking_code',
+                        'muthowif_profile_id',
+                        'customer_id',
+                    ])->with([
+                        'customer:id,name',
+                        'muthowifProfile' => static function ($q2): void {
+                            $q2->select(['id', 'user_id'])->with('user:id,name');
+                        },
+                        'latestSettledBookingPayment' => static function ($q3): void {
+                            $q3->select([
+                                'id',
+                                'muthowif_booking_id',
+                                'order_id',
+                                'gross_amount',
+                                'status',
+                                'settled_at',
+                                'created_at',
+                            ]);
+                        },
+                    ]);
                 },
             ])
             ->get();
 
         $withdrawals = MuthowifWithdrawal::query()
-            ->with(['muthowifProfile.user'])
+            ->with([
+                'muthowifProfile' => static function ($q): void {
+                    $q->select(['id', 'user_id'])->with('user:id,name');
+                },
+            ])
+            ->where('updated_at', '>=', $historySince)
             ->get();
 
         /** @var Collection<int, array{kind: string, at: CarbonInterface, payment?: BookingPayment, refund?: BookingRefundRequest, withdrawal?: MuthowifWithdrawal}> $timeline */

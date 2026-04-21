@@ -80,6 +80,18 @@ class MuthowifBooking extends Model
     }
 
     /**
+     * Pembayaran settlement/capture terbaru (satu baris) untuk tampilan admin / refund.
+     *
+     * @return HasOne<BookingPayment, $this>
+     */
+    public function latestSettledBookingPayment(): HasOne
+    {
+        return $this->hasOne(BookingPayment::class, 'muthowif_booking_id')
+            ->whereIn('status', ['settlement', 'capture'])
+            ->latestOfMany(['settled_at', 'id']);
+    }
+
+    /**
      * @return HasMany<BookingRefundRequest, $this>
      */
     public function refundRequests(): HasMany

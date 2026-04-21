@@ -46,7 +46,7 @@
                         'rate' => PlatformFee::RATE * 100,
                         'total' => PlatformFee::TOTAL_RATE * 100,
                     ]) }}</p>
-                    <p class="mt-1 text-xs text-slate-500">{{ __('admin.finance.history_grouped_note') }}</p>
+                    <p class="mt-1 text-xs text-slate-500">{{ __('admin.finance.history_grouped_note', ['months' => (int) config('admin.finance.history_months', 24)]) }}</p>
                 </div>
                 @if ($history->isEmpty())
                     <p class="p-8 text-center text-sm text-slate-500">{{ __('admin.finance.history_empty') }}</p>
@@ -131,7 +131,7 @@
                                             /** @var \App\Models\BookingRefundRequest $r */
                                             $r = $row['refund'];
                                             $b = $r->muthowifBooking;
-                                            $pay = $b?->bookingPayments->first();
+                                            $pay = $b?->latestSettledBookingPayment;
                                             $rfPlat = (float) $r->refund_fee_platform;
                                             $rfMu = (float) $r->refund_fee_muthowif;
                                             $rfTotal = $rfPlat + $rfMu;
