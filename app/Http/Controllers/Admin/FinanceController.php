@@ -22,9 +22,8 @@ class FinanceController extends Controller
         $platformFeesFromRefunds = (float) BookingRefundRequest::query()
             ->where('status', BookingChangeRequestStatus::Approved)
             ->sum('refund_fee_platform');
-        // Jangan jumlahkan refund ke angka utama: potongan admin refund juga :pct dari harga dasar
-        // seperti total fee platform pada order — menjumlahkan keduanya = double count per booking.
-        $totalPlatformFees = $platformFeesFromPayments;
+        // Total platform (admin): fee dari pembayaran + potongan admin refund (:pct dari harga dasar).
+        $totalPlatformFees = $platformFeesFromPayments + $platformFeesFromRefunds;
         $totalVolume = (int) (clone $paidQuery)->sum('gross_amount');
 
         $payments = BookingPayment::query()
