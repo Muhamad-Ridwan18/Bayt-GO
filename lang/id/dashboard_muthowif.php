@@ -62,4 +62,17 @@ return [
     'section_shortcuts' => 'Semua menu',
     'section_shortcuts_sub' => 'Satu grid untuk semua fitur utama.',
     'link_booking_detail' => 'Buka detail booking',
+
+    'wallet_ledger_title' => 'Riwayat pergerakan saldo',
+    'wallet_ledger_hint' => 'Masuk saat booking selesai; keluar saat withdraw disetujui admin; masuk lagi jika transfer gagal dan saldo dikembalikan.',
+    'wallet_ledger_col_time' => 'Waktu',
+    'wallet_ledger_col_type' => 'Jenis',
+    'wallet_ledger_col_amount' => 'Nominal',
+    'wallet_ledger_col_detail' => 'Keterangan',
+    'wallet_ledger_kind_booking_credit' => 'Pendapatan booking',
+    'wallet_ledger_kind_withdraw_debit' => 'Penarikan (disetujui)',
+    'wallet_ledger_kind_withdraw_refund' => 'Pengembalian saldo (withdraw gagal)',
+    'wallet_ledger_booking' => 'Booking :code',
+    'wallet_ledger_withdraw' => 'Withdraw • :bank · :account',
+    'wallet_ledger_empty' => 'Belum ada pergerakan saldo.',
 ];

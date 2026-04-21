@@ -5,8 +5,10 @@ namespace App\Http\Controllers\Muthowif;
 use App\Http\Controllers\Controller;
 use App\Models\MuthowifProfile;
 use App\Models\MuthowifWithdrawal;
+use App\Services\MuthowifWalletLedger;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
+use Illuminate\Pagination\LengthAwarePaginator;
 use Illuminate\Validation\Rule;
 use Illuminate\View\View;
 
@@ -38,8 +40,27 @@ class WithdrawController extends Controller
             ->orderByDesc('requested_at')
             ->paginate(15);
 
+        $ledgerAll = MuthowifWalletLedger::entriesForProfile($profile);
+        $ledgerPage = max(1, (int) $request->input('ledger_page', 1));
+        $ledgerPerPage = 20;
+        $ledgerTotal = $ledgerAll->count();
+        $ledgerSlice = $ledgerAll->slice(($ledgerPage - 1) * $ledgerPerPage, $ledgerPerPage)->values();
+
+        $walletLedger = new LengthAwarePaginator(
+            $ledgerSlice,
+            $ledgerTotal,
+            $ledgerPerPage,
+            $ledgerPage,
+            [
+                'path' => $request->url(),
+                'pageName' => 'ledger_page',
+            ]
+        );
+        $walletLedger->withQueryString();
+
         return view('muthowif.withdrawals.index', [
             'withdrawals' => $withdrawals,
+            'walletLedger' => $walletLedger,
             'bankOptions' => self::BANK_OPTIONS,
         ]);
     }

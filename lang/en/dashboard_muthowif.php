@@ -62,4 +62,17 @@ return [
     'section_shortcuts' => 'All tools',
     'section_shortcuts_sub' => 'Everything you need in one grid.',
     'link_booking_detail' => 'Open booking',
+
+    'wallet_ledger_title' => 'Balance activity',
+    'wallet_ledger_hint' => 'Credits when a booking is completed; debits when a withdrawal is approved; credits again if that transfer fails and your balance is restored.',
+    'wallet_ledger_col_time' => 'Time',
+    'wallet_ledger_col_type' => 'Type',
+    'wallet_ledger_col_amount' => 'Amount',
+    'wallet_ledger_col_detail' => 'Details',
+    'wallet_ledger_kind_booking_credit' => 'Booking payout',
+    'wallet_ledger_kind_withdraw_debit' => 'Withdrawal (approved)',
+    'wallet_ledger_kind_withdraw_refund' => 'Withdrawal reversed',
+    'wallet_ledger_booking' => 'Booking :code',
+    'wallet_ledger_withdraw' => 'Withdraw • :bank · :account',
+    'wallet_ledger_empty' => 'No balance movements yet.',
 ];
