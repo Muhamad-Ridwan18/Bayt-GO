@@ -64,7 +64,7 @@ return [
     'link_booking_detail' => 'Open booking',
 
     'wallet_ledger_title' => 'Balance activity',
-    'wallet_ledger_hint' => 'Credits when a booking is completed; debits when a withdrawal is approved; credits again if that transfer fails and your balance is restored.',
+    'wallet_ledger_hint' => 'Credits when a booking is completed; debits when a withdrawal is approved; credits again if that transfer fails. Refunds to pilgrims appear when admin finishes the transfer; your balance only changes if that booking’s payout had already been credited.',
     'wallet_ledger_col_time' => 'Time',
     'wallet_ledger_col_type' => 'Type',
     'wallet_ledger_col_amount' => 'Amount',
@@ -72,7 +72,10 @@ return [
     'wallet_ledger_kind_booking_credit' => 'Booking payout',
     'wallet_ledger_kind_withdraw_debit' => 'Withdrawal (approved)',
     'wallet_ledger_kind_withdraw_refund' => 'Withdrawal reversed',
+    'wallet_ledger_kind_refund_completed' => 'Pilgrim refund (completed)',
     'wallet_ledger_booking' => 'Booking :code',
     'wallet_ledger_withdraw' => 'Withdraw • :bank · :account',
     'wallet_ledger_empty' => 'No balance movements yet.',
+    'wallet_ledger_refund_caption' => 'Pilgrim refund completed. No change to wallet — payout for this booking was not credited yet.',
+    'wallet_ledger_refund_caption_clawback' => 'Pilgrim refund completed. Payout that was already credited has been deducted from your balance.',
 ];

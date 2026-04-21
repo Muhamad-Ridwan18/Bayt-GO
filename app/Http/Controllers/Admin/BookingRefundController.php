@@ -7,6 +7,7 @@ use App\Enums\PaymentStatus;
 use App\Http\Controllers\Controller;
 use App\Jobs\NotifyCustomerOfRefundTransferProof;
 use App\Models\BookingRefundRequest;
+use App\Models\MuthowifProfile;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
@@ -89,6 +90,19 @@ class BookingRefundController extends Controller
                 $booking->update([
                     'payment_status' => PaymentStatus::Refunded,
                 ]);
+
+                $pay = $booking->settledBookingPayment();
+                if ($pay !== null && $pay->wallet_credited_at !== null) {
+                    $muthowifProfile = MuthowifProfile::query()
+                        ->whereKey($booking->muthowif_profile_id)
+                        ->lockForUpdate()
+                        ->first();
+                    if ($muthowifProfile !== null) {
+                        $deduct = round((float) $pay->muthowif_net_amount, 2);
+                        $muthowifProfile->wallet_balance = round((float) $muthowifProfile->wallet_balance - $deduct, 2);
+                        $muthowifProfile->save();
+                    }
+                }
             });
         } catch (\Throwable $e) {
             Storage::disk('public')->delete($proofPath);

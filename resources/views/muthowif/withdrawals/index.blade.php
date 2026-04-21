@@ -55,19 +55,22 @@
                             @forelse ($walletLedger as $entry)
                                 @php
                                     $signed = (float) $entry['signed_amount'];
-                                    $amountClass = $signed >= 0 ? 'text-emerald-700' : 'text-rose-700';
+                                    $isNeutralAmount = abs($signed) < 0.005;
+                                    $amountClass = $isNeutralAmount ? 'text-slate-600' : ($signed >= 0 ? 'text-emerald-700' : 'text-rose-700');
                                     $prefix = $signed >= 0 ? '+' : '−';
                                     $abs = \App\Support\IndonesianNumber::formatThousands((string) (int) round(abs($signed)));
                                     $typeLabel = match ($entry['kind']) {
                                         'booking_credit' => __('dashboard_muthowif.wallet_ledger_kind_booking_credit'),
                                         'withdraw_debit' => __('dashboard_muthowif.wallet_ledger_kind_withdraw_debit'),
                                         'withdraw_refund' => __('dashboard_muthowif.wallet_ledger_kind_withdraw_refund'),
+                                        'refund_completed' => __('dashboard_muthowif.wallet_ledger_kind_refund_completed'),
                                         default => $entry['kind'],
                                     };
                                     $typePill = match ($entry['kind']) {
                                         'booking_credit' => 'bg-emerald-50 text-emerald-900 ring-emerald-200',
                                         'withdraw_debit' => 'bg-rose-50 text-rose-900 ring-rose-200',
                                         'withdraw_refund' => 'bg-sky-50 text-sky-900 ring-sky-200',
+                                        'refund_completed' => 'bg-amber-50 text-amber-950 ring-amber-200',
                                         default => 'bg-slate-50 text-slate-900 ring-slate-200',
                                     };
                                 @endphp
@@ -79,7 +82,11 @@
                                         <span class="inline-flex rounded-full px-2.5 py-0.5 text-xs font-semibold ring-1 {{ $typePill }}">{{ $typeLabel }}</span>
                                     </td>
                                     <td class="px-4 py-3 whitespace-nowrap font-semibold tabular-nums {{ $amountClass }}">
-                                        {{ $prefix }} Rp {{ $abs }}
+                                        @if ($isNeutralAmount)
+                                            Rp {{ \App\Support\IndonesianNumber::formatThousands('0') }}
+                                        @else
+                                            {{ $prefix }} Rp {{ $abs }}
+                                        @endif
                                     </td>
                                     <td class="px-4 py-3 text-slate-800">
                                         @if ($entry['kind'] === 'booking_credit' && $entry['booking'])
@@ -87,6 +94,16 @@
                                             <a href="{{ route('muthowif.bookings.show', $b) }}" class="font-medium text-brand-700 underline decoration-brand-300 underline-offset-2 hover:text-brand-800">
                                                 {{ __('dashboard_muthowif.wallet_ledger_booking', ['code' => $b->booking_code ?? $b->getKey()]) }}
                                             </a>
+                                        @elseif ($entry['kind'] === 'refund_completed' && $entry['booking'])
+                                            @php $b = $entry['booking']; @endphp
+                                            <div class="space-y-0.5">
+                                                <a href="{{ route('muthowif.bookings.show', $b) }}" class="font-medium text-brand-700 underline decoration-brand-300 underline-offset-2 hover:text-brand-800">
+                                                    {{ __('dashboard_muthowif.wallet_ledger_booking', ['code' => $b->booking_code ?? $b->getKey()]) }}
+                                                </a>
+                                                <p class="text-xs text-slate-500 leading-snug">
+                                                    {{ $isNeutralAmount ? __('dashboard_muthowif.wallet_ledger_refund_caption') : __('dashboard_muthowif.wallet_ledger_refund_caption_clawback') }}
+                                                </p>
+                                            </div>
                                         @elseif ($entry['withdrawal'])
                                             @php $w = $entry['withdrawal']; @endphp
                                             <span class="text-slate-700">

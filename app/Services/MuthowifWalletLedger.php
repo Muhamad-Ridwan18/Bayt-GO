@@ -2,22 +2,24 @@
 
 namespace App\Services;
 
+use App\Enums\BookingChangeRequestStatus;
 use App\Models\BookingPayment;
+use App\Models\BookingRefundRequest;
 use App\Models\MuthowifProfile;
 use App\Models\MuthowifWithdrawal;
-use Carbon\CarbonInterface;
 use Illuminate\Support\Collection;
 
 final class MuthowifWalletLedger
 {
     /**
      * @return Collection<int, array{
-     *     kind: 'booking_credit'|'withdraw_debit'|'withdraw_refund',
+     *     kind: 'booking_credit'|'withdraw_debit'|'withdraw_refund'|'refund_completed',
      *     signed_amount: float,
-     *     at: CarbonInterface,
+     *     at: \Carbon\CarbonInterface,
      *     tie: string,
      *     booking?: \App\Models\MuthowifBooking,
-     *     withdrawal?: MuthowifWithdrawal
+     *     withdrawal?: MuthowifWithdrawal,
+     *     refund?: BookingRefundRequest
      * }>
      */
     public static function entriesForProfile(MuthowifProfile $profile): Collection
@@ -44,6 +46,7 @@ final class MuthowifWalletLedger
                 'tie' => 'p:'.$payment->getKey(),
                 'booking' => $payment->muthowifBooking,
                 'withdrawal' => null,
+                'refund' => null,
             ]);
         }
 
@@ -60,6 +63,7 @@ final class MuthowifWalletLedger
                     'tie' => 'w:'.$w->getKey().':d',
                     'booking' => null,
                     'withdrawal' => $w,
+                    'refund' => null,
                 ]);
             }
 
@@ -71,8 +75,53 @@ final class MuthowifWalletLedger
                     'tie' => 'w:'.$w->getKey().':r',
                     'booking' => null,
                     'withdrawal' => $w,
+                    'refund' => null,
                 ]);
             }
+        }
+
+        $refunds = BookingRefundRequest::query()
+            ->where('status', BookingChangeRequestStatus::Approved)
+            ->whereNotNull('decided_at')
+            ->whereHas('muthowifBooking', static function ($q) use ($profile): void {
+                $q->where('muthowif_profile_id', $profile->getKey());
+            })
+            ->with([
+                'muthowifBooking' => static function ($q): void {
+                    $q->select(['id', 'booking_code', 'muthowif_profile_id'])
+                        ->with(['bookingPayments']);
+                },
+            ])
+            ->get();
+
+        foreach ($refunds as $refund) {
+            $booking = $refund->muthowifBooking;
+            $at = $refund->decided_at;
+            if ($booking === null || $at === null) {
+                continue;
+            }
+
+            $pay = $booking->relationLoaded('bookingPayments')
+                ? $booking->bookingPayments
+                    ->filter(static fn (BookingPayment $p): bool => in_array($p->status, ['settlement', 'capture'], true))
+                    ->sortByDesc(static fn (BookingPayment $p): int => $p->settled_at?->getTimestamp() ?? $p->created_at?->getTimestamp() ?? 0)
+                    ->first()
+                : $booking->settledBookingPayment();
+
+            $signed = 0.0;
+            if ($pay !== null && $pay->wallet_credited_at !== null) {
+                $signed = -1 * round((float) $pay->muthowif_net_amount, 2);
+            }
+
+            $out->push([
+                'kind' => 'refund_completed',
+                'signed_amount' => $signed,
+                'at' => $at,
+                'tie' => 'r:'.$refund->getKey(),
+                'booking' => $booking,
+                'withdrawal' => null,
+                'refund' => $refund,
+            ]);
         }
 
         return $out
