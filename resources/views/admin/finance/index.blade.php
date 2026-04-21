@@ -35,7 +35,6 @@
                     <p class="mt-2 space-y-1 text-xs leading-relaxed text-brand-900/80">
                         <span class="block">{{ __('admin.finance.platform_from_orders_line', [
                             'amount' => $fmt($platformFeesFromPayments),
-                            'pct' => PlatformFee::TOTAL_RATE * 100,
                         ]) }}</span>
                         <span class="block">{{ __('admin.finance.platform_from_refunds_line', [
                             'amount' => $fmt($platformFeesFromRefunds),

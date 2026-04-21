@@ -20,23 +20,27 @@ class FinanceController extends Controller
         $paidQuery = BookingPayment::query()->whereIn('status', ['settlement', 'capture']);
 
         /*
-         * Platform fee dari pembayaran: hanya booking yang BELUM refunded.
-         * Jika payment_status = refunded, transaksi dibatalkan — fee order tidak dihitung lagi;
-         * revenue platform untuk kasus itu hanya refund_fee_platform (lihat query refund di bawah).
+         * Fee platform dari pembayaran (settlement):
+         * - Booking BUKAN refunded: jumlahkan penuh platform_fee_amount (15% dasar = 7,5% jamaah + 7,5% muthowif).
+         * - Booking refunded: hanya setengah (7,5% dasar) — bagian yang di-retain sebagai revenue platform dari order;
+         *   ditambah refund_fee_platform di bawah (potongan admin refund), tanpa double count penuh 15%+15%.
          *
-         * Setara SQL:
-         *   SELECT COALESCE(SUM(bp.platform_fee_amount), 0)
+         * SQL setara:
+         *   SELECT COALESCE(SUM(
+         *     CASE WHEN b.payment_status = 'refunded' THEN bp.platform_fee_amount * 0.5 ELSE bp.platform_fee_amount END
+         *   ), 0)
          *   FROM booking_payments bp
          *   INNER JOIN muthowif_bookings b ON b.id = bp.muthowif_booking_id
-         *   WHERE bp.status IN ('settlement','capture')
-         *     AND b.payment_status != 'refunded';
+         *   WHERE bp.status IN ('settlement','capture');
          */
         $platformFeesFromPayments = (float) BookingPayment::query()
-            ->whereIn('status', ['settlement', 'capture'])
-            ->whereHas('muthowifBooking', static function ($q): void {
-                $q->where('payment_status', '!=', PaymentStatus::Refunded->value);
-            })
-            ->sum('platform_fee_amount');
+            ->join('muthowif_bookings as b', 'b.id', '=', 'booking_payments.muthowif_booking_id')
+            ->whereIn('booking_payments.status', ['settlement', 'capture'])
+            ->selectRaw(
+                'COALESCE(SUM(CASE WHEN b.payment_status = ? THEN booking_payments.platform_fee_amount * 0.5 ELSE booking_payments.platform_fee_amount END), 0) as platform_from_payments',
+                [PaymentStatus::Refunded->value]
+            )
+            ->value('platform_from_payments');
 
         /*
          * Potongan admin refund selesai (approved).
