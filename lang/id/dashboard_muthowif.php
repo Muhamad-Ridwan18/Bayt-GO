@@ -76,6 +76,6 @@ return [
     'wallet_ledger_booking' => 'Booking :code',
     'wallet_ledger_withdraw' => 'Withdraw • :bank · :account',
     'wallet_ledger_empty' => 'Belum ada pergerakan saldo.',
-    'wallet_ledger_refund_caption' => 'Tidak ada potongan muthowif tercatat (refund lama sebelum aturan 1%).',
+    'wallet_ledger_refund_caption' => 'Tidak ada bagian muthowif tercatat (refund lama sebelum aturan 1%).',
     'wallet_ledger_refund_caption_fee' => 'Bagian muthowif masuk saldo: 1% dari harga dasar layanan.',
 ];

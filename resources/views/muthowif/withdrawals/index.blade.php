@@ -70,7 +70,7 @@
                                         'booking_credit' => 'bg-emerald-50 text-emerald-900 ring-emerald-200',
                                         'withdraw_debit' => 'bg-rose-50 text-rose-900 ring-rose-200',
                                         'withdraw_refund' => 'bg-sky-50 text-sky-900 ring-sky-200',
-                                        'refund_completed' => 'bg-amber-50 text-amber-950 ring-amber-200',
+                                        'refund_completed' => 'bg-emerald-50 text-emerald-900 ring-emerald-200',
                                         default => 'bg-slate-50 text-slate-900 ring-slate-200',
                                     };
                                 @endphp
