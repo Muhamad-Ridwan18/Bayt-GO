@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Events\BookingChatUpdated;
 use App\Models\BookingChatMessage;
 use App\Models\MuthowifBooking;
 use Illuminate\Http\JsonResponse;
@@ -11,18 +12,47 @@ use Symfony\Component\HttpFoundation\Response;
 
 class BookingChatController extends Controller
 {
+    public function unreadCount(Request $request, MuthowifBooking $booking): JsonResponse
+    {
+        $this->authorize('viewBookingChat', $booking);
+
+        $n = $booking->chatMessages()
+            ->where('user_id', '!=', $request->user()->id)
+            ->whereNull('read_at')
+            ->count();
+
+        return response()->json(['unread_for_me' => $n]);
+    }
+
     public function index(Request $request, MuthowifBooking $booking): JsonResponse
     {
         $this->authorize('viewBookingChat', $booking);
+
+        $readerId = $request->user()->id;
+
+        $toMark = $booking->chatMessages()
+            ->where('user_id', '!=', $readerId)
+            ->whereNull('read_at');
+
+        if ($toMark->exists()) {
+            $toMark->update(['read_at' => now()]);
+            broadcast(new BookingChatUpdated($booking))->toOthers();
+        }
 
         $messages = $booking->chatMessages()
             ->with('sender:id,name')
             ->orderBy('created_at')
             ->get();
 
+        $unreadForMe = $booking->chatMessages()
+            ->where('user_id', '!=', $readerId)
+            ->whereNull('read_at')
+            ->count();
+
         return response()->json([
             'messages' => $messages->map(fn (BookingChatMessage $m) => $this->serializeMessage($m, $request, $booking)),
             'chat_open' => $booking->isBookingChatOpen(),
+            'unread_for_me' => $unreadForMe,
         ]);
     }
 
@@ -55,7 +85,7 @@ class BookingChatController extends Controller
 
         $message->load('sender:id,name');
 
-        broadcast(new \App\Events\BookingChatUpdated($booking))->toOthers();
+        broadcast(new BookingChatUpdated($booking))->toOthers();
 
         return response()->json([
             'message' => $this->serializeMessage($message, $request, $booking),
@@ -87,6 +117,8 @@ class BookingChatController extends Controller
     {
         $routeName = $this->messageImageRouteName($request);
 
+        $isMe = (string) $m->user_id === (string) $request->user()->id;
+
         return [
             'id' => $m->id,
             'body' => $m->body ?? '',
@@ -96,7 +128,8 @@ class BookingChatController extends Controller
             'sender_id' => $m->user_id,
             'sender_name' => $m->sender?->name ?? '—',
             'created_at' => $m->created_at?->toIso8601String(),
-            'is_me' => (string) $m->user_id === (string) $request->user()->id,
+            'is_me' => $isMe,
+            'is_read' => $isMe ? $m->read_at !== null : true,
         ];
     }
 

@@ -42,10 +42,10 @@ document.addEventListener('alpine:init', () => {
         
         isPanelExpanded: false,
         view: 'list', // 'list' | 'chat'
-        hasUnread: false,
         
         conversations: [],
         loadingList: false,
+        bookingChannelIds: /** @type {Set<string>} */ (new Set()),
         
         activeConversation: null,
         messages: [],
@@ -57,6 +57,10 @@ document.addEventListener('alpine:init', () => {
         error: '',
         
         pollTimerList: null,
+
+        get unreadTotal() {
+            return this.conversations.reduce((sum, c) => sum + (Number(c.unread_count) || 0), 0);
+        },
 
         get headerTitle() {
             if (this.view === 'chat' && this.activeConversation) {
@@ -75,7 +79,6 @@ document.addEventListener('alpine:init', () => {
         togglePanel() {
             this.isPanelExpanded = !this.isPanelExpanded;
             if (this.isPanelExpanded) {
-                this.hasUnread = false;
                 if (this.view === 'chat') {
                     this.scrollToLatest({ force: true });
                 } else {
@@ -92,13 +95,9 @@ document.addEventListener('alpine:init', () => {
             this.body = '';
             this.clearImage();
             this.loadChatMessages();
-            this.subscribeToBooking(conv.id);
         },
         
         closeChat() {
-            if (this.activeConversation) {
-                this.unsubscribeFromBooking(this.activeConversation.id);
-            }
             this.activeConversation = null;
             this.view = 'list';
             this.loadList();
@@ -111,12 +110,45 @@ document.addEventListener('alpine:init', () => {
                 if (r.ok) {
                     const data = await r.json();
                     this.conversations = data.conversations || [];
+                    this.syncBookingChannels();
                 }
             } catch (e) {
                 console.error(e);
             } finally {
                 this.loadingList = false;
             }
+        },
+
+        syncBookingChannels() {
+            if (!window.Echo) return;
+            const nextIds = new Set(this.conversations.map((c) => String(c.id)));
+            for (const id of [...this.bookingChannelIds]) {
+                if (!nextIds.has(id)) {
+                    this.leaveBookingChannel(id);
+                }
+            }
+            this.conversations.forEach((c) => this.ensureBookingChannel(String(c.id)));
+        },
+
+        ensureBookingChannel(bookingId) {
+            if (!window.Echo || this.bookingChannelIds.has(bookingId)) return;
+            window.Echo.private(`booking.chat.${bookingId}`).listen('BookingChatUpdated', () => {
+                this.onBookingChatEvent(bookingId);
+            });
+            this.bookingChannelIds.add(bookingId);
+        },
+
+        leaveBookingChannel(bookingId) {
+            if (!window.Echo || !this.bookingChannelIds.has(bookingId)) return;
+            window.Echo.leave(`booking.chat.${bookingId}`);
+            this.bookingChannelIds.delete(bookingId);
+        },
+
+        onBookingChatEvent(bookingId) {
+            if (this.activeConversation && String(this.activeConversation.id) === bookingId && this.view === 'chat') {
+                this.loadChatMessages(true);
+            }
+            this.loadList();
         },
 
         pickImage(event) {
@@ -180,10 +212,10 @@ document.addEventListener('alpine:init', () => {
                 
                 const nextLastId = this.messages.length ? this.messages[this.messages.length - 1].id : null;
                 const hasNewMessage = nextLastId !== prevLastId && this.messages.length > 0;
-                
-                if (hasNewMessage && prevLastId !== null && (!this.isPanelExpanded || this.view !== 'chat')) {
-                    this.hasUnread = true;
-                }
+
+                const conv = this.conversations.find((c) => String(c.id) === String(this.activeConversation.id));
+                if (conv) conv.unread_count = data.unread_for_me ?? 0;
+
                 if (this.isPanelExpanded && this.view === 'chat') {
                     this.scrollToLatest({ force: hasNewMessage });
                 }
@@ -238,21 +270,6 @@ document.addEventListener('alpine:init', () => {
             }
         },
         
-        subscribeToBooking(bookingId) {
-            if (window.Echo) {
-                window.Echo.private(`booking.chat.${bookingId}`)
-                    .listen('BookingChatUpdated', (e) => {
-                        this.loadChatMessages(true);
-                    });
-            }
-        },
-        
-        unsubscribeFromBooking(bookingId) {
-            if (window.Echo) {
-                window.Echo.leave(`booking.chat.${bookingId}`);
-            }
-        },
-
         init() {
             this.loadList();
             this.pollTimerList = window.setInterval(() => {
@@ -266,7 +283,206 @@ document.addEventListener('alpine:init', () => {
         
         destroy() {
             if (this.pollTimerList) window.clearInterval(this.pollTimerList);
-            if (this.activeConversation) this.unsubscribeFromBooking(this.activeConversation.id);
+            for (const id of [...this.bookingChannelIds]) {
+                this.leaveBookingChannel(id);
+            }
+        },
+    }));
+
+    Alpine.data('bookingChatPanel', (config) => ({
+        bookingId: String(config.bookingId),
+        fetchUrl: config.fetchUrl,
+        storeUrl: config.storeUrl,
+        unreadUrl: config.unreadUrl,
+        initialOpen: config.initialOpen,
+        locale: config.locale,
+        introOpen: config.introOpen,
+        introClosed: config.introClosed,
+        labels: config.labels,
+
+        isPanelExpanded: false,
+        chatOpen: config.initialOpen,
+        unreadForMe: 0,
+        messages: [],
+        body: '',
+        imageFile: null,
+        imagePreviewUrl: null,
+        loading: false,
+        sending: false,
+        error: '',
+        pollTimer: null,
+
+        get unreadTotal() {
+            return this.unreadForMe;
+        },
+
+        csrf() {
+            return document.querySelector('meta[name="csrf-token"]')?.getAttribute('content') ?? '';
+        },
+
+        formatTime(iso) {
+            if (!iso) return '';
+            const d = new Date(iso);
+            if (Number.isNaN(d.getTime())) return '';
+            return d.toLocaleTimeString(this.locale, { hour: '2-digit', minute: '2-digit' });
+        },
+
+        scrollToLatest(options = {}) {
+            const force = options.force === true;
+            const el = this.$refs.chatScroll;
+            if (!el || this.messages.length === 0) return;
+            const threshold = 150;
+            const atBottom = el.scrollHeight - el.scrollTop - el.clientHeight <= threshold;
+            if (!force && !atBottom) return;
+            this.$nextTick(() => requestAnimationFrame(() => requestAnimationFrame(() => {
+                if (this.$refs.chatScroll) this.$refs.chatScroll.scrollTop = this.$refs.chatScroll.scrollHeight;
+            })));
+        },
+
+        async refreshUnreadOnly() {
+            if (!this.unreadUrl) return;
+            try {
+                const r = await fetch(this.unreadUrl, {
+                    headers: { Accept: 'application/json', 'X-Requested-With': 'XMLHttpRequest' },
+                    credentials: 'same-origin',
+                });
+                if (r.ok) {
+                    const data = await r.json();
+                    this.unreadForMe = Number(data.unread_for_me) || 0;
+                }
+            } catch (e) {
+                console.error(e);
+            }
+        },
+
+        togglePanel() {
+            this.isPanelExpanded = !this.isPanelExpanded;
+            if (this.isPanelExpanded) {
+                this.loadMessages();
+            }
+        },
+
+        pickImage(event) {
+            const input = event.target;
+            const file = input.files && input.files[0] ? input.files[0] : null;
+            if (this.imagePreviewUrl) URL.revokeObjectURL(this.imagePreviewUrl);
+            this.imageFile = file;
+            this.imagePreviewUrl = file ? URL.createObjectURL(file) : null;
+            input.value = '';
+        },
+
+        clearImage() {
+            this.imageFile = null;
+            if (this.imagePreviewUrl) {
+                URL.revokeObjectURL(this.imagePreviewUrl);
+                this.imagePreviewUrl = null;
+            }
+            if (this.$refs.chatImageInput) this.$refs.chatImageInput.value = '';
+        },
+
+        async loadMessages(isBackground = false) {
+            if (!isBackground) this.loading = true;
+            this.error = '';
+            const prevLastId = this.messages.length ? this.messages[this.messages.length - 1].id : null;
+            try {
+                const r = await fetch(this.fetchUrl, {
+                    headers: { Accept: 'application/json', 'X-Requested-With': 'XMLHttpRequest' },
+                    credentials: 'same-origin',
+                });
+                if (!r.ok) throw new Error(this.labels.loadError);
+                const data = await r.json();
+                this.messages = data.messages ?? [];
+                if (data.chat_open !== undefined) this.chatOpen = !!data.chat_open;
+                this.unreadForMe = Number(data.unread_for_me) || 0;
+                const nextLastId = this.messages.length ? this.messages[this.messages.length - 1].id : null;
+                const hasNew = nextLastId !== prevLastId && this.messages.length > 0;
+                if (this.isPanelExpanded) {
+                    this.scrollToLatest({ force: hasNew });
+                }
+            } catch (e) {
+                this.error = e instanceof Error ? e.message : this.labels.loadError;
+            } finally {
+                this.loading = false;
+            }
+        },
+
+        async send() {
+            const text = this.body.trim();
+            const hasImage = !!this.imageFile;
+            if ((!text && !hasImage) || !this.chatOpen || this.sending) return;
+            this.sending = true;
+            this.error = '';
+            try {
+                let r;
+                if (hasImage) {
+                    const fd = new FormData();
+                    if (text) fd.append('body', text);
+                    fd.append('image', this.imageFile);
+                    r = await fetch(this.storeUrl, {
+                        method: 'POST',
+                        headers: { Accept: 'application/json', 'X-CSRF-TOKEN': this.csrf(), 'X-Requested-With': 'XMLHttpRequest' },
+                        credentials: 'same-origin',
+                        body: fd,
+                    });
+                } else {
+                    r = await fetch(this.storeUrl, {
+                        method: 'POST',
+                        headers: {
+                            Accept: 'application/json',
+                            'Content-Type': 'application/json',
+                            'X-CSRF-TOKEN': this.csrf(),
+                            'X-Requested-With': 'XMLHttpRequest',
+                        },
+                        credentials: 'same-origin',
+                        body: JSON.stringify({ body: text }),
+                    });
+                }
+                const data = await r.json().catch(() => ({}));
+                if (!r.ok) {
+                    const msg = data.message ?? data.errors?.image?.[0] ?? data.errors?.body?.[0] ?? this.labels.sendError;
+                    throw new Error(typeof msg === 'string' ? msg : this.labels.sendError);
+                }
+                this.body = '';
+                this.clearImage();
+                if (data.chat_open !== undefined) this.chatOpen = !!data.chat_open;
+                await this.loadMessages(true);
+            } catch (e) {
+                this.error = e instanceof Error ? e.message : this.labels.sendError;
+            } finally {
+                this.sending = false;
+            }
+        },
+
+        onChatSocket() {
+            if (this.isPanelExpanded) {
+                this.loadMessages(true);
+            } else {
+                this.refreshUnreadOnly();
+            }
+        },
+
+        init() {
+            this.refreshUnreadOnly();
+            if (window.Echo) {
+                window.Echo.private(`booking.chat.${this.bookingId}`).listen('BookingChatUpdated', () => {
+                    this.onChatSocket();
+                });
+            }
+            this.pollTimer = window.setInterval(() => {
+                if (!this.isPanelExpanded) {
+                    this.refreshUnreadOnly();
+                } else if (!window.Echo) {
+                    this.loadMessages(true);
+                }
+            }, 6000);
+        },
+
+        destroy() {
+            if (this.pollTimer) window.clearInterval(this.pollTimer);
+            if (this.imagePreviewUrl) URL.revokeObjectURL(this.imagePreviewUrl);
+            if (window.Echo) {
+                window.Echo.leave(`booking.chat.${this.bookingId}`);
+            }
         },
     }));
 

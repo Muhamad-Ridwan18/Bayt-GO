@@ -9,6 +9,9 @@
 
     $initialOpen = $booking->isBookingChatOpen();
     $showPanel = $initialOpen || ($booking->status === BookingStatus::Completed && $booking->isPaid());
+    $unreadCountUrl = auth()->user()->isCustomer()
+        ? route('bookings.chat.unread-count', $booking)
+        : route('muthowif.bookings.chat.unread-count', $booking);
 @endphp
 
 @if ($showPanel)
@@ -18,6 +21,7 @@
             bookingId: @js($booking->id),
             fetchUrl: @js($fetchUrl),
             storeUrl: @js($storeUrl),
+            unreadUrl: @js($unreadCountUrl),
             initialOpen: @js($initialOpen),
             locale: @js(str_replace('_', '-', app()->getLocale())),
             introOpen: @js(__('bookings.chat.intro_open')),
@@ -90,7 +94,18 @@
                                     <img :src="m.image_url" alt="" class="max-h-52 max-w-full rounded-lg object-contain" loading="lazy" width="400" height="400">
                                 </a>
                                 <p class="mt-0.5 whitespace-pre-wrap break-words text-[13px] leading-relaxed" x-show="m.body && m.body.trim()" x-text="m.body"></p>
-                                <p class="mt-1 text-[9px] opacity-75" x-text="formatTime(m.created_at)"></p>
+                                <div class="mt-1 flex items-center gap-1" :class="m.is_me ? 'justify-end' : ''">
+                                    <p class="text-[9px] opacity-75" x-text="formatTime(m.created_at)"></p>
+                                    <span
+                                        x-show="m.is_me"
+                                        x-cloak
+                                        class="inline-flex shrink-0 select-none text-[10px] font-semibold leading-none opacity-90"
+                                        :title="m.is_read ? 'Dibaca' : 'Terkirim'"
+                                    >
+                                        <span x-show="m.is_read">✓✓</span>
+                                        <span x-show="!m.is_read">✓</span>
+                                    </span>
+                                </div>
                             </div>
                         </div>
                     </template>
@@ -158,10 +173,12 @@
             class="relative flex h-14 w-14 lg:h-16 lg:w-16 items-center justify-center rounded-full bg-brand-600 text-white shadow-xl shadow-brand-600/40 ring-4 ring-white transition-all hover:bg-brand-700 hover:scale-105 active:scale-95 z-50 group"
             aria-label="{{ __('bookings.chat.title') }}"
         >
-            <span x-show="hasUnread" x-cloak class="absolute top-0 right-0 flex h-4 w-4">
-                <span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-red-400 opacity-75"></span>
-                <span class="relative inline-flex rounded-full h-4 w-4 bg-red-500 ring-2 ring-white"></span>
-            </span>
+            <span
+                x-show="unreadTotal > 0"
+                x-cloak
+                class="absolute -right-0.5 -top-0.5 flex min-h-[1.25rem] min-w-[1.25rem] items-center justify-center rounded-full bg-red-500 px-1 text-[10px] font-bold leading-none text-white shadow-sm ring-2 ring-white"
+                x-text="unreadTotal > 99 ? '99+' : unreadTotal"
+            ></span>
             <svg x-show="!isPanelExpanded" class="h-7 w-7 transition-transform group-hover:-rotate-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 10h.01M12 10h.01M16 10h.01M9 16H5a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v8a2 2 0 01-2 2h-5l-5 5v-5z"></path>
             </svg>

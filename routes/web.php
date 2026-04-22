@@ -9,6 +9,7 @@ use App\Http\Controllers\Admin\UserManagementController;
 use App\Http\Controllers\Admin\WithdrawalsController;
 use App\Http\Controllers\BookingChatController;
 use App\Http\Controllers\Customer\BookingController as CustomerBookingController;
+use App\Http\Controllers\GlobalChatController;
 use App\Http\Controllers\LocaleController;
 use App\Http\Controllers\Muthowif\BookingController as MuthowifBookingController;
 use App\Http\Controllers\Muthowif\MuthowifDashboardCalendarController;
@@ -90,7 +91,7 @@ Route::middleware('auth')->group(function () {
     Route::patch('/profile/public', [ProfileController::class, 'updatePublicProfile'])->name('profile.public.update');
     Route::delete('/profile', [ProfileController::class, 'destroy'])->name('profile.destroy');
 
-    Route::get('/chat/conversations', [\App\Http\Controllers\GlobalChatController::class, 'index'])->name('chat.conversations');
+    Route::get('/chat/conversations', [GlobalChatController::class, 'index'])->name('chat.conversations');
 
     Route::middleware([EnsureUserRole::class.':customer'])->prefix('bookings')->name('bookings.')->group(function () {
         Route::get('/', [CustomerBookingController::class, 'index'])->name('index');
@@ -103,6 +104,7 @@ Route::middleware('auth')->group(function () {
         Route::post('{booking}/refund-request', [CustomerBookingController::class, 'storeRefundRequest'])->name('refund_request.store');
         Route::post('{booking}/reschedule-request', [CustomerBookingController::class, 'storeRescheduleRequest'])->name('reschedule_request.store');
         Route::get('{booking}/chat/messages', [BookingChatController::class, 'index'])->name('chat.messages');
+        Route::get('{booking}/chat/unread-count', [BookingChatController::class, 'unreadCount'])->name('chat.unread-count');
         Route::post('{booking}/chat/messages', [BookingChatController::class, 'store'])->name('chat.messages.store');
         Route::get('{booking}/chat/messages/{message}/image', [BookingChatController::class, 'image'])->name('chat.messages.image');
         Route::get('{booking}/documents/{type}', [CustomerBookingController::class, 'downloadDocument'])
@@ -126,6 +128,7 @@ Route::middleware('auth')->group(function () {
 
             Route::get('bookings', [MuthowifBookingController::class, 'index'])->name('bookings.index');
             Route::get('bookings/{booking}/chat/messages', [BookingChatController::class, 'index'])->name('bookings.chat.messages');
+            Route::get('bookings/{booking}/chat/unread-count', [BookingChatController::class, 'unreadCount'])->name('bookings.chat.unread-count');
             Route::post('bookings/{booking}/chat/messages', [BookingChatController::class, 'store'])->name('bookings.chat.messages.store');
             Route::get('bookings/{booking}/chat/messages/{message}/image', [BookingChatController::class, 'image'])->name('bookings.chat.messages.image');
             Route::get('bookings/{booking}/documents/{type}', [CustomerBookingController::class, 'downloadDocument'])
