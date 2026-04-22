@@ -55,13 +55,13 @@
                                     <span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
                                     <span class="relative inline-flex rounded-full h-2 w-2 bg-emerald-400"></span>
                                 </span>
-                                Marketplace pendamping umrah
+                                {{ __('welcome.hero_kicker') }}
                             </p>
                             <h1 class="text-3xl sm:text-5xl font-bold leading-[1.1] tracking-tight">
-                                Booking muthowif seperti booking hotel — <span class="text-transparent bg-clip-text bg-gradient-to-r from-brand-200 to-amber-200">pilih tanggal, lihat yang siap.</span>
+                                {!! __('welcome.hero_title_html') !!}
                             </h1>
                             <p class="mt-5 text-base sm:text-lg text-brand-100/90 leading-relaxed max-w-2xl">
-                                Harga transparan (group &amp; private), jadwal libur &amp; slot booking otomatis, semua di satu tempat.
+                                {{ __('welcome.hero_lead') }}
                             </p>
                         </div>
 
