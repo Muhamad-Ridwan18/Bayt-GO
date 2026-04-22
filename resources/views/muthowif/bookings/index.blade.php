@@ -62,14 +62,14 @@
                                 BookingStatus::Pending => 'bg-amber-100 text-amber-950 ring-amber-200/90',
                                 BookingStatus::Confirmed => 'bg-emerald-100 text-emerald-950 ring-emerald-200/90',
                                 BookingStatus::Completed => 'bg-slate-100 text-slate-800 ring-slate-200/90',
-                                BookingStatus::Cancelled => 'bg-slate-100 text-slate-700 ring-slate-200/80',
+                                BookingStatus::Cancelled => 'bg-red-100 text-red-700 ring-red-200/80',
                                 default => 'bg-slate-100 text-slate-700 ring-slate-200/80',
                             };
                             $accentClass = match ($st) {
                                 BookingStatus::Pending => 'bg-amber-500',
                                 BookingStatus::Confirmed => 'bg-emerald-500',
                                 BookingStatus::Completed => 'bg-brand-500',
-                                BookingStatus::Cancelled => 'bg-slate-400',
+                                BookingStatus::Cancelled => 'bg-red-400',
                                 default => 'bg-slate-400',
                             };
                         @endphp
@@ -139,7 +139,7 @@
                                                 @elseif ($st === BookingStatus::Cancelled && in_array($booking->payment_status, [PaymentStatus::RefundPending, PaymentStatus::Refunded], true))
                                                     <span class="inline-flex items-center rounded-full px-2.5 py-1 text-xs font-semibold ring-1 {{ match ($booking->payment_status) {
                                                         PaymentStatus::RefundPending => 'bg-amber-50 text-amber-950 ring-amber-200/90',
-                                                        PaymentStatus::Refunded => 'bg-slate-100 text-slate-700 ring-slate-200/80',
+                                                        PaymentStatus::Refunded => 'bg-red-100 text-red-700 ring-red-200/80',
                                                         default => 'bg-orange-50 text-orange-900 ring-orange-200/90',
                                                     } }}">
                                                         {{ __('muthowif.bookings.payment_prefix') }} {{ $booking->payment_status->label() }}

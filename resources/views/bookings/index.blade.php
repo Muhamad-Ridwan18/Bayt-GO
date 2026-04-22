@@ -22,9 +22,9 @@
             'badge' => 'bg-brand-100 text-brand-950 ring-brand-200/80',
         ],
         BookingStatus::Cancelled->value => [
-            'bar' => 'from-slate-300 via-slate-400 to-slate-500',
-            'glow' => 'shadow-slate-500/10',
-            'badge' => 'bg-slate-100 text-slate-800 ring-slate-200/80',
+            'bar' => 'from-red-300 via-red-400 to-red-500',
+            'glow' => 'shadow-red-500/10',
+            'badge' => 'bg-red-100 text-red-800 ring-red-200/80',
         ],
     ];
 @endphp
@@ -172,7 +172,7 @@
                                                         <span class="inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-semibold ring-1 {{ match ($booking->payment_status) {
                                                             PaymentStatus::Paid => 'bg-brand-50 text-brand-950 ring-brand-200/80',
                                                             PaymentStatus::RefundPending => 'bg-amber-50 text-amber-950 ring-amber-200/80',
-                                                            PaymentStatus::Refunded => 'bg-slate-100 text-slate-800 ring-slate-200/80',
+                                                            PaymentStatus::Refunded => 'bg-red-100 text-red-800 ring-red-200/80',
                                                             default => 'bg-orange-50 text-orange-950 ring-orange-200/80',
                                                         } }}">
                                                             {{ $booking->payment_status->label() }}
