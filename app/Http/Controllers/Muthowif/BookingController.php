@@ -5,6 +5,7 @@ namespace App\Http\Controllers\Muthowif;
 use App\Enums\BookingChangeRequestStatus;
 use App\Enums\BookingStatus;
 use App\Enums\PaymentStatus;
+use App\Events\CustomerBookingUpdated;
 use App\Http\Controllers\Controller;
 use App\Jobs\NotifyCustomerOfApprovedBooking;
 use App\Jobs\NotifyCustomerOfRescheduleApproved;
@@ -43,6 +44,28 @@ class BookingController extends Controller
         ]);
     }
 
+    public function indexLiveFragment(Request $request): View
+    {
+        $profile = $request->user()->muthowifProfile;
+        abort_unless($profile, 403);
+
+        $bookings = MuthowifBooking::query()
+            ->where('muthowif_profile_id', $profile->id)
+            ->with(['customer', 'muthowifProfile.services'])
+            ->withCount([
+                'rescheduleRequests as pending_reschedule_requests_count' => fn ($q) => $q->where('status', BookingChangeRequestStatus::Pending),
+            ])
+            ->orderByRaw("CASE status WHEN 'pending' THEN 0 WHEN 'confirmed' THEN 1 ELSE 2 END")
+            ->orderByDesc('starts_on')
+            ->orderByDesc('created_at')
+            ->paginate(20);
+
+        return view('muthowif.bookings.partials.index-live', [
+            'bookings' => $bookings,
+            'addonsById' => $this->addOnsKeyById($bookings),
+        ]);
+    }
+
     public function show(Request $request, MuthowifBooking $booking): View
     {
         $profile = $request->user()->muthowifProfile;
@@ -67,6 +90,30 @@ class BookingController extends Controller
         ]);
     }
 
+    public function showLiveFragment(Request $request, MuthowifBooking $booking): View
+    {
+        $profile = $request->user()->muthowifProfile;
+        abort_unless($profile && (string) $booking->muthowif_profile_id === (string) $profile->id, 403);
+
+        $booking->load([
+            'customer',
+            'muthowifProfile.services.addOns',
+            'refundRequests' => fn ($q) => $q->orderByDesc('created_at'),
+            'rescheduleRequests' => fn ($q) => $q->orderByDesc('created_at'),
+        ]);
+
+        $addonsById = collect();
+        $ids = collect($booking->selected_add_on_ids ?? [])->unique()->filter()->values();
+        if ($ids->isNotEmpty()) {
+            $addonsById = MuthowifServiceAddOn::query()->whereIn('id', $ids)->get()->keyBy('id');
+        }
+
+        return view('muthowif.bookings.partials.show-live', [
+            'booking' => $booking,
+            'addonsById' => $addonsById,
+        ]);
+    }
+
     public function confirm(Request $request, MuthowifBooking $booking): RedirectResponse
     {
         $this->authorize('confirm', $booking);
@@ -80,6 +127,7 @@ class BookingController extends Controller
             'total_amount' => $total,
         ]);
         NotifyCustomerOfApprovedBooking::dispatchAfterResponse((string) $booking->getKey());
+        broadcast(new CustomerBookingUpdated($booking->fresh()));
 
         return redirect()
             ->route('muthowif.bookings.index')
@@ -91,6 +139,7 @@ class BookingController extends Controller
         $this->authorize('cancelAsMuthowif', $booking);
 
         $booking->update(['status' => BookingStatus::Cancelled]);
+        broadcast(new CustomerBookingUpdated($booking->fresh()));
 
         return redirect()
             ->route('muthowif.bookings.index')
@@ -164,6 +213,7 @@ class BookingController extends Controller
         }
 
         NotifyCustomerOfRescheduleApproved::dispatchAfterResponse((string) $booking->getKey(), (string) $rescheduleRequest->getKey());
+        broadcast(new CustomerBookingUpdated($booking->fresh()));
 
         return redirect()
             ->route('muthowif.bookings.show', $booking)
@@ -193,6 +243,7 @@ class BookingController extends Controller
         ]);
 
         NotifyCustomerOfRescheduleRejected::dispatchAfterResponse((string) $booking->getKey(), (string) $rescheduleRequest->getKey());
+        broadcast(new CustomerBookingUpdated($booking->fresh()));
 
         return redirect()
             ->route('muthowif.bookings.show', $booking)

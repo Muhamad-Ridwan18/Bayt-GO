@@ -94,8 +94,10 @@ Route::middleware('auth')->group(function () {
     Route::get('/chat/conversations', [GlobalChatController::class, 'index'])->name('chat.conversations');
 
     Route::middleware([EnsureUserRole::class.':customer'])->prefix('bookings')->name('bookings.')->group(function () {
+        Route::get('live-index-fragment', [CustomerBookingController::class, 'indexLiveFragment'])->name('index.live-fragment');
         Route::get('/', [CustomerBookingController::class, 'index'])->name('index');
         Route::post('/', [CustomerBookingController::class, 'store'])->name('store');
+        Route::get('{booking}/fragment', [CustomerBookingController::class, 'showLiveFragment'])->name('show.fragment');
         Route::get('{booking}/pembayaran', [CustomerBookingController::class, 'payment'])->name('payment');
         Route::get('{booking}/payment-status', [CustomerBookingController::class, 'paymentStatus'])->name('payment.status');
         Route::get('{booking}/invoice', [CustomerBookingController::class, 'invoice'])->name('invoice');
@@ -126,7 +128,9 @@ Route::middleware('auth')->group(function () {
             Route::post('jadwal', [MuthowifScheduleController::class, 'store'])->name('jadwal.store');
             Route::delete('jadwal/{blockedDate}', [MuthowifScheduleController::class, 'destroy'])->name('jadwal.destroy');
 
+            Route::get('bookings/live-index-fragment', [MuthowifBookingController::class, 'indexLiveFragment'])->name('bookings.index.live-fragment');
             Route::get('bookings', [MuthowifBookingController::class, 'index'])->name('bookings.index');
+            Route::get('bookings/{booking}/fragment', [MuthowifBookingController::class, 'showLiveFragment'])->name('bookings.show.fragment');
             Route::get('bookings/{booking}/chat/messages', [BookingChatController::class, 'index'])->name('bookings.chat.messages');
             Route::get('bookings/{booking}/chat/unread-count', [BookingChatController::class, 'unreadCount'])->name('bookings.chat.unread-count');
             Route::post('bookings/{booking}/chat/messages', [BookingChatController::class, 'store'])->name('bookings.chat.messages.store');

@@ -6,6 +6,7 @@ use App\Enums\BookingChangeRequestStatus;
 use App\Enums\BookingStatus;
 use App\Enums\MuthowifServiceType;
 use App\Enums\MuthowifVerificationStatus;
+use App\Events\CustomerBookingUpdated;
 use App\Http\Controllers\Controller;
 use App\Jobs\NotifyCustomerOfRescheduleSubmitted;
 use App\Jobs\NotifyMuthowifOfNewBooking;
@@ -85,6 +86,37 @@ class BookingController extends Controller
         ]);
     }
 
+    public function indexLiveFragment(Request $request): View
+    {
+        $this->authorize('viewAny', MuthowifBooking::class);
+
+        $bookings = $request->user()
+            ->customerBookings()
+            ->with(['muthowifProfile.user', 'muthowifProfile.services', 'review'])
+            ->orderByDesc('starts_on')
+            ->orderByDesc('created_at')
+            ->paginate(15);
+
+        $addonsById = $this->addOnsKeyById($bookings);
+
+        $statusAggregates = MuthowifBooking::query()
+            ->where('customer_id', $request->user()->getKey())
+            ->toBase()
+            ->selectRaw('status, COUNT(*) as aggregate')
+            ->groupBy('status')
+            ->pluck('aggregate', 'status');
+
+        $bookingStatusCounts = collect(BookingStatus::cases())->mapWithKeys(
+            fn (BookingStatus $status) => [$status->value => (int) ($statusAggregates[$status->value] ?? 0)]
+        );
+
+        return view('bookings.partials.index-body', [
+            'bookings' => $bookings,
+            'addonsById' => $addonsById,
+            'bookingStatusCounts' => $bookingStatusCounts,
+        ]);
+    }
+
     public function show(Request $request, MuthowifBooking $booking): View
     {
         $this->authorize('view', $booking);
@@ -99,6 +131,28 @@ class BookingController extends Controller
         $addonsById = $this->addOnsKeyByIdForBooking($booking);
 
         return view('bookings.show', [
+            'booking' => $booking,
+            'addonsById' => $addonsById,
+            'refundEligibilityError' => BookingPostPayRules::canRequestRefund($booking),
+            'rescheduleEligibilityError' => BookingPostPayRules::canRequestReschedule($booking),
+            'refundPreview' => $this->refundPreviewForBooking($booking),
+        ]);
+    }
+
+    public function showLiveFragment(Request $request, MuthowifBooking $booking): View
+    {
+        $this->authorize('view', $booking);
+
+        $booking->load([
+            'muthowifProfile.user',
+            'muthowifProfile.services.addOns',
+            'review',
+            'refundRequests' => fn ($q) => $q->orderByDesc('created_at'),
+            'rescheduleRequests' => fn ($q) => $q->orderByDesc('created_at'),
+        ]);
+        $addonsById = $this->addOnsKeyByIdForBooking($booking);
+
+        return view('bookings.partials.show-body', [
             'booking' => $booking,
             'addonsById' => $addonsById,
             'refundEligibilityError' => BookingPostPayRules::canRequestRefund($booking),
@@ -245,6 +299,8 @@ class BookingController extends Controller
                 ->with('error', $result['error'] ?? __('bookings.flash.complete_error'));
         }
 
+        broadcast(new CustomerBookingUpdated($booking->fresh()));
+
         return redirect()
             ->route('bookings.show', $booking)
             ->with('status', $result['credited'] ? __('bookings.flash.complete_credited') : __('bookings.flash.complete_ok'));
@@ -268,6 +324,8 @@ class BookingController extends Controller
                 'review' => filled($validated['review'] ?? null) ? trim((string) $validated['review']) : null,
             ]
         );
+
+        broadcast(new CustomerBookingUpdated($booking->fresh()));
 
         return redirect()
             ->route('bookings.show', $booking)
@@ -424,6 +482,7 @@ class BookingController extends Controller
         });
 
         NotifyMuthowifOfNewBooking::dispatchAfterResponse((string) $booking->getKey());
+        broadcast(new CustomerBookingUpdated($booking->fresh()));
 
         return redirect()
             ->route('bookings.index')
@@ -508,6 +567,8 @@ class BookingController extends Controller
                 ->with('error', $e->getMessage());
         }
 
+        broadcast(new CustomerBookingUpdated($booking->fresh()));
+
         return redirect()
             ->route('bookings.show', $booking)
             ->with('status', __('bookings.flash.refund_submitted'));
@@ -581,6 +642,7 @@ class BookingController extends Controller
 
         NotifyMuthowifOfRescheduleRequest::dispatchAfterResponse((string) $booking->getKey(), (string) $rescheduleRequest->getKey());
         NotifyCustomerOfRescheduleSubmitted::dispatchAfterResponse((string) $booking->getKey(), (string) $rescheduleRequest->getKey());
+        broadcast(new CustomerBookingUpdated($booking->fresh()));
 
         return redirect()
             ->route('bookings.show', $booking)
@@ -595,6 +657,8 @@ class BookingController extends Controller
             $booking->bookingPayments()->where('status', 'pending')->delete();
             $booking->update(['status' => BookingStatus::Cancelled]);
         });
+
+        broadcast(new CustomerBookingUpdated($booking->fresh()));
 
         return redirect()
             ->route('bookings.index')

@@ -486,6 +486,116 @@ document.addEventListener('alpine:init', () => {
         },
     }));
 
+    Alpine.data('customerBookingLive', (config) => ({
+        userId: config.userId != null ? String(config.userId) : '',
+        bookingId: config.bookingId != null ? String(config.bookingId) : null,
+        liveMode: config.liveMode ?? 'customer_show',
+        fragmentUrl: config.fragmentUrl ?? null,
+        showUrl: config.showUrl ?? null,
+        paymentStatusUrl: config.paymentStatusUrl ?? null,
+        channelName: null,
+        refreshing: false,
+        pollTimer: null,
+
+        init() {
+            if (this.userId && window.Echo) {
+                this.channelName = `App.Models.User.${this.userId}`;
+                window.Echo.private(this.channelName).listen('.booking.updated', (e) => {
+                    this.onBookingSocket(e);
+                });
+            } else if (this.fragmentUrl) {
+                const interval = this.liveMode === 'customer_payment' ? 12000 : 25000;
+                this.pollTimer = window.setInterval(() => this.onPollTick(), interval);
+            }
+        },
+
+        onPollTick() {
+            if (this.liveMode === 'customer_payment') {
+                this.pollPaymentStatus();
+                return;
+            }
+            this.refreshFragment();
+        },
+
+        async pollPaymentStatus() {
+            if (!this.paymentStatusUrl || this.refreshing) return;
+            this.refreshing = true;
+            try {
+                const r = await fetch(this.paymentStatusUrl, {
+                    headers: { Accept: 'application/json', 'X-Requested-With': 'XMLHttpRequest' },
+                    credentials: 'same-origin',
+                });
+                if (!r.ok) return;
+                const data = await r.json();
+                if (data.is_paid || data.booking_status === 'cancelled') {
+                    if (this.showUrl) window.location.replace(this.showUrl);
+                }
+            } catch {
+                /* ignore */
+            } finally {
+                this.refreshing = false;
+            }
+        },
+
+        onBookingSocket(e) {
+            if (!e?.booking_id) return;
+            const isIndex = this.liveMode === 'customer_index' || this.liveMode === 'muthowif_index';
+            if (!isIndex && this.bookingId && String(e.booking_id) !== String(this.bookingId)) {
+                return;
+            }
+            if (this.liveMode === 'customer_payment') {
+                if (this.showUrl && (e.payment_status === 'paid' || e.status === 'cancelled')) {
+                    window.location.replace(this.showUrl);
+                }
+                return;
+            }
+            this.refreshFragment();
+        },
+
+        csrf() {
+            return document.querySelector('meta[name="csrf-token"]')?.getAttribute('content') ?? '';
+        },
+
+        async refreshFragment() {
+            if (!this.fragmentUrl || this.refreshing) return;
+            this.refreshing = true;
+            try {
+                let url = this.fragmentUrl;
+                if (this.liveMode === 'customer_index' || this.liveMode === 'muthowif_index') {
+                    url += window.location.search || '';
+                }
+                const r = await fetch(url, {
+                    headers: {
+                        Accept: 'text/html',
+                        'X-Requested-With': 'XMLHttpRequest',
+                        'X-CSRF-TOKEN': this.csrf(),
+                    },
+                    credentials: 'same-origin',
+                });
+                if (!r.ok) return;
+                const html = await r.text();
+                const root = this.$refs.liveRoot;
+                if (!root) return;
+                if (typeof Alpine.destroyTree === 'function') {
+                    Alpine.destroyTree(root);
+                }
+                root.innerHTML = html;
+                Alpine.initTree(root);
+            } catch (err) {
+                console.error(err);
+            } finally {
+                this.refreshing = false;
+            }
+        },
+
+        destroy() {
+            if (this.pollTimer) window.clearInterval(this.pollTimer);
+            if (window.Echo && this.channelName) {
+                window.Echo.leave(this.channelName);
+            }
+        },
+    }));
+
     Alpine.data('muthowifDashboardCalendar', (config) => ({
         url: config.url,
         dashboardUrl: config.dashboardUrl,

@@ -93,7 +93,17 @@
 @endphp
 
 <x-app-layout>
-    <div class="relative min-h-[calc(100vh-4rem)] overflow-x-hidden bg-slate-50">
+    <div
+        class="relative min-h-[calc(100vh-4rem)] overflow-x-hidden bg-slate-50"
+        x-data="customerBookingLive({
+            userId: @js(auth()->id()),
+            bookingId: @js($booking->getKey()),
+            liveMode: 'customer_payment',
+            fragmentUrl: null,
+            showUrl: @js(route('bookings.show', $booking)),
+            paymentStatusUrl: @js(route('bookings.payment.status', $booking)),
+        })"
+    >
         <div class="pointer-events-none absolute inset-0 overflow-hidden" aria-hidden="true">
             <div class="absolute -right-24 -top-24 h-96 w-96 rounded-full bg-brand-400/12 blur-3xl"></div>
             <div class="absolute -left-20 top-40 h-80 w-80 rounded-full bg-emerald-400/10 blur-3xl"></div>
