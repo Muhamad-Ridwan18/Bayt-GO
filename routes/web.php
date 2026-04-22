@@ -129,6 +129,7 @@ Route::middleware('auth')->group(function () {
             Route::delete('jadwal/{blockedDate}', [MuthowifScheduleController::class, 'destroy'])->name('jadwal.destroy');
 
             Route::get('bookings/live-index-fragment', [MuthowifBookingController::class, 'indexLiveFragment'])->name('bookings.index.live-fragment');
+            Route::get('bookings/pending-incoming-count', [MuthowifBookingController::class, 'pendingIncomingCount'])->name('bookings.pending-incoming-count');
             Route::get('bookings', [MuthowifBookingController::class, 'index'])->name('bookings.index');
             Route::get('bookings/{booking}/fragment', [MuthowifBookingController::class, 'showLiveFragment'])->name('bookings.show.fragment');
             Route::get('bookings/{booking}/chat/messages', [BookingChatController::class, 'index'])->name('bookings.chat.messages');

@@ -1,7 +1,21 @@
 @php
+    use App\Enums\BookingStatus;
+    use App\Models\MuthowifBooking;
+
     $contactRaw = (string) (config('app.contact_whatsapp') ?: config('app.contact_phone'));
     $contactDigits = preg_replace('/\D+/', '', $contactRaw ?? '') ?? '';
     $contactLink = $contactDigits !== '' ? 'https://wa.me/'.$contactDigits : null;
+
+    $muthowifPendingIncomingCount = 0;
+    if (Auth::check() && Auth::user()->isVerifiedMuthowif()) {
+        $mpNav = Auth::user()->muthowifProfile;
+        if ($mpNav) {
+            $muthowifPendingIncomingCount = MuthowifBooking::query()
+                ->where('muthowif_profile_id', $mpNav->id)
+                ->where('status', BookingStatus::Pending)
+                ->count();
+        }
+    }
 @endphp
 
 <nav x-data="{ open: false }" class="relative z-[90] bg-white/90 backdrop-blur border-b border-slate-200/80 shadow-sm">
@@ -55,7 +69,21 @@
                             {{ __('nav.day_off') }}
                         </x-nav-link>
                         <x-nav-link :href="route('muthowif.bookings.index')" :active="request()->routeIs('muthowif.bookings.*')">
-                            {{ __('nav.booking_requests') }}
+                            <span class="inline-flex items-center gap-2">
+                                {{ __('nav.booking_requests') }}
+                                <span
+                                    x-data="muthowifPendingBookingsBadge({
+                                        userId: @js(auth()->id()),
+                                        countUrl: @js(route('muthowif.bookings.pending-incoming-count')),
+                                        initialCount: @js($muthowifPendingIncomingCount),
+                                    })"
+                                    x-show="count > 0"
+                                    x-cloak
+                                    class="inline-flex min-h-[1.125rem] min-w-[1.125rem] items-center justify-center rounded-full bg-rose-600 px-1 text-[10px] font-bold leading-none text-white shadow-sm"
+                                    x-bind:aria-label="count > 0 ? '{{ __('nav.booking_requests') }}: ' + displayLabel : null"
+                                    x-text="displayLabel"
+                                ></span>
+                            </span>
                         </x-nav-link>
                     @endif
                     @if ($contactLink)
@@ -154,7 +182,21 @@
                     {{ __('nav.day_off') }}
                 </x-responsive-nav-link>
                 <x-responsive-nav-link :href="route('muthowif.bookings.index')" :active="request()->routeIs('muthowif.bookings.*')">
-                    {{ __('nav.booking_requests') }}
+                    <span class="inline-flex items-center gap-2">
+                        {{ __('nav.booking_requests') }}
+                        <span
+                            x-data="muthowifPendingBookingsBadge({
+                                userId: @js(auth()->id()),
+                                countUrl: @js(route('muthowif.bookings.pending-incoming-count')),
+                                initialCount: @js($muthowifPendingIncomingCount),
+                            })"
+                            x-show="count > 0"
+                            x-cloak
+                            class="inline-flex min-h-[1.125rem] min-w-[1.125rem] items-center justify-center rounded-full bg-rose-600 px-1 text-[10px] font-bold leading-none text-white shadow-sm"
+                            x-bind:aria-label="count > 0 ? '{{ __('nav.booking_requests') }}: ' + displayLabel : null"
+                            x-text="displayLabel"
+                        ></span>
+                    </span>
                 </x-responsive-nav-link>
             @endif
             @if ($contactLink)

@@ -13,6 +13,7 @@ use App\Jobs\NotifyCustomerOfRescheduleRejected;
 use App\Models\BookingRescheduleRequest;
 use App\Models\MuthowifBooking;
 use App\Models\MuthowifServiceAddOn;
+use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Pagination\LengthAwarePaginator;
@@ -42,6 +43,19 @@ class BookingController extends Controller
             'bookings' => $bookings,
             'addonsById' => $this->addOnsKeyById($bookings),
         ]);
+    }
+
+    public function pendingIncomingCount(Request $request): JsonResponse
+    {
+        $profile = $request->user()->muthowifProfile;
+        abort_unless($profile, 403);
+
+        $n = MuthowifBooking::query()
+            ->where('muthowif_profile_id', $profile->id)
+            ->where('status', BookingStatus::Pending)
+            ->count();
+
+        return response()->json(['pending_count' => $n]);
     }
 
     public function indexLiveFragment(Request $request): View

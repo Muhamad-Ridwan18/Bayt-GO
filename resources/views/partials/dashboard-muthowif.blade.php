@@ -129,7 +129,21 @@
                 <span class="flex h-5 w-5 shrink-0 items-center justify-center rounded-md bg-violet-100 text-violet-700" aria-hidden="true">
                     <svg class="h-3.5 w-3.5" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M4.5 2A1.5 1.5 0 003 3.5v13A1.5 1.5 0 004.5 18h11a1.5 1.5 0 001.5-1.5V7.621a1.5 1.5 0 00-.44-1.06l-4.12-4.122A1.5 1.5 0 0011.378 2H4.5zm2.25 8.5a.75.75 0 000 1.5h6.75a.75.75 0 000-1.5H6.75zm0 2.5a.75.75 0 000 1.5h6.75a.75.75 0 000-1.5H6.75z" clip-rule="evenodd" /></svg>
                 </span>
-                {{ __('dashboard_muthowif.nav_bookings') }}
+                <span class="inline-flex items-center gap-1.5">
+                    {{ __('dashboard_muthowif.nav_bookings') }}
+                    <span
+                        x-data="muthowifPendingBookingsBadge({
+                            userId: @js(auth()->id()),
+                            countUrl: @js(route('muthowif.bookings.pending-incoming-count')),
+                            initialCount: @js((int) $mp->pending_bookings_count),
+                        })"
+                        x-show="count > 0"
+                        x-cloak
+                        class="inline-flex min-h-[1.125rem] min-w-[1.125rem] items-center justify-center rounded-full bg-rose-600 px-1 text-[10px] font-bold leading-none text-white shadow-sm"
+                        x-bind:aria-label="count > 0 ? '{{ __('dashboard_muthowif.nav_bookings') }}: ' + displayLabel : null"
+                        x-text="displayLabel"
+                    ></span>
+                </span>
             </a>
             <a href="#muthowif-schedule" class="inline-flex snap-start shrink-0 items-center gap-1.5 rounded-lg border border-slate-200/90 bg-white px-2.5 py-1.5 text-xs font-semibold text-slate-800 shadow-sm transition hover:border-brand-200 hover:bg-brand-50/80 sm:px-3 sm:text-[13px]">
                 <span class="flex h-5 w-5 shrink-0 items-center justify-center rounded-md bg-amber-100 text-amber-800" aria-hidden="true">

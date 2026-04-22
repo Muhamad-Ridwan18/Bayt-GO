@@ -34,6 +34,62 @@ document.addEventListener('alpine:init', () => {
         },
     }));
 
+    Alpine.data('muthowifPendingBookingsBadge', (config) => ({
+        userId: config.userId != null ? String(config.userId) : '',
+        countUrl: config.countUrl ?? '',
+        count: Number(config.initialCount ?? 0) || 0,
+        pollTimer: null,
+        channelName: null,
+
+        get displayLabel() {
+            if (this.count > 99) {
+                return '99+';
+            }
+            return String(this.count);
+        },
+
+        init() {
+            if (this.userId && window.Echo) {
+                this.channelName = `App.Models.User.${this.userId}`;
+                window.Echo.private(this.channelName).listen('.booking.updated', () => {
+                    void this.refresh();
+                });
+            } else if (this.countUrl) {
+                this.pollTimer = window.setInterval(() => void this.refresh(), 45000);
+            }
+        },
+
+        async refresh() {
+            if (!this.countUrl) {
+                return;
+            }
+            try {
+                const r = await fetch(this.countUrl, {
+                    headers: { Accept: 'application/json', 'X-Requested-With': 'XMLHttpRequest' },
+                    credentials: 'same-origin',
+                });
+                if (!r.ok) {
+                    return;
+                }
+                const data = await r.json();
+                if (typeof data.pending_count === 'number') {
+                    this.count = data.pending_count;
+                }
+            } catch {
+                /* ignore */
+            }
+        },
+
+        destroy() {
+            if (this.pollTimer) {
+                window.clearInterval(this.pollTimer);
+            }
+            if (window.Echo && this.channelName) {
+                window.Echo.leave(this.channelName);
+            }
+        },
+    }));
+
     Alpine.data('globalChatPanel', (config) => ({
         listUrl: config.listUrl,
         userId: config.userId,
