@@ -120,11 +120,15 @@
                                 <span
                                     x-show="m.is_me"
                                     x-cloak
-                                    class="inline-flex shrink-0 select-none text-[10px] font-semibold leading-none opacity-90"
+                                    class="inline-flex shrink-0 items-center"
+                                    :class="m.is_read ? 'text-[#53BDEB]' : 'text-white/55'"
                                     :title="m.is_read ? 'Dibaca' : 'Terkirim'"
+                                    aria-hidden="true"
                                 >
-                                    <span x-show="m.is_read">✓✓</span>
-                                    <span x-show="!m.is_read">✓</span>
+                                    <svg class="h-[14px] w-[18px]" viewBox="0 0 18 11" fill="none" stroke="currentColor" stroke-width="1.85" stroke-linecap="round" stroke-linejoin="round">
+                                        <path d="M1 5.5l3.5 3.5L9.5 1.5"/>
+                                        <path d="M5.5 5.5L9 9l7-7.5"/>
+                                    </svg>
                                 </span>
                             </div>
                         </div>
