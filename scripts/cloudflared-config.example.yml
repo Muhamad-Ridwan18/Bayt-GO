@@ -1,0 +1,14 @@
+# Salin ke:  %USERPROFILE%\.cloudflared\config.yml
+# Setelah: cloudflared tunnel login
+#         cloudflared tunnel create NAMA_TUNNEL
+#         salin TUNNEL_ID dan file credentials JSON.
+#
+# Ganti: tunnel id, path credentials, hostname Cloudflare milikmu, lokal tujuan.
+
+# tunnel: TUNNEL_ID_GUID
+# credentials-file: C:\Users\NAMA_USER\.cloudflared\TUNNEL_ID.json
+#
+# ingress:
+#   - hostname: app.domainkamu.com
+#     service: http://127.0.0.1:8000
+#   - service: http_status:404

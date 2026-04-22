@@ -55,6 +55,8 @@ class BookingChatController extends Controller
 
         $message->load('sender:id,name');
 
+        broadcast(new \App\Events\BookingChatUpdated($booking))->toOthers();
+
         return response()->json([
             'message' => $this->serializeMessage($message, $request, $booking),
             'chat_open' => $booking->fresh()->isBookingChatOpen(),

@@ -55,5 +55,8 @@
                 {{ $slot }}
             </main>
         </div>
+        @auth
+            @include('partials.global-chat')
+        @endauth
     </body>
 </html>

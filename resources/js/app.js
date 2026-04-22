@@ -34,179 +34,239 @@ document.addEventListener('alpine:init', () => {
         },
     }));
 
-    Alpine.data('bookingChatPanel', (config) => ({
+    Alpine.data('globalChatPanel', (config) => ({
+        listUrl: config.listUrl,
+        userId: config.userId,
+        locale: config.locale,
+        labels: config.labels,
+        
+        isPanelExpanded: false,
+        view: 'list', // 'list' | 'chat'
+        hasUnread: false,
+        
+        conversations: [],
+        loadingList: false,
+        
+        activeConversation: null,
         messages: [],
         body: '',
         imageFile: null,
         imagePreviewUrl: null,
-        chatOpen: config.initialOpen,
-        loading: false,
+        loadingChat: false,
         sending: false,
         error: '',
-        fetchUrl: config.fetchUrl,
-        storeUrl: config.storeUrl,
-        locale: config.locale,
-        introOpen: config.introOpen,
-        introClosed: config.introClosed,
-        labels: config.labels,
-        pollTimer: null,
+        
+        pollTimerList: null,
+
+        get headerTitle() {
+            if (this.view === 'chat' && this.activeConversation) {
+                return this.activeConversation.other_name;
+            }
+            return this.labels.title;
+        },
+        
+        get headerSubtitle() {
+            if (this.view === 'chat' && this.activeConversation) {
+                return `${this.activeConversation.booking_code} • ${this.activeConversation.service_type}`;
+            }
+            return '';
+        },
+
+        togglePanel() {
+            this.isPanelExpanded = !this.isPanelExpanded;
+            if (this.isPanelExpanded) {
+                this.hasUnread = false;
+                if (this.view === 'chat') {
+                    this.scrollToLatest({ force: true });
+                } else {
+                    this.loadList();
+                }
+            }
+        },
+        
+        openChat(conv) {
+            this.activeConversation = conv;
+            this.view = 'chat';
+            this.messages = [];
+            this.error = '';
+            this.body = '';
+            this.clearImage();
+            this.loadChatMessages();
+            this.subscribeToBooking(conv.id);
+        },
+        
+        closeChat() {
+            if (this.activeConversation) {
+                this.unsubscribeFromBooking(this.activeConversation.id);
+            }
+            this.activeConversation = null;
+            this.view = 'list';
+            this.loadList();
+        },
+
+        async loadList() {
+            this.loadingList = true;
+            try {
+                const r = await fetch(this.listUrl, { headers: { 'Accept': 'application/json', 'X-Requested-With': 'XMLHttpRequest' }});
+                if (r.ok) {
+                    const data = await r.json();
+                    this.conversations = data.conversations || [];
+                }
+            } catch (e) {
+                console.error(e);
+            } finally {
+                this.loadingList = false;
+            }
+        },
+
         pickImage(event) {
             const input = event.target;
             const file = input.files && input.files[0] ? input.files[0] : null;
-            if (this.imagePreviewUrl) {
-                URL.revokeObjectURL(this.imagePreviewUrl);
-                this.imagePreviewUrl = null;
-            }
+            if (this.imagePreviewUrl) URL.revokeObjectURL(this.imagePreviewUrl);
             this.imageFile = file;
             this.imagePreviewUrl = file ? URL.createObjectURL(file) : null;
+            input.value = '';
         },
+        
         clearImage() {
             this.imageFile = null;
             if (this.imagePreviewUrl) {
                 URL.revokeObjectURL(this.imagePreviewUrl);
                 this.imagePreviewUrl = null;
             }
-            const input = this.$refs.chatImageInput;
-            if (input) {
-                input.value = '';
-            }
+            if (this.$refs.chatImageInput) this.$refs.chatImageInput.value = '';
         },
-        formatTime(iso) {
-            if (!iso) {
-                return '';
-            }
+
+        formatTimeShort(iso) {
+            if (!iso) return '';
             const d = new Date(iso);
-            if (Number.isNaN(d.getTime())) {
-                return '';
-            }
-            return d.toLocaleString(this.locale, {
-                day: '2-digit',
-                month: 'short',
-                hour: '2-digit',
-                minute: '2-digit',
-            });
+            if (Number.isNaN(d.getTime())) return '';
+            return d.toLocaleTimeString(this.locale, { hour: '2-digit', minute: '2-digit' });
         },
+
         csrf() {
             return document.querySelector('meta[name="csrf-token"]')?.getAttribute('content') ?? '';
         },
+        
         scrollToLatest(options = {}) {
             const force = options.force === true;
             const el = this.$refs.chatScroll;
-            if (!el || this.messages.length === 0) {
-                return;
-            }
-            const threshold = 120;
+            if (!el || this.messages.length === 0) return;
+            const threshold = 150;
             const atBottom = el.scrollHeight - el.scrollTop - el.clientHeight <= threshold;
-            if (!force && !atBottom) {
-                return;
-            }
-            this.$nextTick(() => {
-                requestAnimationFrame(() => {
-                    requestAnimationFrame(() => {
-                        const box = this.$refs.chatScroll;
-                        if (box) {
-                            box.scrollTop = box.scrollHeight;
-                        }
-                    });
-                });
-            });
+            if (!force && !atBottom) return;
+            this.$nextTick(() => requestAnimationFrame(() => requestAnimationFrame(() => {
+                if (this.$refs.chatScroll) this.$refs.chatScroll.scrollTop = this.$refs.chatScroll.scrollHeight;
+            })));
         },
-        async load() {
-            if (this.loading) {
-                return;
-            }
-            this.loading = true;
+
+        async loadChatMessages(isBackground = false) {
+            if (!this.activeConversation) return;
+            if (!isBackground) this.loadingChat = true;
             this.error = '';
             const prevLastId = this.messages.length ? this.messages[this.messages.length - 1].id : null;
+            
             try {
-                const r = await fetch(this.fetchUrl, {
-                    headers: {
-                        Accept: 'application/json',
-                        'X-Requested-With': 'XMLHttpRequest',
-                    },
+                const r = await fetch(this.activeConversation.fetchUrl, {
+                    headers: { 'Accept': 'application/json', 'X-Requested-With': 'XMLHttpRequest' },
                     credentials: 'same-origin',
                 });
-                if (!r.ok) {
-                    throw new Error(this.labels.loadError);
-                }
+                if (!r.ok) throw new Error(this.labels.loadError);
                 const data = await r.json();
                 this.messages = data.messages ?? [];
-                this.chatOpen = !!data.chat_open;
+                
+                // Update open state just in case
+                if (data.chat_open !== undefined) this.activeConversation.is_open = !!data.chat_open;
+                
                 const nextLastId = this.messages.length ? this.messages[this.messages.length - 1].id : null;
                 const hasNewMessage = nextLastId !== prevLastId && this.messages.length > 0;
-                this.scrollToLatest({ force: hasNewMessage });
+                
+                if (hasNewMessage && prevLastId !== null && (!this.isPanelExpanded || this.view !== 'chat')) {
+                    this.hasUnread = true;
+                }
+                if (this.isPanelExpanded && this.view === 'chat') {
+                    this.scrollToLatest({ force: hasNewMessage });
+                }
             } catch (e) {
                 this.error = e instanceof Error ? e.message : this.labels.loadError;
             } finally {
-                this.loading = false;
+                this.loadingChat = false;
             }
         },
+
         async send() {
             const text = this.body.trim();
             const hasImage = !!this.imageFile;
-            if ((!text && !hasImage) || !this.chatOpen || this.sending) {
-                return;
-            }
+            if ((!text && !hasImage) || !this.activeConversation?.is_open || this.sending) return;
+            
             this.sending = true;
             this.error = '';
             try {
                 let r;
                 if (hasImage) {
                     const fd = new FormData();
-                    if (text) {
-                        fd.append('body', text);
-                    }
+                    if (text) fd.append('body', text);
                     fd.append('image', this.imageFile);
-                    r = await fetch(this.storeUrl, {
+                    r = await fetch(this.activeConversation.storeUrl, {
                         method: 'POST',
-                        headers: {
-                            Accept: 'application/json',
-                            'X-CSRF-TOKEN': this.csrf(),
-                            'X-Requested-With': 'XMLHttpRequest',
-                        },
+                        headers: { 'Accept': 'application/json', 'X-CSRF-TOKEN': this.csrf(), 'X-Requested-With': 'XMLHttpRequest' },
                         credentials: 'same-origin',
                         body: fd,
                     });
                 } else {
-                    r = await fetch(this.storeUrl, {
+                    r = await fetch(this.activeConversation.storeUrl, {
                         method: 'POST',
-                        headers: {
-                            Accept: 'application/json',
-                            'Content-Type': 'application/json',
-                            'X-CSRF-TOKEN': this.csrf(),
-                            'X-Requested-With': 'XMLHttpRequest',
-                        },
+                        headers: { 'Accept': 'application/json', 'Content-Type': 'application/json', 'X-CSRF-TOKEN': this.csrf(), 'X-Requested-With': 'XMLHttpRequest' },
                         credentials: 'same-origin',
                         body: JSON.stringify({ body: text }),
                     });
                 }
                 const data = await r.json().catch(() => ({}));
                 if (!r.ok) {
-                    const msg =
-                        data.message ??
-                        data.errors?.image?.[0] ??
-                        data.errors?.body?.[0] ??
-                        this.labels.sendError;
+                    const msg = data.message ?? data.errors?.image?.[0] ?? data.errors?.body?.[0] ?? this.labels.sendError;
                     throw new Error(typeof msg === 'string' ? msg : this.labels.sendError);
                 }
+                
                 this.body = '';
                 this.clearImage();
-                this.chatOpen = !!data.chat_open;
-                await this.load();
+                if (data.chat_open !== undefined) this.activeConversation.is_open = !!data.chat_open;
+                await this.loadChatMessages(true);
             } catch (e) {
                 this.error = e instanceof Error ? e.message : this.labels.sendError;
             } finally {
                 this.sending = false;
             }
         },
-        init() {
-            this.load();
-            this.pollTimer = window.setInterval(() => this.load(), 6000);
-        },
-        destroy() {
-            if (this.pollTimer) {
-                window.clearInterval(this.pollTimer);
+        
+        subscribeToBooking(bookingId) {
+            if (window.Echo) {
+                window.Echo.private(`booking.chat.${bookingId}`)
+                    .listen('BookingChatUpdated', (e) => {
+                        this.loadChatMessages(true);
+                    });
             }
+        },
+        
+        unsubscribeFromBooking(bookingId) {
+            if (window.Echo) {
+                window.Echo.leave(`booking.chat.${bookingId}`);
+            }
+        },
+
+        init() {
+            this.loadList();
+            this.pollTimerList = window.setInterval(() => {
+                if (!this.isPanelExpanded || this.view === 'list') {
+                    this.loadList();
+                } else if (this.view === 'chat' && !window.Echo) {
+                    this.loadChatMessages(true);
+                }
+            }, 6000);
+        },
+        
+        destroy() {
+            if (this.pollTimerList) window.clearInterval(this.pollTimerList);
+            if (this.activeConversation) this.unsubscribeFromBooking(this.activeConversation.id);
         },
     }));
 

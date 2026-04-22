@@ -90,6 +90,8 @@ Route::middleware('auth')->group(function () {
     Route::patch('/profile/public', [ProfileController::class, 'updatePublicProfile'])->name('profile.public.update');
     Route::delete('/profile', [ProfileController::class, 'destroy'])->name('profile.destroy');
 
+    Route::get('/chat/conversations', [\App\Http\Controllers\GlobalChatController::class, 'index'])->name('chat.conversations');
+
     Route::middleware([EnsureUserRole::class.':customer'])->prefix('bookings')->name('bookings.')->group(function () {
         Route::get('/', [CustomerBookingController::class, 'index'])->name('index');
         Route::post('/', [CustomerBookingController::class, 'store'])->name('store');

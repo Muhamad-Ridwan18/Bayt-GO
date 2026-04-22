@@ -172,14 +172,6 @@
                 </div>
             </div>
 
-            @if ($b->isBookingChatOpen() || ($st === BookingStatus::Completed && $b->isPaid()))
-                @include('bookings.partials.booking-chat', [
-                    'booking' => $b,
-                    'fetchUrl' => route('muthowif.bookings.chat.messages', $b),
-                    'storeUrl' => route('muthowif.bookings.chat.messages.store', $b),
-                ])
-            @endif
-
             @if ($b->refundRequests->isNotEmpty())
                 <div class="rounded-2xl border border-slate-200/90 bg-gradient-to-b from-white to-slate-50/80 p-5 shadow-sm ring-1 ring-slate-100 sm:p-6">
                     <h3 class="font-semibold text-slate-900">{{ __('muthowif.booking_show.refund_title') }}</h3>
