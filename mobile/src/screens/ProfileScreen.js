@@ -17,6 +17,7 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { StatusBar } from 'expo-status-bar';
 import { apiClient } from '../api/client';
 import * as ImagePicker from 'expo-image-picker';
+import SwipeableScreen from '../components/SwipeableScreen';
 
 const { width } = Dimensions.get('window');
 
@@ -213,6 +214,7 @@ export default function ProfileScreen({ user, onLogout, navigation }) {
   }
 
   return (
+    <SwipeableScreen onSwipeBack={() => navigation.goBack()}>
     <SafeAreaView style={styles.container}>
       <StatusBar style="dark" />
       
@@ -428,6 +430,7 @@ export default function ProfileScreen({ user, onLogout, navigation }) {
         </TouchableOpacity>
       </View>
     </SafeAreaView>
+    </SwipeableScreen>
   );
 }
 

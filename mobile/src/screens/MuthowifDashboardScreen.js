@@ -13,6 +13,7 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { StatusBar } from 'expo-status-bar';
 import { Calendar, LocaleConfig } from 'react-native-calendars';
 import { apiClient } from '../api/client';
+import { Skeleton, SkeletonCard, SkeletonText } from '../components/Skeleton';
 
 LocaleConfig.locales['id'] = {
   monthNames: ['Januari','Februari','Maret','April','Mei','Juni','Juli','Agustus','September','Oktober','November','Desember'],
@@ -30,7 +31,8 @@ export default function MuthowifDashboardScreen({ user, onLogout, navigation }) 
   const [refreshing, setRefreshing] = useState(false);
   const [dashboardData, setDashboardData] = useState({
     stats: [],
-    recent_schedules: []
+    recent_schedules: [],
+    unread_messages: 0,
   });
   const [markedDates, setMarkedDates] = useState({});
 
@@ -63,10 +65,64 @@ export default function MuthowifDashboardScreen({ user, onLogout, navigation }) 
 
   useEffect(() => {
     fetchData();
+    const interval = setInterval(() => {
+      apiClient.getMuthowifDashboardData(user.token).then(data => {
+        setDashboardData(prev => ({ ...prev, unread_messages: data.unread_messages }));
+      }).catch(() => {});
+    }, 5000);
+    return () => clearInterval(interval);
   }, []);
 
   if (loading) {
-    return <View style={styles.center}><ActivityIndicator size="large" color="#0984e3" /></View>;
+    return (
+      <SafeAreaView style={styles.container}>
+        <ScrollView contentContainerStyle={styles.scrollContent} showsVerticalScrollIndicator={false}>
+          {/* Profile card skeleton */}
+          <SkeletonCard style={{ flexDirection: 'row', alignItems: 'center', gap: 14, marginBottom: 25 }}>
+            <Skeleton width={56} height={56} borderRadius={16} />
+            <View style={{ flex: 1 }}>
+              <SkeletonText width="40%" height={11} />
+              <SkeletonText width="65%" height={18} style={{ marginBottom: 0 }} />
+            </View>
+          </SkeletonCard>
+          {/* Wallet card skeleton */}
+          <Skeleton width="100%" height={100} borderRadius={24} style={{ marginBottom: 25 }} />
+          {/* Shortcut grid */}
+          <View style={{ flexDirection: 'row', justifyContent: 'space-between', marginBottom: 30 }}>
+            {[1,2,3,4].map(i => (
+              <View key={i} style={{ alignItems: 'center', width: '22%' }}>
+                <Skeleton width={55} height={55} borderRadius={18} style={{ marginBottom: 8 }} />
+                <Skeleton width="80%" height={11} borderRadius={6} />
+              </View>
+            ))}
+          </View>
+          {/* Stats row */}
+          <View style={{ flexDirection: 'row', gap: 15, marginBottom: 30 }}>
+            {[1,2].map(i => (
+              <SkeletonCard key={i} style={{ flex: 1, marginBottom: 0 }}>
+                <SkeletonText width="50%" height={20} />
+                <SkeletonText width="70%" height={11} style={{ marginBottom: 0 }} />
+              </SkeletonCard>
+            ))}
+          </View>
+          {/* Calendar placeholder */}
+          <Skeleton width="100%" height={280} borderRadius={24} style={{ marginBottom: 30 }} />
+          {/* Task list */}
+          {[1,2,3].map(i => (
+            <SkeletonCard key={i}>
+              <View style={{ flexDirection: 'row', alignItems: 'center', gap: 14 }}>
+                <Skeleton width={40} height={40} borderRadius={12} />
+                <View style={{ flex: 1 }}>
+                  <SkeletonText width="60%" height={14} />
+                  <SkeletonText width="40%" height={11} style={{ marginBottom: 0 }} />
+                </View>
+                <Skeleton width={60} height={26} borderRadius={8} />
+              </View>
+            </SkeletonCard>
+          ))}
+        </ScrollView>
+      </SafeAreaView>
+    );
   }
 
   return (
@@ -203,7 +259,17 @@ export default function MuthowifDashboardScreen({ user, onLogout, navigation }) 
           <View style={styles.navActive}><Text style={{fontSize:22}}>🏠</Text></View>
           <Text style={styles.navLabelActive}>Home</Text>
         </TouchableOpacity>
-        <TouchableOpacity style={styles.navItem} onPress={() => navigation.navigate('ChatList')}><Text style={{fontSize:22}}>💬</Text><Text style={styles.navLabel}>Pesan</Text></TouchableOpacity>
+        <TouchableOpacity style={styles.navItem} onPress={() => navigation.navigate('ChatList')}>
+          <View>
+            <Text style={{fontSize:22}}>💬</Text>
+            {dashboardData.unread_messages > 0 && (
+              <View style={styles.badgeTab}>
+                <Text style={styles.badgeTabText}>{dashboardData.unread_messages > 99 ? '99+' : dashboardData.unread_messages}</Text>
+              </View>
+            )}
+          </View>
+          <Text style={styles.navLabel}>Pesan</Text>
+        </TouchableOpacity>
         <TouchableOpacity style={styles.navItem} onPress={() => navigation.navigate('Wallet')}><Text style={{fontSize:22}}>👛</Text><Text style={styles.navLabel}>Dompet</Text></TouchableOpacity>
         <TouchableOpacity style={styles.navItem} onPress={() => navigation.navigate('Profile')}><Text style={{fontSize:22}}>👤</Text><Text style={styles.navLabel}>Profil</Text></TouchableOpacity>
       </View>
@@ -332,4 +398,21 @@ const styles = StyleSheet.create({
   navActive: { backgroundColor: '#F0F9FF', width: 45, height: 45, borderRadius: 15, justifyContent: 'center', alignItems: 'center', marginBottom: 4 },
   navLabel: { fontSize: 10, fontWeight: '700', color: '#94A3B8' },
   navLabelActive: { fontSize: 10, fontWeight: '800', color: '#0984e3' },
+  badgeTab: {
+    position: 'absolute',
+    top: -4,
+    right: -8,
+    backgroundColor: '#EF4444',
+    borderRadius: 8,
+    minWidth: 16,
+    height: 16,
+    justifyContent: 'center',
+    alignItems: 'center',
+    paddingHorizontal: 4,
+  },
+  badgeTabText: {
+    color: '#FFFFFF',
+    fontSize: 8,
+    fontWeight: '800',
+  }
 });

@@ -13,6 +13,8 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { StatusBar } from 'expo-status-bar';
 import { Ionicons } from '@expo/vector-icons';
 import { apiClient } from '../api/client';
+import SwipeableScreen from '../components/SwipeableScreen';
+import { Skeleton, SkeletonText } from '../components/Skeleton';
 
 const { width } = Dimensions.get('window');
 
@@ -101,26 +103,46 @@ export default function ChatListScreen({ user, navigation }) {
 
   const totalUnread = conversations.reduce((s, c) => s + (c.unread_count ?? 0), 0);
 
+  // Skeleton saat loading
+  const ConvSkeleton = () => (
+    <View style={{ flexDirection: 'row', alignItems: 'center', paddingHorizontal: 20, paddingVertical: 14, borderBottomWidth: 1, borderBottomColor: '#F8FAFC' }}>
+      <Skeleton width={52} height={52} borderRadius={18} style={{ marginRight: 14, flexShrink: 0 }} />
+      <View style={{ flex: 1 }}>
+        <View style={{ flexDirection: 'row', justifyContent: 'space-between', marginBottom: 8 }}>
+          <SkeletonText width="45%" height={14} style={{ marginBottom: 0 }} />
+          <Skeleton width={35} height={11} borderRadius={6} />
+        </View>
+        <SkeletonText width="70%" height={12} style={{ marginBottom: 0 }} />
+      </View>
+    </View>
+  );
+
   return (
+    <SwipeableScreen onSwipeBack={() => navigation.goBack()}>
     <SafeAreaView style={styles.container}>
       <StatusBar style="dark" />
 
-      {/* Header */}
+      {/* Header Premium */}
       <View style={styles.header}>
         <View>
           <Text style={styles.headerTitle}>Pesan</Text>
-          {totalUnread > 0 && (
-            <Text style={styles.headerSub}>{totalUnread} pesan belum dibaca</Text>
+          {totalUnread > 0 ? (
+            <View style={styles.unreadPill}>
+              <View style={styles.unreadDot} />
+              <Text style={styles.headerSub}>{totalUnread} pesan baru</Text>
+            </View>
+          ) : (
+            <Text style={styles.headerSubNormal}>Percakapan dengan muthowif</Text>
           )}
         </View>
-        <View style={styles.headerIcon}>
-          <Ionicons name="chatbubbles" size={24} color="#0984e3" />
+        <View style={styles.headerIconWrap}>
+          <Ionicons name="chatbubbles" size={26} color="#0984e3" />
         </View>
       </View>
 
       {loading ? (
-        <View style={styles.center}>
-          <ActivityIndicator size="large" color="#0984e3" />
+        <View>
+          {[1,2,3,4,5,6].map(i => <ConvSkeleton key={i} />)}
         </View>
       ) : (
         <FlatList
@@ -144,65 +166,99 @@ export default function ChatListScreen({ user, navigation }) {
         />
       )}
     </SafeAreaView>
+    </SwipeableScreen>
   );
 }
 
 const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: '#FFFFFF' },
-  center: { flex: 1, justifyContent: 'center', alignItems: 'center' },
+  container: { flex: 1, backgroundColor: '#F8FAFC' },
 
   header: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    paddingHorizontal: 20,
-    paddingVertical: 16,
-    borderBottomWidth: 1,
-    borderBottomColor: '#F1F5F9',
-    backgroundColor: '#FFFFFF',
+    paddingHorizontal: 24,
+    paddingTop: 10,
+    paddingBottom: 20,
+    backgroundColor: '#F8FAFC',
   },
-  headerTitle: { fontSize: 26, fontWeight: '900', color: '#1E293B' },
-  headerSub: { fontSize: 12, color: '#0984e3', fontWeight: '700', marginTop: 2 },
-  headerIcon: {
-    width: 44,
-    height: 44,
-    borderRadius: 14,
+  headerTitle: { fontSize: 28, fontWeight: '800', color: '#0F172A', letterSpacing: -0.5 },
+  headerSubNormal: { fontSize: 13, color: '#64748B', marginTop: 4, fontWeight: '500' },
+  unreadPill: {
+    flexDirection: 'row',
+    alignItems: 'center',
     backgroundColor: '#EFF6FF',
+    paddingHorizontal: 10,
+    paddingVertical: 4,
+    borderRadius: 12,
+    marginTop: 6,
+    alignSelf: 'flex-start',
+    borderWidth: 1,
+    borderColor: '#DBEAFE',
+  },
+  unreadDot: {
+    width: 6,
+    height: 6,
+    borderRadius: 3,
+    backgroundColor: '#3B82F6',
+    marginRight: 6,
+  },
+  headerSub: { fontSize: 12, color: '#1D4ED8', fontWeight: '700' },
+  headerIconWrap: {
+    width: 50,
+    height: 50,
+    borderRadius: 18,
+    backgroundColor: '#FFFFFF',
     justifyContent: 'center',
     alignItems: 'center',
+    shadowColor: '#0984e3',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.1,
+    shadowRadius: 10,
+    elevation: 3,
   },
 
-  listContent: { paddingVertical: 8 },
-  separator: { height: 1, backgroundColor: '#F8FAFC', marginLeft: 84 },
+  listContent: { paddingHorizontal: 20, paddingBottom: 40 },
+  separator: { height: 12 },
 
   convItem: {
     flexDirection: 'row',
     alignItems: 'center',
-    paddingHorizontal: 20,
-    paddingVertical: 14,
+    paddingHorizontal: 18,
+    paddingVertical: 16,
     backgroundColor: '#FFFFFF',
+    borderRadius: 24,
+    borderWidth: 1,
+    borderColor: '#F1F5F9',
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.03,
+    shadowRadius: 10,
+    elevation: 2,
   },
   avatar: {
-    width: 52,
-    height: 52,
-    borderRadius: 18,
-    backgroundColor: '#0984e3',
+    width: 54,
+    height: 54,
+    borderRadius: 20,
+    backgroundColor: '#EFF6FF',
     justifyContent: 'center',
     alignItems: 'center',
-    marginRight: 14,
+    marginRight: 16,
     position: 'relative',
     flexShrink: 0,
+    borderWidth: 1,
+    borderColor: '#E0F2FE',
   },
-  avatarText: { color: '#FFFFFF', fontSize: 20, fontWeight: '800' },
+  avatarText: { color: '#0984e3', fontSize: 20, fontWeight: '800' },
   onlineDot: {
     position: 'absolute',
-    bottom: 2,
-    right: 2,
-    width: 12,
-    height: 12,
-    borderRadius: 6,
+    bottom: -2,
+    right: -2,
+    width: 14,
+    height: 14,
+    borderRadius: 7,
     backgroundColor: '#10B981',
-    borderWidth: 2,
+    borderWidth: 2.5,
     borderColor: '#FFFFFF',
   },
 
@@ -211,9 +267,9 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    marginBottom: 3,
+    marginBottom: 4,
   },
-  convName: { fontSize: 15, fontWeight: '700', color: '#1E293B', flex: 1, marginRight: 8 },
+  convName: { fontSize: 16, fontWeight: '700', color: '#1E293B', flex: 1, marginRight: 8, letterSpacing: -0.3 },
   convNameUnread: { fontWeight: '900', color: '#0F172A' },
   convTime: { fontSize: 11, color: '#94A3B8', fontWeight: '600', flexShrink: 0 },
   convTimeUnread: { color: '#0984e3', fontWeight: '800' },
@@ -222,27 +278,32 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    marginBottom: 2,
+    marginBottom: 4,
   },
-  convLastMsg: { fontSize: 13, color: '#94A3B8', fontWeight: '500', flex: 1, marginRight: 8 },
-  convLastMsgUnread: { color: '#475569', fontWeight: '700' },
+  convLastMsg: { fontSize: 13, color: '#64748B', fontWeight: '500', flex: 1, marginRight: 8, lineHeight: 18 },
+  convLastMsgUnread: { color: '#334155', fontWeight: '700' },
 
-  bookingCode: { fontSize: 10, color: '#CBD5E1', fontWeight: '700', letterSpacing: 0.5 },
+  bookingCode: { fontSize: 10, color: '#94A3B8', fontWeight: '700', letterSpacing: 0.5 },
 
   unreadBadge: {
-    backgroundColor: '#0984e3',
-    borderRadius: 10,
-    minWidth: 20,
-    height: 20,
+    backgroundColor: '#EF4444',
+    borderRadius: 12,
+    minWidth: 24,
+    height: 24,
     justifyContent: 'center',
     alignItems: 'center',
-    paddingHorizontal: 5,
+    paddingHorizontal: 6,
     flexShrink: 0,
+    shadowColor: '#EF4444',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.3,
+    shadowRadius: 4,
+    elevation: 2,
   },
-  unreadBadgeText: { color: '#FFFFFF', fontSize: 10, fontWeight: '800' },
+  unreadBadgeText: { color: '#FFFFFF', fontSize: 11, fontWeight: '800' },
 
   emptyContainer: { flex: 1, justifyContent: 'center', alignItems: 'center' },
-  emptyState: { alignItems: 'center', gap: 12, paddingHorizontal: 40 },
-  emptyTitle: { fontSize: 18, fontWeight: '800', color: '#1E293B' },
-  emptyText: { fontSize: 13, color: '#94A3B8', textAlign: 'center', lineHeight: 20 },
+  emptyState: { alignItems: 'center', gap: 14, paddingHorizontal: 40, marginTop: -50 },
+  emptyTitle: { fontSize: 18, fontWeight: '800', color: '#0F172A', letterSpacing: -0.5 },
+  emptyText: { fontSize: 14, color: '#64748B', textAlign: 'center', lineHeight: 22 },
 });

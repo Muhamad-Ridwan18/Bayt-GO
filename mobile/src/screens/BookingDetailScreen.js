@@ -13,6 +13,7 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { StatusBar } from 'expo-status-bar';
 import { Ionicons } from '@expo/vector-icons';
 import { apiClient } from '../api/client';
+import SwipeableScreen from '../components/SwipeableScreen';
 
 export default function BookingDetailScreen({ route, user, navigation }) {
   const { bookingId } = route.params;
@@ -74,6 +75,7 @@ export default function BookingDetailScreen({ route, user, navigation }) {
   const colors = getStatusColor(booking.status);
 
   return (
+    <SwipeableScreen onSwipeBack={() => navigation.goBack()}>
     <SafeAreaView style={styles.container}>
       <StatusBar style="dark" />
       
@@ -197,9 +199,9 @@ export default function BookingDetailScreen({ route, user, navigation }) {
 
       </ScrollView>
     </SafeAreaView>
+    </SwipeableScreen>
   );
 }
-
 const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: '#F8FAFC' },
   center: { flex: 1, justifyContent: 'center', alignItems: 'center' },

@@ -182,6 +182,94 @@ export const apiClient = {
     }
   },
 
+  async searchMuthowifs(token, params = {}) {
+    try {
+      const queryParams = new URLSearchParams();
+      if (params.q) queryParams.append('q', params.q);
+      if (params.start_date) queryParams.append('start_date', params.start_date);
+      if (params.end_date) queryParams.append('end_date', params.end_date);
+      if (params.page) queryParams.append('page', params.page);
+
+      const queryString = queryParams.toString() ? `?${queryParams.toString()}` : '';
+      
+      const response = await fetch(`${BASE_URL}/directory${queryString}`, {
+        method: 'GET',
+        headers: {
+          'Accept': 'application/json',
+          'Authorization': `Bearer ${token}`,
+        },
+      });
+      const data = await response.json();
+      if (!response.ok) throw new Error(data.message || 'Gagal mengambil data direktori');
+      return data;
+    } catch (error) {
+      console.error('Search Muthowifs Error:', error);
+      throw error;
+    }
+  },
+
+  async getMuthowifDetail(token, id, params = {}) {
+    try {
+      const queryParams = new URLSearchParams();
+      if (params.start_date) queryParams.append('start_date', params.start_date);
+      if (params.end_date) queryParams.append('end_date', params.end_date);
+
+      const queryString = queryParams.toString() ? `?${queryParams.toString()}` : '';
+      
+      const response = await fetch(`${BASE_URL}/directory/${id}${queryString}`, {
+        method: 'GET',
+        headers: {
+          'Accept': 'application/json',
+          'Authorization': `Bearer ${token}`,
+        },
+      });
+      const data = await response.json();
+      if (!response.ok) throw new Error(data.message || 'Gagal mengambil detail muthowif');
+      return data;
+    } catch (error) {
+      console.error('Get Muthowif Detail Error:', error);
+      throw error;
+    }
+  },
+
+  async createBooking(token, formData) {
+    try {
+      const response = await fetch(`${BASE_URL}/customer/bookings`, {
+        method: 'POST',
+        headers: {
+          'Accept': 'application/json',
+          'Authorization': `Bearer ${token}`,
+          // Content-Type is set automatically by fetch when passing FormData
+        },
+        body: formData,
+      });
+      const data = await response.json();
+      if (!response.ok) throw new Error(data.message || 'Gagal membuat pesanan');
+      return data;
+    } catch (error) {
+      console.error('Create Booking Error:', error);
+      throw error;
+    }
+  },
+
+  async requestPayment(token, bookingId) {
+    try {
+      const response = await fetch(`${BASE_URL}/customer/bookings/${bookingId}/pay`, {
+        method: 'POST',
+        headers: {
+          'Accept': 'application/json',
+          'Authorization': `Bearer ${token}`,
+        },
+      });
+      const data = await response.json();
+      if (!response.ok) throw new Error(data.message || 'Gagal memproses pembayaran');
+      return data;
+    } catch (error) {
+      console.error('Request Payment Error:', error);
+      throw error;
+    }
+  },
+
   async getMuthowifDashboardData(token) {
     try {
       const response = await fetch(`${BASE_URL}/muthowif/dashboard`, {

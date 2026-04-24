@@ -15,6 +15,7 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { StatusBar } from 'expo-status-bar';
 import { Calendar } from 'react-native-calendars';
 import { apiClient } from '../api/client';
+import SwipeableScreen from '../components/SwipeableScreen';
 
 const { width } = Dimensions.get('window');
 
@@ -113,6 +114,7 @@ export default function TimeOffScreen({ user, navigation }) {
   };
 
   return (
+    <SwipeableScreen onSwipeBack={() => navigation.goBack()}>
     <SafeAreaView style={styles.container}>
       <StatusBar style="dark" />
       
@@ -198,6 +200,7 @@ export default function TimeOffScreen({ user, navigation }) {
 
       </ScrollView>
     </SafeAreaView>
+    </SwipeableScreen>
   );
 }
 

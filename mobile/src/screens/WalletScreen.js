@@ -18,6 +18,8 @@ import { StatusBar } from 'expo-status-bar';
 import { Ionicons } from '@expo/vector-icons';
 import { LinearGradient } from 'expo-linear-gradient';
 import { apiClient } from '../api/client';
+import SwipeableScreen from '../components/SwipeableScreen';
+import { Skeleton, SkeletonCard, SkeletonText, SkeletonListItem } from '../components/Skeleton';
 
 const { width } = Dimensions.get('window');
 
@@ -102,10 +104,35 @@ export default function WalletScreen({ user, navigation }) {
   };
 
   if (loading) {
-    return <View style={styles.center}><ActivityIndicator size="large" color="#0984e3" /></View>;
+    return (
+      <SwipeableScreen onSwipeBack={() => navigation.goBack()}>
+      <SafeAreaView style={styles.container}>
+        {/* Header skeleton */}
+        <View style={styles.header}>
+          <Skeleton width={36} height={36} borderRadius={10} />
+          <SkeletonText width={120} height={18} style={{ marginBottom: 0 }} />
+          <Skeleton width={36} height={36} borderRadius={10} />
+        </View>
+        <ScrollView showsVerticalScrollIndicator={false}>
+          {/* Balance card */}
+          <Skeleton width="100%" height={140} borderRadius={24} style={{ margin: 20, width: '90%', alignSelf: 'center' }} />
+          {/* Tabs */}
+          <View style={{ flexDirection: 'row', paddingHorizontal: 20, marginBottom: 15 }}>
+            <Skeleton width={80} height={28} borderRadius={8} style={{ marginRight: 20 }} />
+            <Skeleton width={80} height={28} borderRadius={8} />
+          </View>
+          {/* List */}
+          <View style={{ paddingHorizontal: 20 }}>
+            {[1,2,3,4,5].map(i => <SkeletonListItem key={i} />)}
+          </View>
+        </ScrollView>
+      </SafeAreaView>
+      </SwipeableScreen>
+    );
   }
 
   return (
+    <SwipeableScreen onSwipeBack={() => navigation.goBack()}>
     <SafeAreaView style={styles.container}>
       <StatusBar style="dark" />
       
@@ -328,6 +355,7 @@ export default function WalletScreen({ user, navigation }) {
         </View>
       </Modal>
     </SafeAreaView>
+    </SwipeableScreen>
   );
 }
 

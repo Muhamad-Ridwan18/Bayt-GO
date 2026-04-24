@@ -15,8 +15,17 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::get('/user', function (Request $request) {
         return $request->user();
     });
+    // Mobile Directory/Marketplace
+    Route::get('/directory', [\App\Http\Controllers\Api\MuthowifDirectoryApiController::class, 'index']);
+    Route::get('/directory/{id}', [\App\Http\Controllers\Api\MuthowifDirectoryApiController::class, 'show']);
+
     Route::get('/customer/dashboard', [\App\Http\Controllers\Api\Customer\DashboardController::class, 'index']);
     Route::get('/muthowif/dashboard', [\App\Http\Controllers\Api\Muthowif\DashboardController::class, 'index']);
+
+    // Customer Bookings
+    Route::post('/customer/bookings', [\App\Http\Controllers\Api\Customer\BookingApiController::class, 'store']);
+    Route::post('/customer/bookings/{booking}/pay', [\App\Http\Controllers\Api\Customer\BookingApiController::class, 'pay']);
+
     Route::get('/muthowif/services', [\App\Http\Controllers\Api\Muthowif\MuthowifServiceController::class, 'index']);
     Route::put('/muthowif/services/{id}', [\App\Http\Controllers\Api\Muthowif\MuthowifServiceController::class, 'update']);
     Route::get('/muthowif/blocked-dates', [\App\Http\Controllers\Api\Muthowif\MuthowifBlockedDateController::class, 'index']);

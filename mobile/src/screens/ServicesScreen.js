@@ -12,6 +12,7 @@ import {
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { StatusBar } from 'expo-status-bar';
 import { apiClient } from '../api/client';
+import SwipeableScreen from '../components/SwipeableScreen';
 
 const { width } = Dimensions.get('window');
 
@@ -41,6 +42,7 @@ export default function ServicesScreen({ user, navigation }) {
   };
 
   return (
+    <SwipeableScreen onSwipeBack={() => navigation.goBack()}>
     <SafeAreaView style={styles.container}>
       <StatusBar style="dark" />
       
@@ -107,6 +109,7 @@ export default function ServicesScreen({ user, navigation }) {
 
       </ScrollView>
     </SafeAreaView>
+    </SwipeableScreen>
   );
 }
 

@@ -56,9 +56,17 @@ class DashboardController extends Controller
                 ];
             });
 
+        $unreadCount = MuthowifBooking::where('muthowif_profile_id', $profile->id)
+            ->withCount(['chatMessages as unread_count' => function ($q) use ($user) {
+                $q->where('user_id', '!=', $user->id)->whereNull('read_at');
+            }])
+            ->get()
+            ->sum('unread_count');
+
         return response()->json([
             'stats' => $stats,
             'recent_schedules' => $schedules,
+            'unread_messages' => $unreadCount,
         ]);
     }
 }

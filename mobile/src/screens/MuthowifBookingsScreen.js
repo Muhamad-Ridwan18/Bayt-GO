@@ -13,6 +13,8 @@ import {
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { StatusBar } from 'expo-status-bar';
 import { apiClient } from '../api/client';
+import SwipeableScreen from '../components/SwipeableScreen';
+import { Skeleton, SkeletonCard, SkeletonText } from '../components/Skeleton';
 
 const { width } = Dimensions.get('window');
 
@@ -97,7 +99,46 @@ export default function MuthowifBookingsScreen({ user, navigation }) {
     }
   };
 
+  if (loading) {
+    return (
+      <SwipeableScreen onSwipeBack={() => navigation.goBack()}>
+      <SafeAreaView style={styles.container}>
+        {/* Header */}
+        <View style={styles.header}>
+          <Skeleton width={36} height={36} borderRadius={10} />
+          <SkeletonText width={140} height={18} style={{ marginBottom: 0 }} />
+          <Skeleton width={36} height={36} borderRadius={10} />
+        </View>
+        {/* Tabs */}
+        <View style={{ flexDirection: 'row', padding: 15, gap: 8 }}>
+          {[1,2,3,4,5].map(i => <Skeleton key={i} width={70} height={34} borderRadius={12} />)}
+        </View>
+        <ScrollView contentContainerStyle={{ padding: 15 }}>
+          {[1,2,3].map(i => (
+            <SkeletonCard key={i}>
+              <View style={{ flexDirection: 'row', justifyContent: 'space-between', marginBottom: 14 }}>
+                <View><SkeletonText width={80} height={10} /><SkeletonText width={140} height={18} style={{ marginBottom: 0 }} /></View>
+                <Skeleton width={80} height={28} borderRadius={10} />
+              </View>
+              <Skeleton width="100%" height={1} borderRadius={0} style={{ marginBottom: 14 }} />
+              <View style={{ flexDirection: 'row', flexWrap: 'wrap' }}>
+                {[1,2,3,4].map(j => (
+                  <View key={j} style={{ width: '50%', marginBottom: 12 }}>
+                    <SkeletonText width="40%" height={9} />
+                    <SkeletonText width="70%" height={13} style={{ marginBottom: 0 }} />
+                  </View>
+                ))}
+              </View>
+            </SkeletonCard>
+          ))}
+        </ScrollView>
+      </SafeAreaView>
+      </SwipeableScreen>
+    );
+  }
+
   return (
+    <SwipeableScreen onSwipeBack={() => navigation.goBack()}>
     <SafeAreaView style={styles.container}>
       <StatusBar style="dark" />
       
@@ -208,6 +249,7 @@ export default function MuthowifBookingsScreen({ user, navigation }) {
         )}
       </ScrollView>
     </SafeAreaView>
+    </SwipeableScreen>
   );
 }
 
