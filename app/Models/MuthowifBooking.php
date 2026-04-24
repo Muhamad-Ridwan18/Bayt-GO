@@ -33,11 +33,11 @@ class MuthowifBooking extends Model
         'payment_status',
         'total_amount',
         'paid_at',
-        'ticket_outbound_path',
-        'ticket_return_path',
-        'passport_path',
-        'itinerary_path',
         'visa_path',
+        'daily_price_snapshot',
+        'same_hotel_price_snapshot',
+        'transport_price_snapshot',
+        'add_ons_snapshot',
     ];
 
     protected function casts(): array
@@ -53,6 +53,10 @@ class MuthowifBooking extends Model
             'payment_status' => PaymentStatus::class,
             'total_amount' => 'decimal:2',
             'paid_at' => 'datetime',
+            'daily_price_snapshot' => 'decimal:2',
+            'same_hotel_price_snapshot' => 'decimal:2',
+            'transport_price_snapshot' => 'decimal:2',
+            'add_ons_snapshot' => 'array',
         ];
     }
 
@@ -183,35 +187,7 @@ class MuthowifBooking extends Model
      */
     public function computeTotalAmount(): float
     {
-        $this->loadMissing(['muthowifProfile.services.addOns']);
-        $profile = $this->muthowifProfile;
-        if (! $profile) {
-            return 0.0;
-        }
-
-        $service = $profile->services->firstWhere('type', $this->service_type);
-        $nights = $this->billingNightsInclusive();
-        $daily = $service && $service->daily_price !== null ? (float) $service->daily_price : 0.0;
-        $base = $nights * $daily;
-
-        $addons = 0.0;
-        if ($this->service_type === MuthowifServiceType::PrivateJamaah) {
-            foreach ($this->resolvedAddOns() as $addon) {
-                $addons += (float) $addon->price;
-            }
-        }
-
-        $sameHotel = 0.0;
-        if ($this->with_same_hotel && $service && $service->same_hotel_price_per_day !== null) {
-            $sameHotel = $nights * (float) $service->same_hotel_price_per_day;
-        }
-
-        $transport = 0.0;
-        if ($this->with_transport && $service && $service->transport_price_flat !== null) {
-            $transport = (float) $service->transport_price_flat;
-        }
-
-        return round($base + $addons + $sameHotel + $transport, 2);
+        return app(\App\Services\BookingPricingService::class)->calculateTotal($this);
     }
 
     /**

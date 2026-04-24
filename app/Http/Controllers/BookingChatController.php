@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Events\BookingChatUpdated;
+use App\Http\Resources\BookingChatMessageResource;
 use App\Models\BookingChatMessage;
 use App\Models\MuthowifBooking;
 use Illuminate\Http\JsonResponse;
@@ -30,6 +31,7 @@ class BookingChatController extends Controller
 
         $readerId = $request->user()->id;
 
+        // Mark as read secara efisien
         $toMark = $booking->chatMessages()
             ->where('user_id', '!=', $readerId)
             ->whereNull('read_at');
@@ -39,10 +41,11 @@ class BookingChatController extends Controller
             broadcast(new BookingChatUpdated($booking))->toOthers();
         }
 
+        // Gunakan Cursor Pagination untuk performa chat yang lebih baik
         $messages = $booking->chatMessages()
             ->with('sender:id,name')
-            ->orderBy('created_at')
-            ->get();
+            ->orderBy('created_at', 'desc')
+            ->cursorPaginate(30);
 
         $unreadForMe = $booking->chatMessages()
             ->where('user_id', '!=', $readerId)
@@ -50,7 +53,8 @@ class BookingChatController extends Controller
             ->count();
 
         return response()->json([
-            'messages' => $messages->map(fn (BookingChatMessage $m) => $this->serializeMessage($m, $request, $booking)),
+            'messages' => BookingChatMessageResource::collection($messages->getCollection()->reverse()),
+            'next_cursor' => $messages->nextCursor()?->encode(),
             'chat_open' => $booking->isBookingChatOpen(),
             'unread_for_me' => $unreadForMe,
         ]);
@@ -88,7 +92,7 @@ class BookingChatController extends Controller
         broadcast(new BookingChatUpdated($booking))->toOthers();
 
         return response()->json([
-            'message' => $this->serializeMessage($message, $request, $booking),
+            'message' => new BookingChatMessageResource($message),
             'chat_open' => $booking->fresh()->isBookingChatOpen(),
         ], 201);
     }
@@ -110,35 +114,4 @@ class BookingChatController extends Controller
         return $disk->response($message->image_path, basename($message->image_path));
     }
 
-    /**
-     * @return array<string, mixed>
-     */
-    private function serializeMessage(BookingChatMessage $m, Request $request, MuthowifBooking $booking): array
-    {
-        $routeName = $this->messageImageRouteName($request);
-
-        $isMe = (string) $m->user_id === (string) $request->user()->id;
-
-        return [
-            'id' => $m->id,
-            'body' => $m->body ?? '',
-            'image_url' => $m->image_path
-                ? route($routeName, ['booking' => $booking, 'message' => $m])
-                : null,
-            'sender_id' => $m->user_id,
-            'sender_name' => $m->sender?->name ?? '—',
-            'created_at' => $m->created_at?->toIso8601String(),
-            'is_me' => $isMe,
-            'is_read' => $isMe ? $m->read_at !== null : true,
-        ];
-    }
-
-    private function messageImageRouteName(Request $request): string
-    {
-        if ($request->user()?->isCustomer()) {
-            return 'bookings.chat.messages.image';
-        }
-
-        return 'muthowif.bookings.chat.messages.image';
-    }
 }

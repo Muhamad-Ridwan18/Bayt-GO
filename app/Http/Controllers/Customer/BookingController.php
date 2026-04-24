@@ -451,7 +451,9 @@ class BookingController extends Controller
 
             $bookingCode = app(BookingOrderCodeService::class)->allocateNextWithinTransaction();
 
-            $booking = MuthowifBooking::query()->create([
+            $pricingService = app(\App\Services\BookingPricingService::class);
+            
+            $booking = MuthowifBooking::query()->create(array_merge([
                 'booking_code' => $bookingCode,
                 'muthowif_profile_id' => $profile->id,
                 'customer_id' => $request->user()->id,
@@ -463,7 +465,11 @@ class BookingController extends Controller
                 'starts_on' => $start->toDateString(),
                 'ends_on' => $end->toDateString(),
                 'status' => BookingStatus::Pending,
-            ]);
+            ], $pricingService->getPricingSnapshots(new MuthowifBooking([
+                'muthowif_profile_id' => $profile->id,
+                'service_type' => $serviceType,
+                'selected_add_on_ids' => $selectedAddOnIds,
+            ]))));
 
             $dir = 'booking-documents/'.$booking->getKey();
             $ticketOutbound = $request->file('ticket_outbound')->store($dir, 'local');
