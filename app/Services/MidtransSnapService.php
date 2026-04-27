@@ -26,6 +26,72 @@ class MidtransSnapService
             : 'https://api.sandbox.midtrans.com';
     }
 
+    public function snapBaseUrl(): string
+    {
+        return config('services.midtrans.is_production', false)
+            ? 'https://app.midtrans.com/snap/v1'
+            : 'https://app.sandbox.midtrans.com/snap/v1';
+    }
+
+    /**
+     * @return array{
+     *   token: string,
+     *   redirect_url: string
+     * }
+     */
+    public function createSnapSession(BookingPayment $payment): array
+    {
+        $serverKey = config('services.midtrans.server_key');
+        if (! is_string($serverKey) || $serverKey === '') {
+            throw new RuntimeException('MIDTRANS_SERVER_KEY belum diatur.');
+        }
+
+        $payment->loadMissing(['muthowifBooking.customer', 'muthowifBooking.muthowifProfile.user']);
+        $booking = $payment->muthowifBooking;
+        $customer = $booking->customer;
+        $muthowifName = $booking->muthowifProfile?->user?->name ?? 'Muthowif';
+
+        $firstName = Str::limit(preg_replace('/[^\p{L}\p{N}\s\-]/u', '', (string) ($customer?->name ?? 'Jamaah')), 40, '');
+
+        $payload = [
+            'transaction_details' => [
+                'order_id' => $payment->order_id,
+                'gross_amount' => (int) $payment->gross_amount,
+            ],
+            'customer_details' => array_filter([
+                'first_name' => $firstName !== '' ? $firstName : 'Jamaah',
+                'email' => $customer?->email,
+                'phone' => $customer?->phone,
+            ]),
+            'item_details' => [
+                [
+                    'id' => 'BOOKING',
+                    'price' => (int) $payment->gross_amount,
+                    'quantity' => 1,
+                    'name' => Str::limit('Pendampingan - '.$muthowifName, 50),
+                ],
+            ],
+            // Optional: specify allowed payment methods if needed
+            // 'enabled_payments' => ['credit_card', 'bca_va', 'bni_va', 'bri_va', 'mandiri_clickpay', 'gopay', 'shopeepay'],
+        ];
+
+        $response = Http::timeout(45)
+            ->withBasicAuth($serverKey, '')
+            ->acceptJson()
+            ->post($this->snapBaseUrl().'/transactions', $payload);
+
+        if (! $response->successful()) {
+            Log::error('Midtrans Snap API gagal', [
+                'status' => $response->status(),
+                'body' => $response->body(),
+                'payload' => $payload
+            ]);
+            throw new RuntimeException('Gagal membuat sesi pembayaran Midtrans. ' . ($response->json('error_messages')[0] ?? ''));
+        }
+
+        return $response->json();
+    }
+
     /**
      * @return array{
      *   transaction_id: string|null,

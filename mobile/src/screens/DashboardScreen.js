@@ -167,12 +167,16 @@ export default function DashboardScreen({ user, onLogout, navigation }) {
           </TouchableOpacity>
 
           {/* Action: Booking Saya */}
-          <TouchableOpacity style={styles.actionCard} activeOpacity={0.7}>
-            <View style={[styles.actionIconWrap, { backgroundColor: '#EFF6FF' }]}>
-              <Ionicons name="calendar-clear" size={26} color="#3B82F6" />
+          <TouchableOpacity 
+            style={styles.actionCard} 
+            activeOpacity={0.7}
+            onPress={() => navigation?.navigate('BookingList')}
+          >
+            <View style={[styles.actionIconWrap, { backgroundColor: '#F0F9FF' }]}>
+              <Ionicons name="calendar-clear" size={26} color="#0984e3" />
             </View>
             <Text style={styles.actionTitle}>Booking saya</Text>
-            <Text style={styles.actionDesc}>Status pembayaran & perjalanan</Text>
+            <Text style={styles.actionDesc}>Status bayar & jadwal</Text>
           </TouchableOpacity>
 
           {/* Action: Pesan (Chat) */}
@@ -254,7 +258,7 @@ export default function DashboardScreen({ user, onLogout, navigation }) {
             <Ionicons name="home" size={24} color="#0984e3" />
             <Text style={[styles.tabLabel, { color: '#0984e3' }]}>Home</Text>
           </TouchableOpacity>
-          <TouchableOpacity style={styles.tabItem}>
+          <TouchableOpacity style={styles.tabItem} onPress={() => navigation?.navigate('BookingList')}>
             <Ionicons name="calendar-outline" size={24} color="#94A3B8" />
             <Text style={styles.tabLabel}>Booking</Text>
           </TouchableOpacity>
@@ -288,11 +292,18 @@ const styles = StyleSheet.create({
   header: {
     paddingHorizontal: 25,
     paddingTop: 15,
-    paddingBottom: 15,
+    paddingBottom: 20,
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    backgroundColor: '#F8FAFC',
+    backgroundColor: '#FFFFFF',
+    borderBottomLeftRadius: 30, 
+    borderBottomRightRadius: 30,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.03,
+    shadowRadius: 10,
+    elevation: 5
   },
   headerProfile: {
     flexDirection: 'row',

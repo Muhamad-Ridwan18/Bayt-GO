@@ -124,7 +124,7 @@ class MuthowifBooking extends Model
      */
     public function isBookingChatOpen(): bool
     {
-        return $this->status === BookingStatus::Confirmed && $this->isPaid();
+        return in_array($this->status, [BookingStatus::Pending, BookingStatus::Confirmed, BookingStatus::Completed], true);
     }
 
     public function pendingRefundRequest(): ?BookingRefundRequest

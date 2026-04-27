@@ -1,4 +1,4 @@
-const BASE_URL = 'http://192.168.1.44:8001/api';
+const BASE_URL = 'http://192.168.1.42:8001/api';
 
 export const apiClient = {
   async getChatConversations(token) {
@@ -252,6 +252,24 @@ export const apiClient = {
     }
   },
 
+  async getCustomerBookings(token) {
+    try {
+      const response = await fetch(`${BASE_URL}/customer/bookings`, {
+        method: 'GET',
+        headers: {
+          'Accept': 'application/json',
+          'Authorization': `Bearer ${token}`,
+        },
+      });
+      const data = await response.json();
+      if (!response.ok) throw new Error(data.message || 'Gagal memuat daftar pesanan');
+      return data;
+    } catch (error) {
+      console.error('Get Customer Bookings Error:', error);
+      throw error;
+    }
+  },
+
   async requestPayment(token, bookingId) {
     try {
       const response = await fetch(`${BASE_URL}/customer/bookings/${bookingId}/pay`, {
@@ -438,9 +456,10 @@ export const apiClient = {
     }
   },
 
-  async getBookingDetail(token, id) {
+  async getBookingDetail(token, id, isMuthowif = false) {
     try {
-      const response = await fetch(`${BASE_URL}/muthowif/bookings/${id}`, {
+      const endpoint = isMuthowif ? `/muthowif/bookings/${id}` : `/customer/bookings/${id}`;
+      const response = await fetch(`${BASE_URL}${endpoint}`, {
         method: 'GET',
         headers: {
           'Accept': 'application/json',
@@ -448,10 +467,28 @@ export const apiClient = {
         },
       });
       const data = await response.json();
-      if (!response.ok) throw new Error(data.message);
+      if (!response.ok) throw new Error(data.message || 'Gagal mengambil detail pesanan');
       return data;
     } catch (error) {
       console.error('Get Booking Detail Error:', error);
+      throw error;
+    }
+  },
+
+  async getPaymentUrl(token, id) {
+    try {
+      const response = await fetch(`${BASE_URL}/customer/bookings/${id}/pay`, {
+        method: 'POST',
+        headers: {
+          'Accept': 'application/json',
+          'Authorization': `Bearer ${token}`,
+        },
+      });
+      const data = await response.json();
+      if (!response.ok) throw new Error(data.message || 'Gagal mengambil URL pembayaran');
+      return data;
+    } catch (error) {
+      console.error('Get Payment URL Error:', error);
       throw error;
     }
   },
@@ -735,6 +772,27 @@ export const apiClient = {
       return data;
     } catch (error) {
       console.error('Send Chat Message Error:', error);
+      throw error;
+    }
+  },
+
+  async getPaymentUrl(token, bookingId, method = '') {
+    try {
+      const body = method ? JSON.stringify({ method }) : undefined;
+      const response = await fetch(`${BASE_URL}/customer/bookings/${bookingId}/pay`, {
+        method: 'POST',
+        headers: {
+          'Accept': 'application/json',
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`,
+        },
+        body,
+      });
+      const data = await response.json();
+      if (!response.ok) throw new Error(data.message || 'Gagal mendapatkan instruksi pembayaran');
+      return data;
+    } catch (error) {
+      console.error('Get Payment URL Error:', error);
       throw error;
     }
   }

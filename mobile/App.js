@@ -15,13 +15,14 @@ import EditServiceScreen from './src/screens/EditServiceScreen';
 import TimeOffScreen from './src/screens/TimeOffScreen';
 import MuthowifBookingsScreen from './src/screens/MuthowifBookingsScreen';
 import BookingDetailScreen from './src/screens/BookingDetailScreen';
+import BookingListScreen from './src/screens/BookingListScreen';
 import WalletScreen from './src/screens/WalletScreen';
 import ChatScreen from './src/screens/ChatScreen';
 import ChatListScreen from './src/screens/ChatListScreen';
 import SearchMuthowifScreen from './src/screens/SearchMuthowifScreen';
 import MuthowifDetailScreen from './src/screens/MuthowifDetailScreen';
 import CheckoutScreen from './src/screens/CheckoutScreen';
-import PaymentWebScreen from './src/screens/PaymentWebScreen';
+import PaymentScreen from './src/screens/PaymentScreen';
 
 const { width } = Dimensions.get('window');
 
@@ -159,7 +160,8 @@ export default function App() {
       case 'SearchMuthowif': return <SearchMuthowifScreen user={user} navigation={nav} />;
       case 'MuthowifDetail': return <MuthowifDetailScreen route={route} user={user} navigation={nav} />;
       case 'Checkout': return <CheckoutScreen route={route} user={user} navigation={nav} />;
-      case 'PaymentWeb': return <PaymentWebScreen route={route} user={user} navigation={nav} />;
+      case 'Payment': return <PaymentScreen route={route} user={user} navigation={nav} />;
+      case 'BookingList': return <BookingListScreen user={user} navigation={nav} />;
       default: return null;
     }
   };

@@ -24,6 +24,8 @@ class MuthowifService extends Model
         'transport_price_flat',
     ];
 
+    protected $appends = ['price'];
+
     protected function casts(): array
     {
         return [
@@ -32,6 +34,11 @@ class MuthowifService extends Model
             'same_hotel_price_per_day' => 'decimal:2',
             'transport_price_flat' => 'decimal:2',
         ];
+    }
+
+    public function getPriceAttribute()
+    {
+        return $this->daily_price;
     }
 
     public function muthowifProfile(): BelongsTo

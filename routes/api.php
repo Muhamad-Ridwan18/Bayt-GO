@@ -23,6 +23,8 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::get('/muthowif/dashboard', [\App\Http\Controllers\Api\Muthowif\DashboardController::class, 'index']);
 
     // Customer Bookings
+    Route::get('/customer/bookings', [\App\Http\Controllers\Api\Customer\BookingApiController::class, 'index']);
+    Route::get('/customer/bookings/{booking}', [\App\Http\Controllers\Api\Customer\BookingApiController::class, 'show']);
     Route::post('/customer/bookings', [\App\Http\Controllers\Api\Customer\BookingApiController::class, 'store']);
     Route::post('/customer/bookings/{booking}/pay', [\App\Http\Controllers\Api\Customer\BookingApiController::class, 'pay']);
 

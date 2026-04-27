@@ -136,14 +136,14 @@ export default function WalletScreen({ user, navigation }) {
     <SafeAreaView style={styles.container}>
       <StatusBar style="dark" />
       
-      {/* Header */}
+      {/* Header Premium */}
       <View style={styles.header}>
         <TouchableOpacity onPress={() => navigation.goBack()} style={styles.backBtn}>
-          <Ionicons name="arrow-back" size={24} color="#1E293B" />
+          <Ionicons name="arrow-back" size={24} color="#0F172A" />
         </TouchableOpacity>
         <Text style={styles.headerTitle}>Dompet Saya</Text>
         <TouchableOpacity style={styles.helpBtn}>
-          <Ionicons name="help-circle-outline" size={24} color="#64748B" />
+          <Ionicons name="help-circle-outline" size={24} color="#0F172A" />
         </TouchableOpacity>
       </View>
 
@@ -368,12 +368,18 @@ const styles = StyleSheet.create({
     alignItems: 'center', 
     paddingHorizontal: 20, 
     paddingVertical: 15,
-    borderBottomWidth: 1,
-    borderBottomColor: '#F1F5F9'
+    backgroundColor: '#FFFFFF',
+    borderBottomLeftRadius: 30, 
+    borderBottomRightRadius: 30,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.03,
+    shadowRadius: 10,
+    elevation: 5
   },
-  headerTitle: { fontSize: 18, fontWeight: '800', color: '#1E293B' },
-  backBtn: { padding: 5 },
-  helpBtn: { padding: 5 },
+  headerTitle: { fontSize: 18, fontWeight: '900', color: '#0F172A' },
+  backBtn: { width: 40, height: 40, justifyContent: 'center', alignItems: 'center' },
+  helpBtn: { width: 40, height: 40, justifyContent: 'center', alignItems: 'center' },
 
   balanceCard: {
     margin: 20,

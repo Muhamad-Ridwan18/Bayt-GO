@@ -30,27 +30,18 @@ class MidtransSnapPaymentProvider implements SnapPaymentProviderInterface
 
     public function createPaymentSession(BookingPayment $payment, ?string $method = null): SnapPaymentSession
     {
-        $selectedMethod = $method ?? 'va_bca';
-        $session = $this->midtrans->createCoreChargeSession($payment, $selectedMethod);
+        // Use Snap API instead of Core API to get a redirect URL
+        $session = $this->midtrans->createSnapSession($payment);
 
         return new SnapPaymentSession(
-            snapToken: null,
-            clientKey: null,
-            snapJsUrl: null,
-            paymentUrl: null,
-            providerReferenceId: $session['transaction_id'] ?? $payment->order_id,
-            instructions: [
-                'method' => $selectedMethod,
-                'payment_type' => $session['payment_type'] ?? 'bank_transfer',
-                'va_bank' => $session['va_bank'] ?? null,
-                'va_number' => $session['va_number'] ?? null,
-                'bill_key' => $session['bill_key'] ?? null,
-                'biller_code' => $session['biller_code'] ?? null,
-                'qr_string' => $session['qr_string'] ?? null,
-                'deeplink_url' => $session['deeplink_url'] ?? null,
-                'checkout_url' => $session['checkout_url'] ?? null,
-                'expiry_time' => $session['expiry_time'] ?? null,
-            ],
+            snapToken: $session['token'] ?? null,
+            clientKey: config('services.midtrans.client_key'),
+            snapJsUrl: config('services.midtrans.is_production', false) 
+                ? 'https://app.midtrans.com/snap/snap.js' 
+                : 'https://app.sandbox.midtrans.com/snap/snap.js',
+            paymentUrl: $session['redirect_url'] ?? null,
+            providerReferenceId: $payment->order_id,
+            instructions: [],
         );
     }
 

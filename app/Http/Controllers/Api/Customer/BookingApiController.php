@@ -26,6 +26,28 @@ use Illuminate\Validation\ValidationException;
 class BookingApiController extends Controller
 {
     private const MAX_RANGE_DAYS = 90;
+    
+    public function index(Request $request): JsonResponse
+    {
+        $bookings = MuthowifBooking::query()
+            ->where('customer_id', $request->user()->id)
+            ->with(['muthowifProfile.user'])
+            ->orderBy('created_at', 'desc')
+            ->get();
+
+        return response()->json($bookings);
+    }
+
+    public function show(Request $request, MuthowifBooking $booking): JsonResponse
+    {
+        if ($booking->customer_id !== $request->user()->id) {
+            return response()->json(['message' => 'Unauthorized'], 403);
+        }
+
+        $booking->load(['muthowifProfile.user', 'bookingPayments']);
+
+        return response()->json($booking);
+    }
 
     public function store(Request $request): JsonResponse
     {
@@ -180,7 +202,12 @@ class BookingApiController extends Controller
         }
     }
 
-    public function pay(Request $request, MuthowifBooking $booking, SnapPaymentProviderInterface $provider): JsonResponse
+    private const PAYMENT_METHODS = [
+        'va_bca', 'va_bni', 'va_bri', 'va_permata', 'va_mandiri_bill',
+        'qris', 'gopay', 'shopeepay',
+    ];
+
+    public function pay(Request $request, MuthowifBooking $booking): JsonResponse
     {
         if ($booking->customer_id !== $request->user()->id) {
             return response()->json(['message' => 'Unauthorized'], 403);
@@ -190,8 +217,26 @@ class BookingApiController extends Controller
             return response()->json(['message' => 'Pembayaran sudah diterima'], 400);
         }
 
-        if (! $provider->isConfigured()) {
+        /** @var \App\Services\MidtransSnapService $midtrans */
+        $midtrans = app(\App\Services\MidtransSnapService::class);
+
+        if (! $midtrans->isConfigured()) {
             return response()->json(['message' => 'Sistem pembayaran belum dikonfigurasi'], 500);
+        }
+
+        $method = (string) $request->input('method', '');
+
+        // Jika belum ada metode → kembalikan daftar metode saja
+        if ($method === '') {
+            return response()->json([
+                'step'    => 'select_method',
+                'methods' => self::PAYMENT_METHODS,
+                'amount'  => (int) round($booking->resolvedAmountDue()),
+            ]);
+        }
+
+        if (! in_array($method, self::PAYMENT_METHODS, true)) {
+            return response()->json(['message' => 'Metode pembayaran tidak didukung'], 422);
         }
 
         $baseInt = (int) round($booking->resolvedAmountDue());
@@ -207,35 +252,39 @@ class BookingApiController extends Controller
 
         $payment = BookingPayment::query()->create([
             'muthowif_booking_id' => $booking->getKey(),
-            'order_id' => $orderId,
-            'gross_amount' => (int) round($split['customer_gross']),
+            'order_id'            => $orderId,
+            'gross_amount'        => (int) round($split['customer_gross']),
             'platform_fee_amount' => $split['platform_fee_total'],
             'muthowif_net_amount' => $split['muthowif_net'],
-            'status' => 'pending',
+            'status'              => 'pending',
         ]);
 
         try {
-            $session = $provider->createPaymentSession($payment);
-            
-            $update = [];
-            if (! empty($session->snapToken)) {
-                $update['snap_token'] = $session->snapToken;
-            }
+            $session = $midtrans->createCoreChargeSession($payment, $method);
 
-            if (! empty($session->providerReferenceId)) {
-                $update['midtrans_transaction_id'] = $session->providerReferenceId;
+            $update = ['payment_type' => $method];
+            if (! empty($session['transaction_id'])) {
+                $update['midtrans_transaction_id'] = $session['transaction_id'];
             }
-
-            if ($update !== []) {
-                $payment->update($update);
-            }
+            $payment->update($update);
 
             return response()->json([
-                'snap_token' => $session->snapToken,
-                'redirect_url' => $session->redirectUrl,
+                'step'         => 'payment_instructions',
+                'order_id'     => $orderId,
+                'method'       => $method,
+                'gross_amount' => $payment->gross_amount,
+                'expiry_time'  => $session['expiry_time'],
+                'va_bank'      => $session['va_bank'],
+                'va_number'    => $session['va_number'],
+                'bill_key'     => $session['bill_key'],
+                'biller_code'  => $session['biller_code'],
+                'qr_string'    => $session['qr_string'],
+                'deeplink_url' => $session['deeplink_url'],
+                'checkout_url' => $session['checkout_url'],
             ]);
 
         } catch (\Exception $e) {
+            $payment->delete();
             return response()->json(['message' => $e->getMessage()], 500);
         }
     }

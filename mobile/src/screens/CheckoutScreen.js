@@ -1,342 +1,261 @@
-import React, { useState, useEffect, useMemo } from 'react';
+import React, { useState, useMemo } from 'react';
 import { 
   StyleSheet, 
   Text, 
   View, 
   TouchableOpacity, 
   ScrollView, 
-  Image,
-  Dimensions,
+  TextInput, 
+  ActivityIndicator, 
   Alert,
-  ActivityIndicator,
-  TextInput
+  Dimensions,
+  Platform,
+  StatusBar
 } from 'react-native';
-import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context';
+import { SafeAreaView } from 'react-native-safe-area-context';
+import { LinearGradient } from 'expo-linear-gradient';
 import { Ionicons } from '@expo/vector-icons';
-import * as DocumentPicker from 'expo-document-picker';
 import { apiClient } from '../api/client';
 import SwipeableScreen from '../components/SwipeableScreen';
-import { LinearGradient } from 'expo-linear-gradient';
 
 const { width } = Dimensions.get('window');
 
-export default function CheckoutScreen({ route, navigation, user }) {
-  const { id, start_date, end_date, profile, services } = route.params || {};
-  const insets = useSafeAreaInsets();
+export default function CheckoutScreen({ route, user, navigation }) {
+  const { muthowif, service, startDate, endDate } = route.params;
+  
+  const [pilgrimCount, setPilgrimCount] = useState('1');
+  const [withSameHotel, setWithSameHotel] = useState(false);
+  const [withTransport, setWithTransport] = useState(false);
+  const [selectedAddOns, setSelectedAddOns] = useState([]);
+  const [loading, setLoading] = useState(false);
 
-  const formatDateFriendly = (dateStr) => {
-    if (!dateStr) return null;
-    try {
-      const months = ['Jan', 'Feb', 'Mar', 'Apr', 'Mei', 'Juni', 'Juli', 'Agust', 'Sept', 'Okt', 'Nov', 'Des'];
-      const d = new Date(dateStr);
-      return `${d.getDate()} ${months[d.getMonth()]}`;
-    } catch (e) {
-      return dateStr;
+  // Perhitungan hari (100% PARITY DENGAN WEB)
+  const days = useMemo(() => {
+    const start = new Date(startDate);
+    const end = new Date(endDate);
+    const diffTime = Math.abs(end - start);
+    return Math.ceil(diffTime / (1000 * 60 * 60 * 24)) + 1;
+  }, [startDate, endDate]);
+
+  const toggleAddOn = (addon) => {
+    if (selectedAddOns.some(a => a.name === addon.name)) {
+      setSelectedAddOns(selectedAddOns.filter(a => a.name !== addon.name));
+    } else {
+      setSelectedAddOns([...selectedAddOns, addon]);
     }
   };
-
-  const [loading, setLoading] = useState(false);
-  const [serviceType, setServiceType] = useState('private'); // 'group' or 'private'
-  const [pilgrimCount, setPilgrimCount] = useState('1');
-  const [selectedAddOns, setSelectedAddOns] = useState([]);
-  const [withHotel, setWithHotel] = useState(false);
-  const [withTransport, setWithTransport] = useState(false);
-  
-  // Documents
-  const [ticketOutbound, setTicketOutbound] = useState(null);
-  const [ticketReturn, setTicketReturn] = useState(null);
-  const [passport, setPassport] = useState(null);
-  const [itinerary, setItinerary] = useState(null);
-  const [visa, setVisa] = useState(null);
-
-  const selectedService = useMemo(() => {
-    return services.find(s => s.type === serviceType);
-  }, [services, serviceType]);
-
-  const nights = useMemo(() => {
-    if (!start_date || !end_date) return 1;
-    const start = new Date(start_date);
-    const end = new Date(end_date);
-    const diffTime = Math.abs(end - start);
-    const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24)) + 1;
-    return diffDays;
-  }, [start_date, end_date]);
 
   const totalPrice = useMemo(() => {
-    if (!selectedService) return 0;
+    let total = parseFloat(service.daily_price) * days;
+    if (withSameHotel) total += parseFloat(service.same_hotel_price_per_day) * days;
+    if (withTransport) total += parseFloat(service.transport_price_flat);
     
-    let total = Number(selectedService.price);
-    
-    // Add-ons
-    selectedAddOns.forEach(addonId => {
-      const addon = selectedService.add_ons.find(a => a.id === addonId);
-      if (addon) total += Number(addon.price);
+    selectedAddOns.forEach(addon => {
+      total += parseFloat(addon.price);
     });
-
-    // Hotel
-    if (withHotel && selectedService.same_hotel_price_per_day) {
-      total += (Number(selectedService.same_hotel_price_per_day) * nights);
-    }
-
-    // Transport
-    if (withTransport && selectedService.transport_price_flat) {
-      total += Number(selectedService.transport_price_flat);
-    }
-
+    
     return total;
-  }, [selectedService, selectedAddOns, withHotel, withTransport, nights]);
+  }, [service, days, withSameHotel, withTransport, selectedAddOns]);
 
-  const pickDocument = async (type) => {
-    try {
-      const result = await DocumentPicker.getDocumentAsync({
-        type: ['application/pdf', 'image/*'],
-      });
-
-      if (!result.canceled) {
-        const file = result.assets[0];
-        switch (type) {
-          case 'outbound': setTicketOutbound(file); break;
-          case 'return': setTicketReturn(file); break;
-          case 'passport': setPassport(file); break;
-          case 'itinerary': setItinerary(file); break;
-          case 'visa': setVisa(file); break;
-        }
-      }
-    } catch (err) {
-      Alert.alert('Error', 'Gagal memilih dokumen');
-    }
-  };
-
-  const handleSubmit = async () => {
-    if (!ticketOutbound || !ticketReturn || !passport) {
-      Alert.alert('Dokumen Kurang', 'Harap lengkapi dokumen Tiket dan Paspor.');
-      return;
-    }
-
-    if (serviceType === 'group' && !itinerary) {
-      Alert.alert('Dokumen Kurang', 'Paket Group wajib menyertakan Itinerary.');
+  const handleBooking = async () => {
+    const count = parseInt(pilgrimCount);
+    if (isNaN(count) || count < 1) {
+      Alert.alert('Perhatian', 'Jumlah jamaah harus valid');
       return;
     }
 
     setLoading(true);
     try {
-      const formData = new FormData();
-      formData.append('muthowif_profile_id', id);
-      formData.append('start_date', start_date);
-      formData.append('end_date', end_date);
-      formData.append('service_type', serviceType);
-      formData.append('pilgrim_count', pilgrimCount);
-      formData.append('with_same_hotel', withHotel ? '1' : '0');
-      formData.append('with_transport', withTransport ? '1' : '0');
-
-      selectedAddOns.forEach((id, index) => {
-        formData.append(`add_on_ids[${index}]`, id);
+      const result = await apiClient.createBooking(user.token, {
+        muthowif_id: muthowif.id,
+        service_id: service.id,
+        starts_on: startDate,
+        ends_on: endDate,
+        pilgrim_count: count,
+        with_same_hotel: withSameHotel,
+        with_transport: withTransport,
+        add_ons: selectedAddOns
       });
 
-      // Append files
-      const appendFile = (name, file) => {
-        if (file) {
-          formData.append(name, {
-            uri: file.uri,
-            name: file.name,
-            type: file.mimeType || 'application/octet-stream',
-          });
-        }
-      };
-
-      appendFile('ticket_outbound', ticketOutbound);
-      appendFile('ticket_return', ticketReturn);
-      appendFile('passport', passport);
-      appendFile('itinerary', itinerary);
-      appendFile('visa', visa);
-
-      const bookingRes = await apiClient.createBooking(user.token, formData);
-      const paymentRes = await apiClient.requestPayment(user.token, bookingRes.booking_id);
-
-      navigation.navigate('PaymentWeb', { 
-        url: paymentRes.redirect_url,
-        booking_id: bookingRes.booking_id 
-      });
-
+      Alert.alert('Sukses', 'Pesanan berhasil dibuat. Menunggu konfirmasi Muthowif.', [
+        { text: 'Lihat Pesanan', onPress: () => navigation.navigate('BookingList') }
+      ]);
     } catch (error) {
-      Alert.alert('Gagal', error.message || 'Terjadi kesalahan saat memproses pesanan');
+      Alert.alert('Gagal', error.message || 'Terjadi kesalahan saat memesan');
     } finally {
       setLoading(false);
     }
   };
 
-  const toggleAddOn = (id) => {
-    if (selectedAddOns.includes(id)) {
-      setSelectedAddOns(selectedAddOns.filter(item => item !== id));
-    } else {
-      setSelectedAddOns([...selectedAddOns, id]);
-    }
-  };
+  const formatIDR = (num) => num.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ".");
 
   return (
     <SwipeableScreen onSwipeBack={() => navigation.goBack()}>
       <View style={styles.container}>
-        <ScrollView contentContainerStyle={{ paddingBottom: 120 }}>
-          <LinearGradient 
-            colors={['#0F172A', '#1E3A8A']} 
-            style={styles.headerGradient}
-          >
-            <SafeAreaView edges={['top']}>
-              <View style={styles.headerRow}>
-                <TouchableOpacity onPress={() => navigation.goBack()} style={styles.backBtnWrapper}>
-                  <Ionicons name="arrow-back" size={24} color="#FFF" />
-                </TouchableOpacity>
-                <Text style={styles.headerTitle}>Konfirmasi Pemesanan</Text>
+        <StatusBar barStyle="dark-content" />
+        <View style={styles.header}>
+          <SafeAreaView edges={['top']}>
+            <View style={styles.headerContent}>
+              <TouchableOpacity onPress={() => navigation.goBack()} style={styles.backBtn}>
+                <Ionicons name="chevron-back" size={24} color="#0F172A" />
+              </TouchableOpacity>
+              <View style={styles.headerTitleBox}>
+                <Text style={styles.headerTitle}>Konfirmasi Pesanan</Text>
+                <Text style={styles.headerSub}>Langkah Terakhir</Text>
               </View>
-            </SafeAreaView>
-          </LinearGradient>
-
-          <View style={styles.content}>
-            {/* Service Summary Card */}
-            <View style={styles.summaryCardWrapper}>
-              <LinearGradient 
-                colors={['#FFFFFF', '#F8FAFC']} 
-                style={styles.summaryCard}
-              >
-                <View style={styles.profileInfo}>
-                  <Image source={{ uri: profile.avatar }} style={styles.miniAvatar} />
-                  <View>
-                    <Text style={styles.muthowifName}>{profile.name}</Text>
-                    <Text style={styles.muthowifStatus}>Verified Muthowif</Text>
-                  </View>
-                </View>
-                
-                <View style={styles.divider} />
-                
-                <View style={styles.scheduleGrid}>
-                  <View style={styles.scheduleItem}>
-                    <Text style={styles.scheduleLabel}>MULAI</Text>
-                    <Text style={styles.scheduleValue}>
-                      {formatDateFriendly(start_date)}
-                    </Text>
-                  </View>
-                  <Ionicons name="arrow-forward" size={16} color="#CBD5E1" />
-                  <View style={styles.scheduleItem}>
-                    <Text style={styles.scheduleLabel}>SELESAI</Text>
-                    <Text style={styles.scheduleValue}>
-                      {formatDateFriendly(end_date)}
-                    </Text>
-                  </View>
-                  <View style={styles.durationBadge}>
-                    <Text style={styles.durationText}>{nights} Hari</Text>
-                  </View>
-                </View>
-              </LinearGradient>
+              <View style={{ width: 44 }} />
             </View>
+          </SafeAreaView>
+        </View>
 
-            {/* Service Type */}
-            <View style={styles.section}>
-              <Text style={styles.sectionTitle}>Tipe Layanan</Text>
-              <View style={styles.typeSelector}>
-                {services.map(s => (
-                  <TouchableOpacity 
-                    key={s.id}
-                    style={[styles.typeBtn, serviceType === s.type && styles.typeBtnActive]}
-                    onPress={() => setServiceType(s.type)}
-                  >
-                    <Text style={[styles.typeBtnText, serviceType === s.type && styles.typeBtnTextActive]}>
-                      {s.type === 'private' ? 'Private' : 'Group'}
-                    </Text>
-                  </TouchableOpacity>
-                ))}
+        <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={styles.scrollContent}>
+          
+          {/* Summary Banner */}
+          <View style={styles.serviceBanner}>
+            <LinearGradient colors={['#F8FAFC', '#F1F5F9']} style={styles.bannerInner}>
+              <View style={styles.bannerIcon}><Ionicons name="briefcase" size={24} color="#3B82F6" /></View>
+              <View style={{ flex: 1 }}>
+                <Text style={styles.bannerLabel}>LAYANAN PILIHAN</Text>
+                <Text style={styles.bannerName}>{service.name}</Text>
+                <Text style={styles.bannerDuration}>{days} Hari • {startDate} s/d {endDate}</Text>
               </View>
-            </View>
+            </LinearGradient>
+          </View>
 
-            {/* Pilgrim Count */}
-            <View style={styles.section}>
-              <Text style={styles.sectionTitle}>Jumlah Jamaah</Text>
-              <View style={styles.inputContainer}>
-                <Ionicons name="people" size={20} color="#64748B" style={styles.inputIcon} />
-                <TextInput 
-                  style={styles.input}
-                  keyboardType="numeric"
-                  value={pilgrimCount}
-                  onChangeText={setPilgrimCount}
-                  placeholder="Contoh: 2"
-                />
-              </View>
-              {selectedService && (
-                <Text style={styles.inputHelper}>Min: {selectedService.min_pilgrims || 1} - Max: {selectedService.max_pilgrims || 50}</Text>
-              )}
-            </View>
-
-            {/* Add-ons & Acommodation */}
-            <View style={styles.section}>
-              <Text style={styles.sectionTitle}>Layanan Tambahan</Text>
-              
-              {selectedService?.same_hotel_price_per_day > 0 && (
-                <TouchableOpacity style={styles.optionItem} onPress={() => setWithHotel(!withHotel)}>
-                  <Ionicons name={withHotel ? "checkbox" : "square-outline"} size={24} color={withHotel ? "#0984e3" : "#94A3B8"} />
-                  <View style={styles.optionTextContainer}>
-                    <Text style={styles.optionLabel}>Satu Hotel dengan Jamaah</Text>
-                    <Text style={styles.optionPrice}>+ Rp {Number(selectedService.same_hotel_price_per_day).toLocaleString('id-ID')}/malam</Text>
-                  </View>
-                </TouchableOpacity>
-              )}
-
-              {selectedService?.transport_price_flat > 0 && (
-                <TouchableOpacity style={styles.optionItem} onPress={() => setWithTransport(!withTransport)}>
-                  <Ionicons name={withTransport ? "checkbox" : "square-outline"} size={24} color={withTransport ? "#0984e3" : "#94A3B8"} />
-                  <View style={styles.optionTextContainer}>
-                    <Text style={styles.optionLabel}>Transportasi Antar Jemput</Text>
-                    <Text style={styles.optionPrice}>+ Rp {Number(selectedService.transport_price_flat).toLocaleString('id-ID')}</Text>
-                  </View>
-                </TouchableOpacity>
-              )}
-
-              {selectedService?.add_ons && selectedService.add_ons.map(addon => (
-                <TouchableOpacity key={addon.id} style={styles.optionItem} onPress={() => toggleAddOn(addon.id)}>
-                  <Ionicons name={selectedAddOns.includes(addon.id) ? "checkbox" : "square-outline"} size={24} color={selectedAddOns.includes(addon.id) ? "#0984e3" : "#94A3B8"} />
-                  <View style={styles.optionTextContainer}>
-                    <Text style={styles.optionLabel}>{addon.name}</Text>
-                    <Text style={styles.optionPrice}>+ Rp {Number(addon.price).toLocaleString('id-ID')}</Text>
-                  </View>
-                </TouchableOpacity>
-              ))}
-            </View>
-
-            {/* Document Upload */}
-            <View style={styles.section}>
-              <Text style={styles.sectionTitle}>Unggah Dokumen</Text>
-              <Text style={styles.sectionHelper}>Wajib mengunggah Tiket dan Paspor.</Text>
-              
-              <View style={styles.docGrid}>
-                <DocBtn title="Tiket Berangkat" file={ticketOutbound} onPress={() => pickDocument('outbound')} required />
-                <DocBtn title="Tiket Pulang" file={ticketReturn} onPress={() => pickDocument('return')} required />
-                <DocBtn title="Paspor" file={passport} onPress={() => pickDocument('passport')} required />
-                <DocBtn title="Visa (Opsional)" file={visa} onPress={() => pickDocument('visa')} />
-                {serviceType === 'group' && (
-                  <DocBtn title="Itinerary" file={itinerary} onPress={() => pickDocument('itinerary')} required />
-                )}
-              </View>
+          {/* Form Options */}
+          <View style={styles.section}>
+            <Text style={styles.sectionTitle}>Jumlah Jamaah</Text>
+            <View style={styles.inputWrapper}>
+              <Ionicons name="people-outline" size={20} color="#94A3B8" style={styles.inputIcon} />
+              <TextInput 
+                style={styles.input}
+                value={pilgrimCount}
+                onChangeText={setPilgrimCount}
+                keyboardType="numeric"
+                placeholder="Contoh: 2"
+                placeholderTextColor="#CBD5E1"
+              />
             </View>
           </View>
+
+          <View style={styles.section}>
+            <Text style={styles.sectionTitle}>Layanan Tambahan</Text>
+            
+            <TouchableOpacity 
+              style={[styles.optionCard, withSameHotel && styles.optionCardActive]}
+              onPress={() => setWithSameHotel(!withSameHotel)}
+              activeOpacity={0.7}
+            >
+              <View style={styles.optionInfo}>
+                <View style={[styles.optionIcon, withSameHotel && styles.optionIconActive]}>
+                  <Ionicons name="business-outline" size={22} color={withSameHotel ? '#FFF' : '#3B82F6'} />
+                </View>
+                <View style={{ flex: 1 }}>
+                  <Text style={[styles.optionTitle, withSameHotel && styles.optionTitleActive]}>Hotel Yang Sama</Text>
+                  <Text style={styles.optionPrice}>Rp {formatIDR(service.same_hotel_price_per_day)} /hari</Text>
+                </View>
+                <View style={[styles.checkbox, withSameHotel && styles.checkboxActive]}>
+                  {withSameHotel && <Ionicons name="checkmark" size={16} color="#FFF" />}
+                </View>
+              </View>
+            </TouchableOpacity>
+
+            <TouchableOpacity 
+              style={[styles.optionCard, withTransport && styles.optionCardActive]}
+              onPress={() => setWithTransport(!withTransport)}
+              activeOpacity={0.7}
+            >
+              <View style={styles.optionInfo}>
+                <View style={[styles.optionIcon, withTransport && styles.optionIconActive]}>
+                  <Ionicons name="car-outline" size={22} color={withTransport ? '#FFF' : '#3B82F6'} />
+                </View>
+                <View style={{ flex: 1 }}>
+                  <Text style={[styles.optionTitle, withTransport && styles.optionTitleActive]}>Transportasi Flat</Text>
+                  <Text style={styles.optionPrice}>Rp {formatIDR(service.transport_price_flat)} sekali jalan</Text>
+                </View>
+                <View style={[styles.checkbox, withTransport && styles.checkboxActive]}>
+                  {withTransport && <Ionicons name="checkmark" size={16} color="#FFF" />}
+                </View>
+              </View>
+            </TouchableOpacity>
+          </View>
+
+          {service.add_ons && service.add_ons.length > 0 && (
+            <View style={styles.section}>
+              <Text style={styles.sectionTitle}>Add-Ons Tersedia</Text>
+              <View style={styles.addOnGrid}>
+                {service.add_ons.map((addon, index) => {
+                  const isSelected = selectedAddOns.some(a => a.name === addon.name);
+                  return (
+                    <TouchableOpacity 
+                      key={index}
+                      style={[styles.addOnChip, isSelected && styles.addOnChipActive]}
+                      onPress={() => toggleAddOn(addon)}
+                    >
+                      <Text style={[styles.addOnText, isSelected && styles.addOnTextActive]}>{addon.name}</Text>
+                      <Text style={[styles.addOnPrice, isSelected && styles.addOnPriceActive]}>+Rp {formatIDR(addon.price)}</Text>
+                    </TouchableOpacity>
+                  );
+                })}
+              </View>
+            </View>
+          )}
+
+          {/* Pricing Summary Card */}
+          <View style={styles.summaryCard}>
+            <Text style={styles.summaryTitle}>Ringkasan Biaya</Text>
+            <View style={styles.priceRow}>
+              <Text style={styles.priceLabel}>Biaya Layanan ({days} Hari)</Text>
+              <Text style={styles.priceValue}>Rp {formatIDR(parseFloat(service.daily_price) * days)}</Text>
+            </View>
+            {withSameHotel && (
+              <View style={styles.priceRow}>
+                <Text style={styles.priceLabel}>Biaya Hotel ({days} Hari)</Text>
+                <Text style={styles.priceValue}>+ Rp {formatIDR(parseFloat(service.same_hotel_price_per_day) * days)}</Text>
+              </View>
+            )}
+            {withTransport && (
+              <View style={styles.priceRow}>
+                <Text style={styles.priceLabel}>Transportasi Flat</Text>
+                <Text style={styles.priceValue}>+ Rp {formatIDR(service.transport_price_flat)}</Text>
+              </View>
+            )}
+            {selectedAddOns.map((a, i) => (
+              <View key={i} style={styles.priceRow}>
+                <Text style={styles.priceLabel}>Add-on: {a.name}</Text>
+                <Text style={styles.priceValue}>+ Rp {formatIDR(a.price)}</Text>
+              </View>
+            ))}
+            
+            <View style={styles.divider} />
+            <View style={styles.totalRow}>
+              <Text style={styles.totalLabel}>Total Estimasi</Text>
+              <Text style={styles.totalValue}>Rp {formatIDR(totalPrice)}</Text>
+            </View>
+            <View style={styles.infoBox}>
+               <Ionicons name="information-circle" size={16} color="#64748B" />
+               <Text style={styles.infoText}>Harga belum termasuk biaya admin Midtrans.</Text>
+            </View>
+          </View>
+
         </ScrollView>
 
-        {/* Bottom Bar */}
-        <View style={[styles.bottomBar, { paddingBottom: Math.max(insets.bottom, 20) }]}>
-          <View style={styles.bottomBarLeft}>
-            <Text style={styles.totalLabel}>Total Pembayaran</Text>
-            <Text style={styles.totalPrice}>Rp {totalPrice.toLocaleString('id-ID')}</Text>
-          </View>
+        <View style={styles.footer}>
           <TouchableOpacity 
-            style={[styles.payBtn, loading && styles.payBtnDisabled]} 
-            onPress={handleSubmit}
+            style={[styles.bookingBtn, loading && styles.bookingBtnDisabled]} 
+            onPress={handleBooking}
             disabled={loading}
           >
-            {loading ? (
-              <ActivityIndicator color="#FFF" />
-            ) : (
-              <>
-                <Text style={styles.payBtnText}>Bayar Sekarang</Text>
-                <Ionicons name="card" size={18} color="#FFF" />
-              </>
-            )}
+            <LinearGradient colors={['#0F172A', '#1E3A8A']} style={styles.btnGradient}>
+              {loading ? (
+                <ActivityIndicator color="#FFF" />
+              ) : (
+                <>
+                  <Text style={styles.bookingBtnText}>Buat Pesanan Sekarang</Text>
+                  <Ionicons name="arrow-forward" size={20} color="#FFF" />
+                </>
+              )}
+            </LinearGradient>
           </TouchableOpacity>
         </View>
       </View>
@@ -344,196 +263,75 @@ export default function CheckoutScreen({ route, navigation, user }) {
   );
 }
 
-const DocBtn = ({ title, file, onPress, required }) => (
-  <TouchableOpacity style={[styles.docBtn, file && styles.docBtnSuccess]} onPress={onPress}>
-    <Ionicons name={file ? "checkmark-circle" : "cloud-upload"} size={24} color={file ? "#10B981" : "#0984e3"} />
-    <Text style={[styles.docBtnTitle, file && styles.docBtnTitleSuccess]} numberOfLines={1}>
-      {file ? file.name : title}
-    </Text>
-    {required && !file && <View style={styles.requiredDot} />}
-  </TouchableOpacity>
-);
-
 const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: '#F8FAFC' },
-  headerGradient: {
-    paddingBottom: 60,
-    borderBottomLeftRadius: 32,
+  header: { 
+    backgroundColor: '#FFFFFF',
+    paddingBottom: 25, 
+    borderBottomLeftRadius: 32, 
     borderBottomRightRadius: 32,
-  },
-  headerRow: { 
-    flexDirection: 'row', 
-    alignItems: 'center', 
-    paddingHorizontal: 20, 
-    paddingTop: 10,
-    gap: 16
-  },
-  backBtnWrapper: {
-    width: 40,
-    height: 40,
-    borderRadius: 12,
-    backgroundColor: 'rgba(255, 255, 255, 0.15)',
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
-  headerTitle: { fontSize: 20, fontWeight: '800', color: '#FFF', letterSpacing: -0.5 },
-  
-  content: { padding: 20, marginTop: -50 },
-  
-  summaryCardWrapper: {
-    shadowColor: '#0F172A',
-    shadowOffset: { width: 0, height: 12 },
-    shadowOpacity: 0.1,
-    shadowRadius: 24,
-    elevation: 8,
-    marginBottom: 24,
-  },
-  summaryCard: { 
-    borderRadius: 24, 
-    padding: 20, 
-    borderWidth: 1, 
-    borderColor: '#FFF',
-  },
-  profileInfo: { flexDirection: 'row', alignItems: 'center', gap: 14, marginBottom: 16 },
-  miniAvatar: { width: 44, height: 44, borderRadius: 14, backgroundColor: '#F1F5F9' },
-  muthowifName: { fontSize: 16, fontWeight: '800', color: '#0F172A' },
-  muthowifStatus: { fontSize: 11, fontWeight: '700', color: '#10B981', marginTop: 2 },
-  
-  divider: { height: 1, backgroundColor: '#F1F5F9', marginBottom: 16 },
-  
-  scheduleGrid: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' },
-  scheduleItem: { gap: 4 },
-  scheduleLabel: { fontSize: 10, fontWeight: '800', color: '#94A3B8', letterSpacing: 1 },
-  scheduleValue: { fontSize: 15, fontWeight: '800', color: '#1E293B' },
-  durationBadge: { 
-    backgroundColor: '#F0F9FF', 
-    paddingHorizontal: 12, 
-    paddingVertical: 6, 
-    borderRadius: 10,
-    borderWidth: 1,
-    borderColor: '#E0F2FE'
-  },
-  durationText: { fontSize: 12, fontWeight: '800', color: '#0984e3' },
-
-  section: { marginBottom: 28 },
-  sectionTitle: { fontSize: 17, fontWeight: '800', color: '#0F172A', marginBottom: 16 },
-  sectionHelper: { fontSize: 13, color: '#64748B', marginBottom: 16, marginTop: -8 },
-  
-  typeSelector: { flexDirection: 'row', gap: 12 },
-  typeBtn: { 
-    flex: 1, 
-    paddingVertical: 16, 
-    alignItems: 'center', 
-    borderRadius: 18, 
-    backgroundColor: '#FFF',
-    borderWidth: 1,
-    borderColor: '#E2E8F0',
     shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.03,
-    shadowRadius: 4,
-    elevation: 2
-  },
-  typeBtnActive: { 
-    backgroundColor: '#0984e3', 
-    borderColor: '#0984e3',
-    shadowColor: '#0984e3',
-    shadowOpacity: 0.3,
-    shadowRadius: 8,
-  },
-  typeBtnText: { fontSize: 14, fontWeight: '700', color: '#64748B' },
-  typeBtnTextActive: { color: '#FFF' },
-
-  inputContainer: { 
-    flexDirection: 'row', 
-    alignItems: 'center', 
-    backgroundColor: '#FFF', 
-    borderRadius: 18, 
-    borderWidth: 1, 
-    borderColor: '#E2E8F0',
-    paddingHorizontal: 18,
-    height: 58,
-    shadowColor: '#000',
-    shadowOpacity: 0.02,
-    elevation: 1
-  },
-  inputIcon: { marginRight: 14 },
-  input: { flex: 1, fontSize: 16, fontWeight: '700', color: '#0F172A' },
-  inputHelper: { fontSize: 12, color: '#94A3B8', marginTop: 10, fontWeight: '600', paddingLeft: 4 },
-
-  optionItem: { 
-    flexDirection: 'row', 
-    alignItems: 'center', 
-    backgroundColor: '#FFF', 
-    padding: 16, 
-    borderRadius: 20, 
-    marginBottom: 14,
-    borderWidth: 1,
-    borderColor: '#F1F5F9',
-    shadowColor: '#000',
-    shadowOpacity: 0.03,
-    elevation: 2
-  },
-  optionTextContainer: { flex: 1, marginLeft: 14 },
-  optionLabel: { fontSize: 14, fontWeight: '800', color: '#1E293B' },
-  optionPrice: { fontSize: 12, fontWeight: '700', color: '#10B981', marginTop: 3 },
-
-  docGrid: { flexDirection: 'row', flexWrap: 'wrap', gap: 14 },
-  docBtn: { 
-    width: (width - 54) / 2, 
-    backgroundColor: '#FFF', 
-    borderRadius: 20, 
-    padding: 20, 
-    alignItems: 'center',
-    borderWidth: 1.5,
-    borderColor: '#E2E8F0',
-    borderStyle: 'dashed'
-  },
-  docBtnSuccess: { backgroundColor: '#F0FDF4', borderColor: '#10B981', borderStyle: 'solid' },
-  docBtnTitle: { fontSize: 12, fontWeight: '800', color: '#64748B', marginTop: 10, textAlign: 'center' },
-  docBtnTitleSuccess: { color: '#166534' },
-  requiredDot: { 
-    position: 'absolute', 
-    top: 10, 
-    right: 10, 
-    width: 7, 
-    height: 7, 
-    borderRadius: 4, 
-    backgroundColor: '#EF4444' 
-  },
-
-  bottomBar: {
-    position: 'absolute',
-    bottom: 0,
-    left: 0,
-    right: 0,
-    backgroundColor: 'rgba(255, 255, 255, 0.95)',
-    flexDirection: 'row',
-    paddingHorizontal: 24,
-    paddingTop: 18,
-    borderTopWidth: 1,
-    borderTopColor: '#F1F5F9',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-  },
-  bottomBarLeft: { flex: 1 },
-  totalLabel: { fontSize: 12, color: '#64748B', fontWeight: '700', marginBottom: 4 },
-  totalPrice: { fontSize: 22, fontWeight: '900', color: '#0F172A' },
-  payBtn: { 
-    backgroundColor: '#0984e3', 
-    flexDirection: 'row', 
-    alignItems: 'center', 
-    justifyContent: 'center', 
-    paddingHorizontal: 26, 
-    height: 56, 
-    borderRadius: 18, 
-    gap: 10,
-    shadowColor: '#0984e3',
     shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.3,
-    shadowRadius: 12,
-    elevation: 6
+    shadowOpacity: 0.03,
+    shadowRadius: 10,
+    elevation: 5
   },
-  payBtnDisabled: { opacity: 0.7 },
-  payBtnText: { color: '#FFF', fontSize: 16, fontWeight: '800' }
+  headerContent: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', paddingHorizontal: 20, paddingTop: 10 },
+  backBtn: { width: 44, height: 44, borderRadius: 22, backgroundColor: '#F8FAFC', justifyContent: 'center', alignItems: 'center' },
+  headerTitleBox: { alignItems: 'center' },
+  headerTitle: { color: '#0F172A', fontSize: 18, fontWeight: '900' },
+  headerSub: { color: '#94A3B8', fontSize: 10, fontWeight: '800', marginTop: 2, textTransform: 'uppercase', letterSpacing: 1 },
+  
+  scrollContent: { padding: 20, paddingBottom: 120 },
+  
+  serviceBanner: { marginBottom: 25 },
+  bannerInner: { flexDirection: 'row', alignItems: 'center', padding: 20, borderRadius: 24, borderWidth: 1, borderColor: '#F1F5F9' },
+  bannerIcon: { width: 48, height: 48, borderRadius: 16, backgroundColor: '#FFF', justifyContent: 'center', alignItems: 'center', marginRight: 16, shadowColor: '#3B82F6', shadowOffset: { width: 0, height: 4 }, shadowOpacity: 0.1, shadowRadius: 10, elevation: 2 },
+  bannerLabel: { fontSize: 10, fontWeight: '800', color: '#94A3B8', letterSpacing: 1, marginBottom: 4 },
+  bannerName: { fontSize: 16, fontWeight: '900', color: '#1E293B' },
+  bannerDuration: { fontSize: 12, color: '#64748B', fontWeight: '600', marginTop: 4 },
+
+  section: { marginBottom: 25 },
+  sectionTitle: { fontSize: 16, fontWeight: '900', color: '#0F172A', marginBottom: 15, marginLeft: 5 },
+  
+  inputWrapper: { flexDirection: 'row', alignItems: 'center', backgroundColor: '#FFF', borderRadius: 18, borderWidth: 1, borderColor: '#F1F5F9', paddingHorizontal: 16 },
+  inputIcon: { marginRight: 12 },
+  input: { flex: 1, paddingVertical: 16, fontSize: 15, fontWeight: '700', color: '#1E293B' },
+
+  optionCard: { backgroundColor: '#FFF', borderRadius: 20, padding: 18, marginBottom: 12, borderWidth: 1, borderColor: '#F1F5F9' },
+  optionCardActive: { borderColor: '#3B82F6', backgroundColor: '#F0F9FF' },
+  optionInfo: { flexDirection: 'row', alignItems: 'center' },
+  optionIcon: { width: 44, height: 44, borderRadius: 14, backgroundColor: '#EFF6FF', justifyContent: 'center', alignItems: 'center', marginRight: 16 },
+  optionIconActive: { backgroundColor: '#3B82F6' },
+  optionTitle: { fontSize: 15, fontWeight: '800', color: '#1E293B' },
+  optionTitleActive: { color: '#1E3A8A' },
+  optionPrice: { fontSize: 12, color: '#64748B', fontWeight: '600', marginTop: 2 },
+  checkbox: { width: 24, height: 24, borderRadius: 12, borderWidth: 2, borderColor: '#CBD5E1', justifyContent: 'center', alignItems: 'center' },
+  checkboxActive: { backgroundColor: '#3B82F6', borderColor: '#3B82F6' },
+
+  addOnGrid: { flexDirection: 'row', flexWrap: 'wrap', gap: 10 },
+  addOnChip: { backgroundColor: '#FFF', borderRadius: 16, paddingHorizontal: 16, paddingVertical: 12, borderWidth: 1, borderColor: '#F1F5F9', minWidth: (width - 60) / 2 },
+  addOnChipActive: { backgroundColor: '#3B82F6', borderColor: '#3B82F6' },
+  addOnText: { fontSize: 14, fontWeight: '800', color: '#1E293B' },
+  addOnTextActive: { color: '#FFF' },
+  addOnPrice: { fontSize: 11, color: '#64748B', fontWeight: '700', marginTop: 4 },
+  addOnPriceActive: { color: 'rgba(255, 255, 255, 0.8)' },
+
+  summaryCard: { backgroundColor: '#0F172A', borderRadius: 28, padding: 24, shadowColor: '#000', shadowOffset: { width: 0, height: 10 }, shadowOpacity: 0.2, shadowRadius: 20, elevation: 10 },
+  summaryTitle: { fontSize: 18, fontWeight: '900', color: '#FFF', marginBottom: 20 },
+  priceRow: { flexDirection: 'row', justifyContent: 'space-between', marginBottom: 14, gap: 10 },
+  priceLabel: { fontSize: 14, color: 'rgba(255, 255, 255, 0.6)', fontWeight: '600', flex: 1 },
+  priceValue: { fontSize: 14, color: '#FFF', fontWeight: '800', textAlign: 'right' },
+  divider: { height: 1, backgroundColor: 'rgba(255, 255, 255, 0.1)', marginVertical: 10 },
+  totalRow: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginTop: 10, gap: 10 },
+  totalLabel: { fontSize: 16, fontWeight: '900', color: '#FFF', flex: 1 },
+  totalValue: { fontSize: 20, fontWeight: '900', color: '#3B82F6', textAlign: 'right' },
+  infoBox: { flexDirection: 'row', alignItems: 'center', gap: 8, marginTop: 20, backgroundColor: 'rgba(255, 255, 255, 0.05)', padding: 12, borderRadius: 12 },
+  infoText: { fontSize: 11, color: 'rgba(255, 255, 255, 0.5)', fontWeight: '600' },
+
+  footer: { position: 'absolute', bottom: 0, left: 0, right: 0, padding: 24, backgroundColor: 'rgba(255, 255, 255, 0.9)', borderTopWidth: 1, borderTopColor: '#F1F5F9' },
+  bookingBtn: { borderRadius: 20, overflow: 'hidden' },
+  bookingBtnDisabled: { opacity: 0.7 },
+  btnGradient: { flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 12, paddingVertical: 18 },
+  bookingBtnText: { color: '#FFF', fontSize: 16, fontWeight: '900' }
 });

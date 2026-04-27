@@ -205,10 +205,10 @@ export default function ChatScreen({ user, route, navigation }) {
     <SafeAreaView style={styles.container}>
       <StatusBar style="dark" />
 
-      {/* ── Header ── */}
+      {/* Header Premium */}
       <View style={styles.header}>
         <TouchableOpacity onPress={() => navigation?.goBack()} style={styles.backBtn}>
-          <Ionicons name="arrow-back" size={22} color="#1E293B" />
+          <Ionicons name="arrow-back" size={24} color="#0F172A" />
         </TouchableOpacity>
         <View style={styles.headerInfo}>
           <View style={styles.headerAvatar}>
@@ -218,13 +218,15 @@ export default function ChatScreen({ user, route, navigation }) {
             <Text style={styles.headerName} numberOfLines={1}>{partnerName ?? 'Chat'}</Text>
             <View style={styles.statusRow}>
               <View style={[styles.statusDot, { backgroundColor: connected ? '#10B981' : '#94A3B8' }]} />
-              <Text style={styles.headerSub}>
+              <Text style={styles.headerSubText}>
                 {connected ? 'Terhubung' : 'Menghubungkan...'}
               </Text>
             </View>
           </View>
         </View>
-        <Text style={styles.bookingCodeBadge}>{bookingCode}</Text>
+        <View style={styles.badgeWrapper}>
+          <Text style={styles.bookingCodeBadge}>{bookingCode}</Text>
+        </View>
       </View>
 
       {/* ── Chat closed banner ── */}
@@ -310,23 +312,19 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     paddingHorizontal: 16,
-    paddingVertical: 14,
+    paddingTop: 10,
+    paddingBottom: 20,
     backgroundColor: '#FFFFFF',
-    borderBottomWidth: 1,
-    borderBottomColor: '#F1F5F9',
-    gap: 12,
+    borderBottomLeftRadius: 30, 
+    borderBottomRightRadius: 30,
     shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.02,
-    shadowRadius: 5,
-    elevation: 2,
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.03,
+    shadowRadius: 10,
+    elevation: 5
   },
-  backBtn: { 
-    padding: 8, 
-    borderRadius: 12, 
-    backgroundColor: '#F8FAFC' 
-  },
-  headerInfo: { flexDirection: 'row', alignItems: 'center', flex: 1, gap: 12 },
+  backBtn: { width: 44, height: 44, justifyContent: 'center', alignItems: 'center' },
+  headerInfo: { flexDirection: 'row', alignItems: 'center', flex: 1, marginLeft: 4 },
   headerAvatar: {
     width: 44,
     height: 44,
@@ -339,20 +337,15 @@ const styles = StyleSheet.create({
   },
   headerAvatarText: { color: '#0984e3', fontWeight: '800', fontSize: 16 },
   headerName: { fontSize: 17, fontWeight: '800', color: '#0F172A', maxWidth: width * 0.45, letterSpacing: -0.3 },
-  statusRow: { flexDirection: 'row', alignItems: 'center', gap: 6, marginTop: 3 },
-  statusDot: { width: 8, height: 8, borderRadius: 4 },
-  headerSub: { fontSize: 11, color: '#64748B', fontWeight: '600' },
+  statusRow: { flexDirection: 'row', alignItems: 'center', gap: 5, marginTop: 1 },
+  statusDot: { width: 6, height: 6, borderRadius: 3 },
+  headerSubText: { fontSize: 11, color: '#64748B', fontWeight: '600' },
+  badgeWrapper: { backgroundColor: '#F1F5F9', paddingHorizontal: 10, paddingVertical: 4, borderRadius: 10 },
   bookingCodeBadge: { 
     fontSize: 10, 
-    color: '#0984e3', 
+    color: '#64748B', 
     fontWeight: '800', 
-    letterSpacing: 0.5, 
-    backgroundColor: '#EFF6FF',
-    paddingHorizontal: 8,
-    paddingVertical: 4,
-    borderRadius: 8,
-    overflow: 'hidden',
-    flexShrink: 0 
+    letterSpacing: 0.5
   },
 
   closedBanner: {

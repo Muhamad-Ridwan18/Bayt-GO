@@ -1,20 +1,21 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { 
   StyleSheet, 
   Text, 
   View, 
   TouchableOpacity, 
   ScrollView, 
-  ActivityIndicator,
-  Alert,
+  ActivityIndicator, 
+  Alert, 
   RefreshControl,
-  Dimensions
+  Dimensions,
+  StatusBar
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { StatusBar } from 'expo-status-bar';
+import { LinearGradient } from 'expo-linear-gradient';
+import { Ionicons } from '@expo/vector-icons';
 import { apiClient } from '../api/client';
 import SwipeableScreen from '../components/SwipeableScreen';
-import { Skeleton, SkeletonCard, SkeletonText } from '../components/Skeleton';
 
 const { width } = Dimensions.get('window');
 
@@ -22,30 +23,36 @@ export default function MuthowifBookingsScreen({ user, navigation }) {
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
   const [bookings, setBookings] = useState([]);
-  const [activeTab, setActiveTab] = useState('all'); // 'all', 'pending', 'confirmed', 'completed'
+  const [activeTab, setActiveTab] = useState('all');
 
-  const fetchBookings = async () => {
+  const fetchBookings = useCallback(async () => {
     try {
       const data = await apiClient.getMuthowifBookings(user.token);
       setBookings(data.bookings || []);
     } catch (error) {
-      console.error('Fetch Bookings Error:', error);
+      console.error(error);
+      Alert.alert('Error', 'Gagal memuat daftar pesanan');
     } finally {
       setLoading(false);
       setRefreshing(false);
     }
-  };
+  }, [user.token]);
 
   useEffect(() => {
     fetchBookings();
-  }, []);
+  }, [fetchBookings]);
+
+  const onRefresh = () => {
+    setRefreshing(true);
+    fetchBookings();
+  };
 
   const handleConfirm = (id) => {
     Alert.alert(
-      'Konfirmasi Pesanan',
-      'Apakah Anda bersedia membimbing jamaah ini pada tanggal tersebut?',
+      'Setujui Pesanan',
+      'Apakah Anda bersedia membimbing jamaah ini sesuai jadwal?',
       [
-        { text: 'Batal', style: 'cancel' },
+        { text: 'Nanti', style: 'cancel' },
         { 
           text: 'Ya, Setujui', 
           onPress: async () => {
@@ -54,7 +61,7 @@ export default function MuthowifBookingsScreen({ user, navigation }) {
               fetchBookings();
               Alert.alert('Sukses', 'Pesanan berhasil disetujui');
             } catch (error) {
-              Alert.alert('Error', error.message || 'Gagal menyetujui pesanan');
+              Alert.alert('Error', error.message);
             }
           }
         }
@@ -62,26 +69,14 @@ export default function MuthowifBookingsScreen({ user, navigation }) {
     );
   };
 
-  const handleCancel = (id) => {
-    Alert.alert(
-      'Tolak Pesanan',
-      'Apakah Anda yakin ingin menolak pesanan ini?',
-      [
-        { text: 'Batal', style: 'cancel' },
-        { 
-          text: 'Ya, Tolak', 
-          style: 'destructive',
-          onPress: async () => {
-            try {
-              await apiClient.cancelBooking(user.token, id);
-              fetchBookings();
-            } catch (error) {
-              Alert.alert('Error', error.message || 'Gagal membatalkan pesanan');
-            }
-          }
-        }
-      ]
-    );
+  const getStatusStyle = (status) => {
+    switch (status) {
+      case 'pending': return { label: 'Baru', color: '#F59E0B', bg: '#FEF3C7', icon: 'flash' };
+      case 'confirmed': return { label: 'Disetujui', color: '#10B981', bg: '#DCFCE7', icon: 'checkmark-circle' };
+      case 'completed': return { label: 'Selesai', color: '#64748B', bg: '#F1F5F9', icon: 'archive' };
+      case 'cancelled': return { label: 'Dibatalkan', color: '#EF4444', bg: '#FEE2E2', icon: 'close-circle' };
+      default: return { label: status, color: '#64748B', bg: '#F1F5F9', icon: 'help-circle' };
+    }
   };
 
   const filteredBookings = bookings.filter(b => {
@@ -89,166 +84,117 @@ export default function MuthowifBookingsScreen({ user, navigation }) {
     return b.status === activeTab;
   });
 
-  const getStatusColor = (status) => {
-    switch (status) {
-      case 'pending': return { bg: '#FEF3C7', text: '#92400E', dot: '#F59E0B' };
-      case 'confirmed': return { bg: '#D1FAE5', text: '#065F46', dot: '#10B981' };
-      case 'completed': return { bg: '#F1F5F9', text: '#475569', dot: '#94A3B8' };
-      case 'cancelled': return { bg: '#FEE2E2', text: '#991B1B', dot: '#EF4444' };
-      default: return { bg: '#F1F5F9', text: '#475569', dot: '#94A3B8' };
-    }
-  };
-
-  if (loading) {
+  const renderBookingCard = (item) => {
+    const status = getStatusStyle(item.status);
+    
     return (
-      <SwipeableScreen onSwipeBack={() => navigation.goBack()}>
-      <SafeAreaView style={styles.container}>
-        {/* Header */}
-        <View style={styles.header}>
-          <Skeleton width={36} height={36} borderRadius={10} />
-          <SkeletonText width={140} height={18} style={{ marginBottom: 0 }} />
-          <Skeleton width={36} height={36} borderRadius={10} />
+      <View key={item.id} style={styles.card}>
+        <View style={styles.cardHeader}>
+          <View>
+            <Text style={styles.bookingCode}>{item.booking_code}</Text>
+            <Text style={styles.customerName}>{item.customer_name}</Text>
+          </View>
+          <View style={[styles.statusBadge, { backgroundColor: status.bg }]}>
+            <Ionicons name={status.icon} size={14} color={status.color} style={{ marginRight: 4 }} />
+            <Text style={[styles.statusLabel, { color: status.color }]}>{status.label}</Text>
+          </View>
         </View>
-        {/* Tabs */}
-        <View style={{ flexDirection: 'row', padding: 15, gap: 8 }}>
-          {[1,2,3,4,5].map(i => <Skeleton key={i} width={70} height={34} borderRadius={12} />)}
+
+        <View style={styles.divider} />
+
+        <View style={styles.infoGrid}>
+          <View style={styles.infoItem}>
+            <Text style={styles.infoLabel}>TANGGAL</Text>
+            <Text style={styles.infoValue}>{item.starts_on}</Text>
+          </View>
+          <View style={styles.infoItem}>
+            <Text style={styles.infoLabel}>LAYANAN</Text>
+            <Text style={styles.infoValue}>{item.service_type === 'private' ? 'Private' : 'Group'}</Text>
+          </View>
+          <View style={styles.infoItem}>
+            <Text style={styles.infoLabel}>JAMAAH</Text>
+            <Text style={styles.infoValue}>{item.pilgrim_count} Orang</Text>
+          </View>
+          <View style={styles.infoItem}>
+            <Text style={styles.infoLabel}>PENDAPATAN</Text>
+            <Text style={[styles.infoValue, { color: '#0984e3' }]}>{item.total_price}</Text>
+          </View>
         </View>
-        <ScrollView contentContainerStyle={{ padding: 15 }}>
-          {[1,2,3].map(i => (
-            <SkeletonCard key={i}>
-              <View style={{ flexDirection: 'row', justifyContent: 'space-between', marginBottom: 14 }}>
-                <View><SkeletonText width={80} height={10} /><SkeletonText width={140} height={18} style={{ marginBottom: 0 }} /></View>
-                <Skeleton width={80} height={28} borderRadius={10} />
-              </View>
-              <Skeleton width="100%" height={1} borderRadius={0} style={{ marginBottom: 14 }} />
-              <View style={{ flexDirection: 'row', flexWrap: 'wrap' }}>
-                {[1,2,3,4].map(j => (
-                  <View key={j} style={{ width: '50%', marginBottom: 12 }}>
-                    <SkeletonText width="40%" height={9} />
-                    <SkeletonText width="70%" height={13} style={{ marginBottom: 0 }} />
-                  </View>
-                ))}
-              </View>
-            </SkeletonCard>
-          ))}
-        </ScrollView>
-      </SafeAreaView>
-      </SwipeableScreen>
+
+        {item.status === 'pending' ? (
+          <View style={styles.actionRow}>
+            <TouchableOpacity 
+              style={[styles.actionBtn, styles.approveBtn]} 
+              onPress={() => handleConfirm(item.id)}
+            >
+              <LinearGradient colors={['#10B981', '#059669']} style={styles.btnGradient}>
+                 <Text style={styles.approveBtnText}>Setujui Pesanan</Text>
+              </LinearGradient>
+            </TouchableOpacity>
+          </View>
+        ) : (
+          <TouchableOpacity 
+            style={styles.detailBtn}
+            onPress={() => navigation.navigate('BookingDetail', { bookingId: item.id })}
+          >
+            <Text style={styles.detailBtnText}>Lihat Detail & Chat</Text>
+            <Ionicons name="chevron-forward" size={16} color="#64748B" />
+          </TouchableOpacity>
+        )}
+      </View>
     );
-  }
+  };
 
   return (
     <SwipeableScreen onSwipeBack={() => navigation.goBack()}>
-    <SafeAreaView style={styles.container}>
-      <StatusBar style="dark" />
-      
-      {/* Header */}
-      <View style={styles.header}>
-        <TouchableOpacity onPress={() => navigation.navigate('Dashboard')}>
-          <Text style={styles.backBtn}>←</Text>
-        </TouchableOpacity>
-        <Text style={styles.headerTitle}>Daftar Booking</Text>
-        <View style={{ width: 40 }} />
-      </View>
+      <View style={styles.container}>
+        <StatusBar barStyle="dark-content" />
+        <View style={styles.header}>
+          <SafeAreaView edges={['top']}>
+            <View style={styles.headerTop}>
+              <TouchableOpacity onPress={() => navigation.goBack()} style={styles.backBtn}>
+                <Ionicons name="arrow-back" size={24} color="#0F172A" />
+              </TouchableOpacity>
+              <Text style={styles.headerTitle}>Agenda Booking</Text>
+              <View style={{ width: 40 }} />
+            </View>
 
-      {/* Tabs */}
-      <View style={styles.tabContainer}>
-        <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.tabScroll}>
-          {['all', 'pending', 'confirmed', 'completed', 'cancelled'].map((tab) => (
-            <TouchableOpacity 
-              key={tab} 
-              style={[styles.tab, activeTab === tab && styles.activeTab]}
-              onPress={() => setActiveTab(tab)}
-            >
-              <Text style={[styles.tabText, activeTab === tab && styles.activeTabText]}>
-                {tab.charAt(0).toUpperCase() + tab.slice(1)}
-              </Text>
-            </TouchableOpacity>
-          ))}
+            <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.tabScroll} contentContainerStyle={styles.tabContent}>
+              {['all', 'pending', 'confirmed', 'completed', 'cancelled'].map((tab) => (
+                <TouchableOpacity 
+                  key={tab} 
+                  style={[styles.tab, activeTab === tab && styles.activeTab]}
+                  onPress={() => setActiveTab(tab)}
+                >
+                  <Text style={[styles.tabText, activeTab === tab && styles.activeTabText]}>
+                    {tab === 'all' ? 'Semua' : tab === 'pending' ? 'Masuk' : tab.charAt(0).toUpperCase() + tab.slice(1)}
+                  </Text>
+                </TouchableOpacity>
+              ))}
+            </ScrollView>
+          </SafeAreaView>
+        </View>
+
+        <ScrollView 
+          showsVerticalScrollIndicator={false}
+          contentContainerStyle={styles.scrollContent}
+          refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor="#3B82F6" />}
+        >
+          {loading ? (
+            <ActivityIndicator size="large" color="#3B82F6" style={{ marginTop: 50 }} />
+          ) : filteredBookings.length > 0 ? (
+            filteredBookings.map(renderBookingCard)
+          ) : (
+            <View style={styles.empty}>
+              <View style={styles.emptyIconBg}>
+                <Ionicons name="calendar-outline" size={64} color="#CBD5E1" />
+              </View>
+              <Text style={styles.emptyTitle}>Kosong</Text>
+              <Text style={styles.emptySub}>Tidak ada data booking untuk kategori ini.</Text>
+            </View>
+          )}
         </ScrollView>
       </View>
-
-      <ScrollView 
-        showsVerticalScrollIndicator={false}
-        contentContainerStyle={styles.scrollContent}
-        refreshControl={<RefreshControl refreshing={refreshing} onRefresh={fetchBookings} color="#0984e3" />}
-      >
-        {loading ? (
-          <ActivityIndicator size="large" color="#0984e3" style={{ marginTop: 50 }} />
-        ) : filteredBookings.length > 0 ? (
-          filteredBookings.map((item) => {
-            const colors = getStatusColor(item.status);
-            return (
-              <View key={item.id} style={styles.card}>
-                <View style={styles.cardHeader}>
-                  <View>
-                    <Text style={styles.bookingCode}>{item.booking_code}</Text>
-                    <Text style={styles.customerName}>{item.customer_name}</Text>
-                  </View>
-                  <View style={[styles.statusBadge, { backgroundColor: colors.bg }]}>
-                    <View style={[styles.statusDot, { backgroundColor: colors.dot }]} />
-                    <Text style={[styles.statusText, { color: colors.text }]}>{item.status_label}</Text>
-                  </View>
-                </View>
-
-                <View style={styles.divider} />
-
-                <View style={styles.infoGrid}>
-                  <View style={styles.infoItem}>
-                    <Text style={styles.infoLabel}>TANGGAL</Text>
-                    <Text style={styles.infoValue}>{item.starts_on}</Text>
-                  </View>
-                  <View style={styles.infoItem}>
-                    <Text style={styles.infoLabel}>LAYANAN</Text>
-                    <Text style={styles.infoValue}>{item.service_type}</Text>
-                  </View>
-                  <View style={styles.infoItem}>
-                    <Text style={styles.infoLabel}>JAMAAH</Text>
-                    <Text style={styles.infoValue}>{item.pilgrim_count} Orang</Text>
-                  </View>
-                  <View style={styles.infoItem}>
-                    <Text style={styles.infoLabel}>TOTAL</Text>
-                    <Text style={[styles.infoValue, { color: '#0984e3' }]}>{item.total_price}</Text>
-                  </View>
-                </View>
-
-                {item.status === 'pending' && (
-                  <View style={styles.actionRow}>
-                    <TouchableOpacity 
-                      style={[styles.actionBtn, styles.rejectBtn]} 
-                      onPress={() => handleCancel(item.id)}
-                    >
-                      <Text style={styles.rejectBtnText}>Tolak</Text>
-                    </TouchableOpacity>
-                    <TouchableOpacity 
-                      style={[styles.actionBtn, styles.approveBtn]} 
-                      onPress={() => handleConfirm(item.id)}
-                    >
-                      <Text style={styles.approveBtnText}>Setujui</Text>
-                    </TouchableOpacity>
-                  </View>
-                )}
-
-                {(item.status === 'confirmed' || item.status === 'completed' || item.status === 'cancelled') && (
-                  <TouchableOpacity 
-                    style={styles.detailBtn}
-                    onPress={() => navigation.navigate('BookingDetail', { bookingId: item.id })}
-                  >
-                    <Text style={styles.detailBtnText}>Lihat Detail</Text>
-                  </TouchableOpacity>
-                )}
-              </View>
-            );
-          })
-        ) : (
-          <View style={styles.emptyContainer}>
-            <Text style={{fontSize: 50, marginBottom: 20}}>📄</Text>
-            <Text style={styles.emptyTitle}>Tidak Ada Pesanan</Text>
-            <Text style={styles.emptySub}>Belum ada data booking untuk kategori ini.</Text>
-          </View>
-        )}
-      </ScrollView>
-    </SafeAreaView>
     </SwipeableScreen>
   );
 }
@@ -256,61 +202,60 @@ export default function MuthowifBookingsScreen({ user, navigation }) {
 const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: '#F8FAFC' },
   header: { 
-    flexDirection: 'row', 
-    justifyContent: 'space-between', 
-    alignItems: 'center', 
-    paddingHorizontal: 20, 
-    paddingVertical: 15,
-    backgroundColor: '#fff',
-    borderBottomWidth: 1,
-    borderBottomColor: '#F1F5F9'
+    backgroundColor: '#FFFFFF',
+    paddingBottom: 20, 
+    borderBottomLeftRadius: 32, 
+    borderBottomRightRadius: 32,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.03,
+    shadowRadius: 10,
+    elevation: 5
   },
-  backBtn: { fontSize: 24, fontWeight: 'bold', color: '#1E293B', width: 40 },
-  headerTitle: { fontSize: 18, fontWeight: '800', color: '#1E293B' },
+  headerTop: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', paddingHorizontal: 20, paddingTop: 10 },
+  backBtn: { width: 40, height: 40, justifyContent: 'center', alignItems: 'center' },
+  headerTitle: { color: '#0F172A', fontSize: 20, fontWeight: '900' },
   
-  tabContainer: { backgroundColor: '#fff', paddingBottom: 10 },
-  tabScroll: { paddingHorizontal: 15 },
-  tab: { paddingHorizontal: 20, paddingVertical: 10, borderRadius: 12, marginRight: 8, backgroundColor: '#F1F5F9' },
-  activeTab: { backgroundColor: '#0984e3' },
-  tabText: { fontSize: 13, fontWeight: '700', color: '#64748B' },
-  activeTabText: { color: '#fff' },
+  tabScroll: { marginTop: 20 },
+  tabContent: { paddingHorizontal: 20, gap: 10 },
+  tab: { paddingHorizontal: 16, paddingVertical: 8, borderRadius: 20, backgroundColor: '#F8FAFC', borderWidth: 1, borderColor: '#F1F5F9' },
+  activeTab: { backgroundColor: '#0F172A', borderColor: '#0F172A' },
+  tabText: { color: '#64748B', fontSize: 13, fontWeight: '700' },
+  activeTabText: { color: '#FFF' },
 
-  scrollContent: { padding: 15, paddingBottom: 50 },
-  
+  scrollContent: { padding: 20, paddingBottom: 100 },
   card: {
-    backgroundColor: '#fff',
+    backgroundColor: '#FFF',
     borderRadius: 24,
     padding: 20,
-    marginBottom: 15,
+    marginBottom: 20,
     borderWidth: 1,
     borderColor: '#F1F5F9',
-    shadowColor: '#000', shadowOffset: { width: 0, height: 2 }, shadowOpacity: 0.03, shadowRadius: 10, elevation: 2
+    shadowColor: '#64748B', shadowOffset: { width: 0, height: 10 }, shadowOpacity: 0.05, shadowRadius: 15, elevation: 4
   },
   cardHeader: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: 15 },
-  bookingCode: { fontSize: 10, fontWeight: '800', color: '#94A3B8', letterSpacing: 1 },
-  customerName: { fontSize: 18, fontWeight: '800', color: '#1E293B', marginTop: 2 },
-  statusBadge: { flexDirection: 'row', alignItems: 'center', paddingHorizontal: 10, paddingVertical: 5, borderRadius: 10 },
-  statusDot: { width: 6, height: 6, borderRadius: 3, marginRight: 6 },
-  statusText: { fontSize: 11, fontWeight: '800' },
+  bookingCode: { fontSize: 11, fontWeight: '800', color: '#94A3B8', letterSpacing: 1 },
+  customerName: { fontSize: 18, fontWeight: '900', color: '#0F172A', marginTop: 4 },
+  statusBadge: { flexDirection: 'row', alignItems: 'center', paddingHorizontal: 12, paddingVertical: 6, borderRadius: 12 },
+  statusLabel: { fontSize: 11, fontWeight: '800', textTransform: 'uppercase' },
   
-  divider: { height: 1, backgroundColor: '#F1F5F9', marginBottom: 15 },
+  divider: { height: 1, backgroundColor: '#F1F5F9', marginVertical: 15 },
   
   infoGrid: { flexDirection: 'row', flexWrap: 'wrap' },
   infoItem: { width: '50%', marginBottom: 15 },
-  infoLabel: { fontSize: 9, fontWeight: '800', color: '#94A3B8', marginBottom: 4, letterSpacing: 0.5 },
+  infoLabel: { fontSize: 10, fontWeight: '800', color: '#94A3B8', marginBottom: 4, letterSpacing: 0.5 },
   infoValue: { fontSize: 13, fontWeight: '700', color: '#1E293B' },
   
-  actionRow: { flexDirection: 'row', gap: 10, marginTop: 5 },
-  actionBtn: { flex: 1, paddingVertical: 12, borderRadius: 12, alignItems: 'center', justifyContent: 'center' },
-  rejectBtn: { backgroundColor: '#fff', borderWidth: 1, borderColor: '#E2E8F0' },
-  rejectBtnText: { color: '#64748B', fontWeight: '800', fontSize: 13 },
-  approveBtn: { backgroundColor: '#0984e3' },
-  approveBtnText: { color: '#fff', fontWeight: '800', fontSize: 13 },
+  actionRow: { marginTop: 5 },
+  actionBtn: { borderRadius: 16, overflow: 'hidden' },
+  btnGradient: { paddingVertical: 14, alignItems: 'center' },
+  approveBtnText: { color: '#FFF', fontWeight: '900', fontSize: 14 },
   
-  detailBtn: { width: '100%', paddingVertical: 12, borderRadius: 12, backgroundColor: '#F8FAFC', borderWidth: 1, borderColor: '#F1F5F9', alignItems: 'center', marginTop: 5 },
-  detailBtnText: { color: '#1E293B', fontWeight: '800', fontSize: 13 },
+  detailBtn: { flexDirection: 'row', alignItems: 'center', justifyContent: 'center', paddingVertical: 14, borderRadius: 16, backgroundColor: '#F8FAFC', borderWidth: 1, borderColor: '#F1F5F9', gap: 8 },
+  detailBtnText: { color: '#64748B', fontWeight: '800', fontSize: 13 },
 
-  emptyContainer: { alignItems: 'center', justifyContent: 'center', marginTop: 80 },
-  emptyTitle: { fontSize: 20, fontWeight: '800', color: '#1E293B', marginBottom: 8 },
-  emptySub: { fontSize: 14, color: '#94A3B8', textAlign: 'center' }
+  empty: { flex: 1, alignItems: 'center', justifyContent: 'center', marginTop: 60, paddingHorizontal: 40 },
+  emptyIconBg: { width: 120, height: 120, borderRadius: 60, backgroundColor: '#F1F5F9', justifyContent: 'center', alignItems: 'center', marginBottom: 24 },
+  emptyTitle: { fontSize: 20, fontWeight: '900', color: '#0F172A', marginBottom: 12 },
+  emptySub: { fontSize: 14, color: '#64748B', textAlign: 'center', lineHeight: 22 }
 });

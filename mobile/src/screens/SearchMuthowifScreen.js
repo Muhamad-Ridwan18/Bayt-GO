@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect, useCallback, useMemo, useRef } from 'react';
 import { 
   StyleSheet, 
   Text, 
@@ -13,26 +13,25 @@ import {
   RefreshControl,
   KeyboardAvoidingView,
   Platform,
-  Alert
+  Alert,
+  StatusBar
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { StatusBar } from 'expo-status-bar';
 import { Ionicons } from '@expo/vector-icons';
-import { CalendarList, LocaleConfig } from 'react-native-calendars';
+import { LinearGradient } from 'expo-linear-gradient';
 import { apiClient } from '../api/client';
 import SwipeableScreen from '../components/SwipeableScreen';
 import { SkeletonCard, SkeletonText, Skeleton } from '../components/Skeleton';
 
-LocaleConfig.locales['id'] = {
-  monthNames: ['Januari','Februari','Maret','April','Mei','Juni','Juli','Agustus','September','Oktober','November','Desember'],
-  monthNamesShort: ['Jan','Feb','Mar','Apr','Mei','Jun','Jul','Agu','Sep','Okt','Nov','Des'],
-  dayNames: ['Minggu','Senin','Selasa','Rabu','Kamis','Jumat','Sabtu'],
-  dayNamesShort: ['Min','Sen','Sel','Rab','Kam','Jum','Sab'],
-  today: 'Hari ini'
-};
-LocaleConfig.defaultLocale = 'id';
+const { width } = Dimensions.get('window');
 
-const { width, height } = Dimensions.get('window');
+const MONTH_NAMES = ['Januari','Februari','Maret','April','Mei','Juni','Juli','Agustus','September','Oktober','November','Desember'];
+const DAY_NAMES_SHORT = ['Min','Sen','Sel','Rab','Kam','Jum','Sab'];
+
+const formatIDR = (amount) => {
+  if (amount === undefined || amount === null) return '0';
+  return amount.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ".");
+};
 
 export default function SearchMuthowifScreen({ user, navigation }) {
   const [profiles, setProfiles] = useState([]);
@@ -42,149 +41,141 @@ export default function SearchMuthowifScreen({ user, navigation }) {
   const [page, setPage] = useState(1);
   const [lastPage, setLastPage] = useState(1);
   
-  // Search & Filters
   const [searchQuery, setSearchQuery] = useState('');
-  const [debouncedQuery, setDebouncedQuery] = useState('');
   const [startDate, setStartDate] = useState(null);
   const [endDate, setEndDate] = useState(null);
   const [filterModalVisible, setFilterModalVisible] = useState(false);
-  const [activeDateType, setActiveDateType] = useState(null); // 'start' | 'end'
+  const [activeDateType, setActiveDateType] = useState(null);
   
-  // Calendar marking
-  const [markedDates, setMarkedDates] = useState({});
+  const [selectedMonth, setSelectedMonth] = useState(new Date().getMonth());
+  const [selectedYear, setSelectedYear] = useState(new Date().getFullYear());
+  const dayListRef = useRef(null);
 
-  useEffect(() => {
-    const handler = setTimeout(() => {
-      setDebouncedQuery(searchQuery);
-    }, 500);
-    return () => clearTimeout(handler);
-  }, [searchQuery]);
+  const months = useMemo(() => {
+    const res = [];
+    const now = new Date();
+    for (let i = 0; i < 12; i++) {
+      const d = new Date(now.getFullYear(), now.getMonth() + i, 1);
+      res.push({
+        month: d.getMonth(),
+        year: d.getFullYear(),
+        label: `${MONTH_NAMES[d.getMonth()]} ${d.getFullYear()}`
+      });
+    }
+    return res;
+  }, []);
 
-  const fetchProfiles = useCallback(async (pageNum = 1, shouldRefresh = false) => {
+  const days = useMemo(() => {
+    const res = [];
+    const numDays = new Date(selectedYear, selectedMonth + 1, 0).getDate();
+    const today = new Date();
+    today.setHours(0,0,0,0);
+
+    for (let i = 1; i <= numDays; i++) {
+      const d = new Date(selectedYear, selectedMonth, i, 12, 0, 0);
+      const y = d.getFullYear();
+      const m = String(d.getMonth() + 1).padStart(2, '0');
+      const dayNum = String(d.getDate()).padStart(2, '0');
+      const dateString = `${y}-${m}-${dayNum}`;
+      res.push({
+        day: i,
+        dayName: DAY_NAMES_SHORT[d.getDay()],
+        dateString,
+        isPast: d < today,
+        monthName: MONTH_NAMES[selectedMonth]?.substring(0, 3)
+      });
+    }
+    return res;
+  }, [selectedMonth, selectedYear]);
+
+  const fetchProfiles = useCallback(async (p = 1, append = false) => {
+    if (p === 1) setLoading(true);
+    else setLoadingMore(true);
+
     try {
-      if (pageNum === 1) {
-        if (!shouldRefresh) setLoading(true);
-      } else {
-        setLoadingMore(true);
-      }
-
-      const params = {
-        page: pageNum,
-        q: debouncedQuery,
-      };
-
+      const params = { page: p, q: searchQuery };
       if (startDate) params.start_date = startDate;
       if (endDate) params.end_date = endDate;
 
-      const response = await apiClient.searchMuthowifs(user.token, params);
-      
-      if (pageNum === 1) {
-        setProfiles(response.data || []);
-      } else {
-        setProfiles(prev => [...prev, ...(response.data || [])]);
-      }
-      setLastPage(response.last_page || 1);
+      const data = await apiClient.searchMuthowif(user.token, params);
+      setProfiles(prev => append ? [...prev, ...data.data] : data.data);
+      setLastPage(data.last_page);
+      setPage(p);
     } catch (error) {
-      console.error('Fetch Muthowifs Error:', error);
-      Alert.alert('Pencarian Gagal', error.message || 'Terjadi kesalahan saat memuat data muthowif.');
+      console.error(error);
     } finally {
       setLoading(false);
       setLoadingMore(false);
       setRefreshing(false);
     }
-  }, [debouncedQuery, startDate, endDate, user.token]);
+  }, [user.token, searchQuery, startDate, endDate]);
 
   useEffect(() => {
-    setPage(1);
-    fetchProfiles(1);
-  }, [debouncedQuery, startDate, endDate, fetchProfiles]);
+    const timer = setTimeout(() => fetchProfiles(1), 500);
+    return () => clearTimeout(timer);
+  }, [searchQuery, startDate, endDate]);
 
   const handleRefresh = () => {
     setRefreshing(true);
-    setPage(1);
-    fetchProfiles(1, true);
+    fetchProfiles(1);
   };
 
   const handleLoadMore = () => {
-    if (!loadingMore && page < lastPage) {
-      const nextPage = page + 1;
-      setPage(nextPage);
-      fetchProfiles(nextPage);
+    if (page < lastPage && !loadingMore) {
+      fetchProfiles(page + 1, true);
     }
   };
 
-  const handleDayPress = (day) => {
-    const dateString = day.dateString;
-    
+  const handleDateSelect = (dateString) => {
     if (activeDateType === 'start') {
       setStartDate(dateString);
-      if (endDate && new Date(dateString) > new Date(endDate)) {
-        setEndDate(null);
-      }
-      setFilterModalVisible(false);
+      if (endDate && dateString > endDate) setEndDate(null);
     } else {
-      setEndDate(dateString);
-      if (startDate && new Date(dateString) < new Date(startDate)) {
-        setStartDate(dateString);
+      if (startDate && dateString < startDate) {
+        Alert.alert('Perhatian', 'Tanggal kepulangan tidak boleh sebelum keberangkatan.');
+        return;
       }
-      setFilterModalVisible(false);
+      setEndDate(dateString);
     }
+    setFilterModalVisible(false);
   };
 
-  const clearDateFilter = () => {
-    setStartDate(null);
-    setEndDate(null);
+  const formatDateDisplay = (dateStr) => {
+    if (!dateStr) return '';
+    const parts = dateStr.split('-');
+    return `${parts[2]} ${MONTH_NAMES[parseInt(parts[1]) - 1].substring(0, 3)} ${parts[0]}`;
   };
-
-  const renderSkeleton = () => (
-    <View style={styles.listContent}>
-      {[1, 2, 3, 4].map(i => (
-        <SkeletonCard key={i} style={styles.muthowifCard}>
-          <View style={{ flexDirection: 'row', gap: 16 }}>
-            <Skeleton width={70} height={70} borderRadius={24} />
-            <View style={{ flex: 1 }}>
-              <SkeletonText width="60%" height={16} />
-              <Skeleton width={50} height={18} borderRadius={8} style={{ marginBottom: 12 }} />
-              <SkeletonText width="80%" height={12} style={{ marginBottom: 0 }} />
-            </View>
-          </View>
-        </SkeletonCard>
-      ))}
-    </View>
-  );
 
   const renderItem = ({ item }) => (
     <TouchableOpacity 
       style={styles.muthowifCard} 
-      activeOpacity={0.7} 
-      onPress={() => navigation?.navigate('MuthowifDetail', { id: item.id, start_date: startDate, end_date: endDate })}
+      activeOpacity={0.9}
+      onPress={() => navigation.navigate('MuthowifDetail', { id: item.id, start_date: startDate, end_date: endDate })}
     >
-      <Image source={{ uri: item.avatar }} style={styles.muthowifAvatar} />
-      <View style={styles.muthowifInfo}>
-        <View style={styles.muthowifHeaderRow}>
-          <Text style={styles.muthowifName}>{item.name}</Text>
-          <View style={styles.muthowifRatingWrap}>
-            <Ionicons name="star" size={14} color="#F59E0B" />
-            <Text style={styles.muthowifRating}>{item.rating}</Text>
-          </View>
+      <View style={styles.imageWrapper}>
+        <Image source={{ uri: item.avatar }} style={styles.muthowifAvatar} />
+        <View style={styles.ratingBadge}>
+          <Ionicons name="star" size={12} color="#F59E0B" />
+          <Text style={styles.ratingText}>{item.rating}</Text>
         </View>
-        <Text style={styles.muthowifReviews}>Dari {item.reviews} ulasan jamaah</Text>
-        
-        <View style={styles.muthowifTags}>
-          <View style={styles.muthowifTag}>
-            <Ionicons name="location" size={12} color="#0984e3" />
-            <Text style={styles.muthowifTagText}>{item.location}</Text>
-          </View>
-          {item.languages && item.languages.map((lang, idx) => (
-            <View key={idx} style={styles.muthowifTag}>
-              <Text style={styles.muthowifTagText}>{lang}</Text>
+      </View>
+      <View style={styles.muthowifInfo}>
+        <Text style={styles.muthowifName} numberOfLines={1}>{item.name}</Text>
+        <View style={styles.locationRow}>
+          <Ionicons name="location-sharp" size={14} color="#64748B" />
+          <Text style={styles.locationText}>{item.location || 'Makkah'}</Text>
+        </View>
+        <View style={styles.tagRow}>
+          {item.languages?.slice(0, 2).map((lang, i) => (
+            <View key={i} style={styles.tag}>
+              <Text style={styles.tagText}>{lang}</Text>
             </View>
           ))}
         </View>
-        
-        <View style={styles.priceRow}>
-          <Text style={styles.priceLabel}>Mulai dari</Text>
-          <Text style={styles.priceValue}>Rp {Number(item.start_price).toLocaleString('id-ID')}</Text>
+        <View style={styles.priceContainer}>
+          <Text style={styles.pricePrefix}>Mulai dari</Text>
+          <Text style={styles.priceValue}>Rp {formatIDR(item.min_price)}</Text>
+          <Text style={styles.priceSuffix}>/hari</Text>
         </View>
       </View>
     </TouchableOpacity>
@@ -192,425 +183,237 @@ export default function SearchMuthowifScreen({ user, navigation }) {
 
   return (
     <SwipeableScreen onSwipeBack={() => navigation.goBack()}>
-      <SafeAreaView style={styles.container}>
-        <StatusBar style="dark" />
-        
-        {/* Header & Search */}
+      <View style={styles.container}>
+        <StatusBar barStyle="dark-content" />
         <View style={styles.header}>
-          <View style={styles.headerTop}>
-            <TouchableOpacity onPress={() => navigation.goBack()} style={styles.backBtn}>
-              <Ionicons name="arrow-back" size={24} color="#0F172A" />
-            </TouchableOpacity>
-            <Text style={styles.headerTitle}>Cari Muthowif</Text>
-            <View style={{ width: 24 }} />
-          </View>
-
-          <View style={styles.dateContainer}>
-            <TouchableOpacity 
-              style={styles.dateBlock} 
-              activeOpacity={0.7}
-              onPress={() => { setActiveDateType('start'); setFilterModalVisible(true); }}
-            >
-              <Text style={styles.dateBlockLabel}>Keberangkatan</Text>
-              <Text style={[styles.dateBlockValue, !startDate && { color: '#94A3B8' }]}>
-                {startDate ? new Date(startDate).toLocaleDateString('id-ID', {day:'numeric', month:'short', year:'numeric'}) : 'Pilih Tanggal'}
-              </Text>
-            </TouchableOpacity>
-
-            <View style={styles.dateDivider} />
-
-            <TouchableOpacity 
-              style={styles.dateBlock} 
-              activeOpacity={0.7}
-              onPress={() => { setActiveDateType('end'); setFilterModalVisible(true); }}
-            >
-              <Text style={styles.dateBlockLabel}>Kepulangan</Text>
-              <Text style={[styles.dateBlockValue, !endDate && { color: '#94A3B8' }]}>
-                {endDate ? new Date(endDate).toLocaleDateString('id-ID', {day:'numeric', month:'short', year:'numeric'}) : 'Pilih Tanggal'}
-              </Text>
-            </TouchableOpacity>
-
-            {(startDate || endDate) && (
-              <TouchableOpacity onPress={clearDateFilter} style={styles.clearDateBlockBtn}>
-                <Ionicons name="close-circle" size={20} color="#CBD5E1" />
+          <SafeAreaView edges={['top']}>
+            <View style={styles.headerTop}>
+              <TouchableOpacity onPress={() => navigation.goBack()} style={styles.backBtn}>
+                <Ionicons name="arrow-back" size={24} color="#0F172A" />
               </TouchableOpacity>
-            )}
-          </View>
+              <Text style={styles.headerTitle}>Cari Muthowif</Text>
+              <View style={{ width: 24 }} />
+            </View>
 
-          <View style={styles.optionalSearchRow}>
-            <Ionicons name="search" size={18} color="#94A3B8" style={styles.optionalSearchIcon} />
-            <TextInput 
-              style={styles.optionalSearchInput}
-              placeholder="Cari nama muthowif (opsional)"
-              placeholderTextColor="#94A3B8"
-              value={searchQuery}
-              onChangeText={setSearchQuery}
-            />
-            {searchQuery.length > 0 && (
-              <TouchableOpacity onPress={() => setSearchQuery('')} style={styles.clearBtn}>
-                <Ionicons name="close-circle" size={18} color="#CBD5E1" />
-              </TouchableOpacity>
-            )}
-          </View>
+            <View style={styles.searchSection}>
+              <View style={styles.searchBar}>
+                <Ionicons name="search" size={20} color="#94A3B8" style={{ marginRight: 10 }} />
+                <TextInput 
+                  style={styles.searchInput}
+                  placeholder="Cari nama muthowif..."
+                  placeholderTextColor="#94A3B8"
+                  value={searchQuery}
+                  onChangeText={setSearchQuery}
+                />
+              </View>
+
+              <View style={styles.filterRow}>
+                <TouchableOpacity 
+                  style={[styles.dateBtn, startDate && styles.dateBtnActive]} 
+                  onPress={() => { setActiveDateType('start'); setFilterModalVisible(true); }}
+                >
+                  <Ionicons name="calendar-outline" size={16} color={startDate ? '#0984e3' : '#64748B'} />
+                  <Text style={[styles.dateBtnText, startDate && styles.dateBtnTextActive]}>
+                    {startDate ? formatDateDisplay(startDate) : 'Berangkat'}
+                  </Text>
+                </TouchableOpacity>
+
+                <Ionicons name="arrow-forward" size={14} color="#CBD5E1" />
+
+                <TouchableOpacity 
+                  style={[styles.dateBtn, endDate && styles.dateBtnActive]} 
+                  onPress={() => { setActiveDateType('end'); setFilterModalVisible(true); }}
+                >
+                  <Ionicons name="calendar-outline" size={16} color={endDate ? '#0984e3' : '#64748B'} />
+                  <Text style={[styles.dateBtnText, endDate && styles.dateBtnTextActive]}>
+                    {endDate ? formatDateDisplay(endDate) : 'Pulang'}
+                  </Text>
+                </TouchableOpacity>
+
+                {(startDate || endDate) && (
+                  <TouchableOpacity style={styles.clearBtn} onPress={() => { setStartDate(null); setEndDate(null); }}>
+                    <Ionicons name="refresh-circle" size={28} color="#94A3B8" />
+                  </TouchableOpacity>
+                )}
+              </View>
+            </View>
+          </SafeAreaView>
         </View>
 
-        {/* List */}
-        {loading ? renderSkeleton() : (
+        {loading ? (
+          <View style={styles.listContent}>
+            {[1,2,3,4].map(i => (
+              <View key={i} style={{ marginBottom: 20, flexDirection: 'row', gap: 15, backgroundColor: '#FFF', padding: 15, borderRadius: 20 }}>
+                <Skeleton width={100} height={100} borderRadius={16} />
+                <View style={{ flex: 1, gap: 10 }}>
+                  <SkeletonText width="80%" height={18} />
+                  <SkeletonText width="40%" height={12} />
+                  <SkeletonText width="100%" height={24} style={{ marginTop: 10 }} />
+                </View>
+              </View>
+            ))}
+          </View>
+        ) : (
           <FlatList
             data={profiles}
             keyExtractor={item => item.id.toString()}
             renderItem={renderItem}
             contentContainerStyle={styles.listContent}
             showsVerticalScrollIndicator={false}
-            refreshControl={<RefreshControl refreshing={refreshing} onRefresh={handleRefresh} color="#0984e3" />}
+            refreshControl={<RefreshControl refreshing={refreshing} onRefresh={handleRefresh} tintColor="#3B82F6" />}
             onEndReached={handleLoadMore}
-            onEndReachedThreshold={0.5}
-            ListFooterComponent={loadingMore ? <ActivityIndicator size="small" color="#0984e3" style={{ marginVertical: 20 }} /> : null}
             ListEmptyComponent={
-              <View style={styles.emptyState}>
-                <Ionicons name="search-outline" size={64} color="#E2E8F0" />
+              <View style={styles.empty}>
+                <Ionicons name="search-outline" size={80} color="#E2E8F0" />
                 <Text style={styles.emptyTitle}>Muthowif Tidak Ditemukan</Text>
-                <Text style={styles.emptyText}>Coba gunakan kata kunci lain atau ubah filter tanggal ketersediaan Anda.</Text>
+                <Text style={styles.emptySub}>Coba cari dengan kata kunci lain atau ubah tanggal perjalanan Anda.</Text>
               </View>
             }
           />
         )}
 
-        {/* Date Filter Modal */}
-        <Modal
-          visible={filterModalVisible}
-          animationType="slide"
-          transparent={true}
-          onRequestClose={() => setFilterModalVisible(false)}
-        >
+        <Modal visible={filterModalVisible} animationType="fade" transparent={true}>
           <View style={styles.modalOverlay}>
+            <TouchableOpacity style={StyleSheet.absoluteFill} onPress={() => setFilterModalVisible(false)} />
             <View style={styles.modalContent}>
               <View style={styles.modalHeader}>
                 <Text style={styles.modalTitle}>{activeDateType === 'start' ? 'Pilih Keberangkatan' : 'Pilih Kepulangan'}</Text>
-                <TouchableOpacity onPress={() => setFilterModalVisible(false)}>
-                  <Ionicons name="close" size={24} color="#0F172A" />
-                </TouchableOpacity>
+                <TouchableOpacity onPress={() => setFilterModalVisible(false)}><Ionicons name="close" size={24} color="#0F172A" /></TouchableOpacity>
               </View>
               
-              <View style={{ height: height * 0.5 }}>
-                <CalendarList
-                  minDate={new Date().toISOString().split('T')[0]}
-                  current={activeDateType === 'end' && endDate ? endDate : startDate || undefined}
-                  markedDates={{
-                    [(activeDateType === 'end' ? endDate : startDate)]: { selected: true, selectedColor: '#0984e3' }
-                  }}
-                  onDayPress={handleDayPress}
-                  pastScrollRange={0}
-                  futureScrollRange={12}
-                  theme={{
-                    calendarBackground: '#ffffff',
-                    textSectionTitleColor: '#94A3B8',
-                    selectedDayBackgroundColor: '#0984e3',
-                    selectedDayTextColor: '#ffffff',
-                    todayTextColor: '#0984e3',
-                    dayTextColor: '#1E293B',
-                    textDisabledColor: '#E2E8F0',
-                    dotColor: '#0984e3',
-                    selectedDotColor: '#ffffff',
-                    arrowColor: '#0984e3',
-                    monthTextColor: '#0F172A',
-                    indicatorColor: '#0984e3',
-                    textDayFontWeight: '500',
-                    textMonthFontWeight: '800',
-                    textDayHeaderFontWeight: '700',
-                    textDayFontSize: 14,
-                    textMonthFontSize: 16,
-                    textDayHeaderFontSize: 12
-                  }}
-                />
-              </View>
+              <FlatList
+                horizontal
+                showsHorizontalScrollIndicator={false}
+                data={months}
+                keyExtractor={(item, index) => index.toString()}
+                renderItem={({ item }) => (
+                  <TouchableOpacity 
+                    onPress={() => { setSelectedMonth(item.month); setSelectedYear(item.year); }}
+                    style={[styles.monthPill, selectedMonth === item.month && selectedYear === item.year && styles.monthPillActive]}
+                  >
+                    <Text style={[styles.monthPillText, selectedMonth === item.month && selectedYear === item.year && styles.monthPillTextActive]}>{item.label}</Text>
+                  </TouchableOpacity>
+                )}
+                contentContainerStyle={{ paddingHorizontal: 20, gap: 8, marginBottom: 20 }}
+              />
+
+              <FlatList
+                horizontal
+                showsHorizontalScrollIndicator={false}
+                data={days}
+                keyExtractor={item => item.dateString}
+                renderItem={({ item }) => {
+                  const isSelected = activeDateType === 'start' ? startDate === item.dateString : endDate === item.dateString;
+                  return (
+                    <TouchableOpacity 
+                      disabled={item.isPast}
+                      onPress={() => handleDateSelect(item.dateString)}
+                      style={[styles.dayCard, isSelected && styles.dayCardActive, item.isPast && styles.dayCardDisabled]}
+                    >
+                      <Text style={[styles.dayCardName, isSelected && styles.dayCardTextActive, item.isPast && styles.dayCardTextDisabled]}>{item.dayName}</Text>
+                      <Text style={[styles.dayCardNum, isSelected && styles.dayCardTextActive, item.isPast && styles.dayCardTextDisabled]}>{item.day}</Text>
+                      <Text style={[styles.dayCardMonth, isSelected && styles.dayCardTextActive, item.isPast && styles.dayCardTextDisabled]}>{item.monthName}</Text>
+                    </TouchableOpacity>
+                  );
+                }}
+                contentContainerStyle={{ paddingHorizontal: 20, gap: 12, paddingBottom: 20 }}
+              />
             </View>
           </View>
         </Modal>
-
-      </SafeAreaView>
+      </View>
     </SwipeableScreen>
   );
 }
 
 const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: '#F8FAFC' },
+  header: { 
+    backgroundColor: '#FFFFFF',
+    borderBottomLeftRadius: 30, 
+    borderBottomRightRadius: 30,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.03,
+    shadowRadius: 10,
+    elevation: 5,
+    paddingBottom: 20
+  },
+  headerTop: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', paddingHorizontal: 20, paddingTop: 10 },
+  backBtn: { width: 40, height: 40, justifyContent: 'center', alignItems: 'center' },
+  headerTitle: { color: '#0F172A', fontSize: 20, fontWeight: '900', letterSpacing: -0.5 },
   
-  header: {
-    paddingHorizontal: 20,
-    paddingTop: 10,
-    paddingBottom: 20,
-    backgroundColor: '#FFFFFF',
-    borderBottomWidth: 1,
-    borderBottomColor: '#F1F5F9',
-  },
-  headerTop: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    marginBottom: 20,
-  },
-  backBtn: { padding: 4 },
-  headerTitle: {
-    fontSize: 20,
-    fontWeight: '800',
-    color: '#0F172A',
-    letterSpacing: -0.5,
-  },
-  dateContainer: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    backgroundColor: '#FFFFFF',
+  searchSection: { paddingHorizontal: 20, marginTop: 15 },
+  searchBar: { 
+    flexDirection: 'row', 
+    alignItems: 'center', 
+    backgroundColor: '#F8FAFC', 
+    borderRadius: 16, 
+    paddingHorizontal: 16, 
+    height: 50,
     borderWidth: 1,
-    borderColor: '#E2E8F0',
-    borderRadius: 16,
-    marginBottom: 12,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.02,
-    shadowRadius: 5,
-    elevation: 2,
-    height: 70,
+    borderColor: '#F1F5F9'
   },
-  dateBlock: {
-    flex: 1,
-    paddingHorizontal: 16,
-    justifyContent: 'center',
-    height: '100%',
-  },
-  dateDivider: {
-    width: 1,
-    height: '60%',
-    backgroundColor: '#E2E8F0',
-  },
-  dateBlockLabel: {
-    fontSize: 12,
-    color: '#64748B',
-    fontWeight: '700',
-    marginBottom: 4,
-    textTransform: 'uppercase',
-  },
-  dateBlockValue: {
-    fontSize: 14,
-    color: '#0F172A',
-    fontWeight: '800',
-  },
-  clearDateBlockBtn: {
-    padding: 12,
-    position: 'absolute',
-    right: 4,
-    top: 14,
-  },
-
-  optionalSearchRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    backgroundColor: '#F8FAFC',
-    borderRadius: 12,
-    paddingHorizontal: 14,
-    height: 46,
+  searchInput: { flex: 1, fontSize: 14, fontWeight: '700', color: '#1E293B' },
+  
+  filterRow: { flexDirection: 'row', alignItems: 'center', marginTop: 12, gap: 8 },
+  dateBtn: { 
+    flex: 1, 
+    flexDirection: 'row', 
+    alignItems: 'center', 
+    backgroundColor: '#F8FAFC', 
+    paddingVertical: 10, 
+    paddingHorizontal: 12, 
+    borderRadius: 12, 
+    gap: 6,
     borderWidth: 1,
-    borderColor: '#F1F5F9',
+    borderColor: '#F1F5F9'
   },
-  optionalSearchIcon: { marginRight: 10 },
-  optionalSearchInput: {
-    flex: 1,
-    fontSize: 14,
-    color: '#0F172A',
-    height: '100%',
-  },
-  clearBtn: { padding: 4 },
+  dateBtnActive: { backgroundColor: '#F0F9FF', borderColor: '#DBEAFE' },
+  dateBtnText: { color: '#64748B', fontSize: 12, fontWeight: '700' },
+  dateBtnTextActive: { color: '#0984e3' },
+  clearBtn: { padding: 2 },
 
-  listContent: {
-    paddingHorizontal: 20,
-    paddingTop: 20,
-    paddingBottom: 40,
-  },
+  listContent: { padding: 20, paddingBottom: 100 },
+  muthowifCard: { backgroundColor: '#FFF', borderRadius: 24, padding: 16, marginBottom: 16, flexDirection: 'row', gap: 16, borderWidth: 1, borderColor: '#F1F5F9', elevation: 3, shadowColor: '#64748B', shadowOffset: { width: 0, height: 5 }, shadowOpacity: 0.05, shadowRadius: 10 },
+  imageWrapper: { width: 100, height: 120, borderRadius: 20, overflow: 'hidden' },
+  muthowifAvatar: { width: '100%', height: '100%', backgroundColor: '#F8FAFC' },
+  ratingBadge: { position: 'absolute', top: 8, left: 8, backgroundColor: 'rgba(255, 255, 255, 0.95)', paddingHorizontal: 6, paddingVertical: 3, borderRadius: 8, flexDirection: 'row', alignItems: 'center', gap: 3 },
+  ratingText: { fontSize: 10, fontWeight: '800', color: '#1E293B' },
+  
+  muthowifInfo: { flex: 1, justifyContent: 'center' },
+  muthowifName: { fontSize: 18, fontWeight: '900', color: '#0F172A', marginBottom: 4 },
+  locationRow: { flexDirection: 'row', alignItems: 'center', gap: 4, marginBottom: 8 },
+  locationText: { fontSize: 12, color: '#64748B', fontWeight: '600' },
+  tagRow: { flexDirection: 'row', gap: 6, marginBottom: 12 },
+  tag: { backgroundColor: '#F0F9FF', paddingHorizontal: 8, paddingVertical: 4, borderRadius: 8 },
+  tagText: { fontSize: 10, color: '#0984e3', fontWeight: '800' },
+  
+  priceContainer: { flexDirection: 'row', alignItems: 'baseline', gap: 4 },
+  pricePrefix: { fontSize: 10, color: '#94A3B8', fontWeight: '600' },
+  priceValue: { fontSize: 16, fontWeight: '900', color: '#3B82F6' },
+  priceSuffix: { fontSize: 10, color: '#94A3B8', fontWeight: '600' },
 
-  muthowifCard: {
-    backgroundColor: '#FFFFFF',
-    borderRadius: 24,
-    padding: 18,
-    borderWidth: 1,
-    borderColor: '#F1F5F9',
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 6 },
-    shadowOpacity: 0.04,
-    shadowRadius: 15,
-    elevation: 3,
-    marginBottom: 16,
-    flexDirection: 'row',
-    gap: 16,
-    alignItems: 'flex-start',
-  },
-  muthowifAvatar: {
-    width: 70,
-    height: 70,
-    borderRadius: 24,
-    backgroundColor: '#F1F5F9',
-  },
-  muthowifInfo: {
-    flex: 1,
-  },
-  muthowifHeaderRow: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    marginBottom: 4,
-  },
-  muthowifName: {
-    fontSize: 17,
-    fontWeight: '800',
-    color: '#0F172A',
-    letterSpacing: -0.3,
-    flex: 1,
-  },
-  muthowifRatingWrap: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    backgroundColor: '#FFFBEB',
-    paddingHorizontal: 6,
-    paddingVertical: 2,
-    borderRadius: 8,
-    gap: 4,
-  },
-  muthowifRating: {
-    fontSize: 13,
-    fontWeight: '800',
-    color: '#D97706',
-  },
-  muthowifReviews: {
-    fontSize: 12,
-    color: '#64748B',
-    marginBottom: 12,
-  },
-  muthowifTags: {
-    flexDirection: 'row',
-    flexWrap: 'wrap',
-    gap: 8,
-    marginBottom: 14,
-  },
-  muthowifTag: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    backgroundColor: '#F8FAFC',
-    paddingHorizontal: 10,
-    paddingVertical: 6,
-    borderRadius: 8,
-    gap: 4,
-    borderWidth: 1,
-    borderColor: '#F1F5F9',
-  },
-  muthowifTagText: {
-    fontSize: 11,
-    color: '#475569',
-    fontWeight: '600',
-  },
-  priceRow: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    borderTopWidth: 1,
-    borderTopColor: '#F1F5F9',
-    paddingTop: 12,
-  },
-  priceLabel: {
-    fontSize: 11,
-    color: '#94A3B8',
-    fontWeight: '600',
-  },
-  priceValue: {
-    fontSize: 15,
-    color: '#0984e3',
-    fontWeight: '800',
-  },
+  empty: { alignItems: 'center', marginTop: 100, paddingHorizontal: 40 },
+  emptyTitle: { fontSize: 18, fontWeight: '900', color: '#0F172A', marginTop: 20 },
+  emptySub: { fontSize: 14, color: '#64748B', textAlign: 'center', marginTop: 10, lineHeight: 22 },
 
-  emptyState: {
-    alignItems: 'center',
-    justifyContent: 'center',
-    paddingTop: 60,
-    paddingHorizontal: 40,
-  },
-  emptyTitle: {
-    fontSize: 18,
-    fontWeight: '800',
-    color: '#0F172A',
-    marginTop: 16,
-    marginBottom: 8,
-  },
-  emptyText: {
-    fontSize: 14,
-    color: '#64748B',
-    textAlign: 'center',
-    lineHeight: 22,
-  },
+  modalOverlay: { flex: 1, backgroundColor: 'rgba(0,0,0,0.4)', justifyContent: 'flex-end' },
+  modalContent: { backgroundColor: '#FFF', borderTopLeftRadius: 32, borderTopRightRadius: 32, paddingVertical: 24 },
+  modalHeader: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', paddingHorizontal: 24, marginBottom: 20 },
+  modalTitle: { fontSize: 18, fontWeight: '900', color: '#0F172A' },
+  
+  monthPill: { paddingHorizontal: 16, paddingVertical: 10, borderRadius: 20, backgroundColor: '#F1F5F9' },
+  monthPillActive: { backgroundColor: '#0F172A' },
+  monthPillText: { fontSize: 13, fontWeight: '700', color: '#64748B' },
+  monthPillTextActive: { color: '#FFF' },
 
-  modalOverlay: {
-    flex: 1,
-    backgroundColor: 'rgba(15, 23, 42, 0.4)',
-    justifyContent: 'flex-end',
-  },
-  modalContent: {
-    backgroundColor: '#FFFFFF',
-    borderTopLeftRadius: 32,
-    borderTopRightRadius: 32,
-    paddingTop: 24,
-    paddingBottom: Platform.OS === 'ios' ? 40 : 24,
-    minHeight: height * 0.7,
-  },
-  modalHeader: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    paddingHorizontal: 24,
-    marginBottom: 8,
-  },
-  modalTitle: {
-    fontSize: 20,
-    fontWeight: '800',
-    color: '#0F172A',
-    letterSpacing: -0.5,
-  },
-  modalSub: {
-    fontSize: 13,
-    color: '#64748B',
-    paddingHorizontal: 24,
-    marginBottom: 20,
-    lineHeight: 20,
-  },
-  modalActions: {
-    flexDirection: 'row',
-    gap: 12,
-    paddingHorizontal: 24,
-    paddingTop: 20,
-    borderTopWidth: 1,
-    borderTopColor: '#F1F5F9',
-  },
-  btnOutline: {
-    flex: 1,
-    height: 52,
-    borderRadius: 16,
-    borderWidth: 1,
-    borderColor: '#E2E8F0',
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
-  btnOutlineText: {
-    fontSize: 15,
-    fontWeight: '700',
-    color: '#64748B',
-  },
-  btnPrimary: {
-    flex: 2,
-    height: 52,
-    borderRadius: 16,
-    backgroundColor: '#0984e3',
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
-  btnPrimaryText: {
-    fontSize: 15,
-    fontWeight: '700',
-    color: '#FFFFFF',
-  },
+  dayCard: { width: 65, height: 90, borderRadius: 20, backgroundColor: '#F8FAFC', justifyContent: 'center', alignItems: 'center', borderWidth: 1, borderColor: '#F1F5F9' },
+  dayCardActive: { backgroundColor: '#3B82F6', borderColor: '#3B82F6' },
+  dayCardDisabled: { opacity: 0.3 },
+  dayCardName: { fontSize: 11, fontWeight: '700', color: '#94A3B8', marginBottom: 4 },
+  dayCardNum: { fontSize: 20, fontWeight: '900', color: '#0F172A' },
+  dayCardMonth: { fontSize: 10, fontWeight: '700', color: '#94A3B8', marginTop: 2 },
+  dayCardTextActive: { color: '#FFF' },
+  dayCardTextDisabled: { color: '#CBD5E1' }
 });
