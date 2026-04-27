@@ -9,7 +9,10 @@ import {
   Alert,
   Image,
   Dimensions,
-  StatusBar
+  StatusBar,
+  Modal,
+  TextInput,
+  Linking
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { LinearGradient } from 'expo-linear-gradient';
@@ -58,6 +61,57 @@ export default function BookingDetailScreen({ route, user, navigation }) {
         }
       }
     ]);
+  };
+
+  const handleRefundRequest = async (reason) => {
+    if (!reason) {
+      Alert.alert('Error', 'Harap isi alasan refund.');
+      return;
+    }
+    try {
+      await apiClient.requestRefund(user.token, bookingId, reason);
+      fetchDetail();
+      Alert.alert('Sukses', 'Permintaan refund telah diajukan.');
+    } catch (error) {
+      Alert.alert('Error', error.message);
+    }
+  };
+
+  const handleRescheduleRequest = async (newDate) => {
+    // Basic logic: starts_on same as ends_on if 1 day, else we need a range. 
+    // For now we'll just use the provided date as start.
+    try {
+      await apiClient.requestReschedule(user.token, bookingId, newDate, newDate);
+      fetchDetail();
+      Alert.alert('Sukses', 'Permintaan reschedule telah diajukan.');
+    } catch (error) {
+      Alert.alert('Error', error.message);
+    }
+  };
+
+  const handleReviewSubmit = async (rating, comment) => {
+    try {
+      await apiClient.submitReview(user.token, bookingId, rating, comment);
+      fetchDetail();
+      Alert.alert('Sukses', 'Ulasan Anda telah disimpan.');
+    } catch (error) {
+      Alert.alert('Error', error.message);
+    }
+  };
+
+  const handleRescheduleDecision = async (requestId, approved, reason = '') => {
+    try {
+      if (approved) {
+        await apiClient.approveReschedule(user.token, bookingId, requestId);
+        Alert.alert('Sukses', 'Reschedule disetujui.');
+      } else {
+        await apiClient.rejectReschedule(user.token, bookingId, requestId, reason);
+        Alert.alert('Ditolak', 'Reschedule ditolak.');
+      }
+      fetchDetail();
+    } catch (error) {
+      Alert.alert('Error', error.message);
+    }
   };
 
   const getStatusInfo = (status, paymentStatus) => {
@@ -229,7 +283,51 @@ export default function BookingDetailScreen({ route, user, navigation }) {
                 <Text style={styles.docText}>Visa / Paspor</Text>
               </View>
             </View>
+            {booking.payment_status === 'paid' && (
+              <TouchableOpacity 
+                style={styles.invoiceBtn}
+                onPress={() => Alert.alert('Invoice', 'Mengunduh invoice...', [{ text: 'OK' }])}
+              >
+                <Ionicons name="document-text-outline" size={20} color="#3B82F6" />
+                <Text style={styles.invoiceBtnText}>Lihat Invoice PDF</Text>
+              </TouchableOpacity>
+            )}
           </View>
+
+          {/* Change Requests Section */}
+          {(booking.refund_requests?.length > 0 || booking.reschedule_requests?.length > 0) && (
+            <View style={styles.card}>
+              <Text style={styles.sectionTitle}>Permintaan Perubahan</Text>
+              {booking.refund_requests?.map((req, idx) => (
+                <View key={idx} style={styles.changeReqBox}>
+                  <View style={styles.changeReqHeader}>
+                    <Text style={styles.changeReqType}>REFUND</Text>
+                    <Text style={[styles.changeReqStatus, { color: req.status === 'pending' ? '#F59E0B' : '#10B981' }]}>{req.status.toUpperCase()}</Text>
+                  </View>
+                  <Text style={styles.changeReqReason}>Alasan: {req.reason}</Text>
+                </View>
+              ))}
+              {booking.reschedule_requests?.map((req, idx) => (
+                <View key={idx} style={styles.changeReqBox}>
+                  <View style={styles.changeReqHeader}>
+                    <Text style={styles.changeReqType}>RESCHEDULE</Text>
+                    <Text style={[styles.changeReqStatus, { color: req.status === 'pending' ? '#F59E0B' : '#10B981' }]}>{req.status.toUpperCase()}</Text>
+                  </View>
+                  <Text style={styles.changeReqReason}>Ke Tanggal: {new Date(req.starts_on).toLocaleDateString('id-ID')}</Text>
+                  {isMuthowif && req.status === 'pending' && (
+                    <View style={styles.decisionBtns}>
+                      <TouchableOpacity style={styles.rejectBtn} onPress={() => handleRescheduleDecision(req.id, false)}>
+                        <Text style={styles.rejectBtnText}>Tolak</Text>
+                      </TouchableOpacity>
+                      <TouchableOpacity style={styles.approveBtnMini} onPress={() => handleRescheduleDecision(req.id, true)}>
+                        <Text style={styles.approveBtnTextMini}>Setujui</Text>
+                      </TouchableOpacity>
+                    </View>
+                  )}
+                </View>
+              ))}
+            </View>
+          )}
 
         </ScrollView>
 
@@ -260,9 +358,49 @@ export default function BookingDetailScreen({ route, user, navigation }) {
             </TouchableOpacity>
           )}
 
+          {/* Review Action */}
+          {!isMuthowif && booking.status === 'completed' && !booking.review && (
+            <TouchableOpacity 
+              style={styles.primaryBtn}
+              onPress={() => Alert.prompt('Berikan Ulasan', 'Bagaimana pengalaman Anda?', [
+                { text: 'Batal', style: 'cancel' },
+                { text: 'Kirim', onPress: (comment) => handleReviewSubmit(5, comment) }
+              ])}
+            >
+              <LinearGradient colors={['#10B981', '#059669']} style={styles.btnGradient}>
+                <Ionicons name="star" size={20} color="#FFF" />
+                <Text style={styles.btnText}>Beri Ulasan</Text>
+              </LinearGradient>
+            </TouchableOpacity>
+          )}
+
+          {/* Refund/Reschedule Actions for Customer */}
+          {!isMuthowif && booking.payment_status === 'paid' && booking.status === 'confirmed' && (
+            <View style={styles.rowActions}>
+              <TouchableOpacity 
+                style={[styles.secondaryBtn, { flex: 1 }]}
+                onPress={() => Alert.prompt('Ajukan Refund', 'Masukkan alasan pengembalian dana:', [
+                  { text: 'Batal', style: 'cancel' },
+                  { text: 'Ajukan', onPress: handleRefundRequest }
+                ])}
+              >
+                <Text style={styles.secondaryBtnText}>Refund</Text>
+              </TouchableOpacity>
+              <TouchableOpacity 
+                style={[styles.secondaryBtn, { flex: 1 }]}
+                onPress={() => Alert.prompt('Reschedule', 'Masukkan tanggal baru (YYYY-MM-DD):', [
+                  { text: 'Batal', style: 'cancel' },
+                  { text: 'Ajukan', onPress: handleRescheduleRequest }
+                ])}
+              >
+                <Text style={styles.secondaryBtnText}>Reschedule</Text>
+              </TouchableOpacity>
+            </View>
+          )}
+
           {booking.status !== 'cancelled' && (
             <TouchableOpacity 
-              style={styles.secondaryBtn}
+              style={[styles.secondaryBtn, { marginTop: 10 }]}
               onPress={() => navigation.navigate('Chat', { bookingId: booking.id, bookingCode: booking.booking_code, partnerName: otherParty?.name })}
             >
               <Ionicons name="chatbubbles" size={20} color="#3B82F6" />
@@ -350,5 +488,23 @@ const styles = StyleSheet.create({
   btnText: { color: '#FFF', fontSize: 16, fontWeight: '900' },
   secondaryBtn: { flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 10, paddingVertical: 18, borderRadius: 20, backgroundColor: '#EFF6FF', borderWidth: 1, borderColor: '#DBEAFE' },
   secondaryBtnText: { color: '#3B82F6', fontSize: 16, fontWeight: '900' },
+  
+  rowActions: { flexDirection: 'row', gap: 12, marginTop: 10 },
+  
+  invoiceBtn: { flexDirection: 'row', alignItems: 'center', gap: 8, marginTop: 15, paddingTop: 15, borderTopWidth: 1, borderTopColor: '#F1F5F9', borderStyle: 'dashed' },
+  invoiceBtnText: { fontSize: 13, fontWeight: '800', color: '#3B82F6' },
+
+  changeReqBox: { backgroundColor: '#F8FAFC', padding: 16, borderRadius: 20, marginTop: 12, borderWidth: 1, borderColor: '#F1F5F9' },
+  changeReqHeader: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 8 },
+  changeReqType: { fontSize: 11, fontWeight: '900', color: '#64748B', letterSpacing: 1 },
+  changeReqStatus: { fontSize: 11, fontWeight: '900' },
+  changeReqReason: { fontSize: 13, color: '#1E293B', fontWeight: '600' },
+  
+  decisionBtns: { flexDirection: 'row', gap: 10, marginTop: 12 },
+  rejectBtn: { flex: 1, backgroundColor: '#FEF2F2', paddingVertical: 10, borderRadius: 12, alignItems: 'center' },
+  rejectBtnText: { fontSize: 12, fontWeight: '800', color: '#EF4444' },
+  approveBtnMini: { flex: 1, backgroundColor: '#F0FDF4', paddingVertical: 10, borderRadius: 12, alignItems: 'center' },
+  approveBtnTextMini: { fontSize: 12, fontWeight: '800', color: '#10B981' },
+
   center: { flex: 1, justifyContent: 'center', alignItems: 'center' }
 });

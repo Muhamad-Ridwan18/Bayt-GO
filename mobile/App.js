@@ -23,6 +23,7 @@ import SearchMuthowifScreen from './src/screens/SearchMuthowifScreen';
 import MuthowifDetailScreen from './src/screens/MuthowifDetailScreen';
 import CheckoutScreen from './src/screens/CheckoutScreen';
 import PaymentScreen from './src/screens/PaymentScreen';
+import ScheduleScreen from './src/screens/ScheduleScreen';
 
 const { width } = Dimensions.get('window');
 
@@ -162,6 +163,7 @@ export default function App() {
       case 'Checkout': return <CheckoutScreen route={route} user={user} navigation={nav} />;
       case 'Payment': return <PaymentScreen route={route} user={user} navigation={nav} />;
       case 'BookingList': return <BookingListScreen user={user} navigation={nav} />;
+      case 'Schedule': return <ScheduleScreen user={user} navigation={nav} />;
       default: return null;
     }
   };

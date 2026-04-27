@@ -189,9 +189,9 @@ export default function MuthowifDashboardScreen({ user, onLogout, navigation }) 
             <View style={styles.shortcutIcon}><Text style={{fontSize:22}}>💰</Text></View>
             <Text style={styles.shortcutLabel}>Dompet</Text>
           </TouchableOpacity>
-          <TouchableOpacity style={styles.shortcutItem} onPress={() => navigation.navigate('TimeOff')}>
-            <View style={styles.shortcutIcon}><Text style={{fontSize:22}}>⏰</Text></View>
-            <Text style={styles.shortcutLabel}>Libur</Text>
+          <TouchableOpacity style={styles.shortcutItem} onPress={() => navigation.navigate('Schedule')}>
+            <View style={styles.shortcutIcon}><Text style={{fontSize:22}}>📅</Text></View>
+            <Text style={styles.shortcutLabel}>Jadwal</Text>
           </TouchableOpacity>
         </View>
 

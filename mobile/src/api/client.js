@@ -795,5 +795,179 @@ export const apiClient = {
       console.error('Get Payment URL Error:', error);
       throw error;
     }
+  },
+
+  async requestRefund(token, bookingId, reason) {
+    try {
+      const response = await fetch(`${BASE_URL}/customer/bookings/${bookingId}/refund-request`, {
+        method: 'POST',
+        headers: {
+          'Accept': 'application/json',
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`,
+        },
+        body: JSON.stringify({ reason }),
+      });
+      const data = await response.json();
+      if (!response.ok) throw new Error(data.message || 'Gagal mengajukan refund');
+      return data;
+    } catch (error) {
+      console.error('Request Refund Error:', error);
+      throw error;
+    }
+  },
+
+  async requestReschedule(token, bookingId, startsOn, endsOn) {
+    try {
+      const response = await fetch(`${BASE_URL}/customer/bookings/${bookingId}/reschedule-request`, {
+        method: 'POST',
+        headers: {
+          'Accept': 'application/json',
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`,
+        },
+        body: JSON.stringify({ starts_on: startsOn, ends_on: endsOn }),
+      });
+      const data = await response.json();
+      if (!response.ok) throw new Error(data.message || 'Gagal mengajukan reschedule');
+      return data;
+    } catch (error) {
+      console.error('Request Reschedule Error:', error);
+      throw error;
+    }
+  },
+
+  async submitReview(token, bookingId, rating, comment) {
+    try {
+      const response = await fetch(`${BASE_URL}/customer/bookings/${bookingId}/review`, {
+        method: 'POST',
+        headers: {
+          'Accept': 'application/json',
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`,
+        },
+        body: JSON.stringify({ rating, comment }),
+      });
+      const data = await response.json();
+      if (!response.ok) throw new Error(data.message || 'Gagal mengirim ulasan');
+      return data;
+    } catch (error) {
+      console.error('Submit Review Error:', error);
+      throw error;
+    }
+  },
+
+  async getMuthowifSchedule(token) {
+    try {
+      const response = await fetch(`${BASE_URL}/muthowif/jadwal`, {
+        method: 'GET',
+        headers: {
+          'Accept': 'application/json',
+          'Authorization': `Bearer ${token}`,
+        },
+      });
+      const data = await response.json();
+      if (!response.ok) throw new Error(data.message || 'Gagal memuat jadwal');
+      return data;
+    } catch (error) {
+      console.error('Get Schedule Error:', error);
+      throw error;
+    }
+  },
+
+  async blockDate(token, date, note = '') {
+    try {
+      const response = await fetch(`${BASE_URL}/muthowif/jadwal`, {
+        method: 'POST',
+        headers: {
+          'Accept': 'application/json',
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`,
+        },
+        body: JSON.stringify({ date, note }),
+      });
+      const data = await response.json();
+      if (!response.ok) throw new Error(data.message || 'Gagal memblokir tanggal');
+      return data;
+    } catch (error) {
+      console.error('Block Date Error:', error);
+      throw error;
+    }
+  },
+
+  async unblockDate(token, blockedDateId) {
+    try {
+      const response = await fetch(`${BASE_URL}/muthowif/jadwal/${blockedDateId}`, {
+        method: 'DELETE',
+        headers: {
+          'Accept': 'application/json',
+          'Authorization': `Bearer ${token}`,
+        },
+      });
+      if (!response.ok) {
+        const data = await response.json();
+        throw new Error(data.message || 'Gagal menghapus blokir');
+      }
+      return true;
+    } catch (error) {
+      console.error('Unblock Date Error:', error);
+      throw error;
+    }
+  },
+
+  async approveReschedule(token, bookingId, requestId) {
+    try {
+      const response = await fetch(`${BASE_URL}/muthowif/bookings/${bookingId}/reschedule-requests/${requestId}/approve`, {
+        method: 'POST',
+        headers: {
+          'Accept': 'application/json',
+          'Authorization': `Bearer ${token}`,
+        },
+      });
+      const data = await response.json();
+      if (!response.ok) throw new Error(data.message || 'Gagal menyetujui reschedule');
+      return data;
+    } catch (error) {
+      console.error('Approve Reschedule Error:', error);
+      throw error;
+    }
+  },
+
+  async rejectReschedule(token, bookingId, requestId, reason = '') {
+    try {
+      const response = await fetch(`${BASE_URL}/muthowif/bookings/${bookingId}/reschedule-requests/${requestId}/reject`, {
+        method: 'POST',
+        headers: {
+          'Accept': 'application/json',
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`,
+        },
+        body: JSON.stringify({ reason }),
+      });
+      const data = await response.json();
+      if (!response.ok) throw new Error(data.message || 'Gagal menolak reschedule');
+      return data;
+    } catch (error) {
+      console.error('Reject Reschedule Error:', error);
+      throw error;
+    }
+  },
+
+  async getInvoice(token, bookingId) {
+    try {
+      const response = await fetch(`${BASE_URL}/customer/bookings/${bookingId}/invoice`, {
+        method: 'GET',
+        headers: {
+          'Accept': 'application/json',
+          'Authorization': `Bearer ${token}`,
+        },
+      });
+      const data = await response.json();
+      if (!response.ok) throw new Error(data.message || 'Gagal memuat invoice');
+      return data;
+    } catch (error) {
+      console.error('Get Invoice Error:', error);
+      throw error;
+    }
   }
 };
