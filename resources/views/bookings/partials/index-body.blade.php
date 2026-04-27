@@ -1,4 +1,4 @@
-﻿@php
+@php
     use App\Enums\BookingStatus;
     use App\Enums\MuthowifServiceType;
     use App\Enums\PaymentStatus;
@@ -257,7 +257,7 @@
 
                                                 @if ($st === BookingStatus::Confirmed && $booking->payment_status === PaymentStatus::Pending)
                                                     <a href="{{ route('bookings.payment', $booking) }}" class="inline-flex items-center justify-center rounded-xl bg-gradient-to-r from-brand-600 to-brand-700 px-4 py-2.5 text-center text-sm font-semibold text-white shadow-md shadow-brand-600/20 transition hover:from-brand-500 hover:to-brand-600">
-                                                        {{ __('bookings.index.pay_midtrans') }}
+                                                        {{ __('bookings.index.pay_online') }}
                                                     </a>
                                                 @endif
 

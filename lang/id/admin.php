@@ -47,12 +47,15 @@ return [
     ],
     'logs' => [
         'view_lines' => 'Lihat 800 baris',
+        'clear' => 'Hapus log',
+        'clear_confirm' => 'Kosongkan storage/logs/laravel.log? Tindakan ini tidak bisa dibatalkan.',
+        'filter_hint' => 'Alur pembayaran: cari teks “[payment]” di log ini, atau PAYMENT_FLOW_LOG=false untuk mengurangi volume.',
     ],
     'finance' => [
         'intro' => 'Ringkasan biaya platform (:pct% total) dan satu riwayat transaksi: pembayaran (order), refund selesai, serta withdraw muthowif — diurutkan waktu sehingga order terlihat sebelum refund pada booking yang sama.',
         'refund_cta' => 'Refund menunggu transfer',
         'platform_total' => 'Total fee platform (admin)',
-        'reference_midtrans_order' => 'Order Midtrans: :order',
+        'reference_payment_order' => 'Order pembayaran: :order',
         'gross_volume' => 'Volume bruto (belum refunded)',
         'history_title' => 'Riwayat transaksi',
         'history_group_withdraw' => 'Withdraw',

@@ -2,7 +2,6 @@
 
 namespace App\Models;
 
-use App\Models\MuthowifProfile;
 use Illuminate\Database\Eloquent\Concerns\HasUuids;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
@@ -19,8 +18,8 @@ class MuthowifWithdrawal extends Model
         'beneficiary_bank',
         'notes',
         'status',
-        'midtrans_reference_no',
-        'midtrans_initial_status',
+        'gateway_reference_no',
+        'gateway_initial_status',
         'requested_at',
         'approved_at',
         'processing_at',
@@ -28,7 +27,7 @@ class MuthowifWithdrawal extends Model
         'failed_at',
         'failed_reason',
         'transfer_proof_path',
-        'midtrans_notification_payload',
+        'gateway_notification_payload',
     ];
 
     protected function casts(): array
@@ -40,7 +39,7 @@ class MuthowifWithdrawal extends Model
             'processing_at' => 'datetime',
             'completed_at' => 'datetime',
             'failed_at' => 'datetime',
-            'midtrans_notification_payload' => 'array',
+            'gateway_notification_payload' => 'array',
         ];
     }
 
@@ -49,4 +48,3 @@ class MuthowifWithdrawal extends Model
         return $this->belongsTo(MuthowifProfile::class);
     }
 }
-

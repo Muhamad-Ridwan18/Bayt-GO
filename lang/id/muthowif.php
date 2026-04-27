@@ -38,7 +38,7 @@ return [
         'refund_fees' => 'Dari harga dasar: admin Rp :platform dan muthowif Rp :muthowif (order batal).',
         'role_pilgrim' => 'Jamaah:',
         'role_muthowif' => 'Muthowif:',
-        'midtrans_refund' => 'Refund Midtrans dicatat :datetime.',
+        'gateway_refund' => 'Refund gateway dicatat :datetime.',
         'reschedule_title' => 'Pengajuan reschedule',
         'reschedule_from' => 'Dari :old_start – :old_end',
         'reschedule_to' => ':new_start – :new_end',

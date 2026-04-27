@@ -45,6 +45,9 @@ Route::bind('blockedDate', function (string $value) {
 Route::post('/payments/midtrans/notification', [PaymentWebhookController::class, 'handle'])
     ->name('payments.midtrans.notification');
 
+Route::post('/payments/doku/notification', [PaymentWebhookController::class, 'doku'])
+    ->name('payments.doku.notification');
+
 Route::get('/layanan', [MuthowifDirectoryController::class, 'index'])->name('layanan.index');
 Route::get('/layanan/{publicProfile}/foto', [MuthowifDirectoryController::class, 'photo'])->name('layanan.photo');
 Route::get('/layanan/{publicProfile}', [MuthowifDirectoryController::class, 'show'])->name('layanan.show');

@@ -31,7 +31,7 @@ return [
     'signed_in_as' => 'Anda masuk sebagai',
     'profile_settings' => 'Pengaturan profil',
     'admin_label' => 'Dashboard admin',
-    'admin_title' => 'Pantau platform & transaksi Midtrans',
+    'admin_title' => 'Pantau platform & pembayaran',
     'admin_subtitle' => 'Pembayaran settlement: total fee platform (sama dengan halaman Keuangan) dan volume bruto tanpa booking refunded.',
     'stat_platform_fee' => 'Platform fee',
     'stat_gross_volume' => 'Volume bruto (belum refunded)',

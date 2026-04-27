@@ -3,8 +3,8 @@
 namespace App\Support;
 
 /**
- * Kanal yang mendukung refund otomatis via API Midtrans (Core API / Snap).
- * VA bank_transfer & echannel tidak termasuk — refund lewat prosedur manual / dashboard Midtrans.
+ * Kanal yang mendukung refund otomatis via API Midtrans (legacy / Core API / Snap).
+ * VA bank_transfer & echannel tidak termasuk — refund lewat prosedur manual atau penyedia pembayaran.
  *
  * @see https://docs.midtrans.com/reference/refund-transaction
  */

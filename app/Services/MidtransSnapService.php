@@ -84,9 +84,9 @@ class MidtransSnapService
             Log::error('Midtrans Snap API gagal', [
                 'status' => $response->status(),
                 'body' => $response->body(),
-                'payload' => $payload
+                'payload' => $payload,
             ]);
-            throw new RuntimeException('Gagal membuat sesi pembayaran Midtrans. ' . ($response->json('error_messages')[0] ?? ''));
+            throw new RuntimeException('Gagal membuat sesi pembayaran Midtrans. '.($response->json('error_messages')[0] ?? ''));
         }
 
         return $response->json();
@@ -316,8 +316,8 @@ class MidtransSnapService
     {
         $type = strtolower((string) ($payment->payment_type ?? ''));
 
-        if ($type === 'qris' && is_string($payment->midtrans_transaction_id) && $payment->midtrans_transaction_id !== '') {
-            return $payment->midtrans_transaction_id;
+        if ($type === 'qris' && is_string($payment->gateway_transaction_id) && $payment->gateway_transaction_id !== '') {
+            return $payment->gateway_transaction_id;
         }
 
         return (string) $payment->order_id;
@@ -343,4 +343,3 @@ class MidtransSnapService
         return null;
     }
 }
-

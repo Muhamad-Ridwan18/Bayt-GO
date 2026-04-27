@@ -23,7 +23,7 @@ Manajemen perjalanan dan pemesanan dari sisi pengguna jasa.
 
 - **Daftar Booking**: List perjalanan (mendatang & riwayat).
 - **Detail Booking**: Status, upload dokumen (Paspor/Visa/Tiket), dan akses chat.
-- **Pembayaran**: Integrasi instruksi bayar Midtrans dan cetak Invoice.
+- **Pembayaran**: Instruksi bayar (gateway DOKU Checkout / VA langsung) dan cetak Invoice.
 - **Review**: Memberikan rating dan ulasan setelah perjalanan selesai.
 
 ## 4. Fitur Muthowif (Penyedia Jasa)

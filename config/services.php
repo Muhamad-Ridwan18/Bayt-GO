@@ -55,10 +55,21 @@ return [
     'midtrans' => [
         'server_key' => env('MIDTRANS_SERVER_KEY'),
         'client_key' => env('MIDTRANS_CLIENT_KEY'),
-        'is_production' => env('MIDTRANS_IS_PRODUCTION', false),
+        /** Env booleans are strings; cast so "false" is not treated as true in PHP. */
+        'is_production' => filter_var(env('MIDTRANS_IS_PRODUCTION', false), FILTER_VALIDATE_BOOLEAN),
         'core_payment_expire_minutes' => env('MIDTRANS_CORE_PAYMENT_EXPIRE_MINUTES', 60),
     ],
 
-
+    'doku' => [
+        'client_id' => trim((string) env('DOKU_CLIENT_ID', '')),
+        'secret_key' => trim((string) env('DOKU_SECRET_KEY', '')),
+        'is_production' => filter_var(env('DOKU_IS_PRODUCTION', false), FILTER_VALIDATE_BOOLEAN),
+        'payment_due_minutes' => env('DOKU_PAYMENT_DUE_MINUTES', 60),
+        'va_expire_minutes' => env('DOKU_VA_EXPIRE_MINUTES', 60),
+        /** Path only; harus sama dengan route notifikasi (verifikasi signature). */
+        'notification_path' => env('DOKU_NOTIFICATION_PATH', '/payments/doku/notification'),
+        /** DOKU tidak punya GoPay di Checkout; default ke DANA. Sesuaikan di .env jika perlu. */
+        'gopay_checkout_method' => env('DOKU_GOPAY_CHECKOUT_METHOD', 'EMONEY_DANA'),
+    ],
 
 ];

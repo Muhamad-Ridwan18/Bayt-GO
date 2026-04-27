@@ -234,7 +234,7 @@ export default function CheckoutScreen({ route, user, navigation }) {
             </View>
             <View style={styles.infoBox}>
                <Ionicons name="information-circle" size={16} color="#64748B" />
-               <Text style={styles.infoText}>Harga belum termasuk biaya admin Midtrans.</Text>
+               <Text style={styles.infoText}>Harga belum termasuk biaya admin pembayaran (DOKU).</Text>
             </View>
           </View>
 

@@ -9,24 +9,23 @@ use App\Http\Controllers\Controller;
 use App\Models\BookingPayment;
 use App\Models\MuthowifBooking;
 use App\Models\MuthowifProfile;
-use App\Models\MuthowifService;
-use App\Payments\Contracts\SnapPaymentProviderInterface;
 use App\Services\BookingOrderCodeService;
+use App\Services\BookingPricingService;
+use App\Services\Doku\DokuDirectChargeService;
+use App\Support\PaymentFlowLog;
 use App\Support\PlatformFee;
 use Carbon\Carbon;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
-use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Facades\Validator;
 use Illuminate\Support\Str;
 use Illuminate\Validation\Rule;
-use Illuminate\Validation\ValidationException;
 
 class BookingApiController extends Controller
 {
     private const MAX_RANGE_DAYS = 90;
-    
+
     public function index(Request $request): JsonResponse
     {
         $bookings = MuthowifBooking::query()
@@ -149,8 +148,8 @@ class BookingApiController extends Controller
                 }
 
                 $bookingCode = app(BookingOrderCodeService::class)->allocateNextWithinTransaction();
-                $pricingService = app(\App\Services\BookingPricingService::class);
-                
+                $pricingService = app(BookingPricingService::class);
+
                 $booking = MuthowifBooking::query()->create(array_merge([
                     'booking_code' => $bookingCode,
                     'muthowif_profile_id' => $profile->id,
@@ -194,7 +193,7 @@ class BookingApiController extends Controller
             return response()->json([
                 'message' => 'Pemesanan berhasil dibuat',
                 'booking_id' => $booking->id,
-                'booking_code' => $booking->booking_code
+                'booking_code' => $booking->booking_code,
             ], 201);
 
         } catch (\Exception $e) {
@@ -209,18 +208,30 @@ class BookingApiController extends Controller
 
     public function pay(Request $request, MuthowifBooking $booking): JsonResponse
     {
+        PaymentFlowLog::info('api.payment.enter', [
+            'booking_id' => $booking->getKey(),
+            'user_id' => $request->user()?->id,
+            'method_body' => (string) $request->input('method', ''),
+        ]);
+
         if ($booking->customer_id !== $request->user()->id) {
+            PaymentFlowLog::warning('api.payment.unauthorized', ['booking_id' => $booking->getKey()]);
+
             return response()->json(['message' => 'Unauthorized'], 403);
         }
 
         if ($booking->isPaid()) {
+            PaymentFlowLog::info('api.payment.skip_already_paid', ['booking_id' => $booking->getKey()]);
+
             return response()->json(['message' => 'Pembayaran sudah diterima'], 400);
         }
 
-        /** @var \App\Services\MidtransSnapService $midtrans */
-        $midtrans = app(\App\Services\MidtransSnapService::class);
+        /** @var DokuDirectChargeService $doku */
+        $doku = app(DokuDirectChargeService::class);
 
-        if (! $midtrans->isConfigured()) {
+        if (! $doku->isConfigured()) {
+            PaymentFlowLog::warning('api.payment.gateway_unconfigured', ['booking_id' => $booking->getKey()]);
+
             return response()->json(['message' => 'Sistem pembayaran belum dikonfigurasi'], 500);
         }
 
@@ -228,63 +239,100 @@ class BookingApiController extends Controller
 
         // Jika belum ada metode → kembalikan daftar metode saja
         if ($method === '') {
+            PaymentFlowLog::info('api.payment.select_method_step', [
+                'booking_id' => $booking->getKey(),
+                'amount' => (int) round($booking->resolvedAmountDue()),
+            ]);
+
             return response()->json([
-                'step'    => 'select_method',
+                'step' => 'select_method',
                 'methods' => self::PAYMENT_METHODS,
-                'amount'  => (int) round($booking->resolvedAmountDue()),
+                'amount' => (int) round($booking->resolvedAmountDue()),
             ]);
         }
 
         if (! in_array($method, self::PAYMENT_METHODS, true)) {
+            PaymentFlowLog::warning('api.payment.method_invalid', ['booking_id' => $booking->getKey(), 'method' => $method]);
+
             return response()->json(['message' => 'Metode pembayaran tidak didukung'], 422);
         }
 
         $baseInt = (int) round($booking->resolvedAmountDue());
         if ($baseInt < 1) {
+            PaymentFlowLog::warning('api.payment.invalid_total', ['booking_id' => $booking->getKey(), 'base_int' => $baseInt]);
+
             return response()->json(['message' => 'Total pembayaran tidak valid'], 400);
         }
 
         $split = PlatformFee::split((float) $baseInt);
 
-        $booking->bookingPayments()->where('status', 'pending')->delete();
+        $superseded = $booking->bookingPayments()->where('status', 'pending')->update(['status' => 'cancelled']);
+        if ($superseded > 0) {
+            PaymentFlowLog::info('api.payment.supersede_pending', [
+                'booking_id' => $booking->getKey(),
+                'rows_cancelled' => $superseded,
+            ]);
+        }
 
         $orderId = 'BG-'.str_replace('-', '', (string) $booking->getKey()).'-'.Str::lower(Str::random(10));
 
         $payment = BookingPayment::query()->create([
             'muthowif_booking_id' => $booking->getKey(),
-            'order_id'            => $orderId,
-            'gross_amount'        => (int) round($split['customer_gross']),
+            'order_id' => $orderId,
+            'gross_amount' => (int) round($split['customer_gross']),
             'platform_fee_amount' => $split['platform_fee_total'],
             'muthowif_net_amount' => $split['muthowif_net'],
-            'status'              => 'pending',
+            'status' => 'pending',
+        ]);
+
+        PaymentFlowLog::info('api.payment.charge_started', [
+            'booking_id' => $booking->getKey(),
+            'order_id' => $orderId,
+            'method' => $method,
+            'gross_amount' => $payment->gross_amount,
+            'booking_status' => $booking->status->value,
         ]);
 
         try {
-            $session = $midtrans->createCoreChargeSession($payment, $method);
+            $session = $doku->createChargeSession($payment, $method);
 
             $update = ['payment_type' => $method];
             if (! empty($session['transaction_id'])) {
-                $update['midtrans_transaction_id'] = $session['transaction_id'];
+                $update['gateway_transaction_id'] = $session['transaction_id'];
             }
             $payment->update($update);
 
+            PaymentFlowLog::info('api.payment.session_ok', [
+                'booking_id' => $booking->getKey(),
+                'order_id' => $orderId,
+                'method' => $method,
+                'has_va' => ! empty($session['va_number']),
+                'has_checkout_url' => ! empty($session['checkout_url']),
+            ]);
+
             return response()->json([
-                'step'         => 'payment_instructions',
-                'order_id'     => $orderId,
-                'method'       => $method,
+                'step' => 'payment_instructions',
+                'order_id' => $orderId,
+                'method' => $method,
                 'gross_amount' => $payment->gross_amount,
-                'expiry_time'  => $session['expiry_time'],
-                'va_bank'      => $session['va_bank'],
-                'va_number'    => $session['va_number'],
-                'bill_key'     => $session['bill_key'],
-                'biller_code'  => $session['biller_code'],
-                'qr_string'    => $session['qr_string'],
+                'expiry_time' => $session['expiry_time'],
+                'va_bank' => $session['va_bank'],
+                'va_number' => $session['va_number'],
+                'bill_key' => $session['bill_key'],
+                'biller_code' => $session['biller_code'],
+                'qr_string' => $session['qr_string'],
                 'deeplink_url' => $session['deeplink_url'],
                 'checkout_url' => $session['checkout_url'],
             ]);
 
         } catch (\Exception $e) {
+            PaymentFlowLog::warning('api.payment.session_failed', [
+                'booking_id' => $booking->getKey(),
+                'order_id' => $orderId,
+                'message' => $e->getMessage(),
+            ]);
             $payment->delete();
+
             return response()->json(['message' => $e->getMessage()], 500);
         }
     }

@@ -26,9 +26,9 @@ class BookingRefundRequest extends Model
         'refund_fee_platform',
         'refund_fee_muthowif',
         'net_refund_customer',
-        'midtrans_refund_key',
-        'midtrans_refunded_at',
-        'midtrans_refund_response',
+        'gateway_refund_key',
+        'gateway_refunded_at',
+        'gateway_refund_response',
         'transfer_proof_path',
         'decided_at',
         'decided_by',
@@ -40,8 +40,8 @@ class BookingRefundRequest extends Model
             'status' => BookingChangeRequestStatus::class,
             'service_base_amount' => 'decimal:2',
             'decided_at' => 'datetime',
-            'midtrans_refunded_at' => 'datetime',
-            'midtrans_refund_response' => 'array',
+            'gateway_refunded_at' => 'datetime',
+            'gateway_refund_response' => 'array',
         ];
     }
 

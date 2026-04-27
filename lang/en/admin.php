@@ -47,12 +47,15 @@ return [
     ],
     'logs' => [
         'view_lines' => 'View 800 lines',
+        'clear' => 'Clear log',
+        'clear_confirm' => 'Empty storage/logs/laravel.log? This cannot be undone.',
+        'filter_hint' => 'Payment flow: search for “[payment]” in this file or set PAYMENT_FLOW_LOG=false to reduce noise.',
     ],
     'finance' => [
         'intro' => 'Summary of platform fees (:pct% total) and one chronological ledger: payments (orders), completed refunds, and chaperone withdrawals — so an order appears before its refund when you scroll the timeline.',
         'refund_cta' => 'Refunds pending transfer',
         'platform_total' => 'Total platform fees (admin)',
-        'reference_midtrans_order' => 'Midtrans order: :order',
+        'reference_payment_order' => 'Payment order: :order',
         'gross_volume' => 'Gross volume (not refunded)',
         'history_title' => 'Transaction history',
         'history_group_withdraw' => 'Withdrawal',

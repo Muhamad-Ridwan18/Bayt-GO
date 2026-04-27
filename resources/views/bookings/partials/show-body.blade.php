@@ -214,7 +214,7 @@
                             @php $paymentQuery = request()->query('payment'); @endphp
                             @if ($paymentQuery === 'success')
                                 <p class="mt-5 text-xs leading-relaxed text-slate-600">
-                                    {!! __('bookings.show.midtrans_wait_html') !!}
+                                    {!! __('bookings.show.payment_wait_html') !!}
                                 </p>
                             @else
                                 <p class="mt-5 text-xs leading-relaxed text-slate-600">

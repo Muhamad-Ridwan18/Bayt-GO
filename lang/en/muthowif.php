@@ -38,7 +38,7 @@ return [
         'refund_fees' => 'From base: admin Rp :platform and chaperone Rp :muthowif (booking cancelled).',
         'role_pilgrim' => 'Pilgrim:',
         'role_muthowif' => 'Chaperone:',
-        'midtrans_refund' => 'Midtrans refund recorded :datetime.',
+        'gateway_refund' => 'Gateway refund recorded :datetime.',
         'reschedule_title' => 'Reschedule requests',
         'reschedule_from' => 'From :old_start – :old_end',
         'reschedule_to' => ':new_start – :new_end',

@@ -21,9 +21,11 @@ use App\Models\MuthowifServiceAddOn;
 use App\Payments\Contracts\SnapPaymentProviderInterface;
 use App\Services\BookingCompletionService;
 use App\Services\BookingOrderCodeService;
+use App\Services\BookingPricingService;
 use App\Services\BookingRefundExecutor;
 use App\Support\BookingPostPayRules;
 use App\Support\BookingRefundFee;
+use App\Support\PaymentFlowLog;
 use App\Support\PlatformFee;
 use Carbon\Carbon;
 use Illuminate\Http\JsonResponse;
@@ -165,13 +167,25 @@ class BookingController extends Controller
     {
         $this->authorize('pay', $booking);
 
+        PaymentFlowLog::info('web.payment.enter', [
+            'booking_id' => $booking->getKey(),
+            'booking_status' => $booking->status->value,
+            'payment_status' => $booking->payment_status->value,
+            'method_query' => (string) $request->query('method', ''),
+            'provider' => get_class($provider),
+        ]);
+
         if ($booking->isPaid()) {
+            PaymentFlowLog::info('web.payment.skip_already_paid', ['booking_id' => $booking->getKey()]);
+
             return redirect()
                 ->route('bookings.show', $booking)
                 ->with('status', __('bookings.flash.payment_already_received'));
         }
 
         if (! $provider->isConfigured()) {
+            PaymentFlowLog::warning('web.payment.gateway_unconfigured', ['booking_id' => $booking->getKey()]);
+
             return view('bookings.payment-unconfigured', [
                 'booking' => $booking,
             ]);
@@ -179,6 +193,8 @@ class BookingController extends Controller
 
         $baseInt = (int) round($booking->resolvedAmountDue());
         if ($baseInt < 1) {
+            PaymentFlowLog::warning('web.payment.invalid_total', ['booking_id' => $booking->getKey(), 'base_int' => $baseInt]);
+
             return redirect()
                 ->route('bookings.show', $booking)
                 ->with('error', __('bookings.flash.invalid_total'));
@@ -186,6 +202,8 @@ class BookingController extends Controller
 
         $selectedMethod = (string) $request->query('method', '');
         if ($selectedMethod !== '' && ! in_array($selectedMethod, self::CORE_PAYMENT_METHODS, true)) {
+            PaymentFlowLog::warning('web.payment.method_not_supported', ['booking_id' => $booking->getKey(), 'method' => $selectedMethod]);
+
             return redirect()
                 ->route('bookings.payment', $booking)
                 ->with('error', __('bookings.flash.method_not_supported'));
@@ -193,7 +211,52 @@ class BookingController extends Controller
 
         $split = PlatformFee::split((float) $baseInt);
 
-        $booking->bookingPayments()->where('status', 'pending')->delete();
+        if ($selectedMethod === '') {
+            $payment = $booking->bookingPayments()
+                ->where('status', 'pending')
+                ->latest('id')
+                ->first();
+
+            if ($payment === null) {
+                $orderId = 'BG-'.str_replace('-', '', (string) $booking->getKey()).'-'.Str::lower(Str::random(10));
+                $payment = BookingPayment::query()->create([
+                    'muthowif_booking_id' => $booking->getKey(),
+                    'order_id' => $orderId,
+                    'gross_amount' => (int) round($split['customer_gross']),
+                    'platform_fee_amount' => $split['platform_fee_total'],
+                    'muthowif_net_amount' => $split['muthowif_net'],
+                    'status' => 'pending',
+                ]);
+                PaymentFlowLog::info('web.payment.pending_created', [
+                    'booking_id' => $booking->getKey(),
+                    'order_id' => $orderId,
+                    'gross_amount' => $payment->gross_amount,
+                ]);
+            } else {
+                PaymentFlowLog::info('web.payment.pending_reused', [
+                    'booking_id' => $booking->getKey(),
+                    'order_id' => $payment->order_id,
+                    'gross_amount' => $payment->gross_amount,
+                ]);
+            }
+
+            return view('bookings.payment', [
+                'booking' => $booking,
+                'payment' => $payment->fresh(),
+                'selectedMethod' => $selectedMethod,
+                'methods' => self::CORE_PAYMENT_METHODS,
+                'instructions' => null,
+            ]);
+        }
+
+        $superseded = $booking->bookingPayments()->where('status', 'pending')->update(['status' => 'cancelled']);
+        if ($superseded > 0) {
+            PaymentFlowLog::info('web.payment.supersede_pending', [
+                'booking_id' => $booking->getKey(),
+                'rows_cancelled' => $superseded,
+                'note' => 'Sesi bayar lama ditandai cancelled agar webhook DOKU tetap menemukan invoice jika user ganti metode.',
+            ]);
+        }
 
         $orderId = 'BG-'.str_replace('-', '', (string) $booking->getKey()).'-'.Str::lower(Str::random(10));
 
@@ -209,36 +272,69 @@ class BookingController extends Controller
             'status' => 'pending',
         ]);
 
+        PaymentFlowLog::info('web.payment.charge_started', [
+            'booking_id' => $booking->getKey(),
+            'order_id' => $orderId,
+            'method' => $selectedMethod,
+            'gross_amount' => $payment->gross_amount,
+            'booking_status' => $booking->status->value,
+        ]);
+
         $session = null;
 
         try {
-            if ($selectedMethod !== '') {
-                $session = $provider->createPaymentSession($payment, $selectedMethod);
-            }
+            $session = $provider->createPaymentSession($payment, $selectedMethod);
 
             if ($session !== null) {
                 $update = [];
                 if (! empty($session->snapToken)) {
-                    $update['snap_token'] = $session->snapToken;
+                    $update['checkout_token'] = $session->snapToken;
                 }
 
                 if (! empty($session->providerReferenceId)) {
-                    $update['midtrans_transaction_id'] = $session->providerReferenceId;
+                    $update['gateway_transaction_id'] = $session->providerReferenceId;
                 }
 
-                if (is_string($selectedMethod) && $selectedMethod !== '') {
-                    $update['payment_type'] = $selectedMethod;
-                }
+                $update['payment_type'] = $selectedMethod;
 
                 if ($update !== []) {
                     $payment->update($update);
                 }
             }
+
+            PaymentFlowLog::info('web.payment.session_ok', [
+                'booking_id' => $booking->getKey(),
+                'order_id' => $payment->order_id,
+                'has_payment_url' => $session !== null && is_string($session->paymentUrl) && $session->paymentUrl !== '',
+                'has_checkout_token' => $session !== null && ! empty($session->snapToken),
+            ]);
         } catch (RuntimeException $e) {
+            PaymentFlowLog::warning('web.payment.session_failed', [
+                'booking_id' => $booking->getKey(),
+                'order_id' => $payment->order_id ?? null,
+                'message' => $e->getMessage(),
+            ]);
+
             return redirect()
                 ->route('bookings.show', $booking)
                 ->with('error', $e->getMessage());
         }
+
+        if ($session !== null && is_string($session->paymentUrl) && $session->paymentUrl !== '') {
+            PaymentFlowLog::info('web.payment.redirect_gateway', [
+                'booking_id' => $booking->getKey(),
+                'order_id' => $payment->order_id,
+                'payment_url_host' => parse_url($session->paymentUrl, PHP_URL_HOST),
+            ]);
+
+            return redirect()->away($session->paymentUrl);
+        }
+
+        PaymentFlowLog::info('web.payment.render_instructions', [
+            'booking_id' => $booking->getKey(),
+            'order_id' => $payment->order_id,
+            'method' => $selectedMethod,
+        ]);
 
         return view('bookings.payment', [
             'booking' => $booking,
@@ -451,8 +547,8 @@ class BookingController extends Controller
 
             $bookingCode = app(BookingOrderCodeService::class)->allocateNextWithinTransaction();
 
-            $pricingService = app(\App\Services\BookingPricingService::class);
-            
+            $pricingService = app(BookingPricingService::class);
+
             $booking = MuthowifBooking::query()->create(array_merge([
                 'booking_code' => $bookingCode,
                 'muthowif_profile_id' => $profile->id,
@@ -660,7 +756,9 @@ class BookingController extends Controller
         $this->authorize('cancelAsCustomer', $booking);
 
         DB::transaction(function () use ($booking): void {
-            $booking->bookingPayments()->where('status', 'pending')->delete();
+            $booking->bookingPayments()
+                ->whereNotIn('status', ['settlement', 'capture'])
+                ->delete();
             $booking->update(['status' => BookingStatus::Cancelled]);
         });
 

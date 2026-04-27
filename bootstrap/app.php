@@ -7,6 +7,7 @@ use Illuminate\Console\Scheduling\Schedule;
 use Illuminate\Foundation\Application;
 use Illuminate\Foundation\Configuration\Exceptions;
 use Illuminate\Foundation\Configuration\Middleware;
+use Illuminate\Http\Request;
 
 return Application::configure(basePath: dirname(__DIR__))
     ->withRouting(
@@ -21,6 +22,17 @@ return Application::configure(basePath: dirname(__DIR__))
         $schedule->command('bookings:auto-complete-service')->everyMinute();
     })
     ->withMiddleware(function (Middleware $middleware): void {
+        if (filter_var(env('TRUST_PROXIES', false), FILTER_VALIDATE_BOOLEAN)) {
+            $middleware->trustProxies(
+                at: '*',
+                headers: Request::HEADER_X_FORWARDED_FOR
+                    | Request::HEADER_X_FORWARDED_HOST
+                    | Request::HEADER_X_FORWARDED_PORT
+                    | Request::HEADER_X_FORWARDED_PROTO
+                    | Request::HEADER_X_FORWARDED_PREFIX,
+            );
+        }
+
         $middleware->web(append: [
             SetLocale::class,
         ]);

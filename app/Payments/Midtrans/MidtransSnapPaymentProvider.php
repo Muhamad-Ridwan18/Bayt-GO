@@ -36,8 +36,8 @@ class MidtransSnapPaymentProvider implements SnapPaymentProviderInterface
         return new SnapPaymentSession(
             snapToken: $session['token'] ?? null,
             clientKey: config('services.midtrans.client_key'),
-            snapJsUrl: config('services.midtrans.is_production', false) 
-                ? 'https://app.midtrans.com/snap/snap.js' 
+            snapJsUrl: config('services.midtrans.is_production', false)
+                ? 'https://app.midtrans.com/snap/snap.js'
                 : 'https://app.sandbox.midtrans.com/snap/snap.js',
             paymentUrl: $session['redirect_url'] ?? null,
             providerReferenceId: $payment->order_id,
@@ -100,9 +100,9 @@ class MidtransSnapPaymentProvider implements SnapPaymentProviderInterface
                     ->lockForUpdate()
                     ->firstOrFail();
 
-                $payment->midtrans_notification_payload = $payload;
+                $payment->gateway_notification_payload = $payload;
                 if ($request->filled('transaction_id')) {
-                    $payment->midtrans_transaction_id = (string) $request->input('transaction_id');
+                    $payment->gateway_transaction_id = (string) $request->input('transaction_id');
                 }
                 if ($request->filled('payment_type')) {
                     $payment->payment_type = (string) $request->input('payment_type');

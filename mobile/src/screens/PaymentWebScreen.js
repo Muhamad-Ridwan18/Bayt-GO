@@ -44,7 +44,7 @@ export default function PaymentWebScreen({ route, navigation, user }) {
   }, [url, booking_id, fetchUrl]);
 
   const handleNavigationStateChange = (navState) => {
-    // Deteksi jika Midtrans mengarahkan kembali ke aplikasi (finish/error/cancel)
+    // Deteksi redirect setelah pembayaran (DOKU / host checkout: finish/callback)
     // Biasanya URL mengandung "finish", "unfinish", atau "error"
     if (navState.url.includes('finish') || navState.url.includes('callback')) {
       Alert.alert('Status Pembayaran', 'Terima kasih! Kami akan memverifikasi pembayaran Anda.', [

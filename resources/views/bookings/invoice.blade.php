@@ -139,11 +139,11 @@
 
                 @if ($payment)
                     <p class="mt-5 text-xs leading-relaxed text-slate-500">
-                        {{ __('bookings.invoice.midtrans_via') }}
+                        {{ __('bookings.invoice.gateway_via') }}
                         @if ($payment->payment_type)
                             <span class="font-medium text-slate-600">({{ $payment->payment_type }})</span>
                         @endif
-                        . {{ __('bookings.invoice.midtrans_fee_note', ['pct' => (int) round(PlatformFee::RATE * 100)]) }}
+                        . {{ __('bookings.invoice.gateway_fee_note', ['pct' => (int) round(PlatformFee::RATE * 100)]) }}
                     </p>
                 @endif
             </div>

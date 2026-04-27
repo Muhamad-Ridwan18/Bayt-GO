@@ -10,6 +10,7 @@ class BookingPayment extends Model
 {
     use HasUuids;
 
+    /** Status: pending | cancelled (sesi diganti user, tetap ada untuk webhook) | settlement | capture */
     protected $fillable = [
         'muthowif_booking_id',
         'order_id',
@@ -17,12 +18,12 @@ class BookingPayment extends Model
         'platform_fee_amount',
         'muthowif_net_amount',
         'status',
-        'snap_token',
-        'midtrans_transaction_id',
+        'checkout_token',
+        'gateway_transaction_id',
         'payment_type',
         'settled_at',
         'wallet_credited_at',
-        'midtrans_notification_payload',
+        'gateway_notification_payload',
     ];
 
     protected function casts(): array
@@ -33,7 +34,7 @@ class BookingPayment extends Model
             'muthowif_net_amount' => 'decimal:2',
             'settled_at' => 'datetime',
             'wallet_credited_at' => 'datetime',
-            'midtrans_notification_payload' => 'array',
+            'gateway_notification_payload' => 'array',
         ];
     }
 

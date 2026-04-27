@@ -37,7 +37,7 @@ final class AdminFinanceSummary
     }
 
     /**
-     * Volume bruto pembayaran (gross Midtrans): settlement/capture pada booking yang belum refunded.
+     * Volume bruto pembayaran (gross): settlement/capture pada booking yang belum refunded.
      */
     public static function grossVolumeExcludingRefundedBookings(): int
     {

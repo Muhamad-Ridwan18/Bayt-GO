@@ -12,7 +12,7 @@ use App\Models\MuthowifProfile;
 final class MuthowifFinanceSummary
 {
     /**
-     * Volume bruto pembayaran jamaah (gross Midtrans): settlement/capture pada booking muthowif ini yang belum refunded.
+     * Volume bruto pembayaran jamaah (gross): settlement/capture pada booking muthowif ini yang belum refunded.
      */
     public static function grossVolumeExcludingRefundedBookings(MuthowifProfile|string $profile): int
     {

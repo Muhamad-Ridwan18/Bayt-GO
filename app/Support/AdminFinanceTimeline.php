@@ -16,7 +16,7 @@ use Illuminate\Support\Str;
 final class AdminFinanceTimeline
 {
     /**
-     * Jumlah pembayaran Midtrans settlement/capture dalam jendela waktu (sama query filter dengan tabel keuangan).
+     * Jumlah pembayaran gateway (settlement/capture) dalam jendela waktu (sama query filter dengan tabel keuangan).
      */
     public static function settlementPaymentCountSince(CarbonInterface $since): int
     {

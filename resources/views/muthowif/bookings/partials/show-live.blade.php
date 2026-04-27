@@ -1,4 +1,4 @@
-﻿@php
+@php
     use App\Enums\BookingChangeRequestStatus;
     use App\Enums\BookingStatus;
     use App\Enums\MuthowifServiceType;
@@ -201,8 +201,8 @@
                                 @if ($req->muthowif_note)
                                     <p class="text-slate-600"><span class="font-medium">{{ __('muthowif.booking_show.role_muthowif') }}</span> {{ $req->muthowif_note }}</p>
                                 @endif
-                                @if ($req->midtrans_refunded_at)
-                                    <p class="text-xs text-emerald-800">{{ __('muthowif.booking_show.midtrans_refund', ['datetime' => $req->midtrans_refunded_at->timezone(config('app.timezone'))->format('d/m/Y H:i')]) }}</p>
+                                @if ($req->gateway_refunded_at)
+                                    <p class="text-xs text-emerald-800">{{ __('muthowif.booking_show.gateway_refund', ['datetime' => $req->gateway_refunded_at->timezone(config('app.timezone'))->format('d/m/Y H:i')]) }}</p>
                                 @endif
                             </li>
                         @endforeach

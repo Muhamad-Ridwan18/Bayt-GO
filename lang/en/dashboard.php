@@ -31,7 +31,7 @@ return [
     'signed_in_as' => 'You are signed in as',
     'profile_settings' => 'Profile settings',
     'admin_label' => 'Admin dashboard',
-    'admin_title' => 'Monitor the platform & Midtrans',
+    'admin_title' => 'Monitor the platform & payments',
     'admin_subtitle' => 'Settled payments: platform fee totals (same as Finance page) and gross volume excluding refunded bookings.',
     'stat_platform_fee' => 'Platform fee',
     'stat_gross_volume' => 'Gross volume (not refunded)',

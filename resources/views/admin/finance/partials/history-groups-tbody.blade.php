@@ -59,7 +59,7 @@
                         </div>
                     @endif
                 </td>
-                <td class="px-4 py-3 align-top font-mono text-xs text-slate-700 max-w-[14rem] truncate" title="{{ filled($p->order_id) ? __('admin.finance.reference_midtrans_order', ['order' => $p->order_id]) : '' }}">
+                <td class="px-4 py-3 align-top font-mono text-xs text-slate-700 max-w-[14rem] truncate" title="{{ filled($p->order_id) ? __('admin.finance.reference_payment_order', ['order' => $p->order_id]) : '' }}">
                     {{ filled($b?->booking_code) ? $b->booking_code : ($p->order_id ?? '—') }}
                 </td>
                 <td class="px-4 py-3 align-top text-slate-800">{{ $b?->customer?->name ?? '—' }}</td>
@@ -97,7 +97,7 @@
                         </div>
                     @endif
                 </td>
-                <td class="px-4 py-3 align-top font-mono text-xs text-slate-700 max-w-[14rem] truncate" title="{{ filled($pay?->order_id) ? __('admin.finance.reference_midtrans_order', ['order' => $pay->order_id]) : '' }}">
+                <td class="px-4 py-3 align-top font-mono text-xs text-slate-700 max-w-[14rem] truncate" title="{{ filled($pay?->order_id) ? __('admin.finance.reference_payment_order', ['order' => $pay->order_id]) : '' }}">
                     {{ filled($b?->booking_code) ? $b->booking_code : ($pay?->order_id ?? '—') }}
                 </td>
                 <td class="px-4 py-3 align-top text-slate-800">{{ $b?->customer?->name ?? '—' }}</td>
