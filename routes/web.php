@@ -4,6 +4,7 @@ use App\Enums\MuthowifVerificationStatus;
 use App\Http\Controllers\Admin\BookingRefundController;
 use App\Http\Controllers\Admin\FinanceController;
 use App\Http\Controllers\Admin\LogsController;
+use App\Http\Controllers\Admin\MootaWebhookHistoriesLiveController;
 use App\Http\Controllers\Admin\MuthowifVerificationController;
 use App\Http\Controllers\Admin\UserManagementController;
 use App\Http\Controllers\Admin\WithdrawalsController;
@@ -11,6 +12,7 @@ use App\Http\Controllers\BookingChatController;
 use App\Http\Controllers\Customer\BookingController as CustomerBookingController;
 use App\Http\Controllers\GlobalChatController;
 use App\Http\Controllers\LocaleController;
+use App\Http\Controllers\MootaWebhookController;
 use App\Http\Controllers\Muthowif\BookingController as MuthowifBookingController;
 use App\Http\Controllers\Muthowif\MuthowifDashboardCalendarController;
 use App\Http\Controllers\Muthowif\MuthowifScheduleController;
@@ -22,8 +24,11 @@ use App\Http\Controllers\Public\MuthowifDirectoryController;
 use App\Http\Middleware\EnsureUserRole;
 use App\Models\MuthowifBlockedDate;
 use App\Models\MuthowifProfile;
+use Illuminate\Foundation\Http\Middleware\ValidateCsrfToken;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Route;
+use Illuminate\Support\Str;
 
 Route::bind('publicProfile', function (string $value) {
     return MuthowifProfile::query()
@@ -48,6 +53,35 @@ Route::post('/payments/midtrans/notification', [PaymentWebhookController::class,
 Route::post('/payments/doku/notification', [PaymentWebhookController::class, 'doku'])
     ->name('payments.doku.notification');
 
+/**
+ * Endpoint uji webhook: POST dari gateway / layanan luar (tanpa CSRF).
+ * Pakai URL: {APP_URL}/webhooks/test
+ */
+Route::withoutMiddleware([ValidateCsrfToken::class])
+    ->post('/webhooks/test', function (Request $request) {
+        Log::info('webhooks.test', [
+            'ip' => $request->ip(),
+            'content_type' => $request->header('Content-Type'),
+            'raw_preview' => Str::limit($request->getContent(), 8192),
+        ]);
+
+        return response()->json([
+            'ok' => true,
+            'received_at' => now()->toIso8601String(),
+            'hint' => 'Uji webhook; produksi pakai POST /payments/doku/notification atau /payments/midtrans/notification.',
+        ]);
+    })->name('webhooks.test');
+
+Route::get('/docs/moota-webhook', function () {
+    return view('docs.moota-webhook', [
+        'webhookUrl' => route('webhooks.moota', absolute: true),
+    ]);
+})->name('docs.moota_webhook');
+
+Route::middleware(['moota.ip'])
+    ->post('/webhooks/moota', MootaWebhookController::class)
+    ->name('webhooks.moota');
+
 Route::get('/layanan', [MuthowifDirectoryController::class, 'index'])->name('layanan.index');
 Route::get('/layanan/{publicProfile}/foto', [MuthowifDirectoryController::class, 'photo'])->name('layanan.photo');
 Route::get('/layanan/{publicProfile}', [MuthowifDirectoryController::class, 'show'])->name('layanan.show');
@@ -57,6 +91,28 @@ Route::get('/locale/{locale}', [LocaleController::class, 'switch'])->name('local
 Route::get('/', function () {
     return view('welcome');
 });
+
+/** Hanya local: beberapa panel uji hanya bisa POST ke root URL tunnel (tanpa path). */
+if (app()->environment('local')) {
+    Route::withoutMiddleware([ValidateCsrfToken::class])
+        ->post('/', function (Request $request) {
+            Log::info('webhooks.dev_root_ping', [
+                'ip' => $request->ip(),
+                'content_type' => $request->header('Content-Type'),
+                'raw_preview' => Str::limit($request->getContent(), 8192),
+            ]);
+
+            return response()->json([
+                'ok' => true,
+                'received_at' => now()->toIso8601String(),
+                'hint' => 'Untuk uji rutin lebih baik pakai POST '.rtrim(config('app.url'), '/').'/webhooks/test',
+                'real_webhooks' => [
+                    'doku' => route('payments.doku.notification', absolute: true),
+                    'midtrans' => route('payments.midtrans.notification', absolute: true),
+                ],
+            ]);
+        })->name('webhooks.dev_root_ping');
+}
 
 Route::get('/muthowif/daftar/menunggu', function () {
     return view('auth.muthowif-registration-pending');
@@ -159,6 +215,10 @@ Route::middleware('auth')->group(function () {
         Route::get('refund-menunggu', [BookingRefundController::class, 'index'])->name('refunds.index');
         Route::post('refund-menunggu/{refund}/selesai', [BookingRefundController::class, 'complete'])->name('refunds.complete');
         Route::get('keuangan', [FinanceController::class, 'index'])->name('finance.index');
+        Route::get('moota-webhooks/testing', [MootaWebhookHistoriesLiveController::class, 'testing'])
+            ->name('moota_webhooks.testing');
+        Route::get('moota-webhooks', [MootaWebhookHistoriesLiveController::class, 'live'])
+            ->name('moota_webhooks.live');
         Route::get('withdrawals', [WithdrawalsController::class, 'index'])->name('withdrawals.index');
         Route::post('withdrawals/{withdrawal}/approve', [WithdrawalsController::class, 'approve'])->name('withdrawals.approve');
         Route::post('withdrawals/{withdrawal}/selesai-transfer', [WithdrawalsController::class, 'markTransferred'])->name('withdrawals.mark_transferred');

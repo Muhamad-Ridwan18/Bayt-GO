@@ -722,6 +722,33 @@ document.addEventListener('alpine:init', () => {
             }
         },
     }));
+
+    Alpine.data('mootaWebhookLiveDashboard', (initialRows = [], realtimeEnabled = false) => ({
+        rows: Array.isArray(initialRows) ? initialRows : [],
+        realtimeEnabled,
+        expandedId: null,
+        toggleRow(id) {
+            this.expandedId = this.expandedId === id ? null : id;
+        },
+        init() {
+            if (!this.realtimeEnabled || typeof window.Echo === 'undefined') {
+                return;
+            }
+            window.Echo.private('admin.moota-webhooks').listen('.moota.webhook.recorded', (payload) => {
+                const webhook = payload?.webhook;
+                if (!webhook?.id) {
+                    return;
+                }
+                if (this.rows.some((row) => String(row.id) === String(webhook.id))) {
+                    return;
+                }
+                this.rows.unshift(webhook);
+                if (this.rows.length > 100) {
+                    this.rows.pop();
+                }
+            });
+        },
+    }));
 });
 
 window.Alpine = Alpine;

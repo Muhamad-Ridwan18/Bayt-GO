@@ -1,5 +1,6 @@
 <?php
 
+use App\Http\Middleware\AllowMootaWebhookIp;
 use App\Http\Middleware\EnsureUserRole;
 use App\Http\Middleware\EnsureVerifiedMuthowif;
 use App\Http\Middleware\SetLocale;
@@ -40,8 +41,10 @@ return Application::configure(basePath: dirname(__DIR__))
         $middleware->validateCsrfTokens(except: [
             'payments/midtrans/notification',
             'payments/doku/notification',
+            'webhooks/moota',
         ]);
         $middleware->alias([
+            'moota.ip' => AllowMootaWebhookIp::class,
             'role' => EnsureUserRole::class,
             'verified.muthowif' => EnsureVerifiedMuthowif::class,
         ]);

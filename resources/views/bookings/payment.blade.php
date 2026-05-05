@@ -1,4 +1,5 @@
 @php
+    use App\Support\BookingSnapPaymentCatalog;
     use App\Support\IndonesianNumber;
     use Carbon\Carbon;
     use App\Support\PlatformFee;
@@ -21,6 +22,10 @@
         'qris' => [
             'title' => __('bookings.payment.groups.qris.title'),
             'description' => __('bookings.payment.groups.qris.description'),
+        ],
+        'moota' => [
+            'title' => __('bookings.payment.groups.moota.title'),
+            'description' => __('bookings.payment.groups.moota.description'),
         ],
     ];
 
@@ -64,6 +69,14 @@
             'logo_path' => asset('images/payments/va_mandiri_bill.svg'),
             'description' => __('bookings.payment.method_va_mandiri_bill.description'),
             'enabled' => in_array('va_mandiri_bill', $methods, true),
+        ],
+        [
+            'id' => 'bank_transfer_moota',
+            'group' => 'moota',
+            'name' => __('bookings.payment.method_bank_transfer_moota.name'),
+            'logo_path' => asset('images/payments/bank_transfer_moota.svg'),
+            'description' => __('bookings.payment.method_bank_transfer_moota.description'),
+            'enabled' => in_array('bank_transfer_moota', $methods, true),
         ],
         [
             'id' => 'qris',
@@ -127,6 +140,9 @@
                             <p class="text-xs font-bold uppercase tracking-wider text-brand-700">{{ __('bookings.payment.page_kicker') }}</p>
                             <h1 class="mt-2 text-2xl font-bold tracking-tight text-slate-900 sm:text-3xl lg:text-[2rem] lg:leading-tight">{{ __('bookings.payment.page_title') }}</h1>
                             <p class="mt-3 text-sm leading-relaxed text-slate-600 sm:text-base">{{ __('bookings.payment.page_lead') }}</p>
+                            @if (BookingSnapPaymentCatalog::driver() === 'moota')
+                                <p class="mt-2 rounded-xl border border-amber-200/80 bg-amber-50/80 px-3 py-2 text-xs font-medium text-amber-950 ring-1 ring-amber-100/80 sm:text-sm">{{ __('bookings.payment.moota_amount_note') }}</p>
+                            @endif
                         </div>
                         <div class="shrink-0 rounded-2xl border border-brand-200/80 bg-gradient-to-br from-brand-50 to-emerald-50/50 px-5 py-4 text-right shadow-inner ring-1 ring-brand-100/60">
                             <p class="text-[11px] font-semibold uppercase tracking-wide text-brand-800">{{ __('bookings.invoice.total') }}</p>
@@ -149,7 +165,7 @@
                                 </span>
                                 <div>
                                     <h2 class="text-sm font-bold text-slate-900">{{ __('bookings.payment.order_summary') }}</h2>
-                                    <p class="mt-0.5 text-[11px] text-slate-500">{{ __('bookings.payment.gateway_badge') }}</p>
+                                    <p class="mt-0.5 text-[11px] text-slate-500">{{ BookingSnapPaymentCatalog::driver() === 'moota' ? __('bookings.payment.gateway_badge_moota') : __('bookings.payment.gateway_badge') }}</p>
                                 </div>
                             </div>
                             <dl class="mt-4 space-y-3 text-sm">
@@ -214,7 +230,7 @@
                                 </div>
                                 <span class="inline-flex items-center gap-1.5 rounded-full bg-white/10 px-3 py-1.5 text-[11px] font-semibold text-white ring-1 ring-white/20">
                                     <svg class="h-3.5 w-3.5 text-emerald-300" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true"><path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.857-9.809a.75.75 0 00-1.214-.882l-3.483 4.79-1.88-1.88a.75.75 0 10-1.06 1.061l2.5 2.5a.75.75 0 001.137-.089l4-5.5z" clip-rule="evenodd" /></svg>
-                                    {{ __('bookings.payment.gateway_badge') }}
+                                    {{ BookingSnapPaymentCatalog::driver() === 'moota' ? __('bookings.payment.gateway_badge_moota') : __('bookings.payment.gateway_badge') }}
                                 </span>
                             </div>
                         </div>
@@ -239,11 +255,15 @@
                                                         <span class="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-slate-100 text-slate-700 ring-1 ring-slate-200/80" aria-hidden="true">
                                                             <svg class="h-5 w-5" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M2.25 18h19.5M2.25 9h19.5M2.25 4.5h19.5M9 4.5V18M15 4.5V18" /></svg>
                                                         </span>
+                                                    @elseif ($groupId === 'moota')
+                                                        <span class="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-teal-50 text-teal-800 ring-1 ring-teal-200/70" aria-hidden="true">
+                                                            <svg class="h-5 w-5" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M2.25 18h19.5M2.25 9h19.5M2.25 4.5h19.5M9 4.5V18M15 4.5V18" /></svg>
+                                                        </span>
                                                     @elseif ($groupId === 'ewallet')
                                                         <span class="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-amber-50 text-amber-800 ring-1 ring-amber-200/70" aria-hidden="true">
                                                             <svg class="h-5 w-5" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M21 12a2.25 2.25 0 00-2.25-2.25H15a3 3 0 11-6 0H5.25A2.25 2.25 0 003 12m18 0v1.5a2.25 2.25 0 01-2.25 2.25H5.25A2.25 2.25 0 013 13.5V12m18 0a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
                                                         </span>
-                                                    @else
+                                                    @elseif ($groupId === 'qris')
                                                         <span class="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-emerald-50 text-emerald-800 ring-1 ring-emerald-200/70" aria-hidden="true">
                                                             <svg class="h-5 w-5" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M3.75 4.875c0-.621.504-1.125 1.125-1.125h4.5c.621 0 1.125.504 1.125 1.125v4.5c0 .621-.504 1.125-1.125 1.125h-4.5A1.125 1.125 0 013.75 9.375v-4.5zM3.75 14.625c0-.621.504-1.125 1.125-1.125h4.5c.621 0 1.125.504 1.125 1.125v4.5c0 .621-.504 1.125-1.125 1.125h-4.5a1.125 1.125 0 01-1.125-1.125v-4.5zM13.5 4.875c0-.621.504-1.125 1.125-1.125h4.5c.621 0 1.125.504 1.125 1.125v4.5c0 .621-.504 1.125-1.125 1.125h-4.5A1.125 1.125 0 0113.5 9.375v-4.5zM13.5 14.625c0-.621.504-1.125 1.125-1.125h4.5c.621 0 1.125.504 1.125 1.125v4.5c0 .621-.504 1.125-1.125 1.125h-4.5a1.125 1.125 0 01-1.125-1.125v-4.5z" /></svg>
                                                         </span>

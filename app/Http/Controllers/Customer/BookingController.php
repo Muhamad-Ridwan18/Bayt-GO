@@ -25,6 +25,7 @@ use App\Services\BookingPricingService;
 use App\Services\BookingRefundExecutor;
 use App\Support\BookingPostPayRules;
 use App\Support\BookingRefundFee;
+use App\Support\BookingSnapPaymentCatalog;
 use App\Support\PaymentFlowLog;
 use App\Support\PlatformFee;
 use Carbon\Carbon;
@@ -45,17 +46,6 @@ use Symfony\Component\HttpFoundation\Response;
 class BookingController extends Controller
 {
     private const MAX_RANGE_DAYS = 90;
-
-    private const CORE_PAYMENT_METHODS = [
-        'va_bca',
-        'va_bni',
-        'va_bri',
-        'va_permata',
-        'va_mandiri_bill',
-        'qris',
-        'gopay',
-        'shopeepay',
-    ];
 
     public function index(Request $request): View
     {
@@ -201,7 +191,7 @@ class BookingController extends Controller
         }
 
         $selectedMethod = (string) $request->query('method', '');
-        if ($selectedMethod !== '' && ! in_array($selectedMethod, self::CORE_PAYMENT_METHODS, true)) {
+        if ($selectedMethod !== '' && ! in_array($selectedMethod, BookingSnapPaymentCatalog::webMethods(), true)) {
             PaymentFlowLog::warning('web.payment.method_not_supported', ['booking_id' => $booking->getKey(), 'method' => $selectedMethod]);
 
             return redirect()
@@ -244,7 +234,7 @@ class BookingController extends Controller
                 'booking' => $booking,
                 'payment' => $payment->fresh(),
                 'selectedMethod' => $selectedMethod,
-                'methods' => self::CORE_PAYMENT_METHODS,
+                'methods' => BookingSnapPaymentCatalog::webMethods(),
                 'instructions' => null,
             ]);
         }
@@ -340,7 +330,7 @@ class BookingController extends Controller
             'booking' => $booking,
             'payment' => $payment->fresh(),
             'selectedMethod' => $selectedMethod,
-            'methods' => self::CORE_PAYMENT_METHODS,
+            'methods' => BookingSnapPaymentCatalog::webMethods(),
             'instructions' => $session?->instructions,
         ]);
     }

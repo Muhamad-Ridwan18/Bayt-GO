@@ -1,0 +1,6 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 80 50" fill="none" role="img" aria-label="Bank">
+  <rect width="80" height="50" rx="8" fill="#f8fafc" stroke="#cbd5e1" stroke-width="1.5"/>
+  <path d="M12 38V14h56v24H12zm6-18h44v16H18V20z" stroke="#0d9488" stroke-width="2" fill="none"/>
+  <path d="M26 32h28" stroke="#94a3b8" stroke-width="2" stroke-linecap="round"/>
+  <path d="M40 24v6" stroke="#14b8a6" stroke-width="2" stroke-linecap="round"/>
+</svg>

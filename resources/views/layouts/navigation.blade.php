@@ -54,6 +54,12 @@
                         <x-nav-link :href="route('admin.withdrawals.index')" :active="request()->routeIs('admin.withdrawals.*')">
                             {{ __('nav.withdraw') }}
                         </x-nav-link>
+                        <x-nav-link :href="route('admin.moota_webhooks.live')" :active="request()->routeIs('admin.moota_webhooks.live')">
+                            {{ __('nav.moota_webhooks') }}
+                        </x-nav-link>
+                        <x-nav-link :href="route('admin.moota_webhooks.testing')" :active="request()->routeIs('admin.moota_webhooks.testing')">
+                            {{ __('nav.moota_testing') }}
+                        </x-nav-link>
                         <x-nav-link :href="route('admin.muthowif.index')" :active="request()->routeIs('admin.muthowif.*')">
                             {{ __('nav.verify_muthowif') }}
                         </x-nav-link>
@@ -166,6 +172,12 @@
                 </x-responsive-nav-link>
                 <x-responsive-nav-link :href="route('admin.withdrawals.index')" :active="request()->routeIs('admin.withdrawals.*')">
                     {{ __('nav.withdraw') }}
+                </x-responsive-nav-link>
+                <x-responsive-nav-link :href="route('admin.moota_webhooks.live')" :active="request()->routeIs('admin.moota_webhooks.live')">
+                    {{ __('nav.moota_webhooks') }}
+                </x-responsive-nav-link>
+                <x-responsive-nav-link :href="route('admin.moota_webhooks.testing')" :active="request()->routeIs('admin.moota_webhooks.testing')">
+                    {{ __('nav.moota_testing') }}
                 </x-responsive-nav-link>
                 <x-responsive-nav-link :href="route('admin.muthowif.index')" :active="request()->routeIs('admin.muthowif.*')">
                     {{ __('nav.verify_muthowif') }}

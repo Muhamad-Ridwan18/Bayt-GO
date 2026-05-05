@@ -12,6 +12,7 @@ use App\Models\MuthowifProfile;
 use App\Services\BookingOrderCodeService;
 use App\Services\BookingPricingService;
 use App\Services\Doku\DokuDirectChargeService;
+use App\Services\Moota\MootaBookingChargeService;
 use App\Support\PaymentFlowLog;
 use App\Support\PlatformFee;
 use Carbon\Carbon;
@@ -201,10 +202,19 @@ class BookingApiController extends Controller
         }
     }
 
-    private const PAYMENT_METHODS = [
+    private const DOKU_PAYMENT_METHODS = [
         'va_bca', 'va_bni', 'va_bri', 'va_permata', 'va_mandiri_bill',
         'qris', 'gopay', 'shopeepay',
     ];
+
+    /** @return list<string> */
+    private function apiPaymentMethods(): array
+    {
+        return match (config('services.booking.payment_driver', 'doku')) {
+            'moota' => ['bank_transfer_moota'],
+            default => self::DOKU_PAYMENT_METHODS,
+        };
+    }
 
     public function pay(Request $request, MuthowifBooking $booking): JsonResponse
     {
@@ -226,11 +236,19 @@ class BookingApiController extends Controller
             return response()->json(['message' => 'Pembayaran sudah diterima'], 400);
         }
 
-        /** @var DokuDirectChargeService $doku */
+        $driver = (string) config('services.booking.payment_driver', 'doku');
+        $moota = app(MootaBookingChargeService::class);
         $doku = app(DokuDirectChargeService::class);
 
-        if (! $doku->isConfigured()) {
-            PaymentFlowLog::warning('api.payment.gateway_unconfigured', ['booking_id' => $booking->getKey()]);
+        $gatewayReady = $driver === 'moota'
+            ? $moota->isConfigured()
+            : $doku->isConfigured();
+
+        if (! $gatewayReady) {
+            PaymentFlowLog::warning('api.payment.gateway_unconfigured', [
+                'booking_id' => $booking->getKey(),
+                'driver' => $driver,
+            ]);
 
             return response()->json(['message' => 'Sistem pembayaran belum dikonfigurasi'], 500);
         }
@@ -242,16 +260,18 @@ class BookingApiController extends Controller
             PaymentFlowLog::info('api.payment.select_method_step', [
                 'booking_id' => $booking->getKey(),
                 'amount' => (int) round($booking->resolvedAmountDue()),
+                'driver' => $driver,
             ]);
 
             return response()->json([
                 'step' => 'select_method',
-                'methods' => self::PAYMENT_METHODS,
+                'driver' => $driver,
+                'methods' => $this->apiPaymentMethods(),
                 'amount' => (int) round($booking->resolvedAmountDue()),
             ]);
         }
 
-        if (! in_array($method, self::PAYMENT_METHODS, true)) {
+        if (! in_array($method, $this->apiPaymentMethods(), true)) {
             PaymentFlowLog::warning('api.payment.method_invalid', ['booking_id' => $booking->getKey(), 'method' => $method]);
 
             return response()->json(['message' => 'Metode pembayaran tidak didukung'], 422);
@@ -288,12 +308,42 @@ class BookingApiController extends Controller
         PaymentFlowLog::info('api.payment.charge_started', [
             'booking_id' => $booking->getKey(),
             'order_id' => $orderId,
+            'driver' => $driver,
             'method' => $method,
             'gross_amount' => $payment->gross_amount,
             'booking_status' => $booking->status->value,
         ]);
 
         try {
+            if ($driver === 'moota') {
+                $result = $moota->createChargeForBookingPayment($payment);
+
+                $payment->update([
+                    'gateway_transaction_id' => $result['trx_id'],
+                    'gateway_notification_payload' => ['moota_create_transaction_response' => $result['payload']],
+                    'payment_type' => 'bank_transfer_moota',
+                ]);
+
+                PaymentFlowLog::info('api.payment.session_ok', [
+                    'booking_id' => $booking->getKey(),
+                    'order_id' => $orderId,
+                    'driver' => 'moota',
+                    'have_checkout_url' => true,
+                ]);
+
+                return response()->json([
+                    'step' => 'payment_instructions',
+                    'driver' => 'moota',
+                    'order_id' => $orderId,
+                    'method' => $method,
+                    'gross_amount' => $payment->gross_amount,
+                    'expected_transfer_total' => $result['moota_total'],
+                    'trx_id' => $result['trx_id'],
+                    'checkout_url' => $result['payment_url'],
+                    'expiry_time' => $result['expiry_time'],
+                ]);
+            }
+
             $session = $doku->createChargeSession($payment, $method);
 
             $update = ['payment_type' => $method];
@@ -305,6 +355,7 @@ class BookingApiController extends Controller
             PaymentFlowLog::info('api.payment.session_ok', [
                 'booking_id' => $booking->getKey(),
                 'order_id' => $orderId,
+                'driver' => 'doku',
                 'method' => $method,
                 'has_va' => ! empty($session['va_number']),
                 'has_checkout_url' => ! empty($session['checkout_url']),
@@ -312,6 +363,7 @@ class BookingApiController extends Controller
 
             return response()->json([
                 'step' => 'payment_instructions',
+                'driver' => 'doku',
                 'order_id' => $orderId,
                 'method' => $method,
                 'gross_amount' => $payment->gross_amount,

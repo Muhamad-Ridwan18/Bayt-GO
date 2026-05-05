@@ -9,6 +9,8 @@ return [
     'finance' => 'Keuangan',
     'refund' => 'Refund',
     'withdraw' => 'Withdraw',
+    'moota_webhooks' => 'Moota',
+    'moota_testing' => 'Moota sandbox',
     'verify_muthowif' => 'Verifikasi muthowif',
     'users' => 'Pengguna',
     'services' => 'Pelayanan',

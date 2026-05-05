@@ -21,13 +21,20 @@
                             <path fill-rule="evenodd" d="M8.485 2.495c.673-1.167 2.357-1.167 3.03 0l6.28 10.875c.673 1.167-.17 2.625-1.516 2.625H3.72c-1.347 0-2.189-1.458-1.515-2.625L8.485 2.495zM10 5a.75.75 0 01.75.75v3.5a.75.75 0 01-1.5 0v-3.5A.75.75 0 0110 5zm0 9a1 1 0 100-2 1 1 0 000 2z" clip-rule="evenodd" />
                         </svg>
                     </div>
-                    <p class="mt-4 text-lg font-bold text-amber-950">{{ __('bookings.unconfigured.title') }}</p>
-                    <p class="mt-2 text-sm leading-relaxed text-amber-950/90">
-                        {!! __('bookings.unconfigured.body') !!}
+                    @php
+                        $paymentDriver = config('services.booking.payment_driver', 'doku');
+                    @endphp
+                    <p class="mt-4 text-lg font-bold text-amber-950">
+                        {{ $paymentDriver === 'moota' ? __('bookings.unconfigured.title_moota') : __('bookings.unconfigured.title') }}
                     </p>
-                    <p class="mt-3 text-xs font-semibold text-amber-950/90">{{ __('bookings.unconfigured.notification_url_label') }}</p>
+                    <p class="mt-2 text-sm leading-relaxed text-amber-950/90">
+                        {!! $paymentDriver === 'moota' ? __('bookings.unconfigured.body_moota') : __('bookings.unconfigured.body') !!}
+                    </p>
+                    <p class="mt-3 text-xs font-semibold text-amber-950/90">
+                        {{ $paymentDriver === 'moota' ? __('bookings.unconfigured.moota_webhook_url_label') : __('bookings.unconfigured.notification_url_label') }}
+                    </p>
                     <p class="mt-1 break-all rounded-xl border border-amber-200/80 bg-white/80 px-3 py-2.5 font-mono text-[11px] leading-snug text-amber-950 ring-1 ring-amber-100/80">
-                        {{ route('payments.doku.notification', absolute: true) }}
+                        {{ $paymentDriver === 'moota' ? route('webhooks.moota', absolute: true) : route('payments.doku.notification', absolute: true) }}
                     </p>
                 </div>
             </div>

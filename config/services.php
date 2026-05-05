@@ -60,6 +60,11 @@ return [
         'core_payment_expire_minutes' => env('MIDTRANS_CORE_PAYMENT_EXPIRE_MINUTES', 60),
     ],
 
+    'booking' => [
+        /** Driver halaman bayar web: `doku` (default) atau `moota`. */
+        'payment_driver' => env('BOOKING_PAYMENT_DRIVER', 'doku'),
+    ],
+
     'doku' => [
         'client_id' => trim((string) env('DOKU_CLIENT_ID', '')),
         'secret_key' => trim((string) env('DOKU_SECRET_KEY', '')),
@@ -70,6 +75,24 @@ return [
         'notification_path' => env('DOKU_NOTIFICATION_PATH', '/payments/doku/notification'),
         /** DOKU tidak punya GoPay di Checkout; default ke DANA. Sesuaikan di .env jika perlu. */
         'gopay_checkout_method' => env('DOKU_GOPAY_CHECKOUT_METHOD', 'EMONEY_DANA'),
+    ],
+
+    /** Webhook mutasi bank: hanya IPv4 dalam daftar yang boleh mengakses POST /webhooks/moota. */
+    'moota' => [
+        'webhook_ips' => array_values(array_filter(array_map(
+            'trim',
+            explode(',', (string) env('MOOTA_WEBHOOK_IPS', '103.236.201.178,212.38.74.36,128.199.173.138'))
+        ))),
+        /** Secret untuk verifikasi header Signature (HMAC-SHA256 atas raw POST body); samakan dengan Moota. */
+        'signing_secret' => (string) env('MOOTA_WEBHOOK_SIGNING_SECRET', ''),
+        /** Outbound API v2 (Create Transaction). */
+        'api_base_url' => rtrim((string) env('MOOTA_API_BASE_URL', 'https://api.moota.co'), '/'),
+        'api_email' => (string) env('MOOTA_API_EMAIL', ''),
+        'api_password' => (string) env('MOOTA_API_PASSWORD', ''),
+        /** ID rekening di Moota (sama dengan `account_id` / `bank_account_id` API). */
+        'bank_account_id' => (string) env('MOOTA_BANK_ACCOUNT_ID', ''),
+        'payment_expire_minutes' => (int) env('MOOTA_PAYMENT_EXPIRE_MINUTES', 1440),
+        'token_cache_minutes' => (int) env('MOOTA_ACCESS_TOKEN_CACHE_MINUTES', 55),
     ],
 
 ];

@@ -1,0 +1,627 @@
+{
+  "info": {
+    "name": "Moota API v2",
+    "description": "Koleksi endpoint Moota (https://api.moota.co/). Whitelist IP webhook: 128.199.173.138",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "variable": [
+    { "key": "baseUrl", "value": "https://api.moota.co" },
+    { "key": "token", "value": "" },
+    { "key": "bank_id", "value": "" },
+    { "key": "mutation_id", "value": "" },
+    { "key": "webhook_id", "value": "" },
+    { "key": "trx_id", "value": "" },
+    { "key": "tag_id", "value": "" },
+    { "key": "topup_id", "value": "" }
+  ],
+  "auth": {
+    "type": "bearer",
+    "bearer": [{ "key": "token", "value": "{{token}}", "type": "string" }]
+  },
+  "item": [
+    {
+      "name": "Auth",
+      "item": [
+        {
+          "name": "Generate Token (Login)",
+          "request": {
+            "auth": { "type": "noauth" },
+            "method": "POST",
+            "header": [
+              { "key": "Accept", "value": "application/json" },
+              { "key": "Content-Type", "value": "application/json" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"email\": \"user@moota.com\",\n  \"password\": \"password_account\",\n  \"scopes\": [\"api\"]\n}"
+            },
+            "url": "{{baseUrl}}/api/v2/auth/login"
+          }
+        },
+        {
+          "name": "Logout",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Accept", "value": "application/json" }],
+            "url": "{{baseUrl}}/api/v2/auth/logout"
+          }
+        },
+        {
+          "name": "Register",
+          "request": {
+            "auth": { "type": "noauth" },
+            "method": "POST",
+            "header": [
+              { "key": "Accept", "value": "application/json" },
+              { "key": "Content-Type", "value": "application/json" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"moota\",\n  \"email\": \"moota@email.co\",\n  \"password\": \"your password\",\n  \"password_confirmation\": \"your password confirmation\"\n}"
+            },
+            "url": "{{baseUrl}}/api/v2/auth/register"
+          }
+        },
+        {
+          "name": "User Profile (GET)",
+          "request": {
+            "method": "GET",
+            "header": [{ "key": "Accept", "value": "application/json" }],
+            "url": "{{baseUrl}}/api/v2/user"
+          }
+        },
+        {
+          "name": "Update User Profile (POST)",
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Accept", "value": "application/json" },
+              { "key": "Content-Type", "value": "application/json" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"loream\",\n  \"email\": \"user@example.com\",\n  \"no_ktp\": \"\",\n  \"alamat\": \"street 2373 Kelly Street\"\n}"
+            },
+            "url": "{{baseUrl}}/api/v2/user"
+          }
+        }
+      ]
+    },
+    {
+      "name": "Bank Accounts",
+      "item": [
+        {
+          "name": "List Available Banks",
+          "request": {
+            "method": "GET",
+            "header": [{ "key": "Accept", "value": "application/json" }],
+            "url": {
+              "raw": "{{baseUrl}}/api/v2/bank/available?page=1&per_page=10",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "v2", "bank", "available"],
+              "query": [
+                { "key": "page", "value": "1" },
+                { "key": "per_page", "value": "10" }
+              ]
+            }
+          }
+        },
+        {
+          "name": "My Bank Accounts",
+          "request": {
+            "method": "GET",
+            "header": [{ "key": "Accept", "value": "application/json" }],
+            "url": {
+              "raw": "{{baseUrl}}/api/v2/bank?page=1&per_page=20",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "v2", "bank"],
+              "query": [
+                { "key": "page", "value": "1" },
+                { "key": "per_page", "value": "20" }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Create Bank Account",
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Accept", "value": "application/json" },
+              { "key": "Content-Type", "value": "application/json" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"corporate_id\": \"\",\n  \"bank_type\": \"bca\",\n  \"username\": \"user_ibanking\",\n  \"password\": \"password_ibanking\",\n  \"name_holder\": \"Jhone Dhoe\",\n  \"account_number\": \"16899030\",\n  \"is_active\": true\n}"
+            },
+            "url": "{{baseUrl}}/api/v2/bank/store"
+          }
+        },
+        {
+          "name": "Update Bank Account",
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Accept", "value": "application/json" },
+              { "key": "Content-Type", "value": "application/json" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"corporate_id\": \"\",\n  \"bank_type\": \"bca\",\n  \"username\": \"user_ibanking\",\n  \"password\": \"password_ibanking\",\n  \"name_holder\": \"Jhone Dhoe\",\n  \"account_number\": \"16899030\",\n  \"is_active\": true\n}"
+            },
+            "url": "{{baseUrl}}/api/v2/bank/update/{{bank_id}}"
+          }
+        },
+        {
+          "name": "Destroy Bank Account",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Accept", "value": "application/json" }],
+            "url": "{{baseUrl}}/api/v2/bank/{{bank_id}}/destroy"
+          }
+        },
+        {
+          "name": "E-wallet Request OTP",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Accept", "value": "application/json" }],
+            "url": "{{baseUrl}}/api/v2/bank/request/otp/{{bank_id}}"
+          }
+        },
+        {
+          "name": "E-wallet Verify OTP",
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Accept", "value": "application/json" },
+              { "key": "Content-Type", "value": "application/json" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"otp_code\": \"123456\"\n}"
+            },
+            "url": "{{baseUrl}}/api/v2/bank/verification/otp/{{bank_id}}"
+          }
+        },
+        {
+          "name": "Get Accounts Index (untuk Create Transaction)",
+          "request": {
+            "method": "GET",
+            "header": [{ "key": "Accept", "value": "application/json" }],
+            "url": "{{baseUrl}}/api/v2/accounts/index"
+          }
+        },
+        {
+          "name": "Get Accounts (deprecated)",
+          "request": {
+            "method": "GET",
+            "header": [{ "key": "Accept", "value": "application/json" }],
+            "url": "{{baseUrl}}/api/v2/accounts"
+          }
+        }
+      ]
+    },
+    {
+      "name": "Mutations",
+      "item": [
+        {
+          "name": "Refresh Mutation",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Accept", "value": "application/json" }],
+            "url": "{{baseUrl}}/api/v2/bank/{{bank_id}}/refresh"
+          }
+        },
+        {
+          "name": "List Mutations",
+          "request": {
+            "method": "GET",
+            "header": [{ "key": "Accept", "value": "application/json" }],
+            "url": {
+              "raw": "{{baseUrl}}/api/v2/mutation?type=&bank=&tag=&start_date=&end_date=&amount=&page=1&per_page=10",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "v2", "mutation"],
+              "query": [
+                { "key": "type", "value": "", "description": "CR|DB" },
+                { "key": "bank", "value": "", "description": "bank_id" },
+                { "key": "tag", "value": "" },
+                { "key": "start_date", "value": "", "description": "Y-m-d" },
+                { "key": "end_date", "value": "", "description": "Y-m-d" },
+                { "key": "amount", "value": "" },
+                { "key": "page", "value": "1" },
+                { "key": "per_page", "value": "10" }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Note Mutation",
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Accept", "value": "application/json" },
+              { "key": "Content-Type", "value": "application/json" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"note\": \"tabungan sekolah\"\n}"
+            },
+            "url": "{{baseUrl}}/api/v2/mutation/{{mutation_id}}/note"
+          }
+        },
+        {
+          "name": "Destroy Mutations (bulk)",
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Accept", "value": "application/json" },
+              { "key": "Content-Type", "value": "application/json" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"mutations\": [\"mutation_id_1\", \"mutation_id_2\"]\n}"
+            },
+            "url": "{{baseUrl}}/api/v2/mutation/destroy"
+          }
+        },
+        {
+          "name": "Mutation Summary",
+          "request": {
+            "method": "GET",
+            "header": [{ "key": "Accept", "value": "application/json" }],
+            "url": {
+              "raw": "{{baseUrl}}/api/v2/mutation/summary?bank_id=&type=&start_date=&end_date=",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "v2", "mutation", "summary"],
+              "query": [
+                { "key": "bank_id", "value": "" },
+                { "key": "type", "value": "", "description": "credit|debit" },
+                { "key": "start_date", "value": "", "description": "Y-m-d GMT+7" },
+                { "key": "end_date", "value": "", "description": "Y-m-d GMT+7" }
+              ]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "Tagging Mutation",
+      "item": [
+        {
+          "name": "Attach Tags",
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Accept", "value": "application/json" },
+              { "key": "Content-Type", "value": "application/json" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": [\"bayar listrik\", \"belanja bulanan\"]\n}"
+            },
+            "url": "{{baseUrl}}/api/v2/tagging/mutation/{{mutation_id}}"
+          }
+        },
+        {
+          "name": "Update Tags",
+          "request": {
+            "method": "PUT",
+            "header": [
+              { "key": "Accept", "value": "application/json" },
+              { "key": "Content-Type", "value": "application/json" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": [\"bayar listrik\", \"belanja bulanan\"]\n}"
+            },
+            "url": "{{baseUrl}}/api/v2/tagging/mutation/{{mutation_id}}"
+          }
+        },
+        {
+          "name": "Delete Tags",
+          "request": {
+            "method": "DELETE",
+            "header": [
+              { "key": "Accept", "value": "application/json" },
+              { "key": "Content-Type", "value": "application/json" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": [\"bayar listrik\"]\n}"
+            },
+            "url": "{{baseUrl}}/api/v2/tagging/mutation/{{mutation_id}}"
+          }
+        }
+      ]
+    },
+    {
+      "name": "Create Transaction",
+      "item": [
+        {
+          "name": "Create Transaction",
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Accept", "value": "application/json" },
+              { "key": "Content-Type", "value": "application/json" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"order_id\": \"ORDER-001\",\n  \"account_id\": \"{{bank_id}}\",\n  \"customers\": {\n    \"name\": \"Jhon Doe\",\n    \"email\": null,\n    \"phone\": null\n  },\n  \"items\": [\n    {\n      \"name\": \"Air Mineral\",\n      \"description\": \"Air berkualitas\",\n      \"qty\": 1,\n      \"price\": 10000\n    }\n  ],\n  \"description\": \"Pembayaran pesanan\",\n  \"note\": null,\n  \"redirect_url\": \"https://www.example.com\",\n  \"success_redirect_url\": null,\n  \"failed_redirect_url\": null,\n  \"total\": 10000,\n  \"expired_in_minutes\": 60\n}"
+            },
+            "description": "Dokumentasi juga menyebut field bank_account_id di contoh 422; jika 422, ganti account_id menjadi bank_account_id sesuai respons server.",
+            "url": "{{baseUrl}}/api/v2/create-transaction"
+          }
+        }
+      ]
+    },
+    {
+      "name": "Taggings",
+      "item": [
+        {
+          "name": "Create Tag",
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Accept", "value": "application/json" },
+              { "key": "Content-Type", "value": "application/json" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"bayar listrik\"\n}"
+            },
+            "url": "{{baseUrl}}/api/v2/tagging"
+          }
+        },
+        {
+          "name": "Update Tag",
+          "request": {
+            "method": "PUT",
+            "header": [
+              { "key": "Accept", "value": "application/json" },
+              { "key": "Content-Type", "value": "application/json" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"bayar token listrik\"\n}"
+            },
+            "url": "{{baseUrl}}/api/v2/tagging/{{tag_id}}"
+          }
+        },
+        {
+          "name": "Destroy Tag",
+          "request": {
+            "method": "DELETE",
+            "header": [{ "key": "Accept", "value": "application/json" }],
+            "url": "{{baseUrl}}/api/v2/tagging/{{tag_id}}"
+          }
+        }
+      ]
+    },
+    {
+      "name": "Topups",
+      "item": [
+        {
+          "name": "Bank Target Topup",
+          "request": {
+            "method": "GET",
+            "header": [{ "key": "Accept", "value": "application/json" }],
+            "url": "{{baseUrl}}/api/v2/payment"
+          }
+        },
+        {
+          "name": "List Topups",
+          "request": {
+            "method": "GET",
+            "header": [{ "key": "Accept", "value": "application/json" }],
+            "url": "{{baseUrl}}/api/v2/topup"
+          }
+        },
+        {
+          "name": "Create Topup",
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Accept", "value": "application/json" },
+              { "key": "Content-Type", "value": "application/json" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"amount\": 50000,\n  \"payment_method\": \"bca\"\n}"
+            },
+            "url": "{{baseUrl}}/api/v2/topup"
+          }
+        },
+        {
+          "name": "Topup Denominations",
+          "request": {
+            "method": "GET",
+            "header": [{ "key": "Accept", "value": "application/json" }],
+            "url": "{{baseUrl}}/api/v2/topup/denom"
+          }
+        },
+        {
+          "name": "Download Invoice Topup",
+          "request": {
+            "method": "GET",
+            "header": [{ "key": "Accept", "value": "application/json" }],
+            "url": "{{baseUrl}}/api/v2/topup/download/{{topup_id}}"
+          }
+        },
+        {
+          "name": "Redeem Voucher",
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Accept", "value": "application/json" },
+              { "key": "Content-Type", "value": "application/json" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"code\": \"xxxMootaxxx\"\n}"
+            },
+            "url": "{{baseUrl}}/api/v2/voucher/redeem"
+          }
+        },
+        {
+          "name": "History Point (transaction)",
+          "request": {
+            "method": "GET",
+            "header": [{ "key": "Accept", "value": "application/json" }],
+            "url": {
+              "raw": "{{baseUrl}}/api/v2/transaction?start_date=&end_date=&page=1&per_page=10",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "v2", "transaction"],
+              "query": [
+                { "key": "start_date", "value": "" },
+                { "key": "end_date", "value": "" },
+                { "key": "page", "value": "1" },
+                { "key": "per_page", "value": "10" }
+              ]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "Webhooks",
+      "item": [
+        {
+          "name": "List Webhooks",
+          "request": {
+            "method": "GET",
+            "header": [{ "key": "Accept", "value": "application/json" }],
+            "url": {
+              "raw": "{{baseUrl}}/api/v2/integration/webhook?url=&bank_id=&page=1&per_page=15",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "v2", "integration", "webhook"],
+              "query": [
+                { "key": "url", "value": "" },
+                { "key": "bank_id", "value": "" },
+                { "key": "page", "value": "1" },
+                { "key": "per_page", "value": "15" }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Create Webhook",
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Accept", "value": "application/json" },
+              { "key": "Content-Type", "value": "application/json" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"url\": \"https://your-domain.com/webhooks/moota\",\n  \"bank_account_id\": \"{{bank_id}}\",\n  \"kinds\": \"credit\",\n  \"secret_token\": \"generate_your_hash_secret_token\",\n  \"start_unique_code\": 1,\n  \"end_unique_code\": 999\n}"
+            },
+            "url": "{{baseUrl}}/api/v2/integration/webhook"
+          }
+        },
+        {
+          "name": "Destroy Webhook",
+          "request": {
+            "method": "DELETE",
+            "header": [{ "key": "Accept", "value": "application/json" }],
+            "url": "{{baseUrl}}/api/v2/integration/webhook/{{webhook_id}}"
+          }
+        },
+        {
+          "name": "Attach Bank to Webhook",
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Accept", "value": "application/json" },
+              { "key": "Content-Type", "value": "application/json" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"bank_account_id\": \"{{bank_id}}\"\n}"
+            },
+            "url": "{{baseUrl}}/api/v2/integration/webhook/attach/{{webhook_id}}"
+          }
+        },
+        {
+          "name": "Detach Bank from Webhook",
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Accept", "value": "application/json" },
+              { "key": "Content-Type", "value": "application/json" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"bank_account_id\": \"{{bank_id}}\"\n}"
+            },
+            "url": "{{baseUrl}}/api/v2/integration/webhook/detach/{{webhook_id}}"
+          }
+        }
+      ]
+    },
+    {
+      "name": "Terima Uang (deprecated)",
+      "item": [
+        {
+          "name": "List Terima Uang",
+          "request": {
+            "method": "GET",
+            "header": [{ "key": "Accept", "value": "application/json" }],
+            "url": {
+              "raw": "{{baseUrl}}/api/v2/mutation-tracking?per_page=10&status=",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "v2", "mutation-tracking"],
+              "query": [
+                { "key": "per_page", "value": "10" },
+                { "key": "status", "value": "", "description": "PENDING|SUCCESS|FAILED" }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Create Terima Uang",
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Accept", "value": "application/json" },
+              { "key": "Content-Type", "value": "application/json" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"order_id\": \"ORDER-001\",\n  \"webhook_id\": null,\n  \"bank_account_id\": \"{{bank_id}}\",\n  \"customers\": {\n    \"name\": \"Jhon Doe\",\n    \"email\": null,\n    \"phone\": null\n  },\n  \"items\": [\n    {\n      \"name\": \"Air Mineral\",\n      \"description\": \"Air berkualitas\",\n      \"qty\": 1,\n      \"price\": 10000\n    }\n  ],\n  \"description\": \"xxxxxxx\",\n  \"note\": null,\n  \"redirect_url\": \"https://www.google.com\",\n  \"total\": 10000,\n  \"expired_in_minutes\": 60\n}"
+            },
+            "url": "{{baseUrl}}/api/v2/mutation-tracking"
+          }
+        },
+        {
+          "name": "Detail Terima Uang",
+          "request": {
+            "method": "GET",
+            "header": [{ "key": "Accept", "value": "application/json" }],
+            "url": {
+              "raw": "{{baseUrl}}/api/v2/mutation-tracking/detail?trx_id={{trx_id}}",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "v2", "mutation-tracking", "detail"],
+              "query": [{ "key": "trx_id", "value": "{{trx_id}}" }]
+            }
+          }
+        },
+        {
+          "name": "Cancel Terima Uang",
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Accept", "value": "application/json" },
+              { "key": "Content-Type", "value": "application/json" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"trx_id\": \"PYM-xxxxx-xxxxx\"\n}"
+            },
+            "url": "{{baseUrl}}/api/v2/mutation-tracking/cancel"
+          }
+        }
+      ]
+    }
+  ]
+}

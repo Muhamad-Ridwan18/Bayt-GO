@@ -2,9 +2,13 @@
 
 namespace App\Providers;
 
+use App\Events\MootaWebhookRecorded;
+use App\Listeners\ProcessMootaWebhookForBookingPayments;
 use App\Payments\Contracts\SnapPaymentProviderInterface;
 use App\Payments\Doku\DokuCheckoutPaymentProvider;
+use App\Payments\Moota\MootaSnapPaymentProvider;
 use Illuminate\Pagination\Paginator;
+use Illuminate\Support\Facades\Event;
 use Illuminate\Support\Facades\URL;
 use Illuminate\Support\ServiceProvider;
 
@@ -15,7 +19,12 @@ class AppServiceProvider extends ServiceProvider
      */
     public function register(): void
     {
-        $this->app->bind(SnapPaymentProviderInterface::class, DokuCheckoutPaymentProvider::class);
+        $this->app->bind(SnapPaymentProviderInterface::class, function ($app): SnapPaymentProviderInterface {
+            return match (config('services.booking.payment_driver', 'doku')) {
+                'moota' => $app->make(MootaSnapPaymentProvider::class),
+                default => $app->make(DokuCheckoutPaymentProvider::class),
+            };
+        });
     }
 
     /**
@@ -23,6 +32,7 @@ class AppServiceProvider extends ServiceProvider
      */
     public function boot(): void
     {
+        Event::listen(MootaWebhookRecorded::class, ProcessMootaWebhookForBookingPayments::class);
         Paginator::useBootstrapFive();
 
         /*
