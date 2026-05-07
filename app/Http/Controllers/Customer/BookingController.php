@@ -37,7 +37,6 @@ use Illuminate\Pagination\LengthAwarePaginator;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Storage;
-use Illuminate\Support\Str;
 use Illuminate\Validation\Rule;
 use Illuminate\Validation\ValidationException;
 use Illuminate\View\View;
@@ -209,9 +208,12 @@ class BookingController extends Controller
                 ->first();
 
             if ($payment === null) {
-                $orderId = 'BG-'.str_replace('-', '', (string) $booking->getKey()).'-'.Str::lower(Str::random(10));
+                $ids = BookingPayment::newPrimaryKeyAndOrderId((string) $booking->getKey());
+                $orderId = $ids['order_id'];
                 $payment = BookingPayment::query()->create([
+                    'id' => $ids['id'],
                     'muthowif_booking_id' => $booking->getKey(),
+                    'booking_code' => $booking->booking_code,
                     'order_id' => $orderId,
                     'gross_amount' => (int) round($split['customer_gross']),
                     'platform_fee_amount' => $split['platform_fee_total'],
@@ -283,10 +285,13 @@ class BookingController extends Controller
             ]);
         }
 
-        $orderId = 'BG-'.str_replace('-', '', (string) $booking->getKey()).'-'.Str::lower(Str::random(10));
+        $ids = BookingPayment::newPrimaryKeyAndOrderId((string) $booking->getKey());
+        $orderId = $ids['order_id'];
 
         $payment = BookingPayment::query()->create([
+            'id' => $ids['id'],
             'muthowif_booking_id' => $booking->getKey(),
+            'booking_code' => $booking->booking_code,
             'order_id' => $orderId,
             // Nominal yang dibayar customer (base + fee customer).
             'gross_amount' => (int) round($split['customer_gross']),

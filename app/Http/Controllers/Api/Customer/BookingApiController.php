@@ -21,7 +21,6 @@ use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Validator;
-use Illuminate\Support\Str;
 use Illuminate\Validation\Rule;
 
 class BookingApiController extends Controller
@@ -305,10 +304,13 @@ class BookingApiController extends Controller
             ]);
         }
 
-        $orderId = 'BG-'.str_replace('-', '', (string) $booking->getKey()).'-'.Str::lower(Str::random(10));
+        $ids = BookingPayment::newPrimaryKeyAndOrderId((string) $booking->getKey());
+        $orderId = $ids['order_id'];
 
         $payment = BookingPayment::query()->create([
+            'id' => $ids['id'],
             'muthowif_booking_id' => $booking->getKey(),
+            'booking_code' => $booking->booking_code,
             'order_id' => $orderId,
             'gross_amount' => (int) round($split['customer_gross']),
             'platform_fee_amount' => $split['platform_fee_total'],

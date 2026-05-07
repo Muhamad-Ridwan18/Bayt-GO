@@ -60,7 +60,7 @@ final class ProcessMootaWebhookForBookingPayments
                 continue;
             }
 
-            $this->maybeSettleMutation($mutation, $history->getKey(), (int) $index);
+            $this->maybeSettleMutation($mutation, $history->getKey(), (int) $index, $payload);
         }
     }
 
@@ -88,9 +88,14 @@ final class ProcessMootaWebhookForBookingPayments
 
     /**
      * @param  array<string, mixed>  $mutation
+     * @param  array<string, mixed>  $envelopePayload  JSON webhook utuh (deskripsi BK-BYTG… kadang hanya di akar payload).
      */
-    private function maybeSettleMutation(array $mutation, int|string|null $historyId = null, int $mutationIndex = 0): void
-    {
+    private function maybeSettleMutation(
+        array $mutation,
+        int|string|null $historyId = null,
+        int $mutationIndex = 0,
+        array $envelopePayload = [],
+    ): void {
         $type = strtoupper((string) ($mutation['type'] ?? ''));
         if ($type !== 'CR') {
             PaymentFlowLog::info('moota.settle.skip_non_credit', [
@@ -110,7 +115,7 @@ final class ProcessMootaWebhookForBookingPayments
         $amountRaw = $mutation['amount'] ?? $detail['amount_captured'] ?? $detail['total'] ?? null;
         $incomingHint = is_numeric($amountRaw) ? (int) round((float) $amountRaw) : null;
 
-        $orderId = $this->resolveBookingOrderId($detail, $mutation, $incomingHint);
+        $orderId = $this->resolveBookingOrderId($detail, $mutation, $incomingHint, $envelopePayload);
         if ($orderId === null) {
             PaymentFlowLog::info('moota.settle.skip_unmapped_mutation', [
                 'history_id' => $historyId,
@@ -149,7 +154,18 @@ final class ProcessMootaWebhookForBookingPayments
         $notifiedOrderId = $orderId;
 
         try {
-            $shouldNotify = DB::transaction(function () use ($orderId, $incoming, $mutation, $detail, $mutationId, $trxFromHook, $historyId, $mutationIndex, &$notifiedOrderId): bool {
+            $shouldNotify = DB::transaction(function () use (
+                $orderId,
+                $incoming,
+                $mutation,
+                $detail,
+                $mutationId,
+                $trxFromHook,
+                $historyId,
+                $mutationIndex,
+                &$notifiedOrderId,
+                $envelopePayload,
+            ): bool {
                 /** @var BookingPayment|null $payment */
                 $payment = BookingPayment::query()
                     ->where('order_id', $orderId)
@@ -181,7 +197,7 @@ final class ProcessMootaWebhookForBookingPayments
                 }
 
                 if ($payment === null) {
-                    $resolvedOid = $this->tryResolveOrderIdByBookingCode($detail, $mutation, $incoming);
+                    $resolvedOid = $this->tryResolveOrderIdByBookingCode($detail, $mutation, $incoming, $envelopePayload);
                     if ($resolvedOid !== null) {
                         $payment = BookingPayment::query()
                             ->where('order_id', $resolvedOid)
@@ -265,10 +281,14 @@ final class ProcessMootaWebhookForBookingPayments
                     return false;
                 }
 
-                $detailTrust = $this->mootaPaymentDetailTrustsSuccessfulCharge($payment, $incoming, $detail);
+                $detailTrust = $this->mootaPaymentDetailTrustsSuccessfulCharge($payment, $incoming, $detail, $trxFromHook);
                 $expected = $this->expectedTransferAmount($payment, $detail);
 
-                if ($expected === null && ! $detailTrust) {
+                $structuredMeta = $this->webhookHasStructuredBgOrderOrTrxIds($detail, $mutation);
+                $bkMatchesBlob = $this->bookingPaymentMatchesBkInFullBlob($payment, $detail, $mutation, $envelopePayload);
+                $looseBkOnlyMatch = $bkMatchesBlob && ! $structuredMeta;
+
+                if ($expected === null && ! $detailTrust && ! $looseBkOnlyMatch) {
                     PaymentFlowLog::warning('moota.settle.missing_expected_amount', [
                         'order_id' => $orderId,
                         'payment_id' => $payment->getKey(),
@@ -279,6 +299,7 @@ final class ProcessMootaWebhookForBookingPayments
                 }
 
                 $amountOk = $detailTrust
+                    || ($looseBkOnlyMatch && $this->amountOkWhenBkDescriptionTrusts($payment, $incoming, $expected, $detail, $trxFromHook))
                     || ($expected !== null && $this->incomingMatchesExpectedMootaAmount($incoming, $expected, $payment, $detail, $trxFromHook));
 
                 if (! $amountOk) {
@@ -306,7 +327,7 @@ final class ProcessMootaWebhookForBookingPayments
                     && is_string($trxFromHook) && $trxFromHook !== ''
                     && $storedTrx !== $trxFromHook;
 
-                if ($trxMismatch && ! $detailTrust) {
+                if ($trxMismatch && ! $detailTrust && ! $looseBkOnlyMatch) {
                     Log::warning('Moota webhook: trx_id tidak cocok', [
                         'order_id' => $orderId,
                         'stored' => $storedTrx,
@@ -581,8 +602,12 @@ final class ProcessMootaWebhookForBookingPayments
      * @param  array<string, mixed>  $detail
      * @param  array<string, mixed>  $mutation
      */
-    private function resolveBookingOrderId(array $detail, array $mutation, ?int $incomingAmount = null): ?string
-    {
+    private function resolveBookingOrderId(
+        array $detail,
+        array $mutation,
+        ?int $incomingAmount = null,
+        array $envelopePayload = [],
+    ): ?string {
         $fromPayload = $this->trimmedOrderIdFromDetail($detail['order_id'] ?? null);
         if ($fromPayload !== '' && str_starts_with($fromPayload, 'BG-')) {
             PaymentFlowLog::info('moota.settle.order_resolved_via_payment_detail', ['order_id' => $fromPayload]);
@@ -602,7 +627,7 @@ final class ProcessMootaWebhookForBookingPayments
             return $fromText;
         }
 
-        $fromBookingCode = $this->tryResolveOrderIdByBookingCode($detail, $mutation, $incomingAmount);
+        $fromBookingCode = $this->tryResolveOrderIdByBookingCode($detail, $mutation, $incomingAmount, $envelopePayload);
         if ($fromBookingCode !== null) {
             return $fromBookingCode;
         }
@@ -647,11 +672,19 @@ final class ProcessMootaWebhookForBookingPayments
     /**
      * Kode booking (BK-BYTG…) ikut di label item / deskripsi mutasi Moota.
      *
+     * @param  array<string, mixed>  $envelopePayload  JSON webhook utuh (agar `description` di akar ikut dipindai).
      * @return list<string>
      */
-    private function extractBkBookingCodesFromMootaPayload(array $detail, array $mutation): array
-    {
-        $blob = json_encode([$mutation, $detail], JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES) ?: '';
+    private function extractBkBookingCodesFromMootaPayload(
+        array $detail,
+        array $mutation,
+        array $envelopePayload = [],
+    ): array {
+        $parts = [$mutation, $detail];
+        if ($envelopePayload !== []) {
+            $parts[] = $envelopePayload;
+        }
+        $blob = json_encode($parts, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES) ?: '';
         if (preg_match_all('/\b(BK-BYTG[0-9]+)\b/', $blob, $m)) {
             /** @var list<string> $codes */
             $codes = array_values(array_unique($m[1]));
@@ -664,12 +697,35 @@ final class ProcessMootaWebhookForBookingPayments
 
     /**
      * Cocokkan mutasi ke booking lewat {@see MuthowifBooking::$booking_code}, lalu ke baris pembayaran Moota.
+     *
+     * @param  array<string, mixed>  $envelopePayload  JSON webhook utuh.
      */
-    private function tryResolveOrderIdByBookingCode(array $detail, array $mutation, ?int $incomingAmount): ?string
-    {
+    private function tryResolveOrderIdByBookingCode(
+        array $detail,
+        array $mutation,
+        ?int $incomingAmount,
+        array $envelopePayload = [],
+    ): ?string {
         $trxHint = $this->mootaTrxFromMutation($detail, $mutation);
 
-        foreach ($this->extractBkBookingCodesFromMootaPayload($detail, $mutation) as $code) {
+        foreach ($this->extractBkBookingCodesFromMootaPayload($detail, $mutation, $envelopePayload) as $code) {
+            $byColumn = BookingPayment::query()
+                ->where('booking_code', $code)
+                ->where('payment_type', 'like', 'bank_transfer_moota%')
+                ->whereIn('status', ['pending', 'cancelled', 'settlement', 'capture'])
+                ->orderByRaw("CASE status WHEN 'pending' THEN 0 WHEN 'cancelled' THEN 1 WHEN 'settlement' THEN 2 WHEN 'capture' THEN 3 ELSE 4 END")
+                ->orderByDesc('id')
+                ->first();
+
+            if ($byColumn !== null) {
+                PaymentFlowLog::info('moota.settle.order_resolved_via_booking_payments.booking_code', [
+                    'booking_code' => $code,
+                    'order_id' => $byColumn->order_id,
+                ]);
+
+                return (string) $byColumn->order_id;
+            }
+
             $booking = MuthowifBooking::query()->where('booking_code', $code)->first();
             if ($booking === null) {
                 continue;
@@ -910,6 +966,78 @@ final class ProcessMootaWebhookForBookingPayments
         }
 
         return null;
+    }
+
+    /**
+     * Ada order_id BG-… atau trx_id di field terstruktur payment_detail / mutasi (bukan hanya di dalam teks description).
+     *
+     * @param  array<string, mixed>  $detail
+     * @param  array<string, mixed>  $mutation
+     */
+    private function webhookHasStructuredBgOrderOrTrxIds(array $detail, array $mutation): bool
+    {
+        foreach ([$detail['order_id'] ?? null, $mutation['order_id'] ?? null] as $raw) {
+            $oid = $this->trimmedOrderIdFromDetail($raw);
+            if ($oid !== '' && str_starts_with($oid, 'BG-')) {
+                return true;
+            }
+        }
+
+        foreach ([$detail['trx_id'] ?? null, $mutation['trx_id'] ?? null] as $t) {
+            if (is_string($t) && trim($t) !== '') {
+                return true;
+            }
+        }
+
+        return false;
+    }
+
+    /**
+     * @param  array<string, mixed>  $detail
+     * @param  array<string, mixed>  $mutation
+     * @param  array<string, mixed>  $envelopePayload
+     */
+    private function bookingPaymentMatchesBkInFullBlob(
+        BookingPayment $payment,
+        array $detail,
+        array $mutation,
+        array $envelopePayload,
+    ): bool {
+        $codes = $this->extractBkBookingCodesFromMootaPayload($detail, $mutation, $envelopePayload);
+        if ($codes === []) {
+            return false;
+        }
+
+        $pc = is_string($payment->booking_code) ? trim($payment->booking_code) : '';
+        if ($pc !== '' && in_array($pc, $codes, true)) {
+            return true;
+        }
+
+        $booking = $payment->muthowifBooking;
+        if ($booking === null) {
+            $payment->loadMissing('muthowifBooking');
+            $booking = $payment->muthowifBooking;
+        }
+        $bc = is_string($booking?->booking_code) ? trim((string) $booking->booking_code) : '';
+
+        return $bc !== '' && in_array($bc, $codes, true);
+    }
+
+    /**
+     * Nominal saat kepercayaan lewat deskripsi BK-BYTG saja (tanpa order/trx terstruktur): pakai metadata atau gross_amount baris.
+     */
+    private function amountOkWhenBkDescriptionTrusts(
+        BookingPayment $payment,
+        int $incoming,
+        ?int $expected,
+        array $detail,
+        ?string $trxFromHook,
+    ): bool {
+        if ($expected !== null) {
+            return $this->incomingMatchesExpectedMootaAmount($incoming, $expected, $payment, $detail, $trxFromHook);
+        }
+
+        return $incoming === (int) $payment->gross_amount;
     }
 
     /**

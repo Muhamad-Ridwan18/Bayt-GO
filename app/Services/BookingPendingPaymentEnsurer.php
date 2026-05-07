@@ -9,7 +9,6 @@ use App\Models\MuthowifBooking;
 use App\Support\PaymentFlowLog;
 use App\Support\PlatformFee;
 use Illuminate\Support\Facades\DB;
-use Illuminate\Support\Str;
 
 /**
  * Memastikan ada satu baris {@see BookingPayment} status pending (placeholder tagihan)
@@ -100,6 +99,7 @@ final class BookingPendingPaymentEnsurer
                     'gross_amount' => $gross,
                     'platform_fee_amount' => $split['platform_fee_total'],
                     'muthowif_net_amount' => $split['muthowif_net'],
+                    'booking_code' => $booking->booking_code,
                 ]);
                 PaymentFlowLog::info('booking_payment.ensure.updated_placeholder', [
                     'booking_id' => $booking->getKey(),
@@ -110,10 +110,13 @@ final class BookingPendingPaymentEnsurer
                 return $placeholder->fresh();
             }
 
-            $orderId = 'BG-'.str_replace('-', '', (string) $booking->getKey()).'-'.Str::lower(Str::random(10));
+            $ids = BookingPayment::newPrimaryKeyAndOrderId((string) $booking->getKey());
+            $orderId = $ids['order_id'];
 
             $created = BookingPayment::query()->create([
+                'id' => $ids['id'],
                 'muthowif_booking_id' => $booking->getKey(),
+                'booking_code' => $booking->booking_code,
                 'order_id' => $orderId,
                 'gross_amount' => $gross,
                 'platform_fee_amount' => $split['platform_fee_total'],

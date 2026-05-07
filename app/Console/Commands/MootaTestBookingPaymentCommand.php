@@ -88,10 +88,13 @@ class MootaTestBookingPaymentCommand extends Command
         }
 
         $split = PlatformFee::split((float) $baseInt);
-        $orderId = 'BG-'.str_replace('-', '', (string) $booking->getKey()).'-'.Str::lower(Str::random(10));
+        $ids = BookingPayment::newPrimaryKeyAndOrderId((string) $booking->getKey());
+        $orderId = $ids['order_id'];
 
         $payment = BookingPayment::query()->create([
+            'id' => $ids['id'],
             'muthowif_booking_id' => $booking->getKey(),
+            'booking_code' => $booking->booking_code,
             'order_id' => $orderId,
             'gross_amount' => (int) round($split['customer_gross']),
             'platform_fee_amount' => $split['platform_fee_total'],
