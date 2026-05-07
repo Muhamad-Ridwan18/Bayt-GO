@@ -104,6 +104,7 @@ return [
         'doc_optional' => 'optional',
         'tc_title' => 'Terms & conditions',
         'tc_body_html' => '<ul class="list-disc space-y-2 pl-4 text-slate-700"><li>Your booking request becomes binding after the muthowif approves and you complete payment according to BaytGo rules.</li><li>Uploaded data and documents are used to verify the service; ensure tickets and documents match your travel dates.</li><li>The muthowif may reject or cancel if the slot conflicts, is unavailable, or policy is not met.</li><li>Payment, cancellation, refunds, and reschedules follow platform policies shown on the booking pages.</li><li>By continuing, you confirm the information is accurate and you understand the approval and payment flow.</li></ul>',
+        'tc_full_text' => 'Read the full terms & conditions',
         'tc_checkbox' => 'I have read and agree to the terms & conditions above.',
         'tc_cancel' => 'Cancel',
         'tc_submit' => 'Agree and submit',

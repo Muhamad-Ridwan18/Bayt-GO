@@ -139,7 +139,10 @@
 
             <footer class="border-t border-slate-200 bg-white mt-auto">
                 <div class="max-w-6xl mx-auto px-4 sm:px-6 py-8 flex flex-col sm:flex-row items-center justify-between gap-4 text-sm text-slate-500">
-                    <span>&copy; {{ date('Y') }} {{ config('app.name') }}</span>
+                    <div class="flex flex-col items-center gap-2 sm:items-start sm:flex-row sm:gap-4">
+                        <span>&copy; {{ date('Y') }} {{ config('app.name') }}</span>
+                        <a href="{{ route('terms') }}" class="text-xs font-semibold text-brand-700 hover:text-brand-800">{{ __('terms.footer_link') }}</a>
+                    </div>
                     <div class="flex flex-col items-center gap-1 sm:items-end">
                         <span class="text-xs text-slate-400">{{ __('welcome.footer_tagline') }}</span>
                         @if ($contactLink)

@@ -93,6 +93,7 @@
                                     <option value="" @selected(old('locale', $editUser->locale) === null || old('locale', $editUser->locale) === '')>{{ __('admin.users.locale_default') }}</option>
                                     <option value="id" @selected(old('locale', $editUser->locale) === 'id')>Bahasa Indonesia</option>
                                     <option value="en" @selected(old('locale', $editUser->locale) === 'en')>English</option>
+                                    <option value="ar" @selected(old('locale', $editUser->locale) === 'ar')>العربية</option>
                                 </select>
                                 <x-input-error class="mt-2" :messages="$errors->get('locale')" />
                             </div>

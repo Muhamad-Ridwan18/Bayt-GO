@@ -21,4 +21,5 @@ return [
     'contact_us' => 'Contact us',
     'lang_en' => 'English',
     'lang_id' => 'Indonesian',
+    'lang_ar' => 'Arabic',
 ];

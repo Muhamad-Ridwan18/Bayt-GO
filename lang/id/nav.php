@@ -21,4 +21,5 @@ return [
     'contact_us' => 'Hubungi kami',
     'lang_en' => 'English',
     'lang_id' => 'Bahasa Indonesia',
+    'lang_ar' => 'Arab',
 ];

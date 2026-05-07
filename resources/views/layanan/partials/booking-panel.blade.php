@@ -398,6 +398,9 @@
                             </div>
                             <div class="min-h-0 flex-1 overflow-y-auto px-5 py-4 text-sm leading-relaxed text-slate-600 sm:px-6">
                                 {!! __('marketplace.panel.tc_body_html') !!}
+                                <p class="mt-4 border-t border-slate-100 pt-4">
+                                    <a href="{{ route('terms') }}" target="_blank" rel="noopener noreferrer" class="inline-flex items-center gap-1 font-semibold text-brand-700 underline decoration-brand-700/40 underline-offset-2 hover:text-brand-800">{{ __('marketplace.panel.tc_full_text') }}</a>
+                                </p>
                                 <label class="mt-5 flex cursor-pointer items-start gap-3 rounded-xl border border-slate-200 bg-slate-50/80 p-3 ring-1 ring-slate-100">
                                     <input type="checkbox" x-model="tcAgree" class="mt-0.5 rounded border-slate-300 text-brand-600 focus:ring-brand-500" />
                                     <span class="text-sm font-medium text-slate-800">{{ __('marketplace.panel.tc_checkbox') }}</span>

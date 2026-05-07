@@ -8,11 +8,11 @@
 
 <div {{ $attributes->merge(['class' => $variant === 'compact' ? 'inline-flex' : 'inline-flex items-stretch']) }} role="group" aria-label="{{ __('nav.language') }}">
     @if ($variant === 'segment-dark')
-        <div class="inline-flex rounded-xl border border-white/20 bg-white/10 p-1 shadow-inner backdrop-blur-sm">
+        <div class="inline-flex flex-wrap justify-end gap-1 rounded-xl border border-white/20 bg-white/10 p-1 shadow-inner backdrop-blur-sm">
             <a
                 href="{{ route('locale.switch', ['locale' => 'id']) }}"
                 @class([
-                    'rounded-lg px-3 py-1.5 text-xs font-bold tracking-wide transition-all duration-200 min-w-[2.75rem] text-center',
+                    'rounded-lg px-2.5 py-1.5 text-xs font-bold tracking-wide transition-all duration-200 min-w-[2.5rem] text-center',
                     'bg-white text-brand-900 shadow-md ring-1 ring-white/30' => $current === 'id',
                     'text-white/85 hover:bg-white/15 hover:text-white' => $current !== 'id',
                 ])
@@ -22,20 +22,30 @@
             <a
                 href="{{ route('locale.switch', ['locale' => 'en']) }}"
                 @class([
-                    'rounded-lg px-3 py-1.5 text-xs font-bold tracking-wide transition-all duration-200 min-w-[2.75rem] text-center',
+                    'rounded-lg px-2.5 py-1.5 text-xs font-bold tracking-wide transition-all duration-200 min-w-[2.5rem] text-center',
                     'bg-white text-brand-900 shadow-md ring-1 ring-white/30' => $current === 'en',
                     'text-white/85 hover:bg-white/15 hover:text-white' => $current !== 'en',
                 ])
                 aria-current="{{ $current === 'en' ? 'true' : 'false' }}"
                 title="{{ __('nav.lang_en') }}"
             >EN</a>
+            <a
+                href="{{ route('locale.switch', ['locale' => 'ar']) }}"
+                @class([
+                    'rounded-lg px-2.5 py-1.5 text-xs font-bold tracking-wide transition-all duration-200 min-w-[2.5rem] text-center',
+                    'bg-white text-brand-900 shadow-md ring-1 ring-white/30' => $current === 'ar',
+                    'text-white/85 hover:bg-white/15 hover:text-white' => $current !== 'ar',
+                ])
+                aria-current="{{ $current === 'ar' ? 'true' : 'false' }}"
+                title="{{ __('nav.lang_ar') }}"
+            >AR</a>
         </div>
     @elseif ($variant === 'segment')
-        <div class="inline-flex rounded-xl border border-slate-200 bg-slate-100/90 p-1 shadow-inner">
+        <div class="inline-flex flex-wrap gap-1 rounded-xl border border-slate-200 bg-slate-100/90 p-1 shadow-inner">
             <a
                 href="{{ route('locale.switch', ['locale' => 'id']) }}"
                 @class([
-                    'rounded-lg px-3 py-1.5 text-xs font-bold tracking-wide transition-all duration-200 min-w-[2.75rem] text-center',
+                    'rounded-lg px-2.5 py-1.5 text-xs font-bold tracking-wide transition-all duration-200 min-w-[2.5rem] text-center',
                     'bg-brand-600 text-white shadow-md shadow-brand-600/30 ring-1 ring-brand-700/20' => $current === 'id',
                     'text-slate-600 hover:bg-white/80 hover:text-slate-900' => $current !== 'id',
                 ])
@@ -45,16 +55,26 @@
             <a
                 href="{{ route('locale.switch', ['locale' => 'en']) }}"
                 @class([
-                    'rounded-lg px-3 py-1.5 text-xs font-bold tracking-wide transition-all duration-200 min-w-[2.75rem] text-center',
+                    'rounded-lg px-2.5 py-1.5 text-xs font-bold tracking-wide transition-all duration-200 min-w-[2.5rem] text-center',
                     'bg-brand-600 text-white shadow-md shadow-brand-600/30 ring-1 ring-brand-700/20' => $current === 'en',
                     'text-slate-600 hover:bg-white/80 hover:text-slate-900' => $current !== 'en',
                 ])
                 aria-current="{{ $current === 'en' ? 'true' : 'false' }}"
                 title="{{ __('nav.lang_en') }}"
             >EN</a>
+            <a
+                href="{{ route('locale.switch', ['locale' => 'ar']) }}"
+                @class([
+                    'rounded-lg px-2.5 py-1.5 text-xs font-bold tracking-wide transition-all duration-200 min-w-[2.5rem] text-center',
+                    'bg-brand-600 text-white shadow-md shadow-brand-600/30 ring-1 ring-brand-700/20' => $current === 'ar',
+                    'text-slate-600 hover:bg-white/80 hover:text-slate-900' => $current !== 'ar',
+                ])
+                aria-current="{{ $current === 'ar' ? 'true' : 'false' }}"
+                title="{{ __('nav.lang_ar') }}"
+            >AR</a>
         </div>
     @else
-        <div class="flex gap-1.5">
+        <div class="flex flex-wrap gap-1.5">
             <a
                 href="{{ route('locale.switch', ['locale' => 'id']) }}"
                 @class([
@@ -71,6 +91,14 @@
                     'bg-slate-200/80 text-slate-700' => $current !== 'en',
                 ])
             >EN</a>
+            <a
+                href="{{ route('locale.switch', ['locale' => 'ar']) }}"
+                @class([
+                    'rounded-lg px-2.5 py-1 text-[11px] font-bold transition',
+                    'bg-brand-600 text-white shadow' => $current === 'ar',
+                    'bg-slate-200/80 text-slate-700' => $current !== 'ar',
+                ])
+            >AR</a>
         </div>
     @endif
 </div>

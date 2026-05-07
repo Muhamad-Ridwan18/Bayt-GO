@@ -24,6 +24,7 @@ use App\Http\Controllers\PaymentWebhookController;
 use App\Http\Controllers\ProfileController;
 use App\Http\Controllers\Public\MuthowifDirectoryController;
 use App\Http\Controllers\SupportTicketController;
+use App\Http\Controllers\TermsController;
 use App\Http\Middleware\EnsureUserRole;
 use App\Models\MuthowifBlockedDate;
 use App\Models\MuthowifProfile;
@@ -88,6 +89,8 @@ Route::middleware(['moota.ip'])
 Route::get('/layanan', [MuthowifDirectoryController::class, 'index'])->name('layanan.index');
 Route::get('/layanan/{publicProfile}/foto', [MuthowifDirectoryController::class, 'photo'])->name('layanan.photo');
 Route::get('/layanan/{publicProfile}', [MuthowifDirectoryController::class, 'show'])->name('layanan.show');
+
+Route::get('/terms', TermsController::class)->name('terms');
 
 Route::get('/locale/{locale}', [LocaleController::class, 'switch'])->name('locale.switch');
 

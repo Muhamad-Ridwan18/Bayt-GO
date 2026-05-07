@@ -42,7 +42,7 @@ class AdminUpdateUserRequest extends FormRequest
             'role' => ['required', Rule::enum(UserRole::class)],
             'customer_type' => ['nullable', Rule::enum(CustomerType::class)],
             'ppui_number' => ['nullable', 'string', 'max:64'],
-            'locale' => ['nullable', 'string', Rule::in(['en', 'id'])],
+            'locale' => ['nullable', 'string', Rule::in(['en', 'id', 'ar'])],
             'password' => ['nullable', 'string', 'min:8', 'confirmed'],
         ];
     }
