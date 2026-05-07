@@ -9,7 +9,9 @@ use App\Events\MootaWebhookRecorded;
 use App\Jobs\NotifyMuthowifOfPaidBooking;
 use App\Models\BookingPayment;
 use App\Models\MuthowifBooking;
+use App\Services\BookingPendingPaymentEnsurer;
 use App\Support\PaymentFlowLog;
+use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Str;
@@ -84,6 +86,21 @@ final class ProcessMootaWebhookForBookingPayments
         }
 
         return [$payload];
+    }
+
+    /**
+     * Tagihan transfer bank Moota, atau placeholder (payment_type kosong) dari {@see BookingPendingPaymentEnsurer}.
+     *
+     * @param  Builder<BookingPayment>  $q
+     * @return Builder<BookingPayment>
+     */
+    private function whereMootaBankTransferIncludingPlaceholder(Builder $q): Builder
+    {
+        return $q->where(function (Builder $w): void {
+            $w->where('payment_type', 'like', 'bank_transfer_moota%')
+                ->orWhereNull('payment_type')
+                ->orWhere('payment_type', '');
+        });
     }
 
     /**
@@ -175,8 +192,7 @@ final class ProcessMootaWebhookForBookingPayments
                 if ($payment === null) {
                     $trx = is_string($trxFromHook) ? trim($trxFromHook) : '';
                     if ($trx !== '') {
-                        $payment = BookingPayment::query()
-                            ->where('payment_type', 'like', 'bank_transfer_moota%')
+                        $payment = $this->whereMootaBankTransferIncludingPlaceholder(BookingPayment::query())
                             ->where('gateway_transaction_id', $trx)
                             ->whereIn('status', ['pending', 'cancelled', 'settlement', 'capture'])
                             ->orderByRaw("CASE status WHEN 'pending' THEN 0 WHEN 'cancelled' THEN 1 WHEN 'settlement' THEN 2 WHEN 'capture' THEN 3 ELSE 4 END")
@@ -239,14 +255,19 @@ final class ProcessMootaWebhookForBookingPayments
                     'booking_id' => $payment->muthowif_booking_id,
                 ]);
 
-                $payType = is_string($payment->payment_type) ? $payment->payment_type : '';
-                if ($payType === '' || ! str_starts_with($payType, 'bank_transfer_moota')) {
+                $payType = is_string($payment->payment_type) ? trim($payment->payment_type) : '';
+                /** Pembayaran sudah jelas driver lain (Doku/Midtrans); null = placeholder ensure / belum charge. */
+                if ($payType !== '' && ! str_starts_with($payType, 'bank_transfer_moota')) {
                     PaymentFlowLog::info('moota.settle.skip_wrong_payment_type', [
                         'order_id' => $orderId,
                         'payment_type' => $payment->payment_type,
                     ]);
 
                     return false;
+                }
+
+                if ($payType === '') {
+                    $payment->payment_type = 'bank_transfer_moota';
                 }
 
                 if ($payment->isSettled()) {
@@ -635,8 +656,7 @@ final class ProcessMootaWebhookForBookingPayments
         $trx = $this->mootaTrxFromMutation($detail, $mutation);
         if ($trx !== null) {
             /** @var BookingPayment|null $payment */
-            $payment = BookingPayment::query()
-                ->where('payment_type', 'like', 'bank_transfer_moota%')
+            $payment = $this->whereMootaBankTransferIncludingPlaceholder(BookingPayment::query())
                 ->where('gateway_transaction_id', $trx)
                 ->whereIn('status', ['pending', 'cancelled', 'settlement', 'capture'])
                 ->orderByRaw("CASE status WHEN 'pending' THEN 0 WHEN 'cancelled' THEN 1 WHEN 'settlement' THEN 2 WHEN 'capture' THEN 3 ELSE 4 END")
@@ -709,9 +729,8 @@ final class ProcessMootaWebhookForBookingPayments
         $trxHint = $this->mootaTrxFromMutation($detail, $mutation);
 
         foreach ($this->extractBkBookingCodesFromMootaPayload($detail, $mutation, $envelopePayload) as $code) {
-            $byColumn = BookingPayment::query()
+            $byColumn = $this->whereMootaBankTransferIncludingPlaceholder(BookingPayment::query())
                 ->where('booking_code', $code)
-                ->where('payment_type', 'like', 'bank_transfer_moota%')
                 ->whereIn('status', ['pending', 'cancelled', 'settlement', 'capture'])
                 ->orderByRaw("CASE status WHEN 'pending' THEN 0 WHEN 'cancelled' THEN 1 WHEN 'settlement' THEN 2 WHEN 'capture' THEN 3 ELSE 4 END")
                 ->orderByDesc('id')
@@ -734,9 +753,8 @@ final class ProcessMootaWebhookForBookingPayments
             $bookingKey = $booking->getKey();
 
             if (is_string($trxHint) && trim($trxHint) !== '') {
-                $p = BookingPayment::query()
+                $p = $this->whereMootaBankTransferIncludingPlaceholder(BookingPayment::query())
                     ->where('muthowif_booking_id', $bookingKey)
-                    ->where('payment_type', 'like', 'bank_transfer_moota%')
                     ->where('gateway_transaction_id', trim($trxHint))
                     ->orderByDesc('id')
                     ->first();
@@ -751,9 +769,8 @@ final class ProcessMootaWebhookForBookingPayments
             }
 
             if ($incomingAmount !== null && $incomingAmount > 0) {
-                $candidates = BookingPayment::query()
+                $candidates = $this->whereMootaBankTransferIncludingPlaceholder(BookingPayment::query())
                     ->where('muthowif_booking_id', $bookingKey)
-                    ->where('payment_type', 'like', 'bank_transfer_moota%')
                     ->whereIn('status', ['pending', 'cancelled', 'settlement', 'capture'])
                     ->orderByRaw("CASE status WHEN 'pending' THEN 0 WHEN 'cancelled' THEN 1 WHEN 'settlement' THEN 2 WHEN 'capture' THEN 3 ELSE 4 END")
                     ->orderByDesc('id')
@@ -782,9 +799,8 @@ final class ProcessMootaWebhookForBookingPayments
                 }
             }
 
-            $fallback = BookingPayment::query()
+            $fallback = $this->whereMootaBankTransferIncludingPlaceholder(BookingPayment::query())
                 ->where('muthowif_booking_id', $bookingKey)
-                ->where('payment_type', 'like', 'bank_transfer_moota%')
                 ->whereIn('status', ['pending', 'cancelled', 'settlement', 'capture'])
                 ->orderByRaw("CASE status WHEN 'pending' THEN 0 WHEN 'cancelled' THEN 1 WHEN 'settlement' THEN 2 WHEN 'capture' THEN 3 ELSE 4 END")
                 ->orderByDesc('id')
@@ -827,8 +843,7 @@ final class ProcessMootaWebhookForBookingPayments
             return null;
         }
 
-        $candidates = BookingPayment::query()
-            ->where('payment_type', 'like', 'bank_transfer_moota%')
+        $candidates = $this->whereMootaBankTransferIncludingPlaceholder(BookingPayment::query())
             ->whereIn('status', ['pending', 'cancelled'])
             ->whereHas('muthowifBooking', function ($q): void {
                 $q->where('status', BookingStatus::Confirmed)
