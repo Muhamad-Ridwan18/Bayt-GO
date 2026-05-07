@@ -26,7 +26,7 @@
                 <!-- Logo -->
                 <div class="shrink-0 flex items-center">
                     <a href="{{ url('/') }}" class="flex items-center gap-2">
-                        <span class="flex h-9 w-9 items-center justify-center rounded-lg bg-brand-600 text-white text-xs font-bold">BG</span>
+                        <x-site-logo variant="nav" />
                         <span class="text-lg font-semibold text-slate-900 hidden sm:inline">Bayt<span class="text-brand-600">Go</span></span>
                     </a>
                 </div>
@@ -70,6 +70,9 @@
                         </x-nav-link>
                         <x-nav-link :href="route('admin.users.index')" :active="request()->routeIs('admin.users.*')">
                             {{ __('nav.users') }}
+                        </x-nav-link>
+                        <x-nav-link :href="route('admin.site-appearance.edit')" :active="request()->routeIs('admin.site-appearance.*')">
+                            {{ __('nav.site_logo') }}
                         </x-nav-link>
                         <x-nav-link :href="route('admin.support-tickets.index')" :active="request()->routeIs('admin.support-tickets.*')">
                             {{ __('nav.support_tickets') }}
@@ -197,6 +200,9 @@
                 </x-responsive-nav-link>
                 <x-responsive-nav-link :href="route('admin.users.index')" :active="request()->routeIs('admin.users.*')">
                     {{ __('nav.users') }}
+                </x-responsive-nav-link>
+                <x-responsive-nav-link :href="route('admin.site-appearance.edit')" :active="request()->routeIs('admin.site-appearance.*')">
+                    {{ __('nav.site_logo') }}
                 </x-responsive-nav-link>
                 <x-responsive-nav-link :href="route('admin.support-tickets.index')" :active="request()->routeIs('admin.support-tickets.*')">
                     {{ __('nav.support_tickets') }}

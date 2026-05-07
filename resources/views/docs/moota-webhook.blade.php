@@ -32,7 +32,7 @@
     <header class="sticky top-0 z-20 border-b border-white/10 bg-slate-900/95 backdrop-blur-md text-white">
         <div class="max-w-4xl mx-auto px-4 sm:px-6 py-3.5 flex items-center justify-between gap-4">
             <a href="{{ url('/') }}" class="flex items-center gap-2.5 group">
-                <span class="flex h-10 w-10 items-center justify-center rounded-2xl bg-gradient-to-br from-brand-400 to-brand-700 text-white text-xs font-bold shadow-lg shadow-brand-900/40 ring-1 ring-white/20">BG</span>
+                <x-site-logo variant="docs" />
                 <span class="text-base font-bold tracking-tight">Bayt<span class="text-brand-300">Go</span></span>
             </a>
             <a href="{{ route('layanan.index') }}" class="text-sm font-medium text-white/90 hover:text-white">{{ __('layanan.find_muthowif') }}</a>

@@ -16,7 +16,7 @@
         <div class="min-h-screen flex flex-col">
             <header class="shrink-0 px-4 sm:px-6 py-4 flex items-center justify-between max-w-lg mx-auto w-full sm:max-w-md">
                 <a href="{{ url('/') }}" class="flex items-center gap-2 group">
-                    <span class="flex h-9 w-9 items-center justify-center rounded-xl bg-brand-600 text-white shadow-market text-sm font-bold shadow-brand-600/20">BG</span>
+                    <x-site-logo variant="guest" />
                     <span class="text-lg font-semibold tracking-tight text-slate-900">Bayt<span class="text-brand-600">Go</span></span>
                 </a>
                 <nav class="flex items-center gap-2 text-sm">

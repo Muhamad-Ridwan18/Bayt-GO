@@ -17,6 +17,7 @@ return [
     'day_off' => 'Jadwal libur',
     'booking_requests' => 'Permintaan booking',
     'support_tickets' => 'Tiket bantuan',
+    'site_logo' => 'Logo situs',
     'contact_us' => 'Hubungi kami',
     'lang_en' => 'English',
     'lang_id' => 'Bahasa Indonesia',

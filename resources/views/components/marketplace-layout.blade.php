@@ -24,7 +24,7 @@
                 <header class="sticky top-0 z-20 w-full border-b border-white/40 bg-white/75 shadow-sm shadow-slate-900/5 backdrop-blur-xl">
                     <div class="mx-auto flex w-full min-w-0 max-w-6xl items-center justify-between gap-4 px-4 py-3.5 sm:px-6">
                         <a href="{{ url('/') }}" class="group flex items-center gap-3">
-                            <span class="flex h-11 w-11 items-center justify-center rounded-2xl bg-gradient-to-br from-brand-500 to-brand-700 text-sm font-bold text-white shadow-lg shadow-brand-600/25 ring-2 ring-white/50 transition group-hover:shadow-brand-600/40">BG</span>
+                            <x-site-logo variant="marketplace" />
                             <span class="text-lg font-bold tracking-tight text-slate-900">Bayt<span class="text-brand-600">Go</span></span>
                         </a>
                         <nav class="flex flex-wrap items-center justify-end gap-1.5 text-sm sm:gap-2">

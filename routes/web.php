@@ -6,6 +6,7 @@ use App\Http\Controllers\Admin\FinanceController;
 use App\Http\Controllers\Admin\LogsController;
 use App\Http\Controllers\Admin\MootaWebhookHistoriesLiveController;
 use App\Http\Controllers\Admin\MuthowifVerificationController;
+use App\Http\Controllers\Admin\SiteAppearanceController;
 use App\Http\Controllers\Admin\SupportTicketsController;
 use App\Http\Controllers\Admin\UserManagementController;
 use App\Http\Controllers\Admin\WithdrawalsController;
@@ -219,6 +220,8 @@ Route::middleware('auth')->group(function () {
         });
 
     Route::middleware([EnsureUserRole::class.':admin'])->prefix('admin')->name('admin.')->group(function () {
+        Route::get('tampilan/logo', [SiteAppearanceController::class, 'edit'])->name('site-appearance.edit');
+        Route::post('tampilan/logo', [SiteAppearanceController::class, 'update'])->name('site-appearance.update');
         Route::get('pengguna', [UserManagementController::class, 'index'])->name('users.index');
         Route::get('pengguna/{user}/ubah', [UserManagementController::class, 'edit'])->name('users.edit');
         Route::patch('pengguna/{user}', [UserManagementController::class, 'update'])->name('users.update');

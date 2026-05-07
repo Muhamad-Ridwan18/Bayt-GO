@@ -19,7 +19,7 @@
             <header class="sticky top-0 z-20 border-b border-white/10 bg-slate-900/95 backdrop-blur-md text-white">
                 <div class="max-w-6xl mx-auto px-4 sm:px-6 py-3.5 flex items-center justify-between gap-4">
                     <a href="{{ url('/') }}" class="flex items-center gap-2.5 group">
-                        <span class="flex h-11 w-11 items-center justify-center rounded-2xl bg-gradient-to-br from-brand-400 to-brand-700 text-white text-sm font-bold shadow-lg shadow-brand-900/40 ring-1 ring-white/20">BG</span>
+                        <x-site-logo variant="welcome" />
                         <span class="text-lg font-bold tracking-tight">Bayt<span class="text-brand-300">Go</span></span>
                     </a>
                     <nav class="flex items-center gap-1 sm:gap-2 text-sm flex-wrap justify-end">
