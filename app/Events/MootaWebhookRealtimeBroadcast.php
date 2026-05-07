@@ -38,7 +38,7 @@ class MootaWebhookRealtimeBroadcast implements ShouldBroadcastNow
     public function broadcastWith(): array
     {
         return [
-            'webhook' => $this->history->toRealtimeSnapshot(900),
+            'webhook' => $this->history->toRealtimeSnapshot(1600, 45000),
         ];
     }
 }

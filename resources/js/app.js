@@ -723,12 +723,20 @@ document.addEventListener('alpine:init', () => {
         },
     }));
 
-    Alpine.data('mootaWebhookLiveDashboard', (initialRows = [], realtimeEnabled = false) => ({
+    Alpine.data('mootaWebhookLiveDashboard', (initialRows = [], realtimeEnabled = false, payloadSourceLabels = {}) => ({
         rows: Array.isArray(initialRows) ? initialRows : [],
         realtimeEnabled,
+        payloadSourceLabels,
         expandedId: null,
         toggleRow(id) {
             this.expandedId = this.expandedId === id ? null : id;
+        },
+        payloadSourceLabel(key) {
+            if (!key) {
+                return '—';
+            }
+
+            return this.payloadSourceLabels[key] || key;
         },
         init() {
             try {
