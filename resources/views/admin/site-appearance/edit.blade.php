@@ -29,7 +29,7 @@
                 <h2 class="text-sm font-semibold text-slate-900">{{ __('admin.appearance.current_heading') }}</h2>
 
                 @if ($logoUrl)
-                    <div class="mt-4 flex items-center gap-4 rounded-xl border border-slate-100 bg-slate-50 p-4">
+                    <div class="mt-4 flex items-center gap-4 rounded-xl bg-slate-50 p-4">
                         <img src="{{ $logoUrl }}" alt="" class="h-16 w-auto max-w-[200px] object-contain">
                     </div>
                 @else

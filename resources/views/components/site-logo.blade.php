@@ -10,29 +10,29 @@
     /** @var array<string, array{outer: string, img: string, fallback: string}> $styles */
     $styles = [
         'welcome' => [
-            'outer' => 'flex h-11 w-11 shrink-0 items-center justify-center overflow-hidden rounded-2xl bg-white/95 p-1.5 shadow-lg shadow-black/15 ring-1 ring-white/25',
+            'outer' => 'flex h-11 w-11 shrink-0 items-center justify-center overflow-hidden rounded-2xl bg-transparent p-0',
             'img' => 'h-full w-full object-contain',
-            'fallback' => 'flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl bg-gradient-to-br from-brand-400 to-brand-700 text-sm font-bold text-white shadow-lg shadow-brand-900/40 ring-1 ring-white/20',
+            'fallback' => 'flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl bg-gradient-to-br from-brand-400 to-brand-700 text-sm font-bold text-white shadow-lg shadow-brand-900/40',
         ],
         'nav' => [
-            'outer' => 'flex h-9 w-9 shrink-0 items-center justify-center overflow-hidden rounded-lg bg-white p-1 shadow-sm ring-1 ring-slate-200/90',
+            'outer' => 'flex h-9 w-9 shrink-0 items-center justify-center overflow-hidden rounded-lg bg-transparent p-0',
             'img' => 'h-full w-full object-contain',
             'fallback' => 'flex h-9 w-9 items-center justify-center rounded-lg bg-brand-600 text-xs font-bold text-white',
         ],
         'guest' => [
-            'outer' => 'flex h-9 w-9 shrink-0 items-center justify-center overflow-hidden rounded-xl bg-white p-1 shadow-market ring-1 ring-slate-200/90 shadow-brand-600/10',
+            'outer' => 'flex h-9 w-9 shrink-0 items-center justify-center overflow-hidden rounded-xl bg-transparent p-0',
             'img' => 'h-full w-full object-contain',
-            'fallback' => 'flex h-9 w-9 items-center justify-center rounded-xl bg-brand-600 text-sm font-bold text-white shadow-market shadow-brand-600/20',
+            'fallback' => 'flex h-9 w-9 items-center justify-center rounded-xl bg-brand-600 text-sm font-bold text-white',
         ],
         'marketplace' => [
-            'outer' => 'flex h-11 w-11 shrink-0 items-center justify-center overflow-hidden rounded-2xl bg-white p-1.5 shadow-lg shadow-brand-600/20 ring-2 ring-white/50 transition group-hover:shadow-brand-600/40',
+            'outer' => 'flex h-11 w-11 shrink-0 items-center justify-center overflow-hidden rounded-2xl bg-transparent p-0 transition',
             'img' => 'h-full w-full object-contain',
-            'fallback' => 'flex h-11 w-11 items-center justify-center rounded-2xl bg-gradient-to-br from-brand-500 to-brand-700 text-sm font-bold text-white shadow-lg shadow-brand-600/25 ring-2 ring-white/50 transition group-hover:shadow-brand-600/40',
+            'fallback' => 'flex h-11 w-11 items-center justify-center rounded-2xl bg-gradient-to-br from-brand-500 to-brand-700 text-sm font-bold text-white shadow-lg shadow-brand-600/25 transition group-hover:shadow-brand-600/40',
         ],
         'docs' => [
-            'outer' => 'flex h-10 w-10 shrink-0 items-center justify-center overflow-hidden rounded-2xl bg-white/95 p-1 shadow-lg shadow-black/15 ring-1 ring-white/20',
+            'outer' => 'flex h-10 w-10 shrink-0 items-center justify-center overflow-hidden rounded-2xl bg-transparent p-0',
             'img' => 'h-full w-full object-contain',
-            'fallback' => 'flex h-10 w-10 items-center justify-center rounded-2xl bg-gradient-to-br from-brand-400 to-brand-700 text-xs font-bold text-white shadow-lg shadow-brand-900/40 ring-1 ring-white/20',
+            'fallback' => 'flex h-10 w-10 items-center justify-center rounded-2xl bg-gradient-to-br from-brand-400 to-brand-700 text-xs font-bold text-white shadow-lg shadow-brand-900/40',
         ],
     ];
 
