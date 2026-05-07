@@ -36,4 +36,24 @@ return [
         'customer' => 'Pilgrim',
         'muthowif' => 'Muthowif',
     ],
+    'support_ticket_category' => [
+        'bug' => 'Bug / Technical issue',
+        'booking' => 'Booking',
+        'payment' => 'Payment',
+        'account' => 'Account & profile',
+        'suggestion' => 'Suggestion',
+        'other' => 'Other',
+    ],
+    'support_ticket_priority' => [
+        'low' => 'Low',
+        'normal' => 'Normal',
+        'high' => 'High',
+    ],
+    'support_ticket_status' => [
+        'open' => 'Open',
+        'in_progress' => 'In progress',
+        'awaiting_customer' => 'Awaiting your reply',
+        'resolved' => 'Resolved',
+        'closed' => 'Closed',
+    ],
 ];

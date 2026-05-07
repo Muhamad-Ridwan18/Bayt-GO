@@ -71,6 +71,22 @@ class User extends Authenticatable
         return $this->hasMany(BookingReview::class, 'customer_id');
     }
 
+    /**
+     * @return HasMany<SupportTicket, $this>
+     */
+    public function supportTickets(): HasMany
+    {
+        return $this->hasMany(SupportTicket::class, 'user_id');
+    }
+
+    /**
+     * @return HasMany<SupportTicket, $this>
+     */
+    public function assignedSupportTickets(): HasMany
+    {
+        return $this->hasMany(SupportTicket::class, 'assigned_admin_id');
+    }
+
     public function isVerifiedMuthowif(): bool
     {
         return $this->isMuthowif()

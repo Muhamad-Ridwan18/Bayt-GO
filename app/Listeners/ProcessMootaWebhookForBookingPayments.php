@@ -12,26 +12,40 @@ use App\Models\MuthowifBooking;
 use App\Support\PaymentFlowLog;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Str;
 
 final class ProcessMootaWebhookForBookingPayments
 {
     public function handle(MootaWebhookRecorded $event): void
     {
         $history = $event->history;
+        Log::info('moota.settle.listener_start', ['history_id' => $history->getKey()]);
+
         $secret = (string) config('services.moota.signing_secret', '');
         if ($secret !== '' && $history->signature_verified !== true) {
+            Log::warning('moota.settle.skipped_signature', [
+                'history_id' => $history->getKey(),
+                'signature_verified' => $history->signature_verified,
+            ]);
             PaymentFlowLog::info('moota.settle.skip_signature', ['id' => $history->id]);
 
             return;
         }
 
         if ($history->parse_error !== null) {
+            Log::warning('moota.settle.skipped_bad_json', [
+                'history_id' => $history->getKey(),
+                'parse_error' => Str::limit((string) $history->parse_error, 512),
+            ]);
+
             return;
         }
 
         /** @var array<string, mixed>|null $payload */
         $payload = $history->payload;
         if (! is_array($payload)) {
+            Log::warning('moota.settle.skipped_payload_missing', ['history_id' => $history->getKey()]);
+
             return;
         }
 
@@ -72,21 +86,20 @@ final class ProcessMootaWebhookForBookingPayments
             return;
         }
 
-        $detail = $mutation['payment_detail'] ?? null;
-        if (! is_array($detail)) {
-            return;
-        }
+        /** Mutasi “scrapping” sering tidak punya payment_detail; payment hosted bisa mengisinya. */
+        $detail = is_array($mutation['payment_detail'] ?? null)
+            ? $mutation['payment_detail']
+            : [];
 
-        $orderId = $detail['order_id'] ?? null;
-        if (! is_string($orderId) || $orderId === '' || ! str_starts_with($orderId, 'BG-')) {
+        $orderId = $this->resolveBookingOrderId($detail, $mutation);
+        if ($orderId === null) {
             return;
         }
 
         $mutationId = $mutation['mutation_id'] ?? $mutation['token'] ?? null;
         $mutationId = is_string($mutationId) ? $mutationId : null;
 
-        $trxFromHook = $detail['trx_id'] ?? null;
-        $trxFromHook = is_string($trxFromHook) ? $trxFromHook : null;
+        $trxFromHook = $this->mootaTrxFromMutation($detail, $mutation);
 
         $amountRaw = $mutation['amount'] ?? $detail['amount_captured'] ?? $detail['total'] ?? null;
         if (! is_numeric($amountRaw)) {
@@ -263,6 +276,124 @@ final class ProcessMootaWebhookForBookingPayments
         $fromDetail = $detail['total'] ?? $detail['amount_captured'] ?? null;
         if (is_numeric($fromDetail)) {
             return (int) round((float) $fromDetail);
+        }
+
+        return null;
+    }
+
+    /**
+     * Order id dari payload (BG-...) atau, jika kosong seperti banyak webhook mutasi Moota,
+     * lewat trx_id (PYM-...) yang sama dengan gateway_transaction_id booking kita.
+     *
+     * @param  array<string, mixed>  $detail
+     * @param  array<string, mixed>  $mutation
+     */
+    private function resolveBookingOrderId(array $detail, array $mutation): ?string
+    {
+        $rawOrder = $detail['order_id'] ?? null;
+        $fromPayload = is_string($rawOrder) ? trim($rawOrder) : '';
+        if ($fromPayload !== '' && str_starts_with($fromPayload, 'BG-')) {
+            return $fromPayload;
+        }
+
+        $fromText = $this->mootaExtractOrderIdBg($detail, $mutation);
+        if ($fromText !== null) {
+            return $fromText;
+        }
+
+        $trx = $this->mootaTrxFromMutation($detail, $mutation);
+        if ($trx === null) {
+            PaymentFlowLog::info('moota.settle.skip_no_order_or_trx', [
+                'raw_order_id' => is_string($rawOrder) ? $rawOrder : null,
+            ]);
+
+            return null;
+        }
+
+        /** @var BookingPayment|null $payment */
+        $payment = BookingPayment::query()
+            ->where('payment_type', 'bank_transfer_moota')
+            ->where('gateway_transaction_id', $trx)
+            ->where('status', 'pending')
+            ->first();
+
+        if ($payment === null) {
+            PaymentFlowLog::info('moota.settle.skip_trx_unknown', ['trx_id' => $trx]);
+
+            return null;
+        }
+
+        PaymentFlowLog::info('moota.settle.order_resolved_via_trx', [
+            'trx_id' => $trx,
+            'order_id' => $payment->order_id,
+        ]);
+
+        return $payment->order_id;
+    }
+
+    /**
+     * @param  array<string, mixed>  $detail
+     * @param  array<string, mixed>  $mutation
+     */
+    private function mootaTrxFromMutation(array $detail, array $mutation): ?string
+    {
+        foreach ([$detail['trx_id'] ?? null, $mutation['trx_id'] ?? null] as $candidate) {
+            if (is_string($candidate) && ($t = trim($candidate)) !== '') {
+                return $t;
+            }
+        }
+
+        $haystacks = [];
+        foreach (['note', 'description', 'unique_note'] as $k) {
+            foreach ([$detail[$k] ?? null, $mutation[$k] ?? null] as $text) {
+                if (is_string($text) && $text !== '') {
+                    $haystacks[] = $text;
+                }
+            }
+        }
+
+        $haystacks[] = json_encode($mutation, JSON_UNESCAPED_SLASHES | JSON_INVALID_UTF8_IGNORE) ?: '';
+
+        foreach ($haystacks as $haystack) {
+            if (! is_string($haystack) || $haystack === '') {
+                continue;
+            }
+
+            if (preg_match('/\b(PYM-[A-Za-z0-9\-]+)\b/', $haystack, $matches)) {
+                return $matches[1];
+            }
+        }
+
+        return null;
+    }
+
+    /**
+     * Kadang order_id ikut di catatan transfer / deskripsi mutasi (termasuk JSON bertingkat).
+     *
+     * @param  array<string, mixed>  $detail
+     * @param  array<string, mixed>  $mutation
+     */
+    private function mootaExtractOrderIdBg(array $detail, array $mutation): ?string
+    {
+        $haystacks = [];
+        foreach (['note', 'description', 'order_id'] as $k) {
+            foreach ([$detail[$k] ?? null, $mutation[$k] ?? null] as $text) {
+                if (is_string($text) && $text !== '') {
+                    $haystacks[] = $text;
+                }
+            }
+        }
+
+        $haystacks[] = json_encode($mutation, JSON_UNESCAPED_SLASHES | JSON_INVALID_UTF8_IGNORE) ?: '';
+
+        foreach ($haystacks as $haystack) {
+            if (! is_string($haystack) || $haystack === '') {
+                continue;
+            }
+
+            if (preg_match('/\b(BG-[A-Za-z0-9\-]+)\b/', $haystack, $matches)) {
+                return $matches[1];
+            }
         }
 
         return null;

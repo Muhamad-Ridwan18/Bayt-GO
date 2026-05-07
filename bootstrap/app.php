@@ -1,6 +1,7 @@
 <?php
 
 use App\Http\Middleware\AllowMootaWebhookIp;
+use App\Http\Middleware\EnsureCustomerOrMuthowif;
 use App\Http\Middleware\EnsureUserRole;
 use App\Http\Middleware\EnsureVerifiedMuthowif;
 use App\Http\Middleware\SetLocale;
@@ -46,6 +47,7 @@ return Application::configure(basePath: dirname(__DIR__))
         $middleware->alias([
             'moota.ip' => AllowMootaWebhookIp::class,
             'role' => EnsureUserRole::class,
+            'reporter' => EnsureCustomerOrMuthowif::class,
             'verified.muthowif' => EnsureVerifiedMuthowif::class,
         ]);
     })

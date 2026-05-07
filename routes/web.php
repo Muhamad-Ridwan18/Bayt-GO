@@ -6,6 +6,7 @@ use App\Http\Controllers\Admin\FinanceController;
 use App\Http\Controllers\Admin\LogsController;
 use App\Http\Controllers\Admin\MootaWebhookHistoriesLiveController;
 use App\Http\Controllers\Admin\MuthowifVerificationController;
+use App\Http\Controllers\Admin\SupportTicketsController;
 use App\Http\Controllers\Admin\UserManagementController;
 use App\Http\Controllers\Admin\WithdrawalsController;
 use App\Http\Controllers\BookingChatController;
@@ -21,6 +22,7 @@ use App\Http\Controllers\Muthowif\WithdrawController as MuthowifWithdrawControll
 use App\Http\Controllers\PaymentWebhookController;
 use App\Http\Controllers\ProfileController;
 use App\Http\Controllers\Public\MuthowifDirectoryController;
+use App\Http\Controllers\SupportTicketController;
 use App\Http\Middleware\EnsureUserRole;
 use App\Models\MuthowifBlockedDate;
 use App\Models\MuthowifProfile;
@@ -152,6 +154,14 @@ Route::middleware('auth')->group(function () {
 
     Route::get('/chat/conversations', [GlobalChatController::class, 'index'])->name('chat.conversations');
 
+    Route::middleware(['reporter'])->prefix('support')->name('support.')->group(function () {
+        Route::get('/', [SupportTicketController::class, 'index'])->name('index');
+        Route::get('/baru', [SupportTicketController::class, 'create'])->name('create');
+        Route::post('/', [SupportTicketController::class, 'store'])->name('store');
+        Route::get('/{ticket}', [SupportTicketController::class, 'show'])->name('show');
+        Route::post('/{ticket}/balas', [SupportTicketController::class, 'reply'])->name('reply');
+    });
+
     Route::middleware([EnsureUserRole::class.':customer'])->prefix('bookings')->name('bookings.')->group(function () {
         Route::get('live-index-fragment', [CustomerBookingController::class, 'indexLiveFragment'])->name('index.live-fragment');
         Route::get('/', [CustomerBookingController::class, 'index'])->name('index');
@@ -230,6 +240,11 @@ Route::middleware('auth')->group(function () {
         Route::post('muthowif/{profile}/approve', [MuthowifVerificationController::class, 'approve'])->name('muthowif.approve');
         Route::post('muthowif/{profile}/reject', [MuthowifVerificationController::class, 'reject'])->name('muthowif.reject');
         Route::get('muthowif/{profile}', [MuthowifVerificationController::class, 'show'])->name('muthowif.show');
+        Route::get('tiket', [SupportTicketsController::class, 'index'])->name('support-tickets.index');
+        Route::get('tiket/{ticket}', [SupportTicketsController::class, 'show'])->name('support-tickets.show');
+        Route::post('tiket/{ticket}/balas', [SupportTicketsController::class, 'reply'])->name('support-tickets.reply');
+        Route::patch('tiket/{ticket}', [SupportTicketsController::class, 'update'])->name('support-tickets.update');
+        Route::post('tiket/{ticket}/tugaskan-saya', [SupportTicketsController::class, 'assignSelf'])->name('support-tickets.assign_self');
     });
 });
 

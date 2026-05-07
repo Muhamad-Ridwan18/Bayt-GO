@@ -169,6 +169,12 @@
                 </span>
                 {{ __('dashboard_muthowif.nav_wallet') }}
             </a>
+            <a href="{{ route('support.index') }}" class="inline-flex snap-start shrink-0 items-center gap-1.5 rounded-lg border border-slate-200/90 bg-white px-2.5 py-1.5 text-xs font-semibold text-slate-800 shadow-sm transition hover:border-cyan-200 hover:bg-cyan-50/90 sm:px-3 sm:text-[13px]">
+                <span class="flex h-5 w-5 shrink-0 items-center justify-center rounded-md bg-cyan-100 text-cyan-800" aria-hidden="true">
+                    <svg class="h-3.5 w-3.5" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M12 9v3.75m9-.75a9 9 0 11-18 0 9 9 0 0118 0zm-9 3.75h.008v.008H12v-.008z" /></svg>
+                </span>
+                {{ __('dashboard_muthowif.nav_support') }}
+            </a>
             <a href="{{ route('profile.edit') }}" class="inline-flex snap-start shrink-0 items-center gap-1.5 rounded-lg border border-slate-200/90 bg-white px-2.5 py-1.5 text-xs font-semibold text-slate-800 shadow-sm transition hover:bg-slate-50 sm:px-3 sm:text-[13px]">
                 <span class="flex h-5 w-5 shrink-0 items-center justify-center rounded-md bg-slate-200 text-slate-700" aria-hidden="true">
                     <svg class="h-3.5 w-3.5" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-5.5-2.5a2.5 2.5 0 11-5 0 2.5 2.5 0 015 0zM10 12a5.5 5.5 0 00-4.9 3H14.9A5.5 5.5 0 0010 12z" clip-rule="evenodd" /></svg>

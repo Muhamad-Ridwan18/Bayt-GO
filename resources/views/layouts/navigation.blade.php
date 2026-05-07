@@ -44,6 +44,11 @@
                             {{ __('nav.my_bookings') }}
                         </x-nav-link>
                     @endif
+                    @if (Auth::user()->isCustomer() || Auth::user()->isMuthowif())
+                        <x-nav-link :href="route('support.index')" :active="request()->routeIs('support.*')">
+                            {{ __('nav.support_tickets') }}
+                        </x-nav-link>
+                    @endif
                     @if (Auth::user()->isAdmin())
                         <x-nav-link :href="route('admin.finance.index')" :active="request()->routeIs('admin.finance.*')">
                             {{ __('nav.finance') }}
@@ -65,6 +70,9 @@
                         </x-nav-link>
                         <x-nav-link :href="route('admin.users.index')" :active="request()->routeIs('admin.users.*')">
                             {{ __('nav.users') }}
+                        </x-nav-link>
+                        <x-nav-link :href="route('admin.support-tickets.index')" :active="request()->routeIs('admin.support-tickets.*')">
+                            {{ __('nav.support_tickets') }}
                         </x-nav-link>
                     @endif
                     @if (Auth::user()->isVerifiedMuthowif())
@@ -163,6 +171,11 @@
                     {{ __('nav.my_bookings') }}
                 </x-responsive-nav-link>
             @endif
+            @if (Auth::user()->isCustomer() || Auth::user()->isMuthowif())
+                <x-responsive-nav-link :href="route('support.index')" :active="request()->routeIs('support.*')">
+                    {{ __('nav.support_tickets') }}
+                </x-responsive-nav-link>
+            @endif
             @if (Auth::user()->isAdmin())
                 <x-responsive-nav-link :href="route('admin.finance.index')" :active="request()->routeIs('admin.finance.*')">
                     {{ __('nav.finance') }}
@@ -184,6 +197,9 @@
                 </x-responsive-nav-link>
                 <x-responsive-nav-link :href="route('admin.users.index')" :active="request()->routeIs('admin.users.*')">
                     {{ __('nav.users') }}
+                </x-responsive-nav-link>
+                <x-responsive-nav-link :href="route('admin.support-tickets.index')" :active="request()->routeIs('admin.support-tickets.*')">
+                    {{ __('nav.support_tickets') }}
                 </x-responsive-nav-link>
             @endif
             @if (Auth::user()->isVerifiedMuthowif())

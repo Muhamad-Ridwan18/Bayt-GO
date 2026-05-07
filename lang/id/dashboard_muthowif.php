@@ -56,6 +56,7 @@ return [
     'nav_services' => 'Layanan',
     'nav_time_off' => 'Jadwal libur',
     'nav_wallet' => 'Saldo',
+    'nav_support' => 'Bantuan',
     'nav_profile' => 'Akun',
     'section_summary' => 'Ringkasan',
     'section_summary_sub' => 'Saldo dan jumlah booking — ketuk kartu untuk lanjut.',

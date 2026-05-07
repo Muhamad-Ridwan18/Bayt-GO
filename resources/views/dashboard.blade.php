@@ -77,7 +77,7 @@
                             </div>
                         </div>
                     </div>
-                    <div class="grid grid-cols-1 gap-4 sm:grid-cols-3">
+                    <div class="grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-4">
                         <a href="{{ route('layanan.index') }}" class="group relative flex flex-col gap-4 overflow-hidden rounded-3xl border border-slate-200/80 bg-gradient-to-b from-white to-slate-50/90 p-6 shadow-sm shadow-slate-200/40 ring-1 ring-slate-100 transition-all duration-300 hover:-translate-y-1 hover:border-violet-200/80 hover:shadow-lg hover:shadow-violet-500/10 hover:ring-violet-100">
                             <div class="absolute -right-6 -top-6 h-24 w-24 rounded-full bg-violet-400/10 blur-2xl transition group-hover:bg-violet-400/20"></div>
                             <span class="relative flex h-14 w-14 items-center justify-center rounded-2xl bg-gradient-to-br from-violet-500 to-violet-700 text-white shadow-lg shadow-violet-500/25 ring-1 ring-white/20 transition group-hover:scale-105" aria-hidden="true">
@@ -117,6 +117,20 @@
                             </div>
                             <span class="relative inline-flex items-center gap-1 text-sm font-semibold text-slate-700 group-hover:text-slate-900">
                                 {{ __('dashboard.shortcut_profile_cta') }}
+                                <svg class="h-4 w-4 transition group-hover:translate-x-1" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true"><path fill-rule="evenodd" d="M3 10a.75.75 0 01.75-.75h10.638L10.23 5.29a.75.75 0 111.04-1.08l5.5 5.25a.75.75 0 010 1.08l-5.5 5.25a.75.75 0 11-1.04-1.08l4.158-3.96H3.75A.75.75 0 013 10z" clip-rule="evenodd" /></svg>
+                            </span>
+                        </a>
+                        <a href="{{ route('support.index') }}" class="group relative flex flex-col gap-4 overflow-hidden rounded-3xl border border-slate-200/80 bg-gradient-to-b from-white to-cyan-50/40 p-6 shadow-sm shadow-slate-200/40 ring-1 ring-slate-100 transition-all duration-300 hover:-translate-y-1 hover:border-cyan-200/90 hover:shadow-lg hover:shadow-cyan-500/10 hover:ring-cyan-100">
+                            <div class="absolute -right-6 -top-6 h-24 w-24 rounded-full bg-cyan-400/10 blur-2xl transition group-hover:bg-cyan-400/20"></div>
+                            <span class="relative flex h-14 w-14 items-center justify-center rounded-2xl bg-gradient-to-br from-cyan-500 to-teal-600 text-white shadow-lg shadow-cyan-500/25 ring-1 ring-white/20 transition group-hover:scale-105" aria-hidden="true">
+                                <svg class="h-7 w-7" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M12 9v3.75m9-.75a9 9 0 11-18 0 9 9 0 0118 0zm-9 3.75h.008v.008H12v-.008z" /></svg>
+                            </span>
+                            <div class="relative">
+                                <p class="font-semibold text-slate-900">{{ __('dashboard.shortcut_support_title') }}</p>
+                                <p class="mt-1 text-sm leading-relaxed text-slate-600">{{ __('dashboard.shortcut_support_desc') }}</p>
+                            </div>
+                            <span class="relative inline-flex items-center gap-1 text-sm font-semibold text-cyan-800 group-hover:text-cyan-900">
+                                {{ __('dashboard.shortcut_support_cta') }}
                                 <svg class="h-4 w-4 transition group-hover:translate-x-1" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true"><path fill-rule="evenodd" d="M3 10a.75.75 0 01.75-.75h10.638L10.23 5.29a.75.75 0 111.04-1.08l5.5 5.25a.75.75 0 010 1.08l-5.5 5.25a.75.75 0 11-1.04-1.08l4.158-3.96H3.75A.75.75 0 013 10z" clip-rule="evenodd" /></svg>
                             </span>
                         </a>
@@ -315,6 +329,12 @@
                                                 <svg class="h-5 w-5" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M15 19.128a9.38 9.38 0 002.625.372 9.337 9.337 0 004.121-.952 4.125 4.125 0 00-7.813-2.387M15 19.128v-.003c0-1.113-.285-2.16-.786-3.07M15 19.128v.106A12.318 12.318 0 018.624 21c-2.331 0-4.512-.645-6.374-1.766l-.001-.109a6.375 6.375 0 0111.964-3.07M12 6.375a3.375 3.375 0 11-6.75 0 3.375 3.375 0 016.75 0zm8.25 2.25a2.625 2.625 0 11-5.25 0 2.625 2.625 0 015.25 0z" /></svg>
                                             </span>
                                             <span class="text-xs font-semibold leading-tight">{{ __('dashboard.users') }}</span>
+                                        </a>
+                                        <a href="{{ route('admin.support-tickets.index') }}" class="group flex flex-col items-center gap-2 rounded-2xl border border-white/20 bg-white/5 px-3 py-4 text-center text-white transition hover:scale-[1.02] hover:bg-white/10">
+                                            <span class="flex h-11 w-11 items-center justify-center rounded-xl bg-teal-500/30 text-teal-100" aria-hidden="true">
+                                                <svg class="h-5 w-5" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M12 9v3.75m9-.75a9 9 0 11-18 0 9 9 0 0118 0zm-9 3.75h.008v.008H12v-.008z" /></svg>
+                                            </span>
+                                            <span class="text-xs font-semibold leading-tight">{{ __('nav.support_tickets') }}</span>
                                         </a>
                                         <a href="{{ route('admin.logs.index') }}" class="group col-span-2 flex flex-col items-center gap-2 rounded-2xl border border-white/20 bg-white/5 px-3 py-4 text-center text-white transition hover:scale-[1.01] hover:bg-white/10">
                                             <span class="flex h-11 w-11 items-center justify-center rounded-xl bg-slate-500/35 text-slate-100" aria-hidden="true">

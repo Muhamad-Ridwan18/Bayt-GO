@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Events\MootaWebhookRealtimeBroadcast;
 use App\Events\MootaWebhookRecorded;
 use App\Http\Middleware\AllowMootaWebhookIp;
 use App\Models\MootaWebhookHistory;
@@ -21,6 +22,12 @@ final class MootaWebhookController extends Controller
     {
         $rawBody = $request->getContent();
         $sourceIp = AllowMootaWebhookIp::resolveWebhookSourceIp($request) ?: (string) $request->ip();
+
+        Log::info('moota.webhook.request', [
+            'ip' => $sourceIp !== '' ? $sourceIp : null,
+            'bytes' => strlen($rawBody),
+            'hint' => 'Jika Anda bayar di Moota tapi tidak pernah ada baris ini, Moota tidak meng-POST ke URL webhook Anda (tunnel/URL salah, atau webhook belum dikirim sandbox).',
+        ]);
 
         $parsedPayload = null;
         $parseError = null;
@@ -57,10 +64,12 @@ final class MootaWebhookController extends Controller
             'parse_error' => $parseError,
         ]);
 
+        MootaWebhookRecorded::dispatch($history);
+
         try {
-            MootaWebhookRecorded::dispatch($history);
+            broadcast(new MootaWebhookRealtimeBroadcast($history));
         } catch (\Throwable $e) {
-            // ShouldBroadcastNow / Pusher gagal tidak boleh menghalangi 204 ke Moota (Reverb bisa mati di dev).
+            // Reverb / Pusher mati tidak boleh menghalangi 204 ke Moota.
             Log::warning('moota.webhook.broadcast_failed', [
                 'history_id' => $history->id,
                 'message' => $e->getMessage(),

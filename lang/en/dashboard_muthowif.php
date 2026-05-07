@@ -56,6 +56,7 @@ return [
     'nav_services' => 'Services',
     'nav_time_off' => 'Time off',
     'nav_wallet' => 'Wallet',
+    'nav_support' => 'Support',
     'nav_profile' => 'Account',
     'section_summary' => 'Summary',
     'section_summary_sub' => 'Balance and booking counts — tap a card for more.',

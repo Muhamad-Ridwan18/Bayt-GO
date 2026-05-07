@@ -36,4 +36,24 @@ return [
         'customer' => 'Jamaah',
         'muthowif' => 'Muthowif',
     ],
+    'support_ticket_category' => [
+        'bug' => 'Bug / masalah teknis',
+        'booking' => 'Booking',
+        'payment' => 'Pembayaran',
+        'account' => 'Akun & profil',
+        'suggestion' => 'Saran',
+        'other' => 'Lainnya',
+    ],
+    'support_ticket_priority' => [
+        'low' => 'Rendah',
+        'normal' => 'Normal',
+        'high' => 'Tinggi',
+    ],
+    'support_ticket_status' => [
+        'open' => 'Terbuka',
+        'in_progress' => 'Diproses',
+        'awaiting_customer' => 'Menunggu balasan Anda',
+        'resolved' => 'Selesai',
+        'closed' => 'Ditutup',
+    ],
 ];

@@ -35,6 +35,10 @@ final class AllowMootaWebhookIp
             abort(Response::HTTP_FORBIDDEN, 'Forbidden');
         }
 
+        Log::info('moota.webhook.ip_allowed', [
+            'resolved_ip' => $resolved,
+        ]);
+
         return $next($request);
     }
 

@@ -16,6 +16,7 @@ return [
     'services' => 'Services',
     'day_off' => 'Time off',
     'booking_requests' => 'Booking requests',
+    'support_tickets' => 'Support tickets',
     'contact_us' => 'Contact us',
     'lang_en' => 'English',
     'lang_id' => 'Indonesian',
