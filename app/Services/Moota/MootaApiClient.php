@@ -325,6 +325,20 @@ final class MootaApiClient
     }
 
     /**
+     * Semua `bank_id` dari GET /api/v2/bank` (untuk payload webhook; API mewajibkan kolom akun).
+     *
+     * @return list<string>
+     */
+    public function allBankAccountIdsFromApi(): array
+    {
+        $map = $this->bankAccountDetailsByIdMap();
+        $ids = array_keys($map);
+        sort($ids);
+
+        return array_values(array_unique($ids));
+    }
+
+    /**
      * @param  list<string>  $orderedAccountIds  Urutan sama dengan .env / UI (__0, __1, …).
      * @return array<int, array{name: string, description: string}>
      */

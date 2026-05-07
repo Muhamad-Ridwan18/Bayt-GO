@@ -17,7 +17,7 @@ class MootaRegisterWebhookCommand extends Command
     protected $signature = 'moota:register-webhook
                             {--url= : URL penuh endpoint (default: route webhooks.moota dari APP_URL)}
                             {--kinds=credit : Filter mutasi: credit|debit|both}
-                            {--scope=all : Rekening: all (kosongkan bank_account_id) atau config (pakai MOOTA_BANK_ACCOUNT_ID)}
+                            {--scope=config : Rekening: config (MOOTA_BANK_ACCOUNT_ID) atau all (semua rekening dari API /api/v2/bank)}
                             {--generate-secret : Buat secret_token acak; cetak baris MOOTA_WEBHOOK_SIGNING_SECRET untuk .env}
                             {--dry-run : Hanya tampilkan payload, tidak memanggil API}';
 
@@ -51,23 +51,30 @@ class MootaRegisterWebhookCommand extends Command
             return self::FAILURE;
         }
 
+        $dryRun = (bool) $this->option('dry-run');
+
         $scope = (string) $this->option('scope');
-        $bankAccountIdField = '';
+        /** @var list<string> $bankAccountIds */
+        $bankAccountIds = [];
         if ($scope === 'config') {
-            $ids = $client->bankAccountIds();
-            if ($ids === []) {
-                $this->error('scope=config membutuhkan MOOTA_BANK_ACCOUNT_ID di .env.');
+            $bankAccountIds = $client->bankAccountIds();
+            if ($bankAccountIds === []) {
+                $this->error('scope=config membutuhkan MOOTA_BANK_ACCOUNT_ID di .env (pisahkan koma/spasi jika lebih dari satu).');
 
                 return self::FAILURE;
             }
-            $bankAccountIdField = implode(',', $ids);
-        } elseif ($scope !== 'all') {
-            $this->error('Opsi --scope harus all atau config.');
+        } elseif ($scope === 'all') {
+            $bankAccountIds = $client->allBankAccountIdsFromApi();
+            if ($bankAccountIds === []) {
+                $this->error('scope=all: tidak ada rekening dari API Moota (GET /api/v2/bank). Tambahkan rekening di dashboard Moota, atau gunakan --scope=config dengan MOOTA_BANK_ACCOUNT_ID.');
+
+                return self::FAILURE;
+            }
+        } else {
+            $this->error('Opsi --scope harus config atau all.');
 
             return self::FAILURE;
         }
-
-        $dryRun = (bool) $this->option('dry-run');
 
         $secret = trim((string) config('services.moota.signing_secret', ''));
         if (! $dryRun && $secret === '') {
@@ -91,49 +98,70 @@ class MootaRegisterWebhookCommand extends Command
         $start = (int) config('services.moota.webhook_unique_start', 0);
         $end = (int) config('services.moota.webhook_unique_end', 999);
 
-        $payload = [
-            'url' => $targetUrl,
-            'bank_account_id' => $bankAccountIdField,
-            'kinds' => $kinds,
-            'secret_token' => $secret,
-            'start_unique_code' => $start,
-            'end_unique_code' => $end,
-        ];
-
         $this->line('URL webhook: <fg=cyan>'.$targetUrl.'</>');
         $this->line('Kinds: <fg=cyan>'.$kinds.'</>');
-        $this->line('bank_account_id: <fg=cyan>'.($bankAccountIdField === '' ? '(semua rekening di akun Moota)' : $bankAccountIdField).'</>');
+        $this->line('Rekening (satu webhook per ID): <fg=cyan>'.implode(', ', $bankAccountIds).'</>'.($scope === 'all' ? ' <fg=gray>(dari API)</>' : ' <fg=gray>(MOOTA_BANK_ACCOUNT_ID)</>'));
         $this->line('Filter kode unik: <fg=cyan>'.$start.' … '.$end.'</>');
 
-        if ($this->option('dry-run')) {
+        if ($dryRun) {
             $this->newLine();
-            $this->line('<fg=yellow>[dry-run]</> Payload: '.json_encode($payload, JSON_UNESCAPED_SLASHES | JSON_PRETTY_PRINT));
+            $this->line('<fg=yellow>[dry-run]</> Satu permintaan POST per rekening (bank_account_id tunggal):');
+            foreach ($bankAccountIds as $bankId) {
+                $payload = [
+                    'url' => $targetUrl,
+                    'bank_account_id' => $bankId,
+                    'kinds' => $kinds,
+                    'secret_token' => $secret,
+                    'start_unique_code' => $start,
+                    'end_unique_code' => $end,
+                ];
+                $this->line(json_encode($payload, JSON_UNESCAPED_SLASHES | JSON_PRETTY_PRINT));
+                $this->newLine();
+            }
 
             return self::SUCCESS;
         }
 
-        try {
-            $duplicates = $this->webhooksMatchingUrl($client, $targetUrl);
-            if ($duplicates !== []) {
-                $this->warn('Sudah ada webhook Moota dengan URL yang sama:');
-                foreach ($duplicates as $row) {
-                    $wid = is_string($row['webhook_id'] ?? null) ? $row['webhook_id'] : (string) ($row['token'] ?? $row['id'] ?? '?');
-                    $this->line(' • webhook_id: '.$wid.' | kinds: '.(string) ($row['kinds'] ?? '?'));
-                }
-                $this->newLine();
-                $this->info('Tidak membuat duplikasi. Hapus webhook lama di dashboard Moota bila perlu, lalu jalankan lagi.');
+        $created = 0;
+        $skipped = 0;
 
-                return self::SUCCESS;
+        foreach ($bankAccountIds as $bankId) {
+            $payload = [
+                'url' => $targetUrl,
+                'bank_account_id' => $bankId,
+                'kinds' => $kinds,
+                'secret_token' => $secret,
+                'start_unique_code' => $start,
+                'end_unique_code' => $end,
+            ];
+
+            $existing = $this->webhooksForUrlAndBankAccount($client, $targetUrl, $bankId);
+            if ($existing !== []) {
+                $row = $existing[0];
+                $wid = is_string($row['webhook_id'] ?? null) ? $row['webhook_id'] : (string) ($row['token'] ?? $row['id'] ?? '?');
+                $this->warn('Lewati '.$bankId.': sudah ada webhook untuk URL + akun ini (webhook_id: '.$wid.').');
+                $skipped++;
+
+                continue;
             }
 
-            $response = $client->createIntegrationWebhook($payload);
-            $this->newLine();
-            $this->info('Webhook berhasil didaftarkan di Moota.');
-            $this->line(json_encode($response, JSON_UNESCAPED_SLASHES | JSON_PRETTY_PRINT));
-        } catch (RuntimeException $e) {
-            $this->error($e->getMessage());
+            try {
+                $response = $client->createIntegrationWebhook($payload);
+                $this->info('Terdaftar: '.$bankId);
+                $this->line(json_encode($response, JSON_UNESCAPED_SLASHES | JSON_PRETTY_PRINT));
+                $created++;
+            } catch (RuntimeException $e) {
+                $this->error($bankId.': '.$e->getMessage());
 
-            return self::FAILURE;
+                return self::FAILURE;
+            }
+        }
+
+        if ($created === 0 && $skipped > 0) {
+            $this->newLine();
+            $this->info('Tidak ada webhook baru; semua rekening sudah punya webhook untuk URL ini.');
+
+            return self::SUCCESS;
         }
 
         $this->newLine();
@@ -143,9 +171,11 @@ class MootaRegisterWebhookCommand extends Command
     }
 
     /**
+     * Webhook yang sama URL **dan** akun bank (Moota tidak menerima beberapa ID sekaligus dalam satu POST).
+     *
      * @return list<array<string, mixed>>
      */
-    private function webhooksMatchingUrl(MootaApiClient $client, string $targetUrl): array
+    private function webhooksForUrlAndBankAccount(MootaApiClient $client, string $targetUrl, string $bankAccountId): array
     {
         $matches = [];
         $page = 1;
@@ -169,7 +199,8 @@ class MootaRegisterWebhookCommand extends Command
                     continue;
                 }
                 $u = isset($row['url']) && is_string($row['url']) ? $row['url'] : '';
-                if ($u === $targetUrl) {
+                $bid = isset($row['bank_account_id']) && is_string($row['bank_account_id']) ? trim($row['bank_account_id']) : '';
+                if ($u === $targetUrl && $bid === trim($bankAccountId)) {
                     $matches[] = $row;
                 }
             }
