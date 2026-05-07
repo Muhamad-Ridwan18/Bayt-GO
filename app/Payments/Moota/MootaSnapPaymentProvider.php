@@ -23,7 +23,7 @@ final class MootaSnapPaymentProvider implements SnapPaymentProviderInterface
         return $this->moota->isConfigured();
     }
 
-    public function createPaymentSession(BookingPayment $payment, ?string $method = null): SnapPaymentSession
+    public function createPaymentSession(BookingPayment $payment, ?string $method = null, ?string $mootaBankAccountId = null): SnapPaymentSession
     {
         if ($method !== 'bank_transfer_moota') {
             throw new RuntimeException(__('bookings.flash.method_not_supported'));
@@ -36,7 +36,11 @@ final class MootaSnapPaymentProvider implements SnapPaymentProviderInterface
         ]);
 
         try {
-            $result = $this->moota->createChargeForBookingPayment($payment);
+            $explicit = is_string($mootaBankAccountId) ? trim($mootaBankAccountId) : '';
+            $result = $this->moota->createChargeForBookingPayment(
+                $payment,
+                $explicit !== '' ? $explicit : null,
+            );
         } catch (RuntimeException $e) {
             PaymentFlowLog::warning('moota.provider.exception', ['message' => $e->getMessage()]);
 

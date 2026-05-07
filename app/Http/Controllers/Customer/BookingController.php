@@ -23,6 +23,7 @@ use App\Services\BookingCompletionService;
 use App\Services\BookingOrderCodeService;
 use App\Services\BookingPricingService;
 use App\Services\BookingRefundExecutor;
+use App\Services\Moota\MootaApiClient;
 use App\Support\BookingPostPayRules;
 use App\Support\BookingRefundFee;
 use App\Support\BookingSnapPaymentCatalog;
@@ -191,7 +192,7 @@ class BookingController extends Controller
         }
 
         $selectedMethod = (string) $request->query('method', '');
-        if ($selectedMethod !== '' && ! in_array($selectedMethod, BookingSnapPaymentCatalog::webMethods(), true)) {
+        if ($selectedMethod !== '' && ! in_array($selectedMethod, BookingSnapPaymentCatalog::webMethodsExpanded(), true)) {
             PaymentFlowLog::warning('web.payment.method_not_supported', ['booking_id' => $booking->getKey(), 'method' => $selectedMethod]);
 
             return redirect()
@@ -234,7 +235,8 @@ class BookingController extends Controller
                 'booking' => $booking,
                 'payment' => $payment->fresh(),
                 'selectedMethod' => $selectedMethod,
-                'methods' => BookingSnapPaymentCatalog::webMethods(),
+                'methods' => BookingSnapPaymentCatalog::webMethodsExpanded(),
+                'mootaBankAccountIds' => $this->mootaBankAccountIdsForPaymentView(),
                 'instructions' => null,
             ]);
         }
@@ -270,10 +272,28 @@ class BookingController extends Controller
             'booking_status' => $booking->status->value,
         ]);
 
+        $normalizedPay = BookingSnapPaymentCatalog::normalizeWebPaymentMethod($selectedMethod);
+
+        if (str_starts_with($selectedMethod, 'bank_transfer_moota__') && empty($normalizedPay['moota_bank_account_id'])) {
+            PaymentFlowLog::warning('web.payment.moota_bad_account_choice', ['booking_id' => $booking->getKey(), 'method' => $selectedMethod]);
+
+            return redirect()
+                ->route('bookings.payment', $booking)
+                ->with('error', __('bookings.flash.moota_invalid_account_choice'));
+        }
+
         $session = null;
 
         try {
-            $session = $provider->createPaymentSession($payment, $selectedMethod);
+            $mootaAccountIdRaw = $normalizedPay['moota_bank_account_id'] ?? null;
+            $mootaAccountForProvider = is_string($mootaAccountIdRaw) && $mootaAccountIdRaw !== ''
+                ? $mootaAccountIdRaw
+                : null;
+            $session = $provider->createPaymentSession(
+                $payment,
+                $normalizedPay['canonical'],
+                $mootaAccountForProvider,
+            );
 
             if ($session !== null) {
                 $update = [];
@@ -330,7 +350,8 @@ class BookingController extends Controller
             'booking' => $booking,
             'payment' => $payment->fresh(),
             'selectedMethod' => $selectedMethod,
-            'methods' => BookingSnapPaymentCatalog::webMethods(),
+            'methods' => BookingSnapPaymentCatalog::webMethodsExpanded(),
+            'mootaBankAccountIds' => $this->mootaBankAccountIdsForPaymentView(),
             'instructions' => $session?->instructions,
         ]);
     }
@@ -816,5 +837,15 @@ class BookingController extends Controller
         }
 
         return BookingRefundFee::snapshot($booking, $payment);
+    }
+
+    /** @return list<string> */
+    private function mootaBankAccountIdsForPaymentView(): array
+    {
+        if (BookingSnapPaymentCatalog::driver() !== 'moota') {
+            return [];
+        }
+
+        return app(MootaApiClient::class)->bankAccountIds();
     }
 }

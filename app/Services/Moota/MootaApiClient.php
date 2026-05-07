@@ -21,9 +21,63 @@ final class MootaApiClient
     {
         $email = trim((string) config('services.moota.api_email'));
         $password = (string) config('services.moota.api_password');
-        $account = trim((string) config('services.moota.bank_account_id'));
+        /** @var array<int, string> $accounts */
+        $accounts = config('services.moota.bank_account_ids', []);
 
-        return $email !== '' && $password !== '' && $account !== '';
+        return $email !== '' && $password !== '' && $accounts !== [];
+    }
+
+    /**
+     * Create Transaction Moota hanya menerima satu `bank_account_id` per request.
+     */
+    public function resolveBankAccountIdForCharge(): string
+    {
+        /** @var array<int, string> $ids */
+        $ids = config('services.moota.bank_account_ids', []);
+        $ids = array_values(array_filter(array_map(trim(...), $ids)));
+        if ($ids === []) {
+            return '';
+        }
+        if (count($ids) === 1) {
+            return $ids[0];
+        }
+
+        $mode = (string) config('services.moota.bank_account_pick', 'first');
+
+        return match ($mode) {
+            'round_robin', 'round-robin', 'roundrobin' => $this->pickBankAccountIdRoundRobin($ids),
+            default => $ids[0],
+        };
+    }
+
+    /**
+     * Daftar ID rekening Moota (unik, tak kosong).
+     *
+     * @return list<string>
+     */
+    public function bankAccountIds(): array
+    {
+        /** @var array<int, string> $ids */
+        $ids = config('services.moota.bank_account_ids', []);
+
+        return array_values(array_filter(array_map(trim(...), $ids)));
+    }
+
+    /**
+     * @param  non-empty-array<int, string>  $ids
+     */
+    private function pickBankAccountIdRoundRobin(array $ids): string
+    {
+        $cacheKey = 'moota:bank_account_rr';
+        $i = Cache::increment($cacheKey);
+        if ($i === false) {
+            Cache::put($cacheKey, 1, now()->addYear());
+            $i = 1;
+        }
+
+        $n = count($ids);
+
+        return $ids[($i - 1) % $n];
     }
 
     private function loginAndToken(): string

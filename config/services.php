@@ -89,8 +89,16 @@ return [
         'api_base_url' => rtrim((string) env('MOOTA_API_BASE_URL', 'https://api.moota.co'), '/'),
         'api_email' => (string) env('MOOTA_API_EMAIL', ''),
         'api_password' => (string) env('MOOTA_API_PASSWORD', ''),
-        /** ID rekening di Moota (sama dengan `account_id` / `bank_account_id` API). */
-        'bank_account_id' => (string) env('MOOTA_BANK_ACCOUNT_ID', ''),
+        /**
+         * Satu atau lebih ID rekening Moota (`bank_account_id` di Create Transaction). Pisahkan dengan koma/spasi.
+         * Setiap pembuatan transaksi hanya boleh mengirim satu ID; pilih lewat `bank_account_pick`.
+         */
+        'bank_account_ids' => array_values(array_filter(array_map(
+            'trim',
+            preg_split('/[\s,]+/', (string) env('MOOTA_BANK_ACCOUNT_ID', ''), -1, PREG_SPLIT_NO_EMPTY) ?: []
+        ))),
+        /** `first` | `round_robin` | `user` (pilih rekening di UI bila ada beberapa ID). */
+        'bank_account_pick' => strtolower(trim((string) env('MOOTA_BANK_ACCOUNT_PICK', 'first'))),
         'payment_expire_minutes' => (int) env('MOOTA_PAYMENT_EXPIRE_MINUTES', 1440),
         'token_cache_minutes' => (int) env('MOOTA_ACCESS_TOKEN_CACHE_MINUTES', 55),
     ],

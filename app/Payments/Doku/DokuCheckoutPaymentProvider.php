@@ -30,7 +30,7 @@ class DokuCheckoutPaymentProvider implements SnapPaymentProviderInterface
         return $this->checkout->isConfigured();
     }
 
-    public function createPaymentSession(BookingPayment $payment, ?string $method = null): SnapPaymentSession
+    public function createPaymentSession(BookingPayment $payment, ?string $method = null, ?string $mootaBankAccountId = null): SnapPaymentSession
     {
         if (! is_string($method) || $method === '') {
             throw new RuntimeException('Pilih metode pembayaran terlebih dahulu.');

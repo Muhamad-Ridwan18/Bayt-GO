@@ -14,9 +14,11 @@ interface SnapPaymentProviderInterface
     /**
      * Buat session pembayaran untuk booking tertentu.
      *
+     * @param  string|null  $mootaBankAccountId  Untuk driver Moota: salah satu ID dari {@see config('services.moota.bank_account_ids')}. Abaikan untuk provider lain.
+     *
      * @throws \RuntimeException
      */
-    public function createPaymentSession(BookingPayment $payment, ?string $method = null): SnapPaymentSession;
+    public function createPaymentSession(BookingPayment $payment, ?string $method = null, ?string $mootaBankAccountId = null): SnapPaymentSession;
 
     /**
      * Proses notification/webhook dari provider.
@@ -24,4 +26,3 @@ interface SnapPaymentProviderInterface
      */
     public function handleNotification(Request $request): Response;
 }
-

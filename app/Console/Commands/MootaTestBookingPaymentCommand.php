@@ -7,6 +7,7 @@ use App\Enums\PaymentStatus;
 use App\Models\BookingPayment;
 use App\Models\MuthowifBooking;
 use App\Payments\Moota\MootaSnapPaymentProvider;
+use App\Services\Moota\MootaApiClient;
 use App\Support\PlatformFee;
 use Illuminate\Console\Command;
 use Illuminate\Support\Facades\Http;
@@ -99,7 +100,9 @@ class MootaTestBookingPaymentCommand extends Command
         ]);
 
         try {
-            $session = $provider->createPaymentSession($payment, 'bank_transfer_moota');
+            $mootaIds = app(MootaApiClient::class)->bankAccountIds();
+            $mootaExplicit = \count($mootaIds) > 1 ? $mootaIds[0] : null;
+            $session = $provider->createPaymentSession($payment, 'bank_transfer_moota', $mootaExplicit);
         } catch (RuntimeException $e) {
             $this->error('Create transaction gagal: '.$e->getMessage());
 

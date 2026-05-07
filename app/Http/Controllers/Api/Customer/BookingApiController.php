@@ -13,6 +13,7 @@ use App\Services\BookingOrderCodeService;
 use App\Services\BookingPricingService;
 use App\Services\Doku\DokuDirectChargeService;
 use App\Services\Moota\MootaBookingChargeService;
+use App\Support\BookingSnapPaymentCatalog;
 use App\Support\PaymentFlowLog;
 use App\Support\PlatformFee;
 use Carbon\Carbon;
@@ -211,7 +212,7 @@ class BookingApiController extends Controller
     private function apiPaymentMethods(): array
     {
         return match (config('services.booking.payment_driver', 'doku')) {
-            'moota' => ['bank_transfer_moota'],
+            'moota' => BookingSnapPaymentCatalog::webMethodsExpanded(),
             default => self::DOKU_PAYMENT_METHODS,
         };
     }
@@ -277,6 +278,16 @@ class BookingApiController extends Controller
             return response()->json(['message' => 'Metode pembayaran tidak didukung'], 422);
         }
 
+        $mootaNormalizedForCharge = null;
+        if ($driver === 'moota') {
+            $mootaNormalizedForCharge = BookingSnapPaymentCatalog::normalizeWebPaymentMethod($method);
+            if (str_starts_with($method, 'bank_transfer_moota__') && empty($mootaNormalizedForCharge['moota_bank_account_id'])) {
+                PaymentFlowLog::warning('api.payment.moota_bad_account', ['booking_id' => $booking->getKey(), 'method' => $method]);
+
+                return response()->json(['message' => __('bookings.flash.moota_invalid_account_choice')], 422);
+            }
+        }
+
         $baseInt = (int) round($booking->resolvedAmountDue());
         if ($baseInt < 1) {
             PaymentFlowLog::warning('api.payment.invalid_total', ['booking_id' => $booking->getKey(), 'base_int' => $baseInt]);
@@ -316,7 +327,9 @@ class BookingApiController extends Controller
 
         try {
             if ($driver === 'moota') {
-                $result = $moota->createChargeForBookingPayment($payment);
+                $mootaAccountIdRaw = $mootaNormalizedForCharge['moota_bank_account_id'] ?? null;
+                $mootaExplicit = is_string($mootaAccountIdRaw) && $mootaAccountIdRaw !== '' ? trim($mootaAccountIdRaw) : null;
+                $result = $moota->createChargeForBookingPayment($payment, $mootaExplicit);
 
                 $payment->update([
                     'gateway_transaction_id' => $result['trx_id'],

@@ -4,6 +4,9 @@
     use Carbon\Carbon;
     use App\Support\PlatformFee;
 
+    /** @var list<string> $mootaBankAccountIds */
+    $mootaBankAccountIds = $mootaBankAccountIds ?? [];
+
     $isWaitingConfirmation = $selectedMethod !== '' && is_array($instructions);
     $split = PlatformFee::split((float) $booking->resolvedAmountDue());
     $customerPlatformFee = (float) ($split['customer_fee'] ?? 0.0);
@@ -103,6 +106,29 @@
             'enabled' => in_array('shopeepay', $methods, true),
         ],
     ];
+
+    $mootaExtras = [];
+    foreach ($methods as $mid) {
+        if (preg_match('/^bank_transfer_moota__(\d+)$/', (string) $mid, $mm)) {
+            $mi = (int) $mm[1];
+            $ref = $mootaBankAccountIds[$mi] ?? '';
+            $masked = $ref === '' ? '—' : (strlen($ref) > 14 ? substr($ref, 0, 6).'…'.substr($ref, -4) : $ref);
+            $mootaExtras[] = [
+                'id' => $mid,
+                'group' => 'moota',
+                'name' => __('bookings.payment.moota_account_title', ['n' => $mi + 1]),
+                'logo_path' => asset('images/payments/bank_transfer_moota.svg'),
+                'description' => __('bookings.payment.moota_account_masked', ['ref' => $masked]),
+                'enabled' => true,
+            ];
+        }
+    }
+    if ($mootaExtras !== []) {
+        $methodsUi = array_values(array_merge(
+            array_values(array_filter($methodsUi, static fn (array $row): bool => $row['id'] !== 'bank_transfer_moota')),
+            $mootaExtras
+        ));
+    }
 @endphp
 
 <x-app-layout>

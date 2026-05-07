@@ -14,6 +14,9 @@ return [
         'reschedule_submitted' => 'Pengajuan reschedule dikirim. Menunggu persetujuan muthowif.',
         'cancelled' => 'Booking dibatalkan.',
         'payment_tx_not_found' => 'Transaksi pembayaran tidak ditemukan untuk booking ini.',
+        'moota_bank_account_required' => 'Pilih salah satu rekening Moota untuk melanjutkan pembayaran.',
+        'moota_bank_account_invalid' => 'Tidak bisa menentukan rekening Moota yang valid untuk pembayaran ini.',
+        'moota_invalid_account_choice' => 'Pilihan rekening Moota tidak valid. Segarkan halaman dan pilih lagi.',
     ],
     'validation' => [
         'start_past' => 'Tanggal mulai tidak boleh sebelum hari ini.',
@@ -234,6 +237,8 @@ return [
             'name' => 'Transfer bank (Moota)',
             'description' => 'Buka halaman Moota; transfer sesuai nominal dan rekening yang ditampilkan.',
         ],
+        'moota_account_title' => 'Transfer bank (:n)',
+        'moota_account_masked' => 'Ref. rekening Moota: :ref',
         'moota_line_item' => 'Pembayaran booking',
         'moota_description' => 'BaytGo — booking :code',
         'moota_notification_wrong_route' => 'Gunakan POST /webhooks/moota untuk notifikasi Moota.',

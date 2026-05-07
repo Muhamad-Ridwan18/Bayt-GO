@@ -19,7 +19,7 @@ final class MootaBookingChargeService
     }
 
     /**
-     * @return array{
+     * @param  array{
      *   payment_url:string,
      *   trx_id:?string,
      *   expiry_time:?string,
@@ -27,7 +27,7 @@ final class MootaBookingChargeService
      *   payload:array<string,mixed>
      * }
      */
-    public function createChargeForBookingPayment(BookingPayment $payment): array
+    public function createChargeForBookingPayment(BookingPayment $payment, ?string $explicitMootaBankAccountId = null): array
     {
         if (! $this->client->isConfigured()) {
             throw new RuntimeException('Moota belum dikonfigurasi.');
@@ -70,7 +70,22 @@ final class MootaBookingChargeService
             'code' => (string) ($booking->booking_code ?? $booking->getKey()),
         ]);
 
-        $accountId = trim((string) config('services.moota.bank_account_id'));
+        $allowedAccounts = $this->client->bankAccountIds();
+        $pickMode = strtolower((string) config('services.moota.bank_account_pick', 'first'));
+
+        $explicit = is_string($explicitMootaBankAccountId) ? trim($explicitMootaBankAccountId) : '';
+
+        if ($explicit !== '' && in_array($explicit, $allowedAccounts, true)) {
+            $accountId = $explicit;
+        } elseif (count($allowedAccounts) > 1 && $pickMode === 'user') {
+            throw new RuntimeException(__('bookings.flash.moota_bank_account_required'));
+        } else {
+            $accountId = $this->client->resolveBankAccountIdForCharge();
+        }
+
+        if ($accountId === '') {
+            throw new RuntimeException(__('bookings.flash.moota_bank_account_invalid'));
+        }
         $expire = max(30, min(10080, (int) config('services.moota.payment_expire_minutes', 1440)));
 
         $redirectBack = Route::has('bookings.show')

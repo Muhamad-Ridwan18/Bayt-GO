@@ -14,6 +14,9 @@ return [
         'reschedule_submitted' => 'Reschedule request sent. Awaiting muthowif approval.',
         'cancelled' => 'Booking cancelled.',
         'payment_tx_not_found' => 'No payment transaction was found for this booking.',
+        'moota_bank_account_required' => 'Choose which Moota-connected account to use before paying.',
+        'moota_bank_account_invalid' => 'Could not resolve a valid Moota bank account for this payment.',
+        'moota_invalid_account_choice' => 'That Moota bank option is invalid. Refresh and choose again.',
     ],
     'validation' => [
         'start_past' => 'Start date cannot be before today.',
@@ -234,6 +237,8 @@ return [
             'name' => 'Bank transfer (Moota)',
             'description' => 'Open Moota\'s page and transfer the displayed amount to the shown account.',
         ],
+        'moota_account_title' => 'Bank transfer (:n)',
+        'moota_account_masked' => 'Moota account ref.: :ref',
         'moota_line_item' => 'Booking payment',
         'moota_description' => 'BaytGo — booking :code',
         'moota_notification_wrong_route' => 'Use POST /webhooks/moota for Moota notifications.',

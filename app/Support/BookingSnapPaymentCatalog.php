@@ -28,4 +28,49 @@ final class BookingSnapPaymentCatalog
             default => [...self::DOKU_METHODS],
         };
     }
+
+    /**
+     * Untuk Moota dengan beberapa rekening + {@see config('services.moota.bank_account_pick')} = user,
+     * metode dipecah jadi bank_transfer_moota__0, __1, … agar jamaah memilih rekening di UI.
+     *
+     * @return list<string>
+     */
+    public static function webMethodsExpanded(): array
+    {
+        $base = self::webMethods();
+        if (self::driver() !== 'moota') {
+            return $base;
+        }
+
+        /** @var array<int, string> $ids */
+        $ids = config('services.moota.bank_account_ids', []);
+        $ids = array_values(array_filter(array_map(trim(...), $ids)));
+        $pick = strtolower((string) config('services.moota.bank_account_pick', 'first'));
+        if (count($ids) <= 1 || $pick !== 'user') {
+            return $base;
+        }
+
+        return array_map(static fn (int $i): string => 'bank_transfer_moota__'.$i, array_keys($ids));
+    }
+
+    /**
+     * @return array{canonical: string, moota_bank_account_id: ?string}
+     */
+    public static function normalizeWebPaymentMethod(string $selected): array
+    {
+        if (! preg_match('/^bank_transfer_moota__(\d+)$/', $selected, $m)) {
+            return ['canonical' => $selected, 'moota_bank_account_id' => null];
+        }
+
+        /** @var array<int, string> $ids */
+        $ids = config('services.moota.bank_account_ids', []);
+        $ids = array_values(array_filter(array_map(trim(...), $ids)));
+        $idx = (int) $m[1];
+        $accountId = $ids[$idx] ?? null;
+
+        return [
+            'canonical' => 'bank_transfer_moota',
+            'moota_bank_account_id' => is_string($accountId) ? $accountId : null,
+        ];
+    }
 }

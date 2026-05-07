@@ -28,7 +28,7 @@ class MidtransSnapPaymentProvider implements SnapPaymentProviderInterface
         return $this->midtrans->isConfigured();
     }
 
-    public function createPaymentSession(BookingPayment $payment, ?string $method = null): SnapPaymentSession
+    public function createPaymentSession(BookingPayment $payment, ?string $method = null, ?string $mootaBankAccountId = null): SnapPaymentSession
     {
         // Use Snap API instead of Core API to get a redirect URL
         $session = $this->midtrans->createSnapSession($payment);
