@@ -162,8 +162,8 @@ final class ProcessMootaWebhookForBookingPayments
                         $payment = BookingPayment::query()
                             ->where('payment_type', 'like', 'bank_transfer_moota%')
                             ->where('gateway_transaction_id', $trx)
-                            ->whereIn('status', ['pending', 'cancelled'])
-                            ->orderByRaw("CASE WHEN status = 'pending' THEN 0 ELSE 1 END")
+                            ->whereIn('status', ['pending', 'cancelled', 'settlement', 'capture'])
+                            ->orderByRaw("CASE status WHEN 'pending' THEN 0 WHEN 'cancelled' THEN 1 WHEN 'settlement' THEN 2 WHEN 'capture' THEN 3 ELSE 4 END")
                             ->orderByDesc('id')
                             ->lockForUpdate()
                             ->first();
@@ -181,12 +181,29 @@ final class ProcessMootaWebhookForBookingPayments
                 }
 
                 if ($payment === null) {
+                    $resolvedOid = $this->tryResolveOrderIdByBookingCode($detail, $mutation, $incoming);
+                    if ($resolvedOid !== null) {
+                        $payment = BookingPayment::query()
+                            ->where('order_id', $resolvedOid)
+                            ->lockForUpdate()
+                            ->first();
+                        if ($payment !== null) {
+                            PaymentFlowLog::info('moota.settle.payment_found_via_booking_code_in_tx', [
+                                'history_id' => $historyId,
+                                'mutation_index' => $mutationIndex,
+                                'order_id_db' => $payment->order_id,
+                            ]);
+                        }
+                    }
+                }
+
+                if ($payment === null) {
                     PaymentFlowLog::warning('moota.settle.no_payment_row', [
                         'history_id' => $historyId,
                         'mutation_index' => $mutationIndex,
                         'order_id' => $orderId,
                         'trx_from_hook' => $trxFromHook,
-                        'hint' => 'Tidak ada booking_payments dengan order_id ini, dan tidak ada baris Moota dengan gateway_transaction_id = trx dari webhook. Cek DB / reset testing / charge baru.',
+                        'hint' => 'Tidak ada baris pembayaran (order_id / trx / kode BK-BYTG). Cek DB atau cocokkan booking_code + trx.',
                     ]);
 
                     return false;
@@ -217,12 +234,20 @@ final class ProcessMootaWebhookForBookingPayments
                 }
 
                 if ($payment->isSettled()) {
-                    PaymentFlowLog::info('moota.settle.skip_already_settled', [
-                        'order_id' => $orderId,
-                        'payment_status' => $payment->status,
-                    ]);
+                    $bookingQuick = MuthowifBooking::query()
+                        ->whereKey($payment->muthowif_booking_id)
+                        ->lockForUpdate()
+                        ->first();
+                    if ($bookingQuick !== null && $bookingQuick->payment_status === PaymentStatus::Paid) {
+                        PaymentFlowLog::info('moota.settle.skip_already_lunas', [
+                            'order_id' => $payment->order_id,
+                            'payment_status' => $payment->status,
+                            'booking_payment_status' => $bookingQuick->payment_status->value,
+                            'note' => 'Pembayaran sudah settlement/capture dan booking sudah Paid — tidak perlu proses ulang.',
+                        ]);
 
-                    return false;
+                        return false;
+                    }
                 }
 
                 $gatewayMeta = $payment->gateway_notification_payload ?? [];
@@ -577,14 +602,19 @@ final class ProcessMootaWebhookForBookingPayments
             return $fromText;
         }
 
+        $fromBookingCode = $this->tryResolveOrderIdByBookingCode($detail, $mutation, $incomingAmount);
+        if ($fromBookingCode !== null) {
+            return $fromBookingCode;
+        }
+
         $trx = $this->mootaTrxFromMutation($detail, $mutation);
         if ($trx !== null) {
             /** @var BookingPayment|null $payment */
             $payment = BookingPayment::query()
                 ->where('payment_type', 'like', 'bank_transfer_moota%')
                 ->where('gateway_transaction_id', $trx)
-                ->whereIn('status', ['pending', 'cancelled'])
-                ->orderByRaw("CASE WHEN status = 'pending' THEN 0 ELSE 1 END")
+                ->whereIn('status', ['pending', 'cancelled', 'settlement', 'capture'])
+                ->orderByRaw("CASE status WHEN 'pending' THEN 0 WHEN 'cancelled' THEN 1 WHEN 'settlement' THEN 2 WHEN 'capture' THEN 3 ELSE 4 END")
                 ->orderByDesc('id')
                 ->first();
 
@@ -610,6 +640,110 @@ final class ProcessMootaWebhookForBookingPayments
         PaymentFlowLog::info('moota.settle.skip_no_order_or_trx', [
             'raw_order_id' => $detail['order_id'] ?? null,
         ]);
+
+        return null;
+    }
+
+    /**
+     * Kode booking (BK-BYTG…) ikut di label item / deskripsi mutasi Moota.
+     *
+     * @return list<string>
+     */
+    private function extractBkBookingCodesFromMootaPayload(array $detail, array $mutation): array
+    {
+        $blob = json_encode([$mutation, $detail], JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES) ?: '';
+        if (preg_match_all('/\b(BK-BYTG[0-9]+)\b/', $blob, $m)) {
+            /** @var list<string> $codes */
+            $codes = array_values(array_unique($m[1]));
+
+            return $codes;
+        }
+
+        return [];
+    }
+
+    /**
+     * Cocokkan mutasi ke booking lewat {@see MuthowifBooking::$booking_code}, lalu ke baris pembayaran Moota.
+     */
+    private function tryResolveOrderIdByBookingCode(array $detail, array $mutation, ?int $incomingAmount): ?string
+    {
+        $trxHint = $this->mootaTrxFromMutation($detail, $mutation);
+
+        foreach ($this->extractBkBookingCodesFromMootaPayload($detail, $mutation) as $code) {
+            $booking = MuthowifBooking::query()->where('booking_code', $code)->first();
+            if ($booking === null) {
+                continue;
+            }
+
+            $bookingKey = $booking->getKey();
+
+            if (is_string($trxHint) && trim($trxHint) !== '') {
+                $p = BookingPayment::query()
+                    ->where('muthowif_booking_id', $bookingKey)
+                    ->where('payment_type', 'like', 'bank_transfer_moota%')
+                    ->where('gateway_transaction_id', trim($trxHint))
+                    ->orderByDesc('id')
+                    ->first();
+                if ($p !== null) {
+                    PaymentFlowLog::info('moota.settle.order_resolved_via_booking_code_trx', [
+                        'booking_code' => $code,
+                        'order_id' => $p->order_id,
+                    ]);
+
+                    return (string) $p->order_id;
+                }
+            }
+
+            if ($incomingAmount !== null && $incomingAmount > 0) {
+                $candidates = BookingPayment::query()
+                    ->where('muthowif_booking_id', $bookingKey)
+                    ->where('payment_type', 'like', 'bank_transfer_moota%')
+                    ->whereIn('status', ['pending', 'cancelled', 'settlement', 'capture'])
+                    ->orderByRaw("CASE status WHEN 'pending' THEN 0 WHEN 'cancelled' THEN 1 WHEN 'settlement' THEN 2 WHEN 'capture' THEN 3 ELSE 4 END")
+                    ->orderByDesc('id')
+                    ->get();
+                foreach ($candidates as $payment) {
+                    $exp = $this->expectedTransferAmount($payment, $detail);
+                    if ($exp === null) {
+                        continue;
+                    }
+                    if ($exp === $incomingAmount) {
+                        PaymentFlowLog::info('moota.settle.order_resolved_via_booking_code_amount', [
+                            'booking_code' => $code,
+                            'order_id' => $payment->order_id,
+                        ]);
+
+                        return (string) $payment->order_id;
+                    }
+                    if ($this->incomingMatchesExpectedMootaAmount($incomingAmount, $exp, $payment, $detail, $trxHint)) {
+                        PaymentFlowLog::info('moota.settle.order_resolved_via_booking_code_amount_detail', [
+                            'booking_code' => $code,
+                            'order_id' => $payment->order_id,
+                        ]);
+
+                        return (string) $payment->order_id;
+                    }
+                }
+            }
+
+            $fallback = BookingPayment::query()
+                ->where('muthowif_booking_id', $bookingKey)
+                ->where('payment_type', 'like', 'bank_transfer_moota%')
+                ->whereIn('status', ['pending', 'cancelled', 'settlement', 'capture'])
+                ->orderByRaw("CASE status WHEN 'pending' THEN 0 WHEN 'cancelled' THEN 1 WHEN 'settlement' THEN 2 WHEN 'capture' THEN 3 ELSE 4 END")
+                ->orderByDesc('id')
+                ->first();
+
+            if ($fallback !== null) {
+                PaymentFlowLog::info('moota.settle.order_resolved_via_booking_code_fallback', [
+                    'booking_code' => $code,
+                    'order_id' => $fallback->order_id,
+                    'payment_status' => $fallback->status,
+                ]);
+
+                return (string) $fallback->order_id;
+            }
+        }
 
         return null;
     }
