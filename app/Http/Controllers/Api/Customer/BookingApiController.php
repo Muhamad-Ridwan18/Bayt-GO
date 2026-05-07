@@ -331,12 +331,17 @@ class BookingApiController extends Controller
                 $mootaExplicit = is_string($mootaAccountIdRaw) && $mootaAccountIdRaw !== '' ? trim($mootaAccountIdRaw) : null;
                 $result = $moota->createChargeForBookingPayment($payment, $mootaExplicit);
 
+                $gatewayPayload = [
+                    'moota_create_transaction_response' => $result['payload'],
+                    'moota_chosen_bank_account_id' => $result['bank_account_id'],
+                ];
+                if ($result['moota_total'] !== null) {
+                    $gatewayPayload['moota_expected_transfer_total'] = $result['moota_total'];
+                }
+
                 $payment->update([
                     'gateway_transaction_id' => $result['trx_id'],
-                    'gateway_notification_payload' => [
-                        'moota_create_transaction_response' => $result['payload'],
-                        'moota_chosen_bank_account_id' => $result['bank_account_id'],
-                    ],
+                    'gateway_notification_payload' => $gatewayPayload,
                     'payment_type' => 'bank_transfer_moota',
                 ]);
 

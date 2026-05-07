@@ -155,7 +155,7 @@ final class ProcessMootaWebhookForBookingPayments
                     return false;
                 }
 
-                if ($incoming !== $expected) {
+                if (! $this->incomingMatchesExpectedMootaAmount($incoming, $expected, $payment, $detail, $trxFromHook)) {
                     Log::critical('Moota webhook: nominal transfer tidak cocok', [
                         'order_id' => $orderId,
                         'expected' => $expected,
@@ -256,13 +256,18 @@ final class ProcessMootaWebhookForBookingPayments
     }
 
     /**
-     * @param  array<string, mixed>  $detail
+     * Nominal transfer dari respons create-transaction (isi saat charge) atau dari payment_detail webhook.
      */
     private function expectedTransferAmount(BookingPayment $payment, array $detail): ?int
     {
         $payload = $payment->gateway_notification_payload ?? [];
         if (! is_array($payload)) {
             return null;
+        }
+
+        $explicit = $payload['moota_expected_transfer_total'] ?? null;
+        if (is_numeric($explicit)) {
+            return (int) round((float) $explicit);
         }
 
         $root = $payload['moota_create_transaction_response'] ?? null;
@@ -275,9 +280,11 @@ final class ProcessMootaWebhookForBookingPayments
             $data = $root;
         }
 
-        $total = data_get($data, 'total');
-        if (is_numeric($total)) {
-            return (int) round((float) $total);
+        foreach (['total', 'amount', 'grand_total'] as $key) {
+            $v = data_get($data, $key);
+            if (is_numeric($v)) {
+                return (int) round((float) $v);
+            }
         }
 
         $fromDetail = $detail['total'] ?? $detail['amount_captured'] ?? null;
@@ -286,6 +293,47 @@ final class ProcessMootaWebhookForBookingPayments
         }
 
         return null;
+    }
+
+    /**
+     * Mutasi bank memakai total final (termasuk kode unik Moota); metadata lama kadang hanya punya nominal dasar.
+     * Bila trx_id sama dan payment_detail dari webhook menyatakan nominal = mutasi, anggap sah.
+     */
+    private function incomingMatchesExpectedMootaAmount(int $incoming, int $expected, BookingPayment $payment, array $detail, ?string $trxFromHook): bool
+    {
+        if ($incoming === $expected) {
+            return true;
+        }
+
+        if ($this->webhookPaymentDetailConfirmsBankAmount($payment, $incoming, $detail, $trxFromHook)) {
+            PaymentFlowLog::info('moota.settle.amount_ok_via_payment_detail', [
+                'order_id' => $payment->order_id,
+                'incoming' => $incoming,
+                'metadata_expected' => $expected,
+            ]);
+
+            return true;
+        }
+
+        return false;
+    }
+
+    private function webhookPaymentDetailConfirmsBankAmount(BookingPayment $payment, int $incoming, array $detail, ?string $trxFromHook): bool
+    {
+        $hookTrx = is_string($trxFromHook) ? trim($trxFromHook) : '';
+        $storedTrx = is_string($payment->gateway_transaction_id) ? trim($payment->gateway_transaction_id) : '';
+        if ($hookTrx === '' || $storedTrx === '' || $hookTrx !== $storedTrx) {
+            return false;
+        }
+
+        foreach (['total', 'amount_captured'] as $key) {
+            $v = $detail[$key] ?? null;
+            if (is_numeric($v) && (int) round((float) $v) === $incoming) {
+                return true;
+            }
+        }
+
+        return false;
     }
 
     /**
