@@ -24,7 +24,7 @@ class RegisterOtpController extends Controller
         }
 
         $request->validate([
-            'phone' => ['required', 'string', 'min:10', 'max:20'],
+            'phone' => ['required', 'string', 'min:8', 'max:24'],
             'role' => ['required', Rule::in(['customer', 'muthowif'])],
         ]);
 
@@ -55,7 +55,7 @@ class RegisterOtpController extends Controller
         ]);
 
         $request->validate([
-            'phone' => ['required', 'string', 'min:10', 'max:20'],
+            'phone' => ['required', 'string', 'min:8', 'max:24'],
             'otp' => ['required', 'string', 'size:6', 'regex:/^\d{6}$/'],
         ]);
 

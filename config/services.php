@@ -35,6 +35,14 @@ return [
         ],
     ],
 
+    /*
+    | ISO 3166-1 alpha-2: dipakai saat pengguna tidak menulis +kode negara (nomor format lokal/domestik).
+    | Contoh ID → 0812… dikenali sebagai Indonesia; untuk nomor luar negeri lebih aman tulis lengkap seperti +6591234567.
+    */
+    'phone' => [
+        'default_region' => env('PHONE_DEFAULT_REGION', 'ID'),
+    ],
+
     'fonnte' => [
         'token' => env('FONNTE_TOKEN'),
         'url' => env('FONNTE_API_URL', 'https://api.fonnte.com/send'),

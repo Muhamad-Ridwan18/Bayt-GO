@@ -2,7 +2,7 @@
 
 return [
     'title' => 'WhatsApp verification',
-    'hint' => 'An OTP code is sent to the WhatsApp number above. Do not share the code with anyone.',
+    'hint' => 'An OTP code is sent to the WhatsApp number above. Do not share the code with anyone. If your number is outside the app’s default country, use international format with +country code.',
     'send' => 'Send OTP code',
     'sending' => 'Sending…',
     'wait' => 'Wait :n s',

@@ -5,12 +5,12 @@ namespace App\Http\Controllers\Admin;
 use App\Enums\MuthowifVerificationStatus;
 use App\Http\Controllers\Controller;
 use App\Models\MuthowifProfile;
-use Illuminate\Support\Facades\DB;
 use App\Models\MuthowifSupportingDocument;
 use App\Services\FonnteService;
-use App\Support\PhoneNumber;
+use App\Support\IntlPhone;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\View\View;
@@ -89,15 +89,19 @@ class MuthowifVerificationController extends Controller
         ]);
 
         $waFlash = null;
-        $target = PhoneNumber::forFonnte($profile->phone);
+        $fonnteDial = IntlPhone::fonnteDial($profile->phone);
         $token = config('services.fonnte.token');
-        if ($target !== null && filled($token)) {
+        if ($fonnteDial !== null && filled($token)) {
             $appName = config('app.name', 'BaytGo');
             $name = $profile->user->name;
             $message = "Halo *{$name}*,\n\nPendaftaran muthowif Anda di *{$appName}* telah *disetujui*.\n\nAnda sekarang dapat masuk ke akun menggunakan email terdaftar.\n\nTerima kasih.";
 
             try {
-                $this->fonnte->sendText($target, $message);
+                $this->fonnte->sendText(
+                    $fonnteDial['target'],
+                    $message,
+                    $fonnteDial['country_calling_code'],
+                );
                 $waFlash = ' Notifikasi WhatsApp terkirim.';
             } catch (Throwable $e) {
                 Log::warning('WhatsApp verifikasi muthowif gagal', [
@@ -106,7 +110,7 @@ class MuthowifVerificationController extends Controller
                 ]);
                 $waFlash = ' Notifikasi WhatsApp gagal dikirim; cek log atau Fonnte.';
             }
-        } elseif ($target === null) {
+        } elseif ($fonnteDial === null) {
             $waFlash = ' Nomor WhatsApp tidak valid — notifikasi WA dilewati.';
         } elseif (! filled($token)) {
             $waFlash = ' FONNTE_TOKEN kosong — notifikasi WA dilewati.';

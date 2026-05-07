@@ -5,6 +5,7 @@ namespace App\Http\Controllers\Auth;
 use App\Http\Controllers\Controller;
 use App\Models\User;
 use App\Services\PasswordResetOtpService;
+use App\Support\IntlPhone;
 use Illuminate\Auth\Events\PasswordReset;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
@@ -14,7 +15,6 @@ use Illuminate\Support\Str;
 use Illuminate\Validation\Rules;
 use Illuminate\Validation\ValidationException;
 use Illuminate\View\View;
-use App\Support\PhoneNumber;
 
 class NewPasswordController extends Controller
 {
@@ -64,7 +64,7 @@ class NewPasswordController extends Controller
             if ($suffix !== false && $suffix !== '') {
                 $candidates = User::query()->where('phone', 'like', '%'.$suffix)->limit(50)->get(['id', 'phone']);
                 foreach ($candidates as $candidate) {
-                    if (PhoneNumber::normalize($candidate->phone) === $normalizedPhone) {
+                    if (IntlPhone::normalize($candidate->phone) === $normalizedPhone) {
                         $user = $candidate;
                         break;
                     }

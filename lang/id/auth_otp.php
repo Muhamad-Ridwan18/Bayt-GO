@@ -2,7 +2,7 @@
 
 return [
     'title' => 'Verifikasi WhatsApp',
-    'hint' => 'Kode OTP dikirim ke nomor WhatsApp di atas. Jangan bagikan kode kepada siapa pun.',
+    'hint' => 'Kode OTP dikirim ke nomor WhatsApp di atas. Jangan bagikan kode kepada siapa pun. Di luar negara default aplikasi, tulis nomor lengkap dengan +kode negara.',
     'send' => 'Kirim kode OTP',
     'sending' => 'Mengirim…',
     'wait' => 'Tunggu :n d',

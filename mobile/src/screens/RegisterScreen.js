@@ -96,7 +96,7 @@ export default function RegisterScreen({ navigation }) {
   };
 
   const handleSendOtp = async () => {
-    if (phone.length < 10) {
+    if (phone.length < 8) {
       Alert.alert('Perhatian', 'Masukkan nomor WhatsApp yang valid.');
       return;
     }

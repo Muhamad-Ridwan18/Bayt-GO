@@ -3,7 +3,7 @@
 namespace App\Services;
 
 use App\Models\User;
-use App\Support\PhoneNumber;
+use App\Support\IntlPhone;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\RateLimiter;
 use Illuminate\Validation\ValidationException;
@@ -41,10 +41,10 @@ class PasswordResetOtpService
      */
     public function send(string $phoneInput): array
     {
-        $normalized = PhoneNumber::normalize($phoneInput);
-        if ($normalized === null || strlen($normalized) < 10 || strlen($normalized) > 15) {
+        $normalized = IntlPhone::normalize($phoneInput);
+        if ($normalized === null || strlen($normalized) < 8 || strlen($normalized) > 15) {
             throw ValidationException::withMessages([
-                'phone' => ['Format nomor WhatsApp tidak valid.'],
+                'phone' => ['Format nomor WhatsApp tidak valid. Gunakan +kode negara dan nomor lengkap, atau sesuai PHONE_DEFAULT_REGION.'],
             ]);
         }
 
@@ -76,8 +76,8 @@ class PasswordResetOtpService
         Cache::put($this->cacheResetPhoneKey($resetToken), $normalized, now()->addSeconds(self::RESET_TOKEN_TTL_SECONDS));
         Cache::forget($this->cacheAttemptsKey($normalized));
 
-        $target = PhoneNumber::forFonnte($normalized);
-        if (! is_string($target) || $target === '') {
+        $fonnteDial = IntlPhone::fonnteDial('+'.$normalized);
+        if ($fonnteDial === null) {
             throw ValidationException::withMessages([
                 'phone' => ['Format nomor WhatsApp tidak valid.'],
             ]);
@@ -87,7 +87,11 @@ class PasswordResetOtpService
         $message = "Kode reset password {$appName}: *{$otp}*\n\nJangan bagikan kode ini kepada siapa pun. Berlaku 10 menit.";
 
         try {
-            $this->fonnte->sendText($target, $message);
+            $this->fonnte->sendText(
+                $fonnteDial['target'],
+                $message,
+                $fonnteDial['country_calling_code'],
+            );
         } catch (RuntimeException $e) {
             Cache::forget($this->cacheCodeKey($normalized));
             Cache::forget($this->cacheResetPhoneKey($resetToken));
@@ -111,12 +115,12 @@ class PasswordResetOtpService
     public function consumeAndValidate(string $resetToken, string $otp): string
     {
         $mappedPhone = Cache::get($this->cacheResetPhoneKey($resetToken));
-        if (! is_string($mappedPhone) || $mappedPhone === '' || PhoneNumber::normalize($mappedPhone) === null) {
+        if (! is_string($mappedPhone) || $mappedPhone === '' || IntlPhone::normalize($mappedPhone) === null) {
             throw ValidationException::withMessages([
                 'token' => ['Sesi reset tidak valid atau kedaluwarsa.'],
             ]);
         }
-        $normalized = (string) PhoneNumber::normalize($mappedPhone);
+        $normalized = (string) IntlPhone::normalize($mappedPhone);
 
         $stored = Cache::get($this->cacheCodeKey($normalized));
         if ($stored === null || ! is_string($stored)) {
@@ -203,7 +207,7 @@ class PasswordResetOtpService
             ->get(['id', 'phone']);
 
         foreach ($candidates as $candidate) {
-            if (PhoneNumber::normalize($candidate->phone) === $normalized) {
+            if (IntlPhone::normalize($candidate->phone) === $normalized) {
                 return $candidate;
             }
         }

@@ -274,7 +274,7 @@
                     if (!this.otpEnabled) return;
                     this.otpFeedback = '';
                     const phone = this.phoneValue();
-                    if (phone.length < 10) {
+                    if (phone.length < 8) {
                         this.otpFeedback = this.otpJs.phoneRequired;
                         return;
                     }

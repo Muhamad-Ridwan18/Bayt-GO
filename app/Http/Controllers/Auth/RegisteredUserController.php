@@ -9,7 +9,7 @@ use App\Http\Controllers\Controller;
 use App\Models\MuthowifProfile;
 use App\Models\User;
 use App\Services\RegistrationOtpService;
-use App\Support\PhoneNumber;
+use App\Support\IntlPhone;
 use Illuminate\Auth\Events\Registered;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
@@ -35,7 +35,7 @@ class RegisteredUserController extends Controller
         if ($otpEnabled && is_string($phoneVerifiedNormalized) && $phoneVerifiedNormalized !== '') {
             $oldPhone = (string) old('phone', '');
             if ($oldPhone !== '') {
-                $phoneVerifiedInitial = PhoneNumber::normalize($oldPhone) === $phoneVerifiedNormalized;
+                $phoneVerifiedInitial = IntlPhone::normalize($oldPhone) === $phoneVerifiedNormalized;
             }
         }
 
@@ -56,7 +56,7 @@ class RegisteredUserController extends Controller
             'password' => ['required', 'confirmed', Rules\Password::defaults()],
             'role' => ['required', Rule::enum(UserRole::class)->only([UserRole::Customer, UserRole::Muthowif])],
             'customer_type' => ['required_if:role,customer', 'nullable', Rule::enum(CustomerType::class)],
-            'phone' => ['required_if:role,customer', 'required_if:role,muthowif', 'nullable', 'string', 'min:10', 'max:20'],
+            'phone' => ['required_if:role,customer', 'required_if:role,muthowif', 'nullable', 'string', 'min:8', 'max:24'],
             'address' => ['required_if:role,customer', 'required_if:role,muthowif', 'nullable', 'string', 'max:2000'],
             'ppui_number' => ['required_if:customer_type,company', 'nullable', 'string', 'max:64'],
             'nik' => ['required_if:role,muthowif', 'nullable', 'string', 'size:16', 'regex:/^\d{16}$/'],

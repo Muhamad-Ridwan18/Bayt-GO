@@ -10,7 +10,10 @@ use RuntimeException;
 
 class FonnteService
 {
-    public function sendText(string $target, string $message): void
+    /**
+     * @param  string|null  $countryCallingCode  Kode negara pemanggil (digit), mis. 62, 1, 44. Null = pakai FONNTE_COUNTRY_CODE (.env).
+     */
+    public function sendText(string $target, string $message, ?string $countryCallingCode = null): void
     {
         $token = config('services.fonnte.token');
         if ($token === null || $token === '') {
@@ -18,6 +21,10 @@ class FonnteService
         }
 
         $url = config('services.fonnte.url', 'https://api.fonnte.com/send');
+
+        $cc = $countryCallingCode !== null && $countryCallingCode !== ''
+            ? $countryCallingCode
+            : config('services.fonnte.country_code', '62');
 
         try {
             /** @var Response $response */
@@ -29,7 +36,7 @@ class FonnteService
                 ->post($url, [
                     'target' => $target,
                     'message' => $message,
-                    'countryCode' => config('services.fonnte.country_code', '62'),
+                    'countryCode' => $cc,
                 ]);
         } catch (ConnectionException $e) {
             Log::warning('Fonnte connection failed', ['exception' => $e->getMessage()]);
@@ -57,7 +64,10 @@ class FonnteService
      *
      * @see https://docs.fonnte.com/api-send-message/
      */
-    public function sendMessageWithPublicFileUrl(string $target, string $message, string $publicFileUrl, ?string $filename = null): void
+    /**
+     * @param  string|null  $countryCallingCode  Lihat {@see sendText()}.
+     */
+    public function sendMessageWithPublicFileUrl(string $target, string $message, string $publicFileUrl, ?string $filename = null, ?string $countryCallingCode = null): void
     {
         $token = config('services.fonnte.token');
         if ($token === null || $token === '') {
@@ -66,11 +76,15 @@ class FonnteService
 
         $url = config('services.fonnte.url', 'https://api.fonnte.com/send');
 
+        $cc = $countryCallingCode !== null && $countryCallingCode !== ''
+            ? $countryCallingCode
+            : config('services.fonnte.country_code', '62');
+
         $payload = [
             'target' => $target,
             'message' => $message,
             'url' => $publicFileUrl,
-            'countryCode' => config('services.fonnte.country_code', '62'),
+            'countryCode' => $cc,
         ];
 
         if ($filename !== null && $filename !== '') {

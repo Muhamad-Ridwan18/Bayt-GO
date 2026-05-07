@@ -7,7 +7,7 @@ use App\Models\BookingRescheduleRequest;
 use App\Models\MuthowifBooking;
 use App\Models\MuthowifWithdrawal;
 use App\Support\IndonesianNumber;
-use App\Support\PhoneNumber;
+use App\Support\IntlPhone;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Storage;
 use RuntimeException;
@@ -33,14 +33,14 @@ class MuthowifBookingWhatsAppNotifier
             return;
         }
 
-        $target = $this->resolveTarget($profile->phone, $profile->id, $booking->id);
-        if ($target === null) {
+        $fonnteDial = $this->resolveFonnteDial($profile->phone, $profile->id, $booking->id);
+        if ($fonnteDial === null) {
             return;
         }
 
         $locale = $this->localeForUser($profile->user?->locale);
 
-        $this->withLocale($locale, function () use ($booking, $target, $locale): void {
+        $this->withLocale($locale, function () use ($booking, $fonnteDial, $locale): void {
             $customerName = $booking->customer?->name ?? __('whatsapp.fallback_pilgrim', [], $locale);
             $start = $booking->starts_on->format('d/m/Y');
             $end = $booking->ends_on->format('d/m/Y');
@@ -79,7 +79,7 @@ class MuthowifBookingWhatsAppNotifier
             $lines[] = __('whatsapp.muthowif.new_booking.open_panel', [], $locale);
             $lines[] = $url;
 
-            $this->sendToTarget($target, implode("\n", $lines), $booking->id);
+            $this->sendToTarget($fonnteDial, implode("\n", $lines), $booking->id);
         });
     }
 
@@ -98,14 +98,14 @@ class MuthowifBookingWhatsAppNotifier
             return;
         }
 
-        $target = $this->resolveTarget($profile->phone, $profile->id, $booking->id);
-        if ($target === null) {
+        $fonnteDial = $this->resolveFonnteDial($profile->phone, $profile->id, $booking->id);
+        if ($fonnteDial === null) {
             return;
         }
 
         $locale = $this->localeForUser($profile->user?->locale);
 
-        $this->withLocale($locale, function () use ($booking, $target, $locale): void {
+        $this->withLocale($locale, function () use ($booking, $fonnteDial, $locale): void {
             $customerName = $booking->customer?->name ?? __('whatsapp.fallback_pilgrim', [], $locale);
             $start = $booking->starts_on->format('d/m/Y');
             $end = $booking->ends_on->format('d/m/Y');
@@ -130,7 +130,7 @@ class MuthowifBookingWhatsAppNotifier
             $lines[] = __('whatsapp.muthowif.payment_settled.open', [], $locale);
             $lines[] = $url;
 
-            $this->sendToTarget($target, implode("\n", $lines), $booking->id);
+            $this->sendToTarget($fonnteDial, implode("\n", $lines), $booking->id);
         });
     }
 
@@ -156,8 +156,8 @@ class MuthowifBookingWhatsAppNotifier
             return;
         }
 
-        $target = PhoneNumber::forFonnte($customer->phone);
-        if ($target === null || $target === '') {
+        $fonnteDial = IntlPhone::fonnteDial($customer->phone);
+        if ($fonnteDial === null) {
             Log::warning('WhatsApp notify customer skipped: nomor customer kosong atau tidak valid.', [
                 'customer_id' => $customer->id,
                 'booking_id' => $booking->id,
@@ -168,7 +168,7 @@ class MuthowifBookingWhatsAppNotifier
 
         $locale = $this->localeForUser($customer->locale);
 
-        $this->withLocale($locale, function () use ($booking, $target, $locale): void {
+        $this->withLocale($locale, function () use ($booking, $fonnteDial, $locale): void {
             $muthowifName = $booking->muthowifProfile?->user?->name ?? __('whatsapp.fallback_muthowif', [], $locale);
             $start = $booking->starts_on->format('d/m/Y');
             $end = $booking->ends_on->format('d/m/Y');
@@ -193,7 +193,7 @@ class MuthowifBookingWhatsAppNotifier
             $lines[] = __('whatsapp.customer.approved.pay_at', [], $locale);
             $lines[] = $url;
 
-            $this->sendToTarget($target, implode("\n", $lines), $booking->id);
+            $this->sendToTarget($fonnteDial, implode("\n", $lines), $booking->id);
         });
     }
 
@@ -208,14 +208,14 @@ class MuthowifBookingWhatsAppNotifier
             return;
         }
 
-        $target = $this->resolveTarget($profile->phone, $profile->id, $booking->id);
-        if ($target === null) {
+        $fonnteDial = $this->resolveFonnteDial($profile->phone, $profile->id, $booking->id);
+        if ($fonnteDial === null) {
             return;
         }
 
         $locale = $this->localeForUser($profile->user?->locale);
 
-        $this->withLocale($locale, function () use ($booking, $rescheduleRequest, $target, $locale): void {
+        $this->withLocale($locale, function () use ($booking, $rescheduleRequest, $fonnteDial, $locale): void {
             $customerName = $booking->customer?->name ?? __('whatsapp.fallback_pilgrim', [], $locale);
             $prevStart = $rescheduleRequest->previous_starts_on->format('d/m/Y');
             $prevEnd = $rescheduleRequest->previous_ends_on->format('d/m/Y');
@@ -244,7 +244,7 @@ class MuthowifBookingWhatsAppNotifier
             $lines[] = __('whatsapp.muthowif.reschedule_requested.open_detail', [], $locale);
             $lines[] = $url;
 
-            $this->sendToTarget($target, implode("\n", $lines), $booking->id);
+            $this->sendToTarget($fonnteDial, implode("\n", $lines), $booking->id);
         });
     }
 
@@ -266,8 +266,8 @@ class MuthowifBookingWhatsAppNotifier
             return;
         }
 
-        $target = PhoneNumber::forFonnte($customer->phone);
-        if ($target === null || $target === '') {
+        $fonnteDial = IntlPhone::fonnteDial($customer->phone);
+        if ($fonnteDial === null) {
             Log::warning('WhatsApp reschedule submitted skipped: nomor customer kosong atau tidak valid.', [
                 'customer_id' => $customer->id,
                 'booking_id' => $booking->id,
@@ -278,7 +278,7 @@ class MuthowifBookingWhatsAppNotifier
 
         $locale = $this->localeForUser($customer->locale);
 
-        $this->withLocale($locale, function () use ($booking, $rescheduleRequest, $target, $locale): void {
+        $this->withLocale($locale, function () use ($booking, $rescheduleRequest, $fonnteDial, $locale): void {
             $muthowifName = $booking->muthowifProfile?->user?->name ?? __('whatsapp.fallback_muthowif', [], $locale);
             $newStart = $rescheduleRequest->new_starts_on->format('d/m/Y');
             $newEnd = $rescheduleRequest->new_ends_on->format('d/m/Y');
@@ -304,7 +304,7 @@ class MuthowifBookingWhatsAppNotifier
             $lines[] = __('whatsapp.customer.reschedule_submitted.view_detail', [], $locale);
             $lines[] = $url;
 
-            $this->sendToTarget($target, implode("\n", $lines), $booking->id);
+            $this->sendToTarget($fonnteDial, implode("\n", $lines), $booking->id);
         });
     }
 
@@ -326,8 +326,8 @@ class MuthowifBookingWhatsAppNotifier
             return;
         }
 
-        $target = PhoneNumber::forFonnte($customer->phone);
-        if ($target === null || $target === '') {
+        $fonnteDial = IntlPhone::fonnteDial($customer->phone);
+        if ($fonnteDial === null) {
             Log::warning('WhatsApp reschedule approved skipped: nomor customer kosong atau tidak valid.', [
                 'customer_id' => $customer->id,
                 'booking_id' => $booking->id,
@@ -338,7 +338,7 @@ class MuthowifBookingWhatsAppNotifier
 
         $locale = $this->localeForUser($customer->locale);
 
-        $this->withLocale($locale, function () use ($booking, $rescheduleRequest, $target, $locale): void {
+        $this->withLocale($locale, function () use ($booking, $rescheduleRequest, $fonnteDial, $locale): void {
             $muthowifName = $booking->muthowifProfile?->user?->name ?? __('whatsapp.fallback_muthowif', [], $locale);
             $start = $booking->starts_on->format('d/m/Y');
             $end = $booking->ends_on->format('d/m/Y');
@@ -369,7 +369,7 @@ class MuthowifBookingWhatsAppNotifier
                 $lines[] = $note;
             }
 
-            $this->sendToTarget($target, implode("\n", $lines), $booking->id);
+            $this->sendToTarget($fonnteDial, implode("\n", $lines), $booking->id);
         });
     }
 
@@ -391,8 +391,8 @@ class MuthowifBookingWhatsAppNotifier
             return;
         }
 
-        $target = PhoneNumber::forFonnte($customer->phone);
-        if ($target === null || $target === '') {
+        $fonnteDial = IntlPhone::fonnteDial($customer->phone);
+        if ($fonnteDial === null) {
             Log::warning('WhatsApp reschedule rejected skipped: nomor customer kosong atau tidak valid.', [
                 'customer_id' => $customer->id,
                 'booking_id' => $booking->id,
@@ -403,7 +403,7 @@ class MuthowifBookingWhatsAppNotifier
 
         $locale = $this->localeForUser($customer->locale);
 
-        $this->withLocale($locale, function () use ($booking, $rescheduleRequest, $target, $locale): void {
+        $this->withLocale($locale, function () use ($booking, $rescheduleRequest, $fonnteDial, $locale): void {
             $muthowifName = $booking->muthowifProfile?->user?->name ?? __('whatsapp.fallback_muthowif', [], $locale);
             $unchangedStart = $booking->starts_on->format('d/m/Y');
             $unchangedEnd = $booking->ends_on->format('d/m/Y');
@@ -434,7 +434,7 @@ class MuthowifBookingWhatsAppNotifier
                 $lines[] = $note;
             }
 
-            $this->sendToTarget($target, implode("\n", $lines), $booking->id);
+            $this->sendToTarget($fonnteDial, implode("\n", $lines), $booking->id);
         });
     }
 
@@ -465,8 +465,8 @@ class MuthowifBookingWhatsAppNotifier
             return;
         }
 
-        $target = PhoneNumber::forFonnte($customer->phone);
-        if ($target === null || $target === '') {
+        $fonnteDial = IntlPhone::fonnteDial($customer->phone);
+        if ($fonnteDial === null) {
             Log::warning('WhatsApp refund proof skipped: nomor customer kosong atau tidak valid.', [
                 'customer_id' => $customer->id,
                 'refund_id' => $refund->id,
@@ -483,7 +483,7 @@ class MuthowifBookingWhatsAppNotifier
         $appName = config('app.name', 'BaytGo');
         $detailUrl = route('bookings.show', $booking);
 
-        $this->withLocale($locale, function () use ($refund, $booking, $target, $locale, $proofUrl, $filename, $amountFmt, $appName, $detailUrl): void {
+        $this->withLocale($locale, function () use ($refund, $booking, $fonnteDial, $locale, $proofUrl, $filename, $amountFmt, $appName, $detailUrl): void {
             $lines = [
                 __('whatsapp.customer.refund_transfer_done.headline', ['app' => $appName], $locale),
                 '',
@@ -503,7 +503,7 @@ class MuthowifBookingWhatsAppNotifier
             $lines[] = __('whatsapp.customer.refund_transfer_done.attachment_caption', [], $locale);
 
             $message = implode("\n", $lines);
-            $this->sendFileProofToTarget($target, $message, $proofUrl, $filename, (string) $refund->getKey());
+            $this->sendFileProofToTarget($fonnteDial, $message, $proofUrl, $filename, (string) $refund->getKey());
         });
     }
 
@@ -533,8 +533,8 @@ class MuthowifBookingWhatsAppNotifier
             return;
         }
 
-        $target = $this->resolveTarget($profile->phone, $profile->id, (string) $withdrawal->getKey());
-        if ($target === null) {
+        $fonnteDial = $this->resolveFonnteDial($profile->phone, $profile->id, (string) $withdrawal->getKey());
+        if ($fonnteDial === null) {
             return;
         }
 
@@ -546,7 +546,7 @@ class MuthowifBookingWhatsAppNotifier
         $appName = config('app.name', 'BaytGo');
         $panelUrl = route('muthowif.withdrawals.index');
 
-        $this->withLocale($locale, function () use ($withdrawal, $target, $locale, $proofUrl, $filename, $amountFmt, $appName, $panelUrl): void {
+        $this->withLocale($locale, function () use ($withdrawal, $fonnteDial, $locale, $proofUrl, $filename, $amountFmt, $appName, $panelUrl): void {
             $lines = [
                 __('whatsapp.muthowif.withdrawal_transfer_done.headline', ['app' => $appName], $locale),
                 '',
@@ -561,14 +561,23 @@ class MuthowifBookingWhatsAppNotifier
             ];
 
             $message = implode("\n", $lines);
-            $this->sendFileProofToTarget($target, $message, $proofUrl, $filename, (string) $withdrawal->getKey());
+            $this->sendFileProofToTarget($fonnteDial, $message, $proofUrl, $filename, (string) $withdrawal->getKey());
         });
     }
 
-    private function sendFileProofToTarget(string $target, string $message, string $proofPublicUrl, ?string $filenameForNonImage, string $contextId): void
+    /**
+     * @param  array{target: string, country_calling_code: string}  $fonnteDial
+     */
+    private function sendFileProofToTarget(array $fonnteDial, string $message, string $proofPublicUrl, ?string $filenameForNonImage, string $contextId): void
     {
         try {
-            $this->fonnte->sendMessageWithPublicFileUrl($target, $message, $proofPublicUrl, $filenameForNonImage);
+            $this->fonnte->sendMessageWithPublicFileUrl(
+                $fonnteDial['target'],
+                $message,
+                $proofPublicUrl,
+                $filenameForNonImage,
+                $fonnteDial['country_calling_code'],
+            );
         } catch (RuntimeException $e) {
             Log::warning('WhatsApp notify with attachment failed', [
                 'context_id' => $contextId,
@@ -600,7 +609,10 @@ class MuthowifBookingWhatsAppNotifier
         }
     }
 
-    private function resolveTarget(string $phone, string $profileId, string $bookingId): ?string
+    /**
+     * @return array{target: string, country_calling_code: string}|null
+     */
+    private function resolveFonnteDial(string $phone, string $profileId, string $bookingId): ?array
     {
         $token = config('services.fonnte.token');
         if ($token === null || $token === '') {
@@ -609,8 +621,8 @@ class MuthowifBookingWhatsAppNotifier
             return null;
         }
 
-        $target = PhoneNumber::forFonnte($phone);
-        if ($target === null || $target === '') {
+        $dial = IntlPhone::fonnteDial($phone);
+        if ($dial === null) {
             Log::warning('WhatsApp notify skipped: nomor muthowif kosong atau tidak valid.', [
                 'muthowif_profile_id' => $profileId,
                 'booking_id' => $bookingId,
@@ -619,13 +631,20 @@ class MuthowifBookingWhatsAppNotifier
             return null;
         }
 
-        return $target;
+        return $dial;
     }
 
-    private function sendToTarget(string $target, string $message, string $bookingId): void
+    /**
+     * @param  array{target: string, country_calling_code: string}  $fonnteDial
+     */
+    private function sendToTarget(array $fonnteDial, string $message, string $bookingId): void
     {
         try {
-            $this->fonnte->sendText($target, $message);
+            $this->fonnte->sendText(
+                $fonnteDial['target'],
+                $message,
+                $fonnteDial['country_calling_code'],
+            );
         } catch (RuntimeException $e) {
             Log::warning('WhatsApp notify failed', [
                 'booking_id' => $bookingId,

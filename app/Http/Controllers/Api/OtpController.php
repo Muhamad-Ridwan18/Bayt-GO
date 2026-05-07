@@ -17,12 +17,13 @@ class OtpController extends Controller
     public function send(Request $request)
     {
         $request->validate([
-            'phone' => ['required', 'string', 'min:10', 'max:20'],
+            'phone' => ['required', 'string', 'min:8', 'max:24'],
             'role' => ['required', Rule::in(['customer', 'muthowif'])],
         ]);
 
         try {
             $this->registrationOtp->send($request->string('phone')->toString());
+
             return response()->json(['message' => 'Kode OTP berhasil dikirim.']);
         } catch (ValidationException $e) {
             return response()->json([
@@ -36,7 +37,7 @@ class OtpController extends Controller
     public function verify(Request $request)
     {
         $request->validate([
-            'phone' => ['required', 'string', 'min:10', 'max:20'],
+            'phone' => ['required', 'string', 'min:8', 'max:24'],
             'otp' => ['required', 'string', 'size:6'],
         ]);
 
@@ -45,9 +46,10 @@ class OtpController extends Controller
                 $request->string('phone')->toString(),
                 $request->string('otp')->toString()
             );
+
             return response()->json([
                 'message' => 'Verifikasi berhasil.',
-                'verified' => true
+                'verified' => true,
             ]);
         } catch (ValidationException $e) {
             return response()->json([

@@ -2,7 +2,7 @@
 
 namespace App\Services;
 
-use App\Support\PhoneNumber;
+use App\Support\IntlPhone;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\RateLimiter;
 use Illuminate\Validation\ValidationException;
@@ -36,10 +36,11 @@ class RegistrationOtpService
      */
     public function send(string $phoneInput): void
     {
-        $normalized = PhoneNumber::normalize($phoneInput);
-        if ($normalized === null || strlen($normalized) < 10 || strlen($normalized) > 15) {
+        $normalized = IntlPhone::normalize($phoneInput);
+        $fonnteDial = IntlPhone::fonnteDial($phoneInput);
+        if ($normalized === null || $fonnteDial === null || strlen($normalized) < 8 || strlen($normalized) > 15) {
             throw ValidationException::withMessages([
-                'phone' => ['Format nomor WhatsApp tidak valid.'],
+                'phone' => ['Format nomor WhatsApp tidak valid. Gunakan +kode negara dan nomor lengkap, atau nomor lokal sesuai wilayah default (PHONE_DEFAULT_REGION).'],
             ]);
         }
 
@@ -61,12 +62,15 @@ class RegistrationOtpService
         Cache::put($this->cacheCodeKey($normalized), $hash, now()->addSeconds(self::OTP_TTL_SECONDS));
         Cache::forget($this->cacheAttemptsKey($normalized));
 
-        $target = $this->fonnteTarget($normalized);
         $appName = config('app.name', 'BaytGo');
         $message = "Kode verifikasi {$appName} Anda: *{$otp}*\n\nJangan bagikan kode ini kepada siapa pun. Berlaku 10 menit.";
 
         try {
-            $this->fonnte->sendText($target, $message);
+            $this->fonnte->sendText(
+                $fonnteDial['target'],
+                $message,
+                $fonnteDial['country_calling_code'],
+            );
         } catch (RuntimeException $e) {
             Cache::forget($this->cacheCodeKey($normalized));
             throw ValidationException::withMessages([
@@ -83,7 +87,7 @@ class RegistrationOtpService
      */
     public function verify(string $phoneInput, string $otp): string
     {
-        $normalized = PhoneNumber::normalize($phoneInput);
+        $normalized = IntlPhone::normalize($phoneInput);
         if ($normalized === null) {
             throw ValidationException::withMessages([
                 'otp' => ['Nomor tidak valid.'],
@@ -137,24 +141,12 @@ class RegistrationOtpService
 
     public function isPhoneVerifiedForRegistration(string $phoneInput): bool
     {
-        $normalized = PhoneNumber::normalize($phoneInput);
+        $normalized = IntlPhone::normalize($phoneInput);
         if ($normalized === null) {
             return false;
         }
 
         return session('registration_phone_verified') === $normalized;
-    }
-
-    /**
-     * Fonnte: gunakan format lokal 08… dengan countryCode 62 (default).
-     */
-    private function fonnteTarget(string $normalized): string
-    {
-        if (str_starts_with($normalized, '62')) {
-            return '0'.substr($normalized, 2);
-        }
-
-        return $normalized;
     }
 
     private function cacheCodeKey(string $normalized): string
