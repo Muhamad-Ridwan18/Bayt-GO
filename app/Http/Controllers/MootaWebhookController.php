@@ -6,6 +6,7 @@ use App\Events\MootaWebhookRealtimeBroadcast;
 use App\Events\MootaWebhookRecorded;
 use App\Http\Middleware\AllowMootaWebhookIp;
 use App\Models\MootaWebhookHistory;
+use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Http\Response;
 use Illuminate\Support\Facades\Log;
@@ -18,7 +19,7 @@ final class MootaWebhookController extends Controller
      *
      * @see https://moota.co/guide/webhook/
      */
-    public function __invoke(Request $request): Response
+    public function __invoke(Request $request): JsonResponse
     {
         $rawBody = $request->getContent();
         $sourceIp = AllowMootaWebhookIp::resolveWebhookSourceIp($request) ?: (string) $request->ip();
