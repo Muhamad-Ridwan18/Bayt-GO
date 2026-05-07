@@ -333,7 +333,10 @@ class BookingApiController extends Controller
 
                 $payment->update([
                     'gateway_transaction_id' => $result['trx_id'],
-                    'gateway_notification_payload' => ['moota_create_transaction_response' => $result['payload']],
+                    'gateway_notification_payload' => [
+                        'moota_create_transaction_response' => $result['payload'],
+                        'moota_chosen_bank_account_id' => $result['bank_account_id'],
+                    ],
                     'payment_type' => 'bank_transfer_moota',
                 ]);
 

@@ -19,12 +19,14 @@ final class MootaBookingChargeService
     }
 
     /**
-     * @param  array{
+     * @return array{
      *   payment_url:string,
      *   trx_id:?string,
      *   expiry_time:?string,
      *   moota_total:?int,
-     *   payload:array<string,mixed>
+     *   payload:array<string,mixed>,
+     *   normalized_data:array<string,mixed>,
+     *   bank_account_id:string
      * }
      */
     public function createChargeForBookingPayment(BookingPayment $payment, ?string $explicitMootaBankAccountId = null): array
@@ -171,6 +173,7 @@ final class MootaBookingChargeService
             'moota_total' => $mootaTotal,
             'payload' => $json,
             'normalized_data' => $data,
+            'bank_account_id' => $accountId,
         ];
     }
 }

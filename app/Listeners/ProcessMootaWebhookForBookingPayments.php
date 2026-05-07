@@ -41,7 +41,7 @@ final class ProcessMootaWebhookForBookingPayments
             return;
         }
 
-        /** @var array<string, mixed>|null $payload */
+        /** @var array|null $payload */
         $payload = $history->payload;
         if (! is_array($payload)) {
             Log::warning('moota.settle.skipped_payload_missing', ['history_id' => $history->getKey()]);
@@ -55,7 +55,7 @@ final class ProcessMootaWebhookForBookingPayments
     }
 
     /**
-     * @param  array<string, mixed>  $payload
+     * @param  array<string, mixed>  $payload  Bisa objek mutasi tunggal atau daftar di akar JSON.
      * @return list<array<string, mixed>>
      */
     private function normalizedMutations(array $payload): array
@@ -86,13 +86,21 @@ final class ProcessMootaWebhookForBookingPayments
             return;
         }
 
-        /** Mutasi “scrapping” sering tidak punya payment_detail; payment hosted bisa mengisinya. */
+        /** Mutasi dari Moota: array di akar JSON; payment_detail bisa kosong pada tes/manual. */
         $detail = is_array($mutation['payment_detail'] ?? null)
             ? $mutation['payment_detail']
             : [];
 
-        $orderId = $this->resolveBookingOrderId($detail, $mutation);
+        $amountRaw = $mutation['amount'] ?? $detail['amount_captured'] ?? $detail['total'] ?? null;
+        $incomingHint = is_numeric($amountRaw) ? (int) round((float) $amountRaw) : null;
+
+        $orderId = $this->resolveBookingOrderId($detail, $mutation, $incomingHint);
         if ($orderId === null) {
+            PaymentFlowLog::info('moota.settle.skip_unmapped_mutation', [
+                'mutation_id' => $mutation['mutation_id'] ?? $mutation['token'] ?? null,
+                'bank_id' => $mutation['bank_id'] ?? null,
+            ]);
+
             return;
         }
 
@@ -101,7 +109,6 @@ final class ProcessMootaWebhookForBookingPayments
 
         $trxFromHook = $this->mootaTrxFromMutation($detail, $mutation);
 
-        $amountRaw = $mutation['amount'] ?? $detail['amount_captured'] ?? $detail['total'] ?? null;
         if (! is_numeric($amountRaw)) {
             return;
         }
@@ -282,13 +289,12 @@ final class ProcessMootaWebhookForBookingPayments
     }
 
     /**
-     * Order id dari payload (BG-...) atau, jika kosong seperti banyak webhook mutasi Moota,
-     * lewat trx_id (PYM-...) yang sama dengan gateway_transaction_id booking kita.
+     * Order id dari payload (BG-...), trx_id / teks (PYM-/BG-), atau pasangan bank_id + nominal transfer.
      *
      * @param  array<string, mixed>  $detail
      * @param  array<string, mixed>  $mutation
      */
-    private function resolveBookingOrderId(array $detail, array $mutation): ?string
+    private function resolveBookingOrderId(array $detail, array $mutation, ?int $incomingAmount = null): ?string
     {
         $rawOrder = $detail['order_id'] ?? null;
         $fromPayload = is_string($rawOrder) ? trim($rawOrder) : '';
@@ -302,33 +308,153 @@ final class ProcessMootaWebhookForBookingPayments
         }
 
         $trx = $this->mootaTrxFromMutation($detail, $mutation);
-        if ($trx === null) {
-            PaymentFlowLog::info('moota.settle.skip_no_order_or_trx', [
-                'raw_order_id' => is_string($rawOrder) ? $rawOrder : null,
+        if ($trx !== null) {
+            /** @var BookingPayment|null $payment */
+            $payment = BookingPayment::query()
+                ->where('payment_type', 'bank_transfer_moota')
+                ->where('gateway_transaction_id', $trx)
+                ->where('status', 'pending')
+                ->first();
+
+            if ($payment === null) {
+                PaymentFlowLog::info('moota.settle.skip_trx_unknown', ['trx_id' => $trx]);
+            } else {
+                PaymentFlowLog::info('moota.settle.order_resolved_via_trx', [
+                    'trx_id' => $trx,
+                    'order_id' => $payment->order_id,
+                ]);
+
+                return $payment->order_id;
+            }
+        }
+
+        if ($incomingAmount !== null && $incomingAmount > 0) {
+            $fromBank = $this->tryResolveOrderIdByBankAndAmount($mutation, $incomingAmount);
+            if ($fromBank !== null) {
+                return $fromBank;
+            }
+        }
+
+        PaymentFlowLog::info('moota.settle.skip_no_order_or_trx', [
+            'raw_order_id' => is_string($rawOrder) ? $rawOrder : null,
+        ]);
+
+        return null;
+    }
+
+    /**
+     * Cocokkan mutasi ke pembayaran pending bila payment_detail kosong: bank_id Moota + nominal sama dengan total create-transaction.
+     */
+    private function tryResolveOrderIdByBankAndAmount(array $mutation, int $incoming): ?string
+    {
+        $mBankId = $this->mutationMootaBankId($mutation);
+        if ($mBankId === '') {
+            return null;
+        }
+
+        $candidates = BookingPayment::query()
+            ->where('payment_type', 'bank_transfer_moota')
+            ->where('status', 'pending')
+            ->whereHas('muthowifBooking', function ($q): void {
+                $q->where('status', BookingStatus::Confirmed)
+                    ->where('payment_status', PaymentStatus::Pending);
+            })
+            ->get();
+
+        $byBank = [];
+        foreach ($candidates as $payment) {
+            $expected = $this->expectedTransferAmount($payment, []);
+            if ($expected === null || $expected !== $incoming) {
+                continue;
+            }
+            $pBank = $this->mootaBankAccountIdFromCreatePayload($payment);
+            if ($pBank !== null && $pBank === $mBankId) {
+                $byBank[] = (string) $payment->order_id;
+            }
+        }
+
+        if (count($byBank) === 1) {
+            PaymentFlowLog::info('moota.settle.order_resolved_via_bank_amount', [
+                'bank_id' => $mBankId,
+                'amount' => $incoming,
+            ]);
+
+            return $byBank[0];
+        }
+
+        if (count($byBank) > 1) {
+            Log::warning('moota.settle.ambiguous_bank_amount', [
+                'bank_id' => $mBankId,
+                'amount' => $incoming,
             ]);
 
             return null;
         }
 
-        /** @var BookingPayment|null $payment */
-        $payment = BookingPayment::query()
-            ->where('payment_type', 'bank_transfer_moota')
-            ->where('gateway_transaction_id', $trx)
-            ->where('status', 'pending')
-            ->first();
+        $amountOnly = $candidates->filter(function (BookingPayment $payment) use ($incoming): bool {
+            $expected = $this->expectedTransferAmount($payment, []);
 
-        if ($payment === null) {
-            PaymentFlowLog::info('moota.settle.skip_trx_unknown', ['trx_id' => $trx]);
+            return $expected !== null && $expected === $incoming;
+        });
 
+        if ($amountOnly->count() === 1) {
+            $first = $amountOnly->first();
+            PaymentFlowLog::info('moota.settle.order_resolved_via_amount_only', [
+                'order_id' => $first?->order_id,
+            ]);
+
+            return $first !== null ? (string) $first->order_id : null;
+        }
+
+        return null;
+    }
+
+    private function mutationMootaBankId(array $mutation): string
+    {
+        foreach ([
+            $mutation['bank_id'] ?? null,
+            data_get($mutation, 'bank.bank_id'),
+            data_get($mutation, 'bank.token'),
+            data_get($mutation, 'account.account_id'),
+        ] as $candidate) {
+            if (is_string($candidate) && trim($candidate) !== '') {
+                return trim($candidate);
+            }
+        }
+
+        return '';
+    }
+
+    private function mootaBankAccountIdFromCreatePayload(BookingPayment $payment): ?string
+    {
+        $gatewayMeta = $payment->gateway_notification_payload ?? [];
+        if (! is_array($gatewayMeta)) {
             return null;
         }
 
-        PaymentFlowLog::info('moota.settle.order_resolved_via_trx', [
-            'trx_id' => $trx,
-            'order_id' => $payment->order_id,
-        ]);
+        $chosen = $gatewayMeta['moota_chosen_bank_account_id'] ?? null;
+        if (is_string($chosen) && trim($chosen) !== '') {
+            return trim($chosen);
+        }
 
-        return $payment->order_id;
+        $root = $gatewayMeta['moota_create_transaction_response'] ?? null;
+        if (! is_array($root)) {
+            return null;
+        }
+
+        $data = $root['data'] ?? null;
+        if (! is_array($data)) {
+            $data = $root;
+        }
+
+        foreach (['bank_account_id', 'bank_id', 'token'] as $key) {
+            $v = data_get($data, $key);
+            if (is_string($v) && trim($v) !== '') {
+                return trim($v);
+            }
+        }
+
+        return null;
     }
 
     /**

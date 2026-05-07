@@ -47,7 +47,10 @@ final class MootaSnapPaymentProvider implements SnapPaymentProviderInterface
             throw $e;
         }
 
-        $mergedPayload = ['moota_create_transaction_response' => $result['payload']];
+        $mergedPayload = [
+            'moota_create_transaction_response' => $result['payload'],
+            'moota_chosen_bank_account_id' => $result['bank_account_id'],
+        ];
 
         $payment->update([
             'gateway_transaction_id' => $result['trx_id'],
