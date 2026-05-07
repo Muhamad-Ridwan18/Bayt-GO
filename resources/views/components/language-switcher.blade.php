@@ -1,5 +1,5 @@
 @props([
-    'variant' => 'segment', // segment | compact
+    'variant' => 'segment', // segment | segment-dark | compact
 ])
 
 @php
@@ -7,7 +7,30 @@
 @endphp
 
 <div {{ $attributes->merge(['class' => $variant === 'compact' ? 'inline-flex' : 'inline-flex items-stretch']) }} role="group" aria-label="{{ __('nav.language') }}">
-    @if ($variant === 'segment')
+    @if ($variant === 'segment-dark')
+        <div class="inline-flex rounded-xl border border-white/20 bg-white/10 p-1 shadow-inner backdrop-blur-sm">
+            <a
+                href="{{ route('locale.switch', ['locale' => 'id']) }}"
+                @class([
+                    'rounded-lg px-3 py-1.5 text-xs font-bold tracking-wide transition-all duration-200 min-w-[2.75rem] text-center',
+                    'bg-white text-brand-900 shadow-md ring-1 ring-white/30' => $current === 'id',
+                    'text-white/85 hover:bg-white/15 hover:text-white' => $current !== 'id',
+                ])
+                aria-current="{{ $current === 'id' ? 'true' : 'false' }}"
+                title="{{ __('nav.lang_id') }}"
+            >ID</a>
+            <a
+                href="{{ route('locale.switch', ['locale' => 'en']) }}"
+                @class([
+                    'rounded-lg px-3 py-1.5 text-xs font-bold tracking-wide transition-all duration-200 min-w-[2.75rem] text-center',
+                    'bg-white text-brand-900 shadow-md ring-1 ring-white/30' => $current === 'en',
+                    'text-white/85 hover:bg-white/15 hover:text-white' => $current !== 'en',
+                ])
+                aria-current="{{ $current === 'en' ? 'true' : 'false' }}"
+                title="{{ __('nav.lang_en') }}"
+            >EN</a>
+        </div>
+    @elseif ($variant === 'segment')
         <div class="inline-flex rounded-xl border border-slate-200 bg-slate-100/90 p-1 shadow-inner">
             <a
                 href="{{ route('locale.switch', ['locale' => 'id']) }}"

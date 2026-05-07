@@ -23,6 +23,7 @@
                         <span class="text-lg font-bold tracking-tight">Bayt<span class="text-brand-300">Go</span></span>
                     </a>
                     <nav class="flex items-center gap-1 sm:gap-2 text-sm flex-wrap justify-end">
+                        <x-language-switcher variant="segment-dark" class="shrink-0 sm:mr-1" />
                         <a href="{{ route('layanan.index') }}" class="px-3 sm:px-4 py-2 rounded-xl font-medium text-white/90 hover:bg-white/10 transition">{{ __('layanan.find_muthowif') }}</a>
                         @if ($contactLink)
                             <a href="{{ $contactLink }}" target="_blank" rel="noopener noreferrer" class="px-3 sm:px-4 py-2 rounded-xl font-medium text-brand-100 hover:bg-white/10 transition">{{ __('nav.contact_us') }}</a>
