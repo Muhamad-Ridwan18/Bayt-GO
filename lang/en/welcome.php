@@ -3,7 +3,11 @@
 return [
     'page_title' => 'Marketplace umrah',
     'hero_kicker' => 'Umrah companion marketplace',
-    'hero_title_html' => 'Booking a muthowif is as easy as booking a hotel — <span class="text-transparent bg-clip-text bg-gradient-to-r from-brand-200 to-amber-200">pick a date and see availability in real-time.</span>',
+    'hero_title_l1_before' => 'Booking a muthowif is as',
+    'hero_title_l1_mark' => 'easy as',
+    'hero_title_l2_before' => 'booking a hotel —',
+    'hero_title_l2_mark' => 'pick a date and',
+    'hero_title_l3_mark' => 'see availability in real-time.',
     'hero_lead' => 'Transparent pricing (group & private), flexible scheduling, and automated booking system — all in one platform.',
     'search_label' => 'Search availability',
     'badge_1' => 'Verified muthowif',

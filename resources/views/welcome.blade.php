@@ -57,8 +57,16 @@
                                 </span>
                                 {{ __('welcome.hero_kicker') }}
                             </p>
-                            <h1 class="text-3xl sm:text-5xl font-bold leading-tight tracking-tight">
-                                {!! __('welcome.hero_title_html') !!}
+                            <h1 class="text-3xl sm:text-5xl font-bold leading-[1.12] sm:leading-[1.1] tracking-tight text-white">
+                                <span class="block">{{ __('welcome.hero_title_l1_before') }}
+                                    <span class="inline-block rounded-md bg-black/55 px-2 py-0.5 shadow-lg shadow-black/30 ring-1 ring-white/10 box-decoration-clone">{{ __('welcome.hero_title_l1_mark') }}</span>
+                                </span>
+                                <span class="block mt-1 sm:mt-1.5">{{ __('welcome.hero_title_l2_before') }}
+                                    <span class="inline-block rounded-md bg-black/55 px-2 py-0.5 shadow-lg shadow-black/30 ring-1 ring-white/10 box-decoration-clone">{{ __('welcome.hero_title_l2_mark') }}</span>
+                                </span>
+                                <span class="block mt-1 sm:mt-1.5">
+                                    <span class="box-decoration-clone inline-block rounded-md bg-rose-950/75 px-2 py-0.5 shadow-lg shadow-black/25 ring-1 ring-rose-400/20">{{ __('welcome.hero_title_l3_mark') }}</span>
+                                </span>
                             </h1>
                             <p class="text-base sm:text-lg text-brand-100/90 leading-relaxed max-w-2xl">
                                 {{ __('welcome.hero_lead') }}

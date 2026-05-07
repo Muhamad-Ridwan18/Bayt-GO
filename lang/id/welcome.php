@@ -3,7 +3,11 @@
 return [
     'page_title' => 'Marketplace umrah',
     'hero_kicker' => 'Marketplace pendamping umrah',
-    'hero_title_html' => 'Booking muthowif semudah booking hotel — <span class="text-transparent bg-clip-text bg-gradient-to-r from-brand-200 to-amber-200">pilih tanggal dan lihat ketersediaan secara real-time.</span>',
+    'hero_title_l1_before' => 'Booking muthowif',
+    'hero_title_l1_mark' => 'semudah',
+    'hero_title_l2_before' => 'booking hotel —',
+    'hero_title_l2_mark' => 'pilih tanggal dan',
+    'hero_title_l3_mark' => 'lihat ketersediaan secara real-time.',
     'hero_lead' => 'Harga transparan (grup & privat), jadwal fleksibel, dan sistem booking otomatis — semua dalam satu platform.',
     'search_label' => 'Cari ketersediaan',
     'badge_1' => 'Muthowif terverifikasi',
