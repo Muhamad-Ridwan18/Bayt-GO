@@ -242,6 +242,38 @@ class BookingController extends Controller
             ]);
         }
 
+        if (BookingSnapPaymentCatalog::driver() === 'moota') {
+            $expectedGross = (int) round($split['customer_gross']);
+            $existingPending = $booking->bookingPayments()
+                ->where('status', 'pending')
+                ->where('payment_type', $selectedMethod)
+                ->where('gross_amount', $expectedGross)
+                ->whereNotNull('gateway_transaction_id')
+                ->latest('id')
+                ->first();
+
+            if ($existingPending !== null) {
+                $reuseInstructions = $this->mootaInstructionsFromStoredPayment($existingPending);
+                if ($reuseInstructions !== null && ! empty($reuseInstructions['checkout_url'])) {
+                    PaymentFlowLog::info('web.payment.moota_reuse_pending_session', [
+                        'booking_id' => $booking->getKey(),
+                        'order_id' => $existingPending->order_id,
+                        'method' => $selectedMethod,
+                    ]);
+
+                    return view('bookings.payment', [
+                        'booking' => $booking,
+                        'payment' => $existingPending->fresh(),
+                        'selectedMethod' => $selectedMethod,
+                        'methods' => BookingSnapPaymentCatalog::webMethodsExpanded(),
+                        'mootaBankAccountIds' => $this->mootaBankAccountIdsForPaymentView(),
+                        'mootaPaymentRows' => $this->mootaPaymentRowsForPaymentView(),
+                        'instructions' => $reuseInstructions,
+                    ]);
+                }
+            }
+        }
+
         $superseded = $booking->bookingPayments()->where('status', 'pending')->update(['status' => 'cancelled']);
         if ($superseded > 0) {
             PaymentFlowLog::info('web.payment.supersede_pending', [
@@ -822,6 +854,43 @@ class BookingController extends Controller
         }
 
         return MuthowifServiceAddOn::query()->whereIn('id', $ids)->get()->keyBy('id');
+    }
+
+    /**
+     * Instruksi bayar Moota dari payload charge yang sudah tersimpan (untuk reuse sesi tanpa supersede + cancel).
+     *
+     * @return array<string, mixed>|null
+     */
+    private function mootaInstructionsFromStoredPayment(BookingPayment $payment): ?array
+    {
+        $meta = $payment->gateway_notification_payload ?? [];
+        if (! is_array($meta)) {
+            return null;
+        }
+
+        $root = $meta['moota_create_transaction_response'] ?? null;
+        if (! is_array($root)) {
+            return null;
+        }
+
+        $data = $root['data'] ?? null;
+        if (! is_array($data)) {
+            $data = $root;
+        }
+
+        $url = data_get($data, 'payment_url');
+        if (! is_string($url) || $url === '') {
+            return null;
+        }
+
+        $exp = data_get($data, 'expired_at');
+        $totalHint = $meta['moota_expected_transfer_total'] ?? data_get($data, 'total');
+
+        return array_filter([
+            'checkout_url' => $url,
+            'expiry_time' => is_string($exp) && $exp !== '' ? $exp : null,
+            'moota_expected_transfer_total' => is_numeric($totalHint) ? (int) round((float) $totalHint) : null,
+        ], static fn ($v) => $v !== null && $v !== '');
     }
 
     /**
