@@ -125,6 +125,12 @@
                                                 </ul>
                                             @endif
 
+                                            <div class="mt-2 rounded-xl border border-brand-100/90 bg-gradient-to-r from-brand-50/90 to-white px-3 py-2.5 ring-1 ring-brand-100/70">
+                                                <p class="text-sm font-bold tabular-nums text-brand-950">
+                                                    {{ __('bookings.index.total_line', ['amount' => IndonesianNumber::formatThousands((string) (int) round((float) $booking->resolvedAmountDue()))]) }}
+                                                </p>
+                                            </div>
+
                                             @include('bookings.partials.booking-documents', ['booking' => $booking, 'routeName' => 'muthowif.bookings.documents.show', 'compact' => true])
 
                                             <div class="flex flex-wrap items-center gap-2">
