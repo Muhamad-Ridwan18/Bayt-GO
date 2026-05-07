@@ -69,7 +69,7 @@ final class MootaWebhookController extends Controller
         try {
             broadcast(new MootaWebhookRealtimeBroadcast($history));
         } catch (\Throwable $e) {
-            // Reverb / Pusher mati tidak boleh menghalangi 204 ke Moota.
+            // Broadcast gagal tidak boleh menghalangi respons HTTP ke Moota.
             Log::warning('moota.webhook.broadcast_failed', [
                 'history_id' => $history->id,
                 'message' => $e->getMessage(),
@@ -84,9 +84,19 @@ final class MootaWebhookController extends Controller
         ]);
 
         if ($secret !== '' && $signatureVerified === false) {
-            return response('', Response::HTTP_FORBIDDEN);
+            return response()->json([
+                'ok' => false,
+                'error' => 'invalid_signature',
+            ], Response::HTTP_FORBIDDEN)->header('Cache-Control', 'no-store');
         }
 
-        return response()->noContent();
+        /*
+         * Sukses: HTTP 200 + JSON kecil (bukan body kosong) agar mudah dicek di dashboard Moota / alat debug.
+         * Versi sebelumnya memakai 204 No Content — itu juga valid untuk Moota; daftar IP & signature tetap wajib benar.
+         */
+        return response()->json([
+            'ok' => true,
+            'received_at' => now()->toIso8601String(),
+        ], Response::HTTP_OK)->header('Cache-Control', 'no-store');
     }
 }
