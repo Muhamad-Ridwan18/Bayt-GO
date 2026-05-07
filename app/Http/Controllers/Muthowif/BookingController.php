@@ -13,6 +13,7 @@ use App\Jobs\NotifyCustomerOfRescheduleRejected;
 use App\Models\BookingRescheduleRequest;
 use App\Models\MuthowifBooking;
 use App\Models\MuthowifServiceAddOn;
+use App\Services\BookingPendingPaymentEnsurer;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
@@ -140,6 +141,9 @@ class BookingController extends Controller
             'payment_status' => PaymentStatus::Pending,
             'total_amount' => $total,
         ]);
+
+        app(BookingPendingPaymentEnsurer::class)->ensure($booking->fresh());
+
         NotifyCustomerOfApprovedBooking::dispatchAfterResponse((string) $booking->getKey());
         broadcast(new CustomerBookingUpdated($booking->fresh()));
 

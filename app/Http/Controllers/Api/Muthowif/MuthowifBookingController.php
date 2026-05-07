@@ -2,24 +2,25 @@
 
 namespace App\Http\Controllers\Api\Muthowif;
 
-use App\Http\Controllers\Controller;
-use Illuminate\Http\Request;
-use App\Models\MuthowifBooking;
 use App\Enums\BookingStatus;
 use App\Enums\PaymentStatus;
+use App\Http\Controllers\Controller;
+use App\Models\MuthowifBooking;
+use App\Services\BookingPendingPaymentEnsurer;
 use Carbon\Carbon;
+use Illuminate\Http\Request;
 
 class MuthowifBookingController extends Controller
 {
     public function index(Request $request)
     {
         $user = $request->user();
-        
+
         $bookings = MuthowifBooking::where('muthowif_profile_id', $user->muthowifProfile->id)
             ->with(['customer', 'muthowifProfile.services'])
             ->orderBy('created_at', 'desc')
             ->get()
-            ->map(function($b) {
+            ->map(function ($b) {
                 return [
                     'id' => $b->id,
                     'booking_code' => $b->booking_code,
@@ -33,12 +34,12 @@ class MuthowifBookingController extends Controller
                     'ends_on' => Carbon::parse($b->ends_on)->format('d M Y'),
                     'service_type' => $b->service_type?->label() ?? '—',
                     'pilgrim_count' => $b->pilgrim_count,
-                    'total_price' => 'Rp ' . number_format($b->total_amount, 0, ',', '.')
+                    'total_price' => 'Rp '.number_format($b->total_amount, 0, ',', '.'),
                 ];
             });
 
         return response()->json([
-            'bookings' => $bookings
+            'bookings' => $bookings,
         ]);
     }
 
@@ -64,12 +65,12 @@ class MuthowifBookingController extends Controller
                 'ends_on' => Carbon::parse($b->ends_on)->format('d M Y'),
                 'service_type' => $b->service_type?->label() ?? '—',
                 'pilgrim_count' => $b->pilgrim_count,
-                'total_price' => 'Rp ' . number_format($b->resolvedAmountDue(), 0, ',', '.'),
-                'with_same_hotel' => (bool)$b->with_same_hotel,
-                'with_transport' => (bool)$b->with_transport,
-                'add_ons' => $b->resolvedAddOns()->map(fn($a) => ['name' => $a->name, 'price' => (float)$a->price]),
-                'notes' => $b->notes ?? 'Tidak ada catatan tambahan'
-            ]
+                'total_price' => 'Rp '.number_format($b->resolvedAmountDue(), 0, ',', '.'),
+                'with_same_hotel' => (bool) $b->with_same_hotel,
+                'with_transport' => (bool) $b->with_transport,
+                'add_ons' => $b->resolvedAddOns()->map(fn ($a) => ['name' => $a->name, 'price' => (float) $a->price]),
+                'notes' => $b->notes ?? 'Tidak ada catatan tambahan',
+            ],
         ]);
     }
 
@@ -83,11 +84,20 @@ class MuthowifBookingController extends Controller
             return response()->json(['message' => 'Hanya pesanan pending yang bisa disetujui.'], 422);
         }
 
-        $booking->update(['status' => BookingStatus::Confirmed]);
+        $booking->loadMissing(['muthowifProfile.services.addOns']);
+        $total = $booking->computeTotalAmount();
+
+        $booking->update([
+            'status' => BookingStatus::Confirmed,
+            'payment_status' => PaymentStatus::Pending,
+            'total_amount' => $total,
+        ]);
+
+        app(BookingPendingPaymentEnsurer::class)->ensure($booking->fresh());
 
         return response()->json([
             'message' => 'Pesanan berhasil disetujui',
-            'status' => 'confirmed'
+            'status' => 'confirmed',
         ]);
     }
 
@@ -97,7 +107,7 @@ class MuthowifBookingController extends Controller
         $booking = MuthowifBooking::where('muthowif_profile_id', $user->muthowifProfile->id)
             ->findOrFail($id);
 
-        if (!in_array($booking->status, [BookingStatus::Pending, BookingStatus::Confirmed])) {
+        if (! in_array($booking->status, [BookingStatus::Pending, BookingStatus::Confirmed])) {
             return response()->json(['message' => 'Pesanan ini tidak dapat dibatalkan.'], 422);
         }
 
@@ -105,7 +115,7 @@ class MuthowifBookingController extends Controller
 
         return response()->json([
             'message' => 'Pesanan berhasil dibatalkan',
-            'status' => 'cancelled'
+            'status' => 'cancelled',
         ]);
     }
 }
