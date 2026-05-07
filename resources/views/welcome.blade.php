@@ -49,21 +49,22 @@
                     <div class="absolute bottom-0 left-0 w-80 h-80 bg-amber-500/15 rounded-full blur-3xl translate-y-1/2 -translate-x-1/4"></div>
 
                     <div class="relative max-w-6xl mx-auto px-4 sm:px-6 pt-12 sm:pt-16 pb-12 sm:pb-16">
-                        <div class="max-w-3xl">
-                            <p class="inline-flex items-center gap-2 rounded-full bg-white/10 text-brand-100 text-xs font-semibold px-3 py-1.5 mb-5 ring-1 ring-white/20">
+                        <div class="max-w-3xl flex flex-col gap-5">
+                            <p class="inline-flex items-center gap-2 rounded-full bg-white/10 text-brand-100 text-xs font-semibold px-3 py-1.5 ring-1 ring-white/20 mb-5">
                                 <span class="relative flex h-2 w-2">
                                     <span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
                                     <span class="relative inline-flex rounded-full h-2 w-2 bg-emerald-400"></span>
                                 </span>
                                 {{ __('welcome.hero_kicker') }}
                             </p>
-                            <h1 class="text-3xl sm:text-5xl font-bold leading-[1.1] tracking-tight">
+                            <h1 class="text-3xl sm:text-5xl font-bold leading-tight tracking-tight">
                                 {!! __('welcome.hero_title_html') !!}
                             </h1>
-                            <p class="mt-5 text-base sm:text-lg text-brand-100/90 leading-relaxed max-w-2xl">
+                            <p class="text-base sm:text-lg text-brand-100/90 leading-relaxed max-w-2xl">
                                 {{ __('welcome.hero_lead') }}
                             </p>
                         </div>
+                   
 
                         <div class="mt-10 max-w-4xl">
                             <p class="text-sm font-medium text-brand-100/90 mb-3">{{ __('welcome.search_label') }}</p>
