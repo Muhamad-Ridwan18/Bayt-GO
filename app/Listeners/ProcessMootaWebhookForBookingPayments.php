@@ -49,8 +49,18 @@ final class ProcessMootaWebhookForBookingPayments
             return;
         }
 
-        foreach ($this->normalizedMutations($payload) as $mutation) {
-            $this->maybeSettleMutation($mutation);
+        $mutations = $this->normalizedMutations($payload);
+        PaymentFlowLog::info('moota.settle.payload_mutations', [
+            'history_id' => $history->getKey(),
+            'mutation_count' => count($mutations),
+        ]);
+
+        foreach ($mutations as $index => $mutation) {
+            if (! is_array($mutation)) {
+                continue;
+            }
+
+            $this->maybeSettleMutation($mutation, $history->getKey(), (int) $index);
         }
     }
 
@@ -79,10 +89,16 @@ final class ProcessMootaWebhookForBookingPayments
     /**
      * @param  array<string, mixed>  $mutation
      */
-    private function maybeSettleMutation(array $mutation): void
+    private function maybeSettleMutation(array $mutation, int|string|null $historyId = null, int $mutationIndex = 0): void
     {
         $type = strtoupper((string) ($mutation['type'] ?? ''));
         if ($type !== 'CR') {
+            PaymentFlowLog::info('moota.settle.skip_non_credit', [
+                'history_id' => $historyId,
+                'mutation_index' => $mutationIndex,
+                'type' => $type !== '' ? $type : null,
+            ]);
+
             return;
         }
 
@@ -97,6 +113,8 @@ final class ProcessMootaWebhookForBookingPayments
         $orderId = $this->resolveBookingOrderId($detail, $mutation, $incomingHint);
         if ($orderId === null) {
             PaymentFlowLog::info('moota.settle.skip_unmapped_mutation', [
+                'history_id' => $historyId,
+                'mutation_index' => $mutationIndex,
                 'mutation_id' => $mutation['mutation_id'] ?? $mutation['token'] ?? null,
                 'bank_id' => $mutation['bank_id'] ?? null,
             ]);
@@ -104,12 +122,25 @@ final class ProcessMootaWebhookForBookingPayments
             return;
         }
 
+        PaymentFlowLog::info('moota.settle.order_resolved', [
+            'history_id' => $historyId,
+            'mutation_index' => $mutationIndex,
+            'order_id' => $orderId,
+            'has_payment_detail_order_id' => isset($detail['order_id']),
+        ]);
+
         $mutationId = $mutation['mutation_id'] ?? $mutation['token'] ?? null;
         $mutationId = is_string($mutationId) ? $mutationId : null;
 
         $trxFromHook = $this->mootaTrxFromMutation($detail, $mutation);
 
         if (! is_numeric($amountRaw)) {
+            PaymentFlowLog::info('moota.settle.skip_non_numeric_amount', [
+                'history_id' => $historyId,
+                'mutation_index' => $mutationIndex,
+                'order_id' => $orderId,
+            ]);
+
             return;
         }
         $incoming = (int) round((float) $amountRaw);
@@ -117,7 +148,7 @@ final class ProcessMootaWebhookForBookingPayments
         $shouldNotify = false;
 
         try {
-            $shouldNotify = DB::transaction(function () use ($orderId, $incoming, $mutation, $detail, $mutationId, $trxFromHook): bool {
+            $shouldNotify = DB::transaction(function () use ($orderId, $incoming, $mutation, $detail, $mutationId, $trxFromHook, $historyId, $mutationIndex): bool {
                 /** @var BookingPayment|null $payment */
                 $payment = BookingPayment::query()
                     ->where('order_id', $orderId)
@@ -125,15 +156,42 @@ final class ProcessMootaWebhookForBookingPayments
                     ->first();
 
                 if ($payment === null) {
+                    PaymentFlowLog::warning('moota.settle.no_payment_row', [
+                        'history_id' => $historyId,
+                        'mutation_index' => $mutationIndex,
+                        'order_id' => $orderId,
+                    ]);
+
                     return false;
                 }
 
+                $paymentStatusBefore = (string) $payment->status;
+
+                PaymentFlowLog::info('moota.settle.payment_row_loaded', [
+                    'history_id' => $historyId,
+                    'mutation_index' => $mutationIndex,
+                    'payment_id' => $payment->getKey(),
+                    'order_id' => $orderId,
+                    'payment_status' => $paymentStatusBefore,
+                    'booking_id' => $payment->muthowif_booking_id,
+                ]);
+
                 $payType = is_string($payment->payment_type) ? $payment->payment_type : '';
                 if ($payType === '' || ! str_starts_with($payType, 'bank_transfer_moota')) {
+                    PaymentFlowLog::info('moota.settle.skip_wrong_payment_type', [
+                        'order_id' => $orderId,
+                        'payment_type' => $payment->payment_type,
+                    ]);
+
                     return false;
                 }
 
                 if ($payment->isSettled()) {
+                    PaymentFlowLog::info('moota.settle.skip_already_settled', [
+                        'order_id' => $orderId,
+                        'payment_status' => $payment->status,
+                    ]);
+
                     return false;
                 }
 
@@ -144,6 +202,11 @@ final class ProcessMootaWebhookForBookingPayments
 
                 if ($mutationId !== null
                     && ($gatewayMeta['moota_last_processed_mutation_id'] ?? null) === $mutationId) {
+                    PaymentFlowLog::info('moota.settle.skip_duplicate_mutation', [
+                        'order_id' => $orderId,
+                        'mutation_id' => $mutationId,
+                    ]);
+
                     return false;
                 }
 
@@ -153,6 +216,8 @@ final class ProcessMootaWebhookForBookingPayments
                 if ($expected === null && ! $detailTrust) {
                     PaymentFlowLog::warning('moota.settle.missing_expected_amount', [
                         'order_id' => $orderId,
+                        'payment_id' => $payment->getKey(),
+                        'detail_trust' => false,
                     ]);
 
                     return false;
@@ -169,9 +234,13 @@ final class ProcessMootaWebhookForBookingPayments
                         'detail_trust' => $detailTrust,
                     ]);
                     PaymentFlowLog::warning('moota.settle.amount_mismatch', [
+                        'history_id' => $historyId,
                         'order_id' => $orderId,
+                        'payment_id' => $payment->getKey(),
+                        'payment_status' => $paymentStatusBefore,
                         'expected' => $expected,
                         'incoming' => $incoming,
+                        'detail_trust' => $detailTrust,
                     ]);
 
                     return false;
@@ -189,7 +258,10 @@ final class ProcessMootaWebhookForBookingPayments
                         'hook' => $trxFromHook,
                     ]);
                     PaymentFlowLog::warning('moota.settle.trx_mismatch', [
+                        'history_id' => $historyId,
                         'order_id' => $orderId,
+                        'payment_id' => $payment->getKey(),
+                        'payment_status' => $paymentStatusBefore,
                     ]);
 
                     return false;
@@ -210,6 +282,16 @@ final class ProcessMootaWebhookForBookingPayments
                     $payment->status = 'settlement';
                     $payment->save();
 
+                    PaymentFlowLog::info('moota.settle.payment_settled_refund_state', [
+                        'history_id' => $historyId,
+                        'order_id' => $orderId,
+                        'payment_id' => $payment->getKey(),
+                        'from_status' => $paymentStatusBefore,
+                        'to_status' => 'settlement',
+                        'booking_payment_status' => $booking->payment_status->value,
+                        'updated' => true,
+                    ]);
+
                     return false;
                 }
 
@@ -218,12 +300,48 @@ final class ProcessMootaWebhookForBookingPayments
                     $payment->settled_at = $payment->settled_at ?? now();
                     $payment->save();
 
+                    PaymentFlowLog::info('moota.settle.payment_settled_booking_already_paid', [
+                        'history_id' => $historyId,
+                        'order_id' => $orderId,
+                        'payment_id' => $payment->getKey(),
+                        'from_status' => $paymentStatusBefore,
+                        'to_status' => 'settlement',
+                        'updated' => true,
+                    ]);
+
                     return false;
                 }
 
                 if ($booking->status !== BookingStatus::Confirmed) {
-                    $payment->status = 'pending';
-                    $payment->save();
+                    if ($paymentStatusBefore === 'cancelled') {
+                        $payment->status = 'settlement';
+                        $payment->settled_at = now();
+                        $payment->save();
+
+                        PaymentFlowLog::info('moota.settle.cancelled_payment_settled_booking_unconfirmed', [
+                            'history_id' => $historyId,
+                            'order_id' => $orderId,
+                            'payment_id' => $payment->getKey(),
+                            'from_status' => 'cancelled',
+                            'to_status' => 'settlement',
+                            'booking_id' => $booking->getKey(),
+                            'booking_status' => $booking->status->value,
+                            'updated' => true,
+                            'note' => 'Mutasi valid; booking belum Confirmed — baris pembayaran tetap di-settlement agar uang masuk tercatat.',
+                        ]);
+                    } else {
+                        $payment->status = 'pending';
+                        $payment->save();
+
+                        PaymentFlowLog::info('moota.settle.booking_not_confirmed_payment_pending', [
+                            'history_id' => $historyId,
+                            'order_id' => $orderId,
+                            'payment_id' => $payment->getKey(),
+                            'from_status' => $paymentStatusBefore,
+                            'booking_status' => $booking->status->value,
+                            'updated' => $paymentStatusBefore !== 'pending',
+                        ]);
+                    }
 
                     return false;
                 }
@@ -236,6 +354,17 @@ final class ProcessMootaWebhookForBookingPayments
                 $payment->settled_at = now();
                 $payment->save();
 
+                PaymentFlowLog::info('moota.settle.completed_booking_paid', [
+                    'history_id' => $historyId,
+                    'mutation_index' => $mutationIndex,
+                    'order_id' => $orderId,
+                    'payment_id' => $payment->getKey(),
+                    'booking_id' => $booking->getKey(),
+                    'from_payment_status' => $paymentStatusBefore,
+                    'to_payment_status' => 'settlement',
+                    'updated' => true,
+                ]);
+
                 return true;
             });
         } catch (\Throwable $e) {
@@ -245,6 +374,8 @@ final class ProcessMootaWebhookForBookingPayments
             ]);
             PaymentFlowLog::warning('moota.settle.exception', [
                 'order_id' => $orderId,
+                'history_id' => $historyId,
+                'mutation_index' => $mutationIndex,
                 'message' => $e->getMessage(),
             ]);
 
@@ -252,7 +383,10 @@ final class ProcessMootaWebhookForBookingPayments
         }
 
         if ($shouldNotify) {
-            PaymentFlowLog::info('moota.settle.dispatch_notify', ['order_id' => $orderId]);
+            PaymentFlowLog::info('moota.settle.dispatch_notify', [
+                'history_id' => $historyId,
+                'order_id' => $orderId,
+            ]);
             $payment = BookingPayment::query()->where('order_id', $orderId)->first();
             if ($payment !== null) {
                 NotifyMuthowifOfPaidBooking::dispatchAfterResponse((string) $payment->muthowif_booking_id);
