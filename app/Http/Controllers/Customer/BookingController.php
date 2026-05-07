@@ -237,6 +237,7 @@ class BookingController extends Controller
                 'selectedMethod' => $selectedMethod,
                 'methods' => BookingSnapPaymentCatalog::webMethodsExpanded(),
                 'mootaBankAccountIds' => $this->mootaBankAccountIdsForPaymentView(),
+                'mootaPaymentRows' => $this->mootaPaymentRowsForPaymentView(),
                 'instructions' => null,
             ]);
         }
@@ -352,6 +353,7 @@ class BookingController extends Controller
             'selectedMethod' => $selectedMethod,
             'methods' => BookingSnapPaymentCatalog::webMethodsExpanded(),
             'mootaBankAccountIds' => $this->mootaBankAccountIdsForPaymentView(),
+            'mootaPaymentRows' => $this->mootaPaymentRowsForPaymentView(),
             'instructions' => $session?->instructions,
         ]);
     }
@@ -837,6 +839,21 @@ class BookingController extends Controller
         }
 
         return BookingRefundFee::snapshot($booking, $payment);
+    }
+
+    /** @return array<int, array{name: string, description: string}> */
+    private function mootaPaymentRowsForPaymentView(): array
+    {
+        if (BookingSnapPaymentCatalog::driver() !== 'moota') {
+            return [];
+        }
+
+        $ids = array_values(array_filter(array_map(trim(...), config('services.moota.bank_account_ids', []))));
+        if ($ids === []) {
+            return [];
+        }
+
+        return app(MootaApiClient::class)->paymentLabelsForOrderedAccountIds($ids);
     }
 
     /** @return list<string> */

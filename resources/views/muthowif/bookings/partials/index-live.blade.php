@@ -3,6 +3,7 @@
     use App\Enums\MuthowifServiceType;
     use App\Enums\PaymentStatus;
     use App\Support\IndonesianNumber;
+    use App\Support\PlatformFee;
     use Carbon\Carbon;
 @endphp
         <div class="relative mx-auto max-w-5xl space-y-6 px-4 sm:px-6 lg:px-8">
@@ -54,6 +55,10 @@
                             if ($booking->with_transport && $service && $service->transport_price_flat !== null) {
                                 $transportLine = (float) $service->transport_price_flat;
                             }
+                            $priceSplit = PlatformFee::split((float) $booking->resolvedAmountDue());
+                            $serviceBaseIdr = (float) ($priceSplit['base'] ?? 0.0);
+                            $customerPlatformFeeIdr = (float) ($priceSplit['customer_fee'] ?? 0.0);
+                            $customerGrossIdr = (float) ($priceSplit['customer_gross'] ?? 0.0);
                             $badgeClass = match ($st) {
                                 BookingStatus::Pending => 'bg-amber-100 text-amber-950 ring-amber-200/90',
                                 BookingStatus::Confirmed => 'bg-emerald-100 text-emerald-950 ring-emerald-200/90',
@@ -125,10 +130,21 @@
                                                 </ul>
                                             @endif
 
-                                            <div class="mt-2 rounded-xl border border-brand-100/90 bg-gradient-to-r from-brand-50/90 to-white px-3 py-2.5 ring-1 ring-brand-100/70">
-                                                <p class="text-sm font-bold tabular-nums text-brand-950">
-                                                    {{ __('bookings.index.total_line', ['amount' => IndonesianNumber::formatThousands((string) (int) round((float) $booking->resolvedAmountDue()))]) }}
-                                                </p>
+                                            <div class="mt-2 overflow-hidden rounded-xl border border-brand-100/90 bg-white shadow-sm ring-1 ring-brand-100/70">
+                                                <dl class="divide-y divide-slate-100 text-sm">
+                                                    <div class="flex justify-between gap-3 px-3 py-2">
+                                                        <dt class="text-slate-600">{{ __('bookings.invoice.subtotal') }}</dt>
+                                                        <dd class="font-semibold tabular-nums text-slate-900">Rp {{ IndonesianNumber::formatThousands((string) (int) round($serviceBaseIdr)) }}</dd>
+                                                    </div>
+                                                    <div class="flex justify-between gap-3 px-3 py-2">
+                                                        <dt class="text-slate-600">{{ __('bookings.invoice.platform_fee_pct') }}</dt>
+                                                        <dd class="font-semibold tabular-nums text-slate-900">Rp {{ IndonesianNumber::formatThousands((string) (int) round($customerPlatformFeeIdr)) }}</dd>
+                                                    </div>
+                                                    <div class="flex justify-between gap-3 bg-gradient-to-r from-brand-50/90 to-brand-50/40 px-3 py-2.5">
+                                                        <dt class="font-bold text-slate-900">{{ __('bookings.invoice.total') }}</dt>
+                                                        <dd class="font-bold tabular-nums text-brand-700">Rp {{ IndonesianNumber::formatThousands((string) (int) round($customerGrossIdr)) }}</dd>
+                                                    </div>
+                                                </dl>
                                             </div>
 
                                             @include('bookings.partials.booking-documents', ['booking' => $booking, 'routeName' => 'muthowif.bookings.documents.show', 'compact' => true])

@@ -8,6 +8,21 @@
     $mootaBankAccountIds = $mootaBankAccountIds ?? [];
 
     $isWaitingConfirmation = $selectedMethod !== '' && is_array($instructions);
+
+    /**
+     * Moota multi-rekening: susun $methods dari config (sinkron dengan .env).
+     */
+    if (BookingSnapPaymentCatalog::driver() === 'moota') {
+        $mootaIdsForUi = array_values(array_filter(array_map(trim(...), config('services.moota.bank_account_ids', []))));
+        $mootaBankAccountIds = $mootaIdsForUi;
+        if (count($mootaIdsForUi) > 1) {
+            $methods = array_map(
+                static fn (int $i): string => 'bank_transfer_moota__'.$i,
+                array_keys($mootaIdsForUi)
+            );
+        }
+    }
+
     $split = PlatformFee::split((float) $booking->resolvedAmountDue());
     $customerPlatformFee = (float) ($split['customer_fee'] ?? 0.0);
     $customerTotal = (float) ($split['customer_gross'] ?? 0.0);
@@ -111,14 +126,12 @@
     foreach ($methods as $mid) {
         if (preg_match('/^bank_transfer_moota__(\d+)$/', (string) $mid, $mm)) {
             $mi = (int) $mm[1];
-            $ref = $mootaBankAccountIds[$mi] ?? '';
-            $masked = $ref === '' ? '—' : (strlen($ref) > 14 ? substr($ref, 0, 6).'…'.substr($ref, -4) : $ref);
             $mootaExtras[] = [
                 'id' => $mid,
                 'group' => 'moota',
                 'name' => __('bookings.payment.moota_account_title', ['n' => $mi + 1]),
                 'logo_path' => asset('images/payments/bank_transfer_moota.svg'),
-                'description' => __('bookings.payment.moota_account_masked', ['ref' => $masked]),
+                'description' => '',
                 'enabled' => true,
             ];
         }
@@ -128,6 +141,27 @@
             array_values(array_filter($methodsUi, static fn (array $row): bool => $row['id'] !== 'bank_transfer_moota')),
             $mootaExtras
         ));
+    }
+
+    $mootaPaymentRows = $mootaPaymentRows ?? [];
+    if (BookingSnapPaymentCatalog::driver() === 'moota' && $mootaPaymentRows !== []) {
+        $methodsUi = array_map(static function (array $row) use ($mootaPaymentRows): array {
+            if (($row['group'] ?? '') !== 'moota') {
+                return $row;
+            }
+            if (preg_match('/^bank_transfer_moota__(\d+)$/', (string) ($row['id'] ?? ''), $m)) {
+                $mi = (int) $m[1];
+                if (isset($mootaPaymentRows[$mi])) {
+                    $row['name'] = $mootaPaymentRows[$mi]['name'];
+                    $row['description'] = $mootaPaymentRows[$mi]['description'];
+                }
+            } elseif (($row['id'] ?? '') === 'bank_transfer_moota' && isset($mootaPaymentRows[0])) {
+                $row['name'] = $mootaPaymentRows[0]['name'];
+                $row['description'] = $mootaPaymentRows[0]['description'];
+            }
+
+            return $row;
+        }, $methodsUi);
     }
 @endphp
 
@@ -251,7 +285,7 @@
                                     </span>
                                     <div>
                                         <h2 class="text-lg font-bold text-white sm:text-xl">{{ __('bookings.payment.methods_heading') }}</h2>
-                                        <p class="mt-1 text-sm text-brand-100/85">{{ __('bookings.payment.grouped_hint') }}</p>
+                                        <p class="mt-1 text-sm text-brand-100/85">{{ BookingSnapPaymentCatalog::driver() === 'moota' ? __('bookings.payment.moota_methods_intro') : __('bookings.payment.grouped_hint') }}</p>
                                     </div>
                                 </div>
                                 <span class="inline-flex items-center gap-1.5 rounded-full bg-white/10 px-3 py-1.5 text-[11px] font-semibold text-white ring-1 ring-white/20">
@@ -274,6 +308,30 @@
                                         $shouldOpen = $selectedMethod !== '' && in_array($selectedMethod, array_map(fn ($m) => $m['id'], $groupMethods), true);
                                     @endphp
                                     @if ($groupMethods !== [])
+                                        @if ($groupId === 'moota' && BookingSnapPaymentCatalog::driver() === 'moota')
+                                            <div class="overflow-hidden rounded-2xl border border-slate-200/90 bg-white shadow-md ring-1 ring-slate-200/80">
+                                                <div class="border-b border-teal-100/80 bg-gradient-to-r from-teal-50/90 to-white px-4 py-3.5 sm:px-5">
+                                                    <p class="text-sm font-bold text-slate-900">{{ __('bookings.payment.moota_flat_heading') }}</p>
+                                                    <p class="mt-1 text-xs text-slate-600">{{ __('bookings.payment.groups.moota.description') }}</p>
+                                                </div>
+                                                <div class="space-y-2 p-3 sm:p-4">
+                                                    @foreach ($groupMethods as $method)
+                                                        <label class="group/m flex min-h-[4.25rem] cursor-pointer touch-manipulation items-center justify-between gap-3 rounded-xl border px-4 py-3 transition active:scale-[0.99] {{ $selectedMethod === $method['id'] ? 'border-brand-400 bg-gradient-to-br from-brand-50 to-white ring-2 ring-brand-200/60' : 'border-slate-200 bg-white hover:border-slate-300 hover:bg-slate-50/80' }}">
+                                                            <span class="flex min-w-0 items-center gap-3">
+                                                                <img src="{{ $method['logo_path'] }}" alt="" class="h-10 w-16 shrink-0 rounded-lg border border-slate-200/80 bg-white object-contain p-1" width="64" height="40">
+                                                                <span class="min-w-0">
+                                                                    <span class="block text-sm font-semibold text-slate-900">{{ $method['name'] }}</span>
+                                                                    @if (trim((string) ($method['description'] ?? '')) !== '')
+                                                                        <span class="block max-w-[14rem] whitespace-pre-line break-all text-xs text-slate-500 sm:max-w-none sm:break-normal">{{ $method['description'] }}</span>
+                                                                    @endif
+                                                                </span>
+                                                            </span>
+                                                            <input type="radio" name="method" value="{{ $method['id'] }}" class="h-5 w-5 shrink-0 border-slate-300 text-brand-600 focus:ring-brand-500" {{ $selectedMethod === $method['id'] ? 'checked' : '' }}>
+                                                        </label>
+                                                    @endforeach
+                                                </div>
+                                            </div>
+                                        @else
                                         <details class="group rounded-2xl border border-slate-200/90 bg-white open:shadow-md open:ring-1 open:ring-slate-200/80" {{ $shouldOpen ? 'open' : '' }}>
                                             <summary class="flex cursor-pointer list-none items-center justify-between gap-3 rounded-2xl px-4 py-3.5 text-left transition hover:bg-slate-50/90 [&::-webkit-details-marker]:hidden">
                                                 <span class="flex min-w-0 items-center gap-3">
@@ -314,7 +372,9 @@
                                                                 <img src="{{ $method['logo_path'] }}" alt="" class="h-10 w-16 shrink-0 rounded-lg border border-slate-200/80 bg-white object-contain p-1" width="64" height="40">
                                                                 <span class="min-w-0">
                                                                     <span class="block text-sm font-semibold text-slate-900">{{ $method['name'] }}</span>
-                                                                    <span class="block truncate text-xs text-slate-500">{{ $method['description'] }}</span>
+                                                                    @if (trim((string) ($method['description'] ?? '')) !== '')
+                                                                        <span class="block max-w-[14rem] whitespace-pre-line break-all text-xs text-slate-500 sm:max-w-none sm:break-normal">{{ $method['description'] }}</span>
+                                                                    @endif
                                                                 </span>
                                                             </span>
                                                             <input type="radio" name="method" value="{{ $method['id'] }}" class="h-5 w-5 shrink-0 border-slate-300 text-brand-600 focus:ring-brand-500" {{ $selectedMethod === $method['id'] ? 'checked' : '' }}>
@@ -323,6 +383,7 @@
                                                 </div>
                                             </div>
                                         </details>
+                                        @endif
                                     @endif
                                 @endforeach
                             </div>

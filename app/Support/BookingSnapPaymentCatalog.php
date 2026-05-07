@@ -30,8 +30,8 @@ final class BookingSnapPaymentCatalog
     }
 
     /**
-     * Untuk Moota dengan beberapa rekening + {@see config('services.moota.bank_account_pick')} = user,
-     * metode dipecah jadi bank_transfer_moota__0, __1, … agar jamaah memilih rekening di UI.
+     * Untuk Moota: bila ada beberapa {@see config('services.moota.bank_account_ids')}, halaman web memecah
+     * menjadi metode bank_transfer_moota__0, __1, … agar jamaah memilih rekening.
      *
      * @return list<string>
      */
@@ -45,8 +45,7 @@ final class BookingSnapPaymentCatalog
         /** @var array<int, string> $ids */
         $ids = config('services.moota.bank_account_ids', []);
         $ids = array_values(array_filter(array_map(trim(...), $ids)));
-        $pick = strtolower((string) config('services.moota.bank_account_pick', 'first'));
-        if (count($ids) <= 1 || $pick !== 'user') {
+        if (count($ids) <= 1) {
             return $base;
         }
 

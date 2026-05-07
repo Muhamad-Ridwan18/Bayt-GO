@@ -99,16 +99,20 @@ return [
         'api_password' => (string) env('MOOTA_API_PASSWORD', ''),
         /**
          * Satu atau lebih ID rekening Moota (`bank_account_id` di Create Transaction). Pisahkan dengan koma/spasi.
-         * Setiap pembuatan transaksi hanya boleh mengirim satu ID; pilih lewat `bank_account_pick`.
+         * Bila lebih dari satu, halaman bayar web menampilkan satu opsi per rekening.
+         * Tanpa pilihan eksplisit, perilaku lain memakai {@see bank_account_pick}.
          */
         'bank_account_ids' => array_values(array_filter(array_map(
             'trim',
             preg_split('/[\s,]+/', (string) env('MOOTA_BANK_ACCOUNT_ID', ''), -1, PREG_SPLIT_NO_EMPTY) ?: []
         ))),
-        /** `first` | `round_robin` | `user` (pilih rekening di UI bila ada beberapa ID). */
+        /** `first` | `round_robin` | `user` (fallback bila tidak ada rekening terpilih; web multi-rek: pakai opsi per ID). */
         'bank_account_pick' => strtolower(trim((string) env('MOOTA_BANK_ACCOUNT_PICK', 'first'))),
         'payment_expire_minutes' => (int) env('MOOTA_PAYMENT_EXPIRE_MINUTES', 1440),
         'token_cache_minutes' => (int) env('MOOTA_ACCESS_TOKEN_CACHE_MINUTES', 55),
+        /** Rentang filter kode unik untuk webhook mutasi (POST /api/v2/integration/webhook). */
+        'webhook_unique_start' => (int) env('MOOTA_WEBHOOK_UNIQUE_START', 0),
+        'webhook_unique_end' => (int) env('MOOTA_WEBHOOK_UNIQUE_END', 999),
     ],
 
 ];
