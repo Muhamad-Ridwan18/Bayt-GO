@@ -27,6 +27,7 @@ final class MootaWebhookHistoriesLiveController extends Controller
     private function historyFeedView(string $view): View
     {
         $rows = MootaWebhookHistory::query()
+            ->orderByDesc('created_at')
             ->orderByDesc('id')
             ->limit(100)
             ->get()

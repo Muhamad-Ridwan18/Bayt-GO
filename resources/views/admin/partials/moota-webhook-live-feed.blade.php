@@ -16,11 +16,13 @@
         @endif
     </div>
 
-    <p class="px-6 py-10 text-center text-sm text-slate-500" x-show="rows.length === 0" x-cloak>
+    {{-- Jangan pakai x-cloak di blok utama: jika Alpine gagal init, isi tidak pernah tampil. --}}
+    <p class="px-6 py-10 text-center text-sm text-slate-500" x-show="rows.length === 0" x-transition.opacity>
         {{ __('admin.moota_webhooks.empty') }}
     </p>
 
-    <div class="overflow-x-auto" x-show="rows.length > 0" x-cloak>
+    <div class="overflow-x-auto" x-show="rows.length > 0" x-transition.opacity>
+        {{-- template x-for harus di dalam <tbody>: anak langsung <table> tidak valid HTML & browser memindahkan node sehingga Alpine tidak merender baris. --}}
         <table class="min-w-full text-sm">
             <thead class="bg-slate-50 text-left text-xs font-semibold uppercase text-slate-500">
                 <tr>
@@ -33,9 +35,9 @@
                     <th class="px-4 py-3 whitespace-nowrap text-right">{{ __('admin.moota_webhooks.col_detail') }}</th>
                 </tr>
             </thead>
-            <template x-for="row in rows" :key="row.id">
-                <tbody class="divide-y divide-slate-100 border-b border-slate-100">
-                    <tr class="bg-white hover:bg-slate-50/60 align-top">
+            <tbody>
+                <template x-for="row in rows" :key="row.id">
+                    <tr class="border-b border-slate-100 bg-white hover:bg-slate-50/60 align-top">
                         <td class="px-4 py-3 text-slate-700 whitespace-nowrap tabular-nums" x-text="row.created_at"></td>
                         <td class="px-4 py-3 text-slate-800 whitespace-nowrap font-mono text-xs" x-text="row.source_ip || '—'"></td>
                         <td class="px-4 py-3 whitespace-nowrap">
@@ -84,15 +86,15 @@
                             ></button>
                         </td>
                     </tr>
-                    <tr x-show="expandedId === row.id">
-                        <td colspan="7" class="px-4 sm:px-6 py-4 bg-slate-50/95 align-top border-t border-slate-50">
+                    <tr x-show="expandedId === row.id" class="bg-slate-50/95 border-t border-slate-50">
+                        <td colspan="7" class="px-4 sm:px-6 py-4 align-top">
                             <p class="text-xs font-semibold uppercase text-slate-500 mb-2">{{ __('admin.moota_webhooks.expand_payload') }}</p>
                             <pre class="rounded-xl bg-slate-900 text-brand-50 p-4 text-xs overflow-x-auto max-h-[24rem]" x-show="row.payload_preview"><code x-text="row.payload_preview"></code></pre>
                             <p class="text-sm text-slate-500 italic py-4" x-show="!row.payload_preview">{{ __('admin.moota_webhooks.no_payload') }}</p>
                         </td>
                     </tr>
-                </tbody>
-            </template>
+                </template>
+            </tbody>
         </table>
     </div>
 </div>
