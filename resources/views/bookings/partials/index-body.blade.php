@@ -122,117 +122,91 @@
                             <article
                                 class="relative overflow-hidden rounded-3xl border border-slate-200/80 bg-white shadow-md shadow-slate-900/5 transition duration-300 hover:-translate-y-0.5 hover:border-slate-300/80 hover:shadow-lg hover:shadow-slate-900/10 {{ $cardStyle['glow'] }}"
                             >
-                                <div class="p-5 sm:p-6">
+                                <div class="p-4 sm:p-5">
                                     {{-- Row 1: Name & Price --}}
-                                    <div class="flex items-start justify-between gap-4">
-                                        <div class="min-w-0 flex-1">
-                                            <h2 class="truncate text-lg font-bold text-slate-900">
-                                                {{ $booking->muthowifProfile->user->name }}
-                                            </h2>
-                                        </div>
-                                        @if ($booking->total_amount !== null)
-                                            <div class="shrink-0 text-right">
-                                                <p class="text-lg font-bold text-brand-600 tabular-nums">
-                                                    Rp {{ IndonesianNumber::formatThousands((string) (int) round((float) $booking->total_amount)) }}
-                                                </p>
-                                            </div>
-                                        @else
-                                            <div class="shrink-0 text-right">
-                                                <p class="text-sm font-medium text-slate-400 italic">
-                                                    {{ __('bookings.index.price_pending') }}
-                                                </p>
-                                            </div>
-                                        @endif
+                                    <div class="flex items-center justify-between">
+                                        <h2 class="truncate text-base font-bold text-slate-900 sm:text-lg">
+                                            {{ $booking->muthowifProfile->user->name }}
+                                        </h2>
+                                        <p class="text-base font-bold text-brand-600 tabular-nums sm:text-lg">
+                                            Rp {{ $booking->total_amount !== null ? IndonesianNumber::formatThousands((string) (int) round((float) $booking->total_amount)) : '—' }}
+                                        </p>
                                     </div>
 
                                     {{-- Row 2: Code & Status --}}
-                                    <div class="mt-1 flex items-center justify-between gap-4">
-                                        <div class="min-w-0 flex-1">
-                                            @if (filled($booking->booking_code))
-                                                <p class="font-mono text-xs font-medium text-slate-500">
-                                                    {{ $booking->booking_code }}
-                                                </p>
-                                            @else
-                                                <p class="text-[10px] text-slate-400 uppercase tracking-tight">- {{ __('bookings.index.no_code') }} -</p>
-                                            @endif
-                                        </div>
-                                        <div class="flex shrink-0 items-center gap-2">
-                                            <span class="inline-flex items-center rounded-full px-2 py-0.5 text-[10px] font-bold uppercase tracking-wider ring-1 {{ $cardStyle['badge'] }}">
+                                    <div class="mt-0.5 flex items-center justify-between text-[11px] font-medium sm:text-xs">
+                                        <p class="font-mono text-slate-500">
+                                            {{ $booking->booking_code ?? '-' }}
+                                        </p>
+                                        <div class="flex items-center gap-3">
+                                            <span class="{{ str_replace(['bg-', 'text-', 'ring-'], ['text-', 'text-', ''], $cardStyle['badge']) }} font-bold">
                                                 {{ $st->label() }}
                                             </span>
-                                            @if (in_array($st, [BookingStatus::Confirmed, BookingStatus::Completed, BookingStatus::Pending], true) || ($st === BookingStatus::Cancelled && in_array($booking->payment_status, [PaymentStatus::RefundPending, PaymentStatus::Refunded], true)))
-                                                <span class="inline-flex items-center rounded-full px-2 py-0.5 text-[10px] font-bold uppercase tracking-wider ring-1 {{ match ($booking->payment_status) {
-                                                    PaymentStatus::Paid => 'bg-emerald-50 text-emerald-700 ring-emerald-200/80',
-                                                    PaymentStatus::RefundPending => 'bg-amber-50 text-amber-700 ring-amber-200/80',
-                                                    PaymentStatus::Refunded => 'bg-red-50 text-red-700 ring-red-200/80',
-                                                    PaymentStatus::Pending => 'bg-slate-50 text-slate-600 ring-slate-200/80',
-                                                    default => 'bg-slate-50 text-slate-700 ring-slate-200/80',
-                                                } }}">
-                                                    ● {{ $booking->payment_status->label() }}
-                                                </span>
-                                            @endif
+                                            <span class="flex items-center gap-1.5 {{ match ($booking->payment_status) {
+                                                PaymentStatus::Paid => 'text-emerald-600',
+                                                PaymentStatus::RefundPending => 'text-amber-600',
+                                                PaymentStatus::Refunded => 'text-red-600',
+                                                PaymentStatus::Pending => 'text-slate-500',
+                                                default => 'text-slate-600',
+                                            } }} font-bold">
+                                                <span class="text-[8px]">●</span> {{ $booking->payment_status->label() }}
+                                            </span>
                                         </div>
                                     </div>
 
-                                    <div class="my-4 h-px bg-slate-100"></div>
+                                    <div class="my-3 h-px bg-slate-100/80"></div>
 
                                     {{-- Info List --}}
-                                    <div class="space-y-2.5">
+                                    <div class="space-y-2">
                                         {{-- Date --}}
-                                        <div class="flex items-center gap-3 text-sm text-slate-600">
-                                            <svg class="h-4 w-4 shrink-0 text-slate-400" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor">
-                                                <path fill-rule="evenodd" d="M5.75 2a.75.75 0 01.75.75V4h7V2.75a.75.75 0 011.5 0V4h.25A2.75 2.75 0 0118 6.75v8.5A2.75 2.75 0 0115.25 18H4.75A2.75 2.75 0 012 15.25v-8.5A2.75 2.75 0 014.75 4H5V2.75A.75.75 0 015.75 2zm-1 5.5c-.69 0-1.25.56-1.25 1.25v6.5c0 .69.56 1.25 1.25 1.25h10.5c.69 0 1.25-.56 1.25-1.25v-6.5c0-.69-.56-1.25-1.25-1.25H4.75z" clip-rule="evenodd" />
-                                            </svg>
-                                            <span class="font-medium tabular-nums">
+                                        <div class="flex items-center gap-2.5 text-xs text-slate-600 sm:text-sm">
+                                            <span class="text-base">📅</span>
+                                            <span class="font-semibold tabular-nums">
                                                 {{ Carbon::parse($booking->starts_on)->format('d') }} – {{ Carbon::parse($booking->ends_on)->format('d M Y') }}
                                             </span>
                                         </div>
 
                                         {{-- Service & Pilgrims --}}
-                                        <div class="flex items-center gap-3 text-sm text-slate-600">
-                                            <svg class="h-4 w-4 shrink-0 text-slate-400" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor">
-                                                <path d="M10 9a3 3 0 100-6 3 3 0 000 6zm-7 9a7 7 0 1114 0H3z" />
-                                            </svg>
-                                            <span class="font-medium">
+                                        <div class="flex items-center gap-2.5 text-xs text-slate-600 sm:text-sm">
+                                            <span class="text-base">👥</span>
+                                            <span class="font-semibold">
                                                 {{ $booking->service_type?->label() ?? '—' }} · {{ $booking->pilgrim_count }} {{ __('common.pilgrims') }}
                                             </span>
                                         </div>
 
                                         {{-- Add-ons count --}}
                                         @if (! empty($booking->selected_add_on_ids))
-                                            <div class="flex items-center gap-3 text-sm text-slate-600">
-                                                <svg class="h-4 w-4 shrink-0 text-slate-400" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor">
-                                                    <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm.75-11.25a.75.75 0 00-1.5 0v2.5h-2.5a.75.75 0 000 1.5h2.5v2.5a.75.75 0 001.5 0v-2.5h2.5a.75.75 0 000-1.5h-2.5v-2.5z" clip-rule="evenodd" />
-                                                </svg>
-                                                <span class="font-medium">
+                                            <div class="flex items-center gap-2.5 text-xs text-slate-600 sm:text-sm">
+                                                <span class="text-base">➕</span>
+                                                <span class="font-semibold">
                                                     {{ count($booking->selected_add_on_ids) }} {{ __('bookings.index_page.card_addons') }}
                                                 </span>
                                             </div>
                                         @endif
                                     </div>
 
-                                    <div class="my-4 h-px bg-slate-100"></div>
+                                    <div class="my-3 h-px bg-slate-100/80"></div>
 
                                     {{-- Actions --}}
                                     <div class="flex flex-wrap items-center gap-2">
-                                        <a href="{{ route('bookings.show', $booking) }}" class="inline-flex items-center justify-center rounded-xl bg-slate-900 px-4 py-2 text-xs font-bold text-white transition hover:bg-slate-800">
+                                        <a href="{{ route('bookings.show', $booking) }}" class="inline-flex items-center justify-center rounded-lg bg-slate-900 px-3.5 py-1.5 text-[11px] font-bold text-white transition hover:bg-slate-800 sm:text-xs">
                                             {{ __('bookings.index.detail') }}
                                         </a>
 
                                         @if ($st === BookingStatus::Confirmed && $booking->payment_status === PaymentStatus::Pending)
-                                            <a href="{{ route('bookings.payment', $booking) }}" class="inline-flex items-center justify-center rounded-xl bg-brand-600 px-4 py-2 text-xs font-bold text-white transition hover:bg-brand-700">
+                                            <a href="{{ route('bookings.payment', $booking) }}" class="inline-flex items-center justify-center rounded-lg bg-brand-600 px-3.5 py-1.5 text-[11px] font-bold text-white transition hover:bg-brand-700 sm:text-xs">
                                                 {{ __('bookings.index.pay_online') }}
                                             </a>
                                         @endif
 
                                         @if (in_array($booking->payment_status, [PaymentStatus::Paid, PaymentStatus::RefundPending, PaymentStatus::Refunded], true))
-                                            <a href="{{ route('bookings.invoice', $booking) }}" target="_blank" rel="noopener noreferrer" class="inline-flex items-center justify-center rounded-xl border border-slate-200 bg-white px-4 py-2 text-xs font-bold text-slate-700 transition hover:bg-slate-50">
+                                            <a href="{{ route('bookings.invoice', $booking) }}" target="_blank" rel="noopener noreferrer" class="inline-flex items-center justify-center rounded-lg border border-slate-200 bg-white px-3.5 py-1.5 text-[11px] font-bold text-slate-700 transition hover:bg-slate-50 sm:text-xs">
                                                 {{ __('bookings.index.print_invoice') }}
                                             </a>
                                         @endif
 
                                         @if ($st === BookingStatus::Completed)
-                                            <a href="{{ route('bookings.show', $booking) }}" class="inline-flex items-center justify-center rounded-xl border border-brand-200 bg-brand-50 px-4 py-2 text-xs font-bold text-brand-700 transition hover:bg-brand-100">
+                                            <a href="{{ route('bookings.show', $booking) }}" class="inline-flex items-center justify-center rounded-lg border border-brand-200 bg-brand-50 px-3.5 py-1.5 text-[11px] font-bold text-brand-700 transition hover:bg-brand-100 sm:text-xs">
                                                 {{ $booking->review ? __('bookings.index.view_review') : __('bookings.index.give_review') }}
                                             </a>
                                         @endif
@@ -240,7 +214,7 @@
                                         @if ($st === BookingStatus::Pending)
                                             <form method="POST" action="{{ route('bookings.cancel', $booking) }}" onsubmit="return confirm(@json(__('bookings.index.cancel_confirm')));" class="inline">
                                                 @csrf
-                                                <button type="submit" class="rounded-xl border border-red-100 bg-red-50 px-4 py-2 text-xs font-bold text-red-600 transition hover:bg-red-100">
+                                                <button type="submit" class="rounded-lg border border-red-100 bg-red-50 px-3.5 py-1.5 text-[11px] font-bold text-red-600 transition hover:bg-red-100 sm:text-xs">
                                                     {{ __('bookings.index.cancel') }}
                                                 </button>
                                             </form>
