@@ -6,6 +6,7 @@ use App\Http\Controllers\Controller;
 use App\Models\Article;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
+use Illuminate\Http\Response;
 use Illuminate\Support\Carbon;
 use Illuminate\Validation\Rule;
 use Illuminate\View\View;
@@ -76,6 +77,51 @@ class ArticlesAdminController extends Controller
         return redirect()
             ->route('admin.articles.edit', $article)
             ->with('status', __('admin.articles.saved'));
+    }
+
+    public function ckeditorUpload(Request $request): \Symfony\Component\HttpFoundation\Response
+    {
+        $request->validate([
+            'upload' => [
+                'required',
+                'file',
+                'max:10240',
+                'mimes:jpg,jpeg,png,webp,gif,pdf',
+            ],
+        ]);
+
+        $funcNum = (int) ($request->input('CKEditorFuncNum') ?? $request->query('CKEditorFuncNum') ?? 0);
+
+        try {
+            $file = $request->file('upload');
+            if ($file === null) {
+                return $this->ckeditorUploadResponse($funcNum, '', __('admin.articles.upload_missing_file'));
+            }
+
+            $folder = 'articles/ckeditor/'.now()->format('Y/m');
+            $path = $file->store($folder, 'public');
+            $url = asset('storage/'.$path);
+
+            return $this->ckeditorUploadResponse($funcNum, $url, '');
+        } catch (\Throwable) {
+            return $this->ckeditorUploadResponse($funcNum, '', __('admin.articles.upload_failed'));
+        }
+    }
+
+    /**
+     * CKEditor 4 expects an HTML page that calls CKEDITOR.tools.callFunction on the parent window.
+     */
+    private function ckeditorUploadResponse(int $funcNum, string $url, string $errorMessage): Response
+    {
+        $urlJson = json_encode($url, JSON_THROW_ON_ERROR | JSON_HEX_TAG | JSON_HEX_APOS | JSON_HEX_AMP | JSON_HEX_QUOT | JSON_UNESCAPED_SLASHES);
+        $errJson = json_encode($errorMessage, JSON_THROW_ON_ERROR);
+
+        $html = '<!DOCTYPE html><html><head><meta charset="utf-8"></head><body>'
+            .'<script type="text/javascript">'
+            .'window.parent.CKEDITOR.tools.callFunction('.$funcNum.', '.$urlJson.', '.$errJson.');'
+            .'</script></body></html>';
+
+        return response($html)->header('Content-Type', 'text/html; charset=utf-8');
     }
 
     public function destroy(Article $article): RedirectResponse

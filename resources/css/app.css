@@ -44,6 +44,18 @@
     @apply border-s-4 border-gold/80 bg-baytgo/[0.04] py-4 ps-5 pe-4 rounded-r-2xl text-slate-800 italic;
 }
 
+.article-prose img {
+    @apply my-8 h-auto max-w-full rounded-xl border border-slate-200/80 shadow-sm;
+}
+
+.article-prose figure {
+    @apply my-10;
+}
+
+.article-prose figcaption {
+    @apply mt-3 text-center text-sm text-slate-600;
+}
+
 .article-prose strong {
     @apply font-bold text-slate-900;
 }
