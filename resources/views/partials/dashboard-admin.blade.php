@@ -392,5 +392,9 @@
                 </div>
             </aside>
         </div>
+
+        <div class="mt-10 border-t border-slate-200/70 pt-8">
+            @include('partials.dashboard-next-profile-row')
+        </div>
     </div>
 </div>
