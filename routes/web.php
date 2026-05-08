@@ -23,6 +23,7 @@ use App\Http\Controllers\Muthowif\MuthowifServiceController;
 use App\Http\Controllers\Muthowif\WithdrawController as MuthowifWithdrawController;
 use App\Http\Controllers\PaymentWebhookController;
 use App\Http\Controllers\ProfileController;
+use App\Http\Controllers\Public\ArticleController;
 use App\Http\Controllers\Public\MuthowifDirectoryController;
 use App\Http\Controllers\Public\WelcomeController;
 use App\Http\Controllers\SupportTicketController;
@@ -94,6 +95,9 @@ Route::get('/layanan/{publicProfile}/booking', [MuthowifDirectoryController::cla
 Route::get('/layanan/{publicProfile}', [MuthowifDirectoryController::class, 'show'])->name('layanan.show');
 
 Route::get('/terms', TermsController::class)->name('terms');
+
+Route::get('/artikel', [ArticleController::class, 'index'])->name('articles.index');
+Route::get('/artikel/{article:slug}', [ArticleController::class, 'show'])->name('articles.show');
 
 Route::get('/locale/{locale}', [LocaleController::class, 'switch'])->name('locale.switch');
 

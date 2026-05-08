@@ -22,6 +22,7 @@ return [
     'admin_settings' => 'Settings',
     'open_menu' => 'Open menu',
     'contact_us' => 'Contact us',
+    'articles' => 'Articles',
     'lang_en' => 'English',
     'lang_id' => 'Indonesian',
     'lang_ar' => 'Arabic',

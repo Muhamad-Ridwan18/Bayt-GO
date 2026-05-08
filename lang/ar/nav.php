@@ -10,6 +10,7 @@ return [
     'refund' => 'استرداد',
     'withdraw' => 'سحب',
     'contact_us' => 'اتصل بنا',
+    'articles' => 'مقالات',
     'lang_en' => 'English',
     'lang_id' => 'Indonesia',
     'lang_ar' => 'العربية',
