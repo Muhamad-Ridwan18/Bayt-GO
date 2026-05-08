@@ -101,7 +101,7 @@
                                 <span class="inline-flex rounded-full px-2.5 py-1 text-xs font-semibold ring-1 {{ $badgeClass }}">{{ $st->label() }}</span>
                                 @if (in_array($st, [BookingStatus::Confirmed, BookingStatus::Completed], true))
                                     <span class="inline-flex rounded-full px-2.5 py-1 text-xs font-semibold ring-1 {{ match ($b->payment_status) {
-                                        PaymentStatus::Paid => 'bg-brand-50 text-brand-900 ring-brand-200/90',
+                                        PaymentStatus::Paid => 'bg-emerald-100 text-emerald-950 ring-emerald-200/90',
                                         PaymentStatus::Refunded => 'bg-red-100 text-red-700 ring-red-200/80',
                                         default => 'bg-orange-50 text-orange-900 ring-orange-200/90',
                                     } }}">{{ __('muthowif.bookings.payment_prefix') }} {{ $b->payment_status->label() }}</span>

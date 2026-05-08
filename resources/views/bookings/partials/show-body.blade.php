@@ -115,7 +115,7 @@
                                         </span>
                                         @if ($b->payment_status !== PaymentStatus::Pending)
                                             <span class="inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-semibold ring-1 {{ match ($b->payment_status) {
-                                                PaymentStatus::Paid => 'bg-brand-50 text-brand-950 ring-brand-200/80',
+                                                PaymentStatus::Paid => 'bg-emerald-100 text-emerald-950 ring-emerald-200/80',
                                                 PaymentStatus::RefundPending => 'bg-amber-50 text-amber-950 ring-amber-200/80',
                                                 PaymentStatus::Refunded => 'bg-red-100 text-red-800 ring-red-200/80',
                                                 default => 'bg-orange-50 text-orange-950 ring-orange-200/80',
