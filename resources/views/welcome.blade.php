@@ -1,38 +1,15 @@
 <!DOCTYPE html>
 <html lang="{{ str_replace('_', '-', app()->getLocale()) }}">
 @php
+    use App\Support\WelcomeLanding;
+
     $contactRaw = (string) (config('app.contact_whatsapp') ?: config('app.contact_phone'));
     $contactDigits = preg_replace('/\D+/', '', $contactRaw ?? '') ?? '';
     $contactLink = $contactDigits !== '' ? 'https://wa.me/'.$contactDigits : null;
     $featuredMuthowifs = $featuredMuthowifs ?? collect();
 
-    $heroImage = null;
-    // Prefer flat file public/images/bg-welcome.{ext} (e.g. bg-welcome.png)
-    foreach (['webp', 'png', 'jpg', 'jpeg'] as $ext) {
-        $p = public_path('images/bg-welcome.'.$ext);
-        if (file_exists($p)) {
-            $heroImage = asset('images/bg-welcome.'.$ext);
-            break;
-        }
-    }
-    $welcomeBgDir = public_path('images/bg-welcome');
-    if ($heroImage === null && is_dir($welcomeBgDir)) {
-        $entries = array_diff(scandir($welcomeBgDir) ?: [], ['.', '..']);
-        sort($entries, SORT_NATURAL | SORT_FLAG_CASE);
-        foreach ($entries as $name) {
-            $lower = strtolower($name);
-            if (preg_match('/\.(jpe?g|png|webp)$/i', $lower)) {
-                $heroImage = asset('images/bg-welcome/'.$name);
-                break;
-            }
-        }
-    }
-    if ($heroImage === null && file_exists(public_path('images/welcome-hero.jpg'))) {
-        $heroImage = asset('images/welcome-hero.jpg');
-    }
-    if ($heroImage === null) {
-        $heroImage = 'https://images.unsplash.com/photo-1519817914152-22d216bb9170?q=85&w=2160&auto=format&fit=crop';
-    }
+    $heroImage = WelcomeLanding::resolvedHeroImageUrl();
+    $heroImageClasses = WelcomeLanding::heroImageTailwindClasses();
 @endphp
     <head>
         <meta charset="utf-8">
@@ -86,11 +63,12 @@
                 {{-- Hero: full-bleed photo + cream blend (no boxed image) --}}
                 <section class="relative min-h-[34rem] overflow-hidden bg-welcomeCanvas pb-10 sm:min-h-[38rem] sm:pb-12 lg:min-h-[40rem] lg:pb-14">
                     {{-- Background photo: full width --}}
-                    <div class="pointer-events-none absolute inset-0 z-0" aria-hidden="true">
+                    {{-- Geser foto: hanya via object-position; gradient overlay pakai stop bawaan --}}
+                    <div class="pointer-events-none absolute inset-0 z-0 overflow-hidden" aria-hidden="true">
                         <img
                             src="{{ $heroImage }}"
                             alt=""
-                            class="h-full w-full min-h-[36rem] object-cover object-[52%_26%] sm:min-h-[40rem] sm:object-[54%_28%] lg:min-h-[44rem]"
+                            class="{{ $heroImageClasses }}"
                             loading="eager"
                             decoding="async"
                         />

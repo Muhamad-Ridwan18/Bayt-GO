@@ -1,6 +1,7 @@
 <?php
 
 use App\Enums\MuthowifVerificationStatus;
+use App\Http\Controllers\Admin\AdminSettingsHubController;
 use App\Http\Controllers\Admin\BookingRefundController;
 use App\Http\Controllers\Admin\FinanceController;
 use App\Http\Controllers\Admin\LogsController;
@@ -223,6 +224,7 @@ Route::middleware('auth')->group(function () {
         });
 
     Route::middleware([EnsureUserRole::class.':admin'])->prefix('admin')->name('admin.')->group(function () {
+        Route::get('pengaturan', AdminSettingsHubController::class)->name('settings.index');
         Route::get('tampilan/logo', [SiteAppearanceController::class, 'edit'])->name('site-appearance.edit');
         Route::post('tampilan/logo', [SiteAppearanceController::class, 'update'])->name('site-appearance.update');
         Route::get('pengguna', [UserManagementController::class, 'index'])->name('users.index');

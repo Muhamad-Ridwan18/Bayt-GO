@@ -16,23 +16,36 @@
                 ->count();
         }
     }
+
+    $adminHubActive = false;
+    if (Auth::check() && Auth::user()->isAdmin()) {
+        $adminHubActive = request()->routeIs([
+            'admin.settings.index',
+            'admin.site-appearance.*',
+            'admin.users.*',
+            'admin.muthowif.*',
+            'admin.support-tickets.*',
+            'admin.moota_webhooks.*',
+            'admin.logs.*',
+        ]);
+    }
 @endphp
 
-<nav x-data="{ open: false }" class="relative z-[90] bg-white/90 backdrop-blur border-b border-slate-200/80 shadow-sm">
+<nav x-data="{ open: false }" class="relative z-[90] bg-white/90 backdrop-blur border-b border-slate-200/80 shadow-sm" @resize.window="if (window.innerWidth >= 1024) open = false">
     <!-- Primary Navigation Menu -->
     <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        <div class="flex justify-between h-16">
-            <div class="flex">
+        <div class="flex min-h-16 min-w-0 items-center justify-between gap-2">
+            <div class="flex min-w-0 flex-1 items-center lg:flex-initial lg:gap-0">
                 <!-- Logo -->
-                <div class="shrink-0 flex items-center">
-                    <a href="{{ url('/') }}" class="flex items-center gap-2">
+                <div class="flex shrink-0 items-center">
+                    <a href="{{ url('/') }}" class="flex min-w-0 items-center gap-2">
                         <x-site-logo variant="nav" />
-                        <span class="text-lg font-semibold text-slate-900 hidden sm:inline">Bayt<span class="text-brand-600">Go</span></span>
+                        <span class="hidden text-lg font-semibold text-slate-900 sm:inline">Bayt<span class="text-brand-600">Go</span></span>
                     </a>
                 </div>
 
                 <!-- Navigation Links -->
-                <div class="hidden space-x-8 sm:-my-px sm:ms-10 sm:flex">
+                <div class="hidden min-w-0 lg:-my-px lg:ms-10 lg:flex lg:space-x-6 xl:space-x-8">
                     <x-nav-link :href="route('dashboard')" :active="request()->routeIs('dashboard')">
                         {{ __('nav.home') }}
                     </x-nav-link>
@@ -59,23 +72,8 @@
                         <x-nav-link :href="route('admin.withdrawals.index')" :active="request()->routeIs('admin.withdrawals.*')">
                             {{ __('nav.withdraw') }}
                         </x-nav-link>
-                        <x-nav-link :href="route('admin.moota_webhooks.live')" :active="request()->routeIs('admin.moota_webhooks.live')">
-                            {{ __('nav.moota_webhooks') }}
-                        </x-nav-link>
-                        <x-nav-link :href="route('admin.moota_webhooks.testing')" :active="request()->routeIs('admin.moota_webhooks.testing')">
-                            {{ __('nav.moota_testing') }}
-                        </x-nav-link>
-                        <x-nav-link :href="route('admin.muthowif.index')" :active="request()->routeIs('admin.muthowif.*')">
-                            {{ __('nav.verify_muthowif') }}
-                        </x-nav-link>
-                        <x-nav-link :href="route('admin.users.index')" :active="request()->routeIs('admin.users.*')">
-                            {{ __('nav.users') }}
-                        </x-nav-link>
-                        <x-nav-link :href="route('admin.site-appearance.edit')" :active="request()->routeIs('admin.site-appearance.*')">
-                            {{ __('nav.site_logo') }}
-                        </x-nav-link>
-                        <x-nav-link :href="route('admin.support-tickets.index')" :active="request()->routeIs('admin.support-tickets.*')">
-                            {{ __('nav.support_tickets') }}
+                        <x-nav-link :href="route('admin.settings.index')" :active="$adminHubActive">
+                            {{ __('nav.admin_settings') }}
                         </x-nav-link>
                     @endif
                     @if (Auth::user()->isVerifiedMuthowif())
@@ -111,9 +109,9 @@
                 </div>
             </div>
 
-            <div class="flex shrink-0 items-center gap-2 sm:gap-3 sm:ms-6">
-                <x-language-switcher variant="segment" />
-                <div class="relative hidden sm:block">
+            <div class="flex shrink-0 items-center gap-1.5 sm:gap-2 sm:ms-4 lg:ms-6">
+                <x-language-switcher variant="segment" class="hidden lg:inline-flex" />
+                <div class="relative hidden lg:block">
                     <x-dropdown align="right" width="48">
                         <x-slot name="trigger">
                             <button type="button" class="inline-flex items-center px-3 py-2 border border-transparent text-sm leading-4 font-medium rounded-md text-gray-500 bg-white hover:text-gray-700 focus:outline-none transition ease-in-out duration-150">
@@ -144,8 +142,15 @@
                         </x-slot>
                     </x-dropdown>
                 </div>
-                <button type="button" @click="open = ! open" class="inline-flex items-center justify-center rounded-md p-2 text-gray-400 hover:bg-gray-100 hover:text-gray-500 focus:bg-gray-100 focus:text-gray-500 focus:outline-none sm:hidden">
-                    <svg class="h-6 w-6" stroke="currentColor" fill="none" viewBox="0 0 24 24">
+                <button
+                    type="button"
+                    class="inline-flex shrink-0 items-center justify-center rounded-md p-2 text-gray-500 hover:bg-gray-100 hover:text-gray-700 focus:bg-gray-100 focus:text-gray-700 focus:outline-none lg:hidden"
+                    @click="open = ! open"
+                    :aria-expanded="open"
+                    aria-controls="responsive-main-nav"
+                >
+                    <span class="sr-only">{{ __('nav.open_menu') }}</span>
+                    <svg class="h-6 w-6 shrink-0" stroke="currentColor" fill="none" viewBox="0 0 24 24" aria-hidden="true">
                         <path :class="{'hidden': open, 'inline-flex': ! open }" class="inline-flex" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16" />
                         <path :class="{'hidden': ! open, 'inline-flex': open }" class="hidden" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
                     </svg>
@@ -154,8 +159,12 @@
         </div>
     </div>
 
-    <!-- Responsive Navigation Menu -->
-    <div :class="{'block': open, 'hidden': ! open}" class="hidden sm:hidden">
+    <!-- Responsive Navigation Menu (< lg: hamburger; bahasa & menu dalam panel) -->
+    <div
+        id="responsive-main-nav"
+        :class="{'block': open, 'hidden': ! open}"
+        class="hidden border-t border-slate-200/80 bg-white lg:hidden"
+    >
         <div class="px-4 py-3 border-b border-slate-100">
             <p class="text-[11px] font-semibold uppercase tracking-wide text-slate-500">{{ __('nav.language') }}</p>
             <div class="mt-2 flex justify-center">
@@ -189,23 +198,8 @@
                 <x-responsive-nav-link :href="route('admin.withdrawals.index')" :active="request()->routeIs('admin.withdrawals.*')">
                     {{ __('nav.withdraw') }}
                 </x-responsive-nav-link>
-                <x-responsive-nav-link :href="route('admin.moota_webhooks.live')" :active="request()->routeIs('admin.moota_webhooks.live')">
-                    {{ __('nav.moota_webhooks') }}
-                </x-responsive-nav-link>
-                <x-responsive-nav-link :href="route('admin.moota_webhooks.testing')" :active="request()->routeIs('admin.moota_webhooks.testing')">
-                    {{ __('nav.moota_testing') }}
-                </x-responsive-nav-link>
-                <x-responsive-nav-link :href="route('admin.muthowif.index')" :active="request()->routeIs('admin.muthowif.*')">
-                    {{ __('nav.verify_muthowif') }}
-                </x-responsive-nav-link>
-                <x-responsive-nav-link :href="route('admin.users.index')" :active="request()->routeIs('admin.users.*')">
-                    {{ __('nav.users') }}
-                </x-responsive-nav-link>
-                <x-responsive-nav-link :href="route('admin.site-appearance.edit')" :active="request()->routeIs('admin.site-appearance.*')">
-                    {{ __('nav.site_logo') }}
-                </x-responsive-nav-link>
-                <x-responsive-nav-link :href="route('admin.support-tickets.index')" :active="request()->routeIs('admin.support-tickets.*')">
-                    {{ __('nav.support_tickets') }}
+                <x-responsive-nav-link :href="route('admin.settings.index')" :active="$adminHubActive">
+                    {{ __('nav.admin_settings') }}
                 </x-responsive-nav-link>
             @endif
             @if (Auth::user()->isVerifiedMuthowif())
