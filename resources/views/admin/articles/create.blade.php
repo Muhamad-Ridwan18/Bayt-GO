@@ -16,5 +16,5 @@
             </form>
         </div>
     </div>
-    @include('admin.articles._markdown-editor')
+    @include('admin.articles._ckeditor')
 </x-app-layout>

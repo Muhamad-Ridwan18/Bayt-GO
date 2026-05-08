@@ -47,8 +47,8 @@
     </div>
 
     <div class="rounded-2xl border border-slate-200 bg-slate-50/80 p-4 text-sm text-slate-600">
-        <p class="font-semibold text-slate-800">{{ __('admin.articles.markdown_hint_title') }}</p>
-        <p class="mt-1">{{ __('admin.articles.markdown_hint_body') }}</p>
+        <p class="font-semibold text-slate-800">{{ __('admin.articles.editor_hint_title') }}</p>
+        <p class="mt-1">{{ __('admin.articles.editor_hint_body') }}</p>
     </div>
 
     @foreach (['id' => 'ID', 'en' => 'EN', 'ar' => 'AR'] as $locale => $label)
@@ -78,9 +78,14 @@
                     </div>
                 </div>
                 <div>
-                    <x-input-label :for="'body_md_'.$locale" :value="__('admin.articles.field_body_md')" />
-                    <textarea :id="'body_md_'.$locale" :name="'loc['.$locale.'][body_md]'" rows="18" class="mt-1 block w-full rounded-lg border-slate-300 font-mono text-sm shadow-sm focus:border-brand-500 focus:ring-brand-500" required>{{ $field($locale, 'body_md') }}</textarea>
-                    <x-input-error class="mt-2" :messages="$errors->get('loc.'.$locale.'.body_md')" />
+                    <x-input-label :for="'ckeditor_body_'.$locale" :value="__('admin.articles.field_body_html')" />
+                    <textarea
+                        :id="'ckeditor_body_'.$locale"
+                        :name="'loc['.$locale.'][body]'"
+                        rows="12"
+                        class="mt-1 block w-full rounded-lg border-slate-300 font-mono text-sm shadow-sm focus:border-brand-500 focus:ring-brand-500"
+                    >{{ $field($locale, 'body') }}</textarea>
+                    <x-input-error class="mt-2" :messages="$errors->get('loc.'.$locale.'.body')" />
                 </div>
             </div>
         </section>

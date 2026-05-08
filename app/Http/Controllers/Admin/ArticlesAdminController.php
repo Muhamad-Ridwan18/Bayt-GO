@@ -4,12 +4,12 @@ namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
 use App\Models\Article;
-use App\Support\ArticleBodyMarkdown;
-use Carbon\Carbon;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Carbon;
 use Illuminate\Validation\Rule;
 use Illuminate\View\View;
+use Stevebauman\Purify\Facades\Purify;
 
 class ArticlesAdminController extends Controller
 {
@@ -111,22 +111,22 @@ class ArticlesAdminController extends Controller
             'loc.id.excerpt' => ['required', 'string', 'max:65535'],
             'loc.id.category' => ['required', 'string', 'max:120'],
             'loc.id.author' => ['required', 'string', 'max:120'],
-            'loc.id.body_md' => ['required', 'string'],
+            'loc.id.body' => ['required', 'string'],
             'loc.en.title' => ['required', 'string', 'max:255'],
             'loc.en.excerpt' => ['required', 'string', 'max:65535'],
             'loc.en.category' => ['required', 'string', 'max:120'],
             'loc.en.author' => ['required', 'string', 'max:120'],
-            'loc.en.body_md' => ['required', 'string'],
+            'loc.en.body' => ['required', 'string'],
             'loc.ar.title' => ['required', 'string', 'max:255'],
             'loc.ar.excerpt' => ['required', 'string', 'max:65535'],
             'loc.ar.category' => ['required', 'string', 'max:120'],
             'loc.ar.author' => ['required', 'string', 'max:120'],
-            'loc.ar.body_md' => ['required', 'string'],
+            'loc.ar.body' => ['required', 'string'],
         ]);
     }
 
     /**
-     * @return array<string, array{title: string, excerpt: string, category: string, author: string, body_md: string, body: string}>
+     * @return array<string, array<string, string>>
      */
     private function buildTranslations(Request $request): array
     {
@@ -134,14 +134,14 @@ class ArticlesAdminController extends Controller
         foreach (['id', 'en', 'ar'] as $locale) {
             app()->setLocale($locale);
             $row = $request->input('loc.'.$locale, []);
-            $md = (string) ($row['body_md'] ?? '');
+            $html = (string) ($row['body'] ?? '');
             $out[$locale] = [
                 'title' => trim((string) ($row['title'] ?? '')),
                 'excerpt' => trim((string) ($row['excerpt'] ?? '')),
                 'category' => trim((string) ($row['category'] ?? '')),
                 'author' => trim((string) ($row['author'] ?? '')),
-                'body_md' => $md,
-                'body' => ArticleBodyMarkdown::toHtml($md),
+                'body' => Purify::config('article')->clean($html),
+                'body_md' => '',
             ];
         }
 
