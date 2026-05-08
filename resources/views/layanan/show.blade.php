@@ -162,63 +162,58 @@
                             @endif
                         </dl>
 
-                        <details class="group mt-4 rounded-xl border border-slate-200 bg-white open:bg-slate-50/30 open:shadow-sm">
-                            <summary class="flex cursor-pointer list-none items-center justify-between gap-2 px-3 py-2.5 text-sm font-semibold text-brand-800 hover:bg-slate-50/80 [&::-webkit-details-marker]:hidden">
-                                <span>{{ __('marketplace.show.summary_packages') }}</span>
-                                <svg class="h-5 w-5 shrink-0 text-slate-400 transition group-open:rotate-180" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true"><path fill-rule="evenodd" d="M5.23 7.21a.75.75 0 011.06.02L10 11.168l3.71-3.938a.75.75 0 111.08 1.04l-4.25 4.5a.75.75 0 01-1.08 0l-4.25-4.5a.75.75 0 01.02-1.06z" clip-rule="evenodd" /></svg>
-                            </summary>
-                            <div class="space-y-5 border-t border-slate-100 px-3 py-4 text-sm">
-                                @if ($group)
-                                    <div>
-                                        <p class="text-xs font-bold uppercase tracking-wide text-brand-800">{{ __('marketplace.show.group_title') }}</p>
-                                        @if (filled($group->name))
-                                            <p class="mt-1 font-medium text-slate-800">{{ $group->name }}</p>
+                        <div class="mt-6 space-y-5 border-t border-slate-100 pt-5 text-sm">
+                            <h3 class="text-xs font-bold uppercase tracking-wider text-slate-500">{{ __('marketplace.show.summary_packages') }}</h3>
+                            @if ($group)
+                                <div>
+                                    <p class="text-xs font-bold uppercase tracking-wide text-brand-800">{{ __('marketplace.show.group_title') }}</p>
+                                    @if (filled($group->name))
+                                        <p class="mt-1 font-medium text-slate-800">{{ $group->name }}</p>
+                                    @endif
+                                    @if (filled($group->description))
+                                        <p class="mt-2 whitespace-pre-line text-slate-600">{{ $group->description }}</p>
+                                    @endif
+                                    <ul class="mt-2 flex flex-wrap gap-1.5 text-xs">
+                                        @if (($group->same_hotel_price_per_day ?? null) !== null && (float) $group->same_hotel_price_per_day > 0)
+                                            <li class="rounded-full bg-slate-100 px-2 py-0.5 text-slate-700">{{ __('marketplace.show.addon_same_hotel', ['price' => IndonesianNumber::formatThousands((string) (int) $group->same_hotel_price_per_day)]) }}</li>
                                         @endif
-                                        @if (filled($group->description))
-                                            <p class="mt-2 whitespace-pre-line text-slate-600">{{ $group->description }}</p>
+                                        @if (($group->transport_price_flat ?? null) !== null && (float) $group->transport_price_flat > 0)
+                                            <li class="rounded-full bg-slate-100 px-2 py-0.5 text-slate-700">{{ __('marketplace.show.addon_transport', ['price' => IndonesianNumber::formatThousands((string) (int) $group->transport_price_flat)]) }}</li>
                                         @endif
-                                        <ul class="mt-2 flex flex-wrap gap-1.5 text-xs">
-                                            @if (($group->same_hotel_price_per_day ?? null) !== null && (float) $group->same_hotel_price_per_day > 0)
-                                                <li class="rounded-full bg-slate-100 px-2 py-0.5 text-slate-700">{{ __('marketplace.show.addon_same_hotel', ['price' => IndonesianNumber::formatThousands((string) (int) $group->same_hotel_price_per_day)]) }}</li>
-                                            @endif
-                                            @if (($group->transport_price_flat ?? null) !== null && (float) $group->transport_price_flat > 0)
-                                                <li class="rounded-full bg-slate-100 px-2 py-0.5 text-slate-700">{{ __('marketplace.show.addon_transport', ['price' => IndonesianNumber::formatThousands((string) (int) $group->transport_price_flat)]) }}</li>
-                                            @endif
+                                    </ul>
+                                </div>
+                            @endif
+                            @if ($private)
+                                <div>
+                                    <p class="text-xs font-bold uppercase tracking-wide text-amber-900">{{ __('marketplace.show.private_title') }}</p>
+                                    @if (filled($private->name))
+                                        <p class="mt-1 font-medium text-slate-800">{{ $private->name }}</p>
+                                    @endif
+                                    @if (filled($private->description))
+                                        <p class="mt-2 whitespace-pre-line text-slate-600">{{ $private->description }}</p>
+                                    @endif
+                                    <ul class="mt-2 flex flex-wrap gap-1.5 text-xs">
+                                        @if (($private->same_hotel_price_per_day ?? null) !== null && (float) $private->same_hotel_price_per_day > 0)
+                                            <li class="rounded-full bg-slate-100 px-2 py-0.5 text-slate-700">{{ __('marketplace.show.addon_same_hotel', ['price' => IndonesianNumber::formatThousands((string) (int) $private->same_hotel_price_per_day)]) }}</li>
+                                        @endif
+                                        @if (($private->transport_price_flat ?? null) !== null && (float) $private->transport_price_flat > 0)
+                                            <li class="rounded-full bg-slate-100 px-2 py-0.5 text-slate-700">{{ __('marketplace.show.addon_transport', ['price' => IndonesianNumber::formatThousands((string) (int) $private->transport_price_flat)]) }}</li>
+                                        @endif
+                                    </ul>
+                                    @if ($private->addOns->isNotEmpty())
+                                        <p class="mt-3 text-xs font-semibold uppercase tracking-wide text-slate-500">{{ __('marketplace.show.addon_heading') }}</p>
+                                        <ul class="mt-1.5 space-y-1.5">
+                                            @foreach ($private->addOns as $addon)
+                                                <li class="flex justify-between gap-2 rounded-lg bg-amber-50/80 px-2.5 py-1.5 text-xs ring-1 ring-amber-100/80">
+                                                    <span class="font-medium text-slate-800">{{ $addon->name }}</span>
+                                                    <span class="shrink-0 font-bold text-amber-900">Rp {{ IndonesianNumber::formatThousands((string) (int) $addon->price) }}</span>
+                                                </li>
+                                            @endforeach
                                         </ul>
-                                    </div>
-                                @endif
-                                @if ($private)
-                                    <div>
-                                        <p class="text-xs font-bold uppercase tracking-wide text-amber-900">{{ __('marketplace.show.private_title') }}</p>
-                                        @if (filled($private->name))
-                                            <p class="mt-1 font-medium text-slate-800">{{ $private->name }}</p>
-                                        @endif
-                                        @if (filled($private->description))
-                                            <p class="mt-2 whitespace-pre-line text-slate-600">{{ $private->description }}</p>
-                                        @endif
-                                        <ul class="mt-2 flex flex-wrap gap-1.5 text-xs">
-                                            @if (($private->same_hotel_price_per_day ?? null) !== null && (float) $private->same_hotel_price_per_day > 0)
-                                                <li class="rounded-full bg-slate-100 px-2 py-0.5 text-slate-700">{{ __('marketplace.show.addon_same_hotel', ['price' => IndonesianNumber::formatThousands((string) (int) $private->same_hotel_price_per_day)]) }}</li>
-                                            @endif
-                                            @if (($private->transport_price_flat ?? null) !== null && (float) $private->transport_price_flat > 0)
-                                                <li class="rounded-full bg-slate-100 px-2 py-0.5 text-slate-700">{{ __('marketplace.show.addon_transport', ['price' => IndonesianNumber::formatThousands((string) (int) $private->transport_price_flat)]) }}</li>
-                                            @endif
-                                        </ul>
-                                        @if ($private->addOns->isNotEmpty())
-                                            <p class="mt-3 text-xs font-semibold uppercase tracking-wide text-slate-500">{{ __('marketplace.show.addon_heading') }}</p>
-                                            <ul class="mt-1.5 space-y-1.5">
-                                                @foreach ($private->addOns as $addon)
-                                                    <li class="flex justify-between gap-2 rounded-lg bg-amber-50/80 px-2.5 py-1.5 text-xs ring-1 ring-amber-100/80">
-                                                        <span class="font-medium text-slate-800">{{ $addon->name }}</span>
-                                                        <span class="shrink-0 font-bold text-amber-900">Rp {{ IndonesianNumber::formatThousands((string) (int) $addon->price) }}</span>
-                                                    </li>
-                                                @endforeach
-                                            </ul>
-                                        @endif
-                                    </div>
-                                @endif
-                            </div>
-                        </details>
+                                    @endif
+                                </div>
+                            @endif
+                        </div>
                     </div>
                 @endif
 
