@@ -49,6 +49,7 @@ return [
     'verified_badge' => 'Terverifikasi',
     'carousel_prev' => 'Geser ke kiri',
     'carousel_next' => 'Geser ke kanan',
+    'stats' => [
         ['value' => '2.500+', 'label' => 'Muthowif terverifikasi'],
         ['value' => '15.000+', 'label' => 'Booking selesai'],
         ['value' => '98%', 'label' => 'Kepuasan jamaah'],
