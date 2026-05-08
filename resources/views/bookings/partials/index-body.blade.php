@@ -102,15 +102,36 @@
             @else
                 <ul class="mt-10 space-y-6">
                     @foreach ($bookings as $booking)
-                        @php
                             $st = $booking->status;
                             $cardStyle = $statusCardStyles[$st->value] ?? $statusCardStyles[BookingStatus::Pending->value];
+                            $nights = $booking->billingNightsInclusive();
+                            $service = $booking->muthowifProfile?->services->firstWhere('type', $booking->service_type);
+                            $daily = (float) ($booking->daily_price_snapshot ?? ($service ? $service->daily_price : 0.0));
+                            $serviceSubtotal = (float) ($nights * $daily);
+
+                            $addonLines = collect();
+                            if ($booking->service_type === MuthowifServiceType::PrivateJamaah) {
+                                if (! empty($booking->add_ons_snapshot)) {
+                                    $addonLines = collect($booking->add_ons_snapshot)->map(fn ($a) => (object) $a);
+                                } elseif (! empty($booking->selected_add_on_ids)) {
+                                    foreach ($booking->selected_add_on_ids as $aid) {
+                                        if (isset($addonsById[$aid])) {
+                                            $addonLines->push($addonsById[$aid]);
+                                        }
+                                    }
+                                }
+                            }
+                            $addonsSum = $addonLines->sum(fn ($a) => (float) $a->price);
+
+                            $sameHotelPrice = (float) ($booking->same_hotel_price_snapshot ?? ($service ? $service->same_hotel_price_per_day : 0.0));
+                            $sameHotelLine = $booking->with_same_hotel ? ($nights * $sameHotelPrice) : 0.0;
+
+                            $transportLine = (float) ($booking->transport_price_snapshot ?? ($booking->with_transport && $service ? (float) $service->transport_price_flat : 0.0));
+
                             $totalDue = (float) $booking->resolvedAmountDue();
                             $split = \App\Support\PlatformFee::split($totalDue);
                             $customerGross = (float) ($split['customer_gross'] ?? $totalDue);
                             $customerFee = (float) ($split['customer_fee'] ?? 0.0);
-                            $baseSubtotal = (float) ($split['base'] ?? 0.0);
-                        @endphp
                         <li class="group relative">
                             <div class="absolute -inset-px rounded-[1.35rem] bg-gradient-to-br from-white to-slate-100/80 opacity-0 blur transition duration-300 group-hover:opacity-100"></div>
                             <article
@@ -179,15 +200,34 @@
                                         @endif
                                     </div>
 
-                                    {{-- Price Breakdown --}}
                                     <div class="mt-4 overflow-hidden rounded-xl border border-brand-100/60 bg-brand-50/20 ring-1 ring-brand-100/40">
                                         <dl class="divide-y divide-brand-100/40 text-[10px] sm:text-xs">
                                             <div class="flex justify-between gap-3 px-3 py-1.5">
-                                                <dt class="text-slate-600">{{ __('bookings.invoice.subtotal') }}</dt>
-                                                <dd class="font-medium tabular-nums text-slate-900">Rp {{ IndonesianNumber::formatThousands((string) (int) round($baseSubtotal)) }}</dd>
+                                                <dt class="text-slate-600">{{ __('bookings.show.subtotal_service') }}</dt>
+                                                <dd class="font-medium tabular-nums text-slate-900">Rp {{ IndonesianNumber::formatThousands((string) (int) round($serviceSubtotal)) }}</dd>
                                             </div>
+                                            @if ($addonLines->isNotEmpty())
+                                                @foreach ($addonLines as $ad)
+                                                    <div class="flex justify-between gap-3 px-3 py-1.5">
+                                                        <dt class="text-slate-500">+ {{ $ad->name }}</dt>
+                                                        <dd class="font-medium tabular-nums text-slate-800">Rp {{ IndonesianNumber::formatThousands((string) (int) round((float) $ad->price)) }}</dd>
+                                                    </div>
+                                                @endforeach
+                                            @endif
+                                            @if ($sameHotelLine > 0)
+                                                <div class="flex justify-between gap-3 px-3 py-1.5">
+                                                    <dt class="text-slate-500">{{ __('bookings.show.same_hotel_label', ['nights' => $nights, 'days' => __('common.days')]) }}</dt>
+                                                    <dd class="font-medium tabular-nums text-slate-800">Rp {{ IndonesianNumber::formatThousands((string) (int) round($sameHotelLine)) }}</dd>
+                                                </div>
+                                            @endif
+                                            @if ($transportLine > 0)
+                                                <div class="flex justify-between gap-3 px-3 py-1.5">
+                                                    <dt class="text-slate-500">{{ __('bookings.show.transport_label') }}</dt>
+                                                    <dd class="font-medium tabular-nums text-slate-800">Rp {{ IndonesianNumber::formatThousands((string) (int) round($transportLine)) }}</dd>
+                                                </div>
+                                            @endif
                                             <div class="flex justify-between gap-3 px-3 py-1.5">
-                                                <dt class="text-slate-600">{{ __('bookings.invoice.platform_fee_pct') }}</dt>
+                                                <dt class="text-slate-600">{{ __('bookings.show.platform_fee') }}</dt>
                                                 <dd class="font-medium tabular-nums text-slate-900">+ Rp {{ IndonesianNumber::formatThousands((string) (int) round($customerFee)) }}</dd>
                                             </div>
                                             <div class="flex justify-between gap-3 bg-brand-50/60 px-3 py-2">

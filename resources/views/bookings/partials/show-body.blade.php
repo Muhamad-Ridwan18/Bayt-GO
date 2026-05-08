@@ -28,8 +28,10 @@
     }
     $addonsSum = $addonLines->sum(fn ($a) => (float) $a->price);
 
-    $sameHotelLine = (float) ($b->same_hotel_price_snapshot ?? ($b->with_same_hotel && $service && $service->same_hotel_price_per_day !== null ? ($nights * (float) $service->same_hotel_price_per_day) : 0.0));
-    $transportLine = (float) ($b->transport_price_snapshot ?? ($b->with_transport && $service && $service->transport_price_flat !== null ? (float) $service->transport_price_flat : 0.0));
+    $sameHotelPrice = (float) ($b->same_hotel_price_snapshot ?? ($service ? $service->same_hotel_price_per_day : 0.0));
+    $sameHotelLine = $b->with_same_hotel ? ($nights * $sameHotelPrice) : 0.0;
+
+    $transportLine = (float) ($b->transport_price_snapshot ?? ($b->with_transport && $service ? (float) $service->transport_price_flat : 0.0));
 
     $baseTotal = (float) $b->resolvedAmountDue();
     $split = \App\Support\PlatformFee::split($baseTotal);

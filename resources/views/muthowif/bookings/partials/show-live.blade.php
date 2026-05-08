@@ -11,19 +11,35 @@
     $st = $b->status;
     $nights = $b->billingNightsInclusive();
     $service = $b->muthowifProfile?->services->firstWhere('type', $b->service_type);
-    $daily = (float) ($b->daily_price_snapshot ?? ($service ? $service->daily_price : 0));
-    $fmt = fn (float $n) => IndonesianNumber::formatThousands((string) (int) round($n));
+    $daily = (float) ($b->daily_price_snapshot ?? ($service ? $service->daily_price : 0.0));
+    $serviceSubtotal = (float) ($nights * $daily);
 
-    $totalDue = (float) $b->resolvedAmountDue();
-    $split = PlatformFee::split($totalDue);
+    $addonLines = collect();
+    if ($b->service_type === MuthowifServiceType::PrivateJamaah) {
+        if (! empty($b->add_ons_snapshot)) {
+            $addonLines = collect($b->add_ons_snapshot)->map(fn ($a) => (object) $a);
+        } elseif (! empty($b->selected_add_on_ids)) {
+            foreach ($b->selected_add_on_ids as $aid) {
+                if (isset($addonsById[$aid])) {
+                    $addonLines->push($addonsById[$aid]);
+                }
+            }
+        }
+    }
+    $addonsSum = $addonLines->sum(fn ($a) => (float) $a->price);
+
+    $sameHotelPrice = (float) ($b->same_hotel_price_snapshot ?? ($service ? $service->same_hotel_price_per_day : 0.0));
+    $sameHotelLine = $b->with_same_hotel ? ($nights * $sameHotelPrice) : 0.0;
+
+    $transportLine = (float) ($b->transport_price_snapshot ?? ($b->with_transport && $service ? (float) $service->transport_price_flat : 0.0));
+
+    $totalGross = (float) $b->resolvedAmountDue();
+    $split = PlatformFee::split($totalGross);
     $muthowifNet = (float) ($split['muthowif_net'] ?? 0.0);
     $muthowifFee = (float) ($split['muthowif_fee'] ?? 0.0);
     $customerGross = (float) ($split['customer_gross'] ?? 0.0);
     $customerFee = (float) ($split['customer_fee'] ?? 0.0);
-    $baseSubtotal = (float) ($split['base'] ?? 0.0);
-
-    $sameHotelLine = (float) ($b->same_hotel_price_snapshot ?? ($b->with_same_hotel && $service && $service->same_hotel_price_per_day !== null ? ($nights * (float) $service->same_hotel_price_per_day) : 0.0));
-    $transportLine = (float) ($b->transport_price_snapshot ?? ($b->with_transport && $service && $service->transport_price_flat !== null ? (float) $service->transport_price_flat : 0.0));
+    $fmt = fn (float $n) => IndonesianNumber::formatThousands((string) (int) round($n));
 
     $badgeClass = match ($st) {
         BookingStatus::Pending => 'bg-amber-100 text-amber-950 ring-amber-200/90',
@@ -127,17 +143,14 @@
                                 </div>
                                 <div class="flex justify-between gap-4 border-t border-slate-200/60 pt-2">
                                     <dt class="text-slate-600">{{ __('muthowif.booking_show.subtotal_service') }}</dt>
-                                    <dd class="font-medium tabular-nums text-slate-900">Rp {{ $fmt($baseSubtotal) }}</dd>
+                                    <dd class="font-medium tabular-nums text-slate-900">Rp {{ $fmt($serviceSubtotal) }}</dd>
                                 </div>
-                                @if ($b->service_type === MuthowifServiceType::PrivateJamaah && ! empty($b->selected_add_on_ids))
-                                    @foreach ($b->selected_add_on_ids as $aid)
-                                        @if (isset($addonsById[$aid]))
-                                            @php $ad = $addonsById[$aid]; @endphp
-                                            <div class="flex justify-between gap-4">
-                                                <dt class="text-slate-500">+ {{ $ad->name }}</dt>
-                                                <dd class="font-medium tabular-nums text-slate-800">Rp {{ $fmt((float) $ad->price) }}</dd>
-                                            </div>
-                                        @endif
+                                @if ($addonLines->isNotEmpty())
+                                    @foreach ($addonLines as $ad)
+                                        <div class="flex justify-between gap-4">
+                                            <dt class="text-slate-500">+ {{ $ad->name }}</dt>
+                                            <dd class="font-medium tabular-nums text-slate-800">Rp {{ $fmt((float) $ad->price) }}</dd>
+                                        </div>
                                     @endforeach
                                 @endif
                                 @if ($sameHotelLine > 0)
