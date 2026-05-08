@@ -22,7 +22,7 @@
     <body class="font-welcome antialiased text-slate-800 bg-white min-h-screen selection:bg-gold-light selection:text-baytgo-950">
         <div class="min-h-screen flex flex-col">
             {{-- Top navigation: desktop center links at lg+; drawer + hamburger below lg --}}
-            <header class="sticky top-0 z-40 border-b border-slate-100 bg-white" x-data="{ open: false }" @keydown.window.escape="open = false" @resize.window="if (window.innerWidth >= 1024) open = false">
+            <header class="sticky top-0 z-[100] border-b border-slate-100 bg-white shadow-sm" x-data="{ open: false }" @keydown.window.escape="open = false" @resize.window="if (window.innerWidth >= 1024) open = false">
                 <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 relative flex min-h-[4.25rem] items-center justify-between gap-3 lg:gap-6">
                     <a href="{{ url('/') }}" class="relative z-10 flex min-w-0 shrink-0 items-center gap-2.5 group">
                         <x-site-logo variant="welcome" class="rounded-xl ring-1 ring-slate-200/70 shrink-0" />
@@ -40,7 +40,7 @@
 
                     <div class="relative z-10 flex shrink-0 items-center gap-2">
                         <div class="hidden items-center gap-2 sm:gap-3 lg:flex">
-                            <x-language-switcher variant="welcome-menu" />
+                            <x-language-switcher variant="segment" />
                             @if ($contactLink)
                                 <a href="{{ $contactLink }}" target="_blank" rel="noopener noreferrer" class="inline-flex items-center rounded-xl bg-baytgo px-4 py-2.5 text-sm font-semibold text-white shadow-md shadow-baytgo/20 transition hover:bg-baytgo-800">
                                     {{ __('nav.contact_us') }}
@@ -87,7 +87,7 @@
                     <div class="border-t border-slate-100 px-4 py-4 sm:px-6">
                         <p class="text-[11px] font-semibold uppercase tracking-wide text-slate-500">{{ __('nav.language') }}</p>
                         <div class="mt-3 flex justify-start">
-                            <x-language-switcher variant="welcome-menu" />
+                            <x-language-switcher variant="segment" />
                         </div>
                     </div>
                     <div class="flex flex-wrap gap-2 border-t border-slate-100 px-4 py-4 sm:px-6">
