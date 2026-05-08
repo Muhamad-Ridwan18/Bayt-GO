@@ -93,7 +93,6 @@
                         maxlength="255"
                         x-model="locales['{{ $locale }}'].title"
                         @required($locale === 'id')
-                        :value="$field($locale, 'title')"
                     />
                     <x-input-error class="mt-2" :messages="$errors->get('loc.'.$locale.'.title')" />
                 </div>
@@ -109,7 +108,7 @@
                         class="mt-1 block w-full rounded-lg border-slate-300 shadow-sm focus:border-brand-500 focus:ring-brand-500"
                         x-model="locales['{{ $locale }}'].excerpt"
                         @required($locale === 'id')
-                    >{{ $field($locale, 'excerpt') }}</textarea>
+                    ></textarea>
                     <x-input-error class="mt-2" :messages="$errors->get('loc.'.$locale.'.excerpt')" />
                 </div>
                 <div class="grid gap-4 sm:grid-cols-2">
@@ -122,7 +121,6 @@
                             class="mt-1 block w-full"
                             x-model="locales['{{ $locale }}'].category"
                             @required($locale === 'id')
-                            :value="$field($locale, 'category')"
                         />
                         <x-input-error class="mt-2" :messages="$errors->get('loc.'.$locale.'.category')" />
                     </div>
@@ -135,7 +133,6 @@
                             class="mt-1 block w-full"
                             x-model="locales['{{ $locale }}'].author"
                             @required($locale === 'id')
-                            :value="$field($locale, 'author')"
                         />
                         <x-input-error class="mt-2" :messages="$errors->get('loc.'.$locale.'.author')" />
                     </div>
