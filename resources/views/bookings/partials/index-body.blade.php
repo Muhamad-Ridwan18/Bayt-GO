@@ -130,10 +130,16 @@
                                                 {{ $booking->muthowifProfile->user->name }}
                                             </h2>
                                         </div>
-                                        @if ($booking->payment_status === PaymentStatus::Paid && $booking->total_amount !== null)
+                                        @if ($booking->total_amount !== null)
                                             <div class="shrink-0 text-right">
                                                 <p class="text-lg font-bold text-brand-600 tabular-nums">
                                                     Rp {{ IndonesianNumber::formatThousands((string) (int) round((float) $booking->total_amount)) }}
+                                                </p>
+                                            </div>
+                                        @else
+                                            <div class="shrink-0 text-right">
+                                                <p class="text-sm font-medium text-slate-400 italic">
+                                                    {{ __('bookings.index.price_pending') }}
                                                 </p>
                                             </div>
                                         @endif
@@ -146,17 +152,20 @@
                                                 <p class="font-mono text-xs font-medium text-slate-500">
                                                     {{ $booking->booking_code }}
                                                 </p>
+                                            @else
+                                                <p class="text-[10px] text-slate-400 uppercase tracking-tight">- {{ __('bookings.index.no_code') }} -</p>
                                             @endif
                                         </div>
                                         <div class="flex shrink-0 items-center gap-2">
                                             <span class="inline-flex items-center rounded-full px-2 py-0.5 text-[10px] font-bold uppercase tracking-wider ring-1 {{ $cardStyle['badge'] }}">
                                                 {{ $st->label() }}
                                             </span>
-                                            @if (in_array($st, [BookingStatus::Confirmed, BookingStatus::Completed], true) || ($st === BookingStatus::Cancelled && in_array($booking->payment_status, [PaymentStatus::RefundPending, PaymentStatus::Refunded], true)))
+                                            @if (in_array($st, [BookingStatus::Confirmed, BookingStatus::Completed, BookingStatus::Pending], true) || ($st === BookingStatus::Cancelled && in_array($booking->payment_status, [PaymentStatus::RefundPending, PaymentStatus::Refunded], true)))
                                                 <span class="inline-flex items-center rounded-full px-2 py-0.5 text-[10px] font-bold uppercase tracking-wider ring-1 {{ match ($booking->payment_status) {
                                                     PaymentStatus::Paid => 'bg-emerald-50 text-emerald-700 ring-emerald-200/80',
                                                     PaymentStatus::RefundPending => 'bg-amber-50 text-amber-700 ring-amber-200/80',
                                                     PaymentStatus::Refunded => 'bg-red-50 text-red-700 ring-red-200/80',
+                                                    PaymentStatus::Pending => 'bg-slate-50 text-slate-600 ring-slate-200/80',
                                                     default => 'bg-slate-50 text-slate-700 ring-slate-200/80',
                                                 } }}">
                                                     ● {{ $booking->payment_status->label() }}
