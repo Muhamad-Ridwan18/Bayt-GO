@@ -723,6 +723,101 @@ document.addEventListener('alpine:init', () => {
         },
     }));
 
+    Alpine.data('articleAdminEditor', (config) => ({
+        activeLocale: 'id',
+        previewDevice: 'desktop',
+        slug: config.slug ?? '',
+        publishedAtValue: config.publishedAt ?? '',
+        dateFormatLocale: config.dateFormatLocale ?? 'id-ID',
+        labels: config.labels ?? {
+            readingMinutes: '{n} min',
+            byAuthor: '{name}',
+            previewTitleFallback: '…',
+        },
+        locales: config.locales ?? {
+            id: { title: '', excerpt: '', category: '', author: '', bodyHtml: '' },
+            en: { title: '', excerpt: '', category: '', author: '', bodyHtml: '' },
+            ar: { title: '', excerpt: '', category: '', author: '', bodyHtml: '' },
+        },
+        _ckHandler: null,
+        init() {
+            this._ckHandler = (e) => {
+                const d = e.detail;
+                if (! d || ! d.locale || ! this.locales[d.locale]) {
+                    return;
+                }
+                this.locales[d.locale].bodyHtml = typeof d.html === 'string' ? d.html : '';
+            };
+            window.addEventListener('article-admin-ckeditor', this._ckHandler);
+        },
+        destroy() {
+            if (this._ckHandler) {
+                window.removeEventListener('article-admin-ckeditor', this._ckHandler);
+            }
+        },
+        setPublished(published) {
+            const form = document.getElementById('article-admin-form');
+            const cb = form?.querySelector('input[name="is_published"][type="checkbox"]');
+            if (cb) {
+                cb.checked = published;
+            }
+            form?.requestSubmit();
+        },
+        activeBlock() {
+            return this.locales[this.activeLocale] ?? this.locales.id;
+        },
+        firstImageSrc(html) {
+            if (! html) {
+                return null;
+            }
+            const m = html.match(/<img[^>]+src=["']([^"']+)["']/i);
+
+            return m ? m[1] : null;
+        },
+        readingMinutes(html) {
+            const t = typeof html === 'string' ? html.replace(/<[^>]+>/g, ' ').trim() : '';
+            const words = t.split(/\s+/).filter(Boolean).length;
+
+            return Math.max(1, Math.ceil(words / 200));
+        },
+        readingLabel(n) {
+            return this.labels.readingMinutes.replace('{n}', String(n));
+        },
+        authorLine(name) {
+            if (! name) {
+                return '';
+            }
+
+            return this.labels.byAuthor.replace('{name}', name);
+        },
+        formatPublished() {
+            const raw = this.publishedAtValue;
+            if (! raw) {
+                return '—';
+            }
+            const d = new Date(raw);
+            if (Number.isNaN(d.getTime())) {
+                return '—';
+            }
+
+            return d.toLocaleDateString(this.dateFormatLocale, {
+                day: 'numeric',
+                month: 'short',
+                year: 'numeric',
+            });
+        },
+        previewFrameClass() {
+            if (this.previewDevice === 'tablet') {
+                return 'max-w-xl';
+            }
+            if (this.previewDevice === 'mobile') {
+                return 'max-w-sm';
+            }
+
+            return 'max-w-3xl';
+        },
+    }));
+
     Alpine.data('mootaWebhookLiveDashboard', (initialRows = [], realtimeEnabled = false, payloadSourceLabels = {}) => ({
         rows: Array.isArray(initialRows) ? initialRows : [],
         realtimeEnabled,

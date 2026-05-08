@@ -43,6 +43,18 @@
         var el = document.getElementById('ckeditor_body_' + locale);
         if (!el) return;
         CKEDITOR.replace(el, opts);
+        var name = el.getAttribute('name');
+        var ed = (name && CKEDITOR.instances[name]) ? CKEDITOR.instances[name] : CKEDITOR.instances[el.id];
+        if (! ed) {
+            return;
+        }
+        function pushHtml() {
+            window.dispatchEvent(new CustomEvent('article-admin-ckeditor', {
+                detail: { locale: locale, html: ed.getData() },
+            }));
+        }
+        ed.on('instanceReady', pushHtml);
+        ed.on('change', pushHtml);
     });
 
     var form = document.getElementById('article-admin-form');
