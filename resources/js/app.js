@@ -724,7 +724,7 @@ document.addEventListener('alpine:init', () => {
     }));
 
     Alpine.data('articleAdminEditor', (config) => ({
-        activeLocale: 'id',
+        activeLocale: config.activeLocale ?? 'id',
         previewDevice: 'desktop',
         slug: config.slug ?? '',
         publishedAtValue: config.publishedAt ?? '',

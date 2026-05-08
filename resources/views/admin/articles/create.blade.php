@@ -10,7 +10,7 @@
                     <h1 class="mt-1 text-2xl font-bold text-slate-900">{{ __('admin.articles.create_title') }}</h1>
                     <p class="mt-2 text-sm text-slate-600">{{ __('admin.articles.create_sub') }}</p>
 
-                    <form id="article-admin-form" action="{{ route('admin.articles.store') }}" method="post" class="mt-10 space-y-8">
+                    <form id="article-admin-form" action="{{ route('admin.articles.store') }}" method="post" class="mt-10 space-y-8" novalidate>
                         @csrf
                         @include('admin.articles._form', ['article' => $article])
                     </form>

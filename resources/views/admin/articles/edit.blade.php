@@ -16,7 +16,7 @@
                         </p>
                     @endif
 
-                    <form id="article-admin-form" action="{{ route('admin.articles.update', $article) }}" method="post" class="mt-10 space-y-8">
+                    <form id="article-admin-form" action="{{ route('admin.articles.update', $article) }}" method="post" class="mt-10 space-y-8" novalidate>
                         @csrf
                         @method('PUT')
                         @include('admin.articles._form', ['article' => $article])

@@ -171,16 +171,16 @@ class ArticlesAdminController extends Controller
             'loc.id.category' => ['required', 'string', 'max:120'],
             'loc.id.author' => ['required', 'string', 'max:120'],
             'loc.id.body' => ['required', 'string'],
-            'loc.en.title' => ['required', 'string', 'max:255'],
-            'loc.en.excerpt' => ['required', 'string', 'max:65535'],
-            'loc.en.category' => ['required', 'string', 'max:120'],
-            'loc.en.author' => ['required', 'string', 'max:120'],
-            'loc.en.body' => ['required', 'string'],
-            'loc.ar.title' => ['required', 'string', 'max:255'],
-            'loc.ar.excerpt' => ['required', 'string', 'max:65535'],
-            'loc.ar.category' => ['required', 'string', 'max:120'],
-            'loc.ar.author' => ['required', 'string', 'max:120'],
-            'loc.ar.body' => ['required', 'string'],
+            'loc.en.title' => ['nullable', 'string', 'max:255'],
+            'loc.en.excerpt' => ['nullable', 'string', 'max:65535'],
+            'loc.en.category' => ['nullable', 'string', 'max:120'],
+            'loc.en.author' => ['nullable', 'string', 'max:120'],
+            'loc.en.body' => ['nullable', 'string'],
+            'loc.ar.title' => ['nullable', 'string', 'max:255'],
+            'loc.ar.excerpt' => ['nullable', 'string', 'max:65535'],
+            'loc.ar.category' => ['nullable', 'string', 'max:120'],
+            'loc.ar.author' => ['nullable', 'string', 'max:120'],
+            'loc.ar.body' => ['nullable', 'string'],
         ]);
     }
 
@@ -191,7 +191,18 @@ class ArticlesAdminController extends Controller
      */
     private function articleEditorConfig(Article $article): array
     {
+        $activeLocale = 'id';
+        $errors = session('errors');
+        if ($errors) {
+            if ($errors->has('loc.en.*')) {
+                $activeLocale = 'en';
+            } elseif ($errors->has('loc.ar.*')) {
+                $activeLocale = 'ar';
+            }
+        }
+
         $config = [
+            'activeLocale' => $activeLocale,
             'slug' => old('slug', $article->slug ?? ''),
             'publishedAt' => old('published_at', $article->published_at?->format('Y-m-d\TH:i') ?? ''),
             'dateFormatLocale' => str_replace('_', '-', app()->getLocale()),
