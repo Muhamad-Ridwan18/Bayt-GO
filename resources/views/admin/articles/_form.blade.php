@@ -18,10 +18,10 @@
     <section class="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm">
         <h2 class="text-base font-semibold text-slate-900">{{ __('admin.articles.section_meta') }}</h2>
         <div class="mt-5 grid gap-4 sm:grid-cols-2">
-            <div class="sm:col-span-2">
+                <div class="sm:col-span-2">
                 <x-input-label for="slug" :value="__('admin.articles.field_slug')" />
                 <x-text-input id="slug" name="slug" type="text" class="mt-1 block w-full" required autofocus
-                    x-model="slug" />
+                    x-model="slug" :value="old('slug', $article->slug)" />
                 <p class="mt-1 text-xs text-slate-500">{{ __('admin.articles.slug_hint') }}</p>
                 <x-input-error class="mt-2" :messages="$errors->get('slug')" />
             </div>
@@ -93,6 +93,7 @@
                         maxlength="255"
                         x-model="locales['{{ $locale }}'].title"
                         @required($locale === 'id')
+                        :value="$field($locale, 'title')"
                     />
                     <x-input-error class="mt-2" :messages="$errors->get('loc.'.$locale.'.title')" />
                 </div>
@@ -108,7 +109,7 @@
                         class="mt-1 block w-full rounded-lg border-slate-300 shadow-sm focus:border-brand-500 focus:ring-brand-500"
                         x-model="locales['{{ $locale }}'].excerpt"
                         @required($locale === 'id')
-                    ></textarea>
+                    >{{ $field($locale, 'excerpt') }}</textarea>
                     <x-input-error class="mt-2" :messages="$errors->get('loc.'.$locale.'.excerpt')" />
                 </div>
                 <div class="grid gap-4 sm:grid-cols-2">
@@ -121,6 +122,7 @@
                             class="mt-1 block w-full"
                             x-model="locales['{{ $locale }}'].category"
                             @required($locale === 'id')
+                            :value="$field($locale, 'category')"
                         />
                         <x-input-error class="mt-2" :messages="$errors->get('loc.'.$locale.'.category')" />
                     </div>
@@ -133,6 +135,7 @@
                             class="mt-1 block w-full"
                             x-model="locales['{{ $locale }}'].author"
                             @required($locale === 'id')
+                            :value="$field($locale, 'author')"
                         />
                         <x-input-error class="mt-2" :messages="$errors->get('loc.'.$locale.'.author')" />
                     </div>
