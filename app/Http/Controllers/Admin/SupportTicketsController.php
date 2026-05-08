@@ -8,6 +8,7 @@ use App\Http\Controllers\Controller;
 use App\Models\SupportTicket;
 use App\Models\SupportTicketMessage;
 use App\Models\User;
+use App\Services\SupportTicketAttachmentStore;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
@@ -75,17 +76,22 @@ class SupportTicketsController extends Controller
     {
         $this->authorize('reply', $ticket);
 
-        $validated = $request->validate([
+        $validated = $request->validate(array_merge([
             'body' => ['required', 'string', 'max:12000'],
-        ]);
+        ], SupportTicketAttachmentStore::validationRules()));
 
         DB::transaction(function () use ($request, $validated, $ticket): void {
-            SupportTicketMessage::create([
+            $message = SupportTicketMessage::create([
                 'support_ticket_id' => $ticket->getKey(),
                 'user_id' => $request->user()->getKey(),
                 'body' => $validated['body'],
                 'is_staff' => true,
             ]);
+
+            $stored = SupportTicketAttachmentStore::storeFromRequest($request, $ticket, $message);
+            if ($stored !== []) {
+                $message->update(['attachments' => $stored]);
+            }
 
             if ($ticket->status === SupportTicketStatus::Open) {
                 $ticket->status = SupportTicketStatus::InProgress;

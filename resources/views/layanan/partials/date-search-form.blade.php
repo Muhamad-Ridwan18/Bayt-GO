@@ -2,42 +2,94 @@
     'startDate' => '',
     'endDate' => '',
     'searchQuery' => '',
+    'showHeaderBanner' => true,
+    'welcomeAccent' => false,
+    'welcomeInlineHeader' => false,
+    'welcomeFlush' => false,
 ])
 
 @php
-    $dateClass = 'block w-full min-w-[11rem] h-11 rounded-xl border-slate-200 bg-white px-3 text-sm text-slate-900 shadow-sm transition focus:border-brand-500 focus:outline-none focus:ring-2 focus:ring-brand-500/30';
-    $textClass = 'block w-full min-w-0 h-11 rounded-xl border-slate-200 bg-white px-3 text-sm text-slate-900 shadow-sm transition placeholder:text-slate-400 focus:border-brand-500 focus:outline-none focus:ring-2 focus:ring-brand-500/30';
+    if ($welcomeAccent) {
+        $dateClass = 'block w-full min-w-[11rem] h-11 rounded-2xl border border-slate-200/70 bg-white px-3 py-2.5 text-sm text-slate-900 transition focus:border-baytgo focus:outline-none focus:ring-2 focus:ring-baytgo/25';
+        $textClass = 'block w-full min-w-0 h-11 rounded-2xl border border-slate-200/70 bg-white px-3 py-2.5 text-sm text-slate-900 transition placeholder:text-slate-400 focus:border-baytgo focus:outline-none focus:ring-2 focus:ring-baytgo/25';
+    } else {
+        $dateClass = 'block w-full min-w-[11rem] h-11 rounded-xl border border-slate-200/90 bg-white px-3 text-sm text-slate-900 shadow-sm transition focus:border-brand-500 focus:outline-none focus:ring-2 focus:ring-brand-500/30';
+        $textClass = 'block w-full min-w-0 h-11 rounded-xl border border-slate-200/90 bg-white px-3 text-sm text-slate-900 shadow-sm transition placeholder:text-slate-400 focus:border-brand-500 focus:outline-none focus:ring-2 focus:ring-brand-500/30';
+    }
+    $formOuterClass = $welcomeFlush
+        ? 'w-full min-w-0'
+        : ($showHeaderBanner
+            ? 'w-full min-w-0 overflow-hidden rounded-3xl border border-slate-200/90 bg-white shadow-market ring-1 ring-brand-100/50'
+            : 'w-full min-w-0 overflow-hidden rounded-2xl border border-slate-200/80 bg-white shadow-xl shadow-slate-300/40 ring-1 ring-slate-100/90');
+    $submitClass = $welcomeAccent
+        ? 'inline-flex h-11 w-full min-h-[2.75rem] items-center justify-center gap-2 whitespace-nowrap rounded-2xl bg-baytgo px-6 text-sm font-semibold text-white shadow-md shadow-baytgo/20 transition hover:bg-baytgo-800 focus:outline-none focus-visible:ring-2 focus-visible:ring-gold focus-visible:ring-offset-2'
+        : 'inline-flex h-11 w-full min-h-[2.75rem] items-center justify-center gap-2 whitespace-nowrap rounded-xl bg-gradient-to-r from-brand-600 to-brand-700 px-5 text-sm font-semibold text-white shadow-lg shadow-brand-600/25 transition hover:from-brand-500 hover:to-brand-600 focus:outline-none focus-visible:ring-2 focus-visible:ring-brand-500 focus-visible:ring-offset-2';
+    $dateClassInner = $dateClass;
+    $innerPad = $showHeaderBanner ? 'p-5 sm:p-6 md:p-7' : ($welcomeInlineHeader ? 'p-5 pb-6 sm:p-6 sm:pb-7 md:px-7 md:pb-8 md:pt-6' : 'p-5 sm:p-6');
 @endphp
 
-<form method="GET" action="{{ route('layanan.index') }}" class="w-full min-w-0 overflow-hidden rounded-3xl border border-slate-200/90 bg-white shadow-market ring-1 ring-brand-100/50">
-    <div class="border-b border-slate-100 bg-gradient-to-r from-brand-50/90 via-white to-amber-50/40 px-5 py-4 sm:px-7 sm:py-5">
-        <div class="flex flex-col gap-3 sm:flex-row sm:items-center sm:gap-4">
-            <span class="flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl bg-brand-600 text-white shadow-lg shadow-brand-600/25">
-                <svg class="h-6 w-6" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
-                    <path fill-rule="evenodd" d="M6.75 2.25A.75.75 0 017.5 3v1.5h9V3A.75.75 0 0118 3v1.5h.75a3 3 0 013 3v11.25a3 3 0 01-3 3H5.25a3 3 0 01-3-3V7.5a3 3 0 013-3H6V3a.75.75 0 01.75-.75zm13.5 9a1.5 1.5 0 00-1.5-1.5H5.25a1.5 1.5 0 00-1.5 1.5v7.5a1.5 1.5 0 001.5 1.5h13.5a1.5 1.5 0 001.5-1.5v-7.5z" clip-rule="evenodd" />
-                </svg>
-            </span>
-            <div class="min-w-0 flex-1">
-                <p class="text-base font-bold text-slate-900">{{ __('layanan.search_form_title') }}</p>
-                <p class="mt-0.5 text-sm text-slate-600">{{ __('layanan.search_form_sub') }}</p>
+<form method="GET" action="{{ route('layanan.index') }}" class="{{ $formOuterClass }}">
+    @if ($showHeaderBanner)
+        <div class="border-b border-slate-100 bg-gradient-to-r from-brand-50/90 via-white to-amber-50/40 px-5 py-4 sm:px-7 sm:py-5">
+            <div class="flex flex-col gap-3 sm:flex-row sm:items-center sm:gap-4">
+                <span class="flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl bg-brand-600 text-white shadow-lg shadow-brand-600/25">
+                    <svg class="h-6 w-6" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
+                        <path fill-rule="evenodd" d="M6.75 2.25A.75.75 0 017.5 3v1.5h9V3A.75.75 0 0118 3v1.5h.75a3 3 0 013 3v11.25a3 3 0 01-3 3H5.25a3 3 0 01-3-3V7.5a3 3 0 013-3H6V3a.75.75 0 01.75-.75zm13.5 9a1.5 1.5 0 00-1.5-1.5H5.25a1.5 1.5 0 00-1.5 1.5v7.5a1.5 1.5 0 001.5 1.5h13.5a1.5 1.5 0 001.5-1.5v-7.5z" clip-rule="evenodd" />
+                    </svg>
+                </span>
+                <div class="min-w-0 flex-1">
+                    <p class="text-base font-bold text-slate-900">{{ __('layanan.search_form_title') }}</p>
+                    <p class="mt-0.5 text-sm text-slate-600">{{ __('layanan.search_form_sub') }}</p>
+                </div>
             </div>
         </div>
-    </div>
+    @endif
 
-    <div class="p-5 sm:p-6 md:p-7">
+    <div class="{{ $innerPad }}">
+        @if ($welcomeInlineHeader)
+            <div class="mb-5 flex items-start gap-3 sm:mb-6">
+                <span class="flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl bg-emerald-50 text-baytgo ring-1 ring-emerald-100/80">
+                    <svg class="h-5 w-5" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
+                        <path fill-rule="evenodd" d="M6.75 2.25A.75.75 0 017.5 3v1.5h9V3A.75.75 0 0118 3v1.5h.75a3 3 0 013 3v11.25a3 3 0 01-3 3H5.25a3 3 0 01-3-3V7.5a3 3 0 013-3H6V3a.75.75 0 01.75-.75zm13.5 9a1.5 1.5 0 00-1.5-1.5H5.25a1.5 1.5 0 00-1.5 1.5v7.5a1.5 1.5 0 001.5 1.5h13.5a1.5 1.5 0 001.5-1.5v-7.5z" clip-rule="evenodd" />
+                    </svg>
+                </span>
+                <div class="min-w-0">
+                    <h2 class="text-lg font-bold tracking-tight text-baytgo sm:text-xl">{{ __('welcome.search_section_title') }}</h2>
+                    <p class="mt-1 text-sm leading-relaxed text-slate-600">{{ __('layanan.search_form_sub') }}</p>
+                </div>
+            </div>
+        @endif
+
         <div class="flex flex-col gap-4 lg:flex-row lg:flex-wrap lg:items-end lg:gap-x-3 lg:gap-y-4">
             <div class="w-full sm:max-w-md lg:w-[13.5rem] lg:max-w-none lg:flex-shrink-0">
                 <label for="start_date" class="block text-sm font-medium text-slate-700">{{ __('layanan.start_date') }}</label>
-                <input type="date" name="start_date" id="start_date" value="{{ $startDate }}"
-                       min="{{ now()->toDateString() }}" required
-                       class="{{ $dateClass }} mt-2" />
+                @if ($welcomeInlineHeader)
+                    <div class="relative mt-2">
+                        <input type="date" name="start_date" id="start_date" value="{{ $startDate }}"
+                               min="{{ now()->toDateString() }}" required
+                               class="{{ $dateClassInner }}" />
+                    </div>
+                @else
+                    <input type="date" name="start_date" id="start_date" value="{{ $startDate }}"
+                           min="{{ now()->toDateString() }}" required
+                           class="{{ $dateClass }} mt-2" />
+                @endif
             </div>
             <div class="w-full sm:max-w-md lg:w-[13.5rem] lg:max-w-none lg:flex-shrink-0">
                 <label for="end_date" class="block text-sm font-medium text-slate-700">{{ __('layanan.end_date') }}</label>
-                <input type="date" name="end_date" id="end_date" value="{{ $endDate }}"
-                       min="{{ now()->toDateString() }}"
-                       class="{{ $dateClass }} mt-2"
-                       title="{{ __('layanan.end_date_title') }}" />
+                @if ($welcomeInlineHeader)
+                    <div class="relative mt-2">
+                        <input type="date" name="end_date" id="end_date" value="{{ $endDate }}"
+                               min="{{ now()->toDateString() }}"
+                               class="{{ $dateClassInner }}"
+                               title="{{ __('layanan.end_date_title') }}" />
+                    </div>
+                @else
+                    <input type="date" name="end_date" id="end_date" value="{{ $endDate }}"
+                           min="{{ now()->toDateString() }}"
+                           class="{{ $dateClass }} mt-2"
+                           title="{{ __('layanan.end_date_title') }}" />
+                @endif
             </div>
             <div class="w-full lg:min-w-[12rem] lg:flex-1">
                 <label for="q" class="block text-sm font-medium text-slate-700">{{ __('layanan.name_label') }}</label>
@@ -47,17 +99,22 @@
                        class="{{ $textClass }} mt-2 placeholder:text-slate-400" />
             </div>
             <div class="w-full lg:w-auto lg:flex-shrink-0 lg:min-w-[11.5rem] lg:pt-[1.75rem]">
-                <button type="submit"
-                        class="inline-flex h-11 w-full min-h-[2.75rem] items-center justify-center gap-2 whitespace-nowrap rounded-xl bg-gradient-to-r from-brand-600 to-brand-700 px-5 text-sm font-semibold text-white shadow-lg shadow-brand-600/25 transition hover:from-brand-500 hover:to-brand-600 focus:outline-none focus-visible:ring-2 focus-visible:ring-brand-500 focus-visible:ring-offset-2">
+                <button type="submit" class="{{ $submitClass }}">
                     <svg class="h-4 w-4 shrink-0 opacity-95" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true"><path fill-rule="evenodd" d="M9 3.5a5.5 5.5 0 100 11 5.5 5.5 0 000-11zM2 9a7 7 0 1112.452 4.391l3.328 3.329a.75.75 0 11-1.06 1.06l-3.329-3.328A7 7 0 012 9z" clip-rule="evenodd" /></svg>
                     {{ __('layanan.submit_search') }}
                 </button>
             </div>
         </div>
 
-        <p class="mt-5 rounded-xl bg-slate-50/90 px-3 py-2.5 text-xs leading-relaxed text-slate-600 ring-1 ring-slate-100">
-            <span class="font-semibold text-slate-700">{{ __('layanan.help_quick') }}</span> {{ __('layanan.help_body') }}
-            <span class="mt-1 block text-slate-500 sm:mt-0 sm:inline"> {{ __('layanan.help_results') }}</span>
-        </p>
+        @if ($welcomeInlineHeader)
+            <p class="mt-5 rounded-xl border border-stone-100/90 bg-stone-50/80 px-4 py-2.5 text-xs leading-relaxed text-slate-600">
+                <span class="font-semibold text-slate-700">{{ __('welcome.search_tip_label') }}</span> {{ __('welcome.search_tip_body') }}
+            </p>
+        @else
+            <p class="mt-5 rounded-xl bg-slate-50/90 px-3 py-2.5 text-xs leading-relaxed text-slate-600 ring-1 ring-slate-100">
+                <span class="font-semibold text-slate-700">{{ __('layanan.help_quick') }}</span> {{ __('layanan.help_body') }}
+                <span class="mt-1 block text-slate-500 sm:mt-0 sm:inline"> {{ __('layanan.help_results') }}</span>
+            </p>
+        @endif
     </div>
 </form>

@@ -1,5 +1,5 @@
 @props([
-    'variant' => 'segment', // segment | segment-dark | compact
+    'variant' => 'segment', // segment | segment-dark | compact | welcome-menu
 ])
 
 @php
@@ -40,6 +40,38 @@
                 title="{{ __('nav.lang_ar') }}"
             >AR</a>
         </div>
+    @elseif ($variant === 'welcome-menu')
+        <details class="relative">
+            <summary class="flex cursor-pointer list-none items-center gap-2 rounded-xl border border-slate-200/90 bg-white px-3 py-2 text-sm font-semibold text-slate-800 shadow-sm transition hover:border-slate-300 [&::-webkit-details-marker]:hidden">
+                <span>{{ strtoupper($current) }}</span>
+                <svg class="h-4 w-4 shrink-0 text-slate-500" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" aria-hidden="true">
+                    <path stroke-linecap="round" stroke-linejoin="round" d="M19 9l-7 7-7-7" />
+                </svg>
+            </summary>
+            <div class="absolute right-0 z-50 mt-1.5 min-w-[11rem] overflow-hidden rounded-xl border border-slate-100 bg-white py-1 shadow-lg shadow-slate-900/10">
+                <a
+                    href="{{ route('locale.switch', ['locale' => 'id']) }}"
+                    @class([
+                        'block px-4 py-2 text-sm font-medium transition-colors',
+                        'bg-baytgo/8 text-baytgo' => $current === 'id',
+                        'text-slate-700 hover:bg-slate-50' => $current !== 'id',
+                    ]) aria-current="{{ $current === 'id' ? 'true' : 'false' }}" title="{{ __('nav.lang_id') }}">{{ __('nav.lang_id') }}</a>
+                <a
+                    href="{{ route('locale.switch', ['locale' => 'en']) }}"
+                    @class([
+                        'block px-4 py-2 text-sm font-medium transition-colors',
+                        'bg-baytgo/8 text-baytgo' => $current === 'en',
+                        'text-slate-700 hover:bg-slate-50' => $current !== 'en',
+                    ]) aria-current="{{ $current === 'en' ? 'true' : 'false' }}" title="{{ __('nav.lang_en') }}">{{ __('nav.lang_en') }}</a>
+                <a
+                    href="{{ route('locale.switch', ['locale' => 'ar']) }}"
+                    @class([
+                        'block px-4 py-2 text-sm font-medium transition-colors',
+                        'bg-baytgo/8 text-baytgo' => $current === 'ar',
+                        'text-slate-700 hover:bg-slate-50' => $current !== 'ar',
+                    ]) aria-current="{{ $current === 'ar' ? 'true' : 'false' }}" title="{{ __('nav.lang_ar') }}">{{ __('nav.lang_ar') }}</a>
+            </div>
+        </details>
     @elseif ($variant === 'segment')
         <div class="inline-flex flex-wrap gap-1 rounded-xl border border-slate-200 bg-slate-100/90 p-1 shadow-inner">
             <a

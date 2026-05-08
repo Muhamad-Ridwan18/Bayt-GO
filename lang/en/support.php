@@ -15,6 +15,12 @@ return [
     'category' => 'Category',
     'priority' => 'Priority',
     'message' => 'Message',
+    'attachments_label' => 'Screenshots / proof (optional)',
+    'attachments_heading' => 'Attachments',
+    'attachments_hint' => 'Up to 5 files: JPG, PNG, GIF, WebP or PDF — max 5 MB each.',
+    'attachments_hint_short' => 'Images or PDF — up to 5 files, 5 MB each.',
+    'attachment_image_alt' => 'Attachment: :name',
+
     'message_hint' => 'Include steps to reproduce, expected vs actual behaviour, and avoid sharing passwords or full card numbers.',
 
     'table_code' => 'Code',

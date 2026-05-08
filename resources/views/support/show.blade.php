@@ -46,6 +46,7 @@
                                 <time datetime="{{ $message->created_at?->toIso8601String() }}" class="tabular-nums text-slate-500">{{ $message->created_at?->timezone(config('app.timezone'))->format('d/m/Y H:i') }}</time>
                             </div>
                             <div class="prose prose-sm mt-3 max-w-none whitespace-pre-wrap text-slate-800">{{ $message->body }}</div>
+                            @include('support.partials.message-attachments', ['message' => $message])
                         </div>
                     @endforeach
                 </div>
@@ -54,9 +55,14 @@
             @if ($canReply && ! $ticket->isClosed())
                 <section class="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm sm:p-6">
                     <h2 class="text-sm font-semibold text-slate-900">{{ __('support.reply_heading') }}</h2>
-                    <form method="POST" action="{{ route('support.reply', $ticket) }}" class="mt-4 space-y-4">
+                    <form method="POST" action="{{ route('support.reply', $ticket) }}" enctype="multipart/form-data" class="mt-4 space-y-4">
                         @csrf
                         <textarea name="body" rows="5" required placeholder="{{ __('support.reply_placeholder') }}" class="block w-full rounded-xl border-slate-300 shadow-sm focus:border-brand-500 focus:ring-brand-500">{{ old('body') }}</textarea>
+                        <div>
+                            <label for="reply-attachments" class="block text-xs font-medium text-slate-600">{{ __('support.attachments_label') }}</label>
+                            <p class="mt-0.5 text-xs text-slate-500">{{ __('support.attachments_hint_short') }}</p>
+                            <input id="reply-attachments" name="attachments[]" type="file" accept="image/jpeg,image/png,image/gif,image/webp,application/pdf" multiple class="mt-2 block w-full text-sm text-slate-600 file:mr-3 file:rounded-lg file:border-0 file:bg-slate-100 file:px-3 file:py-1.5 file:text-xs file:font-semibold file:text-slate-800 hover:file:bg-slate-200">
+                        </div>
                         <button type="submit" class="inline-flex rounded-2xl bg-brand-600 px-5 py-2.5 text-sm font-semibold text-white shadow-sm transition hover:bg-brand-700">{{ __('support.reply_heading') }}</button>
                     </form>
                 </section>

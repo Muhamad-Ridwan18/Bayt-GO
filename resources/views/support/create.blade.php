@@ -10,7 +10,7 @@
                 <div class="rounded-xl border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-900">{{ $errors->first() }}</div>
             @endif
 
-            <form method="POST" action="{{ route('support.store') }}" class="space-y-5 rounded-2xl border border-slate-200 bg-white p-6 shadow-sm">
+            <form method="POST" action="{{ route('support.store') }}" enctype="multipart/form-data" class="space-y-5 rounded-2xl border border-slate-200 bg-white p-6 shadow-sm">
                 @csrf
                 <div>
                     <label for="subject" class="block text-sm font-medium text-slate-700">{{ __('support.subject') }}</label>
@@ -40,6 +40,12 @@
                     <label for="body" class="block text-sm font-medium text-slate-700">{{ __('support.message') }}</label>
                     <p class="mt-1 text-xs text-slate-500">{{ __('support.message_hint') }}</p>
                     <textarea id="body" name="body" rows="8" required class="mt-2 block w-full rounded-xl border-slate-300 shadow-sm focus:border-brand-500 focus:ring-brand-500">{{ old('body') }}</textarea>
+                </div>
+
+                <div>
+                    <label for="attachments" class="block text-sm font-medium text-slate-700">{{ __('support.attachments_label') }}</label>
+                    <p class="mt-1 text-xs text-slate-500">{{ __('support.attachments_hint') }}</p>
+                    <input id="attachments" name="attachments[]" type="file" accept="image/jpeg,image/png,image/gif,image/webp,application/pdf" multiple class="mt-2 block w-full text-sm text-slate-600 file:mr-3 file:rounded-lg file:border-0 file:bg-brand-50 file:px-4 file:py-2 file:text-sm file:font-semibold file:text-brand-800 hover:file:bg-brand-100">
                 </div>
 
                 <p class="text-xs font-medium text-amber-900/90">{{ __('support.privacy_warning') }}</p>

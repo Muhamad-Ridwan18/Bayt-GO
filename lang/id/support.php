@@ -15,6 +15,12 @@ return [
     'category' => 'Kategori',
     'priority' => 'Prioritas',
     'message' => 'Pesan',
+    'attachments_label' => 'Screenshot / bukti (opsional)',
+    'attachments_heading' => 'Lampiran',
+    'attachments_hint' => 'Maks. 5 berkas: JPG, PNG, GIF, WebP atau PDF — tiap berkas maks. 5 MB.',
+    'attachments_hint_short' => 'Gambar atau PDF — maks. 5 berkas, tiap 5 MB.',
+    'attachment_image_alt' => 'Lampiran: :name',
+
     'message_hint' => 'Tuliskan langkah untuk mengulangi masalah (jika bisa), apa yang Anda harapkan vs yang terjadi, dan hindari menyertakan kata sandi atau nomor kartu lengkap.',
 
     'table_code' => 'Kode',

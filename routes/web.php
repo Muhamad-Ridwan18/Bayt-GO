@@ -23,6 +23,7 @@ use App\Http\Controllers\Muthowif\WithdrawController as MuthowifWithdrawControll
 use App\Http\Controllers\PaymentWebhookController;
 use App\Http\Controllers\ProfileController;
 use App\Http\Controllers\Public\MuthowifDirectoryController;
+use App\Http\Controllers\Public\WelcomeController;
 use App\Http\Controllers\SupportTicketController;
 use App\Http\Controllers\TermsController;
 use App\Http\Middleware\EnsureUserRole;
@@ -94,9 +95,7 @@ Route::get('/terms', TermsController::class)->name('terms');
 
 Route::get('/locale/{locale}', [LocaleController::class, 'switch'])->name('locale.switch');
 
-Route::get('/', function () {
-    return view('welcome');
-});
+Route::get('/', WelcomeController::class)->name('welcome');
 
 /** Hanya local: beberapa panel uji hanya bisa POST ke root URL tunnel (tanpa path). */
 if (app()->environment('local')) {

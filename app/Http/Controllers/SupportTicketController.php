@@ -7,6 +7,7 @@ use App\Enums\SupportTicketPriority;
 use App\Enums\SupportTicketStatus;
 use App\Models\SupportTicket;
 use App\Models\SupportTicketMessage;
+use App\Services\SupportTicketAttachmentStore;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
@@ -45,12 +46,12 @@ class SupportTicketController extends Controller
     {
         $this->authorize('create', SupportTicket::class);
 
-        $validated = $request->validate([
+        $validated = $request->validate(array_merge([
             'subject' => ['required', 'string', 'max:160'],
             'category' => ['required', Rule::enum(SupportTicketCategory::class)],
             'priority' => ['required', Rule::enum(SupportTicketPriority::class)],
             'body' => ['required', 'string', 'max:12000'],
-        ]);
+        ], SupportTicketAttachmentStore::validationRules()));
 
         $ticket = DB::transaction(function () use ($request, $validated): SupportTicket {
             $ticket = SupportTicket::create([
@@ -62,12 +63,17 @@ class SupportTicketController extends Controller
                 'last_activity_at' => now(),
             ]);
 
-            SupportTicketMessage::create([
+            $message = SupportTicketMessage::create([
                 'support_ticket_id' => $ticket->getKey(),
                 'user_id' => $request->user()->getKey(),
                 'body' => $validated['body'],
                 'is_staff' => false,
             ]);
+
+            $stored = SupportTicketAttachmentStore::storeFromRequest($request, $ticket, $message);
+            if ($stored !== []) {
+                $message->update(['attachments' => $stored]);
+            }
 
             return $ticket;
         });
@@ -96,17 +102,22 @@ class SupportTicketController extends Controller
     {
         $this->authorize('reply', $ticket);
 
-        $validated = $request->validate([
+        $validated = $request->validate(array_merge([
             'body' => ['required', 'string', 'max:12000'],
-        ]);
+        ], SupportTicketAttachmentStore::validationRules()));
 
         DB::transaction(function () use ($request, $validated, $ticket): void {
-            SupportTicketMessage::create([
+            $message = SupportTicketMessage::create([
                 'support_ticket_id' => $ticket->getKey(),
                 'user_id' => $request->user()->getKey(),
                 'body' => $validated['body'],
                 'is_staff' => false,
             ]);
+
+            $stored = SupportTicketAttachmentStore::storeFromRequest($request, $ticket, $message);
+            if ($stored !== []) {
+                $message->update(['attachments' => $stored]);
+            }
 
             if ($ticket->status === SupportTicketStatus::AwaitingCustomer) {
                 $ticket->status = SupportTicketStatus::InProgress;

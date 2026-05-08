@@ -13,6 +13,7 @@ export default {
         extend: {
             fontFamily: {
                 sans: ['Plus Jakarta Sans', 'Figtree', ...defaultTheme.fontFamily.sans],
+                welcome: ['Inter', 'Plus Jakarta Sans', 'system-ui', ...defaultTheme.fontFamily.sans],
             },
             colors: {
                 brand: {
@@ -27,6 +28,23 @@ export default {
                     800: '#115e59',
                     900: '#134e4a',
                     950: '#042f2e',
+                },
+                baytgo: {
+                    DEFAULT: '#1A3D34',
+                    50: '#e8eeec',
+                    100: '#c5d4cf',
+                    800: '#15332b',
+                    900: '#1A3D34',
+                    950: '#0f221d',
+                },
+                gold: {
+                    DEFAULT: '#C5A059',
+                    muted: '#b8954d',
+                    light: '#e8dcb8',
+                },
+                welcomeCanvas: {
+                    DEFAULT: '#F9F7F2',
+                    soft: '#FBF9F5',
                 },
             },
             boxShadow: {
