@@ -210,120 +210,111 @@
                         </div>
                         </div>
 
-                        @if ($group || $private)
-                            <details class="group rounded-2xl border border-slate-200 bg-white shadow-sm ring-1 ring-slate-100/80" {{ $addonsDetailsOpen ? 'open' : '' }}>
-                                <summary class="flex cursor-pointer list-none items-center justify-between gap-2 rounded-2xl px-4 py-3.5 text-base font-semibold text-slate-900 hover:bg-slate-50/90 sm:px-5 sm:py-4 [&::-webkit-details-marker]:hidden">
-                                    <span class="min-w-0">
-                                        <span class="block sm:inline">{{ __('marketplace.panel.addons_toggle') }}</span>
-                                        <span class="mt-0.5 block text-xs font-normal text-slate-500 sm:mt-0 sm:ml-2 sm:inline">{{ __('marketplace.panel.addons_toggle_hint') }}</span>
-                                    </span>
-                                    <svg class="h-5 w-5 shrink-0 text-slate-400 transition group-open:rotate-180" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true"><path fill-rule="evenodd" d="M5.23 7.21a.75.75 0 011.06.02L10 11.168l3.71-3.938a.75.75 0 111.08 1.04l-4.25 4.5a.75.75 0 01-1.08 0l-4.25-4.5a.75.75 0 01.02-1.06z" clip-rule="evenodd" /></svg>
-                                </summary>
-                                <div class="space-y-4 border-t border-slate-100 px-4 pb-4 pt-3 sm:px-5">
-                        @endif
-
-                        @if ($group)
-                            <div x-show="serviceType === 'group'" class="space-y-3 rounded-xl border border-slate-100 bg-slate-50/80 p-4 ring-1 ring-slate-100/60 sm:p-5">
-                                <p class="text-xs font-bold uppercase tracking-wide text-brand-800">{{ __('marketplace.panel.addons_group') }}</p>
-
-                                @php
-                                    $groupHotelAvailable = ($group->same_hotel_price_per_day ?? null) !== null && (float) $group->same_hotel_price_per_day > 0;
-                                    $groupTransportAvailable = ($group->transport_price_flat ?? null) !== null && (float) $group->transport_price_flat > 0;
-                                @endphp
-
-                                <label class="flex items-start gap-3 {{ $groupHotelAvailable ? 'cursor-pointer' : 'cursor-not-allowed opacity-60' }}">
-                                    <input type="checkbox" name="with_same_hotel" value="1"
-                                        class="mt-1 size-4 rounded border-slate-300 text-brand-600 shadow-sm focus:ring-brand-500"
-                                        x-bind:disabled="serviceType !== 'group'"
-                                        @disabled(! $groupHotelAvailable)
-                                        @checked($groupHotelAvailable && $oldWithSameHotel)>
-                                    <span class="text-sm leading-relaxed text-slate-700">
-                                        @if ($groupHotelAvailable)
-                                            {{ __('marketplace.panel.same_hotel_yes', ['amount' => IndonesianNumber::formatThousands((string) (int) $group->same_hotel_price_per_day)]) }}
-                                        @else
-                                            {{ __('marketplace.panel.same_hotel_no') }}
-                                        @endif
-                                    </span>
-                                </label>
-
-                                <label class="flex items-start gap-3 {{ $groupTransportAvailable ? 'cursor-pointer' : 'cursor-not-allowed opacity-60' }}">
-                                    <input type="checkbox" name="with_transport" value="1"
-                                        class="mt-1 size-4 rounded border-slate-300 text-brand-600 shadow-sm focus:ring-brand-500"
-                                        x-bind:disabled="serviceType !== 'group'"
-                                        @disabled(! $groupTransportAvailable)
-                                        @checked($groupTransportAvailable && $oldWithTransport)>
-                                    <span class="text-sm leading-relaxed text-slate-700">
-                                        @if ($groupTransportAvailable)
-                                            {{ __('marketplace.panel.transport_yes', ['amount' => IndonesianNumber::formatThousands((string) (int) $group->transport_price_flat)]) }}
-                                        @else
-                                            {{ __('marketplace.panel.transport_no') }}
-                                        @endif
-                                    </span>
-                                </label>
-                            </div>
-                        @endif
-
-                        @if ($private)
-                            <div x-show="serviceType === 'private'" class="space-y-3 rounded-xl border border-amber-100/90 bg-amber-50/50 p-4 ring-1 ring-amber-100/70 sm:p-5">
-                                <p class="text-xs font-bold uppercase tracking-wide text-amber-950">{{ __('marketplace.panel.addons_private') }}</p>
-                                @php
-                                    $privateHotelAvailable = ($private->same_hotel_price_per_day ?? null) !== null && (float) $private->same_hotel_price_per_day > 0;
-                                    $privateTransportAvailable = ($private->transport_price_flat ?? null) !== null && (float) $private->transport_price_flat > 0;
-                                @endphp
-
-                                @if ($private->addOns->isNotEmpty())
-                                    @foreach ($private->addOns as $addon)
-                                        <label class="flex cursor-pointer items-start gap-3">
-                                            <input type="checkbox" name="add_on_ids[]" value="{{ $addon->id }}"
-                                                class="mt-1 size-4 rounded border-slate-300 text-amber-600 shadow-sm focus:ring-amber-500"
-                                                x-bind:disabled="serviceType !== 'private'"
-                                                @checked(in_array((string) $addon->id, $oldAddOnIds, true))>
-                                            <span class="text-sm leading-relaxed text-slate-700">
-                                                {{ $addon->name }}
-                                                <span class="font-semibold text-amber-800">(+Rp {{ IndonesianNumber::formatThousands((string) (int) $addon->price) }})</span>
-                                            </span>
-                                        </label>
-                                    @endforeach
-                                @else
-                                    <p class="text-xs text-slate-600">{{ __('marketplace.panel.no_private_addons') }}</p>
-                                @endif
-
-                                <label class="flex items-start gap-3 {{ $privateHotelAvailable ? 'cursor-pointer' : 'cursor-not-allowed opacity-60' }}">
-                                    <input type="checkbox" name="with_same_hotel" value="1"
-                                        class="mt-1 size-4 rounded border-slate-300 text-amber-600 shadow-sm focus:ring-amber-500"
-                                        x-bind:disabled="serviceType !== 'private'"
-                                        @disabled(! $privateHotelAvailable)
-                                        @checked($privateHotelAvailable && $oldWithSameHotel)>
-                                    <span class="text-sm leading-relaxed text-slate-700">
-                                        @if ($privateHotelAvailable)
-                                            {{ __('marketplace.panel.same_hotel_yes', ['amount' => IndonesianNumber::formatThousands((string) (int) $private->same_hotel_price_per_day)]) }}
-                                        @else
-                                            {{ __('marketplace.panel.same_hotel_no') }}
-                                        @endif
-                                    </span>
-                                </label>
-
-                                <label class="flex items-start gap-3 {{ $privateTransportAvailable ? 'cursor-pointer' : 'cursor-not-allowed opacity-60' }}">
-                                    <input type="checkbox" name="with_transport" value="1"
-                                        class="mt-1 size-4 rounded border-slate-300 text-amber-600 shadow-sm focus:ring-amber-500"
-                                        x-bind:disabled="serviceType !== 'private'"
-                                        @disabled(! $privateTransportAvailable)
-                                        @checked($privateTransportAvailable && $oldWithTransport)>
-                                    <span class="text-sm leading-relaxed text-slate-700">
-                                        @if ($privateTransportAvailable)
-                                            {{ __('marketplace.panel.transport_yes', ['amount' => IndonesianNumber::formatThousands((string) (int) $private->transport_price_flat)]) }}
-                                        @else
-                                            {{ __('marketplace.panel.transport_no') }}
-                                        @endif
-                                    </span>
-                                </label>
-                            </div>
-                        @endif
-
-                        @if ($group || $private)
+                            <div class="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm ring-1 ring-slate-100/80 sm:p-6">
+                                <div class="flex flex-col gap-1">
+                                    <h3 class="text-base font-bold text-slate-900">{{ __('marketplace.panel.addons_toggle') }}</h3>
+                                    <p class="text-xs text-slate-500">{{ __('marketplace.panel.addons_toggle_hint') }}</p>
                                 </div>
-                            </details>
-                        @endif
+                                <div class="mt-4 space-y-4 border-t border-slate-100 pt-4">
+                                    @if ($group)
+                                        <div x-show="serviceType === 'group'" class="space-y-3 rounded-xl border border-slate-100 bg-slate-50/80 p-4 ring-1 ring-slate-100/60 sm:p-5">
+                                            <p class="text-xs font-bold uppercase tracking-wide text-brand-800">{{ __('marketplace.panel.addons_group') }}</p>
+
+                                            @php
+                                                $groupHotelAvailable = ($group->same_hotel_price_per_day ?? null) !== null && (float) $group->same_hotel_price_per_day > 0;
+                                                $groupTransportAvailable = ($group->transport_price_flat ?? null) !== null && (float) $group->transport_price_flat > 0;
+                                            @endphp
+
+                                            <label class="flex items-start gap-3 {{ $groupHotelAvailable ? 'cursor-pointer' : 'cursor-not-allowed opacity-60' }}">
+                                                <input type="checkbox" name="with_same_hotel" value="1"
+                                                    class="mt-1 size-4 rounded border-slate-300 text-brand-600 shadow-sm focus:ring-brand-500"
+                                                    x-bind:disabled="serviceType !== 'group'"
+                                                    @disabled(! $groupHotelAvailable)
+                                                    @checked($groupHotelAvailable && $oldWithSameHotel)>
+                                                <span class="text-sm leading-relaxed text-slate-700">
+                                                    @if ($groupHotelAvailable)
+                                                        {{ __('marketplace.panel.same_hotel_yes', ['amount' => IndonesianNumber::formatThousands((string) (int) $group->same_hotel_price_per_day)]) }}
+                                                    @else
+                                                        {{ __('marketplace.panel.same_hotel_no') }}
+                                                    @endif
+                                                </span>
+                                            </label>
+
+                                            <label class="flex items-start gap-3 {{ $groupTransportAvailable ? 'cursor-pointer' : 'cursor-not-allowed opacity-60' }}">
+                                                <input type="checkbox" name="with_transport" value="1"
+                                                    class="mt-1 size-4 rounded border-slate-300 text-brand-600 shadow-sm focus:ring-brand-500"
+                                                    x-bind:disabled="serviceType !== 'group'"
+                                                    @disabled(! $groupTransportAvailable)
+                                                    @checked($groupTransportAvailable && $oldWithTransport)>
+                                                <span class="text-sm leading-relaxed text-slate-700">
+                                                    @if ($groupTransportAvailable)
+                                                        {{ __('marketplace.panel.transport_yes', ['amount' => IndonesianNumber::formatThousands((string) (int) $group->transport_price_flat)]) }}
+                                                    @else
+                                                        {{ __('marketplace.panel.transport_no') }}
+                                                    @endif
+                                                </span>
+                                            </label>
+                                        </div>
+                                    @endif
+
+                                    @if ($private)
+                                        <div x-show="serviceType === 'private'" class="space-y-3 rounded-xl border border-amber-100/90 bg-amber-50/50 p-4 ring-1 ring-amber-100/70 sm:p-5">
+                                            <p class="text-xs font-bold uppercase tracking-wide text-amber-950">{{ __('marketplace.panel.addons_private') }}</p>
+                                            @php
+                                                $privateHotelAvailable = ($private->same_hotel_price_per_day ?? null) !== null && (float) $private->same_hotel_price_per_day > 0;
+                                                $privateTransportAvailable = ($private->transport_price_flat ?? null) !== null && (float) $private->transport_price_flat > 0;
+                                            @endphp
+
+                                            @if ($private->addOns->isNotEmpty())
+                                                @foreach ($private->addOns as $addon)
+                                                    <label class="flex cursor-pointer items-start gap-3">
+                                                        <input type="checkbox" name="add_on_ids[]" value="{{ $addon->id }}"
+                                                            class="mt-1 size-4 rounded border-slate-300 text-amber-600 shadow-sm focus:ring-amber-500"
+                                                            x-bind:disabled="serviceType !== 'private'"
+                                                            @checked(in_array((string) $addon->id, $oldAddOnIds, true))>
+                                                        <span class="text-sm leading-relaxed text-slate-700">
+                                                            {{ $addon->name }}
+                                                            <span class="font-semibold text-amber-800">(+Rp {{ IndonesianNumber::formatThousands((string) (int) $addon->price) }})</span>
+                                                        </span>
+                                                    </label>
+                                                @endforeach
+                                            @else
+                                                <p class="text-xs text-slate-600">{{ __('marketplace.panel.no_private_addons') }}</p>
+                                            @endif
+
+                                            <label class="flex items-start gap-3 {{ $privateHotelAvailable ? 'cursor-pointer' : 'cursor-not-allowed opacity-60' }}">
+                                                <input type="checkbox" name="with_same_hotel" value="1"
+                                                    class="mt-1 size-4 rounded border-slate-300 text-amber-600 shadow-sm focus:ring-amber-500"
+                                                    x-bind:disabled="serviceType !== 'private'"
+                                                    @disabled(! $privateHotelAvailable)
+                                                    @checked($privateHotelAvailable && $oldWithSameHotel)>
+                                                <span class="text-sm leading-relaxed text-slate-700">
+                                                    @if ($privateHotelAvailable)
+                                                        {{ __('marketplace.panel.same_hotel_yes', ['amount' => IndonesianNumber::formatThousands((string) (int) $private->same_hotel_price_per_day)]) }}
+                                                    @else
+                                                        {{ __('marketplace.panel.same_hotel_no') }}
+                                                    @endif
+                                                </span>
+                                            </label>
+
+                                            <label class="flex items-start gap-3 {{ $privateTransportAvailable ? 'cursor-pointer' : 'cursor-not-allowed opacity-60' }}">
+                                                <input type="checkbox" name="with_transport" value="1"
+                                                    class="mt-1 size-4 rounded border-slate-300 text-amber-600 shadow-sm focus:ring-amber-500"
+                                                    x-bind:disabled="serviceType !== 'private'"
+                                                    @disabled(! $privateTransportAvailable)
+                                                    @checked($privateTransportAvailable && $oldWithTransport)>
+                                                <span class="text-sm leading-relaxed text-slate-700">
+                                                    @if ($privateTransportAvailable)
+                                                        {{ __('marketplace.panel.transport_yes', ['amount' => IndonesianNumber::formatThousands((string) (int) $private->transport_price_flat)]) }}
+                                                    @else
+                                                        {{ __('marketplace.panel.transport_no') }}
+                                                    @endif
+                                                </span>
+                                            </label>
+                                        </div>
+                                    @endif
+                                </div>
+                            </div>
 
                         <fieldset class="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm ring-1 ring-slate-100/80 sm:p-6">
                             <legend class="px-1 text-base font-bold text-slate-900">{{ __('marketplace.panel.docs_heading') }}</legend>
