@@ -1,5 +1,6 @@
 @php
     use App\Enums\BookingStatus;
+    use App\Enums\MuthowifServiceType;
     use App\Enums\PaymentStatus;
     use App\Support\IndonesianNumber;
     use Carbon\Carbon;
