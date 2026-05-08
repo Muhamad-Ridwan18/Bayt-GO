@@ -8,6 +8,8 @@ return [
     'nav_pricing' => 'Harga',
     'nav_about' => 'Tentang kami',
     'nav_faq' => 'FAQ',
+    'nav_primary_aria' => 'Navigasi utama',
+    'nav_mobile_aria' => 'Menu mobile',
 
     'hero_title' => 'Booking Muthowif semudah booking hotel',
     'hero_sub' => 'Pilih tanggal, lihat ketersediaan, dan booking muthowif secara real-time dengan harga transparan.',

@@ -8,6 +8,8 @@ return [
     'nav_pricing' => 'Pricing',
     'nav_about' => 'About us',
     'nav_faq' => 'FAQ',
+    'nav_primary_aria' => 'Primary navigation',
+    'nav_mobile_aria' => 'Mobile menu',
 
     'hero_title' => 'Booking a muthowif as easy as booking a hotel',
     'hero_sub' => 'Pick dates, check availability, and book a muthowif in real-time with transparent pricing.',
