@@ -153,6 +153,34 @@ class BookingController extends Controller
         ]);
     }
 
+    public function requestRefund(Request $request, MuthowifBooking $booking): View
+    {
+        $this->authorize('requestPostPayRefund', $booking);
+
+        $booking->load(['muthowifProfile.user', 'muthowifProfile.services']);
+        $error = BookingPostPayRules::canRequestRefund($booking);
+        $preview = $this->refundPreviewForBooking($booking);
+
+        return view('bookings.refund', [
+            'booking' => $booking,
+            'refundEligibilityError' => $error,
+            'refundPreview' => $preview,
+        ]);
+    }
+
+    public function requestReschedule(Request $request, MuthowifBooking $booking): View
+    {
+        $this->authorize('requestPostPayReschedule', $booking);
+
+        $booking->load(['muthowifProfile.user', 'muthowifProfile.services']);
+        $error = BookingPostPayRules::canRequestReschedule($booking);
+
+        return view('bookings.reschedule', [
+            'booking' => $booking,
+            'rescheduleEligibilityError' => $error,
+        ]);
+    }
+
     public function payment(Request $request, MuthowifBooking $booking, SnapPaymentProviderInterface $provider): View|RedirectResponse
     {
         $this->authorize('pay', $booking);

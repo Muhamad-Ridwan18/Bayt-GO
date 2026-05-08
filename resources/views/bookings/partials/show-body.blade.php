@@ -133,14 +133,14 @@
                                 <p class="text-[0.65rem] font-semibold uppercase tracking-wide text-slate-500">{{ __('bookings.show.period') }}</p>
                                 <p class="mt-1 text-sm font-semibold tabular-nums text-slate-900">
                                     {{ Carbon::parse($b->starts_on)->format('d/m/Y') }}
-                                    <span class="mx-1 font-normal text-slate-400">â†’</span>
+                                    <span class="mx-1 font-normal text-slate-400">-</span>
                                     {{ Carbon::parse($b->ends_on)->format('d/m/Y') }}
                                 </p>
                                 <p class="mt-1 text-xs text-slate-500">{{ __('bookings.show.service_days_line', ['count' => $nights]) }}</p>
                             </div>
                             <div class="rounded-2xl bg-slate-50/90 p-4 ring-1 ring-slate-200/60">
                                 <p class="text-[0.65rem] font-semibold uppercase tracking-wide text-slate-500">{{ __('bookings.show.service') }}</p>
-                                <p class="mt-1 text-sm font-semibold text-slate-900">{{ $b->service_type?->label() ?? 'â€”' }}</p>
+                                <p class="mt-1 text-sm font-semibold text-slate-900">{{ $b->service_type?->label() ?? '-' }}</p>
                                 <p class="mt-1 text-xs text-slate-500">{{ __('bookings.index.pilgrims_count', ['count' => $b->pilgrim_count, 'pilgrims_word' => __('common.pilgrims')]) }}</p>
                             </div>
                         </div>
@@ -242,9 +242,7 @@
                         @endif
                     </div>
                 </div>
-            @endif
-
-            @if ($st === BookingStatus::Confirmed && $b->isPaid())
+                   @if ($st === BookingStatus::Confirmed)
                 <div class="mt-8 space-y-6 rounded-3xl border border-slate-200/80 bg-white p-6 shadow-md shadow-slate-900/5 sm:p-8">
                     <div>
                         <h2 class="text-lg font-bold text-slate-900">{{ __('bookings.show.refund_reschedule_heading') }}</h2>
@@ -256,125 +254,41 @@
                         </p>
                     </div>
 
-                    @if ($refundEligibilityError === null && $refundPreview)
-                        <div class="rounded-2xl border border-slate-100 bg-slate-50/90 p-4 text-sm text-slate-700 ring-1 ring-slate-100 space-y-2">
-                            <p>{!! __('bookings.show.refund_estimate_html', ['amount' => $fmt((float) $refundPreview['net_refund_customer'])]) !!}</p>
-                            <p class="text-xs text-slate-600">{{ __('bookings.show.refund_breakdown_html', [
-                                'base' => $fmt((float) $refundPreview['service_base_amount']),
-                                'paid' => $fmt((float) $refundPreview['customer_paid_amount']),
-                                'platform' => $fmt((float) $refundPreview['refund_fee_platform']),
-                                'muthowif' => $fmt((float) $refundPreview['refund_fee_muthowif']),
-                            ]) }}</p>
-                        </div>
-                        <form method="POST" action="{{ route('bookings.refund_request.store', $b) }}" class="space-y-4" onsubmit="return confirm(@json(__('bookings.show.refund_confirm')));">
-                            @csrf
-                            <div class="grid grid-cols-1 gap-3 sm:grid-cols-2">
-                                <div class="sm:col-span-2">
-                                    <label for="refund_bank_name" class="mb-1 block text-sm font-medium text-slate-700">{{ __('bookings.show.refund_bank_name') }} <span class="text-red-600">*</span></label>
-                                    <input id="refund_bank_name" type="text" name="refund_bank_name" value="{{ old('refund_bank_name') }}" required maxlength="100" autocomplete="off" class="w-full rounded-xl border-slate-300 text-sm shadow-sm focus:border-brand-500 focus:ring-brand-500" placeholder="{{ __('bookings.show.refund_bank_name_placeholder') }}" />
-                                    @error('refund_bank_name')
-                                        <p class="mt-1 text-xs text-red-700">{{ $message }}</p>
-                                    @enderror
+                    <div class="grid grid-cols-1 gap-4 sm:grid-cols-2">
+                        @if ($b->isPaid())
+                            <a href="{{ route('bookings.refund', $b) }}" class="flex flex-col items-start gap-1 rounded-2xl border border-slate-100 bg-slate-50/50 p-4 transition hover:bg-slate-50 hover:ring-1 hover:ring-slate-200">
+                                <span class="text-sm font-bold text-slate-900">{{ __('bookings.show.process_refund') }}</span>
+                                <span class="text-[10px] text-slate-500">Ajukan pengembalian dana jika batal berangkat.</span>
+                            </a>
+                            @if ($b->pendingRescheduleRequest())
+                                <div class="flex flex-col items-start gap-1 rounded-2xl border border-amber-100 bg-amber-50/50 p-4 ring-1 ring-amber-100/60">
+                                    <span class="text-sm font-bold text-amber-900">{{ __('bookings.show.reschedule_pending') }}</span>
+                                    <span class="text-[10px] text-amber-700">Menunggu keputusan muthowif.</span>
                                 </div>
-                                <div>
-                                    <label for="refund_account_holder" class="mb-1 block text-sm font-medium text-slate-700">{{ __('bookings.show.refund_account_holder') }} <span class="text-red-600">*</span></label>
-                                    <input id="refund_account_holder" type="text" name="refund_account_holder" value="{{ old('refund_account_holder') }}" required maxlength="255" autocomplete="name" class="w-full rounded-xl border-slate-300 text-sm shadow-sm focus:border-brand-500 focus:ring-brand-500" placeholder="{{ __('bookings.show.refund_account_holder_placeholder') }}" />
-                                    @error('refund_account_holder')
-                                        <p class="mt-1 text-xs text-red-700">{{ $message }}</p>
-                                    @enderror
-                                </div>
-                                <div>
-                                    <label for="refund_account_number" class="mb-1 block text-sm font-medium text-slate-700">{{ __('bookings.show.refund_account_number') }} <span class="text-red-600">*</span></label>
-                                    <input id="refund_account_number" type="text" name="refund_account_number" value="{{ old('refund_account_number') }}" required maxlength="64" inputmode="numeric" autocomplete="off" class="w-full rounded-xl border-slate-300 text-sm shadow-sm focus:border-brand-500 focus:ring-brand-500" placeholder="{{ __('bookings.show.refund_account_number_placeholder') }}" />
-                                    @error('refund_account_number')
-                                        <p class="mt-1 text-xs text-red-700">{{ $message }}</p>
-                                    @enderror
-                                </div>
-                            </div>
-                            <div>
-                                <label for="refund_note" class="mb-1 block text-sm font-medium text-slate-700">{{ __('bookings.show.note_optional') }}</label>
-                                <textarea id="refund_note" name="customer_note" rows="2" maxlength="2000" class="w-full rounded-xl border-slate-300 text-sm shadow-sm focus:border-brand-500 focus:ring-brand-500">{{ old('customer_note') }}</textarea>
-                            </div>
-                            <button type="submit" class="inline-flex items-center justify-center rounded-xl border border-slate-300 bg-white px-5 py-2.5 text-sm font-semibold text-slate-800 shadow-sm transition hover:bg-slate-50">
-                                {{ __('bookings.show.process_refund') }}
-                            </button>
-                        </form>
-                    @else
-                        <p class="text-sm text-slate-600">{{ $refundEligibilityError }}</p>
-                    @endif
-
-                    @if ($b->pendingRescheduleRequest())
-                        <div class="rounded-2xl border border-amber-200 bg-amber-50/80 px-4 py-3 text-sm text-amber-950 ring-1 ring-amber-200/60">
-                            {{ __('bookings.show.reschedule_pending') }}
-                        </div>
-                    @elseif ($rescheduleEligibilityError === null)
-                        <form method="POST" action="{{ route('bookings.reschedule_request.store', $b) }}" class="space-y-3 border-t border-slate-100 pt-6">
-                            @csrf
-                            <p class="text-sm font-semibold text-slate-800">{{ __('bookings.show.new_schedule', ['nights' => $nights]) }}</p>
-                            <div
-                                class="grid grid-cols-1 gap-3 sm:grid-cols-2"
-                                x-data="{
-                                    nights: {{ $nights }},
-                                    endLabel: @json(__('common.em_dash')),
-                                    dateLocale: @json($dateLocale),
-                                    updateEnd() {
-                                        const v = this.$refs.start?.value;
-                                        if (!v) { this.endLabel = @json(__('common.em_dash')); return; }
-                                        const d = new Date(v + 'T12:00:00');
-                                        d.setDate(d.getDate() + (this.nights - 1));
-                                        this.endLabel = d.toLocaleDateString(this.dateLocale, { day: '2-digit', month: 'long', year: 'numeric' });
-                                    }
-                                }"
-                                x-init="$nextTick(() => updateEnd())"
-                            >
-                                <div>
-                                    <label for="new_start_date" class="mb-1 block text-xs font-medium text-slate-600">{{ __('bookings.show.start_label') }}</label>
-                                    <input
-                                        type="date"
-                                        id="new_start_date"
-                                        name="new_start_date"
-                                        x-ref="start"
-                                        value="{{ old('new_start_date') }}"
-                                        required
-                                        class="w-full rounded-xl border-slate-300 text-sm shadow-sm focus:border-brand-500 focus:ring-brand-500"
-                                        @input="updateEnd()"
-                                        @change="updateEnd()"
-                                    >
-                                    @error('new_start_date')
-                                        <p class="mt-1 text-xs text-red-700">{{ $message }}</p>
-                                    @enderror
-                                </div>
-                                <div>
-                                    <p class="mb-1 block text-xs font-medium text-slate-600">{{ __('bookings.show.end_auto') }}</p>
-                                    <div class="flex min-h-[38px] items-center rounded-xl border border-slate-200 bg-slate-50 px-3 text-sm text-slate-800" x-text="endLabel"></div>
-                                    <p class="mt-1 text-[11px] text-slate-500">{{ __('bookings.show.end_follows', ['nights' => $nights]) }}</p>
-                                </div>
-                            </div>
-                            <div>
-                                <label for="reschedule_note" class="mb-1 block text-xs font-medium text-slate-600">{{ __('bookings.show.note_optional') }}</label>
-                                <textarea id="reschedule_note" name="reschedule_note" rows="2" maxlength="2000" class="w-full rounded-xl border-slate-300 text-sm shadow-sm focus:border-brand-500 focus:ring-brand-500">{{ old('reschedule_note') }}</textarea>
-                                @error('reschedule_note')
-                                    <p class="mt-1 text-xs text-red-700">{{ $message }}</p>
-                                @enderror
-                            </div>
-                            <button type="submit" class="inline-flex items-center justify-center rounded-xl bg-brand-600 px-5 py-2.5 text-sm font-semibold text-white shadow-md shadow-brand-600/20 transition hover:bg-brand-700">
-                                {{ __('bookings.show.submit_reschedule') }}
-                            </button>
-                        </form>
-                    @else
-                        <p class="border-t border-slate-100 pt-6 text-sm text-slate-600">{{ $rescheduleEligibilityError }}</p>
-                    @endif
+                            @else
+                                <a href="{{ route('bookings.reschedule', $b) }}" class="flex flex-col items-start gap-1 rounded-2xl border border-slate-100 bg-slate-50/50 p-4 transition hover:bg-slate-50 hover:ring-1 hover:ring-slate-200">
+                                    <span class="text-sm font-bold text-slate-900">{{ __('bookings.show.submit_reschedule') }}</span>
+                                    <span class="text-[10px] text-slate-500">Ganti tanggal layanan (perlu persetujuan).</span>
+                                </a>
+                            @endif
+                        @else
+                             <div class="sm:col-span-2 rounded-2xl border border-amber-100 bg-amber-50/50 p-4 text-xs text-amber-800">
+                                {{ __('bookings.reschedule_eligibility.not_paid') }}
+                             </div>
+                        @endif
+                    </div>
 
                     @if ($b->refundRequests->isNotEmpty() || $b->rescheduleRequests->isNotEmpty())
-                        <div class="space-y-3 border-t border-slate-100 pt-4 text-xs text-slate-600">
+                        <div class="space-y-3 border-t border-slate-100 pt-6 text-xs text-slate-600">
+                            <h3 class="font-bold text-slate-900 uppercase tracking-wider text-[10px]">Riwayat Pengajuan</h3>
                             @foreach ($b->refundRequests as $req)
                                 <p class="rounded-lg bg-slate-50/80 px-3 py-2">
                                     {{ __('bookings.show.timeline_refund', ['status' => $req->status->label(), 'datetime' => $req->created_at?->timezone(config('app.timezone'))->format('d/m/Y H:i')]) }}
                                     @if ($req->refund_bank_name || $req->refund_account_holder || $req->refund_account_number)
                                         <br><span class="text-slate-600">{{ __('bookings.show.timeline_refund_bank', [
-                                            'bank' => $req->refund_bank_name ?: 'â€”',
-                                            'holder' => $req->refund_account_holder ?: 'â€”',
-                                            'number' => $req->refund_account_number ?: 'â€”',
+                                            'bank' => $req->refund_bank_name ?: '—',
+                                            'holder' => $req->refund_account_holder ?: '—',
+                                            'number' => $req->refund_account_number ?: '—',
                                         ]) }}</span>
                                     @endif
                                     @if ($req->customer_note)
@@ -386,7 +300,7 @@
                                 <p class="rounded-lg bg-slate-50/80 px-3 py-2">
                                     {{ __('bookings.show.timeline_reschedule', [
                                         'status' => $req->status->label(),
-                                        'range' => \Carbon\Carbon::parse($req->new_starts_on)->format('d/m/Y').' â€“ '.\Carbon\Carbon::parse($req->new_ends_on)->format('d/m/Y'),
+                                        'range' => \Carbon\Carbon::parse($req->new_starts_on)->format('d/m/Y').' – '.\Carbon\Carbon::parse($req->new_ends_on)->format('d/m/Y'),
                                         'datetime' => $req->created_at?->timezone(config('app.timezone'))->format('d/m/Y H:i'),
                                     ]) }}
                                     @if ($req->muthowif_note)

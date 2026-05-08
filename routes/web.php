@@ -182,6 +182,8 @@ Route::middleware('auth')->group(function () {
         Route::get('{booking}/invoice', [CustomerBookingController::class, 'invoice'])->name('invoice');
         Route::post('{booking}/selesaikan', [CustomerBookingController::class, 'complete'])->name('complete');
         Route::post('{booking}/review', [CustomerBookingController::class, 'review'])->name('review');
+        Route::get('{booking}/refund', [CustomerBookingController::class, 'requestRefund'])->name('refund');
+        Route::get('{booking}/reschedule', [CustomerBookingController::class, 'requestReschedule'])->name('reschedule');
         Route::post('{booking}/refund-request', [CustomerBookingController::class, 'storeRefundRequest'])->name('refund_request.store');
         Route::post('{booking}/reschedule-request', [CustomerBookingController::class, 'storeRescheduleRequest'])->name('reschedule_request.store');
         Route::get('{booking}/chat/messages', [BookingChatController::class, 'index'])->name('chat.messages');
