@@ -22,7 +22,7 @@ return [
     'search_form_sub' => 'Choose your travel dates and optional name filter.',
     'help_quick' => 'Tip:',
     'help_body' => 'You can leave the end date empty for a single day. Name is optional.',
-    'help_results' => 'Results only include muthowif who are not on leave and have free slots in that range.',
+    'help_results' => 'Only available muthtowif for your selected dates are shown.',
     'empty_state_title' => 'Choose a start date (and end date if more than one day), then press :strong.',
     'empty_state_title_strong' => 'Search',
     'empty_state_sub' => 'The list only appears after dates are set — so you do not waste time on unavailable options.',

@@ -22,7 +22,7 @@ return [
     'search_form_sub' => 'Pilih tanggal perjalanan dan filter nama (opsional).',
     'help_quick' => 'Tips:',
     'help_body' => 'Tanggal selesai boleh dikosongkan jika hanya satu hari. Nama muthowif boleh dikosongkan.',
-    'help_results' => 'Hasil hanya muthowif yang tidak libur dan slot-nya kosong pada rentang tersebut.',
+    'help_results' => 'Hanya muthowif yang tersedia pada tanggal yang dipilih yang akan ditampilkan.',
     'empty_state_title' => 'Pilih tanggal mulai (dan selesai jika lebih dari satu hari), lalu tekan :strong.',
     'empty_state_title_strong' => 'Cari',
     'empty_state_sub' => 'Daftar muthowif hanya muncul setelah tanggal diisi — supaya Anda tidak membuang waktu pada yang tidak available.',
