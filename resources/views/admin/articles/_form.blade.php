@@ -18,10 +18,10 @@
     <section class="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm">
         <h2 class="text-base font-semibold text-slate-900">{{ __('admin.articles.section_meta') }}</h2>
         <div class="mt-5 grid gap-4 sm:grid-cols-2">
-                <div class="sm:col-span-2">
+            <div class="sm:col-span-2">
                 <x-input-label for="slug" :value="__('admin.articles.field_slug')" />
                 <x-text-input id="slug" name="slug" type="text" class="mt-1 block w-full" required autofocus
-                    x-model="slug" :value="old('slug', $article->slug)" />
+                    x-model="slug" />
                 <p class="mt-1 text-xs text-slate-500">{{ __('admin.articles.slug_hint') }}</p>
                 <x-input-error class="mt-2" :messages="$errors->get('slug')" />
             </div>
