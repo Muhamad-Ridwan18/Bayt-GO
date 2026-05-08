@@ -1,141 +1,18 @@
 <x-app-layout>
-    <div class="relative min-h-[calc(100vh-4rem)] overflow-hidden bg-gradient-to-b from-slate-100 via-slate-50 to-white py-8 sm:py-12 @if (Auth::user()->isVerifiedMuthowif()) !py-5 sm:!py-6 @endif">
-        <div class="pointer-events-none absolute inset-0 bg-[radial-gradient(ellipse_80%_50%_at_50%_-20%,rgba(120,53,15,0.08),transparent)]"></div>
-        <div class="pointer-events-none absolute right-0 top-24 h-72 w-72 rounded-full bg-brand-400/5 blur-3xl"></div>
-        <div class="pointer-events-none absolute -left-20 bottom-0 h-64 w-64 rounded-full bg-violet-400/5 blur-3xl"></div>
+    @php
+        $customerDashBg = Auth::user()->isCustomer();
+    @endphp
+    <div class="relative min-h-[calc(100vh-4rem)] {{ $customerDashBg ? 'overflow-x-hidden bg-gradient-to-b from-welcomeCanvas via-white to-slate-50 py-6 sm:py-8' : 'overflow-hidden bg-gradient-to-b from-slate-100 via-slate-50 to-white py-8 sm:py-12' }} @if (Auth::user()->isVerifiedMuthowif()) !py-5 sm:!py-6 @endif">
+        @unless ($customerDashBg)
+            <div class="pointer-events-none absolute inset-0 bg-[radial-gradient(ellipse_80%_50%_at_50%_-20%,rgba(120,53,15,0.08),transparent)]"></div>
+            <div class="pointer-events-none absolute right-0 top-24 h-72 w-72 rounded-full bg-brand-400/5 blur-3xl"></div>
+            <div class="pointer-events-none absolute -left-20 bottom-0 h-64 w-64 rounded-full bg-violet-400/5 blur-3xl"></div>
+        @endunless
 
         <div class="relative mx-auto max-w-7xl space-y-10 px-4 sm:px-6 lg:px-8">
 
             @if (Auth::user()->isCustomer())
-                {{-- Hero jamaah --}}
-                <section class="relative overflow-hidden rounded-[1.75rem] bg-gradient-to-br from-slate-900 via-brand-900 to-amber-950 text-white shadow-[0_25px_50px_-12px_rgba(88,28,28,0.35)] ring-1 ring-white/10 sm:rounded-3xl">
-                    <div class="absolute inset-0 bg-[url('data:image/svg+xml,%3Csvg width=\'60\' height=\'60\' viewBox=\'0 0 60 60\' xmlns=\'http://www.w3.org/2000/svg\'%3E%3Cg fill=\'none\' fill-rule=\'evenodd\'%3E%3Cg fill=\'%23ffffff\' fill-opacity=\'0.05\'%3E%3Cpath d=\'M36 34v-4h-2v4h-4v2h4v4h2v-4h4v-2h-4zm0-30V0h-2v4h-4v2h4v4h2V6h4V4h-4zM6 34v-4H4v4H0v2h4v4h2v-4h4v-2H6zM6 4V0H4v4H0v2h4v4h2V6h4V4H6z\'/%3E%3C/g%3E%3C/g%3E%3C/svg%3E')] opacity-40"></div>
-                    <div class="pointer-events-none absolute -right-16 top-0 h-80 w-80 rounded-full bg-brand-400/25 blur-3xl"></div>
-                    <div class="pointer-events-none absolute bottom-0 left-1/3 h-72 w-96 rounded-full bg-amber-400/15 blur-3xl"></div>
-                    <div class="pointer-events-none absolute right-1/4 top-1/2 h-32 w-32 rounded-full bg-white/5 blur-2xl"></div>
-
-                    <div class="relative space-y-8 px-5 py-8 sm:px-8 sm:py-10 lg:px-10 lg:py-12">
-                        <div class="max-w-3xl">
-                            <div class="inline-flex items-center gap-2 rounded-full bg-white/10 px-3 py-1 text-[11px] font-semibold uppercase tracking-wider text-amber-100/95 ring-1 ring-white/15 backdrop-blur-sm">
-                                <span class="h-1.5 w-1.5 rounded-full bg-emerald-400 shadow-[0_0_8px_rgba(52,211,153,0.8)]" aria-hidden="true"></span>
-                                {{ __('dashboard.customer_badge') }}
-                            </div>
-                            <p class="mt-5 text-sm font-medium text-brand-100/90">{{ __('dashboard.hello') }}</p>
-                            <p class="mt-0.5 text-3xl font-bold tracking-tight text-white sm:text-4xl">{{ Auth::user()->name }}</p>
-                            <span class="mt-4 inline-flex items-center rounded-full bg-white/10 px-3 py-1 text-xs font-semibold text-brand-100 ring-1 ring-white/20">
-                                {{ Auth::user()->role->label() }}
-                            </span>
-                            <h3 class="mt-6 text-xl font-semibold leading-snug text-white sm:text-2xl">
-                                {{ __('dashboard.customer_headline') }}
-                            </h3>
-                            @php
-                                $availableHighlight = '<strong class="font-semibold text-white">'.e(__('dashboard.available')).'</strong>';
-                            @endphp
-                            <p class="mt-3 text-sm leading-relaxed text-brand-100/90 sm:text-base">
-                                {!! __('dashboard.marketplace_html', ['available' => $availableHighlight]) !!}
-                            </p>
-                        </div>
-
-                        <div class="w-full min-w-0 rounded-2xl border border-white/15 bg-white/[0.07] p-4 shadow-inner shadow-black/10 backdrop-blur-md sm:p-5">
-                            <p class="mb-3 flex items-center gap-2 text-sm font-semibold text-brand-50">
-                                <span class="flex h-9 w-9 items-center justify-center rounded-xl bg-white/15 ring-1 ring-white/25" aria-hidden="true">
-                                    <svg class="h-4 w-4" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M5.75 2a.75.75 0 01.75.75V4h7V2.75a.75.75 0 011.5 0V4h.25A2.75 2.75 0 0118 6.75v8.5A2.75 2.75 0 0115.25 18H4.75A2.75 2.75 0 012 15.25v-8.5A2.75 2.75 0 014.75 4H5V2.75A.75.75 0 015.75 2zm-1 5.5c-.69 0-1.25.56-1.25 1.25v6.5c0 .69.56 1.25 1.25 1.25h10.5c.69 0 1.25-.56 1.25-1.25v-6.5c0-.69-.56-1.25-1.25-1.25H4.75z" clip-rule="evenodd" /></svg>
-                                </span>
-                                {{ __('dashboard.search_availability') }}
-                            </p>
-                            @include('layanan.partials.date-search-form', [
-                                'startDate' => '',
-                                'endDate' => '',
-                                'searchQuery' => '',
-                            ])
-                        </div>
-
-                        <div class="flex flex-wrap gap-2.5 border-t border-white/10 pt-4 sm:gap-3">
-                            @foreach ([
-                                __('dashboard.chip_verified'),
-                                __('dashboard.chip_realtime'),
-                                __('dashboard.chip_group_private'),
-                            ] as $chip)
-                                <span class="inline-flex items-center gap-1.5 rounded-full bg-white/10 px-3.5 py-2 text-xs font-medium text-white/95 ring-1 ring-white/15 backdrop-blur-sm transition hover:bg-white/15">
-                                    <svg class="h-3.5 w-3.5 shrink-0 text-emerald-300" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true">
-                                        <path fill-rule="evenodd" d="M16.704 4.153a.75.75 0 01.143 1.052l-8 10.5a.75.75 0 01-1.127.075l-4.5-4.5a.75.75 0 011.06-1.06l3.894 3.893 7.48-9.817a.75.75 0 011.05-.143z" clip-rule="evenodd" />
-                                    </svg>
-                                    {{ $chip }}
-                                </span>
-                            @endforeach
-                        </div>
-                    </div>
-                </section>
-
-                <div>
-                    <div class="mb-5 flex items-end justify-between gap-4">
-                        <div class="flex items-start gap-3">
-                            <span class="mt-0.5 hidden h-10 w-1 rounded-full bg-gradient-to-b from-brand-500 to-amber-500 sm:block" aria-hidden="true"></span>
-                            <div>
-                                <h2 class="text-xl font-bold tracking-tight text-slate-900">{{ __('dashboard.quick_access') }}</h2>
-                                <p class="mt-1 text-sm text-slate-600">{{ __('dashboard.quick_access_sub') }}</p>
-                            </div>
-                        </div>
-                    </div>
-                    <div class="grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-4">
-                        <a href="{{ route('layanan.index') }}" class="group relative flex flex-col gap-4 overflow-hidden rounded-3xl border border-slate-200/80 bg-gradient-to-b from-white to-slate-50/90 p-6 shadow-sm shadow-slate-200/40 ring-1 ring-slate-100 transition-all duration-300 hover:-translate-y-1 hover:border-violet-200/80 hover:shadow-lg hover:shadow-violet-500/10 hover:ring-violet-100">
-                            <div class="absolute -right-6 -top-6 h-24 w-24 rounded-full bg-violet-400/10 blur-2xl transition group-hover:bg-violet-400/20"></div>
-                            <span class="relative flex h-14 w-14 items-center justify-center rounded-2xl bg-gradient-to-br from-violet-500 to-violet-700 text-white shadow-lg shadow-violet-500/25 ring-1 ring-white/20 transition group-hover:scale-105" aria-hidden="true">
-                                <svg class="h-7 w-7" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M21 21l-5.197-5.197m0 0A7.5 7.5 0 105.196 5.196a7.5 7.5 0 0010.607 10.607z" /></svg>
-                            </span>
-                            <div class="relative">
-                                <p class="font-semibold text-slate-900">{{ __('dashboard.shortcut_find_title') }}</p>
-                                <p class="mt-1 text-sm leading-relaxed text-slate-600">{{ __('dashboard.shortcut_find_desc') }}</p>
-                            </div>
-                            <span class="relative inline-flex items-center gap-1 text-sm font-semibold text-violet-700 group-hover:text-violet-800">
-                                {{ __('dashboard.shortcut_find_cta') }}
-                                <svg class="h-4 w-4 transition group-hover:translate-x-1" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true"><path fill-rule="evenodd" d="M3 10a.75.75 0 01.75-.75h10.638L10.23 5.29a.75.75 0 111.04-1.08l5.5 5.25a.75.75 0 010 1.08l-5.5 5.25a.75.75 0 11-1.04-1.08l4.158-3.96H3.75A.75.75 0 013 10z" clip-rule="evenodd" /></svg>
-                            </span>
-                        </a>
-                        <a href="{{ route('bookings.index') }}" class="group relative flex flex-col gap-4 overflow-hidden rounded-3xl border border-slate-200/80 bg-gradient-to-b from-white to-slate-50/90 p-6 shadow-sm shadow-slate-200/40 ring-1 ring-slate-100 transition-all duration-300 hover:-translate-y-1 hover:border-brand-200/80 hover:shadow-lg hover:shadow-brand-500/10 hover:ring-brand-100">
-                            <div class="absolute -right-6 -top-6 h-24 w-24 rounded-full bg-brand-400/10 blur-2xl transition group-hover:bg-brand-400/20"></div>
-                            <span class="relative flex h-14 w-14 items-center justify-center rounded-2xl bg-gradient-to-br from-brand-600 to-brand-800 text-white shadow-lg shadow-brand-600/25 ring-1 ring-white/20 transition group-hover:scale-105" aria-hidden="true">
-                                <svg class="h-7 w-7" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M9 12h3.75M9 15h3m-6.75 3h15a2.25 2.25 0 002.25-2.25V6.75A2.25 2.25 0 0019.5 4.5h-15a2.25 2.25 0 00-2.25 2.25v10.5A2.25 2.25 0 004.5 19.5z" /></svg>
-                            </span>
-                            <div class="relative">
-                                <p class="font-semibold text-slate-900">{{ __('dashboard.shortcut_bookings_title') }}</p>
-                                <p class="mt-1 text-sm leading-relaxed text-slate-600">{{ __('dashboard.shortcut_bookings_desc') }}</p>
-                            </div>
-                            <span class="relative inline-flex items-center gap-1 text-sm font-semibold text-brand-700 group-hover:text-brand-800">
-                                {{ __('dashboard.shortcut_bookings_cta') }}
-                                <svg class="h-4 w-4 transition group-hover:translate-x-1" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true"><path fill-rule="evenodd" d="M3 10a.75.75 0 01.75-.75h10.638L10.23 5.29a.75.75 0 111.04-1.08l5.5 5.25a.75.75 0 010 1.08l-5.5 5.25a.75.75 0 11-1.04-1.08l4.158-3.96H3.75A.75.75 0 013 10z" clip-rule="evenodd" /></svg>
-                            </span>
-                        </a>
-                        <a href="{{ route('profile.edit') }}" class="group relative flex flex-col gap-4 overflow-hidden rounded-3xl border border-slate-200/80 bg-gradient-to-b from-white to-slate-50/90 p-6 shadow-sm shadow-slate-200/40 ring-1 ring-slate-100 transition-all duration-300 hover:-translate-y-1 hover:border-slate-300 hover:shadow-lg hover:shadow-slate-400/10">
-                            <div class="absolute -right-6 -top-6 h-24 w-24 rounded-full bg-slate-400/10 blur-2xl transition group-hover:bg-slate-400/15"></div>
-                            <span class="relative flex h-14 w-14 items-center justify-center rounded-2xl bg-gradient-to-br from-slate-600 to-slate-800 text-white shadow-lg shadow-slate-600/20 ring-1 ring-white/10 transition group-hover:scale-105" aria-hidden="true">
-                                <svg class="h-7 w-7" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M15.75 6a3.75 3.75 0 11-7.5 0 3.75 3.75 0 017.5 0zM4.501 20.118a7.5 7.5 0 0114.998 0A17.933 17.933 0 0112 21.75c-2.676 0-5.216-.584-7.499-1.632z" /></svg>
-                            </span>
-                            <div class="relative">
-                                <p class="font-semibold text-slate-900">{{ __('dashboard.shortcut_profile_title') }}</p>
-                                <p class="mt-1 text-sm leading-relaxed text-slate-600">{{ __('dashboard.shortcut_profile_desc') }}</p>
-                            </div>
-                            <span class="relative inline-flex items-center gap-1 text-sm font-semibold text-slate-700 group-hover:text-slate-900">
-                                {{ __('dashboard.shortcut_profile_cta') }}
-                                <svg class="h-4 w-4 transition group-hover:translate-x-1" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true"><path fill-rule="evenodd" d="M3 10a.75.75 0 01.75-.75h10.638L10.23 5.29a.75.75 0 111.04-1.08l5.5 5.25a.75.75 0 010 1.08l-5.5 5.25a.75.75 0 11-1.04-1.08l4.158-3.96H3.75A.75.75 0 013 10z" clip-rule="evenodd" /></svg>
-                            </span>
-                        </a>
-                        <a href="{{ route('support.index') }}" class="group relative flex flex-col gap-4 overflow-hidden rounded-3xl border border-slate-200/80 bg-gradient-to-b from-white to-cyan-50/40 p-6 shadow-sm shadow-slate-200/40 ring-1 ring-slate-100 transition-all duration-300 hover:-translate-y-1 hover:border-cyan-200/90 hover:shadow-lg hover:shadow-cyan-500/10 hover:ring-cyan-100">
-                            <div class="absolute -right-6 -top-6 h-24 w-24 rounded-full bg-cyan-400/10 blur-2xl transition group-hover:bg-cyan-400/20"></div>
-                            <span class="relative flex h-14 w-14 items-center justify-center rounded-2xl bg-gradient-to-br from-cyan-500 to-teal-600 text-white shadow-lg shadow-cyan-500/25 ring-1 ring-white/20 transition group-hover:scale-105" aria-hidden="true">
-                                <svg class="h-7 w-7" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M12 9v3.75m9-.75a9 9 0 11-18 0 9 9 0 0118 0zm-9 3.75h.008v.008H12v-.008z" /></svg>
-                            </span>
-                            <div class="relative">
-                                <p class="font-semibold text-slate-900">{{ __('dashboard.shortcut_support_title') }}</p>
-                                <p class="mt-1 text-sm leading-relaxed text-slate-600">{{ __('dashboard.shortcut_support_desc') }}</p>
-                            </div>
-                            <span class="relative inline-flex items-center gap-1 text-sm font-semibold text-cyan-800 group-hover:text-cyan-900">
-                                {{ __('dashboard.shortcut_support_cta') }}
-                                <svg class="h-4 w-4 transition group-hover:translate-x-1" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true"><path fill-rule="evenodd" d="M3 10a.75.75 0 01.75-.75h10.638L10.23 5.29a.75.75 0 111.04-1.08l5.5 5.25a.75.75 0 010 1.08l-5.5 5.25a.75.75 0 11-1.04-1.08l4.158-3.96H3.75A.75.75 0 013 10z" clip-rule="evenodd" /></svg>
-                            </span>
-                        </a>
-                    </div>
-                </div>
+                @include('partials.dashboard-customer')
             @elseif (Auth::user()->isVerifiedMuthowif())
                 @include('partials.dashboard-muthowif')
             @elseif (Auth::user()->isMuthowif())
