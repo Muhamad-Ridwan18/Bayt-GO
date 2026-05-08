@@ -1,6 +1,5 @@
 @php
     use App\Enums\BookingStatus;
-    use App\Enums\MuthowifServiceType;
     use App\Enums\PaymentStatus;
     use App\Support\IndonesianNumber;
     use Carbon\Carbon;
@@ -105,16 +104,6 @@
                     @foreach ($bookings as $booking)
                         @php
                             $st = $booking->status;
-                            $nights = $booking->billingNightsInclusive();
-                            $service = $booking->muthowifProfile?->services?->firstWhere('type', $booking->service_type);
-                            $sameHotelLine = 0.0;
-                            if ($booking->with_same_hotel && $service && $service->same_hotel_price_per_day !== null) {
-                                $sameHotelLine = $nights * (float) $service->same_hotel_price_per_day;
-                            }
-                            $transportLine = 0.0;
-                            if ($booking->with_transport && $service && $service->transport_price_flat !== null) {
-                                $transportLine = (float) $service->transport_price_flat;
-                            }
                             $cardStyle = $statusCardStyles[$st->value] ?? $statusCardStyles[BookingStatus::Pending->value];
                         @endphp
                         <li class="group relative">
@@ -138,11 +127,11 @@
                                         <p class="font-mono text-slate-500">
                                             {{ $booking->booking_code ?? '-' }}
                                         </p>
-                                        <div class="flex items-center gap-3">
-                                            <span class="{{ str_replace(['bg-', 'text-', 'ring-'], ['text-', 'text-', ''], $cardStyle['badge']) }} font-bold">
+                                        <div class="flex items-center gap-2">
+                                            <span class="inline-flex max-w-[11rem] shrink-0 items-center truncate rounded-full px-2 py-0.5 text-[10px] font-bold ring-1 sm:text-xs {{ $cardStyle['badge'] }}">
                                                 {{ $st->label() }}
                                             </span>
-                                            <span class="flex items-center gap-1.5 {{ match ($booking->payment_status) {
+                                            <span class="flex min-w-0 items-center gap-1.5 {{ match ($booking->payment_status) {
                                                 PaymentStatus::Paid => 'text-emerald-600',
                                                 PaymentStatus::RefundPending => 'text-amber-600',
                                                 PaymentStatus::Refunded => 'text-red-600',
@@ -220,7 +209,6 @@
                                             </form>
                                         @endif
                                     </div>
-                                </div>
                                 </div>
                             </article>
                         </li>
