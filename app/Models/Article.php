@@ -29,16 +29,6 @@ class Article extends Model
         ];
     }
 
-    public function resolveRouteBinding($value, $field = null): Model
-    {
-        $field ??= $this->getRouteKeyName();
-
-        return self::query()
-            ->where($field, $value)
-            ->published()
-            ->firstOrFail();
-    }
-
     /**
      * @param  Builder<Article>  $query
      * @return Builder<Article>
@@ -63,15 +53,31 @@ class Article extends Model
             ->orderByDesc('published_at');
     }
 
-    public function localized(string $key): string
+    /**
+     * @return array<string, mixed>
+     */
+    public function translationBlock(?string $locale = null): array
     {
-        $locale = app()->getLocale();
         /** @var array<string, mixed> $translations */
         $translations = $this->translations ?? [];
 
-        $block = $translations[$locale] ?? $translations['id'] ?? $translations['en'] ?? [];
+        if ($locale !== null) {
+            $block = $translations[$locale] ?? [];
 
-        return (string) (is_array($block) ? ($block[$key] ?? '') : '');
+            return is_array($block) ? $block : [];
+        }
+
+        $active = app()->getLocale();
+        $block = $translations[$active] ?? $translations['id'] ?? $translations['en'] ?? [];
+
+        return is_array($block) ? $block : [];
+    }
+
+    public function localized(string $key): string
+    {
+        $block = $this->translationBlock();
+
+        return (string) ($block[$key] ?? '');
     }
 
     public function readingMinutes(): int

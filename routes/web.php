@@ -2,6 +2,7 @@
 
 use App\Enums\MuthowifVerificationStatus;
 use App\Http\Controllers\Admin\AdminSettingsHubController;
+use App\Http\Controllers\Admin\ArticlesAdminController;
 use App\Http\Controllers\Admin\BookingRefundController;
 use App\Http\Controllers\Admin\FinanceController;
 use App\Http\Controllers\Admin\LogsController;
@@ -97,7 +98,7 @@ Route::get('/layanan/{publicProfile}', [MuthowifDirectoryController::class, 'sho
 Route::get('/terms', TermsController::class)->name('terms');
 
 Route::get('/artikel', [ArticleController::class, 'index'])->name('articles.index');
-Route::get('/artikel/{article:slug}', [ArticleController::class, 'show'])->name('articles.show');
+Route::get('/artikel/{slug}', [ArticleController::class, 'show'])->name('articles.show');
 
 Route::get('/locale/{locale}', [LocaleController::class, 'switch'])->name('locale.switch');
 
@@ -229,6 +230,10 @@ Route::middleware('auth')->group(function () {
 
     Route::middleware([EnsureUserRole::class.':admin'])->prefix('admin')->name('admin.')->group(function () {
         Route::get('pengaturan', AdminSettingsHubController::class)->name('settings.index');
+        Route::resource('artikel', ArticlesAdminController::class)
+            ->parameters(['artikel' => 'article'])
+            ->except(['show'])
+            ->names('articles');
         Route::get('tampilan/logo', [SiteAppearanceController::class, 'edit'])->name('site-appearance.edit');
         Route::post('tampilan/logo', [SiteAppearanceController::class, 'update'])->name('site-appearance.update');
         Route::get('pengguna', [UserManagementController::class, 'index'])->name('users.index');

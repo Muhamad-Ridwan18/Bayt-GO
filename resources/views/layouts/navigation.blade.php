@@ -22,6 +22,7 @@
         $adminHubActive = request()->routeIs([
             'admin.settings.index',
             'admin.site-appearance.*',
+            'admin.articles.*',
             'admin.users.*',
             'admin.muthowif.*',
             'admin.support-tickets.*',

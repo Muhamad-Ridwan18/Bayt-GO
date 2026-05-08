@@ -25,6 +25,7 @@ class ArticleSeeder extends Seeder
                     'excerpt' => $content['excerpt'],
                     'category' => $content['category'],
                     'author' => $content['author'],
+                    'body_md' => $content['body_md'],
                     'body' => ArticleBodyMarkdown::toHtml($content['body_md']),
                 ];
             }
