@@ -33,7 +33,7 @@
 
     $transportLine = (float) ($b->transport_price_snapshot ?? ($b->with_transport && $service ? (float) $service->transport_price_flat : 0.0));
 
-    $baseTotal = (float) $b->resolvedAmountDue();
+    $baseTotal = (float) ($baseSubtotal + $addonsSum + $sameHotelLine + $transportLine);
     $split = \App\Support\PlatformFee::split($baseTotal);
     $customerTotal = (float) ($split['customer_gross'] ?? $baseTotal);
     $customerPlatformFee = (float) ($split['customer_fee'] ?? 0.0);

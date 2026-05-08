@@ -33,7 +33,7 @@
 
     $transportLine = (float) ($b->transport_price_snapshot ?? ($b->with_transport && $service ? (float) $service->transport_price_flat : 0.0));
 
-    $totalGross = (float) $b->resolvedAmountDue();
+    $totalGross = (float) ($serviceSubtotal + $addonsSum + $sameHotelLine + $transportLine);
     $split = PlatformFee::split($totalGross);
     $muthowifNet = (float) ($split['muthowif_net'] ?? 0.0);
     $muthowifFee = (float) ($split['muthowif_fee'] ?? 0.0);

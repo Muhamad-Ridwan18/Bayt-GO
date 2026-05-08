@@ -45,6 +45,8 @@
                     @foreach ($bookings as $booking)
                         @php
                             $st = $booking->status;
+                            $nights = $booking->billingNightsInclusive();
+                            $service = $booking->muthowifProfile?->services?->firstWhere('type', $booking->service_type);
                             $daily = (float) ($booking->daily_price_snapshot ?? ($service ? $service->daily_price : 0.0));
                             $serviceSubtotal = (float) ($nights * $daily);
 
@@ -67,11 +69,12 @@
 
                             $transportLine = (float) ($booking->transport_price_snapshot ?? ($booking->with_transport && $service ? (float) $service->transport_price_flat : 0.0));
 
-                            $totalGross = (float) $booking->resolvedAmountDue();
+                            $totalGross = (float) ($serviceSubtotal + $addonsSum + $sameHotelLine + $transportLine);
                             $priceSplit = PlatformFee::split($totalGross);
                             $muthowifNetIdr = (float) ($priceSplit['muthowif_net'] ?? 0.0);
                             $muthowifFeeIdr = (float) ($priceSplit['muthowif_fee'] ?? 0.0);
                             $customerGrossIdr = (float) ($priceSplit['customer_gross'] ?? 0.0);
+
                             $badgeClass = match ($st) {
                                 BookingStatus::Pending => 'bg-amber-100 text-amber-950 ring-amber-200/90',
                                 BookingStatus::Confirmed => 'bg-emerald-100 text-emerald-950 ring-emerald-200/90',
