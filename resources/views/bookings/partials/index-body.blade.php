@@ -102,6 +102,7 @@
             @else
                 <ul class="mt-10 space-y-6">
                     @foreach ($bookings as $booking)
+                        @php
                             $st = $booking->status;
                             $cardStyle = $statusCardStyles[$st->value] ?? $statusCardStyles[BookingStatus::Pending->value];
                             $nights = $booking->billingNightsInclusive();
@@ -132,6 +133,7 @@
                             $split = \App\Support\PlatformFee::split($totalDue);
                             $customerGross = (float) ($split['customer_gross'] ?? $totalDue);
                             $customerFee = (float) ($split['customer_fee'] ?? 0.0);
+                        @endphp
                         <li class="group relative">
                             <div class="absolute -inset-px rounded-[1.35rem] bg-gradient-to-br from-white to-slate-100/80 opacity-0 blur transition duration-300 group-hover:opacity-100"></div>
                             <article
