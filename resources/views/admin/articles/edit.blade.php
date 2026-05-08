@@ -1,5 +1,5 @@
 <x-app-layout>
-    <div class="relative min-h-[calc(100vh-4rem)] overflow-hidden bg-gradient-to-b from-slate-100 via-slate-50 to-white py-8 sm:py-12">
+    <div class="relative min-h-[calc(100vh-4rem)] overflow-hidden bg-gradient-to-b from-slate-100 via-slate-50 to-white py-8 sm:py-12 admin-articles-page">
         <div class="relative mx-auto max-w-4xl px-4 sm:px-6 lg:px-8">
             @if (session('status'))
                 <div class="mb-6 rounded-2xl border border-emerald-200 bg-emerald-50 px-4 py-3 text-sm font-medium text-emerald-900 shadow-sm">
@@ -17,7 +17,7 @@
                 </p>
             @endif
 
-            <form action="{{ route('admin.articles.update', $article) }}" method="post" class="mt-10 space-y-8">
+            <form id="article-admin-form" action="{{ route('admin.articles.update', $article) }}" method="post" class="mt-10 space-y-8">
                 @csrf
                 @method('PUT')
                 @include('admin.articles._form', ['article' => $article])
@@ -29,4 +29,5 @@
             </form>
         </div>
     </div>
+    @include('admin.articles._markdown-editor')
 </x-app-layout>

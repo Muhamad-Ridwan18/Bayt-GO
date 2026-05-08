@@ -13,6 +13,7 @@
 
         <!-- Scripts -->
         @vite(['resources/css/app.css', 'resources/js/app.js'])
+        @stack('styles')
     </head>
     <body class="font-sans antialiased">
         <div class="min-h-screen bg-slate-50">
@@ -58,5 +59,6 @@
         @auth
             @include('partials.global-chat')
         @endauth
+        @stack('scripts')
     </body>
 </html>
