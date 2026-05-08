@@ -242,7 +242,9 @@
                         @endif
                     </div>
                 </div>
-                   @if ($st === BookingStatus::Confirmed)
+            @endif
+
+            @if ($st === BookingStatus::Confirmed)
                 <div class="mt-8 space-y-6 rounded-3xl border border-slate-200/80 bg-white p-6 shadow-md shadow-slate-900/5 sm:p-8">
                     <div>
                         <h2 class="text-lg font-bold text-slate-900">{{ __('bookings.show.refund_reschedule_heading') }}</h2>
