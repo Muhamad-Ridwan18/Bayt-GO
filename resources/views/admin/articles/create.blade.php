@@ -1,5 +1,4 @@
 <x-app-layout>
-    @include('admin.articles._editor_config', ['article' => $article])
     <div
         class="admin-articles-page relative min-h-[calc(100vh-4rem)] overflow-hidden bg-gradient-to-b from-slate-100 via-slate-50 to-white py-8 sm:py-12"
         x-data="articleAdminEditor(@js($articleEditorConfig))"

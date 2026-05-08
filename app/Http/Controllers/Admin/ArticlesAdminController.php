@@ -27,8 +27,11 @@ class ArticlesAdminController extends Controller
 
     public function create(): View
     {
+        $article = new Article;
+
         return view('admin.articles.create', [
-            'article' => new Article,
+            'article' => $article,
+            'articleEditorConfig' => $this->articleEditorConfig($article),
         ]);
     }
 
@@ -56,6 +59,7 @@ class ArticlesAdminController extends Controller
     {
         return view('admin.articles.edit', [
             'article' => $article,
+            'articleEditorConfig' => $this->articleEditorConfig($article),
         ]);
     }
 
@@ -169,6 +173,51 @@ class ArticlesAdminController extends Controller
             'loc.ar.author' => ['required', 'string', 'max:120'],
             'loc.ar.body' => ['required', 'string'],
         ]);
+    }
+
+    /**
+     * Alpine.js initial state for admin article create / edit (live preview).
+     *
+     * @return array<string, mixed>
+     */
+    private function articleEditorConfig(Article $article): array
+    {
+        $config = [
+            'slug' => old('slug', $article->slug ?? ''),
+            'publishedAt' => old('published_at', $article->published_at?->format('Y-m-d\TH:i') ?? ''),
+            'dateFormatLocale' => str_replace('_', '-', app()->getLocale()),
+            'locales' => [],
+        ];
+
+        foreach (['id', 'en', 'ar'] as $lc) {
+            $fromOld = function (string $key) use ($article, $lc): string {
+                $o = request()->old('loc.'.$lc.'.'.$key);
+                if ($o !== null) {
+                    return (string) $o;
+                }
+                if (! $article->exists) {
+                    return '';
+                }
+
+                return (string) ($article->translationBlock($lc)[$key] ?? '');
+            };
+
+            $config['locales'][$lc] = [
+                'title' => $fromOld('title'),
+                'excerpt' => $fromOld('excerpt'),
+                'category' => $fromOld('category'),
+                'author' => $fromOld('author'),
+                'bodyHtml' => $fromOld('body'),
+            ];
+        }
+
+        $config['labels'] = [
+            'readingMinutes' => __('articles.reading_minutes', ['count' => '{n}']),
+            'byAuthor' => __('articles.by_author', ['name' => '{name}']),
+            'previewTitleFallback' => __('admin.articles.preview_title_fallback'),
+        ];
+
+        return $config;
     }
 
     /**
