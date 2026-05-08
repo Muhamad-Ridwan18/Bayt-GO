@@ -47,6 +47,11 @@ return [
         'approve_reschedule' => 'Setujui reschedule',
         'reject_short' => 'Tolak',
         'approve_reschedule_confirm' => 'Setujui pergantian tanggal ini?',
+        'payment_heading' => 'Rincian Pembayaran',
+        'rate_per_day' => 'Tarif / Hari',
+        'subtotal_service' => 'Subtotal Layanan',
+        'platform_fee_muthowif' => 'Biaya Platform (Potongan 7,5%)',
+        'net_earning' => 'Pendapatan Bersih',
     ],
     'jadwal' => [
         'page_title' => 'Jadwal libur',

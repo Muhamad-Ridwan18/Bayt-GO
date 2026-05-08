@@ -105,6 +105,11 @@
                         @php
                             $st = $booking->status;
                             $cardStyle = $statusCardStyles[$st->value] ?? $statusCardStyles[BookingStatus::Pending->value];
+                            $totalDue = (float) $booking->resolvedAmountDue();
+                            $split = \App\Support\PlatformFee::split($totalDue);
+                            $customerGross = (float) ($split['customer_gross'] ?? $totalDue);
+                            $customerFee = (float) ($split['customer_fee'] ?? 0.0);
+                            $baseSubtotal = (float) ($split['base'] ?? 0.0);
                         @endphp
                         <li class="group relative">
                             <div class="absolute -inset-px rounded-[1.35rem] bg-gradient-to-br from-white to-slate-100/80 opacity-0 blur transition duration-300 group-hover:opacity-100"></div>
@@ -117,8 +122,8 @@
                                         <h2 class="truncate text-base font-bold text-slate-900 sm:text-lg">
                                             {{ $booking->muthowifProfile->user->name }}
                                         </h2>
-                                        <p class="text-base font-bold text-brand-600 tabular-nums sm:text-lg">
-                                            Rp {{ $booking->total_amount !== null ? IndonesianNumber::formatThousands((string) (int) round((float) $booking->total_amount)) : '—' }}
+                                        <p class="text-base font-bold text-brand-700 tabular-nums sm:text-lg">
+                                            Rp {{ IndonesianNumber::formatThousands((string) (int) round($customerGross)) }}
                                         </p>
                                     </div>
 
@@ -172,6 +177,24 @@
                                                 </span>
                                             </div>
                                         @endif
+                                    </div>
+
+                                    {{-- Price Breakdown --}}
+                                    <div class="mt-4 overflow-hidden rounded-xl border border-brand-100/60 bg-brand-50/20 ring-1 ring-brand-100/40">
+                                        <dl class="divide-y divide-brand-100/40 text-[10px] sm:text-xs">
+                                            <div class="flex justify-between gap-3 px-3 py-1.5">
+                                                <dt class="text-slate-600">{{ __('bookings.invoice.subtotal') }}</dt>
+                                                <dd class="font-medium tabular-nums text-slate-900">Rp {{ IndonesianNumber::formatThousands((string) (int) round($baseSubtotal)) }}</dd>
+                                            </div>
+                                            <div class="flex justify-between gap-3 px-3 py-1.5">
+                                                <dt class="text-slate-600">{{ __('bookings.invoice.platform_fee_pct') }}</dt>
+                                                <dd class="font-medium tabular-nums text-slate-900">+ Rp {{ IndonesianNumber::formatThousands((string) (int) round($customerFee)) }}</dd>
+                                            </div>
+                                            <div class="flex justify-between gap-3 bg-brand-50/60 px-3 py-2">
+                                                <dt class="font-bold text-slate-900">{{ __('bookings.invoice.total') }}</dt>
+                                                <dd class="font-bold tabular-nums text-brand-700 sm:text-sm">Rp {{ IndonesianNumber::formatThousands((string) (int) round($customerGross)) }}</dd>
+                                            </div>
+                                        </dl>
                                     </div>
 
                                     <div class="my-3 h-px bg-slate-100/80"></div>

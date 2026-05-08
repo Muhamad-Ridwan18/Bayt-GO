@@ -57,7 +57,8 @@
                             }
                             $priceSplit = PlatformFee::split((float) $booking->resolvedAmountDue());
                             $serviceBaseIdr = (float) ($priceSplit['base'] ?? 0.0);
-                            $customerPlatformFeeIdr = (float) ($priceSplit['customer_fee'] ?? 0.0);
+                            $muthowifNetIdr = (float) ($priceSplit['muthowif_net'] ?? 0.0);
+                            $muthowifFeeIdr = (float) ($priceSplit['muthowif_fee'] ?? 0.0);
                             $customerGrossIdr = (float) ($priceSplit['customer_gross'] ?? 0.0);
                             $badgeClass = match ($st) {
                                 BookingStatus::Pending => 'bg-amber-100 text-amber-950 ring-amber-200/90',
@@ -131,18 +132,18 @@
                                             @endif
 
                                             <div class="mt-2 overflow-hidden rounded-xl border border-brand-100/90 bg-white shadow-sm ring-1 ring-brand-100/70">
-                                                <dl class="divide-y divide-slate-100 text-sm">
-                                                    <div class="flex justify-between gap-3 px-3 py-2">
-                                                        <dt class="text-slate-600">{{ __('bookings.invoice.subtotal') }}</dt>
-                                                        <dd class="font-semibold tabular-nums text-slate-900">Rp {{ IndonesianNumber::formatThousands((string) (int) round($serviceBaseIdr)) }}</dd>
+                                                <dl class="divide-y divide-slate-100 text-[11px] sm:text-xs">
+                                                    <div class="flex justify-between gap-3 px-3 py-1.5">
+                                                        <dt class="text-slate-600">{{ __('muthowif.booking_show.subtotal_service') }}</dt>
+                                                        <dd class="font-medium tabular-nums text-slate-900">Rp {{ IndonesianNumber::formatThousands((string) (int) round($serviceBaseIdr)) }}</dd>
                                                     </div>
-                                                    <div class="flex justify-between gap-3 px-3 py-2">
-                                                        <dt class="text-slate-600">{{ __('bookings.invoice.platform_fee_pct') }}</dt>
-                                                        <dd class="font-semibold tabular-nums text-slate-900">Rp {{ IndonesianNumber::formatThousands((string) (int) round($customerPlatformFeeIdr)) }}</dd>
+                                                    <div class="flex justify-between gap-3 px-3 py-1.5">
+                                                        <dt class="text-red-600/80">{{ __('muthowif.booking_show.platform_fee_muthowif') }}</dt>
+                                                        <dd class="font-medium tabular-nums text-red-700/90">- Rp {{ IndonesianNumber::formatThousands((string) (int) round($muthowifFeeIdr)) }}</dd>
                                                     </div>
-                                                    <div class="flex justify-between gap-3 bg-gradient-to-r from-brand-50/90 to-brand-50/40 px-3 py-2.5">
-                                                        <dt class="font-bold text-slate-900">{{ __('bookings.invoice.total') }}</dt>
-                                                        <dd class="font-bold tabular-nums text-brand-700">Rp {{ IndonesianNumber::formatThousands((string) (int) round($customerGrossIdr)) }}</dd>
+                                                    <div class="flex justify-between gap-3 bg-gradient-to-r from-brand-50/90 to-brand-50/40 px-3 py-2">
+                                                        <dt class="font-bold text-slate-900">{{ __('muthowif.booking_show.net_earning') }}</dt>
+                                                        <dd class="font-bold tabular-nums text-brand-700 text-sm">Rp {{ IndonesianNumber::formatThousands((string) (int) round($muthowifNetIdr)) }}</dd>
                                                     </div>
                                                 </dl>
                                             </div>

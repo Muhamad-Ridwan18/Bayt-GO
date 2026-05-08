@@ -11,27 +11,28 @@
     $nights = $b->billingNightsInclusive();
     $b->loadMissing(['muthowifProfile.services']);
     $service = $b->muthowifProfile?->services->firstWhere('type', $b->service_type);
-    $daily = $service && $service->daily_price !== null ? (float) $service->daily_price : null;
-    $baseSubtotal = $daily !== null ? $nights * $daily : 0.0;
+    $daily = (float) ($b->daily_price_snapshot ?? ($service ? $service->daily_price : 0.0));
+    $baseSubtotal = (float) $nights * $daily;
+
     $addonLines = collect();
-    if ($b->service_type === MuthowifServiceType::PrivateJamaah && ! empty($b->selected_add_on_ids)) {
-        foreach ($b->selected_add_on_ids as $aid) {
-            if (isset($addonsById[$aid])) {
-                $addonLines->push($addonsById[$aid]);
+    if ($b->service_type === MuthowifServiceType::PrivateJamaah) {
+        if (! empty($b->add_ons_snapshot)) {
+            $addonLines = collect($b->add_ons_snapshot)->map(fn ($a) => (object) $a);
+        } elseif (! empty($b->selected_add_on_ids)) {
+            foreach ($b->selected_add_on_ids as $aid) {
+                if (isset($addonsById[$aid])) {
+                    $addonLines->push($addonsById[$aid]);
+                }
             }
         }
     }
     $addonsSum = $addonLines->sum(fn ($a) => (float) $a->price);
-    $sameHotelLine = 0.0;
-    if ($b->with_same_hotel && $service && $service->same_hotel_price_per_day !== null) {
-        $sameHotelLine = $nights * (float) $service->same_hotel_price_per_day;
-    }
-    $transportLine = 0.0;
-    if ($b->with_transport && $service && $service->transport_price_flat !== null) {
-        $transportLine = (float) $service->transport_price_flat;
-    }
-    $baseTotal = $b->resolvedAmountDue();
-    $split = \App\Support\PlatformFee::split((float) $baseTotal);
+
+    $sameHotelLine = (float) ($b->same_hotel_price_snapshot ?? ($b->with_same_hotel && $service && $service->same_hotel_price_per_day !== null ? ($nights * (float) $service->same_hotel_price_per_day) : 0.0));
+    $transportLine = (float) ($b->transport_price_snapshot ?? ($b->with_transport && $service && $service->transport_price_flat !== null ? (float) $service->transport_price_flat : 0.0));
+
+    $baseTotal = (float) $b->resolvedAmountDue();
+    $split = \App\Support\PlatformFee::split($baseTotal);
     $customerTotal = (float) ($split['customer_gross'] ?? $baseTotal);
     $customerPlatformFee = (float) ($split['customer_fee'] ?? 0.0);
     $muthowifNet = (float) ($split['muthowif_net'] ?? 0.0);
