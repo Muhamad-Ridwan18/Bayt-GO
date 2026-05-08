@@ -29,10 +29,9 @@
     );
 
     $hasBackground = $profile->educationsForDisplay() !== [] || $profile->workExperiencesForDisplay() !== [];
-    $canSubmitBooking = ($bookingIntent['can_submit'] ?? false) && ($group || $private);
 @endphp
 
-<x-marketplace-layout :title="$profile->user->name">
+<x-marketplace-layout :title="$profile->user->name" wide>
     {{-- overflow-hidden: blob dekoratif (-left/-right) jangan memperlebar scroll horizontal di mobile --}}
     <div class="relative min-w-0 space-y-6 overflow-x-hidden">
         <div class="pointer-events-none absolute -left-24 top-0 h-64 w-64 rounded-full bg-brand-200/15 blur-3xl" aria-hidden="true"></div>
@@ -57,28 +56,9 @@
             @endif
         </div>
 
-        @if ($canSubmitBooking)
-            <div class="flex flex-col gap-3 rounded-2xl border border-emerald-200/80 bg-gradient-to-br from-emerald-50/95 via-white to-white px-4 py-3 shadow-sm ring-1 ring-emerald-100/70 sm:flex-row sm:items-center sm:justify-between sm:px-5 sm:py-3.5" role="status">
-                <div class="min-w-0">
-                    <p class="text-sm font-bold text-emerald-950">{{ __('marketplace.show.booking_ready_title') }}</p>
-                    <p class="mt-1 text-xs leading-relaxed text-emerald-900/90">{{ __('marketplace.show.booking_ready_steps') }}</p>
-                </div>
-                <a href="#booking-box" class="inline-flex shrink-0 items-center justify-center gap-1.5 rounded-xl bg-emerald-600 px-4 py-2.5 text-sm font-semibold text-white shadow-md shadow-emerald-900/15 transition hover:bg-emerald-700 focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:ring-offset-2 lg:hidden">
-                    {{ __('marketplace.show.scroll_to_booking') }}
-                    <svg class="h-4 w-4" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true"><path fill-rule="evenodd" d="M10 3a.75.75 0 01.75.75v9.546l2.955-3.084a.75.75 0 111.09 1.03l-4.25 4.442a.75.75 0 01-1.09 0L5.22 11.243a.75.75 0 011.09-1.03l2.955 3.084V3.75A.75.75 0 0110 3z" clip-rule="evenodd" /></svg>
-                </a>
-            </div>
-        @endif
-
-        {{--
-          Mobile: profil → booking → sisanya (pendek).
-          lg: profil + konten di kiri, booking menempel di kanan (grid area).
-        --}}
-        <div
-            class="grid min-w-0 grid-cols-1 gap-6 lg:grid-cols-[minmax(0,1fr),min(22rem,100%)] lg:items-start lg:gap-8 [grid-template-areas:'prof'_'book'_'rest'] lg:[grid-template-areas:'prof_book'_'rest_book']"
-        >
+        <div class="min-w-0 space-y-6">
             {{-- Profil ringkas --}}
-            <div class="[grid-area:prof]">
+            <div class="min-w-0">
                 <div class="relative overflow-hidden rounded-2xl border border-slate-200/80 bg-white shadow-md ring-1 ring-slate-100/80">
                     <span class="absolute inset-x-0 top-0 h-0.5 bg-gradient-to-r from-brand-400 via-brand-500 to-amber-400" aria-hidden="true"></span>
                     <div class="relative flex flex-col gap-4 p-4 sm:flex-row sm:items-center sm:gap-5 sm:p-5">
@@ -128,20 +108,18 @@
                 </div>
             </div>
 
-            {{-- Booking: di mobile langsung di bawah profil; di lg kolom kanan menempel --}}
-            <aside id="booking-box" class="[grid-area:book] scroll-mt-24 lg:sticky lg:top-24 lg:self-start">
-                @include('layanan.partials.booking-panel', [
-                    'profile' => $profile,
-                    'group' => $group,
-                    'private' => $private,
-                    'bookingIntent' => $bookingIntent,
-                    'startDate' => $startDate,
-                    'endDate' => $endDate,
-                ])
-            </aside>
+            @include('layanan.partials.profile-booking-cta', [
+                'profile' => $profile,
+                'group' => $group,
+                'private' => $private,
+                'bookingIntent' => $bookingIntent,
+                'startDate' => $startDate,
+                'endDate' => $endDate,
+                'searchRangeLabel' => $searchRangeLabel,
+            ])
 
             {{-- Detail panjang: ringkasan tetap terlihat, sisanya di <details> --}}
-            <div class="[grid-area:rest] space-y-4">
+            <div class="min-w-0 space-y-4">
                 <div class="flex items-center gap-2 px-0.5 pt-1">
                     <span class="h-px min-w-[1.25rem] flex-1 bg-slate-200/90 sm:min-w-[2rem]" aria-hidden="true"></span>
                     <h2 class="text-[11px] font-bold uppercase tracking-wider text-slate-500">{{ __('marketplace.show.more_about_heading') }}</h2>

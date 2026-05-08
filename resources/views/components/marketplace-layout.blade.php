@@ -1,4 +1,4 @@
-@props(['title' => null])
+@props(['title' => null, 'wide' => false])
 @php
     $contactRaw = (string) (config('app.contact_whatsapp') ?: config('app.contact_phone'));
     $contactDigits = preg_replace('/\D+/', '', $contactRaw ?? '') ?? '';
@@ -22,7 +22,7 @@
                 @include('layouts.navigation')
             @else
                 <header class="sticky top-0 z-20 w-full border-b border-white/40 bg-white/75 shadow-sm shadow-slate-900/5 backdrop-blur-xl">
-                    <div class="mx-auto flex w-full min-w-0 max-w-6xl items-center justify-between gap-4 px-4 py-3.5 sm:px-6">
+                    <div class="mx-auto flex w-full min-w-0 {{ $wide ? 'max-w-7xl' : 'max-w-6xl' }} items-center justify-between gap-4 px-4 py-3.5 sm:px-6">
                         <a href="{{ url('/') }}" class="group flex items-center gap-3">
                             <x-site-logo variant="marketplace" />
                             <span class="text-lg font-bold tracking-tight text-slate-900">Bayt<span class="text-brand-600">Go</span></span>
@@ -48,13 +48,13 @@
             @endauth
 
             <main class="w-full min-w-0 flex-1 px-4 py-8 sm:px-6 sm:py-12">
-                <div class="mx-auto w-full min-w-0 max-w-6xl">
+                <div class="mx-auto w-full min-w-0 {{ $wide ? 'max-w-7xl' : 'max-w-6xl' }}">
                     {{ $slot }}
                 </div>
             </main>
 
             <footer class="mt-auto w-full border-t border-slate-200/80 bg-gradient-to-b from-white to-slate-50/90">
-                <div class="mx-auto flex w-full min-w-0 max-w-6xl flex-col gap-3 px-4 py-8 text-xs text-slate-500 sm:flex-row sm:items-center sm:justify-between sm:px-6">
+                <div class="mx-auto flex w-full min-w-0 {{ $wide ? 'max-w-7xl' : 'max-w-6xl' }} flex-col gap-3 px-4 py-8 text-xs text-slate-500 sm:flex-row sm:items-center sm:justify-between sm:px-6">
                     <span class="font-medium">&copy; {{ date('Y') }} {{ config('app.name') }}</span>
                     @if ($contactLink)
                         <a href="{{ $contactLink }}" target="_blank" rel="noopener noreferrer" class="font-semibold text-brand-700 transition hover:text-brand-800">

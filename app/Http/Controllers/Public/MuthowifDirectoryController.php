@@ -168,6 +168,25 @@ class MuthowifDirectoryController extends Controller
         ]);
     }
 
+    public function booking(Request $request, MuthowifProfile $publicProfile): View
+    {
+        $publicProfile->load([
+            'user',
+            'services.addOns',
+        ]);
+
+        $startDate = (string) $request->query('start_date', '');
+        $endDate = (string) $request->query('end_date', '');
+        $bookingIntent = $this->bookingIntentForProfile($request, $publicProfile, $startDate, $endDate);
+
+        return view('layanan.book', [
+            'profile' => $publicProfile,
+            'startDate' => $startDate,
+            'endDate' => $endDate,
+            'bookingIntent' => $bookingIntent,
+        ]);
+    }
+
     /**
      * @return array{can_submit: bool, reason: string|null, start: ?string, end: ?string}
      */
