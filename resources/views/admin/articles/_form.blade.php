@@ -71,12 +71,6 @@
         </div>
     </div>
 
-    <div class="rounded-2xl border border-emerald-200/70 bg-emerald-50/50 px-4 py-3 text-sm text-emerald-950">
-        <p class="font-semibold text-emerald-900">{{ __('admin.articles.editor_hint_title') }}</p>
-        <p class="mt-1 text-emerald-900/90">{{ __('admin.articles.editor_hint_body') }}</p>
-        <p class="mt-2 text-xs text-emerald-800/80">{{ __('admin.articles.preview_sync_hint') }}</p>
-    </div>
-
     @foreach (['id' => 'ID', 'en' => 'EN', 'ar' => 'AR'] as $locale => $label)
         <section
             class="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm"
@@ -92,8 +86,8 @@
                         <span class="text-[11px] font-medium text-slate-400"><span x-text="locales['{{ $locale }}'].title.length"></span>/255</span>
                     </div>
                     <x-text-input
-                        :id="'title_'.$locale"
-                        :name="'loc['.$locale.'][title]'"
+                        id="title_{{ $locale }}"
+                        name="loc[{{ $locale }}][title]"
                         type="text"
                         class="mt-1 block w-full"
                         maxlength="255"
@@ -108,8 +102,8 @@
                         <span class="text-[11px] font-medium tabular-nums text-slate-400"><span x-text="locales['{{ $locale }}'].excerpt.length"></span> {{ __('admin.articles.chars_unit') }}</span>
                     </div>
                     <textarea
-                        :id="'excerpt_'.$locale"
-                        :name="'loc['.$locale.'][excerpt]'"
+                        id="excerpt_{{ $locale }}"
+                        name="loc[{{ $locale }}][excerpt]"
                         rows="4"
                         class="mt-1 block w-full rounded-lg border-slate-300 shadow-sm focus:border-brand-500 focus:ring-brand-500"
                         x-model="locales['{{ $locale }}'].excerpt"
@@ -121,8 +115,8 @@
                     <div>
                         <x-input-label :for="'cat_'.$locale" :value="__('admin.articles.field_category')" />
                         <x-text-input
-                            :id="'cat_'.$locale"
-                            :name="'loc['.$locale.'][category]'"
+                            id="cat_{{ $locale }}"
+                            name="loc[{{ $locale }}][category]"
                             type="text"
                             class="mt-1 block w-full"
                             x-model="locales['{{ $locale }}'].category"
@@ -133,8 +127,8 @@
                     <div>
                         <x-input-label :for="'author_'.$locale" :value="__('admin.articles.field_author')" />
                         <x-text-input
-                            :id="'author_'.$locale"
-                            :name="'loc['.$locale.'][author]'"
+                            id="author_{{ $locale }}"
+                            name="loc[{{ $locale }}][author]"
                             type="text"
                             class="mt-1 block w-full"
                             x-model="locales['{{ $locale }}'].author"
@@ -144,13 +138,13 @@
                     </div>
                 </div>
                 <div>
-                    <x-input-label :for="'ckeditor_body_'.$locale" :value="__('admin.articles.field_body_html')" />
-                    <textarea
-                        :id="'ckeditor_body_'.$locale"
-                        :name="'loc['.$locale.'][body]'"
-                        rows="12"
-                        class="mt-1 block w-full rounded-lg border-slate-300 font-mono text-sm shadow-sm focus:border-brand-500 focus:ring-brand-500"
-                    >{{ $field($locale, 'body') }}</textarea>
+                    <x-input-label :for="'quill_editor_'.$locale" :value="__('admin.articles.field_body_html')" />
+                    <div class="mt-1 overflow-hidden rounded-xl border border-slate-300 bg-white shadow-sm focus-within:border-brand-500 focus-within:ring-1 focus-within:ring-brand-500">
+                        <div id="quill_editor_{{ $locale }}" class="min-h-[400px] text-base">
+                            {!! $field($locale, 'body') !!}
+                        </div>
+                    </div>
+                    <input type="hidden" id="quill_input_{{ $locale }}" name="loc[{{ $locale }}][body]" value="{{ $field($locale, 'body') }}">
                     <x-input-error class="mt-2" :messages="$errors->get('loc.'.$locale.'.body')" />
                 </div>
             </div>

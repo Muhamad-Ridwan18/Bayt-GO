@@ -99,6 +99,9 @@ class ArticlesAdminController extends Controller
         try {
             $file = $request->file('upload');
             if ($file === null) {
+                if ($request->expectsJson()) {
+                    return response()->json(['error' => __('admin.articles.upload_missing_file')], 422);
+                }
                 return $this->ckeditorUploadResponse($funcNum, '', __('admin.articles.upload_missing_file'));
             }
 
@@ -106,8 +109,14 @@ class ArticlesAdminController extends Controller
             $path = $file->store($folder, 'public');
             $url = asset('storage/'.$path);
 
+            if ($request->expectsJson()) {
+                return response()->json(['url' => $url]);
+            }
             return $this->ckeditorUploadResponse($funcNum, $url, '');
-        } catch (\Throwable) {
+        } catch (\Throwable $e) {
+            if ($request->expectsJson()) {
+                return response()->json(['error' => __('admin.articles.upload_failed')], 500);
+            }
             return $this->ckeditorUploadResponse($funcNum, '', __('admin.articles.upload_failed'));
         }
     }

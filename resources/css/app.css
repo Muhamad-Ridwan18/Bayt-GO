@@ -125,7 +125,38 @@
 }
 
 .article-prose tbody tr:nth-child(even) {
-    @apply bg-slate-50/50;
+    background-color: #f8fafc;
+}
+
+.article-prose .ql-align-center {
+    text-align: center;
+}
+
+.article-prose .ql-align-right {
+    text-align: right;
+}
+
+.article-prose .ql-align-justify {
+    text-align: justify;
+}
+
+.article-prose .ql-size-small {
+    font-size: 0.75em;
+}
+
+.article-prose .ql-size-large {
+    font-size: 1.5em;
+}
+
+.article-prose .ql-size-huge {
+    font-size: 2.5em;
+}
+
+.article-prose .ql-video {
+    display: block;
+    max-width: 100%;
+    aspect-ratio: 16 / 9;
+    border-radius: 0.75rem;
 }
 
 .marketing-rtl {
