@@ -735,24 +735,25 @@ document.addEventListener('alpine:init', () => {
             previewTitleFallback: '…',
         },
         locales: config.locales ?? {
-            id: { title: '', excerpt: '', category: '', author: '', bodyHtml: '' },
-            en: { title: '', excerpt: '', category: '', author: '', bodyHtml: '' },
-            ar: { title: '', excerpt: '', category: '', author: '', bodyHtml: '' },
+            id: { title: '', excerpt: '', category: '', author: '', bodyHtml: '', bodyJson: '' },
+            en: { title: '', excerpt: '', category: '', author: '', bodyHtml: '', bodyJson: '' },
+            ar: { title: '', excerpt: '', category: '', author: '', bodyHtml: '', bodyJson: '' },
         },
-        _ckHandler: null,
+        _editorjsHandler: null,
         init() {
-            this._ckHandler = (e) => {
+            this._editorjsHandler = (e) => {
                 const d = e.detail;
                 if (! d || ! d.locale || ! this.locales[d.locale]) {
                     return;
                 }
                 this.locales[d.locale].bodyHtml = typeof d.html === 'string' ? d.html : '';
+                this.locales[d.locale].bodyJson = typeof d.json === 'object' ? JSON.stringify(d.json) : '';
             };
-            window.addEventListener('article-admin-ckeditor', this._ckHandler);
+            window.addEventListener('article-admin-editorjs', this._editorjsHandler);
         },
         destroy() {
-            if (this._ckHandler) {
-                window.removeEventListener('article-admin-ckeditor', this._ckHandler);
+            if (this._editorjsHandler) {
+                window.removeEventListener('article-admin-editorjs', this._editorjsHandler);
             }
         },
         setPublished(published) {

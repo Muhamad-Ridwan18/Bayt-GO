@@ -233,6 +233,7 @@ Route::middleware('auth')->group(function () {
     Route::middleware([EnsureUserRole::class.':admin'])->prefix('admin')->name('admin.')->group(function () {
         Route::get('pengaturan', AdminSettingsHubController::class)->name('settings.index');
         Route::post('artikel/ckeditor/unggah', [ArticlesAdminController::class, 'ckeditorUpload'])->name('articles.ckeditor_upload');
+        Route::post('artikel/editorjs/unggah', [ArticlesAdminController::class, 'editorjsUpload'])->name('articles.editorjs_upload');
         Route::resource('artikel', ArticlesAdminController::class)
             ->parameters(['artikel' => 'article'])
             ->except(['show'])

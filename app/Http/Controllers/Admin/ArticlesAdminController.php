@@ -4,6 +4,7 @@ namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
 use App\Models\Article;
+use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Http\Response;
@@ -39,7 +40,7 @@ class ArticlesAdminController extends Controller
     {
         $request->merge(['published_at' => $request->input('published_at') ?: null]);
         $validated = $this->validatedBase($request);
-        $translations = $this->buildTranslations($request);
+        $translations = $this->buildTranslations($request, null);
 
         Article::query()->create([
             'slug' => $validated['slug'],
@@ -67,7 +68,7 @@ class ArticlesAdminController extends Controller
     {
         $request->merge(['published_at' => $request->input('published_at') ?: null]);
         $validated = $this->validatedBase($request, $article->id);
-        $translations = $this->buildTranslations($request);
+        $translations = $this->buildTranslations($request, $article);
 
         $article->update([
             'slug' => $validated['slug'],
@@ -121,20 +122,30 @@ class ArticlesAdminController extends Controller
         }
     }
 
-    /**
-     * CKEditor 4 expects an HTML page that calls CKEDITOR.tools.callFunction on the parent window.
-     */
-    private function ckeditorUploadResponse(int $funcNum, string $url, string $errorMessage): Response
+    public function editorjsUpload(Request $request): JsonResponse
     {
-        $urlJson = json_encode($url, JSON_THROW_ON_ERROR | JSON_HEX_TAG | JSON_HEX_APOS | JSON_HEX_AMP | JSON_HEX_QUOT | JSON_UNESCAPED_SLASHES);
-        $errJson = json_encode($errorMessage, JSON_THROW_ON_ERROR);
+        $request->validate([
+            'image' => ['required', 'image', 'max:2048'], // Max 2MB
+        ]);
 
-        $html = '<!DOCTYPE html><html><head><meta charset="utf-8"></head><body>'
-            .'<script type="text/javascript">'
-            .'window.parent.CKEDITOR.tools.callFunction('.$funcNum.', '.$urlJson.', '.$errJson.');'
-            .'</script></body></html>';
+        try {
+            $file = $request->file('image');
+            $folder = 'articles/images/'.now()->format('Y/m');
+            $path = $file->store($folder, 'public');
+            $url = asset('storage/'.$path);
 
-        return response($html)->header('Content-Type', 'text/html; charset=utf-8');
+            return response()->json([
+                'success' => 1,
+                'file' => [
+                    'url' => $url,
+                ],
+            ]);
+        } catch (\Throwable $e) {
+            return response()->json([
+                'success' => 0,
+                'message' => __('admin.articles.upload_failed'),
+            ]);
+        }
     }
 
     public function destroy(Article $article): RedirectResponse
@@ -166,21 +177,24 @@ class ArticlesAdminController extends Controller
             'sort_order' => ['required', 'integer', 'min:0', 'max:99999'],
             'published_at' => ['nullable', 'date'],
             'loc' => ['required', 'array'],
-            'loc.id.title' => ['required', 'string', 'max:255'],
-            'loc.id.excerpt' => ['required', 'string', 'max:65535'],
-            'loc.id.category' => ['required', 'string', 'max:120'],
-            'loc.id.author' => ['required', 'string', 'max:120'],
-            'loc.id.body' => ['required', 'string'],
-            'loc.en.title' => ['nullable', 'string', 'max:255'],
-            'loc.en.excerpt' => ['nullable', 'string', 'max:65535'],
+            'loc.id.title'    => ['required', 'string', 'max:255'],
+            'loc.id.excerpt'  => ['nullable', 'string', 'max:65535'],
+            'loc.id.category' => ['nullable', 'string', 'max:120'],
+            'loc.id.author'   => ['nullable', 'string', 'max:120'],
+            'loc.id.body'     => ['nullable', 'string'],
+            'loc.id.body_json' => ['nullable', 'string'],
+            'loc.en.title'    => ['nullable', 'string', 'max:255'],
+            'loc.en.excerpt'  => ['nullable', 'string', 'max:65535'],
             'loc.en.category' => ['nullable', 'string', 'max:120'],
-            'loc.en.author' => ['nullable', 'string', 'max:120'],
-            'loc.en.body' => ['nullable', 'string'],
-            'loc.ar.title' => ['nullable', 'string', 'max:255'],
-            'loc.ar.excerpt' => ['nullable', 'string', 'max:65535'],
+            'loc.en.author'   => ['nullable', 'string', 'max:120'],
+            'loc.en.body'     => ['nullable', 'string'],
+            'loc.en.body_json' => ['nullable', 'string'],
+            'loc.ar.title'    => ['nullable', 'string', 'max:255'],
+            'loc.ar.excerpt'  => ['nullable', 'string', 'max:65535'],
             'loc.ar.category' => ['nullable', 'string', 'max:120'],
-            'loc.ar.author' => ['nullable', 'string', 'max:120'],
-            'loc.ar.body' => ['nullable', 'string'],
+            'loc.ar.author'   => ['nullable', 'string', 'max:120'],
+            'loc.ar.body'     => ['nullable', 'string'],
+            'loc.ar.body_json' => ['nullable', 'string'],
         ]);
     }
 
@@ -228,6 +242,7 @@ class ArticlesAdminController extends Controller
                 'category' => $fromOld('category'),
                 'author' => $fromOld('author'),
                 'bodyHtml' => $fromOld('body'),
+                'bodyJson' => $fromOld('body_json'),
             ];
         }
 
@@ -243,20 +258,39 @@ class ArticlesAdminController extends Controller
     /**
      * @return array<string, array<string, string>>
      */
-    private function buildTranslations(Request $request): array
+    private function buildTranslations(Request $request, ?Article $existing = null): array
     {
+        // Base: start from existing translations so we never wipe data the user didn't touch.
+        $existingTranslations = $existing?->translations ?? [];
+
         $out = [];
         foreach (['id', 'en', 'ar'] as $locale) {
             app()->setLocale($locale);
             $row = $request->input('loc.'.$locale, []);
-            $html = (string) ($row['body'] ?? '');
+
+            $newTitle    = trim((string) ($row['title']    ?? ''));
+            $newExcerpt  = trim((string) ($row['excerpt']  ?? ''));
+            $newCategory = trim((string) ($row['category'] ?? ''));
+            $newAuthor   = trim((string) ($row['author']   ?? ''));
+            $newBody     = (string) ($row['body']     ?? '');
+            $newBodyJson = (string) ($row['body_json'] ?? '');
+
+            // If user left this locale completely empty, keep existing data (for edit).
+            $isBlank = $newTitle === '' && $newExcerpt === '' && $newBody === '' && $newBodyJson === '';
+
+            if ($isBlank && isset($existingTranslations[$locale])) {
+                $out[$locale] = $existingTranslations[$locale];
+                continue;
+            }
+
             $out[$locale] = [
-                'title' => trim((string) ($row['title'] ?? '')),
-                'excerpt' => trim((string) ($row['excerpt'] ?? '')),
-                'category' => trim((string) ($row['category'] ?? '')),
-                'author' => trim((string) ($row['author'] ?? '')),
-                'body' => Purify::config('article')->clean($html),
-                'body_md' => '',
+                'title'    => $newTitle,
+                'excerpt'  => $newExcerpt,
+                'category' => $newCategory,
+                'author'   => $newAuthor,
+                'body'     => Purify::config('article')->clean($newBody),
+                'body_json' => $newBodyJson,
+                'body_md'  => (string) ($existingTranslations[$locale]['body_md'] ?? ''),
             ];
         }
 
