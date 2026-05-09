@@ -41,7 +41,7 @@
                 <div class="flex shrink-0 items-center">
                     @php
                         if (Auth::user()->isAdmin()) {
-                            $logoHref = route('admin.finance.index');
+                            $logoHref = route('dashboard');
                         } elseif (Auth::user()->isMuthowif()) {
                             $logoHref = route('dashboard');
                         } else {
