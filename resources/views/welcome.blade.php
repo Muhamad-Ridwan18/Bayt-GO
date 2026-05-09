@@ -285,6 +285,48 @@
                     </div>
                 </section>
 
+                {{-- Latest Articles --}}
+                @if ($latestArticles->isNotEmpty())
+                    <section id="artikel-terbaru" class="py-16 sm:py-20 border-t border-slate-100 bg-welcomeCanvas">
+                        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+                            <div class="flex flex-wrap items-end justify-between gap-4 mb-10">
+                                <div>
+                                    <h2 class="text-2xl sm:text-3xl font-bold text-baytgo">{{ __('nav.articles') }}</h2>
+                                    <span class="mt-4 block h-1 w-14 rounded-full bg-gold" aria-hidden="true"></span>
+                                </div>
+                                <a href="{{ route('articles.index') }}" class="text-sm font-semibold text-gold-muted hover:text-baytgo transition inline-flex items-center gap-1">
+                                    {{ __('welcome.popular_see_all') }}
+                                    <svg class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M8.25 4.5 15.75 12l-7.5 7.5"/></svg>
+                                </a>
+                            </div>
+
+                            <div class="grid gap-8 sm:grid-cols-2 lg:grid-cols-3">
+                                @foreach ($latestArticles as $article)
+                                    <article class="group flex flex-col rounded-3xl border border-slate-200/80 bg-white p-6 shadow-sm transition hover:border-baytgo/25 hover:shadow-xl hover:shadow-baytgo/5">
+                                        <div class="mb-5 flex items-center justify-between">
+                                            <span class="rounded-full bg-baytgo/8 px-3 py-1 text-[10px] font-bold uppercase tracking-wider text-baytgo">{{ $article->localized('category') }}</span>
+                                            <time class="text-[11px] font-medium text-slate-500" datetime="{{ $article->published_at?->toIso8601String() }}">
+                                                {{ $article->published_at?->translatedFormat('d M Y') }}
+                                            </time>
+                                        </div>
+                                        <h3 class="text-xl font-bold text-slate-900 group-hover:text-baytgo transition-colors leading-snug">
+                                            <a href="{{ route('articles.show', ['slug' => $article->slug]) }}" class="focus:outline-none">{{ $article->localized('title') }}</a>
+                                        </h3>
+                                        <p class="mt-4 flex-1 text-sm leading-relaxed text-slate-600 line-clamp-3">
+                                            {{ $article->localized('excerpt') }}
+                                        </p>
+                                        <div class="mt-6 flex items-center gap-2 pt-5 border-t border-slate-100">
+                                            <span class="text-[11px] font-bold text-baytgo/80 uppercase tracking-tight">{{ __('articles.reading_minutes', ['count' => $article->readingMinutes()]) }}</span>
+                                            <span class="text-slate-300">•</span>
+                                            <span class="text-[11px] font-medium text-slate-500 uppercase tracking-tight">{{ $article->localized('author') }}</span>
+                                        </div>
+                                    </article>
+                                @endforeach
+                            </div>
+                        </div>
+                    </section>
+                @endif
+
                 {{-- Stats --}}
                 <section class="bg-white py-10 sm:py-12">
                     <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">

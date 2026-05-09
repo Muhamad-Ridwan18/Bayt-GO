@@ -4,6 +4,7 @@ namespace App\Http\Controllers\Public;
 
 use App\Enums\MuthowifVerificationStatus;
 use App\Http\Controllers\Controller;
+use App\Models\Article;
 use App\Models\MuthowifProfile;
 use Illuminate\View\View;
 
@@ -21,8 +22,15 @@ final class WelcomeController extends Controller
             ->limit(14)
             ->get();
 
+        $latestArticles = Article::query()
+            ->published()
+            ->orderByDesc('published_at')
+            ->limit(3)
+            ->get();
+
         return view('welcome', [
             'featuredMuthowifs' => $featuredMuthowifs,
+            'latestArticles' => $latestArticles,
         ]);
     }
 }
