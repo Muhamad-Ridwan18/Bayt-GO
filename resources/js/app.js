@@ -328,13 +328,15 @@ document.addEventListener('alpine:init', () => {
         
         init() {
             this.loadList();
-            this.pollTimerList = window.setInterval(() => {
-                if (!this.isPanelExpanded || this.view === 'list') {
-                    this.loadList();
-                } else if (this.view === 'chat' && !window.Echo) {
-                    this.loadChatMessages(true);
-                }
-            }, 6000);
+            if (!window.Echo) {
+                this.pollTimerList = window.setInterval(() => {
+                    if (!this.isPanelExpanded || this.view === 'list') {
+                        this.loadList();
+                    } else if (this.view === 'chat') {
+                        this.loadChatMessages(true);
+                    }
+                }, 30000); // Polling slower if Echo is missing
+            }
         },
         
         destroy() {
@@ -523,14 +525,15 @@ document.addEventListener('alpine:init', () => {
                 window.Echo.private(`booking.chat.${this.bookingId}`).listen('BookingChatUpdated', () => {
                     this.onChatSocket();
                 });
+            } else {
+                this.pollTimer = window.setInterval(() => {
+                    if (!this.isPanelExpanded) {
+                        this.refreshUnreadOnly();
+                    } else {
+                        this.loadMessages(true);
+                    }
+                }, 30000);
             }
-            this.pollTimer = window.setInterval(() => {
-                if (!this.isPanelExpanded) {
-                    this.refreshUnreadOnly();
-                } else if (!window.Echo) {
-                    this.loadMessages(true);
-                }
-            }, 6000);
         },
 
         destroy() {
