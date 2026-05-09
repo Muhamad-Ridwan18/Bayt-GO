@@ -68,9 +68,16 @@ class Article extends Model
         }
 
         $active = app()->getLocale();
-        $block = $translations[$active] ?? $translations['id'] ?? $translations['en'] ?? [];
+        
+        $locales = array_unique([$active, 'id', 'en', 'ar']);
+        foreach ($locales as $lc) {
+            $block = $translations[$lc] ?? null;
+            if (is_array($block) && !empty(trim((string)($block['title'] ?? '')))) {
+                return $block;
+            }
+        }
 
-        return is_array($block) ? $block : [];
+        return [];
     }
 
     public function localized(string $key): string
