@@ -23,6 +23,33 @@ return [
     'search_tip_label' => 'Tips:',
     'search_tip_body' => 'Tanggal selesai boleh dikosongkan jika hanya satu hari.',
 
+    'value_kicker' => 'Value for everyone',
+    'value_title' => 'BaytGo membuat segalanya mudah bagi jamaah dan memberdayakan muthowif.',
+    'value_customer_title' => 'Untuk Jamaah',
+    'value_customer_sub' => 'Booking muthowif yang mudah, terpercaya, dan transparan.',
+    'value_customer_features' => [
+        'Booking mudah' => 'Pesan muthowif hanya dalam beberapa klik.',
+        'Muthowif terpercaya' => 'Terverifikasi, berpengalaman, dan profesional.',
+        'Harga transparan' => 'Harga jelas di awal. Tanpa biaya tersembunyi.',
+        'Ketersediaan real-time' => 'Lihat ketersediaan secara real-time dan booking instan.',
+    ],
+    'value_muthowif_title' => 'Untuk Muthowif',
+    'value_muthowif_sub' => 'Kelola, kembangkan, dan raih kesuksesan bersama BaytGo.',
+    'value_muthowif_features' => [
+        'Kelola jadwal' => 'Update ketersediaan Anda kapan saja, di mana saja.',
+        'Terima booking' => 'Terima dan kelola booking secara real-time.',
+        'Atur harga' => 'Tetapkan harga Anda sendiri dengan fleksibilitas penuh.',
+        'Tingkatkan reputasi' => 'Bangun profil Anda, dapatkan ulasan, tumbuhkan kepercayaan.',
+    ],
+    'value_banner_title' => 'Platform terpercaya untuk semua',
+    'value_banner_sub' => 'Kami memastikan keamanan, transparansi, dan kepercayaan di setiap booking.',
+    'value_banner_features' => [
+        'Muthowif Terverifikasi' => 'Verifikasi ketat demi ketenangan pikiran Anda.',
+        'Booking Aman' => 'Data dan pembayaran Anda selalu terlindungi.',
+        'Adil & Transparan' => 'Kebijakan yang adil dan komunikasi yang jelas.',
+        'Customer Support' => 'Kami di sini untuk membantu Anda di setiap langkah.',
+    ],
+
     'why_title' => 'Kenapa memilih BaytGo?',
     'why_cards' => [
         [

@@ -23,6 +23,33 @@ return [
     'search_tip_label' => 'Tip:',
     'search_tip_body' => 'You can leave the end date empty for a single day.',
 
+    'value_kicker' => 'Value for everyone',
+    'value_title' => 'BaytGo makes it simple for pilgrims and empowering for muthowif.',
+    'value_customer_title' => 'For Customer',
+    'value_customer_sub' => 'Easy, trusted, and transparent muthowif booking.',
+    'value_customer_features' => [
+        'Easy booking' => 'Book your muthowif in just a few clicks.',
+        'Trusted muthowif' => 'Verified, experienced, and professional.',
+        'Transparent pricing' => 'Clear and upfront prices. No hidden fees.',
+        'Real-time availability' => 'See real availability and book instantly.',
+    ],
+    'value_muthowif_title' => 'For Muthowif',
+    'value_muthowif_sub' => 'Manage, grow, and succeed with BaytGo.',
+    'value_muthowif_features' => [
+        'Manage schedule' => 'Update your availability anytime, anywhere.',
+        'Accept bookings' => 'Receive and manage bookings in real-time.',
+        'Set pricing' => 'Set your own prices with full flexibility.',
+        'Grow reputation' => 'Build your profile, get reviews, grow trust.',
+    ],
+    'value_banner_title' => 'A trusted platform for everyone',
+    'value_banner_sub' => 'We ensure safety, transparency, and trust in every booking.',
+    'value_banner_features' => [
+        'Verified Muthowif' => 'Rigorous verification for your peace of mind.',
+        'Secure Booking' => 'Your data and payment are always protected.',
+        'Fair & Transparent' => 'Fair policies and clear communication.',
+        'Customer Support' => 'We\'re here to help you every step of the way.',
+    ],
+
     'why_title' => 'Why choose BaytGo?',
     'why_cards' => [
         [
