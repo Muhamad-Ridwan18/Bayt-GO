@@ -43,7 +43,7 @@
                         if (Auth::user()->isAdmin()) {
                             $logoHref = route('admin.finance.index');
                         } elseif (Auth::user()->isMuthowif()) {
-                            $logoHref = route('muthowif.bookings.index');
+                            $logoHref = route('dashboard');
                         } else {
                             $logoHref = route('dashboard');
                         }
