@@ -313,34 +313,6 @@
                     </div>
                 </section>
 
-                {{-- Why choose --}}
-                <section id="kenapa" class="border-t border-slate-100/80 bg-welcomeCanvas py-16 sm:py-20">
-                    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-                        <div class="text-center">
-                            <h2 class="text-2xl font-bold text-baytgo sm:text-3xl">{{ __('welcome.why_title') }}</h2>
-                            <span class="mx-auto mt-4 block h-1 w-14 rounded-full bg-gold" aria-hidden="true"></span>
-                        </div>
-                        <div class="mt-12 grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-4">
-                            @foreach (__('welcome.why_cards') as $i => $card)
-                                <article class="rounded-2xl border border-gray-100 bg-white p-6 shadow-sm transition hover:border-gold-light/40 hover:shadow-md">
-                                    <span class="flex h-12 w-12 items-center justify-center rounded-full bg-emerald-50 text-baytgo ring-1 ring-emerald-100/80">
-                                        @if ($i === 0)
-                                            <svg class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M9 12.75 11.25 15 15 9.75M21 12c0 1.268-.63 2.39-1.593 3.068a3.745 3.745 0 0 1-1.043 3.296 3.745 3.745 0 0 1-3.296 1.043A3.745 3.745 0 0 1 12 21c-1.268 0-2.39-.63-3.068-1.593a3.746 3.746 0 0 1-3.296-1.043 3.745 3.745 0 0 1-1.043-3.296A3.745 3.745 0 0 1 3 12c0-1.268.63-2.39 1.593-3.068a3.745 3.745 0 0 1 1.043-3.296 3.746 3.746 0 0 1 3.296-1.043A3.746 3.746 0 0 1 12 3c1.268 0 2.39.63 3.068 1.593a3.746 3.746 0 0 1 3.296 1.043 3.746 3.746 0 0 1 1.043 3.296A3.745 3.745 0 0 1 21 12Z"/></svg>
-                                        @elseif ($i === 1)
-                                            <svg class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M12 3c2.755 0 5.455.232 8.083.678.533.09.917.556.917 1.096v1.044a2.25 2.25 0 0 1-.659 1.591l-5.432 5.432a2.25 2.25 0 0 0-.659 1.591v2.927a2.25 2.25 0 0 1-1.244 2.013L9.75 21v-6.568a2.25 2.25 0 0 0-.659-1.591L3.659 7.409A2.25 2.25 0 0 1 3 5.818V4.774c0-.54.384-1.006.917-1.096A48.32 48.32 0 0 1 12 3Z"/></svg>
-                                        @elseif ($i === 2)
-                                            <svg class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M18 18.72a9.094 9.094 0 0 0 3.741-.479 3 3 0 0 0-4.682-2.72m.94 3.198.001.031c0 .225-.012.447-.037.666A11.944 11.944 0 0 1 12 21c-2.17 0-4.207-.576-5.963-1.584A6.062 6.062 0 0 1 6 18.719m12 0a5.971 5.971 0 0 0-.941-3.197m0 0A5.995 5.995 0 0 0 12 12.75a5.995 5.995 0 0 0-5.058 2.772m0 0a3 3 0 1 0-4.681-2.72"/></svg>
-                                        @else
-                                            <svg class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M8.625 12a.375.375 0 1 1-.75 0 .375.375 0 0 1 .75 0Zm0 0H8.25m4.125 0a.375.375 0 1 1-.75 0 .375.375 0 0 1 .75 0Zm0 0H12m4.125 0a.375.375 0 1 1-.75 0 .375.375 0 0 1 .75 0Zm0 0h-.375M21 12c0 4.556-4.03 8.25-9 8.25a9.764 9.764 0 0 1-2.555-.337 5.972 5.972 0 0 1-.327-.377c0-.068.021-.13.041-.18.02-.05.08-.15.16-.23.16-.16.38-.24.6-.24h.01c.43 0 .84.06 1.225.18.38.12.77.29 1.15.51.38.22.75.49 1.1.8.35.31.68.66.98 1.03.3-.37.63-.72.98-1.03.35-.31.72-.58 1.1-.8.38-.22.77-.39 1.15-.51.38-.12.79-.18 1.225-.18h.01c.22 0 .44.08.6.24.08.08.14.18.16.23.02.05.041.112.041.18a5.98 5.98 0 0 1-.327.377A9.764 9.764 0 0 1 21 12Z"/></svg>
-                                        @endif
-                                    </span>
-                                    <h3 class="mt-4 font-bold text-slate-900">{{ $card['title'] }}</h3>
-                                    <p class="mt-2 text-sm text-slate-600 leading-relaxed">{{ $card['desc'] }}</p>
-                                </article>
-                            @endforeach
-                        </div>
-                    </div>
-                </section>
 
                 {{-- Popular muthowif carousel --}}
                 <section id="muthowif-populer" class="py-16 sm:py-20 bg-white">
