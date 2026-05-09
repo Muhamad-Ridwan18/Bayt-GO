@@ -29,14 +29,14 @@
                         <span class="truncate text-lg font-bold tracking-tight text-baytgo">Bayt<span class="text-gold-muted">Go</span></span>
                     </a>
 
-                    <nav class="hidden lg:flex absolute left-1/2 top-1/2 max-w-none -translate-x-1/2 -translate-y-1/2 items-center gap-0.5 text-sm font-semibold" aria-label="{{ __('welcome.nav_primary_aria') }}">
-                        <a href="{{ route('welcome') }}" class="{{ request()->routeIs('welcome') ? 'relative px-3 py-2 text-baytgo after:absolute after:inset-x-3 after:-bottom-0.5 after:h-0.5 after:rounded-full after:bg-gold' : 'rounded-lg px-3 py-2 text-slate-600 transition hover:text-baytgo' }}">{{ __('welcome.nav_home') }}</a>
-                        <a href="#cara-kerja" class="rounded-lg px-3 py-2 text-slate-600 transition hover:text-baytgo">{{ __('welcome.nav_how') }}</a>
-                        <a href="{{ route('layanan.index') }}" class="{{ request()->routeIs('layanan.*') ? 'relative px-3 py-2 text-baytgo after:absolute after:inset-x-3 after:-bottom-0.5 after:h-0.5 after:rounded-full after:bg-gold' : 'rounded-lg px-3 py-2 text-slate-600 transition hover:text-baytgo' }}">{{ __('welcome.nav_muthowif') }}</a>
-                        <a href="{{ route('articles.index') }}" class="{{ request()->routeIs('articles.*') ? 'relative px-3 py-2 text-baytgo after:absolute after:inset-x-3 after:-bottom-0.5 after:h-0.5 after:rounded-full after:bg-gold' : 'rounded-lg px-3 py-2 text-slate-600 transition hover:text-baytgo' }}">{{ __('nav.articles') }}</a>
-                        <a href="#harga" class="rounded-lg px-3 py-2 text-slate-600 transition hover:text-baytgo">{{ __('welcome.nav_pricing') }}</a>
-                        <a href="#tentang" class="rounded-lg px-3 py-2 text-slate-600 transition hover:text-baytgo">{{ __('welcome.nav_about') }}</a>
-                        <a href="#faq" class="rounded-lg px-3 py-2 text-slate-600 transition hover:text-baytgo">{{ __('welcome.nav_faq') }}</a>
+                    <nav class="hidden lg:flex flex-1 justify-center items-center gap-0.5 xl:gap-1 text-sm font-semibold whitespace-nowrap px-4" aria-label="{{ __('welcome.nav_primary_aria') }}">
+                        <a href="{{ route('welcome') }}" class="{{ request()->routeIs('welcome') ? 'relative px-2 xl:px-3 py-2 text-baytgo after:absolute after:inset-x-2 xl:after:inset-x-3 after:-bottom-0.5 after:h-0.5 after:rounded-full after:bg-gold' : 'rounded-lg px-2 xl:px-3 py-2 text-slate-600 transition hover:text-baytgo' }}">{{ __('welcome.nav_home') }}</a>
+                        <a href="#cara-kerja" class="rounded-lg px-2 xl:px-3 py-2 text-slate-600 transition hover:text-baytgo">{{ __('welcome.nav_how') }}</a>
+                        <a href="{{ route('layanan.index') }}" class="{{ request()->routeIs('layanan.*') ? 'relative px-2 xl:px-3 py-2 text-baytgo after:absolute after:inset-x-2 xl:after:inset-x-3 after:-bottom-0.5 after:h-0.5 after:rounded-full after:bg-gold' : 'rounded-lg px-2 xl:px-3 py-2 text-slate-600 transition hover:text-baytgo' }}">{{ __('welcome.nav_muthowif') }}</a>
+                        <a href="{{ route('articles.index') }}" class="{{ request()->routeIs('articles.*') ? 'relative px-2 xl:px-3 py-2 text-baytgo after:absolute after:inset-x-2 xl:after:inset-x-3 after:-bottom-0.5 after:h-0.5 after:rounded-full after:bg-gold' : 'rounded-lg px-2 xl:px-3 py-2 text-slate-600 transition hover:text-baytgo' }}">{{ __('nav.articles') }}</a>
+                        <a href="#harga" class="rounded-lg px-2 xl:px-3 py-2 text-slate-600 transition hover:text-baytgo">{{ __('welcome.nav_pricing') }}</a>
+                        <a href="#tentang" class="rounded-lg px-2 xl:px-3 py-2 text-slate-600 transition hover:text-baytgo">{{ __('welcome.nav_about') }}</a>
+                        <a href="#faq" class="rounded-lg px-2 xl:px-3 py-2 text-slate-600 transition hover:text-baytgo">{{ __('welcome.nav_faq') }}</a>
                     </nav>
 
                     <div class="relative z-10 flex shrink-0 items-center gap-2">
