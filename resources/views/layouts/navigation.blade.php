@@ -39,7 +39,16 @@
             <div class="flex min-w-0 flex-1 items-center lg:flex-initial lg:gap-0">
                 <!-- Logo -->
                 <div class="flex shrink-0 items-center">
-                    <a href="{{ url('/') }}" class="flex min-w-0 items-center gap-2">
+                    @php
+                        if (Auth::user()->isAdmin()) {
+                            $logoHref = route('admin.finance.index');
+                        } elseif (Auth::user()->isMuthowif()) {
+                            $logoHref = route('muthowif.bookings.index');
+                        } else {
+                            $logoHref = route('dashboard');
+                        }
+                    @endphp
+                    <a href="{{ $logoHref }}" class="flex min-w-0 items-center gap-2">
                         <x-site-logo variant="nav" />
                         <span class="hidden text-lg font-semibold text-slate-900 sm:inline">Bayt<span class="text-brand-600">Go</span></span>
                     </a>
