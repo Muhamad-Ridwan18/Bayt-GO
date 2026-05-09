@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers\Muthowif;
 
+use App\Events\WithdrawalRequested;
 use App\Http\Controllers\Controller;
 use App\Models\MuthowifProfile;
 use App\Models\MuthowifWithdrawal;
@@ -93,6 +94,8 @@ class WithdrawController extends Controller
             'status' => 'pending_approval',
             'requested_at' => now(),
         ]);
+
+        WithdrawalRequested::dispatch($withdrawal);
 
         return redirect()
             ->route('muthowif.withdrawals.index')

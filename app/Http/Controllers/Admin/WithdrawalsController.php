@@ -8,6 +8,7 @@ use App\Models\MuthowifProfile;
 use App\Models\MuthowifWithdrawal;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
+use Illuminate\Http\Response;
 use Illuminate\Support\Facades\DB;
 use Illuminate\View\View;
 use RuntimeException;
@@ -36,6 +37,36 @@ class WithdrawalsController extends Controller
             'pendingCount' => (int) ($pendingAgg->pending_count ?? 0),
             'pendingAmount' => (float) ($pendingAgg->pending_amount ?? 0),
         ]);
+    }
+
+    /**
+     * Fragment endpoint: returns only the table partial (for Alpine.js live reload).
+     */
+    public function indexFragment(Request $request): Response
+    {
+        $withdrawals = MuthowifWithdrawal::query()
+            ->with([
+                'muthowifProfile' => static function ($q): void {
+                    $q->select(['id', 'user_id'])->with('user:id,name');
+                },
+            ])
+            ->orderByDesc('requested_at')
+            ->paginate(20);
+
+        $pendingAgg = MuthowifWithdrawal::query()
+            ->where('status', 'pending_approval')
+            ->selectRaw('COUNT(*) as pending_count, COALESCE(SUM(amount), 0) as pending_amount')
+            ->first();
+
+        return response(
+            view('admin.withdrawals._table', [
+                'withdrawals'   => $withdrawals,
+                'pendingCount'  => (int) ($pendingAgg->pending_count ?? 0),
+                'pendingAmount' => (float) ($pendingAgg->pending_amount ?? 0),
+            ])->render(),
+            200,
+            ['Content-Type' => 'text/html'],
+        );
     }
 
     /**

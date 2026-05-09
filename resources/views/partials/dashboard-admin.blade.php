@@ -326,12 +326,12 @@
                             </span>
                             <span class="text-xs font-semibold text-slate-900">{{ __('dashboard.refund') }}</span>
                         </a>
-                        <a href="{{ route('admin.withdrawals.index') }}" class="group relative flex flex-col items-center gap-2 rounded-2xl border border-slate-200/90 bg-white px-3 py-4 text-center shadow-sm transition hover:border-slate-300 hover:shadow-md">
+                        <a x-data="adminWithdrawalsBadgeLive({{ $pendingWithdrawCount }})" href="{{ route('admin.withdrawals.index') }}" class="group relative flex flex-col items-center gap-2 rounded-2xl border border-slate-200/90 bg-white px-3 py-4 text-center shadow-sm transition hover:border-slate-300 hover:shadow-md">
                             <span class="relative flex h-11 w-11 items-center justify-center rounded-xl bg-sky-100 text-sky-900 ring-1 ring-sky-200/70" aria-hidden="true">
                                 <svg class="h-5 w-5" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M2.25 8.25h19.5M2.25 9h19.5m-16.5 5.25h6m-6 2.25h3m-3.75 3h15a2.25 2.25 0 002.25-2.25V6.75A2.25 2.25 0 0019.5 4.5h-15a2.25 2.25 0 00-2.25 2.25v10.5A2.25 2.25 0 004.5 19.5z" /></svg>
-                                @if ($pendingWithdrawCount > 0)
-                                    <span class="absolute -right-1 -top-1 flex h-4 min-w-[1rem] items-center justify-center rounded-full bg-slate-900 px-1 text-[10px] font-bold text-white">{{ $pendingWithdrawCount > 9 ? '9+' : $pendingWithdrawCount }}</span>
-                                @endif
+                                <template x-if="count > 0">
+                                    <span class="absolute -right-1 -top-1 flex h-4 min-w-[1rem] items-center justify-center rounded-full bg-slate-900 px-1 text-[10px] font-bold text-white" x-text="displayLabel"></span>
+                                </template>
                             </span>
                             <span class="text-xs font-semibold text-slate-900">{{ __('dashboard.withdraw') }}</span>
                         </a>

@@ -251,6 +251,7 @@ Route::middleware('auth')->group(function () {
         Route::get('moota-webhooks', [MootaWebhookHistoriesLiveController::class, 'live'])
             ->name('moota_webhooks.live');
         Route::get('withdrawals', [WithdrawalsController::class, 'index'])->name('withdrawals.index');
+        Route::get('withdrawals/fragment', [WithdrawalsController::class, 'indexFragment'])->name('withdrawals.fragment');
         Route::post('withdrawals/{withdrawal}/approve', [WithdrawalsController::class, 'approve'])->name('withdrawals.approve');
         Route::post('withdrawals/{withdrawal}/selesai-transfer', [WithdrawalsController::class, 'markTransferred'])->name('withdrawals.mark_transferred');
         Route::post('withdrawals/{withdrawal}/gagal-transfer', [WithdrawalsController::class, 'markTransferFailed'])->name('withdrawals.mark_transfer_failed');

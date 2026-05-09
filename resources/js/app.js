@@ -18,6 +18,104 @@ document.addEventListener('alpine:init', () => {
         },
     }));
 
+    Alpine.data('adminWithdrawalsLive', (config) => ({
+        fragmentUrl: config.fragmentUrl ?? null,
+        toastLabel: config.toastLabel ?? 'Ada permintaan withdraw baru!',
+        refreshing: false,
+        pollTimer: null,
+        
+        csrf() {
+            return document.querySelector('meta[name="csrf-token"]')?.getAttribute('content') ?? '';
+        },
+
+        init() {
+            if (window.Echo) {
+                window.Echo.private('admin.withdrawals').listen('.withdrawal.requested', (e) => {
+                    this.showToast(e);
+                    this.refreshFragment();
+                });
+            } else if (this.fragmentUrl) {
+                this.pollTimer = window.setInterval(() => this.refreshFragment(), 60000);
+            }
+        },
+
+        showToast(e) {
+            const msg = `${this.toastLabel} dari ${e.muthowif_name || 'Muthowif'}`;
+            // Optional: you can implement a better toast UI if available in your stack, 
+            // but for now we'll use a simple alert or just rely on the badge/table update.
+            // A simple console log to prevent obtrusive alerts in production if no toast UI exists:
+            console.log(msg);
+            
+            // If there's a global Alpine store for toasts:
+            if (Alpine.store('toasts')) {
+                Alpine.store('toasts').add('success', msg);
+            } else {
+                alert(msg);
+            }
+        },
+
+        async refreshFragment() {
+            if (!this.fragmentUrl || this.refreshing) return;
+            this.refreshing = true;
+            try {
+                let url = this.fragmentUrl;
+                url += window.location.search || '';
+                
+                const r = await fetch(url, {
+                    headers: {
+                        Accept: 'text/html',
+                        'X-Requested-With': 'XMLHttpRequest',
+                        'X-CSRF-TOKEN': this.csrf(),
+                    },
+                    credentials: 'same-origin',
+                });
+                
+                if (!r.ok) return;
+                const html = await r.text();
+                const root = this.$refs.liveRoot;
+                if (!root) return;
+                
+                if (typeof Alpine.destroyTree === 'function') {
+                    Alpine.destroyTree(root);
+                }
+                root.innerHTML = html;
+                Alpine.initTree(root);
+            } catch (err) {
+                console.error(err);
+            } finally {
+                this.refreshing = false;
+            }
+        },
+
+        destroy() {
+            if (this.pollTimer) window.clearInterval(this.pollTimer);
+            if (window.Echo) {
+                window.Echo.leave('admin.withdrawals');
+            }
+        },
+    }));
+
+    Alpine.data('adminWithdrawalsBadgeLive', (initialCount) => ({
+        count: Number(initialCount) || 0,
+        
+        get displayLabel() {
+            if (this.count > 99) return '99+';
+            return String(this.count);
+        },
+
+        init() {
+            if (window.Echo) {
+                window.Echo.private('admin.withdrawals').listen('.withdrawal.requested', (e) => {
+                    if (typeof e.pending_count === 'number') {
+                        this.count = e.pending_count;
+                    } else {
+                        this.count++;
+                    }
+                });
+            }
+        },
+    }));
+
     Alpine.data('muthowifPrivatePelayananForm', (addonRows) => ({
         rows: addonRows,
         formatDigits(d) {

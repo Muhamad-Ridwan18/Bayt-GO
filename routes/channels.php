@@ -14,3 +14,7 @@ Broadcast::channel('booking.chat.{booking}', function ($user, MuthowifBooking $b
 Broadcast::channel('admin.moota-webhooks', function ($user) {
     return $user->isAdmin();
 });
+
+Broadcast::channel('admin.withdrawals', function ($user) {
+    return $user->isAdmin();
+});

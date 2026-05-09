@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers\Api\Muthowif;
 
+use App\Events\WithdrawalRequested;
 use App\Http\Controllers\Controller;
 use App\Models\MuthowifProfile;
 use App\Models\MuthowifWithdrawal;
@@ -94,6 +95,8 @@ class WalletController extends Controller
             'status' => 'pending_approval',
             'requested_at' => now(),
         ]);
+
+        WithdrawalRequested::dispatch($withdrawal);
 
         return response()->json([
             'message' => 'Permintaan withdraw berhasil diajukan.',
