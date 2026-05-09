@@ -302,23 +302,37 @@
 
                             <div class="grid gap-8 sm:grid-cols-2 lg:grid-cols-3">
                                 @foreach ($latestArticles as $article)
-                                    <article class="group flex flex-col rounded-3xl border border-slate-200/80 bg-white p-6 shadow-sm transition hover:border-baytgo/25 hover:shadow-xl hover:shadow-baytgo/5">
-                                        <div class="mb-5 flex items-center justify-between">
-                                            <span class="rounded-full bg-baytgo/8 px-3 py-1 text-[10px] font-bold uppercase tracking-wider text-baytgo">{{ $article->localized('category') }}</span>
-                                            <time class="text-[11px] font-medium text-slate-500" datetime="{{ $article->published_at?->toIso8601String() }}">
-                                                {{ $article->published_at?->translatedFormat('d M Y') }}
-                                            </time>
-                                        </div>
-                                        <h3 class="text-xl font-bold text-slate-900 group-hover:text-baytgo transition-colors leading-snug">
-                                            <a href="{{ route('articles.show', ['slug' => $article->slug]) }}" class="focus:outline-none">{{ $article->localized('title') }}</a>
-                                        </h3>
-                                        <p class="mt-4 flex-1 text-sm leading-relaxed text-slate-600 line-clamp-3">
-                                            {{ $article->localized('excerpt') }}
-                                        </p>
-                                        <div class="mt-6 flex items-center gap-2 pt-5 border-t border-slate-100">
-                                            <span class="text-[11px] font-bold text-baytgo/80 uppercase tracking-tight">{{ __('articles.reading_minutes', ['count' => $article->readingMinutes()]) }}</span>
-                                            <span class="text-slate-300">•</span>
-                                            <span class="text-[11px] font-medium text-slate-500 uppercase tracking-tight">{{ $article->localized('author') }}</span>
+                                    @php
+                                        $body = $article->localized('body');
+                                        $thumbnail = null;
+                                        if (preg_match('/<img[^>]+src=["\']([^"\']+)["\']/', $body, $m)) {
+                                            $thumbnail = $m[1];
+                                        }
+                                    @endphp
+                                    <article class="group flex flex-col overflow-hidden rounded-3xl border border-slate-200/80 bg-white shadow-sm transition hover:border-baytgo/25 hover:shadow-xl hover:shadow-baytgo/5">
+                                        @if ($thumbnail)
+                                            <a href="{{ route('articles.show', ['slug' => $article->slug]) }}" class="block aspect-[16/9] overflow-hidden bg-slate-100">
+                                                <img src="{{ $thumbnail }}" alt="" class="h-full w-full object-cover transition duration-500 group-hover:scale-105" loading="lazy" />
+                                            </a>
+                                        @endif
+                                        <div class="flex flex-1 flex-col p-6">
+                                            <div class="mb-4 flex items-center justify-between">
+                                                <span class="rounded-full bg-baytgo/8 px-3 py-1 text-[10px] font-bold uppercase tracking-wider text-baytgo">{{ $article->localized('category') }}</span>
+                                                <time class="text-[11px] font-medium text-slate-500" datetime="{{ $article->published_at?->toIso8601String() }}">
+                                                    {{ $article->published_at?->translatedFormat('d M Y') }}
+                                                </time>
+                                            </div>
+                                            <h3 class="text-xl font-bold text-slate-900 group-hover:text-baytgo transition-colors leading-snug">
+                                                <a href="{{ route('articles.show', ['slug' => $article->slug]) }}" class="focus:outline-none">{{ $article->localized('title') }}</a>
+                                            </h3>
+                                            <p class="mt-4 flex-1 text-sm leading-relaxed text-slate-600 line-clamp-3">
+                                                {{ $article->localized('excerpt') }}
+                                            </p>
+                                            <div class="mt-6 flex items-center gap-2 pt-5 border-t border-slate-100">
+                                                <span class="text-[11px] font-bold text-baytgo/80 uppercase tracking-tight">{{ __('articles.reading_minutes', ['count' => $article->readingMinutes()]) }}</span>
+                                                <span class="text-slate-300">•</span>
+                                                <span class="text-[11px] font-medium text-slate-500 uppercase tracking-tight">{{ $article->localized('author') }}</span>
+                                            </div>
                                         </div>
                                     </article>
                                 @endforeach
