@@ -134,6 +134,24 @@ class BookingController extends Controller
         $this->authorize('confirm', $booking);
 
         $booking->loadMissing(['muthowifProfile.services.addOns']);
+        $profile = $booking->muthowifProfile;
+        if ($profile === null) {
+            return redirect()
+                ->route('muthowif.bookings.index')
+                ->with('error', 'Profil muthowif tidak ditemukan.');
+        }
+
+        $start = $booking->starts_on->copy()->startOfDay();
+        $end = $booking->ends_on->copy()->startOfDay();
+        if (! $profile->isSlotAvailableForRange($start, $end, (string) $booking->getKey())) {
+            return redirect()
+                ->route('muthowif.bookings.show', $booking)
+                ->with(
+                    'error',
+                    'Slot tanggal ini tidak bisa disetujui karena sudah dipakai booking lain yang disetujui. Batalkan atau tolak pesanan yang bentrok, atau minta jamaah mengubah tanggal.'
+                );
+        }
+
         $total = $booking->computeTotalAmount();
 
         $booking->update([

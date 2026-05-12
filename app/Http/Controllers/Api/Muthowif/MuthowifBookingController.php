@@ -85,6 +85,19 @@ class MuthowifBookingController extends Controller
         }
 
         $booking->loadMissing(['muthowifProfile.services.addOns']);
+        $profile = $booking->muthowifProfile;
+        if ($profile === null) {
+            return response()->json(['message' => 'Profil muthowif tidak ditemukan.'], 422);
+        }
+
+        $start = $booking->starts_on->copy()->startOfDay();
+        $end = $booking->ends_on->copy()->startOfDay();
+        if (! $profile->isSlotAvailableForRange($start, $end, (string) $booking->getKey())) {
+            return response()->json([
+                'message' => 'Slot tanggal bentrok dengan booking lain yang sudah disetujui.',
+            ], 422);
+        }
+
         $total = $booking->computeTotalAmount();
 
         $booking->update([
