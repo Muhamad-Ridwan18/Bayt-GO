@@ -209,6 +209,13 @@
                 <x-input-error :messages="$errors->get('reference_text')" class="mt-2" />
             </div>
 
+            <div>
+                <x-input-label for="muthowif_referral_code" :value="__('auth_custom.muthowif_referral_code_label')" />
+                <x-text-input id="muthowif_referral_code" class="block mt-1 w-full border-slate-300 font-mono uppercase" type="text" name="muthowif_referral_code" :value="old('muthowif_referral_code')" maxlength="16" autocomplete="off" placeholder="{{ __('auth_custom.muthowif_referral_code_placeholder') }}" />
+                <p class="mt-1 text-xs text-slate-500">{{ __('auth_custom.muthowif_referral_code_hint') }}</p>
+                <x-input-error :messages="$errors->get('muthowif_referral_code')" class="mt-2" />
+            </div>
+
             <x-repeating-file-field
                 name="supporting_documents"
                 label="Dokumen pendukung :"

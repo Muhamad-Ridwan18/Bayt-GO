@@ -3,12 +3,16 @@
 namespace App\Http\Controllers\Api\Muthowif;
 
 use App\Enums\BookingStatus;
+use App\Enums\MuthowifBookingMuthowifRejectionKind;
 use App\Enums\PaymentStatus;
+use App\Events\CustomerBookingUpdated;
 use App\Http\Controllers\Controller;
+use App\Jobs\NotifyCustomerOfBookingRejectedSlotFull;
 use App\Models\MuthowifBooking;
 use App\Services\BookingPendingPaymentEnsurer;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
+use Illuminate\Validation\Rule;
 
 class MuthowifBookingController extends Controller
 {
@@ -124,7 +128,38 @@ class MuthowifBookingController extends Controller
             return response()->json(['message' => 'Pesanan ini tidak dapat dibatalkan.'], 422);
         }
 
-        $booking->update(['status' => BookingStatus::Cancelled]);
+        $rules = [
+            'muthowif_rejection_note' => ['nullable', 'string', 'max:2000'],
+        ];
+        if ($booking->status === BookingStatus::Pending) {
+            $rules['muthowif_rejection_kind'] = ['required', Rule::enum(MuthowifBookingMuthowifRejectionKind::class)];
+        }
+
+        $validated = $request->validate($rules);
+
+        $kind = null;
+        $note = null;
+        if ($booking->status === BookingStatus::Pending) {
+            $rawKind = $validated['muthowif_rejection_kind'];
+            $kind = $rawKind instanceof MuthowifBookingMuthowifRejectionKind
+                ? $rawKind
+                : MuthowifBookingMuthowifRejectionKind::from((string) $rawKind);
+            $note = filled($validated['muthowif_rejection_note'] ?? null)
+                ? trim((string) $validated['muthowif_rejection_note'])
+                : null;
+        }
+
+        $booking->update([
+            'status' => BookingStatus::Cancelled,
+            'muthowif_rejection_kind' => $kind,
+            'muthowif_rejection_note' => $note,
+        ]);
+
+        if ($kind === MuthowifBookingMuthowifRejectionKind::SlotFull) {
+            NotifyCustomerOfBookingRejectedSlotFull::dispatchAfterResponse((string) $booking->getKey());
+        }
+
+        broadcast(new CustomerBookingUpdated($booking->fresh()));
 
         return response()->json([
             'message' => 'Pesanan berhasil dibatalkan',

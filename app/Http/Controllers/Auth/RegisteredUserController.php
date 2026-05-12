@@ -243,6 +243,7 @@ class RegisteredUserController extends Controller
             'ktp_image' => ['required_if:role,muthowif', 'nullable', 'file', 'mimes:jpeg,jpg,png,webp', 'max:5120'],
             'supporting_documents' => ['nullable', 'array', 'max:20'],
             'supporting_documents.*' => ['file', 'mimes:pdf,jpeg,jpg,png,webp', 'max:10240'],
+            'muthowif_referral_code' => ['nullable', 'string', 'max:16'],
         ];
 
         $request->validate($rules);
@@ -260,6 +261,21 @@ class RegisteredUserController extends Controller
                     'languages' => 'Isi minimal satu bahasa.',
                 ]);
             }
+
+            $codeRaw = $request->input('muthowif_referral_code');
+            $code = is_string($codeRaw) ? strtoupper(trim($codeRaw)) : '';
+            if ($code !== '') {
+                $exists = MuthowifProfile::query()
+                    ->where('referral_code', $code)
+                    ->where('verification_status', MuthowifVerificationStatus::Approved)
+                    ->exists();
+                if (! $exists) {
+                    throw ValidationException::withMessages([
+                        'muthowif_referral_code' => [__('auth_custom.muthowif_referral_invalid')],
+                    ]);
+                }
+            }
+            $request->merge(['muthowif_referral_code' => $code !== '' ? $code : null]);
         }
     }
 
@@ -305,6 +321,10 @@ class RegisteredUserController extends Controller
                 $educations = $this->requestStringList($request->input('educations'));
                 $workExperiences = $this->requestStringList($request->input('work_experiences'));
 
+                $codeRaw = $request->input('muthowif_referral_code');
+                $code = is_string($codeRaw) ? strtoupper(trim($codeRaw)) : '';
+                $referredById = $code !== '' ? $this->resolveReferredByMuthowifProfileId($code) : null;
+
                 $profile = MuthowifProfile::create([
                     'user_id' => $user->id,
                     'phone' => $request->input('phone'),
@@ -319,6 +339,7 @@ class RegisteredUserController extends Controller
                     'photo_path' => $photoPath,
                     'ktp_image_path' => $ktpPath,
                     'verification_status' => MuthowifVerificationStatus::Pending,
+                    'referred_by_muthowif_profile_id' => $referredById,
                 ]);
 
                 $files = $request->file('supporting_documents', []);
@@ -415,6 +436,10 @@ class RegisteredUserController extends Controller
                 $educations = $this->requestStringList($input['educations'] ?? null);
                 $workExperiences = $this->requestStringList($input['work_experiences'] ?? null);
 
+                $referralRaw = $input['muthowif_referral_code'] ?? null;
+                $referralNorm = is_string($referralRaw) ? strtoupper(trim($referralRaw)) : '';
+                $referredById = $referralNorm !== '' ? $this->resolveReferredByMuthowifProfileId($referralNorm) : null;
+
                 $profile = MuthowifProfile::create([
                     'user_id' => $user->id,
                     'phone' => $input['phone'],
@@ -429,6 +454,7 @@ class RegisteredUserController extends Controller
                     'photo_path' => $photoDest,
                     'ktp_image_path' => $ktpDest,
                     'verification_status' => MuthowifVerificationStatus::Pending,
+                    'referred_by_muthowif_profile_id' => $referredById,
                 ]);
 
                 foreach ($muthowifFiles['supporting'] as $row) {
@@ -469,6 +495,21 @@ class RegisteredUserController extends Controller
         Auth::login($user);
 
         return redirect(route('dashboard', absolute: false));
+    }
+
+    private function resolveReferredByMuthowifProfileId(string $normalizedReferralCode): ?string
+    {
+        $code = strtoupper(trim($normalizedReferralCode));
+        if ($code === '') {
+            return null;
+        }
+
+        $id = MuthowifProfile::query()
+            ->where('referral_code', $code)
+            ->where('verification_status', MuthowifVerificationStatus::Approved)
+            ->value('id');
+
+        return $id !== null ? (string) $id : null;
     }
 
     private function persistPendingRegistration(Request $request): void

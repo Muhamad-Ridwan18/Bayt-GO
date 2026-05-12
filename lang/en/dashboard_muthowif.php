@@ -99,4 +99,6 @@ return [
     'wallet_ledger_empty' => 'No balance movements yet.',
     'wallet_ledger_refund_caption' => 'No muthowif fee on file (older refund before the 1% rule).',
     'wallet_ledger_refund_caption_fee' => 'Muthowif share credited to your wallet: 1% of the service base price.',
+    'referral_code_heading' => 'Your referral code (invite peer muthowifs)',
+    'referral_code_hint' => 'Share this code when colleagues register as muthowifs. After they are verified, they join your network. The code appears once admin approves your profile.',
 ];

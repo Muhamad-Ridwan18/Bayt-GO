@@ -59,6 +59,14 @@ return [
             'status' => '*Status:* Waiting for the new muthowif to approve',
             'view_detail' => '*Booking details:*',
         ],
+        'rejected_slot_full' => [
+            'headline' => '*:app* — booking could not proceed',
+            'body' => 'We’re sorry — *:muthowif* declined your request because their schedule is fully booked for those dates.',
+            'booking_code' => '*Booking code:* :code',
+            'service_dates' => '*Requested dates:* :start - :end',
+            'hint' => 'In the app you’ll see recommendations for other muthowifs from the same network (if any) with an open slot for your dates.',
+            'view_detail' => '*Details & recommendations:*',
+        ],
         'reschedule_submitted' => [
             'headline' => '*:app* — reschedule submitted',
             'body' => 'Your date change request was forwarded to *:muthowif*.',

@@ -198,6 +198,70 @@ class MuthowifBookingWhatsAppNotifier
     }
 
     /**
+     * Muthowif menolak booking (alasan jadwal penuh) — permintaan maaf dan arahkan cek rekomendasi di aplikasi.
+     */
+    public function notifyCustomerBookingRejectedSlotFull(MuthowifBooking $booking): void
+    {
+        if (! config('services.fonnte.customer_booking_rejected_slot_full_notify_enabled', true)) {
+            return;
+        }
+
+        $token = config('services.fonnte.token');
+        if ($token === null || $token === '') {
+            Log::debug('WhatsApp notify customer slot-full rejection skipped: FONNTE_TOKEN kosong.');
+
+            return;
+        }
+
+        $booking->loadMissing(['customer', 'muthowifProfile.user']);
+        $customer = $booking->customer;
+        if ($customer === null) {
+            return;
+        }
+
+        $fonnteDial = IntlPhone::fonnteDial($customer->phone);
+        if ($fonnteDial === null) {
+            Log::warning('WhatsApp notify customer slot-full rejection skipped: nomor customer kosong atau tidak valid.', [
+                'customer_id' => $customer->id,
+                'booking_id' => $booking->id,
+            ]);
+
+            return;
+        }
+
+        $locale = $this->localeForUser($customer->locale);
+
+        $this->withLocale($locale, function () use ($booking, $fonnteDial, $locale): void {
+            $muthowifName = $booking->muthowifProfile?->user?->name ?? __('whatsapp.fallback_muthowif', [], $locale);
+            $start = $booking->starts_on->format('d/m/Y');
+            $end = $booking->ends_on->format('d/m/Y');
+            $appName = config('app.name', 'BaytGo');
+            $url = route('bookings.show', $booking);
+
+            $lines = [
+                __('whatsapp.customer.rejected_slot_full.headline', ['app' => $appName], $locale),
+                '',
+                __('whatsapp.customer.rejected_slot_full.body', ['muthowif' => $muthowifName], $locale),
+                '',
+            ];
+
+            if (filled($booking->booking_code)) {
+                $lines[] = __('whatsapp.customer.rejected_slot_full.booking_code', ['code' => $booking->booking_code], $locale);
+                $lines[] = '';
+            }
+
+            $lines[] = __('whatsapp.customer.rejected_slot_full.service_dates', ['start' => $start, 'end' => $end], $locale);
+            $lines[] = '';
+            $lines[] = __('whatsapp.customer.rejected_slot_full.hint', [], $locale);
+            $lines[] = '';
+            $lines[] = __('whatsapp.customer.rejected_slot_full.view_detail', [], $locale);
+            $lines[] = $url;
+
+            $this->sendToTarget($fonnteDial, implode("\n", $lines), $booking->id);
+        });
+    }
+
+    /**
      * Booking pending dialihkan ke muthowif lain — beri tahu jamaah.
      */
     public function notifyCustomerReferredToPeer(MuthowifBooking $booking, string $previousMuthowifName): void

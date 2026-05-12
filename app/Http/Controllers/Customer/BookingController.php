@@ -24,6 +24,7 @@ use App\Services\BookingOrderCodeService;
 use App\Services\BookingPricingService;
 use App\Services\BookingRefundExecutor;
 use App\Services\Moota\MootaApiClient;
+use App\Services\MuthowifNetworkReferralService;
 use App\Support\BookingPostPayRules;
 use App\Support\BookingRefundFee;
 use App\Support\BookingSnapPaymentCatalog;
@@ -122,12 +123,18 @@ class BookingController extends Controller
         ]);
         $addonsById = $this->addOnsKeyByIdForBooking($booking);
 
+        $networkReferral = app(MuthowifNetworkReferralService::class);
+        $referralNetworkAlternatives = $networkReferral->alternativesForCustomerAfterSlotRejection($booking);
+        $showReferralNetworkPanel = $networkReferral->shouldShowCustomerReferralPanel($booking);
+
         return view('bookings.show', [
             'booking' => $booking,
             'addonsById' => $addonsById,
             'refundEligibilityError' => BookingPostPayRules::canRequestRefund($booking),
             'rescheduleEligibilityError' => BookingPostPayRules::canRequestReschedule($booking),
             'refundPreview' => $this->refundPreviewForBooking($booking),
+            'referralNetworkAlternatives' => $referralNetworkAlternatives,
+            'showReferralNetworkPanel' => $showReferralNetworkPanel,
         ]);
     }
 
@@ -144,12 +151,18 @@ class BookingController extends Controller
         ]);
         $addonsById = $this->addOnsKeyByIdForBooking($booking);
 
+        $networkReferral = app(MuthowifNetworkReferralService::class);
+        $referralNetworkAlternatives = $networkReferral->alternativesForCustomerAfterSlotRejection($booking);
+        $showReferralNetworkPanel = $networkReferral->shouldShowCustomerReferralPanel($booking);
+
         return view('bookings.partials.show-body', [
             'booking' => $booking,
             'addonsById' => $addonsById,
             'refundEligibilityError' => BookingPostPayRules::canRequestRefund($booking),
             'rescheduleEligibilityError' => BookingPostPayRules::canRequestReschedule($booking),
             'refundPreview' => $this->refundPreviewForBooking($booking),
+            'referralNetworkAlternatives' => $referralNetworkAlternatives,
+            'showReferralNetworkPanel' => $showReferralNetworkPanel,
         ]);
     }
 
@@ -837,7 +850,11 @@ class BookingController extends Controller
             $booking->bookingPayments()
                 ->whereNotIn('status', ['settlement', 'capture'])
                 ->delete();
-            $booking->update(['status' => BookingStatus::Cancelled]);
+            $booking->update([
+                'status' => BookingStatus::Cancelled,
+                'muthowif_rejection_kind' => null,
+                'muthowif_rejection_note' => null,
+            ]);
         });
 
         broadcast(new CustomerBookingUpdated($booking->fresh()));

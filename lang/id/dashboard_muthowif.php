@@ -99,4 +99,6 @@ return [
     'wallet_ledger_empty' => 'Belum ada pergerakan saldo.',
     'wallet_ledger_refund_caption' => 'Tidak ada bagian muthowif tercatat (refund lama sebelum aturan 1%).',
     'wallet_ledger_refund_caption_fee' => 'Bagian muthowif masuk saldo: 1% dari harga dasar layanan.',
+    'referral_code_heading' => 'Kode referral Anda (undang rekan muthowif)',
+    'referral_code_hint' => 'Bagikan kode ini saat rekan mendaftar sebagai muthowif. Setelah mereka terverifikasi, mereka terhubung ke jaringan Anda. Kode muncul setelah persetujuan admin.',
 ];

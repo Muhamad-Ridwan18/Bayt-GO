@@ -7,6 +7,7 @@ use App\Http\Controllers\Controller;
 use App\Models\MuthowifProfile;
 use App\Models\MuthowifSupportingDocument;
 use App\Services\FonnteService;
+use App\Services\MuthowifReferralCodeService;
 use App\Support\IntlPhone;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
@@ -88,7 +89,7 @@ class MuthowifVerificationController extends Controller
             'rejection_reason' => null,
         ]);
 
-        $waFlash = null;
+        app(MuthowifReferralCodeService::class)->ensureAssigned($profile->fresh());
         $fonnteDial = IntlPhone::fonnteDial($profile->phone);
         $token = config('services.fonnte.token');
         if ($fonnteDial !== null && filled($token)) {

@@ -14,4 +14,8 @@ return [
     'muthowif_pending_body_html' => 'Dokumen dan foto Anda sedang ditinjau oleh admin. Anda <strong>belum dapat masuk</strong> ke akun sampai pendaftaran disetujui.',
     'muthowif_pending_hint' => 'Setelah disetujui, gunakan email dan password yang Anda daftarkan untuk masuk.',
     'muthowif_pending_login' => 'Ke halaman masuk',
+    'muthowif_referral_code_label' => 'Kode referral muthowif (opsional)',
+    'muthowif_referral_code_placeholder' => 'Contoh: ABCD12',
+    'muthowif_referral_code_hint' => 'Jika ada muthowif yang mengundang Anda, masukkan kode mereka. Hanya kode muthowif yang sudah terverifikasi yang diterima.',
+    'muthowif_referral_invalid' => 'Kode referral tidak valid atau muthowif pemberi kode belum terverifikasi.',
 ];

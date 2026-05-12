@@ -194,12 +194,9 @@
                                         {{ __('muthowif.bookings.approve') }}
                                     </button>
                                 </form>
-                                <form method="POST" action="{{ route('muthowif.bookings.cancel', $b) }}" class="flex-1 min-w-[10rem]" onsubmit="return confirm(@json(__('muthowif.bookings.reject_confirm')));">
-                                    @csrf
-                                    <button type="submit" class="inline-flex w-full items-center justify-center gap-2 rounded-xl border border-slate-300 bg-white px-4 py-2.5 text-sm font-semibold text-slate-800 transition hover:bg-slate-50">
-                                        {{ __('muthowif.bookings.reject') }}
-                                    </button>
-                                </form>
+                                <div class="flex-1 min-w-[10rem]">
+                                    @include('muthowif.bookings.partials.reject-booking-form', ['booking' => $b, 'compact' => false])
+                                </div>
                             </div>
                             @if (isset($peerRecommendTargets) && $peerRecommendTargets->isNotEmpty())
                                 <div class="mt-4 rounded-xl border border-violet-200/90 bg-violet-50/40 p-4 ring-1 ring-violet-100/80">

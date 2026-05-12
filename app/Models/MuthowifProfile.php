@@ -4,9 +4,9 @@ namespace App\Models;
 
 use App\Enums\BookingStatus;
 use App\Enums\MuthowifVerificationStatus;
+use Carbon\CarbonInterface;
 use Illuminate\Database\Eloquent\Concerns\HasUuids;
 use Illuminate\Database\Eloquent\Model;
-use Carbon\CarbonInterface;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Support\Facades\Storage;
@@ -36,6 +36,8 @@ class MuthowifProfile extends Model
         'verified_at',
         'rejection_reason',
         'wallet_balance',
+        'referral_code',
+        'referred_by_muthowif_profile_id',
     ];
 
     protected static function booted(): void
@@ -77,6 +79,19 @@ class MuthowifProfile extends Model
     public function services(): HasMany
     {
         return $this->hasMany(MuthowifService::class)->orderBy('type');
+    }
+
+    public function referredBy(): BelongsTo
+    {
+        return $this->belongsTo(MuthowifProfile::class, 'referred_by_muthowif_profile_id');
+    }
+
+    /**
+     * @return HasMany<MuthowifProfile, $this>
+     */
+    public function referredMuthowifs(): HasMany
+    {
+        return $this->hasMany(MuthowifProfile::class, 'referred_by_muthowif_profile_id');
     }
 
     public function blockedDates(): HasMany

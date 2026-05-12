@@ -56,4 +56,8 @@ return [
         'resolved' => 'Selesai',
         'closed' => 'Ditutup',
     ],
+    'muthowif_booking_muthowif_rejection_kind' => [
+        'slot_full' => 'Jadwal muthowif penuh',
+        'other' => 'Alasan lain',
+    ],
 ];

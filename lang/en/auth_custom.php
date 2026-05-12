@@ -14,4 +14,8 @@ return [
     'muthowif_pending_body_html' => 'Your documents and photo are being reviewed by admin. You <strong>cannot sign in</strong> until registration is approved.',
     'muthowif_pending_hint' => 'Once approved, use the email and password you registered with to sign in.',
     'muthowif_pending_login' => 'Go to sign in',
+    'muthowif_referral_code_label' => 'Muthowif referral code (optional)',
+    'muthowif_referral_code_placeholder' => 'e.g. ABCD12',
+    'muthowif_referral_code_hint' => 'If another verified muthowif invited you, enter their code. Only codes from approved profiles are accepted.',
+    'muthowif_referral_invalid' => 'Referral code is invalid or the referring muthowif is not verified.',
 ];

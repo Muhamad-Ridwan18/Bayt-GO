@@ -33,6 +33,8 @@
                     'refundEligibilityError' => $refundEligibilityError,
                     'rescheduleEligibilityError' => $rescheduleEligibilityError,
                     'refundPreview' => $refundPreview,
+                    'referralNetworkAlternatives' => $referralNetworkAlternatives,
+                    'showReferralNetworkPanel' => $showReferralNetworkPanel,
                 ])
             </div>
         </div>

@@ -59,6 +59,14 @@ return [
             'status' => '*Status:* Menunggu persetujuan muthowif baru',
             'view_detail' => '*Detail booking:*',
         ],
+        'rejected_slot_full' => [
+            'headline' => '*:app* — booking tidak dapat dilanjutkan',
+            'body' => 'Mohon maaf, muthowif *:muthowif* menolak permintaan Anda karena jadwal pendampingan pada tanggal tersebut sudah penuh.',
+            'booking_code' => '*Kode booking:* :code',
+            'service_dates' => '*Tanggal yang diajukan:* :start - :end',
+            'hint' => 'Di aplikasi, kami menampilkan rekomendasi muthowif lain dari jaringan yang sama (jika ada) yang masih memiliki slot untuk tanggal Anda.',
+            'view_detail' => '*Detail booking & rekomendasi:*',
+        ],
         'reschedule_submitted' => [
             'headline' => '*:app* — pengajuan reschedule',
             'body' => 'Pengajuan pergantian tanggal Anda sudah kami teruskan ke *:muthowif*.',

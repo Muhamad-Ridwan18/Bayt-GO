@@ -114,6 +114,16 @@
         </div>
     </section>
 
+    @if (filled($mp->referral_code))
+        <div class="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
+            <div class="rounded-2xl border border-emerald-200/80 bg-emerald-50/60 px-4 py-3 text-sm text-emerald-950 shadow-sm ring-1 ring-emerald-100/80 sm:px-5 sm:py-4">
+                <p class="font-semibold">{{ __('dashboard_muthowif.referral_code_heading') }}</p>
+                <p class="mt-1 font-mono text-base font-bold tracking-wide select-all">{{ $mp->referral_code }}</p>
+                <p class="mt-2 text-xs text-emerald-900/80">{{ __('dashboard_muthowif.referral_code_hint') }}</p>
+            </div>
+        </div>
+    @endif
+
     <div class="grid grid-cols-1 gap-8 lg:grid-cols-12 lg:items-start">
         {{-- Kolom kiri: booking + kalender --}}
         <div class="space-y-8 lg:col-span-8">

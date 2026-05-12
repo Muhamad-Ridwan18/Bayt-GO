@@ -4,11 +4,13 @@ namespace App\Http\Controllers\Muthowif;
 
 use App\Enums\BookingChangeRequestStatus;
 use App\Enums\BookingStatus;
+use App\Enums\MuthowifBookingMuthowifRejectionKind;
 use App\Enums\PaymentStatus;
 use App\Events\CustomerBookingUpdated;
 use App\Http\Controllers\Controller;
 use App\Jobs\NotifyCustomerOfApprovedBooking;
 use App\Jobs\NotifyCustomerOfBookingReferredToPeer;
+use App\Jobs\NotifyCustomerOfBookingRejectedSlotFull;
 use App\Jobs\NotifyCustomerOfRescheduleApproved;
 use App\Jobs\NotifyCustomerOfRescheduleRejected;
 use App\Jobs\NotifyMuthowifOfNewBooking;
@@ -24,6 +26,7 @@ use Illuminate\Http\Request;
 use Illuminate\Pagination\LengthAwarePaginator;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Validation\Rule;
 use Illuminate\View\View;
 use RuntimeException;
 
@@ -187,7 +190,37 @@ class BookingController extends Controller
     {
         $this->authorize('cancelAsMuthowif', $booking);
 
-        $booking->update(['status' => BookingStatus::Cancelled]);
+        $rules = [
+            'muthowif_rejection_note' => ['nullable', 'string', 'max:2000'],
+        ];
+        if ($booking->status === BookingStatus::Pending) {
+            $rules['muthowif_rejection_kind'] = ['required', Rule::enum(MuthowifBookingMuthowifRejectionKind::class)];
+        }
+
+        $validated = $request->validate($rules);
+
+        $kind = null;
+        $note = null;
+        if ($booking->status === BookingStatus::Pending) {
+            $rawKind = $validated['muthowif_rejection_kind'];
+            $kind = $rawKind instanceof MuthowifBookingMuthowifRejectionKind
+                ? $rawKind
+                : MuthowifBookingMuthowifRejectionKind::from((string) $rawKind);
+            $note = filled($validated['muthowif_rejection_note'] ?? null)
+                ? trim((string) $validated['muthowif_rejection_note'])
+                : null;
+        }
+
+        $booking->update([
+            'status' => BookingStatus::Cancelled,
+            'muthowif_rejection_kind' => $kind,
+            'muthowif_rejection_note' => $note,
+        ]);
+
+        if ($kind === MuthowifBookingMuthowifRejectionKind::SlotFull) {
+            NotifyCustomerOfBookingRejectedSlotFull::dispatchAfterResponse((string) $booking->getKey());
+        }
+
         broadcast(new CustomerBookingUpdated($booking->fresh()));
 
         return redirect()

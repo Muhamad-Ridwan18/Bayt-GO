@@ -150,6 +150,12 @@
                 </div>
             </article>
 
+            @include('bookings.partials.referral-network-alternatives', [
+                'booking' => $b,
+                'referralNetworkAlternatives' => $referralNetworkAlternatives ?? collect(),
+                'showReferralNetworkPanel' => $showReferralNetworkPanel ?? false,
+            ])
+
             @if (in_array($st, [BookingStatus::Confirmed, BookingStatus::Completed], true) || ($st === BookingStatus::Cancelled && $b->paid_at))
                 <div class="mt-8 overflow-hidden rounded-3xl border border-slate-200/80 bg-white shadow-md shadow-slate-900/5">
                     <div class="border-b border-slate-100 bg-gradient-to-r from-slate-50 to-white px-6 py-4 sm:px-8">

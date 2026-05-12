@@ -4,8 +4,10 @@ namespace App\Models;
 
 use App\Enums\BookingChangeRequestStatus;
 use App\Enums\BookingStatus;
+use App\Enums\MuthowifBookingMuthowifRejectionKind;
 use App\Enums\MuthowifServiceType;
 use App\Enums\PaymentStatus;
+use App\Services\BookingPricingService;
 use Carbon\CarbonInterface;
 use Illuminate\Database\Eloquent\Concerns\HasUuids;
 use Illuminate\Database\Eloquent\Model;
@@ -38,6 +40,8 @@ class MuthowifBooking extends Model
         'same_hotel_price_snapshot',
         'transport_price_snapshot',
         'add_ons_snapshot',
+        'muthowif_rejection_kind',
+        'muthowif_rejection_note',
     ];
 
     protected function casts(): array
@@ -47,6 +51,7 @@ class MuthowifBooking extends Model
             'ends_on' => 'date',
             'status' => BookingStatus::class,
             'service_type' => MuthowifServiceType::class,
+            'muthowif_rejection_kind' => MuthowifBookingMuthowifRejectionKind::class,
             'selected_add_on_ids' => 'array',
             'with_same_hotel' => 'boolean',
             'with_transport' => 'boolean',
@@ -187,7 +192,7 @@ class MuthowifBooking extends Model
      */
     public function computeTotalAmount(): float
     {
-        return app(\App\Services\BookingPricingService::class)->calculateTotal($this);
+        return app(BookingPricingService::class)->calculateTotal($this);
     }
 
     /**

@@ -202,13 +202,7 @@
                                                             {{ __('muthowif.bookings.approve') }}
                                                         </button>
                                                     </form>
-                                                    <form method="POST" action="{{ route('muthowif.bookings.cancel', $booking) }}" onsubmit="return confirm(@json(__('muthowif.bookings.reject_confirm')));">
-                                                        @csrf
-                                                        <button type="submit" class="inline-flex w-full items-center justify-center gap-2 rounded-xl border border-slate-300 bg-white px-4 py-2.5 text-sm font-semibold text-slate-800 transition hover:bg-slate-50">
-                                                            <svg class="h-4 w-4 text-slate-600" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true"><path fill-rule="evenodd" d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z" clip-rule="evenodd" /></svg>
-                                                            {{ __('muthowif.bookings.reject') }}
-                                                        </button>
-                                                    </form>
+                                                    @include('muthowif.bookings.partials.reject-booking-form', ['booking' => $booking, 'compact' => true])
                                                     @php
                                                         $peers = $peerRecommendByBooking[(string) $booking->getKey()] ?? collect();
                                                     @endphp

@@ -7,6 +7,7 @@ use App\Enums\UserRole;
 use App\Models\MuthowifProfile;
 use App\Models\MuthowifService;
 use App\Models\User;
+use App\Services\MuthowifReferralCodeService;
 use Illuminate\Database\Seeder;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Str;
@@ -19,6 +20,8 @@ class MuthowifDummySeeder extends Seeder
     public function run(): void
     {
         $faker = fake('id_ID');
+
+        $parentProfileId = null;
 
         for ($i = 1; $i <= 20; $i++) {
             $suffix = str_pad((string) $i, 2, '0', STR_PAD_LEFT);
@@ -63,6 +66,16 @@ class MuthowifDummySeeder extends Seeder
                     'wallet_balance' => 0,
                 ],
             );
+
+            if ($i === 1) {
+                $parentProfileId = (string) $profile->getKey();
+            }
+
+            app(MuthowifReferralCodeService::class)->ensureAssigned($profile->fresh());
+
+            if ($i >= 2 && $i <= 6 && $parentProfileId !== null && (string) $profile->getKey() !== $parentProfileId) {
+                $profile->update(['referred_by_muthowif_profile_id' => $parentProfileId]);
+            }
 
             // Tanpa baris muthowif_services, profil tidak muncul di dropdown rekomendasi / marketplace card harga.
             [$groupService, $privateService] = MuthowifService::ensurePairForProfile($profile);
