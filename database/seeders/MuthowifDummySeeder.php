@@ -5,6 +5,7 @@ namespace Database\Seeders;
 use App\Enums\MuthowifVerificationStatus;
 use App\Enums\UserRole;
 use App\Models\MuthowifProfile;
+use App\Models\MuthowifService;
 use App\Models\User;
 use Illuminate\Database\Seeder;
 use Illuminate\Support\Facades\Hash;
@@ -42,7 +43,7 @@ class MuthowifDummySeeder extends Seeder
                 ],
             );
 
-            MuthowifProfile::query()->updateOrCreate(
+            $profile = MuthowifProfile::query()->updateOrCreate(
                 ['user_id' => $user->getKey()],
                 [
                     'phone' => $phone,
@@ -51,9 +52,9 @@ class MuthowifDummySeeder extends Seeder
                     'birth_date' => $faker->dateTimeBetween('-55 years', '-25 years')->format('Y-m-d'),
                     'passport_number' => sprintf('A%s%06d', $suffix, 100000 + $i),
                     'languages' => ['Indonesia', 'Arab'],
-                    'educations' => ['Formal: '. $faker->randomElement(['STAI', 'UIN', 'Pesantren'])],
+                    'educations' => ['Formal: '.$faker->randomElement(['STAI', 'UIN', 'Pesantren'])],
                     'work_experiences' => ['Pembimbing umrah & haji (dummy seed)'],
-                    'reference_text' => 'Akun dummy untuk pengujian — '. $email,
+                    'reference_text' => 'Akun dummy untuk pengujian — '.$email,
                     'photo_path' => 'seed/dummy/muthowif-photo.png',
                     'ktp_image_path' => 'seed/dummy/muthowif-ktp.png',
                     'verification_status' => MuthowifVerificationStatus::Approved,
@@ -62,6 +63,19 @@ class MuthowifDummySeeder extends Seeder
                     'wallet_balance' => 0,
                 ],
             );
+
+            // Tanpa baris muthowif_services, profil tidak muncul di dropdown rekomendasi / marketplace card harga.
+            [$groupService, $privateService] = MuthowifService::ensurePairForProfile($profile);
+            $groupService->update([
+                'daily_price' => 400_000,
+                'min_pilgrims' => 1,
+                'max_pilgrims' => 50,
+            ]);
+            $privateService->update([
+                'daily_price' => 850_000,
+                'min_pilgrims' => 1,
+                'max_pilgrims' => 50,
+            ]);
         }
     }
 }
