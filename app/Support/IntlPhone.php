@@ -11,6 +11,9 @@ final class IntlPhone
 {
     private static ?PhoneNumberUtil $instance = null;
 
+    /** @var array<string, list<array{d: string, iso: string, flag: string, name: string}>> */
+    private static array $countriesForPickerCache = [];
+
     private static function util(): PhoneNumberUtil
     {
         return self::$instance ??= PhoneNumberUtil::getInstance();
@@ -199,6 +202,33 @@ final class IntlPhone
     }
 
     /**
+     * ISO 3166-1 alpha-2 untuk nomor valid, bila metadata mengenali region (berguna untuk kode pemanggil yang dipakai banyak negara, mis. +1).
+     */
+    public static function regionForNumber(?string $input): ?string
+    {
+        if ($input === null || trim($input) === '') {
+            return null;
+        }
+
+        try {
+            $proto = self::parseToProto(trim($input));
+        } catch (NumberParseException) {
+            return null;
+        }
+
+        if (! self::util()->isPossibleNumber($proto)) {
+            return null;
+        }
+
+        $r = self::util()->getRegionCodeForNumber($proto);
+        if (! is_string($r) || strlen($r) !== 2 || ! ctype_alpha($r)) {
+            return null;
+        }
+
+        return strtoupper($r);
+    }
+
+    /**
      * Hanya digit “target” Fonnte tanpa konteks negara — gunakan {@see fonnteDial} bila mengirim lewat Fonnte API.
      */
     public static function forFonnte(?string $input): ?string
@@ -206,5 +236,74 @@ final class IntlPhone
         $d = self::fonnteDial($input);
 
         return $d['target'] ?? null;
+    }
+
+    /**
+     * Semua region yang didukung libphonenumber + nama negara (ICU {@see Locale::getDisplayRegion}) untuk UI pemilih kode telepon.
+     *
+     * @return list<array{d: string, iso: string, flag: string, name: string}>
+     */
+    public static function countriesForPhonePicker(?string $displayLocale = null): array
+    {
+        $locale = $displayLocale ?? str_replace('_', '-', app()->getLocale());
+        if (isset(self::$countriesForPickerCache[$locale])) {
+            return self::$countriesForPickerCache[$locale];
+        }
+
+        $util = self::util();
+        $rows = [];
+        foreach ($util->getSupportedRegions() as $region) {
+            if (! is_string($region) || strlen($region) !== 2 || ! ctype_alpha($region)) {
+                continue;
+            }
+            $cc = $util->getCountryCodeForRegion($region);
+            if ($cc === 0) {
+                continue;
+            }
+            $iso = strtoupper($region);
+            $nameRaw = \Locale::getDisplayRegion('en-'.$iso, $locale);
+            $name = is_string($nameRaw) && $nameRaw !== '' ? $nameRaw : $iso;
+            $rows[] = [
+                'd' => (string) $cc,
+                'iso' => $iso,
+                'flag' => self::flagEmojiFromIso3166Alpha2($iso),
+                'name' => $name,
+            ];
+        }
+
+        usort($rows, static function (array $a, array $b): int {
+            return strcasecmp($a['name'], $b['name']);
+        });
+
+        $priority = ['ID', 'SA', 'MY', 'SG', 'AE', 'QA', 'KW', 'BH', 'OM', 'YE', 'US', 'GB'];
+        $byIso = [];
+        foreach ($rows as $row) {
+            $byIso[$row['iso']] = $row;
+        }
+        $ordered = [];
+        foreach ($priority as $iso) {
+            if (isset($byIso[$iso])) {
+                $ordered[] = $byIso[$iso];
+                unset($byIso[$iso]);
+            }
+        }
+        $rest = array_values($byIso);
+        usort($rest, static function (array $a, array $b): int {
+            return strcasecmp($a['name'], $b['name']);
+        });
+
+        self::$countriesForPickerCache[$locale] = array_merge($ordered, $rest);
+
+        return self::$countriesForPickerCache[$locale];
+    }
+
+    public static function flagEmojiFromIso3166Alpha2(string $iso3166Alpha2): string
+    {
+        $s = strtoupper($iso3166Alpha2);
+        if (strlen($s) !== 2 || ! ctype_alpha($s)) {
+            return '🌐';
+        }
+
+        return mb_chr(0x1F1E6 + ord($s[0]) - 65).mb_chr(0x1F1E6 + ord($s[1]) - 65);
     }
 }
