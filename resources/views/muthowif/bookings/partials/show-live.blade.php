@@ -3,6 +3,7 @@
     use App\Enums\BookingStatus;
     use App\Enums\MuthowifServiceType;
     use App\Enums\PaymentStatus;
+    use App\Models\BookingPayment;
     use App\Support\IndonesianNumber;
     use App\Support\PlatformFee;
     use Carbon\Carbon;
@@ -39,6 +40,24 @@
     $muthowifFee = (float) ($split['muthowif_fee'] ?? 0.0);
     $customerGross = (float) ($split['customer_gross'] ?? 0.0);
     $customerFee = (float) ($split['customer_fee'] ?? 0.0);
+
+    $settledPaymentForReferral = BookingPayment::query()
+        ->where('muthowif_booking_id', $b->getKey())
+        ->whereIn('status', ['settlement', 'capture'])
+        ->orderByDesc('settled_at')
+        ->first();
+    $pendingPaymentForReferral = $settledPaymentForReferral === null
+        ? BookingPayment::query()
+            ->where('muthowif_booking_id', $b->getKey())
+            ->where('status', 'pending')
+            ->orderByDesc('created_at')
+            ->first()
+        : null;
+    $payForReferral = $settledPaymentForReferral ?? $pendingPaymentForReferral;
+    $referralRewardFromPay = $payForReferral !== null
+        ? round((float) ($payForReferral->referral_reward_amount ?? 0), 2)
+        : 0.0;
+    $muthowifNetAfterReferral = round(max(0.0, $muthowifNet - $referralRewardFromPay), 2);
     $fmt = fn (float $n) => IndonesianNumber::formatThousands((string) (int) round($n));
 
     $badgeClass = match ($st) {
@@ -169,9 +188,15 @@
                                     <dt class="text-red-600/80">{{ __('muthowif.booking_show.platform_fee_muthowif') }}</dt>
                                     <dd class="font-medium tabular-nums text-red-700/90">- Rp {{ $fmt($muthowifFee) }}</dd>
                                 </div>
+                                @if ($referralRewardFromPay > 0)
+                                    <div class="flex justify-between gap-4 border-t border-slate-200/60 pt-2">
+                                        <dt class="text-violet-700/90">{{ __('muthowif.booking_show.peer_referral_deduction') }}</dt>
+                                        <dd class="font-medium tabular-nums text-violet-800">- Rp {{ $fmt($referralRewardFromPay) }}</dd>
+                                    </div>
+                                @endif
                                 <div class="flex justify-between gap-4 border-t border-slate-200 pt-2.5 text-sm">
                                     <dt class="font-bold text-slate-900">{{ __('muthowif.booking_show.net_earning') }}</dt>
-                                    <dd class="font-bold tabular-nums text-brand-700">Rp {{ $fmt($muthowifNet) }}</dd>
+                                    <dd class="font-bold tabular-nums text-brand-700">Rp {{ $fmt($muthowifNetAfterReferral) }}</dd>
                                 </div>
                             </dl>
                             <p class="text-[10px] leading-relaxed text-slate-500 italic">

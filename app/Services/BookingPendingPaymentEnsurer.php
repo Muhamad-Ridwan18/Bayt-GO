@@ -6,6 +6,7 @@ use App\Enums\BookingStatus;
 use App\Enums\PaymentStatus;
 use App\Models\BookingPayment;
 use App\Models\MuthowifBooking;
+use App\Support\MuthowifReferralReward;
 use App\Support\PaymentFlowLog;
 use App\Support\PlatformFee;
 use Illuminate\Support\Facades\DB;
@@ -93,12 +94,18 @@ final class BookingPendingPaymentEnsurer
                 ->first();
 
             $gross = (int) round($split['customer_gross']);
+            $referral = MuthowifReferralReward::paymentSnapshot(
+                (float) $split['muthowif_net'],
+                (string) $booking->muthowif_profile_id,
+            );
 
             if ($placeholder !== null) {
                 $placeholder->update([
                     'gross_amount' => $gross,
                     'platform_fee_amount' => $split['platform_fee_total'],
                     'muthowif_net_amount' => $split['muthowif_net'],
+                    'referrer_muthowif_profile_id' => $referral['referrer_muthowif_profile_id'],
+                    'referral_reward_amount' => $referral['referral_reward_amount'],
                     'booking_code' => $booking->booking_code,
                 ]);
                 PaymentFlowLog::info('booking_payment.ensure.updated_placeholder', [
@@ -121,6 +128,8 @@ final class BookingPendingPaymentEnsurer
                 'gross_amount' => $gross,
                 'platform_fee_amount' => $split['platform_fee_total'],
                 'muthowif_net_amount' => $split['muthowif_net'],
+                'referrer_muthowif_profile_id' => $referral['referrer_muthowif_profile_id'],
+                'referral_reward_amount' => $referral['referral_reward_amount'],
                 'status' => 'pending',
             ]);
 

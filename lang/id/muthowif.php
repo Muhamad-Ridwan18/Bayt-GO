@@ -72,6 +72,7 @@ return [
         'rate_per_day' => 'Tarif / Hari',
         'subtotal_service' => 'Subtotal Layanan',
         'platform_fee_muthowif' => 'Biaya platform',
+        'peer_referral_deduction' => 'Bagi hasil referral (muthowif pengundang)',
         'net_earning' => 'Pendapatan Bersih',
     ],
     'jadwal' => [

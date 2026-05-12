@@ -42,6 +42,8 @@ final class AdminFinanceTimeline
                 'gross_amount',
                 'platform_fee_amount',
                 'muthowif_net_amount',
+                'referrer_muthowif_profile_id',
+                'referral_reward_amount',
                 'status',
                 'settled_at',
                 'created_at',

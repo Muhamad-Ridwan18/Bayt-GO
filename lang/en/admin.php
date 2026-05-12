@@ -97,6 +97,8 @@ return [
         'gross' => 'Gross',
         'fee_pct' => 'Fee :pct%',
         'to_muthowif' => 'To chaperone',
+        'referral_to_referrer' => 'Referrer bonus: :amount',
+        'referral_gross_note' => 'Service net before referral: :amount',
         'withdraw_status' => [
             'pending_approval' => 'Pending approval',
             'processing' => 'Transfer in progress',

@@ -72,6 +72,7 @@ return [
         'rate_per_day' => 'Rate / day',
         'subtotal_service' => 'Service subtotal',
         'platform_fee_muthowif' => 'Platform fee',
+        'peer_referral_deduction' => 'Referrer network share',
         'net_earning' => 'Net earnings',
     ],
     'jadwal' => [

@@ -7,6 +7,8 @@ use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Support\Str;
 
+/** @property string|null $referrer_muthowif_profile_id */
+
 class BookingPayment extends Model
 {
     use HasUuids;
@@ -19,6 +21,8 @@ class BookingPayment extends Model
         'gross_amount',
         'platform_fee_amount',
         'muthowif_net_amount',
+        'referrer_muthowif_profile_id',
+        'referral_reward_amount',
         'status',
         'checkout_token',
         'gateway_transaction_id',
@@ -34,6 +38,7 @@ class BookingPayment extends Model
             'gross_amount' => 'integer',
             'platform_fee_amount' => 'decimal:2',
             'muthowif_net_amount' => 'decimal:2',
+            'referral_reward_amount' => 'decimal:2',
             'settled_at' => 'datetime',
             'wallet_credited_at' => 'datetime',
             'gateway_notification_payload' => 'array',
@@ -43,6 +48,20 @@ class BookingPayment extends Model
     public function muthowifBooking(): BelongsTo
     {
         return $this->belongsTo(MuthowifBooking::class, 'muthowif_booking_id');
+    }
+
+    public function referrerMuthowifProfile(): BelongsTo
+    {
+        return $this->belongsTo(MuthowifProfile::class, 'referrer_muthowif_profile_id');
+    }
+
+    /** Net yang masuk ke saldo muthowif pelayan setelah bagi hasil referral. */
+    public function muthowifWalletCreditAmount(): float
+    {
+        return round(
+            (float) $this->muthowif_net_amount - (float) ($this->referral_reward_amount ?? 0),
+            2
+        );
     }
 
     /**

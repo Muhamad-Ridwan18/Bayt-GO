@@ -97,6 +97,8 @@ return [
         'gross' => 'Bruto',
         'fee_pct' => 'Fee :pct%',
         'to_muthowif' => 'Ke muthowif',
+        'referral_to_referrer' => 'Bonus referral (ke muthowif pengundang): :amount',
+        'referral_gross_note' => 'Net layanan sebelum referral: :amount',
         'withdraw_status' => [
             'pending_approval' => 'Menunggu persetujuan',
             'processing' => 'Proses transfer',

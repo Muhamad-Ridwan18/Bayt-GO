@@ -13,7 +13,7 @@ final class MuthowifWalletLedger
 {
     /**
      * @return Collection<int, array{
-     *     kind: 'booking_credit'|'withdraw_debit'|'withdraw_refund'|'refund_completed',
+     *     kind: 'booking_credit'|'referral_reward'|'withdraw_debit'|'withdraw_refund'|'refund_completed',
      *     signed_amount: float,
      *     at: \Carbon\CarbonInterface,
      *     tie: string,
@@ -41,9 +41,36 @@ final class MuthowifWalletLedger
             }
             $out->push([
                 'kind' => 'booking_credit',
-                'signed_amount' => round((float) $payment->muthowif_net_amount, 2),
+                'signed_amount' => round($payment->muthowifWalletCreditAmount(), 2),
                 'at' => $at,
-                'tie' => 'p:'.$payment->getKey(),
+                'tie' => 'p:'.$payment->getKey().':s',
+                'booking' => $payment->muthowifBooking,
+                'withdrawal' => null,
+                'refund' => null,
+            ]);
+        }
+
+        $referralPayments = BookingPayment::query()
+            ->whereNotNull('wallet_credited_at')
+            ->where('referrer_muthowif_profile_id', $profile->getKey())
+            ->where('referral_reward_amount', '>', 0)
+            ->with(['muthowifBooking:id,booking_code,muthowif_profile_id'])
+            ->get();
+
+        foreach ($referralPayments as $payment) {
+            $at = $payment->wallet_credited_at;
+            if ($at === null) {
+                continue;
+            }
+            $reward = round((float) $payment->referral_reward_amount, 2);
+            if ($reward <= 0) {
+                continue;
+            }
+            $out->push([
+                'kind' => 'referral_reward',
+                'signed_amount' => $reward,
+                'at' => $at,
+                'tie' => 'p:'.$payment->getKey().':r',
                 'booking' => $payment->muthowifBooking,
                 'withdrawal' => null,
                 'refund' => null,

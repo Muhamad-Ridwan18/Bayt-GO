@@ -8,6 +8,7 @@ use App\Models\BookingPayment;
 use App\Models\MuthowifBooking;
 use App\Payments\Moota\MootaSnapPaymentProvider;
 use App\Services\Moota\MootaApiClient;
+use App\Support\MuthowifReferralReward;
 use App\Support\PlatformFee;
 use Illuminate\Console\Command;
 use Illuminate\Support\Facades\Http;
@@ -91,6 +92,11 @@ class MootaTestBookingPaymentCommand extends Command
         $ids = BookingPayment::newPrimaryKeyAndOrderId((string) $booking->getKey());
         $orderId = $ids['order_id'];
 
+        $referral = MuthowifReferralReward::paymentSnapshot(
+            (float) $split['muthowif_net'],
+            (string) $booking->muthowif_profile_id,
+        );
+
         $payment = BookingPayment::query()->create([
             'id' => $ids['id'],
             'muthowif_booking_id' => $booking->getKey(),
@@ -99,6 +105,8 @@ class MootaTestBookingPaymentCommand extends Command
             'gross_amount' => (int) round($split['customer_gross']),
             'platform_fee_amount' => $split['platform_fee_total'],
             'muthowif_net_amount' => $split['muthowif_net'],
+            'referrer_muthowif_profile_id' => $referral['referrer_muthowif_profile_id'],
+            'referral_reward_amount' => $referral['referral_reward_amount'],
             'status' => 'pending',
         ]);
 

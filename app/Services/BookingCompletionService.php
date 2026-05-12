@@ -72,7 +72,25 @@ class BookingCompletionService
                         ->lockForUpdate()
                         ->firstOrFail();
 
-                    $profile->wallet_balance = round((float) $profile->wallet_balance + (float) $payment->muthowif_net_amount, 2);
+                    $reward = round((float) ($payment->referral_reward_amount ?? 0), 2);
+                    $payoutToService = $payment->muthowifWalletCreditAmount();
+                    $orphanReward = 0.0;
+
+                    if ($reward > 0.0 && filled($payment->referrer_muthowif_profile_id)) {
+                        $referrer = MuthowifProfile::query()
+                            ->whereKey((string) $payment->referrer_muthowif_profile_id)
+                            ->lockForUpdate()
+                            ->first();
+
+                        if ($referrer !== null) {
+                            $referrer->wallet_balance = round((float) $referrer->wallet_balance + $reward, 2);
+                            $referrer->save();
+                        } else {
+                            $orphanReward = $reward;
+                        }
+                    }
+
+                    $profile->wallet_balance = round((float) $profile->wallet_balance + $payoutToService + $orphanReward, 2);
                     $profile->save();
 
                     $payment->wallet_credited_at = now();

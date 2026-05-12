@@ -69,8 +69,18 @@
                 <td class="px-4 py-3 align-top text-right tabular-nums text-slate-800">Rp {{ $fmt((float) $orderSplit['muthowif_fee']) }}</td>
                 <td class="px-4 py-3 align-top text-right tabular-nums font-semibold text-brand-800">Rp {{ $fmt((float) $orderSplit['platform_fee_total']) }}</td>
                 <td class="px-4 py-3 align-top text-right">
-                    <div class="font-medium text-slate-900">Rp {{ $fmt((float) $p->muthowif_net_amount) }}</div>
+                    @php
+                        $refAmt = (float) ($p->referral_reward_amount ?? 0);
+                        $payoutMu = round((float) $p->muthowif_net_amount - $refAmt, 2);
+                    @endphp
+                    <div class="font-medium text-slate-900">Rp {{ $fmt($payoutMu) }}</div>
                     <div class="text-[10px] text-slate-500">{{ __('admin.finance.to_muthowif') }}</div>
+                    @if ($refAmt > 0.004)
+                        <div class="mt-1 text-[10px] text-slate-500 leading-snug">
+                            {{ __('admin.finance.referral_to_referrer', ['amount' => 'Rp '.$fmt($refAmt)]) }}<br>
+                            <span class="text-slate-400">{{ __('admin.finance.referral_gross_note', ['amount' => 'Rp '.$fmt((float) $p->muthowif_net_amount)]) }}</span>
+                        </div>
+                    @endif
                 </td>
             </tr>
         @elseif ($row['kind'] === 'refund')

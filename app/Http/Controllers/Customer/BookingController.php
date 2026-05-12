@@ -28,6 +28,7 @@ use App\Services\MuthowifNetworkReferralService;
 use App\Support\BookingPostPayRules;
 use App\Support\BookingRefundFee;
 use App\Support\BookingSnapPaymentCatalog;
+use App\Support\MuthowifReferralReward;
 use App\Support\PaymentFlowLog;
 use App\Support\PlatformFee;
 use Carbon\Carbon;
@@ -251,6 +252,10 @@ class BookingController extends Controller
             if ($payment === null) {
                 $ids = BookingPayment::newPrimaryKeyAndOrderId((string) $booking->getKey());
                 $orderId = $ids['order_id'];
+                $referral = MuthowifReferralReward::paymentSnapshot(
+                    (float) $split['muthowif_net'],
+                    (string) $booking->muthowif_profile_id,
+                );
                 $payment = BookingPayment::query()->create([
                     'id' => $ids['id'],
                     'muthowif_booking_id' => $booking->getKey(),
@@ -259,6 +264,8 @@ class BookingController extends Controller
                     'gross_amount' => (int) round($split['customer_gross']),
                     'platform_fee_amount' => $split['platform_fee_total'],
                     'muthowif_net_amount' => $split['muthowif_net'],
+                    'referrer_muthowif_profile_id' => $referral['referrer_muthowif_profile_id'],
+                    'referral_reward_amount' => $referral['referral_reward_amount'],
                     'status' => 'pending',
                 ]);
                 PaymentFlowLog::info('web.payment.pending_created', [
@@ -329,6 +336,11 @@ class BookingController extends Controller
         $ids = BookingPayment::newPrimaryKeyAndOrderId((string) $booking->getKey());
         $orderId = $ids['order_id'];
 
+        $referral = MuthowifReferralReward::paymentSnapshot(
+            (float) $split['muthowif_net'],
+            (string) $booking->muthowif_profile_id,
+        );
+
         $payment = BookingPayment::query()->create([
             'id' => $ids['id'],
             'muthowif_booking_id' => $booking->getKey(),
@@ -340,6 +352,8 @@ class BookingController extends Controller
             'platform_fee_amount' => $split['platform_fee_total'],
             // Yang masuk ke saldo muthowif (base - fee muthowif).
             'muthowif_net_amount' => $split['muthowif_net'],
+            'referrer_muthowif_profile_id' => $referral['referrer_muthowif_profile_id'],
+            'referral_reward_amount' => $referral['referral_reward_amount'],
             'status' => 'pending',
         ]);
 

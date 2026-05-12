@@ -61,6 +61,7 @@
                                     $abs = \App\Support\IndonesianNumber::formatThousands((string) (int) round(abs($signed)));
                                     $typeLabel = match ($entry['kind']) {
                                         'booking_credit' => __('dashboard_muthowif.wallet_ledger_kind_booking_credit'),
+                                        'referral_reward' => __('dashboard_muthowif.wallet_ledger_kind_referral_reward'),
                                         'withdraw_debit' => __('dashboard_muthowif.wallet_ledger_kind_withdraw_debit'),
                                         'withdraw_refund' => __('dashboard_muthowif.wallet_ledger_kind_withdraw_refund'),
                                         'refund_completed' => __('dashboard_muthowif.wallet_ledger_kind_refund_completed'),
@@ -68,6 +69,7 @@
                                     };
                                     $typePill = match ($entry['kind']) {
                                         'booking_credit' => 'bg-emerald-50 text-emerald-900 ring-emerald-200',
+                                        'referral_reward' => 'bg-violet-50 text-violet-900 ring-violet-200',
                                         'withdraw_debit' => 'bg-rose-50 text-rose-900 ring-rose-200',
                                         'withdraw_refund' => 'bg-sky-50 text-sky-900 ring-sky-200',
                                         'refund_completed' => 'bg-emerald-50 text-emerald-900 ring-emerald-200',
@@ -94,6 +96,12 @@
                                             <a href="{{ route('muthowif.bookings.show', $b) }}" class="font-medium text-brand-700 underline decoration-brand-300 underline-offset-2 hover:text-brand-800">
                                                 {{ __('dashboard_muthowif.wallet_ledger_booking', ['code' => $b->booking_code ?? $b->getKey()]) }}
                                             </a>
+                                        @elseif ($entry['kind'] === 'referral_reward' && $entry['booking'])
+                                            @php $b = $entry['booking']; @endphp
+                                            <span class="font-medium text-slate-800">
+                                                {{ __('dashboard_muthowif.wallet_ledger_booking', ['code' => $b->booking_code ?? $b->getKey()]) }}
+                                            </span>
+                                            <p class="mt-0.5 text-xs text-slate-500">{{ __('dashboard_muthowif.wallet_ledger_referral_caption') }}</p>
                                         @elseif ($entry['kind'] === 'refund_completed' && $entry['booking'])
                                             @php $b = $entry['booking']; @endphp
                                             <div class="space-y-0.5">
