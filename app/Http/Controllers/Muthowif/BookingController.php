@@ -8,11 +8,15 @@ use App\Enums\PaymentStatus;
 use App\Events\CustomerBookingUpdated;
 use App\Http\Controllers\Controller;
 use App\Jobs\NotifyCustomerOfApprovedBooking;
+use App\Jobs\NotifyCustomerOfBookingReferredToPeer;
 use App\Jobs\NotifyCustomerOfRescheduleApproved;
 use App\Jobs\NotifyCustomerOfRescheduleRejected;
+use App\Jobs\NotifyMuthowifOfNewBooking;
 use App\Models\BookingRescheduleRequest;
 use App\Models\MuthowifBooking;
+use App\Models\MuthowifProfile;
 use App\Models\MuthowifServiceAddOn;
+use App\Services\BookingPeerReferralService;
 use App\Services\BookingPendingPaymentEnsurer;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
@@ -21,6 +25,7 @@ use Illuminate\Pagination\LengthAwarePaginator;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\DB;
 use Illuminate\View\View;
+use RuntimeException;
 
 class BookingController extends Controller
 {
@@ -99,9 +104,12 @@ class BookingController extends Controller
             $addonsById = MuthowifServiceAddOn::query()->whereIn('id', $ids)->get()->keyBy('id');
         }
 
+        $peerRecommendTargets = app(BookingPeerReferralService::class)->listCandidates($booking, $profile);
+
         return view('muthowif.bookings.show', [
             'booking' => $booking,
             'addonsById' => $addonsById,
+            'peerRecommendTargets' => $peerRecommendTargets,
         ]);
     }
 
@@ -123,9 +131,12 @@ class BookingController extends Controller
             $addonsById = MuthowifServiceAddOn::query()->whereIn('id', $ids)->get()->keyBy('id');
         }
 
+        $peerRecommendTargets = app(BookingPeerReferralService::class)->listCandidates($booking, $profile);
+
         return view('muthowif.bookings.partials.show-live', [
             'booking' => $booking,
             'addonsById' => $addonsById,
+            'peerRecommendTargets' => $peerRecommendTargets,
         ]);
     }
 
@@ -182,6 +193,42 @@ class BookingController extends Controller
             ->with('status', 'Booking ditolak atau dibatalkan.');
     }
 
+    public function recommendToPeer(Request $request, MuthowifBooking $booking): RedirectResponse
+    {
+        $profile = $request->user()->muthowifProfile;
+        abort_unless($profile && (string) $booking->muthowif_profile_id === (string) $profile->id, 403);
+
+        $this->authorize('recommendToPeer', $booking);
+
+        $validated = $request->validate([
+            'target_muthowif_profile_id' => ['required', 'uuid', 'exists:muthowif_profiles,id'],
+        ]);
+
+        /** @var MuthowifProfile $target */
+        $target = MuthowifProfile::query()->findOrFail($validated['target_muthowif_profile_id']);
+
+        $booking->loadMissing('muthowifProfile.user');
+        $previousName = (string) ($booking->muthowifProfile?->user?->name ?? '');
+
+        try {
+            app(BookingPeerReferralService::class)->transfer($booking, $target, $profile);
+        } catch (RuntimeException $e) {
+            return redirect()
+                ->route('muthowif.bookings.show', $booking)
+                ->with('error', $e->getMessage());
+        }
+
+        $freshId = (string) $booking->fresh()->getKey();
+
+        NotifyMuthowifOfNewBooking::dispatchAfterResponse($freshId);
+        NotifyCustomerOfBookingReferredToPeer::dispatchAfterResponse($freshId, $previousName);
+        broadcast(new CustomerBookingUpdated($booking->fresh()));
+
+        return redirect()
+            ->route('muthowif.bookings.index')
+            ->with('status', __('muthowif.bookings.refer_flash_success'));
+    }
+
     public function approveReschedule(Request $request, MuthowifBooking $booking, BookingRescheduleRequest $rescheduleRequest): RedirectResponse
     {
         $this->authorize('decidePostPayChange', $booking);
@@ -227,7 +274,7 @@ class BookingController extends Controller
                 $booking->refresh()->lockForUpdate();
 
                 if (! $rescheduleRequest->isPending()) {
-                    throw new \RuntimeException('Pengajuan reschedule sudah diproses.');
+                    throw new RuntimeException('Pengajuan reschedule sudah diproses.');
                 }
 
                 $rescheduleRequest->update([

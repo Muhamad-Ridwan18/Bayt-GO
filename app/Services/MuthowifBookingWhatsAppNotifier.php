@@ -198,6 +198,72 @@ class MuthowifBookingWhatsAppNotifier
     }
 
     /**
+     * Booking pending dialihkan ke muthowif lain — beri tahu jamaah.
+     */
+    public function notifyCustomerReferredToPeer(MuthowifBooking $booking, string $previousMuthowifName): void
+    {
+        if (! config('services.fonnte.customer_booking_referred_notify_enabled', true)) {
+            return;
+        }
+
+        $token = config('services.fonnte.token');
+        if ($token === null || $token === '') {
+            Log::debug('WhatsApp notify customer referred skipped: FONNTE_TOKEN kosong.');
+
+            return;
+        }
+
+        $booking->loadMissing(['customer', 'muthowifProfile.user']);
+        $customer = $booking->customer;
+        if ($customer === null) {
+            return;
+        }
+
+        $fonnteDial = IntlPhone::fonnteDial($customer->phone);
+        if ($fonnteDial === null) {
+            Log::warning('WhatsApp notify customer referred skipped: nomor customer kosong atau tidak valid.', [
+                'customer_id' => $customer->id,
+                'booking_id' => $booking->id,
+            ]);
+
+            return;
+        }
+
+        $locale = $this->localeForUser($customer->locale);
+
+        $this->withLocale($locale, function () use ($booking, $fonnteDial, $locale, $previousMuthowifName): void {
+            $newMuthowifName = $booking->muthowifProfile?->user?->name ?? __('whatsapp.fallback_muthowif', [], $locale);
+            $start = $booking->starts_on->format('d/m/Y');
+            $end = $booking->ends_on->format('d/m/Y');
+            $appName = config('app.name', 'BaytGo');
+            $url = route('bookings.show', $booking);
+
+            $lines = [
+                __('whatsapp.customer.referred.headline', ['app' => $appName], $locale),
+                '',
+                __('whatsapp.customer.referred.body', [
+                    'previous' => $previousMuthowifName !== '' ? $previousMuthowifName : __('whatsapp.fallback_muthowif', [], $locale),
+                    'new' => $newMuthowifName,
+                ], $locale),
+                '',
+            ];
+
+            if (filled($booking->booking_code)) {
+                $lines[] = __('whatsapp.customer.referred.booking_code', ['code' => $booking->booking_code], $locale);
+                $lines[] = '';
+            }
+
+            $lines[] = __('whatsapp.customer.referred.service_dates', ['start' => $start, 'end' => $end], $locale);
+            $lines[] = __('whatsapp.customer.referred.status', [], $locale);
+            $lines[] = '';
+            $lines[] = __('whatsapp.customer.referred.view_detail', [], $locale);
+            $lines[] = $url;
+
+            $this->sendToTarget($fonnteDial, implode("\n", $lines), $booking->id);
+        });
+    }
+
+    /**
      * Jamaah mengajukan reschedule — beri tahu muthowif (panel booking).
      */
     public function notifyMuthowifRescheduleRequested(MuthowifBooking $booking, BookingRescheduleRequest $rescheduleRequest): void

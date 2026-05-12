@@ -51,6 +51,14 @@ return [
             'status' => '*Status:* Awaiting payment',
             'pay_at' => '*Continue payment at:*',
         ],
+        'referred' => [
+            'headline' => '*:app* — booking reassigned to another muthowif',
+            'body' => '*:previous* referred your request to *:new*. Please check the app for status updates.',
+            'booking_code' => '*Booking code:* :code',
+            'service_dates' => '*Service dates:* :start - :end',
+            'status' => '*Status:* Waiting for the new muthowif to approve',
+            'view_detail' => '*Booking details:*',
+        ],
         'reschedule_submitted' => [
             'headline' => '*:app* — reschedule submitted',
             'body' => 'Your date change request was forwarded to *:muthowif*.',

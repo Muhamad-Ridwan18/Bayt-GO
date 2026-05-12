@@ -14,6 +14,7 @@
             @include('muthowif.bookings.partials.show-live', [
                 'booking' => $booking,
                 'addonsById' => $addonsById,
+                'peerRecommendTargets' => $peerRecommendTargets,
             ])
         </div>
     </div>

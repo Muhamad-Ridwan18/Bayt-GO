@@ -51,6 +51,14 @@ return [
             'status' => '*Status:* Menunggu pembayaran',
             'pay_at' => '*Lanjutkan pembayaran di:*',
         ],
+        'referred' => [
+            'headline' => '*:app* — booking dialihkan ke muthowif lain',
+            'body' => 'Muthowif *:previous* mengarahkan permintaan Anda ke *:new*. Silakan pantau status di aplikasi.',
+            'booking_code' => '*Kode booking:* :code',
+            'service_dates' => '*Tanggal layanan:* :start - :end',
+            'status' => '*Status:* Menunggu persetujuan muthowif baru',
+            'view_detail' => '*Detail booking:*',
+        ],
         'reschedule_submitted' => [
             'headline' => '*:app* — pengajuan reschedule',
             'body' => 'Pengajuan pergantian tanggal Anda sudah kami teruskan ke *:muthowif*.',

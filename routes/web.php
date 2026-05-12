@@ -220,6 +220,7 @@ Route::middleware('auth')->group(function () {
             Route::get('bookings/{booking}/documents/{type}', [CustomerBookingController::class, 'downloadDocument'])
                 ->where('type', 'outbound|return|passport|itinerary|visa')
                 ->name('bookings.documents.show');
+            Route::post('bookings/{booking}/recommend-peer', [MuthowifBookingController::class, 'recommendToPeer'])->name('bookings.recommend-peer');
             Route::get('bookings/{booking}', [MuthowifBookingController::class, 'show'])->name('bookings.show');
             Route::post('bookings/{booking}/confirm', [MuthowifBookingController::class, 'confirm'])->name('bookings.confirm');
             Route::post('bookings/{booking}/cancel', [MuthowifBookingController::class, 'cancel'])->name('bookings.cancel');

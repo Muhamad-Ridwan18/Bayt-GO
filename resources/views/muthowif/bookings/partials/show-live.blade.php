@@ -201,6 +201,33 @@
                                     </button>
                                 </form>
                             </div>
+                            @if (isset($peerRecommendTargets) && $peerRecommendTargets->isNotEmpty())
+                                <div class="mt-4 rounded-xl border border-violet-200/90 bg-violet-50/40 p-4 ring-1 ring-violet-100/80">
+                                    <p class="text-sm font-semibold text-slate-900">{{ __('muthowif.bookings.refer_heading') }}</p>
+                                    <p class="mt-1 text-xs leading-relaxed text-slate-600">{{ __('muthowif.bookings.refer_hint') }}</p>
+                                    <form method="POST" action="{{ route('muthowif.bookings.recommend-peer', $b) }}" class="mt-3 flex flex-col gap-2 sm:flex-row sm:items-stretch" onsubmit="return confirm(@json(__('muthowif.bookings.refer_confirm')));">
+                                        @csrf
+                                        <label class="min-w-0 flex-1">
+                                            <span class="sr-only">{{ __('muthowif.bookings.refer_select_label') }}</span>
+                                            <select
+                                                name="target_muthowif_profile_id"
+                                                required
+                                                class="h-11 w-full rounded-xl border border-slate-200 bg-white px-3 text-sm font-medium text-slate-900 shadow-sm focus:border-brand-400 focus:outline-none focus:ring-2 focus:ring-brand-500/20"
+                                            >
+                                                <option value="">{{ __('muthowif.bookings.refer_select_placeholder') }}</option>
+                                                @foreach ($peerRecommendTargets as $tp)
+                                                    <option value="{{ $tp->id }}">{{ $tp->user?->name ?? '—' }}</option>
+                                                @endforeach
+                                            </select>
+                                        </label>
+                                        <button type="submit" class="inline-flex h-11 shrink-0 items-center justify-center gap-2 rounded-xl bg-violet-700 px-4 text-sm font-semibold text-white shadow-sm transition hover:bg-violet-800 sm:px-5">
+                                            {{ __('muthowif.bookings.refer_submit') }}
+                                        </button>
+                                    </form>
+                                </div>
+                            @elseif (isset($peerRecommendTargets))
+                                <p class="mt-3 text-xs text-slate-500">{{ __('muthowif.bookings.refer_no_candidates') }}</p>
+                            @endif
                         @elseif ($st === BookingStatus::Confirmed && $b->payment_status === PaymentStatus::Pending)
                             <div class="border-t border-slate-100 pt-4">
                                 <form method="POST" action="{{ route('muthowif.bookings.cancel', $b) }}" onsubmit="return confirm(@json(__('muthowif.bookings.cancel_unpaid_confirm')));">
