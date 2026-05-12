@@ -17,15 +17,12 @@
             @endif
         @endif
 
-        <h2 class="mt-5 text-base font-bold text-slate-900">{{ __('bookings.show.referral_network_heading') }}</h2>
-        <p class="mt-1 text-xs leading-relaxed text-slate-600 sm:text-sm">{{ __('bookings.show.referral_network_intro') }}</p>
-
         @if ($referralNetworkAlternatives->isEmpty())
-            <p class="mt-4 rounded-2xl border border-dashed border-slate-200 bg-white/80 px-4 py-6 text-center text-sm text-slate-600">
+            <p class="mt-5 rounded-2xl border border-dashed border-slate-200 bg-white/80 px-4 py-6 text-center text-sm text-slate-600">
                 {{ __('bookings.show.referral_network_empty') }}
             </p>
         @else
-            <ul class="mt-4 space-y-3">
+            <ul class="mt-5 space-y-3">
                 @foreach ($referralNetworkAlternatives as $profile)
                     <li class="flex flex-col gap-3 rounded-2xl border border-slate-200/90 bg-white/95 p-4 shadow-sm ring-1 ring-slate-100/80 sm:flex-row sm:items-center sm:justify-between">
                         <div class="flex min-w-0 items-center gap-3">
