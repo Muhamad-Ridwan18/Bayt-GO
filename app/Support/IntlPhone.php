@@ -6,6 +6,8 @@ use libphonenumber\NumberParseException;
 use libphonenumber\PhoneNumber;
 use libphonenumber\PhoneNumberFormat;
 use libphonenumber\PhoneNumberUtil;
+use Symfony\Component\Intl\Countries;
+use Symfony\Component\Intl\Exception\MissingResourceException;
 
 final class IntlPhone
 {
@@ -261,8 +263,7 @@ final class IntlPhone
                 continue;
             }
             $iso = strtoupper($region);
-            $nameRaw = \Locale::getDisplayRegion('en-'.$iso, $locale);
-            $name = is_string($nameRaw) && $nameRaw !== '' ? $nameRaw : $iso;
+            $name = self::countryDisplayName($iso, $locale);
             $rows[] = [
                 'd' => (string) $cc,
                 'iso' => $iso,
@@ -305,5 +306,18 @@ final class IntlPhone
         }
 
         return mb_chr(0x1F1E6 + ord($s[0]) - 65).mb_chr(0x1F1E6 + ord($s[1]) - 65);
+    }
+
+    private static function countryDisplayName(string $iso3166Alpha2, string $displayLocale): string
+    {
+        try {
+            return Countries::getName($iso3166Alpha2, $displayLocale);
+        } catch (MissingResourceException) {
+            try {
+                return Countries::getName($iso3166Alpha2, 'en');
+            } catch (MissingResourceException) {
+                return $iso3166Alpha2;
+            }
+        }
     }
 }
