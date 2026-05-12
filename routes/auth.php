@@ -18,6 +18,16 @@ Route::middleware('guest')->group(function () {
 
     Route::post('register', [RegisteredUserController::class, 'store']);
 
+    Route::get('register/verify-whatsapp', [RegisteredUserController::class, 'showVerifyWhatsApp'])
+        ->name('register.verify-whatsapp');
+    Route::post('register/complete', [RegisteredUserController::class, 'complete'])
+        ->middleware('throttle:10,1')
+        ->name('register.complete');
+
+    Route::post('register/pending-phone', [RegisteredUserController::class, 'updatePendingPhone'])
+        ->middleware('throttle:20,1')
+        ->name('register.pending-phone');
+
     Route::post('register/otp/send', [RegisterOtpController::class, 'send'])
         ->middleware('throttle:10,1')
         ->name('register.otp.send');

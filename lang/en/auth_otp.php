@@ -16,4 +16,12 @@ return [
     'js_code_digits' => 'Enter the 6-digit OTP code.',
     'js_verify_failed_fallback' => 'Verification failed.',
     'js_verify_ok_fallback' => 'Number verified.',
+    'back_edit' => 'Edit registration details',
+    'finish_register' => 'Finish registration',
+    'session_expired' => 'Your registration session expired. Please register again.',
+    'change_phone_title' => 'Wrong number?',
+    'change_phone_hint' => 'Enter a new WhatsApp number below. Any previous verification will be reset and you will need to request a new OTP.',
+    'new_phone_label' => 'New WhatsApp number',
+    'save_new_phone' => 'Save number',
+    'phone_updated' => 'Number updated. Send a new OTP to this number.',
 ];

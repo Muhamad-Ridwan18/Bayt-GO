@@ -1,15 +1,12 @@
 <x-guest-layout>
-    @php
-        $registerOtpRoutes = [
-            'send' => route('register.otp.send'),
-            'verify' => route('register.otp.verify'),
-            'clear' => route('register.otp.clear'),
-        ];
-    @endphp
-
     <div class="mb-6">
         <h1 class="text-xl font-semibold text-slate-900">Buat akun</h1>
         <p class="mt-1 text-sm text-slate-500">Pilih peran Anda. Muthowif wajib melengkapi biodata, passport, foto, dan dokumen.</p>
+        @if ($otpEnabled ?? false)
+            <p class="mt-2 text-sm text-brand-800 bg-brand-50/80 border border-brand-100 rounded-lg px-3 py-2">
+                Setelah Anda mengirim formulir, langkah berikutnya adalah verifikasi nomor WhatsApp dengan kode OTP sebelum akun dibuat.
+            </p>
+        @endif
     </div>
 
     <form
@@ -18,7 +15,7 @@
         action="{{ route('register') }}"
         enctype="multipart/form-data"
         class="space-y-5"
-        x-data="registerFormData()"
+        x-data="{ role: @json(old('role', 'customer')), customerType: @json(old('customer_type', 'personal')) }"
     >
         @csrf
 
@@ -26,14 +23,14 @@
             <span class="block text-sm font-medium text-slate-700 mb-2">Saya mendaftar sebagai</span>
             <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
                 <label class="relative flex cursor-pointer rounded-xl border-2 p-4 transition has-[:checked]:border-brand-600 has-[:checked]:bg-brand-50/80 border-slate-200 hover:border-brand-300">
-                    <input type="radio" name="role" value="customer" class="mt-0.5 text-brand-600 focus:ring-brand-500" {{ old('role', 'customer') === 'customer' ? 'checked' : '' }} required x-on:change="role = 'customer'; onPhoneChange()">
+                    <input type="radio" name="role" value="customer" class="mt-0.5 text-brand-600 focus:ring-brand-500" {{ old('role', 'customer') === 'customer' ? 'checked' : '' }} required x-on:change="role = 'customer'">
                     <span class="ms-3">
                         <span class="block text-sm font-semibold text-slate-900">Jamaah</span>
                         <span class="block text-xs text-slate-500 mt-0.5">Buat permintaan pendampingan</span>
                     </span>
                 </label>
                 <label class="relative flex cursor-pointer rounded-xl border-2 p-4 transition has-[:checked]:border-brand-600 has-[:checked]:bg-brand-50/80 border-slate-200 hover:border-brand-300">
-                    <input type="radio" name="role" value="muthowif" class="mt-0.5 text-brand-600 focus:ring-brand-500" {{ old('role') === 'muthowif' ? 'checked' : '' }} x-on:change="role = 'muthowif'; onPhoneChange()">
+                    <input type="radio" name="role" value="muthowif" class="mt-0.5 text-brand-600 focus:ring-brand-500" {{ old('role') === 'muthowif' ? 'checked' : '' }} x-on:change="role = 'muthowif'">
                     <span class="ms-3">
                         <span class="block text-sm font-semibold text-slate-900">Muthowif</span>
                         <span class="block text-xs text-slate-500 mt-0.5">Lengkapi dokumen &amp; riwayat</span>
@@ -103,10 +100,9 @@
                 <div>
                     <x-input-label for="phone_customer" value="No. WhatsApp" />
                     <x-text-input id="phone_customer" class="block mt-1 w-full border-slate-300" type="text" name="phone" :value="old('phone')" placeholder="08xxxxxxxxxx" autocomplete="tel" />
+                    <p class="mt-1 text-xs text-slate-500">Gunakan nomor yang terhubung ke WhatsApp — Anda akan memverifikasinya di langkah berikutnya.</p>
                     <x-input-error :messages="$errors->get('phone')" class="mt-2" />
                 </div>
-
-                @include('auth.partials.register-otp', ['roleGate' => 'customer'])
 
                 <div>
                     <x-input-label for="address_customer" value="Alamat" />
@@ -212,10 +208,9 @@
             <div>
                 <x-input-label for="phone_muthowif" value="No. HP / WhatsApp" />
                 <x-text-input id="phone_muthowif" class="block mt-1 w-full border-slate-300" type="text" name="phone" :value="old('phone')" placeholder="08xxxxxxxxxx" autocomplete="tel" />
+                <p class="mt-1 text-xs text-slate-500">Nomor ini akan diverifikasi dengan OTP WhatsApp setelah formulir dikirim.</p>
                 <x-input-error :messages="$errors->get('phone')" class="mt-2" />
             </div>
-
-            @include('auth.partials.register-otp', ['roleGate' => 'muthowif'])
 
             <div>
                 <x-input-label for="address_muthowif" value="Alamat lengkap" />
@@ -234,148 +229,9 @@
             <a class="text-sm text-slate-600 hover:text-brand-700 font-medium text-center sm:text-left" href="{{ route('login') }}">
                 Sudah punya akun? Masuk
             </a>
-            <x-primary-button class="w-full sm:w-auto justify-center" x-bind:disabled="otpEnabled && !phoneVerified && (role === 'customer' || role === 'muthowif')">
+            <x-primary-button class="w-full sm:w-auto justify-center" type="submit">
                 Daftar
             </x-primary-button>
         </div>
     </form>
-
-    <script>
-        function registerFormData() {
-            return {
-                otpRoutes: @json($registerOtpRoutes),
-                otpWaitTpl: @json(__('auth_otp.wait')),
-                otpJs: {
-                    phoneRequired: @json(__('auth_otp.js_phone_required')),
-                    sendFailed: @json(__('auth_otp.js_send_failed_fallback')),
-                    sendOk: @json(__('auth_otp.js_send_ok_fallback')),
-                    codeDigits: @json(__('auth_otp.js_code_digits')),
-                    verifyFailed: @json(__('auth_otp.js_verify_failed_fallback')),
-                    verifyOk: @json(__('auth_otp.js_verify_ok_fallback')),
-                },
-                role: @json(old('role', 'customer')),
-                customerType: @json(old('customer_type', 'personal')),
-                otpEnabled: @json($otpEnabled),
-                phoneVerified: @json($phoneVerifiedInitial ?? false),
-                otpSendLoading: false,
-                otpVerifyLoading: false,
-                otpFeedback: '',
-                otpCode: '',
-                resendCooldown: 0,
-                _resendTimer: null,
-                phoneFieldId() {
-                    return this.role === 'customer' ? 'phone_customer' : 'phone_muthowif';
-                },
-                phoneValue() {
-                    const el = document.getElementById(this.phoneFieldId());
-                    return el ? String(el.value).trim() : '';
-                },
-                async sendOtp() {
-                    if (!this.otpEnabled) return;
-                    this.otpFeedback = '';
-                    const phone = this.phoneValue();
-                    if (phone.length < 8) {
-                        this.otpFeedback = this.otpJs.phoneRequired;
-                        return;
-                    }
-                    this.otpSendLoading = true;
-                    try {
-                        const res = await fetch(this.otpRoutes.send, {
-                            method: 'POST',
-                            headers: {
-                                'Content-Type': 'application/json',
-                                Accept: 'application/json',
-                                'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content,
-                                'X-Requested-With': 'XMLHttpRequest',
-                            },
-                            credentials: 'same-origin',
-                            body: JSON.stringify({ phone, role: this.role }),
-                        });
-                        const data = await res.json().catch(() => ({}));
-                        if (!res.ok) {
-                            const msg = data.errors?.phone?.[0] || data.message || this.otpJs.sendFailed;
-                            throw new Error(msg);
-                        }
-                        this.otpFeedback = data.message || this.otpJs.sendOk;
-                        this.phoneVerified = false;
-                        this.startResendCooldown();
-                    } catch (e) {
-                        this.otpFeedback = e.message || this.otpJs.sendFailed;
-                    } finally {
-                        this.otpSendLoading = false;
-                    }
-                },
-                startResendCooldown() {
-                    if (this._resendTimer) {
-                        clearInterval(this._resendTimer);
-                        this._resendTimer = null;
-                    }
-                    this.resendCooldown = 60;
-                    this._resendTimer = setInterval(() => {
-                        this.resendCooldown--;
-                        if (this.resendCooldown <= 0) {
-                            clearInterval(this._resendTimer);
-                            this._resendTimer = null;
-                        }
-                    }, 1000);
-                },
-                async verifyOtp() {
-                    if (!this.otpEnabled) return;
-                    this.otpFeedback = '';
-                    const phone = this.phoneValue();
-                    const otp = String(this.otpCode).replace(/\D/g, '');
-                    if (otp.length !== 6) {
-                        this.otpFeedback = this.otpJs.codeDigits;
-                        return;
-                    }
-                    this.otpVerifyLoading = true;
-                    try {
-                        const res = await fetch(this.otpRoutes.verify, {
-                            method: 'POST',
-                            headers: {
-                                'Content-Type': 'application/json',
-                                Accept: 'application/json',
-                                'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content,
-                                'X-Requested-With': 'XMLHttpRequest',
-                            },
-                            credentials: 'same-origin',
-                            body: JSON.stringify({ phone, otp }),
-                        });
-                        const data = await res.json().catch(() => ({}));
-                        if (!res.ok) {
-                            const msg = data.errors?.otp?.[0] || data.message || this.otpJs.verifyFailed;
-                            throw new Error(msg);
-                        }
-                        this.phoneVerified = true;
-                        this.otpFeedback = data.message || this.otpJs.verifyOk;
-                    } catch (e) {
-                        this.otpFeedback = e.message || this.otpJs.verifyFailed;
-                    } finally {
-                        this.otpVerifyLoading = false;
-                    }
-                },
-                async clearOtpSession() {
-                    try {
-                        await fetch(this.otpRoutes.clear, {
-                            method: 'POST',
-                            headers: {
-                                'Content-Type': 'application/json',
-                                Accept: 'application/json',
-                                'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content,
-                                'X-Requested-With': 'XMLHttpRequest',
-                            },
-                            credentials: 'same-origin',
-                            body: JSON.stringify({}),
-                        });
-                    } catch (_) {}
-                },
-                async onPhoneChange() {
-                    this.phoneVerified = false;
-                    this.otpCode = '';
-                    this.otpFeedback = '';
-                    await this.clearOtpSession();
-                },
-            };
-        }
-    </script>
 </x-guest-layout>

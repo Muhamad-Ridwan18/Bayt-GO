@@ -16,4 +16,12 @@ return [
     'js_code_digits' => 'Masukkan 6 digit kode OTP.',
     'js_verify_failed_fallback' => 'Verifikasi gagal.',
     'js_verify_ok_fallback' => 'Nomor terverifikasi.',
+    'back_edit' => 'Ubah data pendaftaran',
+    'finish_register' => 'Selesaikan pendaftaran',
+    'session_expired' => 'Sesi pendaftaran kedaluwarsa. Silakan daftar ulang.',
+    'change_phone_title' => 'Salah nomor?',
+    'change_phone_hint' => 'Ganti nomor WhatsApp di bawah. Verifikasi sebelumnya akan direset dan Anda perlu meminta kode OTP lagi.',
+    'new_phone_label' => 'Nomor WhatsApp baru',
+    'save_new_phone' => 'Simpan nomor',
+    'phone_updated' => 'Nomor diperbarui. Silakan kirim ulang kode OTP ke nomor baru.',
 ];
