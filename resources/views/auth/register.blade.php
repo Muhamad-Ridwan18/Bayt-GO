@@ -43,7 +43,8 @@
 
         <fieldset class="space-y-3 border-0 p-0 m-0" x-bind:disabled="selectedRole !== 'customer'">
             <legend class="sr-only">Tipe jamaah</legend>
-            <div x-show="selectedRole === 'customer'" x-cloak>
+            {{-- Jangan pakai x-cloak di sini: bisa selamanya tersembunyi jika Alpine lambat/error. SSR + x-show saja. --}}
+            <div x-show="selectedRole === 'customer'" @if (old('role', 'customer') !== 'customer') style="display: none" @endif>
                 <span class="block text-sm font-medium text-slate-700 mb-2">Tipe jamaah</span>
                 <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
                     <label class="relative flex cursor-pointer rounded-xl border-2 p-4 transition has-[:checked]:border-brand-600 has-[:checked]:bg-brand-50/80 border-slate-200 hover:border-brand-300">
@@ -80,7 +81,7 @@
             </div>
         </fieldset>
 
-        <div x-show="selectedRole === 'customer' || selectedRole === 'muthowif'" x-cloak class="space-y-2">
+        <div class="space-y-2">
             <x-input-label for="phone" value="No. WhatsApp" />
             <x-text-input id="phone" class="block mt-1 w-full border-slate-300" type="text" name="phone" :value="old('phone')" placeholder="08xxxxxxxxxx" autocomplete="tel" />
             <p class="mt-1 text-xs text-slate-500">Gunakan nomor yang terhubung ke WhatsApp — verifikasi OTP dilakukan pada langkah berikutnya setelah formulir dikirim.</p>
@@ -104,14 +105,14 @@
 
         <fieldset class="space-y-5 border-0 p-0 m-0" x-bind:disabled="selectedRole !== 'customer'">
             <legend class="sr-only">Alamat jamaah</legend>
-            <div x-show="selectedRole === 'customer'" x-cloak class="space-y-5">
+            <div x-show="selectedRole === 'customer'" class="space-y-5" @if (old('role', 'customer') !== 'customer') style="display: none" @endif>
                 <div>
                     <x-input-label for="address_customer" value="Alamat" />
                     <textarea id="address_customer" name="address" rows="3" class="block mt-1 w-full rounded-lg border-slate-300 shadow-sm focus:border-brand-500 focus:ring-brand-500 text-sm" placeholder="Alamat lengkap">{{ old('address') }}</textarea>
                     <x-input-error :messages="$errors->get('address')" class="mt-2" />
                 </div>
 
-                <div x-show="customerType === 'company'" x-cloak>
+                <div x-show="customerType === 'company'" @if (old('customer_type') !== 'company') style="display: none" @endif>
                     <x-input-label for="ppui_number" value="Nomor PPUI" />
                     <x-text-input id="ppui_number" class="block mt-1 w-full border-slate-300" type="text" name="ppui_number" :value="old('ppui_number')" autocomplete="off" x-bind:disabled="customerType !== 'company'" />
                     <p class="mt-1 text-xs text-slate-500">Wajib untuk jamaah tipe perusahaan.</p>
@@ -132,7 +133,12 @@
             <x-input-error :messages="$errors->get('password_confirmation')" class="mt-2" />
         </div>
 
-        <fieldset x-show="selectedRole === 'muthowif'" x-cloak class="space-y-5 pt-2 border-t border-slate-200 m-0 min-w-0 border-0 p-0" x-bind:disabled="selectedRole !== 'muthowif'">
+        <fieldset
+            x-show="selectedRole === 'muthowif'"
+            class="space-y-5 pt-2 border-t border-slate-200 m-0 min-w-0 border-0 p-0"
+            x-bind:disabled="selectedRole !== 'muthowif'"
+            @if (old('role') !== 'muthowif') style="display: none" @endif
+        >
             <legend class="sr-only">Data muthowif</legend>
             <p class="text-sm font-medium text-slate-800">Data muthowif</p>
             <p class="text-xs text-slate-500 -mt-3">Gunakan tombol <strong>+ Tambah</strong> untuk menambah baris bahasa, studi, pengalaman, atau dokumen.</p>
