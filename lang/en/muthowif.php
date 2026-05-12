@@ -20,7 +20,7 @@ return [
         'refund_pending_cta' => 'Refund pending admin',
         'refund_history' => 'Refund history',
         'refer_heading' => 'Refer to another muthowif',
-        'refer_hint' => 'If you approve one overlapping request and still have another pending, you can hand off this booking to a peer who offers the same service type and has the slot free. Pricing follows the new muthowif; add-ons are matched by name when possible.',
+        'refer_hint' => 'If you approve one overlapping request, you can hand off another to a peer who offers the same service type. The list shows all verified muthowifs (except you) whose pilgrim limits fit this request — availability for these exact dates is checked when you submit. Pricing follows the new muthowif; add-ons are matched by name when possible.',
         'refer_select_label' => 'Choose muthowif',
         'refer_select_placeholder' => '— Select muthowif —',
         'refer_submit' => 'Transfer booking',

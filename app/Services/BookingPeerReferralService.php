@@ -9,6 +9,7 @@ use App\Enums\PaymentStatus;
 use App\Models\MuthowifBooking;
 use App\Models\MuthowifProfile;
 use App\Models\MuthowifService;
+use App\Models\User;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\DB;
 use RuntimeException;
@@ -82,7 +83,8 @@ class BookingPeerReferralService
     }
 
     /**
-     * Kandidat rekomendasi: disetujui, bukan diri sendiri, punya layanan sama, kapasitas & slot ok.
+     * Kandidat rekomendasi: disetujui, bukan diri sendiri, punya layanan sama & kapasitas jemaah sesuai.
+     * Ketersediaan slot tanggal tidak difilter di sini (bisa panjang); dicek saat transfer.
      *
      * @return Collection<int, MuthowifProfile>
      */
@@ -92,22 +94,20 @@ class BookingPeerReferralService
             return collect();
         }
 
-        $start = $booking->starts_on->copy()->startOfDay();
-        $end = $booking->ends_on->copy()->startOfDay();
-
         return MuthowifProfile::query()
             ->with(['user', 'services.addOns'])
-            ->where('verification_status', MuthowifVerificationStatus::Approved)
+            ->where('muthowif_profiles.verification_status', MuthowifVerificationStatus::Approved)
             ->whereKeyNot($fromProfile->getKey())
             ->whereHas('services', fn ($q) => $q->where('type', $booking->service_type->value))
-            ->orderByDesc('verified_at')
-            ->limit(100)
+            ->orderBy(
+                User::query()
+                    ->select('name')
+                    ->whereColumn('users.id', 'muthowif_profiles.user_id')
+                    ->limit(1)
+            )
+            ->limit(500)
             ->get()
-            ->filter(function (MuthowifProfile $p) use ($booking, $start, $end): bool {
-                if (! $p->isSlotAvailableForRange($start, $end)) {
-                    return false;
-                }
-
+            ->filter(function (MuthowifProfile $p) use ($booking): bool {
                 $svc = $p->services->firstWhere('type', $booking->service_type);
                 if (! $svc instanceof MuthowifService) {
                     return false;
