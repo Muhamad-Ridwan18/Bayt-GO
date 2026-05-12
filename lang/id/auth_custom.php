@@ -5,6 +5,8 @@ return [
     'whatsapp_label' => 'Nomor WhatsApp',
     'whatsapp_placeholder' => 'Contoh: 081234567890 atau +65 9123 4567 (+kode negara disarankan di luar wilayah default)',
     'phone_country_label' => 'Kode negara',
+    'phone_country_search_placeholder' => 'Cari nama negara…',
+    'phone_country_no_results' => 'Tidak ada negara yang cocok.',
     'phone_national_hint' => 'Nomor lokal tanpa kode negara (untuk Indonesia boleh 08… atau 8…).',
     'register_phone_hint' => 'Nomor untuk WhatsApp. Verifikasi OTP dilakukan pada langkah berikutnya setelah formulir dikirim.',
     'send_otp' => 'Kirim Kode OTP',

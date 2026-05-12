@@ -89,14 +89,33 @@
     class="relative space-y-2"
     x-data='{
         countryOpen: false,
+        countryQuery: "",
         countries: @json($countries),
         phoneDial: @json($dialInit),
         phoneNational: @json($nationalInit),
         countryIso: @json($countryIsoInit),
+        filteredCountries() {
+            const q = this.countryQuery.trim().toLowerCase().replace(/^\+/, "");
+            if (!q) return this.countries;
+            return this.countries.filter((c) => {
+                const name = String(c.name || "").toLowerCase();
+                const dial = String(c.d || "");
+                const iso = String(c.iso || "").toLowerCase();
+                return name.includes(q) || dial.includes(q) || iso.includes(q);
+            });
+        },
         pick(c) {
             this.phoneDial = c.d;
             this.countryIso = c.iso ? c.iso : "";
             this.countryOpen = false;
+            this.countryQuery = "";
+        },
+        toggleCountryPicker() {
+            this.countryOpen = !this.countryOpen;
+            if (this.countryOpen) {
+                this.countryQuery = "";
+                this.$nextTick(() => this.$refs.countrySearch?.focus());
+            }
         },
         selected() {
             const x = this.countries.find((c) => c.d === this.phoneDial);
@@ -133,7 +152,7 @@
                 type="button"
                 id="{{ $selectId }}"
                 class="flex items-center gap-2 h-full min-h-[2.75rem] ps-3 pe-3 sm:pe-2 border-e border-slate-200 bg-slate-50/90 hover:bg-slate-100 rounded-s-xl text-left transition"
-                @click="countryOpen = !countryOpen"
+                @click="toggleCountryPicker()"
                 :aria-expanded="countryOpen"
                 aria-haspopup="listbox"
                 aria-controls="country-listbox-{{ $inputId }}"
@@ -153,12 +172,27 @@
                 x-transition:leave="transition ease-in duration-75"
                 x-transition:leave-start="opacity-100 scale-100"
                 x-transition:leave-end="opacity-0 scale-95"
-                class="absolute left-0 top-full z-[100] mt-1 w-[min(100vw-2rem,20rem)] max-h-64 overflow-y-auto rounded-xl border border-slate-200 bg-white py-1 shadow-lg"
+                class="absolute left-0 top-full z-[100] mt-1 flex w-[min(100vw-2rem,20rem)] max-h-72 flex-col rounded-xl border border-slate-200 bg-white shadow-lg"
                 x-cloak
                 role="listbox"
                 id="country-listbox-{{ $inputId }}"
             >
-                <template x-for="c in countries" :key="c.d">
+                <div class="sticky top-0 z-10 border-b border-slate-100 bg-white p-2">
+                    <input
+                        type="search"
+                        x-ref="countrySearch"
+                        x-model="countryQuery"
+                        autocomplete="off"
+                        autocorrect="off"
+                        spellcheck="false"
+                        placeholder="{{ __('auth_custom.phone_country_search_placeholder') }}"
+                        class="w-full rounded-lg border border-slate-200 bg-slate-50 px-3 py-2 text-sm text-slate-900 placeholder:text-slate-400 focus:border-brand-500 focus:bg-white focus:outline-none focus:ring-1 focus:ring-brand-500"
+                        @keydown.escape.stop="countryOpen = false"
+                        @click.stop
+                    />
+                </div>
+                <div class="max-h-52 overflow-y-auto py-1">
+                <template x-for="c in filteredCountries()" :key="c.d">
                     <button
                         type="button"
                         class="flex w-full items-center gap-3 px-3 py-2.5 text-left text-sm hover:bg-slate-100 transition"
@@ -172,6 +206,11 @@
                         <span class="shrink-0 text-slate-500 tabular-nums" x-text="'+' + c.d"></span>
                     </button>
                 </template>
+                <p
+                    x-show="filteredCountries().length === 0"
+                    class="px-3 py-4 text-center text-sm text-slate-500"
+                >{{ __('auth_custom.phone_country_no_results') }}</p>
+                </div>
             </div>
         </div>
 
