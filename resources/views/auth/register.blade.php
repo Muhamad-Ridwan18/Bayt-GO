@@ -9,14 +9,14 @@
         @endif
     </div>
 
-    {{-- Gunakan selectedRole (bukan "role") agar tidak bentrok dengan properti DOM Element.role / ARIA di Alpine --}}
+    {{-- x-data pakai kutip tunggal: @json mengeluarkan "..." sehingga tidak memutus atribut HTML --}}
     <form
         id="register-form"
         method="POST"
         action="{{ route('register') }}"
         enctype="multipart/form-data"
         class="space-y-5"
-        x-data="{ selectedRole: @json(old('role', 'customer')), customerType: @json(old('customer_type', 'personal')) }"
+        x-data='{ selectedRole: @json(old("role", "customer")), customerType: @json(old("customer_type", "personal")) }'
     >
         @csrf
 
