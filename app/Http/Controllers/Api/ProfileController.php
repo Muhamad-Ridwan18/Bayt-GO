@@ -2,10 +2,14 @@
 
 namespace App\Http\Controllers\Api;
 
+use App\Enums\MuthowifVerificationStatus;
 use App\Http\Controllers\Controller;
+use App\Models\MuthowifProfile;
+use App\Services\MuthowifReferralCodeService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Validation\Rules\Password;
+use Illuminate\Validation\ValidationException;
 
 class ProfileController extends Controller
 {
@@ -15,7 +19,7 @@ class ProfileController extends Controller
         $muthowif = $user->muthowifProfile;
 
         if ($muthowif) {
-            $muthowif->load('supportingDocuments');
+            $muthowif->load(['supportingDocuments', 'referredBy.user']);
         }
 
         return response()->json([
@@ -34,12 +38,16 @@ class ProfileController extends Controller
                 'educations' => $muthowif->educationsForDisplay() ?: [],
                 'work_experiences' => $muthowif->workExperiencesForDisplay() ?: [],
                 'reference_text' => $muthowif->reference_text,
-                'supporting_documents' => $muthowif->supportingDocuments->map(fn($d) => [
+                'referral_code' => $muthowif->referral_code,
+                'referred_by_muthowif_profile_id' => $muthowif->referred_by_muthowif_profile_id,
+                'inviter_name' => $muthowif->referredBy?->user?->name,
+                'inviter_referral_code' => $muthowif->referredBy?->referral_code,
+                'supporting_documents' => $muthowif->supportingDocuments->map(fn ($d) => [
                     'id' => $d->id,
-                    'url' => asset('storage/' . $d->path),
-                    'name' => $d->original_name
-                ])
-            ] : null
+                    'url' => asset('storage/'.$d->path),
+                    'name' => $d->original_name,
+                ]),
+            ] : null,
         ]);
     }
 
@@ -49,7 +57,7 @@ class ProfileController extends Controller
 
         $request->validate([
             'name' => ['required', 'string', 'max:255'],
-            'email' => ['required', 'string', 'lowercase', 'email', 'max:255', 'unique:users,email,' . $user->id],
+            'email' => ['required', 'string', 'lowercase', 'email', 'max:255', 'unique:users,email,'.$user->id],
         ]);
 
         $user->fill($request->only('name', 'email'));
@@ -62,7 +70,7 @@ class ProfileController extends Controller
 
         return response()->json([
             'message' => 'Informasi akun berhasil diperbarui',
-            'user' => $user
+            'user' => $user,
         ]);
     }
 
@@ -71,7 +79,7 @@ class ProfileController extends Controller
         $user = $request->user();
         $muthowif = $user->muthowifProfile;
 
-        if (!$muthowif) {
+        if (! $muthowif) {
             return response()->json(['message' => 'Profil Muthowif tidak ditemukan'], 404);
         }
 
@@ -84,9 +92,10 @@ class ProfileController extends Controller
             'educations' => 'nullable|array',
             'work_experiences' => 'nullable|array',
             'reference_text' => 'nullable|string',
+            'inviter_referral_code' => 'nullable|string|max:16',
         ]);
 
-        $muthowif->update([
+        $payload = [
             'phone' => $request->phone,
             'passport_number' => $request->passport_number,
             'birth_date' => $request->birth_date,
@@ -95,11 +104,41 @@ class ProfileController extends Controller
             'educations' => $request->educations,
             'work_experiences' => $request->work_experiences,
             'reference_text' => $request->reference_text,
-        ]);
+        ];
+
+        if ($muthowif->referred_by_muthowif_profile_id === null) {
+            $codeRaw = $request->input('inviter_referral_code');
+            $code = is_string($codeRaw) ? strtoupper(trim($codeRaw)) : '';
+            if ($code !== '') {
+                /** @var MuthowifProfile|null $inviter */
+                $inviter = MuthowifProfile::query()
+                    ->where('referral_code', $code)
+                    ->where('verification_status', MuthowifVerificationStatus::Approved)
+                    ->first();
+                if ($inviter === null) {
+                    throw ValidationException::withMessages([
+                        'inviter_referral_code' => [__('auth_custom.muthowif_referral_invalid')],
+                    ]);
+                }
+                if ((string) $inviter->getKey() === (string) $muthowif->getKey()) {
+                    throw ValidationException::withMessages([
+                        'inviter_referral_code' => [__('profile_public.referral_self_error')],
+                    ]);
+                }
+                $payload['referred_by_muthowif_profile_id'] = (string) $inviter->getKey();
+            }
+        }
+
+        $muthowif->update($payload);
+
+        $fresh = $muthowif->fresh();
+        if ($fresh !== null && $fresh->isApproved()) {
+            app(MuthowifReferralCodeService::class)->ensureAssigned($fresh);
+        }
 
         return response()->json([
             'message' => 'Profil publik berhasil diperbarui',
-            'muthowif' => $muthowif
+            'muthowif' => $muthowif->fresh()?->load('referredBy.user'),
         ]);
     }
 
@@ -115,10 +154,10 @@ class ProfileController extends Controller
         if ($request->hasFile('photo')) {
             $path = $request->file('photo')->store('muthowif/photos', 'public');
             $muthowif->update(['photo_path' => $path]);
-            
+
             return response()->json([
                 'message' => 'Foto profil berhasil diunggah',
-                'photo_url' => asset('storage/' . $path)
+                'photo_url' => asset('storage/'.$path),
             ]);
         }
 
@@ -137,10 +176,10 @@ class ProfileController extends Controller
         if ($request->hasFile('ktp')) {
             $path = $request->file('ktp')->store('muthowif/ktp', 'public');
             $muthowif->update(['ktp_image_path' => $path]);
-            
+
             return response()->json([
                 'message' => 'Scan KTP berhasil diunggah',
-                'ktp_url' => asset('storage/' . $path)
+                'ktp_url' => asset('storage/'.$path),
             ]);
         }
 
@@ -159,21 +198,21 @@ class ProfileController extends Controller
         if ($request->hasFile('document')) {
             $file = $request->file('document');
             $path = $file->store('muthowif/documents', 'public');
-            
+
             $doc = $muthowif->supportingDocuments()->create([
                 'path' => $path,
                 'original_name' => $file->getClientOriginalName(),
-                'sort_order' => $muthowif->supportingDocuments()->count() + 1
+                'sort_order' => $muthowif->supportingDocuments()->count() + 1,
             ]);
-            
+
             return response()->json([
                 'message' => 'Dokumen berhasil diunggah',
                 'document' => [
                     'id' => $doc->id,
                     'path' => $doc->path,
-                    'url' => asset('storage/' . $doc->path),
-                    'name' => $doc->original_name
-                ]
+                    'url' => asset('storage/'.$doc->path),
+                    'name' => $doc->original_name,
+                ],
             ]);
         }
 
@@ -184,7 +223,7 @@ class ProfileController extends Controller
     {
         $user = $request->user();
         $muthowif = $user->muthowifProfile;
-        
+
         $doc = $muthowif->supportingDocuments()->findOrFail($id);
         $doc->delete();
 
@@ -203,7 +242,7 @@ class ProfileController extends Controller
         ]);
 
         return response()->json([
-            'message' => 'Password berhasil diperbarui'
+            'message' => 'Password berhasil diperbarui',
         ]);
     }
 }

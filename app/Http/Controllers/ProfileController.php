@@ -2,12 +2,16 @@
 
 namespace App\Http\Controllers;
 
+use App\Enums\MuthowifVerificationStatus;
 use App\Http\Requests\ProfileUpdateRequest;
+use App\Models\MuthowifProfile;
+use App\Services\MuthowifReferralCodeService;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Redirect;
 use Illuminate\Support\Facades\Storage;
+use Illuminate\Validation\ValidationException;
 use Illuminate\View\View;
 
 class ProfileController extends Controller
@@ -17,7 +21,7 @@ class ProfileController extends Controller
      */
     public function edit(Request $request): View
     {
-        $request->user()->load('muthowifProfile');
+        $request->user()->load(['muthowifProfile.referredBy.user']);
 
         return view('profile.edit', [
             'user' => $request->user(),
@@ -60,6 +64,7 @@ class ProfileController extends Controller
             'work_experiences.*' => ['nullable', 'string', 'max:180'],
             'reference_text' => ['nullable', 'string', 'max:3000'],
             'photo' => ['nullable', 'image', 'mimes:jpg,jpeg,png,webp', 'max:5120'],
+            'inviter_referral_code' => ['nullable', 'string', 'max:16'],
         ]);
 
         $profile->phone = $validated['phone'] ?? null;
@@ -79,7 +84,35 @@ class ProfileController extends Controller
             $profile->photo_path = $request->file('photo')->store('muthowif/photos', 'local');
         }
 
+        if ($profile->referred_by_muthowif_profile_id === null) {
+            $codeRaw = $validated['inviter_referral_code'] ?? null;
+            $code = is_string($codeRaw) ? strtoupper(trim($codeRaw)) : '';
+            if ($code !== '') {
+                /** @var MuthowifProfile|null $inviter */
+                $inviter = MuthowifProfile::query()
+                    ->where('referral_code', $code)
+                    ->where('verification_status', MuthowifVerificationStatus::Approved)
+                    ->first();
+                if ($inviter === null) {
+                    throw ValidationException::withMessages([
+                        'inviter_referral_code' => [__('auth_custom.muthowif_referral_invalid')],
+                    ]);
+                }
+                if ((string) $inviter->getKey() === (string) $profile->getKey()) {
+                    throw ValidationException::withMessages([
+                        'inviter_referral_code' => [__('profile_public.referral_self_error')],
+                    ]);
+                }
+                $profile->referred_by_muthowif_profile_id = (string) $inviter->getKey();
+            }
+        }
+
         $profile->save();
+
+        $fresh = $profile->fresh();
+        if ($fresh !== null && $fresh->isApproved()) {
+            app(MuthowifReferralCodeService::class)->ensureAssigned($fresh);
+        }
 
         return Redirect::route('profile.edit')->with('status', 'public-profile-updated');
     }
