@@ -19,6 +19,8 @@ return [
         'detail_cta' => 'Detail & pengajuan',
         'refund_pending_cta' => 'Refund menunggu admin',
         'refund_history' => 'Riwayat refund',
+        'refer_cta_list' => 'Rekomendasi ke muthowif lain',
+        'refer_hint_list' => 'Pilih rekan di bawah. Ketersediaan tanggal dicek saat Anda mengirim.',
         'refer_heading' => 'Rekomendasikan ke muthowif lain',
         'refer_hint' => 'Jika Anda memilih satu booking untuk disetujui dan ada permintaan lain yang bentrok tanggal, alihkan permintaan tersebut ke rekan muthowif yang menawarkan jenis layanan yang sama. Daftar berikut adalah muthowif terverifikasi (bukan Anda) dengan kapasitas jemaah yang cocok — ketersediaan tanggal dicek otomatis saat Anda menekan alihkan. Harga mengikuti tarif muthowif tujuan; add-on yang namanya sama dicocokkan otomatis.',
         'refer_select_label' => 'Pilih muthowif tujuan',

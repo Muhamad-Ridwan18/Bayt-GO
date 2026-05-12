@@ -19,6 +19,8 @@ return [
         'detail_cta' => 'Details & requests',
         'refund_pending_cta' => 'Refund pending admin',
         'refund_history' => 'Refund history',
+        'refer_cta_list' => 'Refer to another muthowif',
+        'refer_hint_list' => 'Choose a colleague below. Date availability is checked when you submit.',
         'refer_heading' => 'Refer to another muthowif',
         'refer_hint' => 'If you approve one overlapping request, you can hand off another to a peer who offers the same service type. The list shows all verified muthowifs (except you) whose pilgrim limits fit this request — availability for these exact dates is checked when you submit. Pricing follows the new muthowif; add-ons are matched by name when possible.',
         'refer_select_label' => 'Choose muthowif',

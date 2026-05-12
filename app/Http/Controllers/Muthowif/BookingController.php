@@ -48,6 +48,7 @@ class BookingController extends Controller
         return view('muthowif.bookings.index', [
             'bookings' => $bookings,
             'addonsById' => $this->addOnsKeyById($bookings),
+            'peerRecommendByBooking' => $this->peerRecommendTargetsByBookingId($profile, $bookings),
         ]);
     }
 
@@ -83,6 +84,7 @@ class BookingController extends Controller
         return view('muthowif.bookings.partials.index-live', [
             'bookings' => $bookings,
             'addonsById' => $this->addOnsKeyById($bookings),
+            'peerRecommendByBooking' => $this->peerRecommendTargetsByBookingId($profile, $bookings),
         ]);
     }
 
@@ -331,6 +333,24 @@ class BookingController extends Controller
         return redirect()
             ->route('muthowif.bookings.show', $booking)
             ->with('status', 'Pengajuan reschedule ditolak.');
+    }
+
+    /**
+     * @param  LengthAwarePaginator<int, MuthowifBooking>  $bookings
+     * @return array<string, Collection<int, MuthowifProfile>>
+     */
+    private function peerRecommendTargetsByBookingId(MuthowifProfile $profile, LengthAwarePaginator $bookings): array
+    {
+        $referral = app(BookingPeerReferralService::class);
+        $map = [];
+        foreach ($bookings as $booking) {
+            if ($booking->status !== BookingStatus::Pending) {
+                continue;
+            }
+            $map[(string) $booking->getKey()] = $referral->listCandidates($booking, $profile);
+        }
+
+        return $map;
     }
 
     /**

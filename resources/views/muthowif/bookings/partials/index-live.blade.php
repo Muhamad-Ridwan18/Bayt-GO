@@ -5,6 +5,7 @@
     use App\Support\IndonesianNumber;
     use App\Support\PlatformFee;
     use Carbon\Carbon;
+    $peerRecommendByBooking = $peerRecommendByBooking ?? [];
 @endphp
         <div class="relative mx-auto max-w-5xl space-y-6 px-4 sm:px-6 lg:px-8">
             {{-- Header --}}
@@ -208,6 +209,35 @@
                                                             {{ __('muthowif.bookings.reject') }}
                                                         </button>
                                                     </form>
+                                                    @php
+                                                        $peers = $peerRecommendByBooking[(string) $booking->getKey()] ?? collect();
+                                                    @endphp
+                                                    @if ($peers->isNotEmpty())
+                                                        <details class="rounded-xl border border-violet-200/90 bg-violet-50/40 ring-1 ring-violet-100/70">
+                                                            <summary class="cursor-pointer list-none rounded-xl px-3 py-2.5 text-center text-sm font-semibold text-violet-900 outline-none transition hover:bg-violet-100/50 [&::-webkit-details-marker]:hidden">
+                                                                {{ __('muthowif.bookings.refer_cta_list') }}
+                                                            </summary>
+                                                            <div class="space-y-2 border-t border-violet-100/90 p-3">
+                                                                <p class="text-[11px] leading-relaxed text-slate-600">{{ __('muthowif.bookings.refer_hint_list') }}</p>
+                                                                <form method="POST" action="{{ route('muthowif.bookings.recommend-peer', $booking) }}" class="flex flex-col gap-2" onsubmit="return confirm(@json(__('muthowif.bookings.refer_confirm')));">
+                                                                    @csrf
+                                                                    <select
+                                                                        name="target_muthowif_profile_id"
+                                                                        required
+                                                                        class="h-10 w-full rounded-lg border border-slate-200 bg-white px-2.5 text-xs font-medium text-slate-900 shadow-sm focus:border-brand-400 focus:outline-none focus:ring-2 focus:ring-brand-500/20"
+                                                                    >
+                                                                        <option value="">{{ __('muthowif.bookings.refer_select_placeholder') }}</option>
+                                                                        @foreach ($peers as $tp)
+                                                                            <option value="{{ $tp->id }}">{{ $tp->user?->name ?? '—' }}</option>
+                                                                        @endforeach
+                                                                    </select>
+                                                                    <button type="submit" class="inline-flex w-full items-center justify-center gap-1.5 rounded-lg bg-violet-700 px-3 py-2 text-xs font-semibold text-white shadow-sm transition hover:bg-violet-800">
+                                                                        {{ __('muthowif.bookings.refer_submit') }}
+                                                                    </button>
+                                                                </form>
+                                                            </div>
+                                                        </details>
+                                                    @endif
                                                 </div>
                                             @elseif ($st === BookingStatus::Confirmed && $booking->payment_status === PaymentStatus::Pending)
                                                 <form method="POST" action="{{ route('muthowif.bookings.cancel', $booking) }}" onsubmit="return confirm(@json(__('muthowif.bookings.cancel_unpaid_confirm')));">
