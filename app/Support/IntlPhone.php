@@ -6,8 +6,6 @@ use libphonenumber\NumberParseException;
 use libphonenumber\PhoneNumber;
 use libphonenumber\PhoneNumberFormat;
 use libphonenumber\PhoneNumberUtil;
-use Symfony\Component\Intl\Countries;
-use Symfony\Component\Intl\Exception\MissingResourceException;
 
 final class IntlPhone
 {
@@ -15,6 +13,9 @@ final class IntlPhone
 
     /** @var array<string, list<array{d: string, iso: string, flag: string, name: string}>> */
     private static array $countriesForPickerCache = [];
+
+    /** @var array<string, array<string, string>> */
+    private static array $countryNameMaps = [];
 
     private static function util(): PhoneNumberUtil
     {
@@ -241,7 +242,7 @@ final class IntlPhone
     }
 
     /**
-     * Semua region yang didukung libphonenumber + nama negara (ICU {@see Locale::getDisplayRegion}) untuk UI pemilih kode telepon.
+     * Semua region yang didukung libphonenumber + nama negara (data statis umpirsky/country-list, tanpa ext-intl).
      *
      * @return list<array{d: string, iso: string, flag: string, name: string}>
      */
@@ -310,14 +311,44 @@ final class IntlPhone
 
     private static function countryDisplayName(string $iso3166Alpha2, string $displayLocale): string
     {
-        try {
-            return Countries::getName($iso3166Alpha2, $displayLocale);
-        } catch (MissingResourceException) {
-            try {
-                return Countries::getName($iso3166Alpha2, 'en');
-            } catch (MissingResourceException) {
-                return $iso3166Alpha2;
+        $iso = strtoupper($iso3166Alpha2);
+        $map = self::countryNameMapForLocale($displayLocale);
+        if (isset($map[$iso])) {
+            return $map[$iso];
+        }
+
+        if (! str_starts_with(strtolower(str_replace('_', '-', $displayLocale)), 'en')) {
+            $en = self::countryNameMapForLocale('en');
+            if (isset($en[$iso])) {
+                return $en[$iso];
             }
         }
+
+        return $iso;
+    }
+
+    /**
+     * @return array<string, string> ISO alpha-2 => localized country name
+     */
+    private static function countryNameMapForLocale(string $displayLocale): array
+    {
+        $primary = strtolower(explode('-', str_replace('_', '-', $displayLocale))[0]);
+        if (isset(self::$countryNameMaps[$primary])) {
+            return self::$countryNameMaps[$primary];
+        }
+
+        $path = base_path('vendor/umpirsky/country-list/data/'.$primary.'/country.php');
+        if (! is_file($path)) {
+            $map = self::countryNameMapForLocale('en');
+            self::$countryNameMaps[$primary] = $map;
+
+            return $map;
+        }
+
+        /** @var array<string, string> $map */
+        $map = require $path;
+        self::$countryNameMaps[$primary] = $map;
+
+        return $map;
     }
 }

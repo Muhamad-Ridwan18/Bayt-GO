@@ -14,7 +14,7 @@
         "laravel/tinker": "^3.0",
         "pusher/pusher-php-server": "^7.2",
         "stevebauman/purify": "^6.3",
-        "symfony/intl": "^7.4"
+        "umpirsky/country-list": "^2.0"
     },
     "require-dev": {
         "fakerphp/faker": "^1.23",
