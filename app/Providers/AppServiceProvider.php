@@ -33,7 +33,7 @@ class AppServiceProvider extends ServiceProvider
     public function boot(): void
     {
         Event::listen(MootaWebhookRecorded::class, ProcessMootaWebhookForBookingPayments::class);
-        Paginator::useBootstrapFive();
+        Paginator::useTailwind();
 
         /*
          * Tanpa ini, route(..., absolute: true) memakai host permintaan saat ini ($request->root()).
