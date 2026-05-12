@@ -59,7 +59,8 @@ class AuthController extends Controller
             'password' => ['required', 'confirmed', Rules\Password::defaults()],
             'role' => ['required', Rule::enum(UserRole::class)->only([UserRole::Customer, UserRole::Muthowif])],
             'customer_type' => ['required_if:role,customer', 'nullable', Rule::enum(CustomerType::class)],
-            'phone' => ['required', 'string', 'min:10', 'max:20'],
+            'phone' => ['required', 'string', 'min:10', 'max:24'],
+            'country' => ['nullable', 'string', 'size:2', 'regex:/^[A-Za-z]{2}$/'],
             'address' => ['required', 'string', 'max:2000'],
             'ppui_number' => ['required_if:customer_type,company', 'nullable', 'string', 'max:64'],
             'nik' => ['required_if:role,muthowif', 'nullable', 'string', 'size:16', 'regex:/^\d{16}$/'],
@@ -78,6 +79,10 @@ class AuthController extends Controller
             'supporting_documents.*' => ['file', 'mimes:pdf,jpeg,jpg,png,webp', 'max:10240'],
             'device_name' => ['required', 'string'],
         ];
+
+        if ($request->has('country') && $request->string('country')->toString() === '') {
+            $request->merge(['country' => null]);
+        }
 
         $request->validate($rules);
 
@@ -104,6 +109,7 @@ class AuthController extends Controller
                 'password' => Hash::make($request->string('password')->toString()),
                 'role' => $role,
                 'phone' => $role === UserRole::Customer ? $request->string('phone')->toString() : null,
+                'country' => $request->filled('country') ? strtoupper($request->string('country')->toString()) : null,
                 'address' => $role === UserRole::Customer ? $request->string('address')->toString() : null,
                 'customer_type' => $role === UserRole::Customer
                     ? CustomerType::from($request->string('customer_type')->toString())

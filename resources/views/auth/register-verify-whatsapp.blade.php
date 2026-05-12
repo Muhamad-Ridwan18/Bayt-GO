@@ -23,24 +23,22 @@
     <div class="mb-5 rounded-xl border border-slate-200 bg-slate-50/80 p-4">
         <p class="text-sm font-medium text-slate-800">{{ __('auth_otp.change_phone_title') }}</p>
         <p class="mt-1 text-xs text-slate-600">{{ __('auth_otp.change_phone_hint') }}</p>
-        <form method="POST" action="{{ route('register.pending-phone') }}" class="mt-3 flex flex-col sm:flex-row gap-2 sm:items-start">
+        <form method="POST" action="{{ route('register.pending-phone') }}" class="mt-3 space-y-3">
             @csrf
-            <div class="flex-1 min-w-0 w-full">
-                <label class="block text-xs font-medium text-slate-700 mb-1" for="pending_change_phone">{{ __('auth_otp.new_phone_label') }}</label>
-                <input
-                    id="pending_change_phone"
-                    type="text"
-                    name="phone"
-                    value="{{ old('phone', $pendingPhone) }}"
-                    autocomplete="tel"
-                    class="block w-full rounded-lg border-slate-300 shadow-sm focus:border-brand-500 focus:ring-brand-500 text-sm"
-                    placeholder="08xxxxxxxxxx"
-                />
-                <x-input-error :messages="$errors->get('phone')" class="mt-1" />
-            </div>
+            <x-phone-international-input
+                name="phone"
+                :value="old('phone', $pendingPhone)"
+                :country="old('country', $pendingCountry)"
+                :label="__('auth_otp.new_phone_label')"
+                :hint="__('auth_custom.phone_national_hint')"
+                :required="true"
+                input-id="pending_phone_local"
+                select-id="pending_phone_country"
+                error-key="phone"
+            />
             <button
                 type="submit"
-                class="mt-0 sm:mt-5 inline-flex justify-center items-center rounded-lg border border-slate-300 bg-white px-4 py-2 text-sm font-medium text-slate-800 shadow-sm hover:bg-slate-50"
+                class="inline-flex justify-center items-center rounded-lg border border-slate-300 bg-white px-4 py-2 text-sm font-medium text-slate-800 shadow-sm hover:bg-slate-50"
             >
                 {{ __('auth_otp.save_new_phone') }}
             </button>
@@ -49,7 +47,7 @@
 
     @php
         $bannerErrorMessages = collect($errors->getMessages())
-            ->except('phone')
+            ->except(['phone', 'country'])
             ->flatten()
             ->all();
     @endphp

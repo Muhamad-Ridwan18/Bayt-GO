@@ -29,6 +29,7 @@ class UserFactory extends Factory
             'address' => fake()->streetAddress(),
             'customer_type' => CustomerType::Personal,
             'ppui_number' => null,
+            'country' => null,
         ];
     }
 

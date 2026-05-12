@@ -65,6 +65,7 @@ class RegisteredUserController extends Controller
         return view('auth.register-verify-whatsapp', [
             'maskedPhone' => $this->maskedPhoneLabel($phone),
             'pendingPhone' => $phone,
+            'pendingCountry' => $pending['fields']['country'] ?? null,
             'role' => (string) ($pending['fields']['role'] ?? 'customer'),
             'phoneVerifiedInitial' => $phoneVerifiedInitial,
         ]);
@@ -170,11 +171,17 @@ class RegisteredUserController extends Controller
             ]);
         }
 
+        if ($request->has('country') && $request->string('country')->toString() === '') {
+            $request->merge(['country' => null]);
+        }
+
+        $phoneInput = (string) $request->input('phone', '');
+
         $request->validate([
-            'phone' => ['required', 'string', 'min:8', 'max:24'],
+            'phone' => ['required', 'string'],
+            'country' => ['nullable', 'string', 'size:2', 'regex:/^[A-Za-z]{2}$/'],
         ]);
 
-        $phoneInput = $request->string('phone')->toString();
         $normalized = IntlPhone::normalize($phoneInput);
         $fonnteDial = IntlPhone::fonnteDial($phoneInput);
         if ($normalized === null || $fonnteDial === null || strlen($normalized) < 8 || strlen($normalized) > 15) {
@@ -197,6 +204,7 @@ class RegisteredUserController extends Controller
         }
 
         $pending['fields']['phone'] = $phoneInput;
+        $pending['fields']['country'] = $this->nullableCountryIso($request->input('country'));
         session(['pending_registration' => $pending]);
         $registrationOtp->clearVerificationSession();
 
@@ -207,6 +215,10 @@ class RegisteredUserController extends Controller
 
     private function validateRegistrationRequest(Request $request): void
     {
+        if ($request->has('country') && $request->string('country')->toString() === '') {
+            $request->merge(['country' => null]);
+        }
+
         $rules = [
             'name' => ['required', 'string', 'max:255'],
             'email' => ['required', 'string', 'lowercase', 'email', 'max:255', 'unique:'.User::class],
@@ -214,6 +226,7 @@ class RegisteredUserController extends Controller
             'role' => ['required', Rule::enum(UserRole::class)->only([UserRole::Customer, UserRole::Muthowif])],
             'customer_type' => ['required_if:role,customer', 'nullable', Rule::enum(CustomerType::class)],
             'phone' => ['required_if:role,customer', 'required_if:role,muthowif', 'nullable', 'string', 'min:8', 'max:24'],
+            'country' => ['nullable', 'string', 'size:2', 'regex:/^[A-Za-z]{2}$/'],
             'address' => ['required_if:role,customer', 'required_if:role,muthowif', 'nullable', 'string', 'max:2000'],
             'ppui_number' => ['required_if:customer_type,company', 'nullable', 'string', 'max:64'],
             'nik' => ['required_if:role,muthowif', 'nullable', 'string', 'size:16', 'regex:/^\d{16}$/'],
@@ -271,6 +284,7 @@ class RegisteredUserController extends Controller
                 'password' => Hash::make($request->string('password')->toString()),
                 'role' => $role,
                 'phone' => $role === UserRole::Customer ? $request->string('phone')->toString() : null,
+                'country' => $this->nullableCountryIso($request->input('country')),
                 'address' => $role === UserRole::Customer ? $request->string('address')->toString() : null,
                 'customer_type' => $role === UserRole::Customer
                     ? CustomerType::from($request->string('customer_type')->toString())
@@ -373,6 +387,7 @@ class RegisteredUserController extends Controller
                 'password' => Hash::make((string) $input['password']),
                 'role' => $role,
                 'phone' => $role === UserRole::Customer ? (string) $input['phone'] : null,
+                'country' => $this->nullableCountryIso($input['country'] ?? null),
                 'address' => $role === UserRole::Customer ? (string) $input['address'] : null,
                 'customer_type' => $role === UserRole::Customer
                     ? CustomerType::from((string) $input['customer_type'])
@@ -525,6 +540,19 @@ class RegisteredUserController extends Controller
         }
 
         return str_repeat('•', max(0, strlen($n) - 4)).substr($n, -4);
+    }
+
+    private function nullableCountryIso(mixed $value): ?string
+    {
+        if (! is_string($value)) {
+            return null;
+        }
+        $c = strtoupper(trim($value));
+        if (strlen($c) !== 2 || ! ctype_alpha($c)) {
+            return null;
+        }
+
+        return $c;
     }
 
     /**

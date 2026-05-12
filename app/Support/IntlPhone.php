@@ -65,6 +65,75 @@ final class IntlPhone
     }
 
     /**
+     * Pecah nomor (bebas format) menjadi kode negara pemanggil + digit nomor nasional (tanpa 0 depan/trunk).
+     *
+     * @return array{dial: string, national: string}|null
+     */
+    public static function dialAndNational(?string $input): ?array
+    {
+        if ($input === null || trim($input) === '') {
+            return null;
+        }
+
+        try {
+            $proto = self::parseToProto(trim($input));
+        } catch (NumberParseException) {
+            return null;
+        }
+
+        if (! self::util()->isPossibleNumber($proto)) {
+            return null;
+        }
+
+        $cc = $proto->getCountryCode();
+        if ($cc === 0) {
+            return null;
+        }
+
+        $national = (string) $proto->getNationalNumber();
+
+        return [
+            'dial' => (string) $cc,
+            'national' => $national,
+        ];
+    }
+
+    /**
+     * Kode negara pemanggil untuk wilayah default (.env PHONE_DEFAULT_REGION).
+     */
+    public static function defaultDialCode(): string
+    {
+        $util = self::util();
+        $code = $util->getCountryCodeForRegion(self::defaultRegion());
+        if ($code === 0) {
+            return '62';
+        }
+
+        return (string) $code;
+    }
+
+    /**
+     * Nomor untuk backend: gabung kode negara + digit lokal (hanya angka). Digit lokal boleh diawali 0 (dihapus untuk ID).
+     */
+    public static function mergeDialAndNational(string $dialDigits, string $localDigits): ?string
+    {
+        $d = preg_replace('/\D+/', '', $dialDigits) ?? '';
+        $l = preg_replace('/\D+/', '', $localDigits) ?? '';
+        if ($d === '' || $l === '') {
+            return null;
+        }
+
+        if ($d === '62' && str_starts_with($l, '0')) {
+            $l = substr($l, 1);
+        }
+        if ($l === '') {
+            return null;
+        }
+
+        return '+'.$d.$l;
+    }
+
+    /**
      * Normalisasi ke digit E.164 tanpa prefiks + (kunci penyimpanan & cache).
      */
     public static function normalize(?string $input): ?string

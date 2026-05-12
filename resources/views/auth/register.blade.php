@@ -82,10 +82,17 @@
         </fieldset>
 
         <div class="space-y-2">
-            <x-input-label for="phone" value="No. WhatsApp" />
-            <x-text-input id="phone" class="block mt-1 w-full border-slate-300" type="text" name="phone" :value="old('phone')" placeholder="08xxxxxxxxxx" autocomplete="tel" />
-            <p class="mt-1 text-xs text-slate-500">Gunakan nomor yang terhubung ke WhatsApp — verifikasi OTP dilakukan pada langkah berikutnya setelah formulir dikirim.</p>
-            <x-input-error :messages="$errors->get('phone')" class="mt-2" />
+            <x-phone-international-input
+                name="phone"
+                :value="old('phone')"
+                :country="old('country')"
+                :label="__('No. WhatsApp')"
+                :hint="__('auth_custom.register_phone_hint')"
+                :required="true"
+                input-id="register_phone_local"
+                select-id="register_phone_country_code"
+                error-key="phone"
+            />
         </div>
 
         <div>
