@@ -312,9 +312,9 @@ return [
         'platform_fee' => 'Platform fee',
         'total' => 'Total paid',
         'thank_you' => 'Thank you for using :app.',
-        'platform_fee_pct' => 'Platform fee (7.5%)',
+        'platform_fee_pct' => 'Platform fee',
         'gateway_via' => 'Payment processed via DOKU',
-        'gateway_fee_note' => 'The customer platform fee is :pct% of the service subtotal.',
+        'gateway_fee_note' => 'The customer platform fee is calculated from the service subtotal.',
         'electronic_doc' => 'This document is generated electronically and is valid without a wet signature.',
     ],
 ];

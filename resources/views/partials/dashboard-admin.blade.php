@@ -371,10 +371,7 @@
                 <div class="rounded-3xl border border-slate-200/90 bg-gradient-to-br from-slate-50 to-white p-5 shadow-sm ring-1 ring-slate-100/90">
                     <h2 class="text-base font-bold text-slate-900">{{ __('dashboard.platform_fee_note_title') }}</h2>
                     <p class="mt-2 text-sm leading-relaxed text-slate-600">
-                        {{ __('dashboard.platform_fee_note_body', [
-                            'rate' => \App\Support\PlatformFee::RATE * 100,
-                            'total' => \App\Support\PlatformFee::TOTAL_RATE * 100,
-                        ]) }}
+                        {{ __('dashboard.platform_fee_note_body') }}
                     </p>
                 </div>
 

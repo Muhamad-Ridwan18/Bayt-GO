@@ -137,7 +137,7 @@ return [
     'users' => 'Users',
     'logs_webhook' => 'Webhook logs',
     'platform_fee_note_title' => 'Platform fee note',
-    'platform_fee_note_body' => 'Same rules as Finance: per-side fee is :rate% of base (total :total% of base). Totals use full fee on orders, half the order fee when the booking is refunded, plus admin refund deductions when completed. Gross volume excludes refunded bookings. Chaperone balance is credited when the pilgrim completes the service.',
+    'platform_fee_note_body' => 'Same rules as Finance: the platform fee is calculated per side from the service base price. Totals use full fee on orders, half the order fee when the booking is refunded, plus admin refund deductions when completed. Gross volume excludes refunded bookings. Chaperone balance is credited when the pilgrim completes the service.',
     'next_steps' => 'Next steps',
     'next_steps_admin' => 'Use :menu to approve or reject registrations.',
     'next_steps_admin_menu' => 'Verify muthowif',

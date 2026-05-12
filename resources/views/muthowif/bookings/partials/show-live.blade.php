@@ -175,7 +175,7 @@
                                 </div>
                             </dl>
                             <p class="text-[10px] leading-relaxed text-slate-500 italic">
-                                * {{ __('bookings.invoice.gateway_fee_note', ['pct' => 7.5]) }} {{ __('muthowif.booking_show.refund_intro') }}
+                                * {{ __('bookings.invoice.gateway_fee_note') }} {{ __('muthowif.booking_show.refund_intro') }}
                             </p>
                         </div>
 

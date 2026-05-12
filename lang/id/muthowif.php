@@ -71,7 +71,7 @@ return [
         'payment_heading' => 'Rincian Pembayaran',
         'rate_per_day' => 'Tarif / Hari',
         'subtotal_service' => 'Subtotal Layanan',
-        'platform_fee_muthowif' => 'Biaya Platform (Potongan 7,5%)',
+        'platform_fee_muthowif' => 'Biaya platform',
         'net_earning' => 'Pendapatan Bersih',
     ],
     'jadwal' => [

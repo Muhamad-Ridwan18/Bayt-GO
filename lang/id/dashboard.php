@@ -138,7 +138,7 @@ return [
     'users' => 'Pengguna',
     'logs_webhook' => 'Logs webhook',
     'platform_fee_note_title' => 'Catatan biaya platform',
-    'platform_fee_note_body' => 'Sama seperti halaman Keuangan: fee per sisi :rate% dari harga dasar (total :total% dari harga dasar). Total fee memakai fee penuh pada order, setengah fee order jika booking refunded, ditambah potongan admin refund yang sudah selesai. Volume bruto tidak memasukkan booking refunded. Saldo muthowif masuk saat jamaah menyelesaikan layanan.',
+    'platform_fee_note_body' => 'Sama seperti halaman Keuangan: biaya platform dihitung per sisi dari harga dasar layanan. Total fee memakai fee penuh pada order, setengah fee order jika booking refunded, ditambah potongan admin refund yang sudah selesai. Volume bruto tidak memasukkan booking refunded. Saldo muthowif masuk saat jamaah menyelesaikan layanan.',
     'next_steps' => 'Langkah berikutnya',
     'next_steps_admin' => 'Gunakan menu :menu untuk menyetujui atau menolak pendaftaran.',
     'next_steps_admin_menu' => 'Verifikasi muthowif',

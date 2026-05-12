@@ -68,6 +68,11 @@ return [
         'approve_reschedule' => 'Approve reschedule',
         'reject_short' => 'Decline',
         'approve_reschedule_confirm' => 'Approve this date change?',
+        'payment_heading' => 'Payment breakdown',
+        'rate_per_day' => 'Rate / day',
+        'subtotal_service' => 'Service subtotal',
+        'platform_fee_muthowif' => 'Platform fee',
+        'net_earning' => 'Net earnings',
     ],
     'jadwal' => [
         'page_title' => 'Time off',

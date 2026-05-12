@@ -143,7 +143,7 @@
                         @if ($payment->payment_type)
                             <span class="font-medium text-slate-600">({{ $payment->payment_type }})</span>
                         @endif
-                        . {{ __('bookings.invoice.gateway_fee_note', ['pct' => (int) round(PlatformFee::RATE * 100)]) }}
+                        . {{ __('bookings.invoice.gateway_fee_note') }}
                     </p>
                 @endif
             </div>

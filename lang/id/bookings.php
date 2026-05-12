@@ -312,9 +312,9 @@ return [
         'platform_fee' => 'Biaya platform',
         'total' => 'Total dibayar',
         'thank_you' => 'Terima kasih telah menggunakan :app.',
-        'platform_fee_pct' => 'Biaya platform (7,5%)',
+        'platform_fee_pct' => 'Biaya platform',
         'gateway_via' => 'Pembayaran diproses melalui DOKU',
-        'gateway_fee_note' => 'Biaya platform untuk customer adalah :pct% dari subtotal layanan.',
+        'gateway_fee_note' => 'Biaya platform untuk customer dihitung dari subtotal layanan.',
         'electronic_doc' => 'Dokumen ini dibuat secara elektronik dan sah tanpa tanda tangan basah.',
     ],
 ];
