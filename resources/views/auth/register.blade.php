@@ -9,13 +9,14 @@
         @endif
     </div>
 
+    {{-- Gunakan selectedRole (bukan "role") agar tidak bentrok dengan properti DOM Element.role / ARIA di Alpine --}}
     <form
         id="register-form"
         method="POST"
         action="{{ route('register') }}"
         enctype="multipart/form-data"
         class="space-y-5"
-        x-data="{ role: @json(old('role', 'customer')), customerType: @json(old('customer_type', 'personal')) }"
+        x-data="{ selectedRole: @json(old('role', 'customer')), customerType: @json(old('customer_type', 'personal')) }"
     >
         @csrf
 
@@ -23,14 +24,14 @@
             <span class="block text-sm font-medium text-slate-700 mb-2">Saya mendaftar sebagai</span>
             <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
                 <label class="relative flex cursor-pointer rounded-xl border-2 p-4 transition has-[:checked]:border-brand-600 has-[:checked]:bg-brand-50/80 border-slate-200 hover:border-brand-300">
-                    <input type="radio" name="role" value="customer" class="mt-0.5 text-brand-600 focus:ring-brand-500" {{ old('role', 'customer') === 'customer' ? 'checked' : '' }} required x-on:change="role = 'customer'">
+                    <input type="radio" name="role" value="customer" class="mt-0.5 text-brand-600 focus:ring-brand-500" {{ old('role', 'customer') === 'customer' ? 'checked' : '' }} required x-on:change="selectedRole = 'customer'">
                     <span class="ms-3">
                         <span class="block text-sm font-semibold text-slate-900">Jamaah</span>
                         <span class="block text-xs text-slate-500 mt-0.5">Buat permintaan pendampingan</span>
                     </span>
                 </label>
                 <label class="relative flex cursor-pointer rounded-xl border-2 p-4 transition has-[:checked]:border-brand-600 has-[:checked]:bg-brand-50/80 border-slate-200 hover:border-brand-300">
-                    <input type="radio" name="role" value="muthowif" class="mt-0.5 text-brand-600 focus:ring-brand-500" {{ old('role') === 'muthowif' ? 'checked' : '' }} x-on:change="role = 'muthowif'">
+                    <input type="radio" name="role" value="muthowif" class="mt-0.5 text-brand-600 focus:ring-brand-500" {{ old('role') === 'muthowif' ? 'checked' : '' }} x-on:change="selectedRole = 'muthowif'">
                     <span class="ms-3">
                         <span class="block text-sm font-semibold text-slate-900">Muthowif</span>
                         <span class="block text-xs text-slate-500 mt-0.5">Lengkapi dokumen &amp; riwayat</span>
@@ -40,9 +41,9 @@
             <x-input-error :messages="$errors->get('role')" class="mt-2" />
         </div>
 
-        <fieldset class="space-y-3 border-0 p-0 m-0" x-bind:disabled="role !== 'customer'">
+        <fieldset class="space-y-3 border-0 p-0 m-0" x-bind:disabled="selectedRole !== 'customer'">
             <legend class="sr-only">Tipe jamaah</legend>
-            <div x-show="role === 'customer'" x-cloak>
+            <div x-show="selectedRole === 'customer'" x-cloak>
                 <span class="block text-sm font-medium text-slate-700 mb-2">Tipe jamaah</span>
                 <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
                     <label class="relative flex cursor-pointer rounded-xl border-2 p-4 transition has-[:checked]:border-brand-600 has-[:checked]:bg-brand-50/80 border-slate-200 hover:border-brand-300">
@@ -79,12 +80,19 @@
             </div>
         </fieldset>
 
+        <div x-show="selectedRole === 'customer' || selectedRole === 'muthowif'" x-cloak class="space-y-2">
+            <x-input-label for="phone" value="No. WhatsApp" />
+            <x-text-input id="phone" class="block mt-1 w-full border-slate-300" type="text" name="phone" :value="old('phone')" placeholder="08xxxxxxxxxx" autocomplete="tel" />
+            <p class="mt-1 text-xs text-slate-500">Gunakan nomor yang terhubung ke WhatsApp — verifikasi OTP dilakukan pada langkah berikutnya setelah formulir dikirim.</p>
+            <x-input-error :messages="$errors->get('phone')" class="mt-2" />
+        </div>
+
         <div>
             <x-input-label for="name">
-                <span x-text="(role === 'customer' && customerType === 'company') ? 'Nama perusahaan' : 'Nama lengkap'"></span>
+                <span x-text="(selectedRole === 'customer' && customerType === 'company') ? 'Nama perusahaan' : 'Nama lengkap'"></span>
             </x-input-label>
             <x-text-input id="name" class="block mt-1 w-full border-slate-300" type="text" name="name" :value="old('name')" required autofocus autocomplete="name" />
-            <p class="mt-1 text-xs text-slate-500" x-text="(role === 'customer' && customerType === 'company') ? 'Nama badan usaha sesuai dokumen.' : 'Sesuai identitas resmi (KTP / passport).'"></p>
+            <p class="mt-1 text-xs text-slate-500" x-text="(selectedRole === 'customer' && customerType === 'company') ? 'Nama badan usaha sesuai dokumen.' : 'Sesuai identitas resmi (KTP / passport).'"></p>
             <x-input-error :messages="$errors->get('name')" class="mt-2" />
         </div>
 
@@ -94,16 +102,9 @@
             <x-input-error :messages="$errors->get('email')" class="mt-2" />
         </div>
 
-        <fieldset class="space-y-5 border-0 p-0 m-0" x-bind:disabled="role !== 'customer'">
-            <legend class="sr-only">Kontak jamaah</legend>
-            <div x-show="role === 'customer'" x-cloak class="space-y-5">
-                <div>
-                    <x-input-label for="phone_customer" value="No. WhatsApp" />
-                    <x-text-input id="phone_customer" class="block mt-1 w-full border-slate-300" type="text" name="phone" :value="old('phone')" placeholder="08xxxxxxxxxx" autocomplete="tel" />
-                    <p class="mt-1 text-xs text-slate-500">Gunakan nomor yang terhubung ke WhatsApp — Anda akan memverifikasinya di langkah berikutnya.</p>
-                    <x-input-error :messages="$errors->get('phone')" class="mt-2" />
-                </div>
-
+        <fieldset class="space-y-5 border-0 p-0 m-0" x-bind:disabled="selectedRole !== 'customer'">
+            <legend class="sr-only">Alamat jamaah</legend>
+            <div x-show="selectedRole === 'customer'" x-cloak class="space-y-5">
                 <div>
                     <x-input-label for="address_customer" value="Alamat" />
                     <textarea id="address_customer" name="address" rows="3" class="block mt-1 w-full rounded-lg border-slate-300 shadow-sm focus:border-brand-500 focus:ring-brand-500 text-sm" placeholder="Alamat lengkap">{{ old('address') }}</textarea>
@@ -131,7 +132,7 @@
             <x-input-error :messages="$errors->get('password_confirmation')" class="mt-2" />
         </div>
 
-        <fieldset x-show="role === 'muthowif'" x-cloak class="space-y-5 pt-2 border-t border-slate-200 m-0 min-w-0 border-0 p-0" x-bind:disabled="role !== 'muthowif'">
+        <fieldset x-show="selectedRole === 'muthowif'" x-cloak class="space-y-5 pt-2 border-t border-slate-200 m-0 min-w-0 border-0 p-0" x-bind:disabled="selectedRole !== 'muthowif'">
             <legend class="sr-only">Data muthowif</legend>
             <p class="text-sm font-medium text-slate-800">Data muthowif</p>
             <p class="text-xs text-slate-500 -mt-3">Gunakan tombol <strong>+ Tambah</strong> untuk menambah baris bahasa, studi, pengalaman, atau dokumen.</p>
@@ -203,14 +204,7 @@
                 hint="PDF atau gambar — tiap file maks. 10 MB, hingga 20 file total."
             />
 
-            <p class="text-sm font-medium text-slate-800 pt-2 border-t border-slate-100">Kontak &amp; identitas</p>
-
-            <div>
-                <x-input-label for="phone_muthowif" value="No. HP / WhatsApp" />
-                <x-text-input id="phone_muthowif" class="block mt-1 w-full border-slate-300" type="text" name="phone" :value="old('phone')" placeholder="08xxxxxxxxxx" autocomplete="tel" />
-                <p class="mt-1 text-xs text-slate-500">Nomor ini akan diverifikasi dengan OTP WhatsApp setelah formulir dikirim.</p>
-                <x-input-error :messages="$errors->get('phone')" class="mt-2" />
-            </div>
+            <p class="text-sm font-medium text-slate-800 pt-2 border-t border-slate-100">Alamat &amp; identitas</p>
 
             <div>
                 <x-input-label for="address_muthowif" value="Alamat lengkap" />
