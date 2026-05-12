@@ -2,6 +2,13 @@
     use App\Enums\MuthowifBookingMuthowifRejectionKind;
     /** @var \Illuminate\Support\Collection<int,\App\Models\MuthowifProfile> $referralNetworkAlternatives */
     $referralNetworkAlternatives = $referralNetworkAlternatives ?? collect();
+
+    $referralLayananQuery = array_filter([
+        'start_date' => $booking->starts_on?->toDateString(),
+        'end_date' => $booking->ends_on?->toDateString(),
+        'service_type' => $booking->service_type?->value,
+        'pilgrim_count' => $booking->pilgrim_count !== null ? (string) (int) $booking->pilgrim_count : null,
+    ], fn ($v) => filled($v));
 @endphp
 @if (!empty($showReferralNetworkPanel) && $showReferralNetworkPanel)
     <div class="mt-8 overflow-hidden rounded-3xl border border-violet-200/90 bg-gradient-to-br from-violet-50/90 via-white to-slate-50/80 p-6 shadow-md shadow-violet-900/5 ring-1 ring-violet-100/80 sm:p-8">
@@ -38,7 +45,7 @@
                             </div>
                         </div>
                         <a
-                            href="{{ route('layanan.show', $profile) }}"
+                            href="{{ route('layanan.show', array_merge(['publicProfile' => $profile], $referralLayananQuery)) }}"
                             class="inline-flex shrink-0 items-center justify-center gap-2 rounded-xl bg-brand-600 px-4 py-2.5 text-sm font-semibold text-white shadow-md shadow-brand-600/20 transition hover:bg-brand-700"
                         >
                             {{ __('bookings.show.referral_network_view_profile') }}

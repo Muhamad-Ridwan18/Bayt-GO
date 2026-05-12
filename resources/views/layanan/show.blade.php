@@ -39,7 +39,7 @@
 
         {{-- Satu bar atas: kembali + nama + tanggal (ringkas) --}}
         <div class="relative flex flex-wrap items-center gap-x-3 gap-y-2 rounded-2xl border border-slate-200/80 bg-white/95 px-3 py-2.5 text-sm shadow-sm ring-1 ring-slate-100/80 sm:px-4">
-            <a href="{{ route('layanan.index', array_filter(request()->only(['start_date', 'end_date', 'q']))) }}" class="inline-flex items-center gap-1 font-semibold text-brand-700 hover:text-brand-800">
+            <a href="{{ route('layanan.index', array_filter(request()->only(['start_date', 'end_date', 'q', 'service_type', 'pilgrim_count']))) }}" class="inline-flex items-center gap-1 font-semibold text-brand-700 hover:text-brand-800">
                 <svg class="h-4 w-4 shrink-0 opacity-80" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true">
                     <path fill-rule="evenodd" d="M12.79 5.23a.75.75 0 01-.02 1.06L8.832 10l3.938 3.71a.75.75 0 11-1.04 1.08l-4.5-4.25a.75.75 0 010-1.08l4.5-4.25a.75.75 0 011.06.02z" clip-rule="evenodd" />
                 </svg>

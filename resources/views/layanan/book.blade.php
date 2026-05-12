@@ -19,6 +19,12 @@
         'q' => request()->query('q'),
         'start_date' => $startDate !== '' ? $startDate : null,
         'end_date' => $endDate !== '' ? $endDate : null,
+        'service_type' => is_string(request()->query('service_type')) && in_array(request()->query('service_type'), ['group', 'private'], true)
+            ? request()->query('service_type')
+            : null,
+        'pilgrim_count' => is_numeric(request()->query('pilgrim_count')) && (int) request()->query('pilgrim_count') > 0
+            ? (string) (int) request()->query('pilgrim_count')
+            : null,
     ], fn ($v) => filled($v));
     $profileUrl = route('layanan.show', array_merge(['publicProfile' => $profile], $listQs));
 

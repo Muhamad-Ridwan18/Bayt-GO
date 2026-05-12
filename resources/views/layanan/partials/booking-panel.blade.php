@@ -25,9 +25,27 @@
 
     $gBounds = $pilgrimBounds($group ?? null);
     $pBounds = $pilgrimBounds($private ?? null);
-    $defaultService = $group ? 'group' : 'private';
-    $defaultPilgrim = old('pilgrim_count', ($defaultService === 'private') ? $pBounds['min'] : $gBounds['min']);
+
+    $hintSvcRaw = request()->query('service_type');
+    $hintSvc = is_string($hintSvcRaw) ? $hintSvcRaw : '';
+    $serviceFromQuery = in_array($hintSvc, ['group', 'private'], true) ? $hintSvc : null;
+    if ($serviceFromQuery === 'group' && $group) {
+        $defaultService = 'group';
+    } elseif ($serviceFromQuery === 'private' && $private) {
+        $defaultService = 'private';
+    } else {
+        $defaultService = $group ? 'group' : 'private';
+    }
     $selectedService = old('service_type', $defaultService);
+
+    $boundsForSelected = $selectedService === 'private' ? $pBounds : $gBounds;
+    $pilgrimRaw = request()->query('pilgrim_count');
+    $pilgrimFromQuery = is_numeric($pilgrimRaw) ? (int) $pilgrimRaw : null;
+    if ($pilgrimFromQuery !== null) {
+        $pilgrimFromQuery = max($boundsForSelected['min'], min($boundsForSelected['max'], $pilgrimFromQuery));
+    }
+    $defaultPilgrim = old('pilgrim_count', $pilgrimFromQuery ?? (($selectedService === 'private') ? $pBounds['min'] : $gBounds['min']));
+
     $oldWithSameHotel = old('with_same_hotel', false);
     $oldWithTransport = old('with_transport', false);
     $oldAddOnIds = collect(old('add_on_ids', []))->map(fn ($id) => (string) $id)->all();
@@ -92,7 +110,7 @@
                 <div
                     class="space-y-6"
                     x-data="{
-                        serviceType: '{{ old('service_type', $defaultService) }}',
+                        serviceType: '{{ $selectedService }}',
                         bounds: {
                             group: { min: {{ (int) $gBounds['min'] }}, max: {{ (int) $gBounds['max'] }} },
                             private: { min: {{ (int) $pBounds['min'] }}, max: {{ (int) $pBounds['max'] }} },
@@ -151,7 +169,7 @@
                                     <label class="relative flex min-h-[5.5rem] cursor-pointer items-start rounded-2xl border-2 border-slate-200 bg-white p-4 shadow-sm transition-all active:scale-[0.99] hover:border-brand-300 has-[:checked]:border-brand-500 has-[:checked]:bg-gradient-to-br has-[:checked]:from-brand-50 has-[:checked]:to-white has-[:checked]:shadow-md sm:p-5">
                                         <input type="radio" name="service_type" value="group" class="sr-only peer"
                                                x-model="serviceType"
-                                               @checked(old('service_type', $defaultService) === 'group')>
+                                               @checked($selectedService === 'group')>
                                         <span class="flex flex-col gap-1 pr-8">
                                             <span class="inline-flex w-fit rounded-lg bg-brand-100 px-2 py-0.5 text-[10px] font-bold uppercase tracking-wide text-brand-800">{{ MuthowifServiceType::Group->label() }}</span>
                                             <span class="text-base font-bold text-slate-900">{{ __('marketplace.panel.group_label') }}</span>
@@ -168,7 +186,7 @@
                                     <label class="relative flex min-h-[5.5rem] cursor-pointer items-start rounded-2xl border-2 border-slate-200 bg-white p-4 shadow-sm transition-all active:scale-[0.99] hover:border-amber-300 has-[:checked]:border-amber-500 has-[:checked]:bg-gradient-to-br has-[:checked]:from-amber-50 has-[:checked]:to-white has-[:checked]:shadow-md sm:p-5">
                                         <input type="radio" name="service_type" value="private" class="sr-only peer"
                                                x-model="serviceType"
-                                               @checked(old('service_type', $defaultService) === 'private')>
+                                               @checked($selectedService === 'private')>
                                         <span class="flex flex-col gap-1 pr-8">
                                             <span class="inline-flex w-fit rounded-lg bg-amber-100 px-2 py-0.5 text-[10px] font-bold uppercase tracking-wide text-amber-900">{{ MuthowifServiceType::PrivateJamaah->label() }}</span>
                                             <span class="text-base font-bold text-slate-900">{{ __('marketplace.panel.private_label') }}</span>
