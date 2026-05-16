@@ -73,7 +73,7 @@ class GlobalChatController extends Controller
                 'other_name' => $otherName,
                 'photo_url' => $photoUrl,
                 'service_type' => $booking->service_type?->label() ?? 'Service',
-                'is_open' => $booking->isBookingChatOpen() || ($booking->status === BookingStatus::Completed && $booking->isPaid()),
+                'is_open' => $booking->isBookingChatOpen(),
                 'last_message' => $latestMessage ? ($latestMessage->body ?: '📷 Gambar') : 'Belum ada pesan',
                 'last_message_time' => $latestMessage ? $latestMessage->created_at->toISOString() : $booking->created_at->toISOString(),
                 'unread_count' => (int) ($booking->unread_count ?? 0),

@@ -169,16 +169,38 @@ class BookingController extends Controller
         }
 
         $total = $booking->computeTotalAmount();
+        $bookingIdStr = (string) $booking->getKey();
 
-        $booking->update([
-            'status' => BookingStatus::Confirmed,
-            'payment_status' => PaymentStatus::Pending,
-            'total_amount' => $total,
-        ]);
+        DB::transaction(function () use ($booking, $profile, $start, $end, $total, $bookingIdStr): void {
+            $booking->update([
+                'status' => BookingStatus::Confirmed,
+                'payment_status' => PaymentStatus::Pending,
+                'total_amount' => $total,
+            ]);
+
+            // Otomatis tolak pesanan lain yang pending dan bentrok pada jadwal ini
+            $overlappingPending = MuthowifBooking::query()
+                ->where('muthowif_profile_id', $profile->id)
+                ->where('status', BookingStatus::Pending)
+                ->whereKeyNot($bookingIdStr)
+                ->where('starts_on', '<=', $end->toDateString())
+                ->where('ends_on', '>=', $start->toDateString())
+                ->get();
+
+            foreach ($overlappingPending as $other) {
+                $other->update([
+                    'status' => BookingStatus::Cancelled,
+                    'muthowif_rejection_kind' => MuthowifBookingMuthowifRejectionKind::JadwalFull,
+                    'muthowif_rejection_note' => __('bookings.show.muthowif_rejection_auto_collision'),
+                ]);
+                NotifyCustomerOfBookingRejectedJadwalFull::dispatchAfterResponse((string) $other->getKey());
+                broadcast(new CustomerBookingUpdated($other->fresh()));
+            }
+        });
 
         app(BookingPendingPaymentEnsurer::class)->ensure($booking->fresh());
 
-        NotifyCustomerOfApprovedBooking::dispatchAfterResponse((string) $booking->getKey());
+        NotifyCustomerOfApprovedBooking::dispatchAfterResponse($bookingIdStr);
         broadcast(new CustomerBookingUpdated($booking->fresh()));
 
         return redirect()
@@ -323,6 +345,25 @@ class BookingController extends Controller
                     'starts_on' => $start->toDateString(),
                     'ends_on' => $end->toDateString(),
                 ]);
+
+                // Otomatis tolak pesanan lain yang pending dan bentrok pada jadwal baru ini
+                $overlappingPending = MuthowifBooking::query()
+                    ->where('muthowif_profile_id', $profile->id)
+                    ->where('status', BookingStatus::Pending)
+                    ->whereKeyNot($booking->getKey())
+                    ->where('starts_on', '<=', $end->toDateString())
+                    ->where('ends_on', '>=', $start->toDateString())
+                    ->get();
+
+                foreach ($overlappingPending as $other) {
+                    $other->update([
+                        'status' => BookingStatus::Cancelled,
+                        'muthowif_rejection_kind' => MuthowifBookingMuthowifRejectionKind::JadwalFull,
+                        'muthowif_rejection_note' => __('bookings.show.muthowif_rejection_auto_collision'),
+                    ]);
+                    NotifyCustomerOfBookingRejectedJadwalFull::dispatchAfterResponse((string) $other->getKey());
+                    broadcast(new CustomerBookingUpdated($other->fresh()));
+                }
             });
         } catch (\Throwable $e) {
             return redirect()
