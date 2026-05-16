@@ -241,12 +241,12 @@
                                 </div>
                                 <div class="flex justify-between gap-3">
                                     <dt class="text-slate-500">{{ __('bookings.show.muthowif') }}</dt>
-                                    <dd class="text-right font-medium text-slate-900">{{ $booking->muthowifProfile->user->name ?? 'â€”' }}</dd>
+                                    <dd class="text-right font-medium text-slate-900">{{ $booking->muthowifProfile->user->name ?? '-' }}</dd>
                                 </div>
                                 <div class="flex justify-between gap-3">
                                     <dt class="text-slate-500">{{ __('bookings.show.period') }}</dt>
                                     <dd class="text-right font-medium tabular-nums text-slate-900">
-                                        {{ Carbon::parse($booking->starts_on)->format('d/m/Y') }} â€“ {{ Carbon::parse($booking->ends_on)->format('d/m/Y') }}
+                                        {{ Carbon::parse($booking->starts_on)->format('d/m/Y') }} - {{ Carbon::parse($booking->ends_on)->format('d/m/Y') }}
                                     </dd>
                                 </div>
                                 <div class="flex justify-between gap-3 border-t border-slate-100 pt-3">
