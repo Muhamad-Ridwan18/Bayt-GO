@@ -119,7 +119,7 @@ return [
         'title' => 'Ringkasan pesanan',
         'guide_label' => 'Muthowif',
         'dates_label' => 'Periode',
-        'status_ready' => 'Jadwal tersedia — siap mengisi',
+        'status_ready' => 'Jadwal tersedia',
         'hint_ready' => 'Formulir di bawah menggunakan lebar layar supaya kartu paket dan unggahan dokumen nyaman digunakan.',
         'status_guest' => 'Masuk untuk melanjutkan',
         'hint_guest' => 'Setelah masuk sebagai jamaah, Anda dapat mengisi paket dan mengunggah dokumen dalam satu alur.',
