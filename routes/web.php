@@ -233,6 +233,9 @@ Route::middleware('auth')->group(function () {
 
     Route::middleware([EnsureUserRole::class.':admin'])->prefix('admin')->name('admin.')->group(function () {
         Route::get('pengaturan', AdminSettingsHubController::class)->name('settings.index');
+        
+        Route::get('pengaturan/finansial', [\App\Http\Controllers\Admin\FinancialSettingsController::class, 'edit'])->name('financial-settings.edit');
+        Route::put('pengaturan/finansial', [\App\Http\Controllers\Admin\FinancialSettingsController::class, 'update'])->name('financial-settings.update');
         Route::post('artikel/ckeditor/unggah', [ArticlesAdminController::class, 'ckeditorUpload'])->name('articles.ckeditor_upload');
         Route::post('artikel/editorjs/unggah', [ArticlesAdminController::class, 'editorjsUpload'])->name('articles.editorjs_upload');
         Route::resource('artikel', ArticlesAdminController::class)

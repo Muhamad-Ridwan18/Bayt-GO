@@ -29,7 +29,12 @@ class CurrencyService
                 Log::error('CurrencyService Error: ' . $e->getMessage());
             }
 
-            // Fallback jika API gagal
+            // Fallback jika API gagal, cek database via SiteSetting
+            $fallback = \App\Models\SiteSetting::getValue('fallback_usd_rate');
+            if ($fallback !== null && is_numeric($fallback)) {
+                return (float) $fallback;
+            }
+
             return (float) config('app.currency.fallback_usd_rate', 16000.0);
         });
     }

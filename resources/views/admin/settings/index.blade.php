@@ -17,6 +17,18 @@
             <div class="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm">
                 <ul class="divide-y divide-slate-100" role="list">
                     <li>
+                        <a href="{{ route('admin.financial-settings.edit') }}" class="flex items-center gap-4 py-4 transition hover:bg-slate-50/80">
+                            <span class="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-lime-100 text-lime-700" aria-hidden="true">
+                                <svg class="h-5 w-5" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M12 6v12m-3-2.818l.879.659c1.171.879 3.07.879 4.242 0 1.172-.879 1.172-2.303 0-3.182C13.536 12.219 12.768 12 12 12c-.725 0-1.45-.22-2.003-.659-1.106-.879-1.106-2.303 0-3.182s2.9-.879 4.006 0l.415.33M21 12a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
+                            </span>
+                            <div class="min-w-0 flex-1">
+                                <p class="font-semibold text-slate-900">Pengaturan Finansial & Kurs</p>
+                                <p class="text-xs text-slate-500">Atur nilai tukar fallback (cadangan) Dollar saat API down</p>
+                            </div>
+                            <svg class="h-5 w-5 shrink-0 text-slate-400" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" d="m8.25 4.5 7.5 7.5-7.5 7.5" /></svg>
+                        </a>
+                    </li>
+                    <li>
                         <a href="{{ route('admin.site-appearance.edit') }}" class="flex items-center gap-4 py-4 transition hover:bg-slate-50/80">
                             <span class="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-violet-100 text-violet-700" aria-hidden="true">
                                 <svg class="h-5 w-5" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M9.594 3.94c.09-.542.56-.94 1.11-.94h2.593c.55 0 1.02.398 1.11.94l.213 1.281c.063.374.313.686.645.87.074.04.147.083.22.127.324.196.72.257 1.075.124l1.217-.456a1.125 1.125 0 011.37.49l1.384 2.382a1.125 1.125 0 01-.57 1.667l-.908.356c-.378.146-.677.478-.764.892-.068.387-.086.783-.068 1.176.018.394.069.783.173 1.162.106.389.297.743.569 1.044l1.086 1.196a1.125 1.125 0 01.009 1.518l-.93 1.14a1.125 1.125 0 01-1.592.068l-.356-.907c-.196-.332-.596-.547-1.019-.547h-9.094c-.424 0-.823.215-1.019.547l-.356.907a1.125 1.125 0 01-1.592-.068l-.93-1.14a1.125 1.125 0 01.009-1.518l1.086-1.196c.272-.302.463-.656.569-1.044.103-.379.154-.769.173-1.162.019-.394-.068-.789-.069-1.176-.068-.389-.367-.739-.764-.892l-.908-.356a1.125 1.125 0 01-.569-1.667l1.384-2.382a1.125 1.125 0 011.371-.489l1.217.455c.355.134.749.073 1.075-.124.074-.046.146-.086.223-.129.331-.182.579-.489.642-.867l.213-1.281Z" /></svg>
