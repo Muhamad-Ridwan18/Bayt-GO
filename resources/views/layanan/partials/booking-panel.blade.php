@@ -342,7 +342,18 @@
                                 <div class="sm:col-span-1">
                                     <label for="ticket_outbound_{{ $profile->id }}" class="block text-sm font-semibold text-slate-800">{{ __('marketplace.panel.doc_ticket_outbound') }} <span class="text-red-600">*</span></label>
                                     <p class="mt-1 text-xs leading-snug text-slate-500 sm:text-sm">{{ __('marketplace.panel.doc_ticket_outbound_help') }}</p>
-                                    <input id="ticket_outbound_{{ $profile->id }}" type="file" name="ticket_outbound" required accept=".pdf,.jpg,.jpeg,.png,application/pdf,image/jpeg,image/png"
+
+                                    @php $tempOutPath = old('temp_ticket_outbound_path', session('temp_ticket_outbound_path')); @endphp
+                                    @if($tempOutPath)
+                                        <div class="mt-2 flex items-center gap-2 rounded-xl border border-brand-200 bg-brand-50/50 px-3 py-2 text-xs font-medium text-brand-800 ring-1 ring-brand-100">
+                                            <svg class="size-4 shrink-0 text-brand-600" fill="none" viewBox="0 0 24 24" stroke-width="2.5" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M4.5 12.75l6 6 9-13.5" /></svg>
+                                            <span class="truncate">Berkas terunggah: {{ old('temp_ticket_outbound_name', session('temp_ticket_outbound_name')) }}</span>
+                                            <input type="hidden" name="temp_ticket_outbound_path" value="{{ $tempOutPath }}">
+                                            <input type="hidden" name="temp_ticket_outbound_name" value="{{ old('temp_ticket_outbound_name', session('temp_ticket_outbound_name')) }}">
+                                        </div>
+                                    @endif
+
+                                    <input id="ticket_outbound_{{ $profile->id }}" type="file" name="ticket_outbound" @if(!$tempOutPath) required @endif accept=".pdf,.jpg,.jpeg,.png,application/pdf,image/jpeg,image/png"
                                            class="mt-2 block w-full text-sm text-slate-600 file:mr-3 file:rounded-xl file:border-0 file:bg-brand-50 file:px-4 file:py-2.5 file:text-sm file:font-semibold file:text-brand-800 hover:file:bg-brand-100" />
                                     @error('ticket_outbound')
                                         <p class="mt-1 text-xs text-red-600">{{ $message }}</p>
@@ -351,7 +362,18 @@
                                 <div class="sm:col-span-1">
                                     <label for="ticket_return_{{ $profile->id }}" class="block text-sm font-semibold text-slate-800">{{ __('marketplace.panel.doc_ticket_return') }} <span class="text-red-600">*</span></label>
                                     <p class="mt-1 text-xs leading-snug text-slate-500 sm:text-sm">{{ __('marketplace.panel.doc_ticket_return_help') }}</p>
-                                    <input id="ticket_return_{{ $profile->id }}" type="file" name="ticket_return" required accept=".pdf,.jpg,.jpeg,.png,application/pdf,image/jpeg,image/png"
+
+                                    @php $tempRetPath = old('temp_ticket_return_path', session('temp_ticket_return_path')); @endphp
+                                    @if($tempRetPath)
+                                        <div class="mt-2 flex items-center gap-2 rounded-xl border border-brand-200 bg-brand-50/50 px-3 py-2 text-xs font-medium text-brand-800 ring-1 ring-brand-100">
+                                            <svg class="size-4 shrink-0 text-brand-600" fill="none" viewBox="0 0 24 24" stroke-width="2.5" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M4.5 12.75l6 6 9-13.5" /></svg>
+                                            <span class="truncate">Berkas terunggah: {{ old('temp_ticket_return_name', session('temp_ticket_return_name')) }}</span>
+                                            <input type="hidden" name="temp_ticket_return_path" value="{{ $tempRetPath }}">
+                                            <input type="hidden" name="temp_ticket_return_name" value="{{ old('temp_ticket_return_name', session('temp_ticket_return_name')) }}">
+                                        </div>
+                                    @endif
+
+                                    <input id="ticket_return_{{ $profile->id }}" type="file" name="ticket_return" @if(!$tempRetPath) required @endif accept=".pdf,.jpg,.jpeg,.png,application/pdf,image/jpeg,image/png"
                                            class="mt-2 block w-full text-sm text-slate-600 file:mr-3 file:rounded-xl file:border-0 file:bg-brand-50 file:px-4 file:py-2.5 file:text-sm file:font-semibold file:text-brand-800 hover:file:bg-brand-100" />
                                     @error('ticket_return')
                                         <p class="mt-1 text-xs text-red-600">{{ $message }}</p>
@@ -360,7 +382,18 @@
                                 <div class="sm:col-span-1">
                                     <label for="passport_{{ $profile->id }}" class="block text-sm font-semibold text-slate-800">{{ __('marketplace.panel.doc_passport') }} <span class="text-red-600">*</span></label>
                                     <p class="mt-1 text-xs leading-snug text-slate-500 sm:text-sm">{{ __('marketplace.panel.doc_passport_help') }}</p>
-                                    <input id="passport_{{ $profile->id }}" type="file" name="passport" required accept=".pdf,.jpg,.jpeg,.png,application/pdf,image/jpeg,image/png"
+
+                                    @php $tempPasPath = old('temp_passport_path', session('temp_passport_path')); @endphp
+                                    @if($tempPasPath)
+                                        <div class="mt-2 flex items-center gap-2 rounded-xl border border-brand-200 bg-brand-50/50 px-3 py-2 text-xs font-medium text-brand-800 ring-1 ring-brand-100">
+                                            <svg class="size-4 shrink-0 text-brand-600" fill="none" viewBox="0 0 24 24" stroke-width="2.5" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M4.5 12.75l6 6 9-13.5" /></svg>
+                                            <span class="truncate">Berkas terunggah: {{ old('temp_passport_name', session('temp_passport_name')) }}</span>
+                                            <input type="hidden" name="temp_passport_path" value="{{ $tempPasPath }}">
+                                            <input type="hidden" name="temp_passport_name" value="{{ old('temp_passport_name', session('temp_passport_name')) }}">
+                                        </div>
+                                    @endif
+
+                                    <input id="passport_{{ $profile->id }}" type="file" name="passport" @if(!$tempPasPath) required @endif accept=".pdf,.jpg,.jpeg,.png,application/pdf,image/jpeg,image/png"
                                            class="mt-2 block w-full text-sm text-slate-600 file:mr-3 file:rounded-xl file:border-0 file:bg-brand-50 file:px-4 file:py-2.5 file:text-sm file:font-semibold file:text-brand-800 hover:file:bg-brand-100" />
                                     @error('passport')
                                         <p class="mt-1 text-xs text-red-600">{{ $message }}</p>
@@ -373,8 +406,19 @@
                                         <span x-show="serviceType === 'private'" class="font-normal text-slate-400">({{ __('marketplace.panel.doc_optional') }})</span>
                                     </label>
                                     <p class="mt-1 text-xs leading-snug text-slate-500 sm:text-sm">{{ __('marketplace.panel.doc_itinerary_help') }}</p>
+
+                                    @php $tempItiPath = old('temp_itinerary_path', session('temp_itinerary_path')); @endphp
+                                    @if($tempItiPath)
+                                        <div class="mt-2 flex items-center gap-2 rounded-xl border border-brand-200 bg-brand-50/50 px-3 py-2 text-xs font-medium text-brand-800 ring-1 ring-brand-100">
+                                            <svg class="size-4 shrink-0 text-brand-600" fill="none" viewBox="0 0 24 24" stroke-width="2.5" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M4.5 12.75l6 6 9-13.5" /></svg>
+                                            <span class="truncate">Berkas terunggah: {{ old('temp_itinerary_name', session('temp_itinerary_name')) }}</span>
+                                            <input type="hidden" name="temp_itinerary_path" value="{{ $tempItiPath }}">
+                                            <input type="hidden" name="temp_itinerary_name" value="{{ old('temp_itinerary_name', session('temp_itinerary_name')) }}">
+                                        </div>
+                                    @endif
+
                                     <input id="itinerary_{{ $profile->id }}" type="file" name="itinerary" accept=".pdf,.jpg,.jpeg,.png,application/pdf,image/jpeg,image/png"
-                                           x-bind:required="serviceType === 'group'"
+                                           x-bind:required="serviceType === 'group' && !'{{ $tempItiPath }}'"
                                            class="mt-2 block w-full text-sm text-slate-600 file:mr-3 file:rounded-xl file:border-0 file:bg-slate-100 file:px-4 file:py-2.5 file:text-sm file:font-semibold file:text-slate-700 hover:file:bg-slate-200" />
                                     @error('itinerary')
                                         <p class="mt-1 text-xs text-red-600">{{ $message }}</p>
@@ -382,6 +426,17 @@
                                 </div>
                                 <div class="sm:col-span-2">
                                     <label for="visa_{{ $profile->id }}" class="block text-sm font-semibold text-slate-800">{{ __('marketplace.panel.doc_visa') }} <span class="text-slate-400">({{ __('marketplace.panel.doc_optional') }})</span></label>
+                                    
+                                    @php $tempVisaPath = old('temp_visa_path', session('temp_visa_path')); @endphp
+                                    @if($tempVisaPath)
+                                        <div class="mt-2 flex items-center gap-2 rounded-xl border border-brand-200 bg-brand-50/50 px-3 py-2 text-xs font-medium text-brand-800 ring-1 ring-brand-100 max-w-lg">
+                                            <svg class="size-4 shrink-0 text-brand-600" fill="none" viewBox="0 0 24 24" stroke-width="2.5" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M4.5 12.75l6 6 9-13.5" /></svg>
+                                            <span class="truncate">Berkas terunggah: {{ old('temp_visa_name', session('temp_visa_name')) }}</span>
+                                            <input type="hidden" name="temp_visa_path" value="{{ $tempVisaPath }}">
+                                            <input type="hidden" name="temp_visa_name" value="{{ old('temp_visa_name', session('temp_visa_name')) }}">
+                                        </div>
+                                    @endif
+
                                     <input id="visa_{{ $profile->id }}" type="file" name="visa" accept=".pdf,.jpg,.jpeg,.png,application/pdf,image/jpeg,image/png"
                                            class="mt-2 block w-full max-w-full text-sm text-slate-600 file:mr-3 file:rounded-xl file:border-0 file:bg-slate-100 file:px-4 file:py-2.5 file:text-sm file:font-semibold file:text-slate-700 hover:file:bg-slate-200 sm:max-w-lg" />
                                     @error('visa')

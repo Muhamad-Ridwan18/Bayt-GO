@@ -39,6 +39,7 @@ use Illuminate\Pagination\LengthAwarePaginator;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Storage;
+use Illuminate\Support\Facades\Validator;
 use Illuminate\Validation\Rule;
 use Illuminate\Validation\ValidationException;
 use Illuminate\View\View;
@@ -537,7 +538,7 @@ class BookingController extends Controller
     {
         $this->authorize('create', MuthowifBooking::class);
 
-        $validated = $request->validate([
+        $rules = [
             'muthowif_profile_id' => [
                 'required',
                 'uuid',
@@ -553,18 +554,19 @@ class BookingController extends Controller
             'add_on_ids.*' => ['uuid'],
             'with_same_hotel' => ['sometimes', 'boolean'],
             'with_transport' => ['sometimes', 'boolean'],
-            'ticket_outbound' => ['required', 'file', 'mimes:pdf,jpeg,jpg,png', 'max:10240'],
-            'ticket_return' => ['required', 'file', 'mimes:pdf,jpeg,jpg,png', 'max:10240'],
-            'passport' => ['required', 'file', 'mimes:pdf,jpeg,jpg,png', 'max:10240'],
+            'ticket_outbound' => [$this->hasPersistentFile($request, 'ticket_outbound') ? 'nullable' : 'required', 'file', 'mimes:pdf,jpeg,jpg,png', 'max:10240'],
+            'ticket_return' => [$this->hasPersistentFile($request, 'ticket_return') ? 'nullable' : 'required', 'file', 'mimes:pdf,jpeg,jpg,png', 'max:10240'],
+            'passport' => [$this->hasPersistentFile($request, 'passport') ? 'nullable' : 'required', 'file', 'mimes:pdf,jpeg,jpg,png', 'max:10240'],
             'itinerary' => [
-                Rule::requiredIf(fn () => $request->input('service_type') === 'group'),
-                'nullable',
+                $request->input('service_type') === 'group' && !$this->hasPersistentFile($request, 'itinerary') ? 'required' : 'nullable',
                 'file',
                 'mimes:pdf,jpeg,jpg,png',
                 'max:10240',
             ],
             'visa' => ['nullable', 'file', 'mimes:pdf,jpeg,jpg,png', 'max:10240'],
-        ], [
+        ];
+
+        $validator = Validator::make($request->all(), $rules, [
             'itinerary.required' => __('bookings.validation.itinerary_required_group'),
         ], [
             'ticket_outbound' => __('marketplace.panel.doc_ticket_outbound'),
@@ -573,6 +575,14 @@ class BookingController extends Controller
             'itinerary' => __('marketplace.panel.doc_itinerary'),
             'visa' => __('marketplace.panel.doc_visa'),
         ]);
+
+        if ($validator->fails()) {
+            $this->saveTempFiles($request);
+
+            return redirect()->back()->withErrors($validator)->withInput();
+        }
+
+        $validated = $validator->validated();
 
         $start = Carbon::parse($validated['start_date'])->startOfDay();
         $end = Carbon::parse($validated['end_date'] ?? $validated['start_date'])->startOfDay();
@@ -688,14 +698,16 @@ class BookingController extends Controller
             ]))));
 
             $dir = 'booking-documents/'.$booking->getKey();
-            $ticketOutbound = $request->file('ticket_outbound')->store($dir, 'local');
-            $ticketReturn = $request->file('ticket_return')->store($dir, 'local');
-            $itineraryPath = $request->file('itinerary')?->store($dir, 'local');
-            $visaPath = $request->file('visa')?->store($dir, 'local');
+            $ticketOutbound = $this->movePersistentFile($request, 'ticket_outbound', $dir);
+            $ticketReturn = $this->movePersistentFile($request, 'ticket_return', $dir);
+            $passportPath = $this->movePersistentFile($request, 'passport', $dir);
+            $itineraryPath = $this->movePersistentFile($request, 'itinerary', $dir);
+            $visaPath = $this->movePersistentFile($request, 'visa', $dir);
 
             $booking->update([
                 'ticket_outbound_path' => $ticketOutbound,
                 'ticket_return_path' => $ticketReturn,
+                'passport_path' => $passportPath,
                 'itinerary_path' => $itineraryPath,
                 'visa_path' => $visaPath,
             ]);
@@ -1012,5 +1024,40 @@ class BookingController extends Controller
         }
 
         return app(MootaApiClient::class)->bankAccountIds();
+    }
+
+    private function hasPersistentFile(Request $request, string $key): bool
+    {
+        return $request->hasFile($key) || $request->filled("temp_{$key}_path");
+    }
+
+    private function saveTempFiles(Request $request): void
+    {
+        $fields = ['ticket_outbound', 'ticket_return', 'passport', 'itinerary', 'visa'];
+        foreach ($fields as $field) {
+            if ($request->hasFile($field) && $request->file($field)->isValid()) {
+                $file = $request->file($field);
+                $path = $file->store('temp-booking-documents', 'local');
+                session()->flash("temp_{$field}_path", $path);
+                session()->flash("temp_{$field}_name", $file->getClientOriginalName());
+            }
+        }
+    }
+
+    private function movePersistentFile(Request $request, string $key, string $targetDir): ?string
+    {
+        if ($request->hasFile($key)) {
+            return $request->file($key)->store($targetDir, 'local');
+        }
+
+        $tempPath = $request->input("temp_{$key}_path");
+        if ($tempPath && Storage::disk('local')->exists($tempPath)) {
+            $newPath = $targetDir . '/' . basename($tempPath);
+            Storage::disk('local')->move($tempPath, $newPath);
+
+            return $newPath;
+        }
+
+        return null;
     }
 }
