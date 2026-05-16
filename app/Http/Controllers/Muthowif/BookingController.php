@@ -10,7 +10,7 @@ use App\Events\CustomerBookingUpdated;
 use App\Http\Controllers\Controller;
 use App\Jobs\NotifyCustomerOfApprovedBooking;
 use App\Jobs\NotifyCustomerOfBookingReferredToPeer;
-use App\Jobs\NotifyCustomerOfBookingRejectedSlotFull;
+use App\Jobs\NotifyCustomerOfBookingRejectedJadwalFull;
 use App\Jobs\NotifyCustomerOfRescheduleApproved;
 use App\Jobs\NotifyCustomerOfRescheduleRejected;
 use App\Jobs\NotifyMuthowifOfNewBooking;
@@ -159,12 +159,12 @@ class BookingController extends Controller
 
         $start = $booking->starts_on->copy()->startOfDay();
         $end = $booking->ends_on->copy()->startOfDay();
-        if (! $profile->isSlotAvailableForRange($start, $end, (string) $booking->getKey())) {
+        if (! $profile->isJadwalAvailableForRange($start, $end, (string) $booking->getKey())) {
             return redirect()
                 ->route('muthowif.bookings.show', $booking)
                 ->with(
                     'error',
-                    'Slot tanggal ini tidak bisa disetujui karena sudah dipakai booking lain yang disetujui. Batalkan atau tolak pesanan yang bentrok, atau minta jamaah mengubah tanggal.'
+                    'Jadwal tanggal ini tidak bisa disetujui karena sudah dipakai booking lain yang disetujui. Batalkan atau tolak pesanan yang bentrok, atau minta jamaah mengubah tanggal.'
                 );
         }
 
@@ -217,8 +217,8 @@ class BookingController extends Controller
             'muthowif_rejection_note' => $note,
         ]);
 
-        if ($kind === MuthowifBookingMuthowifRejectionKind::SlotFull) {
-            NotifyCustomerOfBookingRejectedSlotFull::dispatchAfterResponse((string) $booking->getKey());
+        if ($kind === MuthowifBookingMuthowifRejectionKind::JadwalFull) {
+            NotifyCustomerOfBookingRejectedJadwalFull::dispatchAfterResponse((string) $booking->getKey());
         }
 
         broadcast(new CustomerBookingUpdated($booking->fresh()));
@@ -289,10 +289,10 @@ class BookingController extends Controller
         $start = $rescheduleRequest->new_starts_on->copy()->startOfDay();
         $end = $rescheduleRequest->new_ends_on->copy()->startOfDay();
 
-        if (! $profile->isSlotAvailableForRange($start, $end, (string) $booking->getKey())) {
+        if (! $profile->isJadwalAvailableForRange($start, $end, (string) $booking->getKey())) {
             return redirect()
                 ->route('muthowif.bookings.show', $booking)
-                ->with('error', 'Slot tanggal yang diajukan tidak lagi tersedia. Minta jamaah mengajukan tanggal lain.');
+                ->with('error', 'Jadwal tanggal yang diajukan tidak lagi tersedia. Minta jamaah mengajukan tanggal lain.');
         }
 
         $oldNights = $booking->billingNightsInclusive();

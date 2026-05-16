@@ -56,8 +56,8 @@ class BookingPeerReferralService
 
         $start = $booking->starts_on->copy()->startOfDay();
         $end = $booking->ends_on->copy()->startOfDay();
-        if (! $targetProfile->isSlotAvailableForRange($start, $end)) {
-            throw new RuntimeException(__('muthowif.bookings.refer_err_slot'));
+        if (! $targetProfile->isJadwalAvailableForRange($start, $end)) {
+            throw new RuntimeException(__('muthowif.bookings.refer_err_jadwal'));
         }
 
         $addonNames = $this->collectAddonNames($booking);

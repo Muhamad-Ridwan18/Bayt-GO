@@ -7,7 +7,7 @@ use App\Enums\MuthowifBookingMuthowifRejectionKind;
 use App\Enums\PaymentStatus;
 use App\Events\CustomerBookingUpdated;
 use App\Http\Controllers\Controller;
-use App\Jobs\NotifyCustomerOfBookingRejectedSlotFull;
+use App\Jobs\NotifyCustomerOfBookingRejectedJadwalFull;
 use App\Models\MuthowifBooking;
 use App\Services\BookingPendingPaymentEnsurer;
 use Carbon\Carbon;
@@ -96,9 +96,9 @@ class MuthowifBookingController extends Controller
 
         $start = $booking->starts_on->copy()->startOfDay();
         $end = $booking->ends_on->copy()->startOfDay();
-        if (! $profile->isSlotAvailableForRange($start, $end, (string) $booking->getKey())) {
+        if (! $profile->isJadwalAvailableForRange($start, $end, (string) $booking->getKey())) {
             return response()->json([
-                'message' => 'Slot tanggal bentrok dengan booking lain yang sudah disetujui.',
+                'message' => 'Jadwal tanggal bentrok dengan booking lain yang sudah disetujui.',
             ], 422);
         }
 
@@ -155,8 +155,8 @@ class MuthowifBookingController extends Controller
             'muthowif_rejection_note' => $note,
         ]);
 
-        if ($kind === MuthowifBookingMuthowifRejectionKind::SlotFull) {
-            NotifyCustomerOfBookingRejectedSlotFull::dispatchAfterResponse((string) $booking->getKey());
+        if ($kind === MuthowifBookingMuthowifRejectionKind::JadwalFull) {
+            NotifyCustomerOfBookingRejectedJadwalFull::dispatchAfterResponse((string) $booking->getKey());
         }
 
         broadcast(new CustomerBookingUpdated($booking->fresh()));

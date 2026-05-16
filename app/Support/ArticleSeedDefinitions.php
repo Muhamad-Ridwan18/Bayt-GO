@@ -176,7 +176,7 @@ Artinya struktur tarif harian atau paket tertentu terlihat sebelum Anda berkomit
 
 ## Alur pembayaran yang wajar
 
-Di BaytGo, alur checkout dirancang agar pembayaran terhubung pada permintaan booking yang sudah Anda setujui. Setelah muthowif merespons sesuai slot yang dipublikasikan, status transaksi dapat dilacak dari akun Anda — mirip cara Anda melacak pesanan marketplace lain yang serius tentang SLA.
+Di BaytGo, alur checkout dirancang agar pembayaran terhubung pada permintaan booking yang sudah Anda setujui. Setelah muthowif merespons sesuai jadwal yang dipublikasikan, status transaksi dapat dilacak dari akun Anda — mirip cara Anda melacak pesanan marketplace lain yang serius tentang SLA.
 
 ## Data pribadi & percakapan
 
@@ -206,7 +206,7 @@ Published rates should cover the scope you read on the profile: base days, servi
 
 ## How checkout behaves
 
-BaytGo links payment intent to the booking request you approved. After a muthowif accepts the slot you selected, you can trace status from your account — the same level of traceability you expect from serious travel marketplaces.
+BaytGo links payment intent to the booking request you approved. After a muthowif accepts the schedule you selected, you can trace status from your account — the same level of traceability you expect from serious travel marketplaces.
 
 ## Privacy and channels
 

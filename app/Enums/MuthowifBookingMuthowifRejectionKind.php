@@ -4,7 +4,7 @@ namespace App\Enums;
 
 enum MuthowifBookingMuthowifRejectionKind: string
 {
-    case SlotFull = 'slot_full';
+    case JadwalFull = 'jadwal_full';
     case Other = 'other';
 
     public function label(): string

@@ -70,7 +70,7 @@ return [
         /** WA ke jamaah: booking dialihkan ke muthowif lain (rekomendasi rekan). */
         'customer_booking_referred_notify_enabled' => env('FONNTE_CUSTOMER_BOOKING_REFERRED_NOTIFY_ENABLED', true),
         /** WA ke jamaah: muthowif menolak karena jadwal penuh — maaf + cek rekomendasi jaringan. */
-        'customer_booking_rejected_slot_full_notify_enabled' => env('FONNTE_CUSTOMER_BOOKING_REJECTED_SLOT_FULL_NOTIFY_ENABLED', true),
+        'customer_booking_rejected_jadwal_full_notify_enabled' => env('FONNTE_CUSTOMER_BOOKING_REJECTED_JADWAL_FULL_NOTIFY_ENABLED', true),
         /** WA ke jamaah: bukti transfer refund (setelah admin upload + tandai selesai). */
         'refund_transfer_proof_notify_enabled' => env('FONNTE_REFUND_TRANSFER_PROOF_NOTIFY_ENABLED', true),
         /** WA ke muthowif: bukti transfer withdraw (setelah admin tandai selesai). */

@@ -15,8 +15,8 @@ enum BookingStatus: string
     }
 
     /**
-     * Status yang membuat slot tanggal dianggap terisi (disembunyikan dari pencarian / tidak bisa dibooking).
-     * Pending sengaja tidak ikut: muthowif belum menyetujui, slot tetap terbuka untuk pesanan lain;
+     * Status yang membuat jadwal tanggal dianggap terisi (disembunyikan dari pencarian / tidak bisa dibooking).
+     * Pending sengaja tidak ikut: muthowif belum menyetujui, jadwal tetap terbuka untuk pesanan lain;
      * saat menyetujui, konfirmasi harus mengecek bentrok dengan booking confirmed lain.
      */
     public static function blocksAvailability(): array

@@ -11,13 +11,13 @@ return [
     'nav_primary_aria' => 'Navigasi utama',
     'nav_mobile_aria' => 'Menu mobile',
 
-    'hero_title' => 'Booking Muthowif semudah booking hotel',
-    'hero_sub' => 'Pilih tanggal, lihat ketersediaan, dan booking muthowif secara real-time dengan harga transparan.',
+    'hero_title' => 'Pesan Muthowif semudah pesan hotel',
+    'hero_sub' => 'Pilih tanggal, lihat ketersediaan, dan pesan muthowif secara real-time dengan harga transparan.',
     'hero_kicker' => 'Marketplace Pendamping Umrah Terpercaya',
 
     'badge_1' => 'Harga transparan',
     'badge_2' => 'Jadwal fleksibel',
-    'badge_3' => 'Booking instan',
+    'badge_3' => 'Pesan instan',
 
     'search_section_title' => 'Cari ketersediaan muthowif',
     'search_tip_label' => 'Tips:',
@@ -26,23 +26,23 @@ return [
     'value_kicker' => 'Value for everyone',
     'value_title' => 'BaytGo membuat segalanya mudah bagi jamaah dan memberdayakan muthowif.',
     'value_customer_title' => 'Untuk Jamaah',
-    'value_customer_sub' => 'Booking muthowif yang mudah, terpercaya, dan transparan.',
+    'value_customer_sub' => 'Pesan muthowif yang mudah, terpercaya, dan transparan.',
     'value_customer_features' => [
         'Booking mudah' => 'Pesan muthowif hanya dalam beberapa klik.',
         'Muthowif terpercaya' => 'Terverifikasi, berpengalaman, dan profesional.',
         'Harga transparan' => 'Harga jelas di awal. Tanpa biaya tersembunyi.',
-        'Ketersediaan real-time' => 'Lihat ketersediaan secara real-time dan booking instan.',
+        'Ketersediaan real-time' => 'Lihat ketersediaan secara real-time dan pesan instan.',
     ],
     'value_muthowif_title' => 'Untuk Muthowif',
     'value_muthowif_sub' => 'Kelola, kembangkan, dan raih kesuksesan bersama BaytGo.',
     'value_muthowif_features' => [
         'Kelola jadwal' => 'Update ketersediaan Anda kapan saja, di mana saja.',
-        'Terima booking' => 'Terima dan kelola booking secara real-time.',
+        'Terima booking' => 'Terima dan kelola pesanan secara real-time.',
         'Atur harga' => 'Tetapkan harga Anda sendiri dengan fleksibilitas penuh.',
         'Tingkatkan reputasi' => 'Bangun profil Anda, dapatkan ulasan, tumbuhkan kepercayaan.',
     ],
     'value_banner_title' => 'Platform terpercaya untuk semua',
-    'value_banner_sub' => 'Kami memastikan keamanan, transparansi, dan kepercayaan di setiap booking.',
+    'value_banner_sub' => 'Kami memastikan keamanan, transparansi, dan kepercayaan di setiap pesanan.',
     'value_banner_features' => [
         'Muthowif Terverifikasi' => 'Verifikasi ketat demi ketenangan pikiran Anda.',
         'Booking Aman' => 'Data dan pembayaran Anda selalu terlindungi.',
@@ -66,7 +66,7 @@ return [
         ],
         [
             'title' => 'Support 24/7',
-            'desc' => 'Tim kami siap membantu ketika Anda butuh bantuan terkait booking.',
+            'desc' => 'Tim kami siap membantu ketika Anda butuh bantuan terkait pesanan.',
         ],
     ],
 
@@ -80,7 +80,7 @@ return [
     'carousel_next' => 'Geser ke kanan',
     'stats' => [
         ['value' => '2.500+', 'label' => 'Muthowif terverifikasi'],
-        ['value' => '15.000+', 'label' => 'Booking selesai'],
+        ['value' => '15.000+', 'label' => 'Pesanan selesai'],
         ['value' => '98%', 'label' => 'Kepuasan jamaah'],
         ['value' => '24/7', 'label' => 'Customer support'],
     ],
@@ -88,7 +88,7 @@ return [
     'testimonials_title' => 'Kata mereka',
     'testimonials' => [
         [
-            'quote' => 'Harga transparan dan alur booking yang mulus. Kami menemukan muthowif yang cocok dengan jadwal hanya dalam beberapa menit.',
+            'quote' => 'Harga transparan dan alur pesanan yang mulus. Kami menemukan muthowif yang cocok dengan jadwal hanya dalam beberapa menit.',
             'name' => 'Ahmad Rizki',
             'role' => 'Jamaah umrah',
         ],
@@ -109,13 +109,13 @@ return [
     'pricing_cta' => 'Buka direktori',
 
     'about_title' => 'Tentang BaytGo',
-    'about_sub' => 'Kami menghubungkan jamaah dengan muthowif terverifikasi lewat marketplace berbasis tanggal — harga jelas dan booking di satu tempat.',
+    'about_sub' => 'Kami menghubungkan jamaah dengan muthowif terverifikasi lewat marketplace berbasis tanggal — harga jelas dan pesanan di satu tempat.',
 
     'faq_title' => 'FAQ',
     'faq_items' => [
         [
-            'q' => 'Bagaimana cara booking?',
-            'a' => 'Pilih tanggal perjalanan, jelajahi muthowif yang tersedia, buka profil, dan ikuti langkah booking.',
+            'q' => 'Bagaimana cara pesan?',
+            'a' => 'Pilih tanggal perjalanan, jelajahi muthowif yang tersedia, buka profil, dan ikuti langkah pemesanan.',
         ],
         [
             'q' => 'Apakah pembayaran aman?',
@@ -123,7 +123,7 @@ return [
         ],
         [
             'q' => 'Bisa batal atau jadwal ulang?',
-            'a' => 'Kebijakan tergantung tahap booking dan layanan; cek ketentuan di tiket Anda atau hubungi support.',
+            'a' => 'Kebijakan tergantung tahap pesanan dan layanan; cek ketentuan di tiket Anda atau hubungi support.',
         ],
     ],
 
@@ -138,8 +138,8 @@ return [
     'steps' => [
         ['title' => 'Tanggal & nama', 'desc' => 'Cari rentang perjalanan dan opsional filter nama muthowif.'],
         ['title' => 'Lihat profil', 'desc' => 'Layanan group/private, harga harian, add-on, dan jadwal libur.'],
-        ['title' => 'Booking & bayar', 'desc' => 'Slot yang bentrok otomatis disembunyikan dari pencarian.'],
-        ['title' => 'Berangkat', 'desc' => 'Pendamping siap di Tanah Suci sesuai kesepakatan.'],
+        ['title' => 'Pesan & bayar', 'desc' => 'Jadwal yang bentrok otomatis disembunyikan dari pencarian.'],
+        ['title' => 'Berangkat', 'desc' => 'Muthowif tersediap di Tanah Suci sesuai kesepakatan.'],
     ],
 
     'footer_tagline' => 'Marketplace umrah — jamaah & muthowif',

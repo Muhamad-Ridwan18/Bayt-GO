@@ -66,9 +66,9 @@
             <p class="mt-5 rounded-xl border border-red-200 bg-red-50 px-4 py-4 text-sm text-red-800 ring-1 ring-red-100/80">{{ __('marketplace.panel.past_start') }}</p>
         @elseif (($intent['reason'] ?? '') === 'range_too_long')
             <p class="mt-5 rounded-xl border border-red-200 bg-red-50 px-4 py-4 text-sm text-red-800 ring-1 ring-red-100/80">{{ __('marketplace.panel.range_too_long') }}</p>
-        @elseif (($intent['reason'] ?? '') === 'slot_unavailable')
+        @elseif (($intent['reason'] ?? '') === 'jadwal_tidak_tersedia')
             <div class="mt-5 rounded-xl border border-amber-200 bg-amber-50 px-4 py-4 text-sm text-amber-950 ring-1 ring-amber-100/80">
-                {!! __('marketplace.panel.slot_unavailable_html', [
+                {!! __('marketplace.panel.jadwal_tidak_tersedia_html', [
                     'range' => $searchRangeLabel ?? '—',
                     'link' => '<a href="'.e(route('layanan.index', array_filter(['start_date' => $startDate, 'end_date' => $endDate !== '' ? $endDate : null]))).'" class="font-semibold underline">'.e(__('layanan.booking_panel_link')).'</a>',
                 ]) !!}

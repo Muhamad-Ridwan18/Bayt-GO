@@ -12,9 +12,9 @@
 @endphp
 @if (!empty($showReferralNetworkPanel) && $showReferralNetworkPanel)
     <div class="mt-8 overflow-hidden rounded-3xl border border-violet-200/90 bg-gradient-to-br from-violet-50/90 via-white to-slate-50/80 p-6 shadow-md shadow-violet-900/5 ring-1 ring-violet-100/80 sm:p-8">
-        @if (($booking->muthowif_rejection_kind ?? null) === MuthowifBookingMuthowifRejectionKind::SlotFull)
+        @if (($booking->muthowif_rejection_kind ?? null) === MuthowifBookingMuthowifRejectionKind::JadwalFull)
             <p class="text-sm leading-relaxed text-slate-800">
-                {{ __('bookings.show.muthowif_slot_full_apology', ['name' => $booking->muthowifProfile?->user?->name ?? '—']) }}
+                {{ __('bookings.show.muthowif_jadwal_full_apology', ['name' => $booking->muthowifProfile?->user?->name ?? '—']) }}
             </p>
             @if (filled($booking->muthowif_rejection_note))
                 <p class="mt-3 rounded-xl border border-slate-100 bg-white/90 px-3 py-2 text-xs text-slate-600 ring-1 ring-slate-100/80">

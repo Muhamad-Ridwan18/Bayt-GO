@@ -233,9 +233,9 @@ class MuthowifDirectoryController extends Controller
             return array_merge($empty, ['reason' => 'range_too_long', 'start' => $startDate, 'end' => $endEffective]);
         }
 
-        if (! $profile->isSlotAvailableForRange($start, $end)) {
+        if (! $profile->isJadwalAvailableForRange($start, $end)) {
             return array_merge($empty, [
-                'reason' => 'slot_unavailable',
+                'reason' => 'jadwal_tidak_tersedia',
                 'start' => $start->toDateString(),
                 'end' => $end->toDateString(),
             ]);

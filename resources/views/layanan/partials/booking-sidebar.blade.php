@@ -2,7 +2,7 @@
 @php
     $intent = $bookingIntent;
     $canAttempt = ($intent['can_submit'] ?? false) === true;
-    $blockedReasons = ['guest', 'missing_dates', 'invalid_dates', 'past_start', 'range_too_long', 'slot_unavailable'];
+    $blockedReasons = ['guest', 'missing_dates', 'invalid_dates', 'past_start', 'range_too_long', 'jadwal_tidak_tersedia'];
     $isBlocked = in_array($intent['reason'] ?? null, $blockedReasons, true);
 @endphp
 

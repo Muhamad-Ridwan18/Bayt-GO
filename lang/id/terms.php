@@ -3,7 +3,7 @@
 return [
     'page_title' => 'Syarat dan ketentuan',
     'footer_link' => 'Syarat dan ketentuan',
-    'intro' => 'Ketentuan ini mencerminkan kebijakan operasional BaytGo. Harap dibaca dengan saksama sebelum melakukan booking atau pembayaran.',
+    'intro' => 'Ketentuan ini mencerminkan kebijakan operasional BaytGo. Harap dibaca dengan saksama sebelum melakukan pesanan atau pembayaran.',
 
     'sections' => [
         [
@@ -21,9 +21,9 @@ return [
             ],
         ],
         [
-            'title' => 'Konfirmasi booking',
+            'title' => 'Konfirmasi pesanan',
             'paragraphs' => [
-                'Booking hanya sah setelah pembayaran diterima.',
+                'Pesanan hanya sah setelah pembayaran diterima.',
             ],
         ],
         [
@@ -66,7 +66,7 @@ return [
             'bullets' => [
                 'Reschedule tergantung ketersediaan tanggal alternatif.',
                 'Muthowif yang ditetapkan tidak dapat diganti.',
-                'Hanya perubahan tanggal yang dapat dilakukan jika masih ada slot.',
+                'Hanya perubahan tanggal yang dapat dilakukan jika masih ada jadwal.',
                 'Permohonan di luar jangka waktu tersebut dapat ditolak.',
             ],
         ],
@@ -97,7 +97,7 @@ return [
         [
             'title' => 'Batas tanggung jawab',
             'paragraphs' => [
-                'Tanggung jawab Perusahaan terbatas pada layanan dalam paket booking yang telah disepakati; layanan pihak ketiga di luar itu tidak termasuk.',
+                'Tanggung jawab Perusahaan terbatas pada layanan dalam paket pesanan yang telah disepakati; layanan pihak ketiga di luar itu tidak termasuk.',
             ],
         ],
         [
@@ -109,7 +109,7 @@ return [
         [
             'title' => 'Persetujuan akhir',
             'paragraphs' => [
-                'Dengan melakukan pembayaran atau booking, Klien menyetujui seluruh syarat dan ketentuan di atas.',
+                'Dengan melakukan pembayaran atau pesanan, Klien menyetujui seluruh syarat dan ketentuan di atas.',
             ],
         ],
     ],

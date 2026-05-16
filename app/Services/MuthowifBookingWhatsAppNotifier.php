@@ -200,15 +200,15 @@ class MuthowifBookingWhatsAppNotifier
     /**
      * Muthowif menolak booking (alasan jadwal penuh) — permintaan maaf dan arahkan cek rekomendasi di aplikasi.
      */
-    public function notifyCustomerBookingRejectedSlotFull(MuthowifBooking $booking): void
+    public function notifyCustomerBookingRejectedJadwalFull(MuthowifBooking $booking): void
     {
-        if (! config('services.fonnte.customer_booking_rejected_slot_full_notify_enabled', true)) {
+        if (! config('services.fonnte.customer_booking_rejected_jadwal_full_notify_enabled', true)) {
             return;
         }
 
         $token = config('services.fonnte.token');
         if ($token === null || $token === '') {
-            Log::debug('WhatsApp notify customer slot-full rejection skipped: FONNTE_TOKEN kosong.');
+            Log::debug('WhatsApp notify customer jadwal-full rejection skipped: FONNTE_TOKEN kosong.');
 
             return;
         }
@@ -221,7 +221,7 @@ class MuthowifBookingWhatsAppNotifier
 
         $fonnteDial = IntlPhone::fonnteDial($customer->phone);
         if ($fonnteDial === null) {
-            Log::warning('WhatsApp notify customer slot-full rejection skipped: nomor customer kosong atau tidak valid.', [
+            Log::warning('WhatsApp notify customer jadwal-full rejection skipped: nomor customer kosong atau tidak valid.', [
                 'customer_id' => $customer->id,
                 'booking_id' => $booking->id,
             ]);
@@ -239,22 +239,22 @@ class MuthowifBookingWhatsAppNotifier
             $url = route('bookings.show', $booking);
 
             $lines = [
-                __('whatsapp.customer.rejected_slot_full.headline', ['app' => $appName], $locale),
+                __('whatsapp.customer.rejected_jadwal_full.headline', ['app' => $appName], $locale),
                 '',
-                __('whatsapp.customer.rejected_slot_full.body', ['muthowif' => $muthowifName], $locale),
+                __('whatsapp.customer.rejected_jadwal_full.body', ['muthowif' => $muthowifName], $locale),
                 '',
             ];
 
             if (filled($booking->booking_code)) {
-                $lines[] = __('whatsapp.customer.rejected_slot_full.booking_code', ['code' => $booking->booking_code], $locale);
+                $lines[] = __('whatsapp.customer.rejected_jadwal_full.booking_code', ['code' => $booking->booking_code], $locale);
                 $lines[] = '';
             }
 
-            $lines[] = __('whatsapp.customer.rejected_slot_full.service_dates', ['start' => $start, 'end' => $end], $locale);
+            $lines[] = __('whatsapp.customer.rejected_jadwal_full.service_dates', ['start' => $start, 'end' => $end], $locale);
             $lines[] = '';
-            $lines[] = __('whatsapp.customer.rejected_slot_full.hint', [], $locale);
+            $lines[] = __('whatsapp.customer.rejected_jadwal_full.hint', [], $locale);
             $lines[] = '';
-            $lines[] = __('whatsapp.customer.rejected_slot_full.view_detail', [], $locale);
+            $lines[] = __('whatsapp.customer.rejected_jadwal_full.view_detail', [], $locale);
             $lines[] = $url;
 
             $this->sendToTarget($fonnteDial, implode("\n", $lines), $booking->id);

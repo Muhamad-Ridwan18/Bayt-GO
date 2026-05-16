@@ -110,7 +110,7 @@ class BookingApiController extends Controller
                     ->lockForUpdate()
                     ->firstOrFail();
 
-                if (! $profile->isSlotAvailableForRange($start, $end)) {
+                if (! $profile->isJadwalAvailableForRange($start, $end)) {
                     throw new \Exception('Jadwal muthowif tidak tersedia untuk rentang tanggal tersebut.');
                 }
 

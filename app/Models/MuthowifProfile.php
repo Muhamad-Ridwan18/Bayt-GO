@@ -110,9 +110,9 @@ class MuthowifProfile extends Model
     }
 
     /**
-     * Apakah slot [starts_on, ends_on] masih bisa dipesan (tidak bentrok libur / booking blocking).
+     * Apakah jadwal [starts_on, ends_on] masih bisa dipesan (tidak bentrok libur / booking blocking).
      */
-    public function isSlotAvailableForRange(CarbonInterface $start, CarbonInterface $end, ?string $exceptBookingId = null): bool
+    public function isJadwalAvailableForRange(CarbonInterface $start, CarbonInterface $end, ?string $exceptBookingId = null): bool
     {
         if (! $this->isApproved()) {
             return false;

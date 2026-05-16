@@ -166,7 +166,7 @@ export default function DashboardScreen({ user, onLogout, navigation }) {
             <Text style={styles.actionDesc}>Jelajahi direktori & filter tanggal</Text>
           </TouchableOpacity>
 
-          {/* Action: Booking Saya */}
+          {/* Action: Pesanan Saya */}
           <TouchableOpacity 
             style={styles.actionCard} 
             activeOpacity={0.7}
@@ -175,7 +175,7 @@ export default function DashboardScreen({ user, onLogout, navigation }) {
             <View style={[styles.actionIconWrap, { backgroundColor: '#F0F9FF' }]}>
               <Ionicons name="calendar-clear" size={26} color="#0984e3" />
             </View>
-            <Text style={styles.actionTitle}>Booking saya</Text>
+            <Text style={styles.actionTitle}>Pesanan Saya</Text>
             <Text style={styles.actionDesc}>Status bayar & jadwal</Text>
           </TouchableOpacity>
 

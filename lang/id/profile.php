@@ -4,7 +4,7 @@ return [
     'page_eyebrow' => 'Akun',
     'page_title' => 'Akun & profil',
     'page_subtitle' => 'Perbarui data login, profil publik muthowif, dan keamanan akun Anda.',
-    'back_dashboard' => 'Dasbor',
+    'back_dashboard' => 'Beranda',
     'jump_account' => 'Akun',
     'jump_password' => 'Kata sandi',
     'jump_public' => 'Profil publik',

@@ -93,9 +93,9 @@
             <p class="text-sm text-red-800 bg-red-50 border border-red-200 rounded-2xl px-4 py-3">
                 {{ __('marketplace.panel.range_too_long') }}
             </p>
-        @elseif ($intent['reason'] === 'slot_unavailable')
+        @elseif ($intent['reason'] === 'jadwal_tidak_tersedia')
             <p class="text-sm text-amber-900 bg-amber-50 border border-amber-200 rounded-2xl px-4 py-3">
-                {!! __('marketplace.panel.slot_unavailable_html', [
+                {!! __('marketplace.panel.jadwal_tidak_tersedia_html', [
                     'range' => $rangeLabel,
                     'link' => '<a href="'.e(route('layanan.index', array_filter(['start_date' => $startDate, 'end_date' => $endDate ?? null]))).'" class="font-semibold underline">'.e(__('layanan.booking_panel_link')).'</a>',
                 ]) !!}
@@ -143,7 +143,7 @@
                             <p class="text-xs font-bold uppercase tracking-wide text-slate-500">{{ __('marketplace.panel.stay_period') }}</p>
                             <p class="mt-1 text-base font-semibold tabular-nums text-slate-900 sm:text-lg">{{ $rangeLabel }}</p>
                         </div>
-                        <span class="inline-flex w-fit items-center rounded-full bg-brand-50 px-3 py-1.5 text-xs font-semibold text-brand-800 ring-1 ring-brand-200/80">{{ __('marketplace.panel.slot_available') }}</span>
+                        <span class="inline-flex w-fit items-center rounded-full bg-brand-50 px-3 py-1.5 text-xs font-semibold text-brand-800 ring-1 ring-brand-200/80">{{ __('marketplace.panel.jadwal_tersedia') }}</span>
                     </div>
 
                     @if ($errors->any())

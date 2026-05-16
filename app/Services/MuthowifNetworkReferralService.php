@@ -21,10 +21,10 @@ class MuthowifNetworkReferralService
      *
      * @return Collection<int, MuthowifProfile>
      */
-    public function alternativesForCustomerAfterSlotRejection(MuthowifBooking $booking): Collection
+    public function alternativesForCustomerAfterJadwalRejection(MuthowifBooking $booking): Collection
     {
         if ($booking->status !== BookingStatus::Cancelled
-            || $booking->muthowif_rejection_kind !== MuthowifBookingMuthowifRejectionKind::SlotFull) {
+            || $booking->muthowif_rejection_kind !== MuthowifBookingMuthowifRejectionKind::JadwalFull) {
             return collect();
         }
 
@@ -65,7 +65,7 @@ class MuthowifNetworkReferralService
                     return false;
                 }
 
-                return $p->isSlotAvailableForRange($start, $end);
+                return $p->isJadwalAvailableForRange($start, $end);
             })
             ->values();
     }
@@ -76,6 +76,6 @@ class MuthowifNetworkReferralService
     public function shouldShowCustomerReferralPanel(MuthowifBooking $booking): bool
     {
         return $booking->status === BookingStatus::Cancelled
-            && $booking->muthowif_rejection_kind === MuthowifBookingMuthowifRejectionKind::SlotFull;
+            && $booking->muthowif_rejection_kind === MuthowifBookingMuthowifRejectionKind::JadwalFull;
     }
 }

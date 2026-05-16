@@ -38,7 +38,7 @@ return [
     ],
     'support_ticket_category' => [
         'bug' => 'Bug / masalah teknis',
-        'booking' => 'Booking',
+        'booking' => 'Pesanan',
         'payment' => 'Pembayaran',
         'account' => 'Akun & profil',
         'suggestion' => 'Saran',
@@ -57,7 +57,7 @@ return [
         'closed' => 'Ditutup',
     ],
     'muthowif_booking_muthowif_rejection_kind' => [
-        'slot_full' => 'Jadwal muthowif penuh',
+        'jadwal_full' => 'Jadwal muthowif penuh',
         'other' => 'Alasan lain',
     ],
 ];

@@ -125,7 +125,7 @@ class BookingController extends Controller
         $addonsById = $this->addOnsKeyByIdForBooking($booking);
 
         $networkReferral = app(MuthowifNetworkReferralService::class);
-        $referralNetworkAlternatives = $networkReferral->alternativesForCustomerAfterSlotRejection($booking);
+        $referralNetworkAlternatives = $networkReferral->alternativesForCustomerAfterJadwalRejection($booking);
         $showReferralNetworkPanel = $networkReferral->shouldShowCustomerReferralPanel($booking);
 
         return view('bookings.show', [
@@ -153,7 +153,7 @@ class BookingController extends Controller
         $addonsById = $this->addOnsKeyByIdForBooking($booking);
 
         $networkReferral = app(MuthowifNetworkReferralService::class);
-        $referralNetworkAlternatives = $networkReferral->alternativesForCustomerAfterSlotRejection($booking);
+        $referralNetworkAlternatives = $networkReferral->alternativesForCustomerAfterJadwalRejection($booking);
         $showReferralNetworkPanel = $networkReferral->shouldShowCustomerReferralPanel($booking);
 
         return view('bookings.partials.show-body', [
@@ -600,9 +600,9 @@ class BookingController extends Controller
                 ->lockForUpdate()
                 ->firstOrFail();
 
-            if (! $profile->isSlotAvailableForRange($start, $end)) {
+            if (! $profile->isJadwalAvailableForRange($start, $end)) {
                 throw ValidationException::withMessages([
-                    'start_date' => __('bookings.validation.slot_unavailable'),
+                    'start_date' => __('bookings.validation.jadwal_tidak_tersedia'),
                 ]);
             }
 
@@ -830,9 +830,9 @@ class BookingController extends Controller
 
         $booking->loadMissing('muthowifProfile');
         $profile = $booking->muthowifProfile;
-        if ($profile === null || ! $profile->isSlotAvailableForRange($start, $end, (string) $booking->getKey())) {
+        if ($profile === null || ! $profile->isJadwalAvailableForRange($start, $end, (string) $booking->getKey())) {
             throw ValidationException::withMessages([
-                'new_start_date' => __('bookings.validation.new_slot_unavailable'),
+                'new_start_date' => __('bookings.validation.jadwal_baru_tidak_tersedia'),
             ]);
         }
 

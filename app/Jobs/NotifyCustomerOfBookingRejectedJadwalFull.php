@@ -6,7 +6,7 @@ use App\Models\MuthowifBooking;
 use App\Services\MuthowifBookingWhatsAppNotifier;
 use Illuminate\Foundation\Bus\Dispatchable;
 
-class NotifyCustomerOfBookingRejectedSlotFull
+class NotifyCustomerOfBookingRejectedJadwalFull
 {
     use Dispatchable;
 
@@ -18,7 +18,7 @@ class NotifyCustomerOfBookingRejectedSlotFull
     {
         $booking = MuthowifBooking::query()->find($this->bookingId);
         if ($booking) {
-            $notifier->notifyCustomerBookingRejectedSlotFull($booking);
+            $notifier->notifyCustomerBookingRejectedJadwalFull($booking);
         }
     }
 }
