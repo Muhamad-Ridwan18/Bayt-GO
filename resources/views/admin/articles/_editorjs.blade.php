@@ -13,6 +13,22 @@
         right: auto;
         left: 0;
     }
+    
+    /* Editor image tuning preview */
+    .ce-block--stretched .ce-image__picture {
+        width: 100%;
+        max-width: none;
+    }
+    .ce-image--with-background {
+        background: #f8fafc;
+        padding: 2rem;
+        display: flex;
+        justify-content: center;
+        border-radius: 1rem;
+    }
+    .ce-image--with-background img {
+        max-width: 60%;
+    }
 </style>
 
 <script src="https://cdn.jsdelivr.net/npm/@editorjs/editorjs@latest"></script>

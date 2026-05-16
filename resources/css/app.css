@@ -48,6 +48,19 @@
     @apply my-8 h-auto max-w-full rounded-xl border border-slate-200/80 shadow-sm;
 }
 
+/* Editor.js Image Tunings */
+.article-prose .ce-image--stretched img {
+    @apply w-full max-w-none border-none rounded-none shadow-none;
+}
+
+.article-prose .ce-image--with-background {
+    @apply bg-slate-100 p-4 sm:p-8 rounded-2xl flex justify-center;
+}
+
+.article-prose .ce-image--with-background img {
+    @apply m-0 max-w-[60%] shadow-md;
+}
+
 .article-prose figure {
     @apply my-10;
 }
