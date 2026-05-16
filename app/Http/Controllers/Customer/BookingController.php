@@ -324,46 +324,68 @@ class BookingController extends Controller
             }
         }
 
-        $superseded = $booking->bookingPayments()->where('status', 'pending')->update(['status' => 'cancelled']);
-        if ($superseded > 0) {
-            PaymentFlowLog::info('web.payment.supersede_pending', [
-                'booking_id' => $booking->getKey(),
-                'rows_cancelled' => $superseded,
-                'note' => 'Sesi bayar lama ditandai cancelled agar webhook DOKU tetap menemukan invoice jika user ganti metode.',
-            ]);
-        }
-
-        $ids = BookingPayment::newPrimaryKeyAndOrderId((string) $booking->getKey());
-        $orderId = $ids['order_id'];
-
         $referral = MuthowifReferralReward::paymentSnapshot(
             (float) $split['muthowif_net'],
             (string) $booking->muthowif_profile_id,
         );
 
-        $payment = BookingPayment::query()->create([
-            'id' => $ids['id'],
-            'muthowif_booking_id' => $booking->getKey(),
-            'booking_code' => $booking->booking_code,
-            'order_id' => $orderId,
-            // Nominal yang dibayar customer (base + fee customer).
-            'gross_amount' => $split['customer_gross'],
-            // Total biaya platform = fee customer + fee muthowif (masing-masing 7,5% dari base).
-            'platform_fee_amount' => $split['platform_fee_total'],
-            // Yang masuk ke saldo muthowif (base - fee muthowif).
-            'muthowif_net_amount' => $split['muthowif_net'],
-            'referrer_muthowif_profile_id' => $referral['referrer_muthowif_profile_id'],
-            'referral_reward_amount' => $referral['referral_reward_amount'],
-            'status' => 'pending',
-        ]);
+        $placeholder = $booking->bookingPayments()
+            ->where('status', 'pending')
+            ->whereNull('gateway_transaction_id')
+            ->latest('id')
+            ->first();
 
-        PaymentFlowLog::info('web.payment.charge_started', [
-            'booking_id' => $booking->getKey(),
-            'order_id' => $orderId,
-            'method' => $selectedMethod,
-            'gross_amount' => $payment->gross_amount,
-            'booking_status' => $booking->status->value,
-        ]);
+        if ($placeholder !== null) {
+            $payment = $placeholder;
+            $orderId = $payment->order_id;
+            $payment->update([
+                'gross_amount' => $split['customer_gross'],
+                'platform_fee_amount' => $split['platform_fee_total'],
+                'muthowif_net_amount' => $split['muthowif_net'],
+                'referrer_muthowif_profile_id' => $referral['referrer_muthowif_profile_id'],
+                'referral_reward_amount' => $referral['referral_reward_amount'],
+            ]);
+            
+            PaymentFlowLog::info('web.payment.reuse_placeholder', [
+                'booking_id' => $booking->getKey(),
+                'order_id' => $orderId,
+                'method' => $selectedMethod,
+                'gross_amount' => $payment->gross_amount,
+            ]);
+        } else {
+            $superseded = $booking->bookingPayments()->where('status', 'pending')->update(['status' => 'cancelled']);
+            if ($superseded > 0) {
+                PaymentFlowLog::info('web.payment.supersede_pending', [
+                    'booking_id' => $booking->getKey(),
+                    'rows_cancelled' => $superseded,
+                    'note' => 'Sesi bayar lama ditandai cancelled.',
+                ]);
+            }
+
+            $ids = BookingPayment::newPrimaryKeyAndOrderId((string) $booking->getKey());
+            $orderId = $ids['order_id'];
+
+            $payment = BookingPayment::query()->create([
+                'id' => $ids['id'],
+                'muthowif_booking_id' => $booking->getKey(),
+                'booking_code' => $booking->booking_code,
+                'order_id' => $orderId,
+                'gross_amount' => $split['customer_gross'],
+                'platform_fee_amount' => $split['platform_fee_total'],
+                'muthowif_net_amount' => $split['muthowif_net'],
+                'referrer_muthowif_profile_id' => $referral['referrer_muthowif_profile_id'],
+                'referral_reward_amount' => $referral['referral_reward_amount'],
+                'status' => 'pending',
+            ]);
+
+            PaymentFlowLog::info('web.payment.charge_started', [
+                'booking_id' => $booking->getKey(),
+                'order_id' => $orderId,
+                'method' => $selectedMethod,
+                'gross_amount' => $payment->gross_amount,
+                'booking_status' => $booking->status->value,
+            ]);
+        }
 
         $normalizedPay = BookingSnapPaymentCatalog::normalizeWebPaymentMethod($selectedMethod);
 
