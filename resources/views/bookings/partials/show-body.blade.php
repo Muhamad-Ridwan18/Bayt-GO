@@ -35,393 +35,433 @@
 
     $baseTotal = (float) ($baseSubtotal + $addonsSum + $sameHotelLine + $transportLine);
     $review = $b->review;
-    $dateLocale = app()->getLocale() === 'id' ? 'id-ID' : 'en-GB';
 
     // Hitung Fee Platform & Total Tagihan (murni dalam USD)
     $split = \App\Support\PlatformFee::split($baseTotal);
     
     $customerTotal = (float) ($split['customer_gross'] ?? $baseTotal);
     $customerPlatformFee = (float) ($split['customer_fee'] ?? 0.0);
-    $muthowifNet = (float) ($split['muthowif_net'] ?? 0.0);
-
-    $statusCardStyles = [
-        BookingStatus::Pending->value => [
-            'bar' => 'from-amber-400 via-amber-500 to-orange-500',
-            'glow' => 'shadow-amber-500/10',
-            'badge' => 'bg-amber-100 text-amber-950 ring-amber-200/80',
-        ],
-        BookingStatus::Confirmed->value => [
-            'bar' => 'from-emerald-400 via-emerald-500 to-teal-600',
-            'glow' => 'shadow-emerald-500/10',
-            'badge' => 'bg-emerald-100 text-emerald-950 ring-emerald-200/80',
-        ],
-        BookingStatus::Completed->value => [
-            'bar' => 'from-brand-400 via-brand-500 to-brand-700',
-            'glow' => 'shadow-brand-500/15',
-            'badge' => 'bg-brand-100 text-brand-950 ring-brand-200/80',
-        ],
-        BookingStatus::Cancelled->value => [
-            'bar' => 'from-red-300 via-red-400 to-red-500',
-            'glow' => 'shadow-red-500/10',
-            'badge' => 'bg-red-100 text-red-800 ring-red-200/80',
-        ],
-    ];
-    $cardStyle = $statusCardStyles[$st->value] ?? $statusCardStyles[BookingStatus::Pending->value];
 @endphp
-            {{-- Hero --}}
-            <article class="relative overflow-hidden rounded-3xl border border-slate-200/80 bg-white shadow-lg shadow-slate-900/5 transition hover:shadow-xl hover:shadow-slate-900/10 {{ $cardStyle['glow'] }}">
-                <div class="flex flex-col sm:flex-row">
-                    <div class="relative h-1.5 w-full shrink-0 self-stretch sm:h-auto sm:w-1.5">
-                        <div class="h-full min-h-[4px] w-full bg-gradient-to-r sm:bg-gradient-to-b {{ $cardStyle['bar'] }}"></div>
-                    </div>
-                    <div class="min-w-0 flex-1 p-6 sm:p-8">
-                        <p class="inline-flex items-center gap-2 text-xs font-semibold uppercase tracking-wider text-slate-500">
-                            <svg class="h-3.5 w-3.5 text-brand-600" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true">
-                                <path fill-rule="evenodd" d="M4.75 2a.75.75 0 01.75.75V4h7V2.75a.75.75 0 011.5 0V4h.25A2.75 2.75 0 0118 6.75v8.5A2.75 2.75 0 0115.25 18H4.75A2.75 2.75 0 012 15.25v-8.5A2.75 2.75 0 014.75 4H5V2.75A.75.75 0 014.75 2zm-1 5.5c-.69 0-1.25.56-1.25 1.25v6.5c0 .69.56 1.25 1.25 1.25h10.5c.69 0 1.25-.56 1.25-1.25v-6.5c0-.69-.56-1.25-1.25-1.25H3.75z" clip-rule="evenodd" />
-                            </svg>
-                            {{ __('bookings.show.detail_kicker') }}
-                        </p>
 
-                        <div class="mt-4 flex flex-col gap-6 sm:flex-row sm:items-start sm:justify-between">
-                            <div class="flex min-w-0 gap-4">
-                                <img
-                                    src="{{ route('layanan.photo', $b->muthowifProfile) }}"
-                                    alt="{{ __('bookings.index.photo_alt', ['name' => $b->muthowifProfile->user->name]) }}"
-                                    class="h-20 w-20 shrink-0 rounded-2xl object-cover shadow-md ring-2 ring-white sm:h-24 sm:w-24"
-                                    loading="lazy"
-                                >
-                                <div class="min-w-0 flex-1 space-y-3">
-                                    <div>
-                                        <h1 class="text-xl font-bold tracking-tight text-slate-900 sm:text-2xl">
-                                            {{ $b->muthowifProfile->user->name }}
-                                        </h1>
-                                        <a
-                                            href="{{ route('layanan.show', $b->muthowifProfile) }}"
-                                            class="mt-1 inline-flex items-center gap-1 text-sm font-semibold text-brand-700 hover:text-brand-800"
-                                        >
-                                            {{ __('marketplace.card.view_profile') }}
-                                            <svg class="h-3.5 w-3.5" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true">
-                                                <path fill-rule="evenodd" d="M3 10a.75.75 0 01.75-.75h10.638L10.23 5.29a.75.75 0 111.04-1.08l5.5 5.25a.75.75 0 010 1.08l-5.5 5.25a.75.75 0 11-1.04-1.08l4.158-3.96H3.75A.75.75 0 013 10z" clip-rule="evenodd" />
-                                            </svg>
-                                        </a>
-                                    </div>
-                                    @if (filled($b->booking_code))
-                                        <div class="rounded-xl border border-slate-100 bg-slate-50/90 px-3 py-2 ring-1 ring-slate-100">
-                                            <p class="text-[0.65rem] font-semibold uppercase tracking-wide text-slate-500">{{ __('bookings.show.booking_code') }}</p>
-                                            <p class="font-mono text-sm font-semibold tracking-tight text-slate-900">{{ $b->booking_code }}</p>
-                                        </div>
-                                    @endif
-                                    <div class="flex flex-wrap gap-2">
-                                        <span class="inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-semibold ring-1 {{ $cardStyle['badge'] }}">
-                                            {{ $st->label() }}
-                                        </span>
-                                        @if ($b->payment_status !== PaymentStatus::Pending)
-                                            <span class="inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-semibold ring-1 {{ match ($b->payment_status) {
-                                                PaymentStatus::Paid => 'bg-emerald-100 text-emerald-950 ring-emerald-200/80',
-                                                PaymentStatus::RefundPending => 'bg-amber-50 text-amber-950 ring-amber-200/80',
-                                                PaymentStatus::Refunded => 'bg-red-100 text-red-800 ring-red-200/80',
-                                                default => 'bg-orange-50 text-orange-950 ring-orange-200/80',
-                                            } }}">
-                                                {{ $b->payment_status->label() }}
-                                            </span>
-                                        @endif
-                                    </div>
-                                </div>
+<div class="mb-6">
+    <a href="{{ route('bookings.index') }}" class="inline-flex items-center gap-2 text-sm font-bold text-[#2D5A4C] hover:text-[#1e3b32] transition">
+        <svg class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5"><path stroke-linecap="round" stroke-linejoin="round" d="M10 19l-7-7m0 0l7-7m-7 7h18" /></svg>
+        Kembali ke Pesanan
+    </a>
+</div>
+
+<div class="grid grid-cols-1 lg:grid-cols-3 gap-6 items-start">
+    {{-- LEFT COLUMN --}}
+    <div class="lg:col-span-2 space-y-6">
+        
+        {{-- Profile Card --}}
+        <div class="rounded-2xl border border-slate-200/80 bg-white p-6 shadow-sm">
+            <div class="flex flex-col sm:flex-row gap-6 items-start sm:items-center justify-between">
+                <div class="flex flex-col sm:flex-row gap-5 items-start sm:items-center min-w-0 w-full">
+                    <img src="{{ route('layanan.photo', $b->muthowifProfile) }}" alt="Photo" class="h-24 w-24 sm:h-24 sm:w-24 shrink-0 rounded-full object-cover ring-1 ring-slate-200/50 shadow-sm">
+                    <div class="min-w-0 space-y-2">
+                        <div class="flex items-center gap-2 flex-wrap">
+                            <h1 class="text-xl font-bold text-slate-900">{{ $b->muthowifProfile->user->name }}</h1>
+                            <span class="inline-flex items-center rounded-full bg-[#E8F3EF] px-2.5 py-0.5 text-[10px] font-bold tracking-wide text-[#2D5A4C]">Terkonfirmasi</span>
+                        </div>
+                        <p class="text-sm text-slate-600">{{ $b->service_type?->label() ?? '-' }}</p>
+                        
+                        <div class="flex flex-col sm:flex-row sm:items-center gap-2 sm:gap-6 text-xs text-slate-600 mt-2">
+                            <div class="flex items-center gap-2">
+                                <svg class="h-4 w-4 text-slate-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" /></svg>
+                                <span>{{ Carbon::parse($b->starts_on)->translatedFormat('d M Y') }} - {{ Carbon::parse($b->ends_on)->translatedFormat('d M Y') }} ({{ $nights }} Hari)</span>
                             </div>
                         </div>
-
-                        <div class="mt-6 grid grid-cols-1 gap-4 sm:grid-cols-2">
-                            <div class="rounded-2xl bg-slate-50/90 p-4 ring-1 ring-slate-200/60">
-                                <p class="text-[0.65rem] font-semibold uppercase tracking-wide text-slate-500">{{ __('bookings.show.period') }}</p>
-                                <p class="mt-1 text-sm font-semibold tabular-nums text-slate-900">
-                                    {{ Carbon::parse($b->starts_on)->format('d/m/Y') }}
-                                    <span class="mx-1 font-normal text-slate-400">-</span>
-                                    {{ Carbon::parse($b->ends_on)->format('d/m/Y') }}
-                                </p>
-                                <p class="mt-1 text-xs text-slate-500">{{ __('bookings.show.service_days_line', ['count' => $nights]) }}</p>
-                            </div>
-                            <div class="rounded-2xl bg-slate-50/90 p-4 ring-1 ring-slate-200/60">
-                                <p class="text-[0.65rem] font-semibold uppercase tracking-wide text-slate-500">{{ __('bookings.show.service') }}</p>
-                                <p class="mt-1 text-sm font-semibold text-slate-900">{{ $b->service_type?->label() ?? '-' }}</p>
-                                <p class="mt-1 text-xs text-slate-500">{{ __('bookings.index.pilgrims_count', ['count' => $b->pilgrim_count, 'pilgrims_word' => __('common.pilgrims')]) }}</p>
-                            </div>
+                        @if (filled($b->booking_code))
+                        <div class="flex items-center gap-2 text-xs text-slate-600">
+                            <svg class="h-4 w-4 text-slate-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M7 7h.01M7 3h5c.512 0 1.024.195 1.414.586l7 7a2 2 0 010 2.828l-7 7a2 2 0 01-2.828 0l-7-7A1.994 1.994 0 013 12V7a4 4 0 014-4z" /></svg>
+                            <span>Kode Pesanan: <span class="font-bold text-slate-900">{{ $b->booking_code }}</span></span>
                         </div>
-
-                        @include('bookings.partials.booking-documents', ['booking' => $b, 'routeName' => 'bookings.documents.show', 'compact' => true])
-                    </div>
-                </div>
-            </article>
-
-            @include('bookings.partials.referral-network-alternatives', [
-                'booking' => $b,
-                'referralNetworkAlternatives' => $referralNetworkAlternatives ?? collect(),
-                'showReferralNetworkPanel' => $showReferralNetworkPanel ?? false,
-            ])
-
-            @if (in_array($st, [BookingStatus::Confirmed, BookingStatus::Completed], true) || ($st === BookingStatus::Cancelled && $b->paid_at))
-                <div class="mt-8 overflow-hidden rounded-3xl border border-slate-200/80 bg-white shadow-md shadow-slate-900/5">
-                    <div class="border-b border-slate-100 bg-gradient-to-r from-slate-50 to-white px-6 py-4 sm:px-8">
-                        <h2 class="flex items-center gap-2 text-base font-bold text-slate-900">
-                            <span class="flex h-8 w-8 items-center justify-center rounded-lg bg-brand-100 text-brand-700">
-                                <svg class="h-4 w-4" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true">
-                                    <path fill-rule="evenodd" d="M2.5 4A1.5 1.5 0 014 2.5h12A1.5 1.5 0 0117.5 4v12a1.5 1.5 0 01-1.5 1.5h-12A1.5 1.5 0 012.5 16V4zm2-1.5a.5.5 0 00-.5.5v12a.5.5 0 00.5.5h12a.5.5 0 00.5-.5v-12a.5.5 0 00-.5-.5h-12z" clip-rule="evenodd" />
-                                    <path fill-rule="evenodd" d="M5 4.75A.75.75 0 015.75 4h8.5a.75.75 0 01.75.75v2.5a.75.75 0 01-.75.75h-8.5A.75.75 0 015 7.25v-2.5zm0 2.5A.75.75 0 015.75 6h8.5a.75.75 0 01.75.75v2.5a.75.75 0 01-.75.75h-8.5A.75.75 0 015 9.25v-2.5zm0 2.5A.75.75 0 015.75 8h8.5a.75.75 0 01.75.75v2.5a.75.75 0 01-.75.75h-8.5A.75.75 0 015 11.25v-2.5zm0 2.5A.75.75 0 015.75 10h8.5a.75.75 0 01.75.75v2.5a.75.75 0 01-.75.75h-8.5A.75.75 0 015 13.25v-2.5z" clip-rule="evenodd" />
-                                </svg>
-                            </span>
-                            {{ __('bookings.show.payment_heading') }}
-                        </h2>
-                    </div>
-                    <div class="p-6 sm:p-8">
-                        <dl class="space-y-3 rounded-2xl bg-slate-50/80 p-4 text-sm ring-1 ring-slate-100 sm:p-5">
-                            <div class="flex justify-between gap-4">
-                                <dt class="text-slate-600">{{ __('bookings.show.rate_per_day') }}</dt>
-                                <dd class="font-medium tabular-nums text-slate-900">
-                                    @if ($daily !== null)
-                                        {{ \App\Support\Currency::format($daily) }}
-                                    @else
-                                        —
-                                    @endif
-                                </dd>
-                            </div>
-                            <div class="flex justify-between gap-4">
-                                <dt class="text-slate-600">{{ __('bookings.show.day_count') }}</dt>
-                                <dd class="font-medium text-slate-900">{{ __('bookings.show.days_count', ['count' => $nights]) }}</dd>
-                            </div>
-                            <div class="flex justify-between gap-4 border-t border-slate-200/80 pt-3">
-                                <dt class="text-slate-600">{{ __('bookings.show.subtotal_service') }}</dt>
-                                <dd class="font-medium tabular-nums text-slate-900">{{ \App\Support\Currency::format($baseSubtotal) }}</dd>
-                            </div>
-                            @if ($addonLines->isNotEmpty())
-                                @foreach ($addonLines as $ad)
-                                    <div class="flex justify-between gap-4">
-                                        <dt class="text-slate-600">+ {{ $ad->name }}</dt>
-                                        <dd class="font-medium tabular-nums text-slate-900">{{ \App\Support\Currency::format((float) $ad->price) }}</dd>
-                                    </div>
-                                @endforeach
-                            @endif
-                            @if ($sameHotelLine > 0)
-                                <div class="flex justify-between gap-4">
-                                    <dt class="text-slate-600">{{ __('bookings.show.same_hotel_label', ['nights' => $nights, 'days' => __('common.days')]) }}</dt>
-                                    <dd class="font-medium tabular-nums text-slate-900">{{ \App\Support\Currency::format($sameHotelLine) }}</dd>
-                                </div>
-                            @endif
-                            @if ($transportLine > 0)
-                                <div class="flex justify-between gap-4">
-                                    <dt class="text-slate-600">{{ __('bookings.show.transport_label') }}</dt>
-                                    <dd class="font-medium tabular-nums text-slate-900">{{ \App\Support\Currency::format($transportLine) }}</dd>
-                                </div>
-                            @endif
-                            <div class="flex justify-between gap-4 border-t border-slate-200/80 pt-3">
-                                <dt class="text-slate-600">{{ __('bookings.show.platform_fee') }}</dt>
-                                <dd class="font-medium tabular-nums text-slate-900">{{ \App\Support\Currency::format($customerPlatformFee) }}</dd>
-                            </div>
-                            <div class="flex justify-between gap-4 border-t border-slate-200 pt-3 text-base">
-                                <dt class="font-semibold text-slate-900">{{ __('bookings.show.total_customer') }}</dt>
-                                <dd class="font-bold tabular-nums text-brand-700">{{ \App\Support\Currency::format($customerTotal) }}</dd>
-                            </div>
-                        </dl>
-
-                        @if ($b->isAwaitingPayment())
-                            @php $paymentQuery = request()->query('payment'); @endphp
-                            @if ($paymentQuery === 'success')
-                                <p class="mt-5 text-xs leading-relaxed text-slate-600">
-                                    {!! __('bookings.show.payment_wait_html') !!}
-                                </p>
-                            @else
-                                <p class="mt-5 text-xs leading-relaxed text-slate-600">
-                                    {{ __('bookings.show.total_includes_fee') }}
-                                </p>
-                            @endif
-
-                            <a href="{{ route('bookings.payment', $b) }}" class="mt-4 inline-flex w-full items-center justify-center gap-2 rounded-2xl bg-gradient-to-r from-brand-600 to-brand-700 px-6 py-3.5 text-sm font-semibold text-white shadow-lg shadow-brand-600/25 transition hover:from-brand-500 hover:to-brand-600 sm:w-auto">
-                                {{ __('bookings.show.pay') }}
-                                <svg class="h-4 w-4" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true">
-                                    <path fill-rule="evenodd" d="M3 10a.75.75 0 01.75-.75h10.638L10.23 5.29a.75.75 0 111.04-1.08l5.5 5.25a.75.75 0 010 1.08l-5.5 5.25a.75.75 0 11-1.04-1.08l4.158-3.96H3.75A.75.75 0 013 10z" clip-rule="evenodd" />
-                                </svg>
-                            </a>
-                        @elseif ($b->paid_at && ($b->isPaid() || $b->isRefundPending() || $b->isRefunded()))
-                            <p class="mt-5 text-sm font-medium text-emerald-800">
-                                {{ __('bookings.show.paid_at', ['datetime' => $b->paid_at->timezone(config('app.timezone'))->format('d/m/Y H:i')]) }}
-                            </p>
-                            <a href="{{ route('bookings.invoice', $b) }}" target="_blank" rel="noopener noreferrer" class="mt-3 inline-flex items-center gap-2 rounded-xl border border-brand-200 bg-brand-50 px-4 py-2.5 text-sm font-semibold text-brand-800 transition hover:bg-brand-100">
-                                {{ __('bookings.show.print_invoice') }}
-                                <svg class="h-4 w-4" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true"><path fill-rule="evenodd" d="M5 4v3H4a2 2 0 00-2 2v3a2 2 0 002 2h1v2a2 2 0 002 2h6a2 2 0 002-2v-2h1a2 2 0 002-2V9a2 2 0 00-2-2h-1V4a2 2 0 00-2-2H7a2 2 0 00-2 2zm8 0H7v3h6V4zm0 8H7v4h6v-4z" clip-rule="evenodd" /></svg>
-                            </a>
                         @endif
                     </div>
                 </div>
-            @endif
+                <div class="flex flex-col gap-3 w-full sm:w-auto shrink-0 mt-4 sm:mt-0">
+                    <a href="{{ route('messages.show', $b->muthowifProfile->user) }}" class="inline-flex w-full sm:w-[130px] items-center justify-center gap-2 rounded-xl border border-slate-200 bg-white px-4 py-2.5 text-xs font-semibold text-slate-700 shadow-sm transition hover:bg-slate-50">
+                        <svg class="h-4 w-4 text-emerald-600" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z" /></svg>
+                        Chat
+                    </a>
+                    <a href="{{ route('layanan.show', $b->muthowifProfile) }}" class="inline-flex w-full sm:w-[130px] items-center justify-center gap-2 rounded-xl bg-[#2D5A4C] px-4 py-2.5 text-xs font-semibold text-white shadow-sm transition hover:bg-[#23483c]">
+                        <svg class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" /></svg>
+                        Lihat Profil
+                    </a>
+                </div>
+            </div>
+        </div>
 
-            @if ($st === BookingStatus::Confirmed)
-                <div class="mt-8 space-y-6 rounded-3xl border border-slate-200/80 bg-white p-6 shadow-md shadow-slate-900/5 sm:p-8">
-                    <div>
-                        <h2 class="text-lg font-bold text-slate-900">{{ __('bookings.show.refund_reschedule_heading') }}</h2>
-                        <p class="mt-2 text-xs leading-relaxed text-slate-600">
-                            {!! __('bookings.show.refund_reschedule_intro_html', [
-                                'refund_days' => BookingPostPayRules::refundMinDaysBeforeService(),
-                                'reschedule_days' => BookingPostPayRules::rescheduleMinDaysBeforeService(),
-                            ]) !!}
-                        </p>
+        @include('bookings.partials.referral-network-alternatives', [
+            'booking' => $b,
+            'referralNetworkAlternatives' => $referralNetworkAlternatives ?? collect(),
+            'showReferralNetworkPanel' => $showReferralNetworkPanel ?? false,
+        ])
+
+        {{-- Payment Details Card --}}
+        <div class="rounded-2xl border border-slate-200/80 bg-white p-6 shadow-sm">
+            <h2 class="flex items-center gap-2 text-sm font-bold text-slate-900 mb-6">
+                <span class="flex h-7 w-7 items-center justify-center rounded-lg bg-slate-50 text-slate-500 border border-slate-100">
+                    <svg class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2" /></svg>
+                </span>
+                Rincian Pembayaran
+            </h2>
+            
+            <dl class="space-y-4 text-xs sm:text-sm">
+                <div class="flex justify-between gap-4">
+                    <dt class="text-slate-600">Tarif / hari</dt>
+                    <dd class="font-bold text-slate-900">{{ \App\Support\Currency::format($daily) }}</dd>
+                </div>
+                <div class="flex justify-between gap-4">
+                    <dt class="text-slate-600">Jumlah hari</dt>
+                    <dd class="font-bold text-slate-900">{{ $nights }} hari</dd>
+                </div>
+                <div class="flex justify-between gap-4">
+                    <dt class="text-slate-600">Subtotal layanan</dt>
+                    <dd class="font-bold text-slate-900">{{ \App\Support\Currency::format($baseSubtotal) }}</dd>
+                </div>
+                @if ($addonLines->isNotEmpty())
+                    @foreach ($addonLines as $ad)
+                        <div class="flex justify-between gap-4">
+                            <dt class="text-slate-600">+ {{ $ad->name }}</dt>
+                            <dd class="font-bold text-slate-900">{{ \App\Support\Currency::format((float) $ad->price) }}</dd>
+                        </div>
+                    @endforeach
+                @endif
+                @if ($sameHotelLine > 0)
+                    <div class="flex justify-between gap-4">
+                        <dt class="text-slate-600">{{ __('bookings.show.same_hotel_label', ['nights' => $nights, 'days' => __('common.days')]) }}</dt>
+                        <dd class="font-bold text-slate-900">{{ \App\Support\Currency::format($sameHotelLine) }}</dd>
                     </div>
+                @endif
+                @if ($transportLine > 0)
+                    <div class="flex justify-between gap-4">
+                        <dt class="text-slate-600">{{ __('bookings.show.transport_label') }}</dt>
+                        <dd class="font-bold text-slate-900">{{ \App\Support\Currency::format($transportLine) }}</dd>
+                    </div>
+                @endif
+                <div class="flex justify-between gap-4">
+                    <dt class="text-slate-600">Biaya platform</dt>
+                    <dd class="font-bold text-slate-900">{{ \App\Support\Currency::format($customerPlatformFee) }}</dd>
+                </div>
+                
+                <div class="flex justify-between gap-4 border-t border-slate-100 pt-4 mt-2">
+                    <dt class="text-base font-bold text-slate-900">Total dibayar (customer)</dt>
+                    <dd class="text-xl font-bold text-[#2D5A4C]">{{ \App\Support\Currency::format($customerTotal) }}</dd>
+                </div>
+            </dl>
 
-                    <div class="grid grid-cols-1 gap-4 sm:grid-cols-2">
-                        @if ($b->isPaid())
-                            <a href="{{ route('bookings.refund', $b) }}" class="flex flex-col items-start gap-1 rounded-2xl border border-slate-100 bg-slate-50/50 p-4 transition hover:bg-slate-50 hover:ring-1 hover:ring-slate-200">
-                                <span class="text-sm font-bold text-slate-900">{{ __('bookings.show.process_refund') }}</span>
-                                <span class="text-[10px] text-slate-500">Ajukan pengembalian dana jika batal berangkat.</span>
+            <div class="mt-6 flex items-start gap-2.5 rounded-xl bg-[#F4F9F7] p-3.5">
+                <svg class="h-4 w-4 mt-0.5 shrink-0 text-[#2D5A4C]" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5"><path stroke-linecap="round" stroke-linejoin="round" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
+                <p class="text-xs font-medium text-[#2D5A4C]">Total yang Anda bayarkan sudah termasuk biaya platform.</p>
+            </div>
+
+            @if ($b->isAwaitingPayment())
+                <a href="{{ route('bookings.payment', $b) }}" class="mt-5 flex w-full items-center justify-center gap-2 rounded-xl bg-[#2D5A4C] px-4 py-3.5 text-sm font-bold tracking-wide text-white shadow-sm transition hover:bg-[#23483c]">
+                    <svg class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5"><path stroke-linecap="round" stroke-linejoin="round" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" /></svg>
+                    Bayar Sekarang &rarr;
+                </a>
+            @elseif ($b->paid_at)
+                <a href="{{ route('bookings.invoice', $b) }}" target="_blank" class="mt-5 flex w-full items-center justify-center gap-2 rounded-xl border border-emerald-600/30 bg-emerald-50 px-4 py-3.5 text-sm font-bold text-emerald-800 transition hover:bg-emerald-100">
+                    <svg class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 002 2h2m2 4h6a2 2 0 002-2v-4a2 2 0 00-2-2H9a2 2 0 00-2 2v4a2 2 0 002 2zm8-12V5a2 2 0 00-2-2H9a2 2 0 00-2 2v4h10z" /></svg>
+                    Lihat Invoice
+                </a>
+            @endif
+        </div>
+
+        {{-- Refund & Reschedule (Accordion Style) --}}
+        @if (in_array($st, [BookingStatus::Confirmed, BookingStatus::Completed], true) || ($st === BookingStatus::Cancelled && $b->paid_at))
+            <div x-data="{ open: false }" class="rounded-2xl border border-slate-200/80 bg-white shadow-sm overflow-hidden">
+                <button @click="open = !open" class="flex w-full items-center justify-between p-5 text-left focus:outline-none">
+                    <div class="flex items-center gap-3">
+                        <span class="flex h-7 w-7 items-center justify-center rounded-lg bg-emerald-50 text-[#2D5A4C]">
+                            <svg class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" /></svg>
+                        </span>
+                        <span class="font-bold text-sm text-slate-900">Refund & Reschedule</span>
+                    </div>
+                    <svg class="h-4 w-4 text-slate-400 transition-transform duration-200" :class="{'rotate-180': open}" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M19 9l-7 7-7-7" /></svg>
+                </button>
+                <div x-show="open" class="px-5 pb-5" x-collapse>
+                    @if ($b->isPaid())
+                        <div class="grid grid-cols-1 sm:grid-cols-2 gap-4 mt-2">
+                            <a href="{{ route('bookings.refund', $b) }}" class="flex flex-col items-start gap-1 rounded-xl border border-slate-100 bg-slate-50/50 p-4 transition hover:bg-slate-50 hover:ring-1 hover:ring-slate-200">
+                                <span class="text-xs font-bold text-slate-900">{{ __('bookings.show.process_refund') }}</span>
+                                <span class="text-[10px] text-slate-500">Ajukan pengembalian dana jika batal.</span>
                             </a>
                             @if ($b->pendingRescheduleRequest())
-                                <div class="flex flex-col items-start gap-1 rounded-2xl border border-amber-100 bg-amber-50/50 p-4 ring-1 ring-amber-100/60">
-                                    <span class="text-sm font-bold text-amber-900">{{ __('bookings.show.reschedule_pending') }}</span>
+                                <div class="flex flex-col items-start gap-1 rounded-xl border border-amber-100 bg-amber-50/50 p-4 ring-1 ring-amber-100/60">
+                                    <span class="text-xs font-bold text-amber-900">{{ __('bookings.show.reschedule_pending') }}</span>
                                     <span class="text-[10px] text-amber-700">Menunggu keputusan muthowif.</span>
                                 </div>
                             @else
-                                <a href="{{ route('bookings.reschedule', $b) }}" class="flex flex-col items-start gap-1 rounded-2xl border border-slate-100 bg-slate-50/50 p-4 transition hover:bg-slate-50 hover:ring-1 hover:ring-slate-200">
-                                    <span class="text-sm font-bold text-slate-900">{{ __('bookings.show.submit_reschedule') }}</span>
+                                <a href="{{ route('bookings.reschedule', $b) }}" class="flex flex-col items-start gap-1 rounded-xl border border-slate-100 bg-slate-50/50 p-4 transition hover:bg-slate-50 hover:ring-1 hover:ring-slate-200">
+                                    <span class="text-xs font-bold text-slate-900">{{ __('bookings.show.submit_reschedule') }}</span>
                                     <span class="text-[10px] text-slate-500">Ganti tanggal layanan (perlu persetujuan).</span>
                                 </a>
                             @endif
-                        @else
-                             <div class="sm:col-span-2 rounded-2xl border border-amber-100 bg-amber-50/50 p-4 text-xs text-amber-800">
-                                {{ __('bookings.reschedule_eligibility.not_paid') }}
-                             </div>
-                        @endif
-                    </div>
+                        </div>
+                    @else
+                        <div class="flex items-center rounded-xl bg-[#FFF9EB] p-3 border border-[#FDE6B5] mt-2">
+                            <div class="flex items-center gap-2.5">
+                                <svg class="h-4 w-4 text-[#B87A00]" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
+                                <span class="text-xs font-medium text-[#7A5100]">Reschedule hanya setelah pembayaran lunas.</span>
+                            </div>
+                        </div>
+                    @endif
 
                     @if ($b->refundRequests->isNotEmpty() || $b->rescheduleRequests->isNotEmpty())
-                        <div class="space-y-3 border-t border-slate-100 pt-6 text-xs text-slate-600">
+                        <div class="space-y-3 border-t border-slate-100 pt-5 mt-5 text-[10px] sm:text-xs text-slate-600">
                             <h3 class="font-bold text-slate-900 uppercase tracking-wider text-[10px]">Riwayat Pengajuan</h3>
                             @foreach ($b->refundRequests as $req)
-                                <p class="rounded-lg bg-slate-50/80 px-3 py-2">
-                                    {{ __('bookings.show.timeline_refund', ['status' => $req->status->label(), 'datetime' => $req->created_at?->timezone(config('app.timezone'))->format('d/m/Y H:i')]) }}
-                                    @if ($req->refund_bank_name || $req->refund_account_holder || $req->refund_account_number)
-                                        <br><span class="text-slate-600">{{ __('bookings.show.timeline_refund_bank', [
-                                            'bank' => $req->refund_bank_name ?: '—',
-                                            'holder' => $req->refund_account_holder ?: '—',
-                                            'number' => $req->refund_account_number ?: '—',
-                                        ]) }}</span>
-                                    @endif
-                                    @if ($req->customer_note)
-                                        <br><span class="text-slate-500">{{ __('bookings.show.timeline_refund_note', ['note' => $req->customer_note]) }}</span>
-                                    @endif
+                                <p class="rounded-lg bg-slate-50 px-3 py-2 border border-slate-100">
+                                    <strong class="text-slate-800">{{ $req->status->label() }} Refund</strong> - {{ $req->created_at?->translatedFormat('d M Y, H:i') }}
                                 </p>
                             @endforeach
                             @foreach ($b->rescheduleRequests as $req)
-                                <p class="rounded-lg bg-slate-50/80 px-3 py-2">
-                                    {{ __('bookings.show.timeline_reschedule', [
-                                        'status' => $req->status->label(),
-                                        'range' => \Carbon\Carbon::parse($req->new_starts_on)->format('d/m/Y').' – '.\Carbon\Carbon::parse($req->new_ends_on)->format('d/m/Y'),
-                                        'datetime' => $req->created_at?->timezone(config('app.timezone'))->format('d/m/Y H:i'),
-                                    ]) }}
-                                    @if ($req->muthowif_note)
-                                        <br><span class="text-slate-500">{{ __('bookings.show.timeline_muthowif_note', ['note' => $req->muthowif_note]) }}</span>
-                                    @endif
+                                <p class="rounded-lg bg-slate-50 px-3 py-2 border border-slate-100">
+                                    <strong class="text-slate-800">{{ $req->status->label() }} Reschedule</strong> - {{ $req->created_at?->translatedFormat('d M Y, H:i') }}
                                 </p>
                             @endforeach
                         </div>
                     @endif
                 </div>
-            @endif
+            </div>
+        @endif
+        
+        {{-- Reviews --}}
+        @if ($st === BookingStatus::Completed)
+            <div class="rounded-2xl border border-slate-200/80 bg-white p-6 shadow-sm">
+                <h2 class="text-sm font-bold text-slate-900 mb-2">{{ __('bookings.show.completed_rating_heading') }}</h2>
+                <p class="text-xs text-slate-600 mb-5">{{ __('bookings.show.completed_rating_intro') }}</p>
 
-            @if ($st === BookingStatus::Cancelled && $b->isRefundPending())
-                @php $pend = $b->pendingRefundRequest(); @endphp
-                <div class="mt-8 rounded-3xl border border-amber-200 bg-gradient-to-br from-amber-50 to-amber-50/40 p-6 text-sm text-amber-950 shadow-md shadow-amber-900/5 ring-1 ring-amber-200/60">
-                    <p class="font-bold">{{ __('bookings.show.refund_pending_title') }}</p>
-                    <p class="mt-2 leading-relaxed">
-                        {!! __('bookings.show.refund_pending_body_html', ['amount' => $pend ? $fmt((float) $pend->net_refund_customer) : __('common.em_dash')]) !!}
-                    </p>
-                </div>
-            @endif
-
-            @if ($st === BookingStatus::Cancelled && $b->isRefunded())
-                <div class="mt-8 rounded-3xl border border-slate-200 bg-slate-50 p-6 text-sm text-slate-700 shadow-sm">
-                    {{ __('bookings.show.refunded_done') }}
-                </div>
-            @endif
-
-            @if ($st === BookingStatus::Confirmed && $b->payment_status === PaymentStatus::Paid)
-                <div class="mt-8 overflow-hidden rounded-3xl border border-brand-200 bg-gradient-to-br from-brand-50/90 to-white p-6 shadow-md shadow-brand-900/5 ring-1 ring-brand-200/50 sm:p-8">
-                    <h2 class="text-lg font-bold text-slate-900">{{ __('bookings.show.complete_service_heading') }}</h2>
-                    <p class="mt-1 text-sm text-slate-600">
-                        {{ __('bookings.show.complete_service_intro') }}
-                    </p>
-
-                    <form method="POST" action="{{ route('bookings.complete', $b) }}" class="mt-5 space-y-4" onsubmit="return confirm(@json(__('bookings.show.complete_confirm')));">
-                        @csrf
-                        <div>
-                            <label class="mb-2 block text-sm font-medium text-slate-700">{{ __('bookings.show.rating_required') }} <span class="text-red-600">*</span></label>
-                            <div class="flex flex-wrap gap-3">
-                                @for ($i = 1; $i <= 5; $i++)
-                                    <label class="inline-flex cursor-pointer items-center gap-2 rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm text-slate-700 shadow-sm transition hover:border-brand-300 hover:bg-brand-50/50">
-                                        <input type="radio" name="rating" value="{{ $i }}" class="border-slate-300 text-brand-600 focus:ring-brand-500" @checked((int) old('rating', 5) === $i) required>
-                                        <span>{{ $i }} ★</span>
-                                    </label>
-                                @endfor
-                            </div>
-                            @error('rating')
-                                <p class="mt-1 text-xs text-red-700">{{ $message }}</p>
-                            @enderror
-                        </div>
-
-                        <div>
-                            <label for="complete_review" class="mb-2 block text-sm font-medium text-slate-700">{{ __('bookings.show.review_optional') }}</label>
-                            <textarea id="complete_review" name="review" rows="4" maxlength="2000" class="w-full rounded-xl border-slate-300 text-sm shadow-sm focus:border-brand-500 focus:ring-brand-500" placeholder="{{ __('bookings.show.review_placeholder') }}">{{ old('review') }}</textarea>
-                            @error('review')
-                                <p class="mt-1 text-xs text-red-700">{{ $message }}</p>
-                            @enderror
-                        </div>
-
-                        <button type="submit" class="inline-flex items-center justify-center rounded-xl bg-emerald-600 px-5 py-2.5 text-sm font-semibold text-white shadow-md shadow-emerald-600/20 transition hover:bg-emerald-700">
-                            {{ __('bookings.show.complete_submit') }}
-                        </button>
-                    </form>
-                </div>
-            @endif
-
-            @if ($st === BookingStatus::Pending || $b->isAwaitingPayment())
-                <form method="POST" action="{{ route('bookings.cancel', $b) }}" class="mt-8 rounded-3xl border border-red-200/80 bg-gradient-to-br from-red-50/90 to-white p-5 shadow-sm ring-1 ring-red-100/80" onsubmit="return confirm(@json(__('bookings.show.cancel_booking_confirm')));">
+                <form method="POST" action="{{ route('bookings.review', $b) }}" class="space-y-4">
                     @csrf
-                    <p class="text-sm font-bold text-red-900">{{ __('bookings.show.cancel_section_title') }}</p>
-                    <p class="mt-1 text-xs text-red-800/90">{{ __('bookings.show.cancel_section_hint') }}</p>
-                    <button type="submit" class="mt-4 rounded-xl border border-red-200 bg-white px-4 py-2.5 text-sm font-semibold text-red-700 shadow-sm transition hover:bg-red-50">
-                        {{ __('bookings.show.cancel_yes') }}
+                    <div>
+                        <label class="mb-2 block text-xs font-medium text-slate-700">{{ __('bookings.show.rating_required') }}</label>
+                        <div class="flex flex-wrap gap-2">
+                            @for ($i = 1; $i <= 5; $i++)
+                                <label class="inline-flex cursor-pointer items-center gap-1.5 rounded-lg border border-slate-200 bg-white px-3 py-1.5 text-xs font-bold text-slate-700 shadow-sm transition hover:border-brand-300 hover:bg-brand-50/50 has-[:checked]:border-brand-500 has-[:checked]:bg-brand-50 has-[:checked]:text-brand-700">
+                                    <input type="radio" name="rating" value="{{ $i }}" class="sr-only" @checked((int) old('rating', $review?->rating ?? 5) === $i)>
+                                    <span>{{ $i }}</span>
+                                    <span class="text-amber-400">★</span>
+                                </label>
+                            @endfor
+                        </div>
+                        @error('rating')
+                            <p class="mt-1 text-xs text-red-700">{{ $message }}</p>
+                        @enderror
+                    </div>
+
+                    <div>
+                        <label for="review" class="mb-2 block text-xs font-medium text-slate-700">{{ __('bookings.show.review_label') }}</label>
+                        <textarea id="review" name="review" rows="3" maxlength="2000" class="w-full rounded-xl border-slate-200 text-xs shadow-sm focus:border-brand-500 focus:ring-brand-500" placeholder="{{ __('bookings.show.review_placeholder_edit') }}">{{ old('review', $review?->review) }}</textarea>
+                        @error('review')
+                            <p class="mt-1 text-xs text-red-700">{{ $message }}</p>
+                        @enderror
+                    </div>
+
+                    <button type="submit" class="inline-flex items-center justify-center rounded-xl bg-[#2D5A4C] px-5 py-2.5 text-xs font-semibold text-white shadow-sm transition hover:bg-[#23483c]">
+                        {{ $review ? __('bookings.show.update_review') : __('bookings.show.submit_review') }}
                     </button>
                 </form>
-            @endif
+            </div>
+        @endif
+        
+        {{-- Completion Confirmation --}}
+        @if ($st === BookingStatus::Confirmed && $b->payment_status === PaymentStatus::Paid)
+            <div class="rounded-2xl border border-brand-200 bg-gradient-to-br from-brand-50/90 to-white p-6 shadow-sm">
+                <h2 class="text-sm font-bold text-slate-900">{{ __('bookings.show.complete_service_heading') }}</h2>
+                <p class="mt-1 text-xs text-slate-600 mb-5">
+                    {{ __('bookings.show.complete_service_intro') }}
+                </p>
 
-            @if ($st === BookingStatus::Completed)
-                <div class="mt-8 rounded-3xl border border-slate-200/80 bg-white p-6 shadow-md shadow-slate-900/5 sm:p-8">
-                    <h2 class="text-lg font-bold text-slate-900">{{ __('bookings.show.completed_rating_heading') }}</h2>
-                    <p class="mt-1 text-sm text-slate-600">{{ __('bookings.show.completed_rating_intro') }}</p>
-
-                    <form method="POST" action="{{ route('bookings.review', $b) }}" class="mt-5 space-y-4">
-                        @csrf
-                        <div>
-                            <label class="mb-2 block text-sm font-medium text-slate-700">{{ __('bookings.show.rating_required') }}</label>
-                            <div class="flex flex-wrap gap-3">
-                                @for ($i = 1; $i <= 5; $i++)
-                                    <label class="inline-flex cursor-pointer items-center gap-2 rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm text-slate-700 shadow-sm transition hover:border-brand-300 hover:bg-brand-50/50">
-                                        <input type="radio" name="rating" value="{{ $i }}" class="border-slate-300 text-brand-600 focus:ring-brand-500" @checked((int) old('rating', $review?->rating ?? 5) === $i)>
-                                        <span>{{ $i }} ★</span>
-                                    </label>
-                                @endfor
-                            </div>
-                            @error('rating')
-                                <p class="mt-1 text-xs text-red-700">{{ $message }}</p>
-                            @enderror
+                <form method="POST" action="{{ route('bookings.complete', $b) }}" class="space-y-4" onsubmit="return confirm(@json(__('bookings.show.complete_confirm')));">
+                    @csrf
+                    <div>
+                        <label class="mb-2 block text-xs font-medium text-slate-700">{{ __('bookings.show.rating_required') }} <span class="text-red-600">*</span></label>
+                        <div class="flex flex-wrap gap-2">
+                            @for ($i = 1; $i <= 5; $i++)
+                                <label class="inline-flex cursor-pointer items-center gap-1.5 rounded-lg border border-slate-200 bg-white px-3 py-1.5 text-xs font-bold text-slate-700 shadow-sm transition hover:border-brand-300 hover:bg-brand-50/50 has-[:checked]:border-brand-500 has-[:checked]:bg-brand-50 has-[:checked]:text-brand-700">
+                                    <input type="radio" name="rating" value="{{ $i }}" class="sr-only" @checked((int) old('rating', 5) === $i) required>
+                                    <span>{{ $i }}</span>
+                                    <span class="text-amber-400">★</span>
+                                </label>
+                            @endfor
                         </div>
+                        @error('rating')
+                            <p class="mt-1 text-xs text-red-700">{{ $message }}</p>
+                        @enderror
+                    </div>
 
-                        <div>
-                            <label for="review" class="mb-2 block text-sm font-medium text-slate-700">{{ __('bookings.show.review_label') }}</label>
-                            <textarea id="review" name="review" rows="4" maxlength="2000" class="w-full rounded-xl border-slate-300 text-sm shadow-sm focus:border-brand-500 focus:ring-brand-500" placeholder="{{ __('bookings.show.review_placeholder_edit') }}">{{ old('review', $review?->review) }}</textarea>
-                            @error('review')
-                                <p class="mt-1 text-xs text-red-700">{{ $message }}</p>
-                            @enderror
-                        </div>
+                    <div>
+                        <label for="complete_review" class="mb-2 block text-xs font-medium text-slate-700">{{ __('bookings.show.review_optional') }}</label>
+                        <textarea id="complete_review" name="review" rows="3" maxlength="2000" class="w-full rounded-xl border-slate-200 text-xs shadow-sm focus:border-brand-500 focus:ring-brand-500" placeholder="{{ __('bookings.show.review_placeholder') }}">{{ old('review') }}</textarea>
+                        @error('review')
+                            <p class="mt-1 text-xs text-red-700">{{ $message }}</p>
+                        @enderror
+                    </div>
 
-                        <button type="submit" class="inline-flex items-center justify-center rounded-xl bg-brand-600 px-5 py-2.5 text-sm font-semibold text-white shadow-md shadow-brand-600/20 transition hover:bg-brand-700">
-                            {{ $review ? __('bookings.show.update_review') : __('bookings.show.submit_review') }}
-                        </button>
-                    </form>
+                    <button type="submit" class="inline-flex items-center justify-center rounded-xl bg-emerald-600 px-5 py-2.5 text-xs font-semibold text-white shadow-sm transition hover:bg-emerald-700">
+                        {{ __('bookings.show.complete_submit') }}
+                    </button>
+                </form>
+            </div>
+        @endif
+        
+        {{-- Cancellation --}}
+        @if ($st === BookingStatus::Pending || $b->isAwaitingPayment())
+            <form method="POST" action="{{ route('bookings.cancel', $b) }}" class="rounded-2xl border border-red-200/80 bg-red-50/30 p-6 shadow-sm" onsubmit="return confirm(@json(__('bookings.show.cancel_booking_confirm')));">
+                @csrf
+                <div class="flex items-center justify-between">
+                    <div>
+                        <p class="text-sm font-bold text-red-900">{{ __('bookings.show.cancel_section_title') }}</p>
+                        <p class="mt-0.5 text-[10px] text-red-800/80">{{ __('bookings.show.cancel_section_hint') }}</p>
+                    </div>
+                    <button type="submit" class="rounded-xl border border-red-200 bg-white px-4 py-2 text-xs font-semibold text-red-700 shadow-sm transition hover:bg-red-50">
+                        Batalkan
+                    </button>
                 </div>
+            </form>
+        @endif
+    </div>
+
+    {{-- RIGHT COLUMN --}}
+    <div class="space-y-6">
+        
+        {{-- Documents --}}
+        <div class="rounded-2xl border border-slate-200/80 bg-white p-6 shadow-sm">
+            <h2 class="flex items-center gap-2 text-sm font-bold text-slate-900 mb-4">
+                <span class="flex h-7 w-7 items-center justify-center rounded-lg bg-slate-50 text-slate-500 border border-slate-100">
+                    <svg class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M8 7v8a2 2 0 002 2h6M8 7V5a2 2 0 012-2h4.586a1 1 0 01.707.293l4.414 4.414a1 1 0 01.293.707V15a2 2 0 01-2 2h-2M8 7H6a2 2 0 00-2 2v10a2 2 0 002 2h8a2 2 0 002-2v-2" /></svg>
+                </span>
+                Dokumen Perjalanan
+            </h2>
+            <div class="space-y-3">
+                @php
+                    $docs = [
+                        ['type' => 'outbound', 'path' => $booking->ticket_outbound_path, 'label' => 'Tiket Pesawat (Berangkat)'],
+                        ['type' => 'return', 'path' => $booking->ticket_return_path, 'label' => 'Tiket Pesawat (Pulang)'],
+                        ['type' => 'passport', 'path' => $booking->passport_path, 'label' => 'Paspor'],
+                        ['type' => 'itinerary', 'path' => $booking->itinerary_path, 'label' => 'Itinerary'],
+                        ['type' => 'visa', 'path' => $booking->visa_path, 'label' => 'Visa'],
+                    ];
+                    $hasDocs = false;
+                @endphp
+                @foreach ($docs as $doc)
+                    @if (filled($doc['path']))
+                        @php $hasDocs = true; @endphp
+                        <div class="flex items-center justify-between rounded-xl border border-slate-100 bg-white p-3 shadow-sm">
+                            <div class="flex items-center gap-3 min-w-0">
+                                <div class="shrink-0 rounded bg-red-600 px-1.5 py-1">
+                                    <span class="text-[8px] font-bold text-white tracking-widest">PDF</span>
+                                </div>
+                                <div class="min-w-0">
+                                    <p class="truncate text-xs font-semibold text-slate-700">{{ $doc['label'] }}</p>
+                                    <p class="text-[10px] text-slate-500 mt-0.5">Tersedia</p>
+                                </div>
+                            </div>
+                            <a href="{{ route('bookings.documents.show', [$booking, $doc['type']]) }}" target="_blank" class="shrink-0 flex h-7 w-7 items-center justify-center rounded-lg bg-[#E8F3EF] text-[#2D5A4C] hover:bg-[#cde4db] transition">
+                                <svg class="h-3 w-3" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5"><path stroke-linecap="round" stroke-linejoin="round" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" /></svg>
+                            </a>
+                        </div>
+                    @endif
+                @endforeach
+                
+                @if(! $hasDocs)
+                    <p class="text-xs text-slate-500 italic p-2">Belum ada dokumen yang diunggah oleh Muthowif.</p>
+                @endif
+            </div>
+            
+            @if($hasDocs)
+            <button type="button" onclick="alert('Fitur sedang dikembangkan.')" class="mt-4 flex w-full items-center justify-center gap-2 rounded-xl bg-[#F4F9F7] py-2.5 text-xs font-bold tracking-wide text-[#2D5A4C] transition hover:bg-[#e2f1ec]">
+                <svg class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5"><path stroke-linecap="round" stroke-linejoin="round" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" /></svg>
+                Download Semua
+            </button>
             @endif
+        </div>
+
+        {{-- Status Timeline --}}
+        <div class="rounded-2xl border border-slate-200/80 bg-white p-6 shadow-sm">
+            <h2 class="text-sm font-bold text-slate-900 mb-6">Status Pemesanan</h2>
+            
+            <div class="relative space-y-6 before:absolute before:inset-0 before:ml-3 before:-translate-x-px md:before:mx-auto md:before:translate-x-0 before:h-full before:w-0.5 before:bg-slate-200">
+                {{-- Created --}}
+                <div class="relative flex items-start gap-4">
+                    <div class="flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-[#2D5A4C] ring-4 ring-white z-10">
+                        <svg class="h-3 w-3 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="3"><path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7" /></svg>
+                    </div>
+                    <div class="min-w-0 pt-0.5">
+                        <p class="text-xs font-bold text-slate-900">Booking Dibuat</p>
+                        <p class="text-[10px] text-slate-500 mt-0.5">{{ $b->created_at->translatedFormat('d M Y, H:i') }}</p>
+                    </div>
+                </div>
+
+                {{-- Confirmed by Muthowif --}}
+                <div class="relative flex items-start gap-4">
+                    <div class="flex h-6 w-6 shrink-0 items-center justify-center rounded-full {{ in_array($st, [BookingStatus::Confirmed, BookingStatus::Completed]) || $b->isAwaitingPayment() ? 'bg-[#2D5A4C]' : 'bg-white border-2 border-slate-300' }} ring-4 ring-white z-10">
+                        @if(in_array($st, [BookingStatus::Confirmed, BookingStatus::Completed]) || $b->isAwaitingPayment())
+                            <svg class="h-3 w-3 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="3"><path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7" /></svg>
+                        @endif
+                    </div>
+                    <div class="min-w-0 pt-0.5">
+                        <p class="text-xs font-bold {{ in_array($st, [BookingStatus::Confirmed, BookingStatus::Completed]) || $b->isAwaitingPayment() ? 'text-slate-900' : 'text-slate-500' }}">Muthowif Mengonfirmasi</p>
+                        @if(in_array($st, [BookingStatus::Confirmed, BookingStatus::Completed]) || $b->isAwaitingPayment())
+                            <p class="text-[10px] text-slate-500 mt-0.5">Telah dikonfirmasi</p>
+                        @endif
+                    </div>
+                </div>
+
+                {{-- Payment --}}
+                <div class="relative flex items-start gap-4">
+                    <div class="flex h-6 w-6 shrink-0 items-center justify-center rounded-full {{ $b->paid_at ? 'bg-[#2D5A4C]' : 'bg-white border-2 border-[#2D5A4C]' }} ring-4 ring-white z-10">
+                        @if($b->paid_at)
+                            <svg class="h-3 w-3 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="3"><path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7" /></svg>
+                        @endif
+                    </div>
+                    <div class="min-w-0 pt-0.5">
+                        <p class="text-xs font-bold {{ $b->paid_at ? 'text-slate-900' : 'text-[#2D5A4C]' }}">{{ $b->paid_at ? 'Pembayaran Lunas' : 'Menunggu Pembayaran' }}</p>
+                        @if(! $b->paid_at && $b->isAwaitingPayment())
+                            <p class="mt-1.5 text-[10px] leading-relaxed text-slate-500 italic">Pesanan akan otomatis dibatalkan jika pembayaran tidak dilakukan.</p>
+                        @elseif($b->paid_at)
+                            <p class="text-[10px] text-slate-500 mt-0.5">{{ $b->paid_at->translatedFormat('d M Y, H:i') }}</p>
+                        @endif
+                    </div>
+                </div>
+
+                {{-- Completed --}}
+                <div class="relative flex items-start gap-4">
+                    <div class="flex h-6 w-6 shrink-0 items-center justify-center rounded-full {{ $st === BookingStatus::Completed ? 'bg-[#2D5A4C]' : 'bg-white border-2 border-slate-300' }} ring-4 ring-white z-10">
+                        @if($st === BookingStatus::Completed)
+                            <svg class="h-3 w-3 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="3"><path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7" /></svg>
+                        @endif
+                    </div>
+                    <div class="min-w-0 pt-0.5">
+                        <p class="text-xs font-bold {{ $st === BookingStatus::Completed ? 'text-slate-900' : 'text-slate-500' }}">Layanan Selesai</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        {{-- Help Support --}}
+        <div class="rounded-2xl border border-slate-200/80 bg-white p-6 shadow-sm">
+            <h2 class="flex items-center gap-2 text-sm font-bold text-slate-900">
+                <span class="flex h-7 w-7 items-center justify-center rounded-lg bg-slate-50 text-slate-500 border border-slate-100">
+                    <svg class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M18.364 5.636l-3.536 3.536m0 5.656l3.536 3.536M9.172 9.172L5.636 5.636m3.536 9.192l-3.536 3.536M21 12a9 9 0 11-18 0 9 9 0 0118 0zm-5 0a4 4 0 11-8 0 4 4 0 018 0z" /></svg>
+                </span>
+                Butuh Bantuan?
+            </h2>
+            <p class="mt-2.5 text-xs text-slate-600">Hubungi tim kami melalui WhatsApp atau lihat FAQ.</p>
+            <div class="mt-4 flex flex-wrap gap-3">
+                <a href="#" class="flex-1 inline-flex items-center justify-center gap-2 rounded-xl border border-slate-200 bg-white px-3 py-2 text-xs font-bold text-[#2D5A4C] shadow-sm transition hover:bg-slate-50">
+                    <svg class="h-4 w-4 text-[#2D5A4C]" fill="currentColor" viewBox="0 0 24 24"><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51a12.8 12.8 0 00-.57-.01c-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 00-3.48-8.413Z"/></svg>
+                    WhatsApp
+                </a>
+                <a href="#" class="flex-1 inline-flex items-center justify-center gap-2 rounded-xl border border-slate-200 bg-white px-3 py-2 text-xs font-bold text-slate-700 shadow-sm transition hover:bg-slate-50">
+                    <svg class="h-4 w-4 text-slate-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M8.228 9c.549-1.165 2.03-2 3.772-2 2.21 0 4 1.343 4 3 0 1.4-1.278 2.575-3.006 2.907-.542.104-.994.54-.994 1.093m0 3h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
+                    Lihat FAQ
+                </a>
+            </div>
+        </div>
+    </div>
+</div>
