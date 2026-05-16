@@ -590,6 +590,21 @@ class BookingController extends Controller
         }
 
         $profileId = $validated['muthowif_profile_id'];
+
+        $existing = MuthowifBooking::query()
+            ->where('muthowif_profile_id', $profileId)
+            ->where('customer_id', $request->user()->id)
+            ->where('starts_on', $start->toDateString())
+            ->where('ends_on', $end->toDateString())
+            ->where('status', BookingStatus::Pending)
+            ->first();
+
+        if ($existing) {
+            return redirect()
+                ->route('bookings.show', $existing)
+                ->with('status', __('bookings.flash.booking_already_exists'));
+        }
+
         $serviceType = MuthowifServiceType::from($validated['service_type']);
 
         $booking = DB::transaction(function () use ($request, $profileId, $start, $end, $validated, $serviceType): MuthowifBooking {

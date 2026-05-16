@@ -17,6 +17,7 @@ return [
         'moota_bank_account_required' => 'Pilih salah satu rekening Moota untuk melanjutkan pembayaran.',
         'moota_bank_account_invalid' => 'Tidak bisa menentukan rekening Moota yang valid untuk pembayaran ini.',
         'moota_invalid_account_choice' => 'Pilihan rekening Moota tidak valid. Segarkan halaman dan pilih lagi.',
+        'booking_already_exists' => 'Anda sudah memiliki pesanan yang menunggu persetujuan untuk muthowif dan tanggal yang sama.',
     ],
     'validation' => [
         'start_past' => 'Tanggal mulai tidak boleh sebelum hari ini.',
