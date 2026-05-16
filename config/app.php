@@ -132,7 +132,7 @@ return [
     */
     'currency' => [
         'display' => env('CURRENCY_DISPLAY', 'USD'), // 'USD' atau 'IDR'
-        'fallback_usd_rate' => (float) env('USD_EXCHANGE_RATE', 17626.0),
+        'fallback_usd_rate' => (float) env('USD_EXCHANGE_RATE', 17602.0),
     ],
 
 ];
