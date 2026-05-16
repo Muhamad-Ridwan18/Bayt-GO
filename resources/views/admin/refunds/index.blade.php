@@ -1,6 +1,6 @@
-@php
-    use App\Support\IndonesianNumber;
-    $fmt = fn (float|int $n) => IndonesianNumber::formatThousands((string) (int) round((float) $n));
+﻿@php
+    use App\Support\Currency;
+    $fmt = fn (float|int $n) => \App\Support\Currency::format((float) $n);
 @endphp
 
 <x-app-layout>
@@ -54,22 +54,22 @@
                                             <p class="text-xs text-slate-500">{{ $refund->customer->email }}</p>
                                         </td>
                                         <td class="px-4 py-3">
-                                            {{ $booking?->muthowifProfile?->user?->name ?? '—' }}
+                                            {{ $booking?->muthowifProfile?->user?->name ?? 'â€”' }}
                                         </td>
                                         <td class="px-4 py-3 text-right font-semibold text-slate-900">
-                                            Rp {{ $fmt((float) $refund->net_refund_customer) }}
+                                            {{ $fmt((float) $refund->net_refund_customer) }}
                                         </td>
                                         <td class="px-4 py-3 text-xs text-slate-700 max-w-[14rem]">
                                             @if ($refund->refund_bank_name || $refund->refund_account_holder || $refund->refund_account_number)
-                                                <p class="font-medium text-slate-900">{{ $refund->refund_bank_name ?: '—' }}</p>
-                                                <p>{{ $refund->refund_account_holder ?: '—' }}</p>
-                                                <p class="font-mono tabular-nums">{{ $refund->refund_account_number ?: '—' }}</p>
+                                                <p class="font-medium text-slate-900">{{ $refund->refund_bank_name ?: 'â€”' }}</p>
+                                                <p>{{ $refund->refund_account_holder ?: 'â€”' }}</p>
+                                                <p class="font-mono tabular-nums">{{ $refund->refund_account_number ?: 'â€”' }}</p>
                                             @else
-                                                <span class="text-slate-400">—</span>
+                                                <span class="text-slate-400">â€”</span>
                                             @endif
                                         </td>
                                         <td class="px-4 py-3 text-slate-600 text-xs max-w-xs">
-                                            {{ $refund->customer_note ?: '—' }}
+                                            {{ $refund->customer_note ?: 'â€”' }}
                                         </td>
                                         <td class="px-4 py-3">
                                             <form method="POST" action="{{ route('admin.refunds.complete', $refund) }}" enctype="multipart/form-data" class="space-y-2" onsubmit="return confirm(@json(__('admin.refunds.confirm_complete')));">
@@ -97,3 +97,4 @@
         </div>
     </div>
 </x-app-layout>
+

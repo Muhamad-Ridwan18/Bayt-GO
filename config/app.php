@@ -125,4 +125,14 @@ return [
         'store' => env('APP_MAINTENANCE_STORE', 'database'),
     ],
 
+    /*
+    |--------------------------------------------------------------------------
+    | Currency Display Configuration
+    |--------------------------------------------------------------------------
+    */
+    'currency' => [
+        'display' => env('CURRENCY_DISPLAY', 'USD'), // 'USD' atau 'IDR'
+        'fallback_usd_rate' => (float) env('USD_EXCHANGE_RATE', 16000.0),
+    ],
+
 ];

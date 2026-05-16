@@ -1,6 +1,6 @@
-@php
+﻿@php
     use App\Support\BookingSnapPaymentCatalog;
-    use App\Support\IndonesianNumber;
+    use App\Support\Currency;
     use Carbon\Carbon;
     use App\Support\PlatformFee;
 
@@ -26,7 +26,7 @@
     $split = PlatformFee::split((float) $booking->resolvedAmountDue());
     $customerPlatformFee = (float) ($split['customer_fee'] ?? 0.0);
     $customerTotal = (float) ($split['customer_gross'] ?? 0.0);
-    $fmt = fn (float $n) => IndonesianNumber::formatThousands((string) (int) round($n));
+    $fmt = fn (float $n) => \App\Support\Currency::format((float) $n);
 
     $methodGroups = [
         'bank' => [
@@ -206,7 +206,7 @@
                         </div>
                         <div class="shrink-0 rounded-2xl border border-brand-200/80 bg-gradient-to-br from-brand-50 to-emerald-50/50 px-5 py-4 text-right shadow-inner ring-1 ring-brand-100/60">
                             <p class="text-[11px] font-semibold uppercase tracking-wide text-brand-800">{{ __('bookings.invoice.total') }}</p>
-                            <p class="mt-1 text-2xl font-bold tabular-nums tracking-tight text-brand-700 sm:text-3xl">Rp {{ $fmt($customerTotal) }}</p>
+                            <p class="mt-1 text-2xl font-bold tabular-nums tracking-tight text-brand-700 sm:text-3xl">{{ $fmt($customerTotal) }}</p>
                         </div>
                     </div>
                 </div>
@@ -241,21 +241,21 @@
                                 </div>
                                 <div class="flex justify-between gap-3">
                                     <dt class="text-slate-500">{{ __('bookings.show.muthowif') }}</dt>
-                                    <dd class="text-right font-medium text-slate-900">{{ $booking->muthowifProfile->user->name ?? '—' }}</dd>
+                                    <dd class="text-right font-medium text-slate-900">{{ $booking->muthowifProfile->user->name ?? 'â€”' }}</dd>
                                 </div>
                                 <div class="flex justify-between gap-3">
                                     <dt class="text-slate-500">{{ __('bookings.show.period') }}</dt>
                                     <dd class="text-right font-medium tabular-nums text-slate-900">
-                                        {{ Carbon::parse($booking->starts_on)->format('d/m/Y') }} – {{ Carbon::parse($booking->ends_on)->format('d/m/Y') }}
+                                        {{ Carbon::parse($booking->starts_on)->format('d/m/Y') }} â€“ {{ Carbon::parse($booking->ends_on)->format('d/m/Y') }}
                                     </dd>
                                 </div>
                                 <div class="flex justify-between gap-3 border-t border-slate-100 pt-3">
                                     <dt class="text-slate-500">{{ __('bookings.show.platform_fee') }}</dt>
-                                    <dd class="font-medium tabular-nums text-slate-900">Rp {{ $fmt($customerPlatformFee) }}</dd>
+                                    <dd class="font-medium tabular-nums text-slate-900">{{ $fmt($customerPlatformFee) }}</dd>
                                 </div>
                                 <div class="flex items-end justify-between gap-3 rounded-xl bg-gradient-to-br from-brand-600/10 via-brand-50/90 to-emerald-50/50 px-3 py-3 ring-1 ring-brand-200/60">
                                     <dt class="text-sm font-bold text-slate-900">{{ __('bookings.invoice.total') }}</dt>
-                                    <dd class="text-xl font-bold tabular-nums text-brand-700 sm:text-2xl">Rp {{ $fmt($customerTotal) }}</dd>
+                                    <dd class="text-xl font-bold tabular-nums text-brand-700 sm:text-2xl">{{ $fmt($customerTotal) }}</dd>
                                 </div>
                             </dl>
                         </div>
@@ -463,7 +463,7 @@
                                     </span>
                                     <div>
                                         <p class="text-[11px] font-semibold uppercase tracking-wide text-slate-500">{{ __('bookings.payment.deadline') }}</p>
-                                        <p id="expiry-text" class="mt-0.5 text-sm font-semibold tabular-nums text-slate-900">{{ ! empty($instructions['expiry_time']) ? Carbon::parse($instructions['expiry_time'])->timezone(config('app.timezone'))->format('d M Y, H:i') : '—' }}{{ __('common.timezone_suffix') }}</p>
+                                        <p id="expiry-text" class="mt-0.5 text-sm font-semibold tabular-nums text-slate-900">{{ ! empty($instructions['expiry_time']) ? Carbon::parse($instructions['expiry_time'])->timezone(config('app.timezone'))->format('d M Y, H:i') : 'â€”' }}{{ __('common.timezone_suffix') }}</p>
                                     </div>
                                 </div>
                                 <div class="flex gap-3 sm:border-l sm:border-emerald-100 sm:pl-5">
@@ -554,3 +554,4 @@
         @endif
     </div>
 </x-app-layout>
+

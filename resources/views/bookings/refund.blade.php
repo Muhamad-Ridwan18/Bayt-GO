@@ -1,9 +1,9 @@
-@php
+﻿@php
     use App\Support\BookingPostPayRules;
-    use App\Support\IndonesianNumber;
+    use App\Support\Currency;
 
     $b = $booking;
-    $fmt = fn (float $n) => IndonesianNumber::formatThousands((string) (int) round($n));
+    $fmt = fn (float $n) => \App\Support\Currency::format((float) $n);
 @endphp
 
 <x-app-layout>
@@ -100,3 +100,4 @@
         </div>
     </div>
 </x-app-layout>
+

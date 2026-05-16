@@ -91,7 +91,7 @@ class BookingRefundController extends Controller
                     'payment_status' => PaymentStatus::Refunded,
                 ]);
 
-                $feeMu = (int) $refund->refund_fee_muthowif;
+                $feeMu = (float) $refund->refund_fee_muthowif;
                 if ($feeMu > 0) {
                     $muthowifProfile = MuthowifProfile::query()
                         ->whereKey($booking->muthowif_profile_id)

@@ -20,20 +20,19 @@ final class BookingRefundFee
     /**
      * @return array{
      *     service_base_amount: float,
-     *     customer_paid_amount: int,
-     *     refund_fee_platform: int,
-     *     refund_fee_muthowif: int,
-     *     net_refund_customer: int
+     *     customer_paid_amount: float,
+     *     refund_fee_platform: float,
+     *     refund_fee_muthowif: float,
+     *     net_refund_customer: float
      * }
      */
     public static function snapshot(MuthowifBooking $booking, BookingPayment $payment): array
     {
         $base = (float) PlatformFee::split((float) $booking->resolvedAmountDue())['base'];
-        $feePlatform = (int) round($base * self::PLATFORM_REFUND_RATE);
-        $feeMuthowif = (int) round($base * self::MUTHOWIF_REFUND_RATE);
-        $paid = (int) $payment->gross_amount;
-        $baseIdr = (int) round($base);
-        $net = max(0, $baseIdr - $feePlatform - $feeMuthowif);
+        $feePlatform = round($base * self::PLATFORM_REFUND_RATE, 2);
+        $feeMuthowif = round($base * self::MUTHOWIF_REFUND_RATE, 2);
+        $paid = (float) $payment->gross_amount;
+        $net = round(max(0, $base - $feePlatform - $feeMuthowif), 2);
 
         return [
             'service_base_amount' => round($base, 2),

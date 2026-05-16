@@ -132,11 +132,16 @@ class MidtransSnapPaymentProvider implements SnapPaymentProviderInterface
                 }
 
                 $grossInt = (int) round((float) $grossAmount);
-                if ($grossInt !== $payment->gross_amount) {
-                    Log::critical('Midtrans notification: gross_amount tidak cocok dengan catatan', [
+                $expectedIdr = (int) app(\App\Services\CurrencyService::class)->convertUsdToIdr($payment->gross_amount);
+                
+                // Beri toleransi 5% untuk fluktuasi kurs antara saat token dibuat dan saat dibayar
+                $tolerance = $expectedIdr * 0.05;
+                if (abs($grossInt - $expectedIdr) > $tolerance) {
+                    Log::critical('Midtrans notification: gross_amount (IDR) berbeda terlalu jauh dari catatan USD', [
                         'order_id' => $orderId,
-                        'expected' => $payment->gross_amount,
-                        'got' => $grossInt,
+                        'recorded_usd' => $payment->gross_amount,
+                        'expected_idr_now' => $expectedIdr,
+                        'got_idr_from_midtrans' => $grossInt,
                     ]);
                     throw new RuntimeException('Gross mismatch');
                 }

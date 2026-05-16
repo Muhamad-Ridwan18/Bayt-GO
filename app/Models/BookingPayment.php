@@ -35,7 +35,7 @@ class BookingPayment extends Model
     protected function casts(): array
     {
         return [
-            'gross_amount' => 'integer',
+            'gross_amount' => 'decimal:2',
             'platform_fee_amount' => 'decimal:2',
             'muthowif_net_amount' => 'decimal:2',
             'referral_reward_amount' => 'decimal:2',

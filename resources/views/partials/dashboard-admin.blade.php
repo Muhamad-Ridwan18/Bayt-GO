@@ -1,13 +1,13 @@
-@php
+﻿@php
     use App\Enums\MuthowifVerificationStatus;
     use App\Models\BookingPayment;
     use App\Models\MuthowifBooking;
     use App\Models\MuthowifProfile;
     use App\Support\AdminFinanceSummary;
-    use App\Support\IndonesianNumber;
+    use App\Support\Currency;
     use Illuminate\Support\Carbon;
 
-    $fmt = fn (float|int $n) => IndonesianNumber::formatThousands((string) (int) round((float) $n));
+    $fmt = fn (float|int $n) => \App\Support\Currency::format((float) $n);
 
     $welcomeHeroBg = null;
     foreach (['webp', 'png', 'jpg', 'jpeg'] as $ext) {
@@ -243,16 +243,16 @@
                         <div class="space-y-4 rounded-2xl border border-slate-100 bg-slate-50/80 p-4 ring-1 ring-slate-100/80">
                             <div>
                                 <p class="text-[11px] font-bold uppercase tracking-wide text-slate-500">{{ __('dashboard.txn_chart_gross') }}</p>
-                                <p class="mt-1 text-lg font-bold text-slate-900">Rp {{ $fmt($chart['total_gross']) }}</p>
+                                <p class="mt-1 text-lg font-bold text-slate-900">{{ $fmt($chart['total_gross']) }}</p>
                                 <p class="mt-0.5 text-xs text-emerald-600">{{ __('dashboard.txn_in_month') }}</p>
                             </div>
                             <div>
                                 <p class="text-[11px] font-bold uppercase tracking-wide text-slate-500">{{ __('dashboard.txn_chart_refunds') }}</p>
-                                <p class="mt-1 text-lg font-bold text-slate-900">Rp {{ $fmt($chart['total_refunds']) }}</p>
+                                <p class="mt-1 text-lg font-bold text-slate-900">{{ $fmt($chart['total_refunds']) }}</p>
                             </div>
                             <div class="border-t border-slate-200/80 pt-4">
                                 <p class="text-[11px] font-bold uppercase tracking-wide text-slate-500">{{ __('dashboard.txn_chart_net') }}</p>
-                                <p class="mt-1 text-lg font-bold text-brand-800">Rp {{ $fmt($netChart) }}</p>
+                                <p class="mt-1 text-lg font-bold text-brand-800">{{ $fmt($netChart) }}</p>
                             </div>
                         </div>
                     </div>
@@ -286,14 +286,14 @@
                                 <tbody class="divide-y divide-slate-100">
                                     @foreach ($recentPayments as $p)
                                         <tr class="hover:bg-slate-50/80">
-                                            <td class="whitespace-nowrap px-4 py-3 font-mono text-xs text-slate-600">{{ \Illuminate\Support\Str::limit((string) $p->id, 8, '…') }}</td>
+                                            <td class="whitespace-nowrap px-4 py-3 font-mono text-xs text-slate-600">{{ \Illuminate\Support\Str::limit((string) $p->id, 8, 'â€¦') }}</td>
                                             <td class="px-4 py-3">
                                                 <span class="inline-flex rounded-full bg-emerald-50 px-2 py-0.5 text-xs font-semibold text-emerald-900 ring-1 ring-emerald-200/80">{{ __('admin.finance.txn_types.order') }}</span>
                                             </td>
-                                            <td class="max-w-[10rem] truncate px-4 py-3 font-mono text-xs text-slate-700" title="{{ $p->order_id }}">{{ $p->muthowifBooking?->booking_code ?? $p->order_id ?? '—' }}</td>
-                                            <td class="whitespace-nowrap px-4 py-3 text-right font-semibold text-slate-900">Rp {{ $fmt($p->gross_amount) }}</td>
+                                            <td class="max-w-[10rem] truncate px-4 py-3 font-mono text-xs text-slate-700" title="{{ $p->order_id }}">{{ $p->muthowifBooking?->booking_code ?? $p->order_id ?? 'â€”' }}</td>
+                                            <td class="whitespace-nowrap px-4 py-3 text-right font-semibold text-slate-900">{{ $fmt($p->gross_amount) }}</td>
                                             <td class="whitespace-nowrap px-4 py-3 text-slate-700">{{ $p->status }}</td>
-                                            <td class="whitespace-nowrap px-4 py-3 text-slate-600">{{ $p->settled_at?->timezone(config('app.timezone'))->format('d/m/Y H:i') ?? '—' }}</td>
+                                            <td class="whitespace-nowrap px-4 py-3 text-slate-600">{{ $p->settled_at?->timezone(config('app.timezone'))->format('d/m/Y H:i') ?? 'â€”' }}</td>
                                         </tr>
                                     @endforeach
                                 </tbody>
@@ -401,3 +401,4 @@
         </div>
     </div>
 </div>
+

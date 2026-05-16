@@ -41,7 +41,7 @@ class BookingPricingService
             $transport = $this->getTransportPrice($booking);
         }
 
-        return round($base + $addons + $sameHotel + $transport, 2);
+        return $base + $addons + $sameHotel + $transport;
     }
 
     /**

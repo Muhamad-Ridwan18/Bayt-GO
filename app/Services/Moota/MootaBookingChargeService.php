@@ -11,6 +11,7 @@ final class MootaBookingChargeService
 {
     public function __construct(
         private readonly MootaApiClient $client,
+        private readonly \App\Services\CurrencyService $currencyService,
     ) {}
 
     public function isConfigured(): bool
@@ -94,6 +95,8 @@ final class MootaBookingChargeService
             ? route('bookings.show', $booking, absolute: true)
             : '';
 
+        $idrAmount = (int) $this->currencyService->convertUsdToIdr($payment->gross_amount);
+
         // Spesifikasi Moota: total wajib; kirim kedua nama field kalau ada perbedaan versi API.
         $payload = [
             'order_id' => $payment->order_id,
@@ -104,11 +107,11 @@ final class MootaBookingChargeService
                 'name' => $itemName,
                 'description' => $baseDescription,
                 'qty' => 1,
-                'price' => (int) $payment->gross_amount,
+                'price' => $idrAmount,
             ]],
             'description' => $baseDescription,
             'note' => $booking->booking_code ?? null,
-            'total' => (int) $payment->gross_amount,
+            'total' => $idrAmount,
             'expired_in_minutes' => $expire,
         ];
 

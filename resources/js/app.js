@@ -3,18 +3,19 @@ import './bootstrap';
 import Alpine from 'alpinejs';
 
 document.addEventListener('alpine:init', () => {
-    Alpine.data('indonesianDigitsInput', (initialDigits = '') => ({
-        raw: String(initialDigits ?? '').replace(/\D/g, ''),
+    Alpine.data('indonesianDigitsInput', (initialValue = '') => ({
+        raw: String(initialValue ?? '').replace(/[^0-9.]/g, ''),
         formatDigits(d) {
-            if (!d) {
-                return '';
-            }
-            return d.replace(/\B(?=(\d{3})+(?!\d))/g, '.');
+            return d; // Di Dollar kita biarkan inputan bersih tanpa auto-separator ribuan dulu agar tidak bingung dengan desimal
         },
         onInput(e) {
-            const el = e.target;
-            this.raw = el.value.replace(/\D/g, '');
-            el.value = this.formatDigits(this.raw);
+            let val = e.target.value.replace(/[^0-9.]/g, '');
+            const parts = val.split('.');
+            if (parts.length > 2) {
+                val = parts[0] + '.' + parts.slice(1).join('');
+            }
+            this.raw = val;
+            e.target.value = val;
         },
     }));
 
@@ -119,16 +120,16 @@ document.addEventListener('alpine:init', () => {
     Alpine.data('muthowifPrivatePelayananForm', (addonRows) => ({
         rows: addonRows,
         formatDigits(d) {
-            if (!d) {
-                return '';
-            }
-            const digits = String(d).replace(/\D/g, '');
-            return digits.replace(/\B(?=(\d{3})+(?!\d))/g, '.');
+            return d;
         },
         onAddonPriceInput(e, row) {
-            const raw = e.target.value.replace(/\D/g, '');
-            row.price = raw;
-            e.target.value = this.formatDigits(raw);
+            let val = e.target.value.replace(/[^0-9.]/g, '');
+            const parts = val.split('.');
+            if (parts.length > 2) {
+                val = parts[0] + '.' + parts.slice(1).join('');
+            }
+            row.price = val;
+            e.target.value = val;
         },
     }));
 

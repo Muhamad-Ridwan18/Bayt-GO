@@ -1,4 +1,4 @@
-<div class="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
+﻿<div class="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
     <h3 class="font-semibold text-slate-900">{{ __('admin.withdrawals.summary') }}</h3>
     <div class="mt-3 grid grid-cols-1 sm:grid-cols-3 gap-3">
         <div class="rounded-xl bg-slate-50 border border-slate-200 p-4">
@@ -8,7 +8,7 @@
         <div class="rounded-xl bg-slate-50 border border-slate-200 p-4 sm:col-span-2">
             <p class="text-xs font-semibold uppercase tracking-wide text-slate-500">{{ __('admin.withdrawals.pending_amount') }}</p>
             <p class="mt-2 text-2xl font-bold text-slate-900 tabular-nums">
-                Rp {{ \App\Support\IndonesianNumber::formatThousands((string) $pendingAmount) }}
+                {{ \App\Support\Currency::format((float) $pendingAmount) }}
             </p>
             <p class="mt-1 text-xs text-slate-600">{{ __('admin.withdrawals.pending_hint') }}</p>
         </div>
@@ -45,16 +45,16 @@
                     @endphp
                     <tr class="hover:bg-slate-50/60">
                         <td class="px-4 py-3 whitespace-nowrap text-slate-600">
-                            {{ $w->requested_at?->format('d/m/Y H:i') ?? '—' }}
+                            {{ $w->requested_at?->format('d/m/Y H:i') ?? 'â€”' }}
                         </td>
                         <td class="px-4 py-3 text-slate-800 whitespace-nowrap">
-                            {{ $user?->name ?? '—' }}
+                            {{ $user?->name ?? 'â€”' }}
                         </td>
                         <td class="px-4 py-3 font-medium text-slate-900 whitespace-nowrap">
-                            Rp {{ \App\Support\IndonesianNumber::formatThousands((string) $w->amount) }}
+                            {{ \App\Support\Currency::format((float) $w->amount) }}
                         </td>
                         <td class="px-4 py-3 text-slate-800 whitespace-nowrap">
-                            {{ $w->beneficiary_bank }} • {{ $w->beneficiary_account }}
+                            {{ $w->beneficiary_bank }} â€¢ {{ $w->beneficiary_account }}
                         </td>
                         <td class="px-4 py-3 whitespace-nowrap">
                             <span class="inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-semibold ring-1 {{ $tagClass }}">
@@ -86,7 +86,7 @@
                                         data-proof-button
                                         data-action="{{ route('admin.withdrawals.mark_transferred', $w) }}"
                                         data-name="{{ $user?->name ?? 'Muthowif' }}"
-                                        data-amount="Rp {{ \App\Support\IndonesianNumber::formatThousands((string) $w->amount) }}"
+                                        data-amount="{{ \App\Support\Currency::format((float) $w->amount) }}"
                                     >
                                         {{ __('admin.withdrawals.mark_transferred') }}
                                     </button>
@@ -98,7 +98,7 @@
                                     </form>
                                 </div>
                             @else
-                                <span class="text-xs text-slate-500">—</span>
+                                <span class="text-xs text-slate-500">â€”</span>
                             @endif
                         </td>
                     </tr>
@@ -117,3 +117,4 @@
         {{ $withdrawals->links() }}
     </div>
 </div>
+

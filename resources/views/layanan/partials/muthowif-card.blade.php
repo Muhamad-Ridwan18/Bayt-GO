@@ -97,7 +97,7 @@
                 <div>
                     @if ($minPrice !== null)
                         <p class="text-xs font-medium text-slate-500">{{ __('marketplace.card.from') }}</p>
-                        <p class="text-lg font-bold text-brand-700">Rp {{ IndonesianNumber::formatThousands((string) $minPrice) }}<span class="text-sm font-semibold text-slate-500">{{ __('common.per_day') }}</span></p>
+                        <p class="text-lg font-bold text-brand-700">{{ \App\Support\Currency::format($minPrice) }}<span class="text-sm font-semibold text-slate-500">{{ __('common.per_day') }}</span></p>
                     @else
                         <p class="text-sm text-slate-500">{{ __('marketplace.card.price_contact') }}</p>
                     @endif

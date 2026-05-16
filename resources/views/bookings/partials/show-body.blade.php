@@ -34,13 +34,16 @@
     $transportLine = (float) ($b->transport_price_snapshot ?? ($b->with_transport && $service ? (float) $service->transport_price_flat : 0.0));
 
     $baseTotal = (float) ($baseSubtotal + $addonsSum + $sameHotelLine + $transportLine);
-    $split = \App\Support\PlatformFee::split($baseTotal);
-    $customerTotal = (float) ($split['customer_gross'] ?? $baseTotal);
+    $review = $b->review;
+    $dateLocale = app()->getLocale() === 'id' ? 'id-ID' : 'en-GB';
+
+    // Konversi Base Total ke IDR untuk perhitungan Fee Platform & Total Tagihan
+    $idrBaseTotal = app(\App\Services\CurrencyService::class)->convertUsdToIdr($baseTotal);
+    $split = \App\Support\PlatformFee::split($idrBaseTotal);
+    
+    $customerTotal = (float) ($split['customer_gross'] ?? $idrBaseTotal);
     $customerPlatformFee = (float) ($split['customer_fee'] ?? 0.0);
     $muthowifNet = (float) ($split['muthowif_net'] ?? 0.0);
-    $review = $b->review;
-    $fmt = fn (float $n) => IndonesianNumber::formatThousands((string) (int) round($n));
-    $dateLocale = app()->getLocale() === 'id' ? 'id-ID' : 'en-GB';
 
     $statusCardStyles = [
         BookingStatus::Pending->value => [
@@ -175,9 +178,9 @@
                                 <dt class="text-slate-600">{{ __('bookings.show.rate_per_day') }}</dt>
                                 <dd class="font-medium tabular-nums text-slate-900">
                                     @if ($daily !== null)
-                                        Rp {{ $fmt($daily) }}
+                                        {{ \App\Support\Currency::format($daily) }}
                                     @else
-                                        â€”
+                                        —
                                     @endif
                                 </dd>
                             </div>
@@ -187,35 +190,35 @@
                             </div>
                             <div class="flex justify-between gap-4 border-t border-slate-200/80 pt-3">
                                 <dt class="text-slate-600">{{ __('bookings.show.subtotal_service') }}</dt>
-                                <dd class="font-medium tabular-nums text-slate-900">Rp {{ $fmt($baseSubtotal) }}</dd>
+                                <dd class="font-medium tabular-nums text-slate-900">{{ \App\Support\Currency::format($baseSubtotal) }}</dd>
                             </div>
                             @if ($addonLines->isNotEmpty())
                                 @foreach ($addonLines as $ad)
                                     <div class="flex justify-between gap-4">
                                         <dt class="text-slate-600">+ {{ $ad->name }}</dt>
-                                        <dd class="font-medium tabular-nums text-slate-900">Rp {{ $fmt((float) $ad->price) }}</dd>
+                                        <dd class="font-medium tabular-nums text-slate-900">{{ \App\Support\Currency::format((float) $ad->price) }}</dd>
                                     </div>
                                 @endforeach
                             @endif
                             @if ($sameHotelLine > 0)
                                 <div class="flex justify-between gap-4">
                                     <dt class="text-slate-600">{{ __('bookings.show.same_hotel_label', ['nights' => $nights, 'days' => __('common.days')]) }}</dt>
-                                    <dd class="font-medium tabular-nums text-slate-900">Rp {{ $fmt($sameHotelLine) }}</dd>
+                                    <dd class="font-medium tabular-nums text-slate-900">{{ \App\Support\Currency::format($sameHotelLine) }}</dd>
                                 </div>
                             @endif
                             @if ($transportLine > 0)
                                 <div class="flex justify-between gap-4">
                                     <dt class="text-slate-600">{{ __('bookings.show.transport_label') }}</dt>
-                                    <dd class="font-medium tabular-nums text-slate-900">Rp {{ $fmt($transportLine) }}</dd>
+                                    <dd class="font-medium tabular-nums text-slate-900">{{ \App\Support\Currency::format($transportLine) }}</dd>
                                 </div>
                             @endif
                             <div class="flex justify-between gap-4 border-t border-slate-200/80 pt-3">
                                 <dt class="text-slate-600">{{ __('bookings.show.platform_fee') }}</dt>
-                                <dd class="font-medium tabular-nums text-slate-900">Rp {{ $fmt($customerPlatformFee) }}</dd>
+                                <dd class="font-medium tabular-nums text-slate-900">{{ \App\Support\Currency::format($customerPlatformFee, 'IDR') }}</dd>
                             </div>
                             <div class="flex justify-between gap-4 border-t border-slate-200 pt-3 text-base">
                                 <dt class="font-semibold text-slate-900">{{ __('bookings.show.total_customer') }}</dt>
-                                <dd class="font-bold tabular-nums text-brand-700">Rp {{ $fmt($customerTotal) }}</dd>
+                                <dd class="font-bold tabular-nums text-brand-700">{{ \App\Support\Currency::format($customerTotal, 'IDR') }}</dd>
                             </div>
                         </dl>
 

@@ -170,8 +170,8 @@
                         <div class="-mx-1 flex gap-4 overflow-x-auto scroll-pl-4 pb-2 snap-x snap-mandatory px-1 sm:-mx-0 sm:flex-wrap sm:gap-5 sm:overflow-visible sm:pb-0 sm:snap-none" x-ref="trackC" style="-webkit-overflow-scrolling: touch;">
                             @foreach ($featuredMuthowifs as $profile)
                                 @php
-                                    $minPrice = (int) round((float) ($profile->services->min('daily_price') ?? 0));
-                                    $formatted = $minPrice > 0 ? 'Rp '.number_format($minPrice, 0, ',', '.') : '—';
+                                    $minPrice = $profile->services->min('daily_price') ?? 0;
+                                    $formatted = \App\Support\Currency::format($minPrice);
                                     $rating = $profile->booking_reviews_avg_rating;
                                     $ratingStr = $rating !== null ? number_format((float) $rating, 1) : '—';
                                     $reviewCount = (int) $profile->booking_reviews_count;

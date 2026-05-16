@@ -80,12 +80,12 @@ class MuthowifDummySeeder extends Seeder
             // Tanpa baris muthowif_services, profil tidak muncul di dropdown rekomendasi / marketplace card harga.
             [$groupService, $privateService] = MuthowifService::ensurePairForProfile($profile);
             $groupService->update([
-                'daily_price' => 400_000,
+                'daily_price' => 25,
                 'min_pilgrims' => 1,
                 'max_pilgrims' => 50,
             ]);
             $privateService->update([
-                'daily_price' => 850_000,
+                'daily_price' => 55,
                 'min_pilgrims' => 1,
                 'max_pilgrims' => 50,
             ]);

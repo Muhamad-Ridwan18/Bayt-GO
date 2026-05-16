@@ -134,8 +134,8 @@
                                 <div class="rounded-xl border border-slate-100 bg-slate-50/80 px-3 py-2.5 ring-1 ring-slate-100/80">
                                     <dt class="text-[11px] font-bold uppercase tracking-wide text-brand-800">{{ MuthowifServiceType::Group->label() }}</dt>
                                     <dd class="mt-1 text-sm font-semibold text-slate-900">
-                                        @if ($group->daily_price !== null)
-                                            Rp {{ IndonesianNumber::formatThousands((string) (int) $group->daily_price) }}<span class="text-xs font-normal text-slate-500">{{ __('marketplace.show.per_day') }}</span>
+                                        @if ($group->daily_price > 0)
+                                            {{ \App\Support\Currency::format($group->daily_price) }}<span class="text-xs font-normal text-slate-500">{{ __('marketplace.show.per_day') }}</span>
                                         @else
                                             <span class="text-slate-500">{{ __('marketplace.card.price_contact') }}</span>
                                         @endif
@@ -149,8 +149,8 @@
                                 <div class="rounded-xl border border-amber-100/90 bg-amber-50/40 px-3 py-2.5 ring-1 ring-amber-100/80">
                                     <dt class="text-[11px] font-bold uppercase tracking-wide text-amber-950">{{ MuthowifServiceType::PrivateJamaah->label() }}</dt>
                                     <dd class="mt-1 text-sm font-semibold text-slate-900">
-                                        @if ($private->daily_price !== null)
-                                            Rp {{ IndonesianNumber::formatThousands((string) (int) $private->daily_price) }}<span class="text-xs font-normal text-slate-500">{{ __('marketplace.show.per_day') }}</span>
+                                        @if ($private->daily_price > 0)
+                                            {{ \App\Support\Currency::format($private->daily_price) }}<span class="text-xs font-normal text-slate-500">{{ __('marketplace.show.per_day') }}</span>
                                         @else
                                             <span class="text-slate-500">{{ __('marketplace.card.price_contact') }}</span>
                                         @endif
@@ -174,11 +174,11 @@
                                         <p class="mt-2 whitespace-pre-line text-slate-600">{{ $group->description }}</p>
                                     @endif
                                     <ul class="mt-2 flex flex-wrap gap-1.5 text-xs">
-                                        @if (($group->same_hotel_price_per_day ?? null) !== null && (float) $group->same_hotel_price_per_day > 0)
-                                            <li class="rounded-full bg-slate-100 px-2 py-0.5 text-slate-700">{{ __('marketplace.show.addon_same_hotel', ['price' => IndonesianNumber::formatThousands((string) (int) $group->same_hotel_price_per_day)]) }}</li>
+                                        @if ($group->same_hotel_price_per_day > 0)
+                                            <li class="rounded-full bg-slate-100 px-2 py-0.5 text-slate-700">{{ __('marketplace.show.addon_same_hotel', ['price' => \App\Support\Currency::format($group->same_hotel_price_per_day)]) }}</li>
                                         @endif
-                                        @if (($group->transport_price_flat ?? null) !== null && (float) $group->transport_price_flat > 0)
-                                            <li class="rounded-full bg-slate-100 px-2 py-0.5 text-slate-700">{{ __('marketplace.show.addon_transport', ['price' => IndonesianNumber::formatThousands((string) (int) $group->transport_price_flat)]) }}</li>
+                                        @if ($group->transport_price_flat > 0)
+                                            <li class="rounded-full bg-slate-100 px-2 py-0.5 text-slate-700">{{ __('marketplace.show.addon_transport', ['price' => \App\Support\Currency::format($group->transport_price_flat)]) }}</li>
                                         @endif
                                     </ul>
                                 </div>
@@ -193,11 +193,11 @@
                                         <p class="mt-2 whitespace-pre-line text-slate-600">{{ $private->description }}</p>
                                     @endif
                                     <ul class="mt-2 flex flex-wrap gap-1.5 text-xs">
-                                        @if (($private->same_hotel_price_per_day ?? null) !== null && (float) $private->same_hotel_price_per_day > 0)
-                                            <li class="rounded-full bg-slate-100 px-2 py-0.5 text-slate-700">{{ __('marketplace.show.addon_same_hotel', ['price' => IndonesianNumber::formatThousands((string) (int) $private->same_hotel_price_per_day)]) }}</li>
+                                        @if ($private->same_hotel_price_per_day > 0)
+                                            <li class="rounded-full bg-slate-100 px-2 py-0.5 text-slate-700">{{ __('marketplace.show.addon_same_hotel', ['price' => \App\Support\Currency::format($private->same_hotel_price_per_day)]) }}</li>
                                         @endif
-                                        @if (($private->transport_price_flat ?? null) !== null && (float) $private->transport_price_flat > 0)
-                                            <li class="rounded-full bg-slate-100 px-2 py-0.5 text-slate-700">{{ __('marketplace.show.addon_transport', ['price' => IndonesianNumber::formatThousands((string) (int) $private->transport_price_flat)]) }}</li>
+                                        @if ($private->transport_price_flat > 0)
+                                            <li class="rounded-full bg-slate-100 px-2 py-0.5 text-slate-700">{{ __('marketplace.show.addon_transport', ['price' => \App\Support\Currency::format($private->transport_price_flat)]) }}</li>
                                         @endif
                                     </ul>
                                     @if ($private->addOns->isNotEmpty())
@@ -206,7 +206,7 @@
                                             @foreach ($private->addOns as $addon)
                                                 <li class="flex justify-between gap-2 rounded-lg bg-amber-50/80 px-2.5 py-1.5 text-xs ring-1 ring-amber-100/80">
                                                     <span class="font-medium text-slate-800">{{ $addon->name }}</span>
-                                                    <span class="shrink-0 font-bold text-amber-900">Rp {{ IndonesianNumber::formatThousands((string) (int) $addon->price) }}</span>
+                                                    <span class="shrink-0 font-bold text-amber-900">{{ \App\Support\Currency::format($addon->price) }}</span>
                                                 </li>
                                             @endforeach
                                         </ul>

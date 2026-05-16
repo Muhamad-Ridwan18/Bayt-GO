@@ -174,7 +174,7 @@
                                             <span class="inline-flex w-fit rounded-lg bg-brand-100 px-2 py-0.5 text-[10px] font-bold uppercase tracking-wide text-brand-800">{{ MuthowifServiceType::Group->label() }}</span>
                                             <span class="text-base font-bold text-slate-900">{{ __('marketplace.panel.group_label') }}</span>
                                             @if ($group->daily_price !== null)
-                                                <span class="text-sm text-slate-600">{{ __('marketplace.panel.from_daily') }} <span class="font-bold text-brand-700">Rp {{ IndonesianNumber::formatThousands((string) (int) $group->daily_price) }}</span>{{ __('marketplace.panel.per_day') }}</span>
+                                                <span class="text-sm text-slate-600">{{ __('marketplace.panel.from_daily') }} <span class="font-bold text-brand-700">{{ \App\Support\Currency::format($group->daily_price) }}</span>{{ __('marketplace.panel.per_day') }}</span>
                                             @endif
                                         </span>
                                         <span class="absolute right-3 top-3 flex h-5 w-5 items-center justify-center rounded-full border-2 border-slate-300 peer-checked:border-brand-600 peer-checked:bg-brand-600 peer-checked:[&_svg]:opacity-100 sm:right-4 sm:top-4">
@@ -191,7 +191,7 @@
                                             <span class="inline-flex w-fit rounded-lg bg-amber-100 px-2 py-0.5 text-[10px] font-bold uppercase tracking-wide text-amber-900">{{ MuthowifServiceType::PrivateJamaah->label() }}</span>
                                             <span class="text-base font-bold text-slate-900">{{ __('marketplace.panel.private_label') }}</span>
                                             @if ($private->daily_price !== null)
-                                                <span class="text-sm text-slate-600">{{ __('marketplace.panel.from_daily') }} <span class="font-bold text-amber-800">Rp {{ IndonesianNumber::formatThousands((string) (int) $private->daily_price) }}</span>{{ __('marketplace.panel.per_day') }}</span>
+                                                <span class="text-sm text-slate-600">{{ __('marketplace.panel.from_daily') }} <span class="font-bold text-amber-800">{{ \App\Support\Currency::format($private->daily_price) }}</span>{{ __('marketplace.panel.per_day') }}</span>
                                             @endif
                                         </span>
                                         <span class="absolute right-3 top-3 flex h-5 w-5 items-center justify-center rounded-full border-2 border-slate-300 peer-checked:border-amber-600 peer-checked:bg-amber-600 peer-checked:[&_svg]:opacity-100 sm:right-4 sm:top-4">
@@ -251,7 +251,7 @@
                                                     @checked($groupHotelAvailable && $oldWithSameHotel)>
                                                 <span class="text-sm leading-relaxed text-slate-700">
                                                     @if ($groupHotelAvailable)
-                                                        {{ __('marketplace.panel.same_hotel_yes', ['amount' => IndonesianNumber::formatThousands((string) (int) $group->same_hotel_price_per_day)]) }}
+                                                        {{ __('marketplace.panel.same_hotel_yes', ['amount' => \App\Support\Currency::format($group->same_hotel_price_per_day)]) }}
                                                     @else
                                                         {{ __('marketplace.panel.same_hotel_no') }}
                                                     @endif
@@ -266,7 +266,7 @@
                                                     @checked($groupTransportAvailable && $oldWithTransport)>
                                                 <span class="text-sm leading-relaxed text-slate-700">
                                                     @if ($groupTransportAvailable)
-                                                        {{ __('marketplace.panel.transport_yes', ['amount' => IndonesianNumber::formatThousands((string) (int) $group->transport_price_flat)]) }}
+                                                        {{ __('marketplace.panel.transport_yes', ['amount' => \App\Support\Currency::format($group->transport_price_flat)]) }}
                                                     @else
                                                         {{ __('marketplace.panel.transport_no') }}
                                                     @endif
@@ -292,7 +292,7 @@
                                                             @checked(in_array((string) $addon->id, $oldAddOnIds, true))>
                                                         <span class="text-sm leading-relaxed text-slate-700">
                                                             {{ $addon->name }}
-                                                            <span class="font-semibold text-amber-800">(+Rp {{ IndonesianNumber::formatThousands((string) (int) $addon->price) }})</span>
+                                                            <span class="font-semibold text-amber-800">(+{{ \App\Support\Currency::format($addon->price) }})</span>
                                                         </span>
                                                     </label>
                                                 @endforeach
@@ -308,7 +308,7 @@
                                                     @checked($privateHotelAvailable && $oldWithSameHotel)>
                                                 <span class="text-sm leading-relaxed text-slate-700">
                                                     @if ($privateHotelAvailable)
-                                                        {{ __('marketplace.panel.same_hotel_yes', ['amount' => IndonesianNumber::formatThousands((string) (int) $private->same_hotel_price_per_day)]) }}
+                                                        {{ __('marketplace.panel.same_hotel_yes', ['amount' => \App\Support\Currency::format($private->same_hotel_price_per_day)]) }}
                                                     @else
                                                         {{ __('marketplace.panel.same_hotel_no') }}
                                                     @endif
@@ -323,7 +323,7 @@
                                                     @checked($privateTransportAvailable && $oldWithTransport)>
                                                 <span class="text-sm leading-relaxed text-slate-700">
                                                     @if ($privateTransportAvailable)
-                                                        {{ __('marketplace.panel.transport_yes', ['amount' => IndonesianNumber::formatThousands((string) (int) $private->transport_price_flat)]) }}
+                                                        {{ __('marketplace.panel.transport_yes', ['amount' => \App\Support\Currency::format($private->transport_price_flat)]) }}
                                                     @else
                                                         {{ __('marketplace.panel.transport_no') }}
                                                     @endif

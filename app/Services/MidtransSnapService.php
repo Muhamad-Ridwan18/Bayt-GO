@@ -41,6 +41,7 @@ class MidtransSnapService
      */
     public function createSnapSession(BookingPayment $payment): array
     {
+        $currencyService = app(CurrencyService::class);
         $serverKey = config('services.midtrans.server_key');
         if (! is_string($serverKey) || $serverKey === '') {
             throw new RuntimeException('MIDTRANS_SERVER_KEY belum diatur.');
@@ -56,7 +57,7 @@ class MidtransSnapService
         $payload = [
             'transaction_details' => [
                 'order_id' => $payment->order_id,
-                'gross_amount' => (int) $payment->gross_amount,
+                'gross_amount' => (int) $currencyService->convertUsdToIdr($payment->gross_amount),
             ],
             'customer_details' => array_filter([
                 'first_name' => $firstName !== '' ? $firstName : 'Jamaah',
@@ -66,7 +67,7 @@ class MidtransSnapService
             'item_details' => [
                 [
                     'id' => 'BOOKING',
-                    'price' => (int) $payment->gross_amount,
+                    'price' => (int) $currencyService->convertUsdToIdr($payment->gross_amount),
                     'quantity' => 1,
                     'name' => Str::limit('Pendampingan - '.$muthowifName, 50),
                 ],
@@ -110,6 +111,7 @@ class MidtransSnapService
      */
     public function createCoreChargeSession(BookingPayment $payment, string $method): array
     {
+        $currencyService = app(CurrencyService::class);
         $serverKey = config('services.midtrans.server_key');
         if (! is_string($serverKey) || $serverKey === '') {
             throw new RuntimeException('MIDTRANS_SERVER_KEY belum diatur.');
@@ -130,7 +132,7 @@ class MidtransSnapService
         $payload = [
             'transaction_details' => [
                 'order_id' => $payment->order_id,
-                'gross_amount' => $payment->gross_amount,
+                'gross_amount' => (int) $currencyService->convertUsdToIdr($payment->gross_amount),
             ],
             'customer_details' => array_filter([
                 'first_name' => $firstName !== '' ? $firstName : 'Jamaah',
@@ -139,7 +141,7 @@ class MidtransSnapService
             'item_details' => [
                 [
                     'id' => 'BOOKING',
-                    'price' => $payment->gross_amount,
+                    'price' => (int) $currencyService->convertUsdToIdr($payment->gross_amount),
                     'quantity' => 1,
                     'name' => Str::limit('Pendampingan - '.$muthowifName, 50),
                 ],

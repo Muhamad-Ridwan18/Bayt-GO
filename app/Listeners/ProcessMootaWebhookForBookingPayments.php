@@ -1052,7 +1052,11 @@ final class ProcessMootaWebhookForBookingPayments
             return $this->incomingMatchesExpectedMootaAmount($incoming, $expected, $payment, $detail, $trxFromHook);
         }
 
-        return $incoming === (int) $payment->gross_amount;
+        $expectedIdr = (int) app(\App\Services\CurrencyService::class)->convertUsdToIdr($payment->gross_amount);
+        
+        // Toleransi 5% untuk fluktuasi kurs + kode unik Moota
+        $tolerance = $expectedIdr * 0.05;
+        return abs($incoming - $expectedIdr) <= $tolerance;
     }
 
     /**

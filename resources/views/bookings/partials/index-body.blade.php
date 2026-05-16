@@ -131,8 +131,12 @@
                             $transportLine = (float) ($booking->transport_price_snapshot ?? ($booking->with_transport && $service ? (float) $service->transport_price_flat : 0.0));
 
                             $totalDue = (float) ($serviceSubtotal + $addonsSum + $sameHotelLine + $transportLine);
-                            $split = \App\Support\PlatformFee::split($totalDue);
-                            $customerGross = (float) ($split['customer_gross'] ?? $totalDue);
+
+                            // Konversi ke IDR untuk Total Tagihan & Fee
+                            $idrTotalDue = app(\App\Services\CurrencyService::class)->convertUsdToIdr($totalDue);
+                            $split = \App\Support\PlatformFee::split($idrTotalDue);
+                            
+                            $customerGross = (float) ($split['customer_gross'] ?? $idrTotalDue);
                             $customerFee = (float) ($split['customer_fee'] ?? 0.0);
                         @endphp
                         <li class="group relative">
@@ -147,7 +151,7 @@
                                             {{ $booking->muthowifProfile->user->name }}
                                         </h2>
                                         <p class="text-base font-bold text-brand-700 tabular-nums sm:text-lg">
-                                            Rp {{ IndonesianNumber::formatThousands((string) (int) round($customerGross)) }}
+                                            {{ \App\Support\Currency::format($customerGross, 'IDR') }}
                                         </p>
                                     </div>
 
@@ -207,35 +211,35 @@
                                         <dl class="divide-y divide-brand-100/40 text-[10px] sm:text-xs">
                                             <div class="flex justify-between gap-3 px-3 py-1.5">
                                                 <dt class="text-slate-600">{{ __('bookings.show.subtotal_service') }}</dt>
-                                                <dd class="font-medium tabular-nums text-slate-900">Rp {{ IndonesianNumber::formatThousands((string) (int) round($serviceSubtotal)) }}</dd>
+                                                <dd class="font-medium tabular-nums text-slate-900">{{ \App\Support\Currency::format($serviceSubtotal) }}</dd>
                                             </div>
                                             @if ($addonLines->isNotEmpty())
                                                 @foreach ($addonLines as $ad)
                                                     <div class="flex justify-between gap-3 px-3 py-1.5">
                                                         <dt class="text-slate-500">+ {{ $ad->name }}</dt>
-                                                        <dd class="font-medium tabular-nums text-slate-800">Rp {{ IndonesianNumber::formatThousands((string) (int) round((float) $ad->price)) }}</dd>
+                                                        <dd class="font-medium tabular-nums text-slate-800">{{ \App\Support\Currency::format((float) $ad->price) }}</dd>
                                                     </div>
                                                 @endforeach
                                             @endif
                                             @if ($sameHotelLine > 0)
                                                 <div class="flex justify-between gap-3 px-3 py-1.5">
                                                     <dt class="text-slate-500">{{ __('bookings.show.same_hotel_label', ['nights' => $nights, 'days' => __('common.days')]) }}</dt>
-                                                    <dd class="font-medium tabular-nums text-slate-800">Rp {{ IndonesianNumber::formatThousands((string) (int) round($sameHotelLine)) }}</dd>
+                                                    <dd class="font-medium tabular-nums text-slate-800">{{ \App\Support\Currency::format($sameHotelLine) }}</dd>
                                                 </div>
                                             @endif
                                             @if ($transportLine > 0)
                                                 <div class="flex justify-between gap-3 px-3 py-1.5">
                                                     <dt class="text-slate-500">{{ __('bookings.show.transport_label') }}</dt>
-                                                    <dd class="font-medium tabular-nums text-slate-800">Rp {{ IndonesianNumber::formatThousands((string) (int) round($transportLine)) }}</dd>
+                                                    <dd class="font-medium tabular-nums text-slate-800">{{ \App\Support\Currency::format($transportLine) }}</dd>
                                                 </div>
                                             @endif
                                             <div class="flex justify-between gap-3 px-3 py-1.5">
                                                 <dt class="text-slate-600">{{ __('bookings.show.platform_fee') }}</dt>
-                                                <dd class="font-medium tabular-nums text-slate-900">+ Rp {{ IndonesianNumber::formatThousands((string) (int) round($customerFee)) }}</dd>
+                                                <dd class="font-medium tabular-nums text-slate-900">+ {{ \App\Support\Currency::format($customerFee, 'IDR') }}</dd>
                                             </div>
                                             <div class="flex justify-between gap-3 bg-brand-50/60 px-3 py-2">
                                                 <dt class="font-bold text-slate-900">{{ __('bookings.invoice.total') }}</dt>
-                                                <dd class="font-bold tabular-nums text-brand-700 sm:text-sm">Rp {{ IndonesianNumber::formatThousands((string) (int) round($customerGross)) }}</dd>
+                                                <dd class="font-bold tabular-nums text-brand-700 sm:text-sm">{{ \App\Support\Currency::format($customerGross, 'IDR') }}</dd>
                                             </div>
                                         </dl>
                                     </div>

@@ -33,12 +33,12 @@ final class BookingPendingPaymentEnsurer
             return null;
         }
 
-        $baseInt = (int) round($booking->resolvedAmountDue());
-        if ($baseInt < 1) {
+        $baseAmount = $booking->resolvedAmountDue();
+        if ($baseAmount < 0.01) {
             return null;
         }
 
-        return DB::transaction(function () use ($booking, $baseInt): ?BookingPayment {
+        return DB::transaction(function () use ($booking, $baseAmount): ?BookingPayment {
             $booking->refresh();
 
             if ($booking->status !== BookingStatus::Confirmed
@@ -47,7 +47,7 @@ final class BookingPendingPaymentEnsurer
                 return null;
             }
 
-            $split = PlatformFee::split((float) $baseInt);
+            $split = PlatformFee::split($baseAmount);
 
             /** Sudah ada sesi charge (Moota trx / SNAP): jangan buat kedua; biarkan satu baris aktif. */
             $withGateway = $booking->bookingPayments()
@@ -93,7 +93,7 @@ final class BookingPendingPaymentEnsurer
                 ->latest('id')
                 ->first();
 
-            $gross = (int) round($split['customer_gross']);
+            $gross = $split['customer_gross'];
             $referral = MuthowifReferralReward::paymentSnapshot(
                 (float) $split['muthowif_net'],
                 (string) $booking->muthowif_profile_id,

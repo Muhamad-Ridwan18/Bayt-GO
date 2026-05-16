@@ -1,8 +1,8 @@
-@php
+﻿@php
     use App\Enums\BookingStatus;
     use App\Enums\MuthowifServiceType;
     use Carbon\Carbon;
-    use App\Support\IndonesianNumber;
+    use App\Support\Currency;
     use App\Support\MuthowifFinanceSummary;
     use App\Services\MuthowifDashboardCalendarDataBuilder;
 
@@ -12,7 +12,7 @@
         'bookings as confirmed_bookings_count' => fn ($q) => $q->where('status', BookingStatus::Confirmed),
     ]);
     $balance = (float) ($mp->wallet_balance ?? 0);
-    $balanceFormatted = IndonesianNumber::formatThousands((string) (int) round($balance));
+    $balanceFormatted = \App\Support\Currency::format((float) $balance);
 
     $monthParam = request()->query('month');
     $calendarData = MuthowifDashboardCalendarDataBuilder::build(
@@ -53,7 +53,7 @@
 @endphp
 
 <div class="space-y-8 scroll-smooth">
-    {{-- Hero: full-bleed seperti welcome — bg-welcome lebar penuh; kiri cream polos, foto dominan ke kanan --}}
+    {{-- Hero: full-bleed seperti welcome â€” bg-welcome lebar penuh; kiri cream polos, foto dominan ke kanan --}}
     <section class="relative left-1/2 w-screen max-w-[100vw] -translate-x-1/2 overflow-hidden bg-welcomeCanvas min-h-[21rem] pb-8 sm:min-h-[24rem] sm:pb-10 lg:min-h-[26rem] lg:pb-12">
         <div class="pointer-events-none absolute inset-0 z-0" aria-hidden="true">
             <img
@@ -170,9 +170,9 @@
                                             <span class="inline-flex shrink-0 rounded-full px-2 py-0.5 text-[10px] font-semibold ring-1 {{ $statusPill }}">{{ $row->status->label() }}</span>
                                         </div>
                                         <p class="text-[11px] text-slate-600">
-                                            {{ Carbon::parse($row->starts_on)->format('d/m') }} – {{ Carbon::parse($row->ends_on)->format('d/m') }}
+                                            {{ Carbon::parse($row->starts_on)->format('d/m') }} â€“ {{ Carbon::parse($row->ends_on)->format('d/m') }}
                                             @if ($row->service_type)
-                                                <span class="text-slate-400"> · </span>{{ $row->service_type->label() }}
+                                                <span class="text-slate-400"> Â· </span>{{ $row->service_type->label() }}
                                             @endif
                                         </p>
                                     </a>
@@ -248,8 +248,8 @@
                     </span>
                     <div class="min-w-0 flex-1">
                         <p class="text-xs font-semibold uppercase tracking-wide text-slate-500">{{ __('dashboard_muthowif.wallet_balance') }}</p>
-                        <p class="text-lg font-bold tabular-nums text-slate-900">Rp {{ $balanceFormatted }}</p>
-                        <p class="mt-1 text-xs font-semibold text-baytgo">{{ __('dashboard_muthowif.action_withdraw') }} →</p>
+                        <p class="text-lg font-bold tabular-nums text-slate-900">{{ $balanceFormatted }}</p>
+                        <p class="mt-1 text-xs font-semibold text-baytgo">{{ __('dashboard_muthowif.action_withdraw') }} â†’</p>
                     </div>
                 </a>
                 <a href="{{ route('muthowif.bookings.index') }}" class="flex items-center gap-4 rounded-2xl border border-slate-200/80 bg-white p-4 shadow-sm transition hover:border-sky-200 hover:shadow-md">
@@ -282,3 +282,4 @@
         </aside>
     </div>
 </div>
+

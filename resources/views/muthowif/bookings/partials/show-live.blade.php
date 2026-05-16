@@ -35,7 +35,11 @@
     $transportLine = (float) ($b->transport_price_snapshot ?? ($b->with_transport && $service ? (float) $service->transport_price_flat : 0.0));
 
     $totalGross = (float) ($serviceSubtotal + $addonsSum + $sameHotelLine + $transportLine);
-    $split = PlatformFee::split($totalGross);
+    
+    // Konversi Gross ke IDR untuk perhitungan Fee & Pendapatan Muthowif
+    $idrTotalGross = app(\App\Services\CurrencyService::class)->convertUsdToIdr($totalGross);
+    $split = PlatformFee::split($idrTotalGross);
+    
     $muthowifNet = (float) ($split['muthowif_net'] ?? 0.0);
     $muthowifFee = (float) ($split['muthowif_fee'] ?? 0.0);
     $customerGross = (float) ($split['customer_gross'] ?? 0.0);
@@ -58,7 +62,7 @@
         ? round((float) ($payForReferral->referral_reward_amount ?? 0), 2)
         : 0.0;
     $muthowifNetAfterReferral = round(max(0.0, $muthowifNet - $referralRewardFromPay), 2);
-    $fmt = fn (float $n) => IndonesianNumber::formatThousands((string) (int) round($n));
+    $muthowifNetAfterReferral = round(max(0.0, $muthowifNet - $referralRewardFromPay), 2);
 
     $badgeClass = match ($st) {
         BookingStatus::Pending => 'bg-amber-100 text-amber-950 ring-amber-200/90',
@@ -154,7 +158,7 @@
                             <dl class="space-y-2 rounded-xl bg-slate-50/80 p-4 text-xs ring-1 ring-slate-100/80">
                                 <div class="flex justify-between gap-4">
                                     <dt class="text-slate-600">{{ __('muthowif.booking_show.rate_per_day') }}</dt>
-                                    <dd class="font-medium tabular-nums text-slate-900">Rp {{ $fmt($daily) }}</dd>
+                                    <dd class="font-medium tabular-nums text-slate-900">{{ \App\Support\Currency::format($daily) }}</dd>
                                 </div>
                                 <div class="flex justify-between gap-4">
                                     <dt class="text-slate-600">{{ __('bookings.show.day_count') }}</dt>
@@ -162,41 +166,41 @@
                                 </div>
                                 <div class="flex justify-between gap-4 border-t border-slate-200/60 pt-2">
                                     <dt class="text-slate-600">{{ __('muthowif.booking_show.subtotal_service') }}</dt>
-                                    <dd class="font-medium tabular-nums text-slate-900">Rp {{ $fmt($serviceSubtotal) }}</dd>
+                                    <dd class="font-medium tabular-nums text-slate-900">{{ \App\Support\Currency::format($serviceSubtotal) }}</dd>
                                 </div>
                                 @if ($addonLines->isNotEmpty())
                                     @foreach ($addonLines as $ad)
                                         <div class="flex justify-between gap-4">
                                             <dt class="text-slate-500">+ {{ $ad->name }}</dt>
-                                            <dd class="font-medium tabular-nums text-slate-800">Rp {{ $fmt((float) $ad->price) }}</dd>
+                                            <dd class="font-medium tabular-nums text-slate-800">{{ \App\Support\Currency::format((float) $ad->price) }}</dd>
                                         </div>
                                     @endforeach
                                 @endif
                                 @if ($sameHotelLine > 0)
                                     <div class="flex justify-between gap-4">
                                         <dt class="text-slate-500">{{ __('bookings.show.same_hotel_label', ['nights' => $nights, 'days' => __('common.days')]) }}</dt>
-                                        <dd class="font-medium tabular-nums text-slate-800">Rp {{ $fmt($sameHotelLine) }}</dd>
+                                        <dd class="font-medium tabular-nums text-slate-800">{{ \App\Support\Currency::format($sameHotelLine) }}</dd>
                                     </div>
                                 @endif
                                 @if ($transportLine > 0)
                                     <div class="flex justify-between gap-4">
                                         <dt class="text-slate-500">{{ __('bookings.show.transport_label') }}</dt>
-                                        <dd class="font-medium tabular-nums text-slate-800">Rp {{ $fmt($transportLine) }}</dd>
+                                        <dd class="font-medium tabular-nums text-slate-800">{{ \App\Support\Currency::format($transportLine) }}</dd>
                                     </div>
                                 @endif
                                 <div class="flex justify-between gap-4 border-t border-slate-200/60 pt-2">
                                     <dt class="text-red-600/80">{{ __('muthowif.booking_show.platform_fee_muthowif') }}</dt>
-                                    <dd class="font-medium tabular-nums text-red-700/90">- Rp {{ $fmt($muthowifFee) }}</dd>
+                                    <dd class="font-medium tabular-nums text-red-700/90">- {{ \App\Support\Currency::format($muthowifFee, 'IDR') }}</dd>
                                 </div>
                                 @if ($referralRewardFromPay > 0)
                                     <div class="flex justify-between gap-4 border-t border-slate-200/60 pt-2">
                                         <dt class="text-violet-700/90">{{ __('muthowif.booking_show.peer_referral_deduction') }}</dt>
-                                        <dd class="font-medium tabular-nums text-violet-800">- Rp {{ $fmt($referralRewardFromPay) }}</dd>
+                                        <dd class="font-medium tabular-nums text-violet-800">- {{ \App\Support\Currency::format($referralRewardFromPay, 'IDR') }}</dd>
                                     </div>
                                 @endif
                                 <div class="flex justify-between gap-4 border-t border-slate-200 pt-2.5 text-sm">
                                     <dt class="font-bold text-slate-900">{{ __('muthowif.booking_show.net_earning') }}</dt>
-                                    <dd class="font-bold tabular-nums text-brand-700">Rp {{ $fmt($muthowifNetAfterReferral) }}</dd>
+                                    <dd class="font-bold tabular-nums text-brand-700">{{ \App\Support\Currency::format($muthowifNetAfterReferral, 'IDR') }}</dd>
                                 </div>
                             </dl>
                             <p class="text-[10px] leading-relaxed text-slate-500 italic">
@@ -279,10 +283,10 @@
                                     } }}">{{ $req->status->label() }}</span>
                                     <span class="text-xs text-slate-500">{{ $req->created_at?->timezone(config('app.timezone'))->format('d/m/Y H:i') }}</span>
                                 </div>
-                                <p class="text-slate-700">{{ __('muthowif.booking_show.refund_net_prefix') }} <strong>Rp {{ $fmt((float) $req->net_refund_customer) }}</strong></p>
+                                <p class="text-slate-700">{{ __('muthowif.booking_show.refund_net_prefix') }} <strong>{{ \App\Support\Currency::format((float) $req->net_refund_customer, 'IDR') }}</strong></p>
                                 <p class="text-xs text-slate-600">{{ __('muthowif.booking_show.refund_fees', [
-                                    'platform' => $fmt((float) $req->refund_fee_platform),
-                                    'muthowif' => $fmt((float) $req->refund_fee_muthowif),
+                                    'platform' => \App\Support\Currency::format((float) $req->refund_fee_platform, 'IDR'),
+                                    'muthowif' => \App\Support\Currency::format((float) $req->refund_fee_muthowif, 'IDR'),
                                 ]) }}</p>
                                 @if ($req->refund_bank_name || $req->refund_account_holder || $req->refund_account_number)
                                     <div class="rounded-lg border border-slate-100 bg-slate-50/80 px-3 py-2 text-xs text-slate-700">

@@ -8,7 +8,7 @@
 
             return [
                 'name' => $row['name'] ?? '',
-                'price' => isset($row['price']) ? preg_replace('/\D+/', '', (string) $row['price']) : '',
+                'price' => isset($row['price']) ? preg_replace('/[^0-9.]/', '', (string) $row['price']) : '',
             ];
         })->values()->all();
     } elseif ($privateService->addOns->isEmpty()) {
@@ -17,7 +17,7 @@
         $addonRows = $privateService->addOns->map(function ($a) {
             return [
                 'name' => $a->name,
-                'price' => (string) (int) $a->price,
+                'price' => (string) (float) $a->price,
             ];
         })->values()->all();
     }
@@ -78,7 +78,7 @@
                                 id="group_daily_price"
                                 :value="old('group_daily_price', $groupService->daily_price !== null ? (string) (int) $groupService->daily_price : '')"
                                 required
-                                placeholder="Contoh: 250.000"
+                                placeholder="Contoh: 25.00"
                                 :prefix="true"
                             />
                             <x-input-error class="mt-2" :messages="$errors->get('group_daily_price')" />
@@ -126,7 +126,7 @@
                                     name="group_same_hotel_price_per_day"
                                     id="group_same_hotel_price_per_day"
                                     :value="old('group_same_hotel_price_per_day', $groupService->same_hotel_price_per_day !== null ? (string) (int) $groupService->same_hotel_price_per_day : '')"
-                                    placeholder="Contoh: 100.000"
+                                    placeholder="Contoh: 10.00"
                                     :prefix="true"
                                 />
                                 <x-input-error class="mt-2" :messages="$errors->get('group_same_hotel_price_per_day')" />
@@ -137,7 +137,7 @@
                                     name="group_transport_price_flat"
                                     id="group_transport_price_flat"
                                     :value="old('group_transport_price_flat', $groupService->transport_price_flat !== null ? (string) (int) $groupService->transport_price_flat : '')"
-                                    placeholder="Contoh: 300.000"
+                                    placeholder="Contoh: 20.00"
                                     :prefix="true"
                                 />
                                 <x-input-error class="mt-2" :messages="$errors->get('group_transport_price_flat')" />
@@ -185,7 +185,7 @@
                                 id="private_daily_price"
                                 :value="old('private_daily_price', $privateService->daily_price !== null ? (string) (int) $privateService->daily_price : '')"
                                 required
-                                placeholder="Contoh: 350.000"
+                                placeholder="Contoh: 50.00"
                                 :prefix="true"
                             />
                             <x-input-error class="mt-2" :messages="$errors->get('private_daily_price')" />
@@ -233,7 +233,7 @@
                                     name="private_same_hotel_price_per_day"
                                     id="private_same_hotel_price_per_day"
                                     :value="old('private_same_hotel_price_per_day', $privateService->same_hotel_price_per_day !== null ? (string) (int) $privateService->same_hotel_price_per_day : '')"
-                                    placeholder="Contoh: 120.000"
+                                    placeholder="Contoh: 15.00"
                                     :prefix="true"
                                 />
                                 <x-input-error class="mt-2" :messages="$errors->get('private_same_hotel_price_per_day')" />
@@ -244,7 +244,7 @@
                                     name="private_transport_price_flat"
                                     id="private_transport_price_flat"
                                     :value="old('private_transport_price_flat', $privateService->transport_price_flat !== null ? (string) (int) $privateService->transport_price_flat : '')"
-                                    placeholder="Contoh: 400.000"
+                                    placeholder="Contoh: 30.00"
                                     :prefix="true"
                                 />
                                 <x-input-error class="mt-2" :messages="$errors->get('private_transport_price_flat')" />
@@ -275,12 +275,12 @@
                                         <div class="flex-1">
                                             <label class="block text-xs font-medium text-slate-600 mb-1">Harga</label>
                                             <div class="flex rounded-lg border border-slate-300 shadow-sm overflow-hidden">
-                                                <span class="inline-flex items-center px-2 bg-white text-slate-500 text-xs border-e border-slate-200 shrink-0">Rp</span>
+                                                <span class="inline-flex items-center px-2 bg-white text-slate-500 text-xs border-e border-slate-200 shrink-0">$</span>
                                                 <input type="text" inputmode="numeric" autocomplete="off"
                                                        x-init="$el.value = formatDigits(String(row.price || ''))"
                                                        @input="onAddonPriceInput($event, row)"
                                                        class="block w-full min-w-0 flex-1 border-0 py-2 px-2 text-sm focus:ring-0"
-                                                       placeholder="500.000" />
+                                                       placeholder="10.00" />
                                                 <input type="hidden" :name="'add_ons[' + index + '][price]'" :value="row.price" />
                                             </div>
                                         </div>

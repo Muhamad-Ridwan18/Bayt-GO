@@ -1,13 +1,13 @@
-@php
-    use App\Support\IndonesianNumber;
+﻿@php
+    use App\Support\Currency;
     use App\Support\PlatformFee;
     use Illuminate\Support\Str;
 
-    $fmt = fn (float|int $n) => IndonesianNumber::formatThousands((string) (int) round((float) $n));
+    $fmt = fn (float|int $n) => \App\Support\Currency::format((float) $n);
     $tz = config('app.timezone');
     $withdrawStatusLabel = function (?string $s) {
         if ($s === null || $s === '') {
-            return '—';
+            return 'â€”';
         }
         $key = 'admin.finance.withdraw_status.'.$s;
         $t = __($key);
@@ -60,20 +60,20 @@
                     @endif
                 </td>
                 <td class="px-4 py-3 align-top font-mono text-xs text-slate-700 max-w-[14rem] truncate" title="{{ filled($p->order_id) ? __('admin.finance.reference_payment_order', ['order' => $p->order_id]) : '' }}">
-                    {{ filled($b?->booking_code) ? $b->booking_code : ($p->order_id ?? '—') }}
+                    {{ filled($b?->booking_code) ? $b->booking_code : ($p->order_id ?? 'â€”') }}
                 </td>
-                <td class="px-4 py-3 align-top text-slate-800">{{ $b?->customer?->name ?? '—' }}</td>
-                <td class="px-4 py-3 align-top text-slate-800">{{ $b?->muthowifProfile?->user?->name ?? '—' }}</td>
-                <td class="px-4 py-3 align-top text-right font-medium text-slate-900">Rp {{ $fmt($p->gross_amount) }}</td>
-                <td class="px-4 py-3 align-top text-right tabular-nums text-slate-800">Rp {{ $fmt((float) $orderSplit['customer_fee']) }}</td>
-                <td class="px-4 py-3 align-top text-right tabular-nums text-slate-800">Rp {{ $fmt((float) $orderSplit['muthowif_fee']) }}</td>
-                <td class="px-4 py-3 align-top text-right tabular-nums font-semibold text-brand-800">Rp {{ $fmt((float) $orderSplit['platform_fee_total']) }}</td>
+                <td class="px-4 py-3 align-top text-slate-800">{{ $b?->customer?->name ?? 'â€”' }}</td>
+                <td class="px-4 py-3 align-top text-slate-800">{{ $b?->muthowifProfile?->user?->name ?? 'â€”' }}</td>
+                <td class="px-4 py-3 align-top text-right font-medium text-slate-900">{{ $fmt($p->gross_amount) }}</td>
+                <td class="px-4 py-3 align-top text-right tabular-nums text-slate-800">{{ $fmt((float) $orderSplit['customer_fee']) }}</td>
+                <td class="px-4 py-3 align-top text-right tabular-nums text-slate-800">{{ $fmt((float) $orderSplit['muthowif_fee']) }}</td>
+                <td class="px-4 py-3 align-top text-right tabular-nums font-semibold text-brand-800">{{ $fmt((float) $orderSplit['platform_fee_total']) }}</td>
                 <td class="px-4 py-3 align-top text-right">
                     @php
                         $refAmt = (float) ($p->referral_reward_amount ?? 0);
                         $payoutMu = round((float) $p->muthowif_net_amount - $refAmt, 2);
                     @endphp
-                    <div class="font-medium text-slate-900">Rp {{ $fmt($payoutMu) }}</div>
+                    <div class="font-medium text-slate-900">{{ $fmt($payoutMu) }}</div>
                     <div class="text-[10px] text-slate-500">{{ __('admin.finance.to_muthowif') }}</div>
                     @if ($refAmt > 0.004)
                         <div class="mt-1 text-[10px] text-slate-500 leading-snug">
@@ -108,16 +108,16 @@
                     @endif
                 </td>
                 <td class="px-4 py-3 align-top font-mono text-xs text-slate-700 max-w-[14rem] truncate" title="{{ filled($pay?->order_id) ? __('admin.finance.reference_payment_order', ['order' => $pay->order_id]) : '' }}">
-                    {{ filled($b?->booking_code) ? $b->booking_code : ($pay?->order_id ?? '—') }}
+                    {{ filled($b?->booking_code) ? $b->booking_code : ($pay?->order_id ?? 'â€”') }}
                 </td>
-                <td class="px-4 py-3 align-top text-slate-800">{{ $b?->customer?->name ?? '—' }}</td>
-                <td class="px-4 py-3 align-top text-slate-800">{{ $b?->muthowifProfile?->user?->name ?? '—' }}</td>
-                <td class="px-4 py-3 align-top text-right font-medium text-slate-900">Rp {{ $fmt((float) $r->customer_paid_amount) }}</td>
-                <td class="px-4 py-3 align-top text-right tabular-nums text-slate-800">Rp {{ $fmt($rfPlat) }}</td>
-                <td class="px-4 py-3 align-top text-right tabular-nums text-slate-800">Rp {{ $fmt($rfMu) }}</td>
-                <td class="px-4 py-3 align-top text-right tabular-nums font-semibold text-brand-800">Rp {{ $fmt($rfTotal) }}</td>
+                <td class="px-4 py-3 align-top text-slate-800">{{ $b?->customer?->name ?? 'â€”' }}</td>
+                <td class="px-4 py-3 align-top text-slate-800">{{ $b?->muthowifProfile?->user?->name ?? 'â€”' }}</td>
+                <td class="px-4 py-3 align-top text-right font-medium text-slate-900">{{ $fmt((float) $r->customer_paid_amount) }}</td>
+                <td class="px-4 py-3 align-top text-right tabular-nums text-slate-800">{{ $fmt($rfPlat) }}</td>
+                <td class="px-4 py-3 align-top text-right tabular-nums text-slate-800">{{ $fmt($rfMu) }}</td>
+                <td class="px-4 py-3 align-top text-right tabular-nums font-semibold text-brand-800">{{ $fmt($rfTotal) }}</td>
                 <td class="px-4 py-3 align-top text-right">
-                    <div class="font-medium text-slate-900">Rp {{ $fmt((float) $r->net_refund_customer) }}</div>
+                    <div class="font-medium text-slate-900">{{ $fmt((float) $r->net_refund_customer) }}</div>
                     <div class="text-[10px] text-slate-500">{{ __('admin.finance.net_to_pilgrim') }}</div>
                 </td>
             </tr>
@@ -142,15 +142,15 @@
                     @endif
                 </td>
                 <td class="px-4 py-3 align-top text-xs text-slate-700">
-                    <div class="font-mono">{{ Str::limit((string) $w->getKey(), 13, '…') }}</div>
-                    <div class="mt-0.5 text-slate-600">{{ $w->beneficiary_bank }} · {{ $w->beneficiary_account }}</div>
+                    <div class="font-mono">{{ Str::limit((string) $w->getKey(), 13, 'â€¦') }}</div>
+                    <div class="mt-0.5 text-slate-600">{{ $w->beneficiary_bank }} Â· {{ $w->beneficiary_account }}</div>
                 </td>
-                <td class="px-4 py-3 align-top text-slate-400">—</td>
-                <td class="px-4 py-3 align-top text-slate-800">{{ $mu?->user?->name ?? '—' }}</td>
-                <td class="px-4 py-3 align-top text-right font-medium text-slate-900">Rp {{ $fmt((float) $w->amount) }}</td>
-                <td class="px-4 py-3 align-top text-right text-slate-400">—</td>
-                <td class="px-4 py-3 align-top text-right text-slate-400">—</td>
-                <td class="px-4 py-3 align-top text-right text-slate-400">—</td>
+                <td class="px-4 py-3 align-top text-slate-400">â€”</td>
+                <td class="px-4 py-3 align-top text-slate-800">{{ $mu?->user?->name ?? 'â€”' }}</td>
+                <td class="px-4 py-3 align-top text-right font-medium text-slate-900">{{ $fmt((float) $w->amount) }}</td>
+                <td class="px-4 py-3 align-top text-right text-slate-400">â€”</td>
+                <td class="px-4 py-3 align-top text-right text-slate-400">â€”</td>
+                <td class="px-4 py-3 align-top text-right text-slate-400">â€”</td>
                 <td class="px-4 py-3 align-top text-right">
                     <div class="text-xs font-medium text-slate-800">{{ $withdrawStatusLabel($w->status) }}</div>
                     @if ($w->status === 'failed' && filled($w->failed_reason))
@@ -161,3 +161,4 @@
         @endif
     @endforeach
 @endforeach
+

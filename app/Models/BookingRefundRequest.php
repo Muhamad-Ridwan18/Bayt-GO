@@ -39,6 +39,10 @@ class BookingRefundRequest extends Model
         return [
             'status' => BookingChangeRequestStatus::class,
             'service_base_amount' => 'decimal:2',
+            'customer_paid_amount' => 'decimal:2',
+            'refund_fee_platform' => 'decimal:2',
+            'refund_fee_muthowif' => 'decimal:2',
+            'net_refund_customer' => 'decimal:2',
             'decided_at' => 'datetime',
             'gateway_refunded_at' => 'datetime',
             'gateway_refund_response' => 'array',

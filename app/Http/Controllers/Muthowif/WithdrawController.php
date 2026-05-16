@@ -72,7 +72,7 @@ class WithdrawController extends Controller
         abort_unless($profile instanceof MuthowifProfile, 403);
 
         $validated = $request->validate([
-            'amount' => ['required', 'numeric', 'min:1000'],
+            'amount' => ['required', 'numeric', 'min:10'],
             'beneficiary_name' => ['required', 'string', 'max:100'],
             'beneficiary_bank' => ['required', 'string', 'max:64', Rule::in(array_keys(self::BANK_OPTIONS))],
             'beneficiary_account' => ['required', 'string', 'max:64'],

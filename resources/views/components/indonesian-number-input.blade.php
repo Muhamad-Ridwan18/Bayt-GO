@@ -11,7 +11,7 @@
     $fieldId = $id ?? $name;
     $initial = old($name, $value);
     $digits = ($initial !== null && $initial !== '')
-        ? preg_replace('/\D+/', '', (string) $initial)
+        ? preg_replace('/[^0-9.]/', '', (string) $initial)
         : '';
 @endphp
 
@@ -23,7 +23,7 @@
     ]) }}
 >
     @if ($prefix)
-        <span class="inline-flex items-center px-3 bg-slate-50 text-slate-600 text-sm border-e border-slate-200 shrink-0">Rp</span>
+        <span class="inline-flex items-center px-3 bg-slate-50 text-slate-600 text-sm border-e border-slate-200 shrink-0">$</span>
     @endif
     <input
         type="text"

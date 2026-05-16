@@ -1,9 +1,9 @@
-@php
-    use App\Support\IndonesianNumber;
+﻿@php
+    use App\Support\Currency;
     use App\Support\PlatformFee;
     use Carbon\Carbon;
 
-    $fmt = fn (float|int $n) => IndonesianNumber::formatThousands((string) (int) round((float) $n));
+    $fmt = fn (float|int $n) => \App\Support\Currency::format((float) $n);
     $split = PlatformFee::split((float) $booking->resolvedAmountDue());
     $base = (float) ($split['base'] ?? 0.0);
     $customerPlatformFee = (float) ($split['customer_fee'] ?? 0.0);
@@ -65,7 +65,7 @@
                     <div class="shrink-0 rounded-2xl bg-white/10 px-5 py-4 text-right ring-1 ring-white/20 backdrop-blur-sm">
                         <p class="text-xs font-semibold uppercase tracking-wide text-brand-100">{{ __('bookings.invoice.date') }}</p>
                         <p class="mt-1 text-xl font-bold tabular-nums text-white sm:text-2xl">
-                            {{ $booking->paid_at?->timezone(config('app.timezone'))->format('d/m/Y H:i') ?? '—' }}
+                            {{ $booking->paid_at?->timezone(config('app.timezone'))->format('d/m/Y H:i') ?? 'â€”' }}
                         </p>
                     </div>
                 </div>
@@ -109,12 +109,12 @@
                 <p class="text-[0.65rem] font-semibold uppercase tracking-wide text-slate-500">{{ __('bookings.invoice.service_period') }}</p>
                 <p class="mt-2 text-lg font-semibold tabular-nums text-slate-900">
                     {{ Carbon::parse($booking->starts_on)->format('d/m/Y') }}
-                    <span class="mx-1 font-normal text-slate-400">–</span>
+                    <span class="mx-1 font-normal text-slate-400">â€“</span>
                     {{ Carbon::parse($booking->ends_on)->format('d/m/Y') }}
                 </p>
                 <p class="mt-2 text-sm text-slate-600">
                     {{ $booking->service_type?->label() ?? __('common.em_dash') }}
-                    <span class="text-slate-300">·</span>
+                    <span class="text-slate-300">Â·</span>
                     {{ __('bookings.index.pilgrims_count', ['count' => $booking->pilgrim_count, 'pilgrims_word' => __('common.pilgrims')]) }}
                 </p>
             </div>
@@ -125,15 +125,15 @@
                 <dl class="mt-4 space-y-0 overflow-hidden rounded-2xl border border-slate-200/80 bg-white shadow-sm">
                     <div class="flex items-center justify-between gap-4 border-b border-slate-100 px-4 py-3.5 sm:px-5">
                         <dt class="text-sm text-slate-600">{{ __('bookings.invoice.subtotal') }}</dt>
-                        <dd class="text-sm font-semibold tabular-nums text-slate-900">Rp {{ $fmt($base) }}</dd>
+                        <dd class="text-sm font-semibold tabular-nums text-slate-900">{{ $fmt($base) }}</dd>
                     </div>
                     <div class="flex items-center justify-between gap-4 border-b border-slate-100 px-4 py-3.5 sm:px-5">
                         <dt class="text-sm text-slate-600">{{ __('bookings.invoice.platform_fee_pct') }}</dt>
-                        <dd class="text-sm font-semibold tabular-nums text-slate-900">Rp {{ $fmt($customerPlatformFee) }}</dd>
+                        <dd class="text-sm font-semibold tabular-nums text-slate-900">{{ $fmt($customerPlatformFee) }}</dd>
                     </div>
                     <div class="flex items-center justify-between gap-4 bg-gradient-to-r from-brand-50/90 to-brand-50/40 px-4 py-4 sm:px-5">
                         <dt class="text-base font-bold text-slate-900">{{ __('bookings.invoice.total') }}</dt>
-                        <dd class="text-xl font-bold tabular-nums text-brand-700 sm:text-2xl">Rp {{ $fmt($gross) }}</dd>
+                        <dd class="text-xl font-bold tabular-nums text-brand-700 sm:text-2xl">{{ $fmt($gross) }}</dd>
                     </div>
                 </dl>
 
@@ -157,3 +157,4 @@
     </div>
 </body>
 </html>
+

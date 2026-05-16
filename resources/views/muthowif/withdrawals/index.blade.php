@@ -23,7 +23,7 @@
                     <div>
                         <p class="text-sm text-slate-500">Saldo dompet muthowif</p>
                         <p class="mt-1 text-2xl font-bold text-slate-900 tabular-nums">
-                            Rp {{ \App\Support\IndonesianNumber::formatThousands((string) (int) round($balance)) }}
+                            {{ \App\Support\Currency::format($balance) }}
                         </p>
                         <p class="mt-2 text-sm text-slate-600 leading-relaxed">
                             Withdraw akan diproses setelah admin menyetujui dan menyelesaikan transfer manual ke rekening Anda.
@@ -58,7 +58,7 @@
                                     $isNeutralAmount = abs($signed) < 0.005;
                                     $amountClass = $isNeutralAmount ? 'text-slate-600' : ($signed >= 0 ? 'text-emerald-700' : 'text-rose-700');
                                     $prefix = $signed >= 0 ? '+' : '−';
-                                    $abs = \App\Support\IndonesianNumber::formatThousands((string) (int) round(abs($signed)));
+                                    $abs = \App\Support\Currency::format(abs($signed));
                                     $typeLabel = match ($entry['kind']) {
                                         'booking_credit' => __('dashboard_muthowif.wallet_ledger_kind_booking_credit'),
                                         'referral_reward' => __('dashboard_muthowif.wallet_ledger_kind_referral_reward'),
@@ -85,9 +85,9 @@
                                     </td>
                                     <td class="px-4 py-3 whitespace-nowrap font-semibold tabular-nums {{ $amountClass }}">
                                         @if ($isNeutralAmount)
-                                            Rp {{ \App\Support\IndonesianNumber::formatThousands('0') }}
+                                            {{ \App\Support\Currency::format(0) }}
                                         @else
-                                            {{ $prefix }} Rp {{ $abs }}
+                                            {{ $prefix }} {{ $abs }}
                                         @endif
                                     </td>
                                     <td class="px-4 py-3 text-slate-800">
@@ -143,13 +143,13 @@
                     @csrf
 
                     <div>
-                        <x-input-label for="amount" value="Nominal (Rp)" />
+                        <x-input-label for="amount" value="Nominal (USD)" />
                         <x-indonesian-number-input
                             name="amount"
                             id="amount"
                             required
                             :value="old('amount')"
-                            placeholder="Contoh: 1.000.000"
+                            placeholder="Contoh: 150.00"
                             :prefix="true"
                         />
                         @error('amount')
@@ -230,7 +230,7 @@
                                         {{ $w->requested_at?->format('d/m/Y H:i') ?? '—' }}
                                     </td>
                                     <td class="px-4 py-3 font-medium text-slate-900 whitespace-nowrap">
-                                        Rp {{ \App\Support\IndonesianNumber::formatThousands((string) (int) round((float) $w->amount)) }}
+                                        {{ \App\Support\Currency::format((float) $w->amount) }}
                                     </td>
                                     <td class="px-4 py-3 text-slate-800 whitespace-nowrap">
                                         {{ $w->beneficiary_bank }} • {{ $w->beneficiary_account }}

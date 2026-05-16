@@ -71,7 +71,11 @@
                             $transportLine = (float) ($booking->transport_price_snapshot ?? ($booking->with_transport && $service ? (float) $service->transport_price_flat : 0.0));
 
                             $totalGross = (float) ($serviceSubtotal + $addonsSum + $sameHotelLine + $transportLine);
-                            $priceSplit = PlatformFee::split($totalGross);
+                            
+                            // Konversi Gross ke IDR untuk perhitungan Fee & Pendapatan Muthowif
+                            $idrTotalGross = app(\App\Services\CurrencyService::class)->convertUsdToIdr($totalGross);
+                            $priceSplit = PlatformFee::split($idrTotalGross);
+                            
                             $muthowifNetIdr = (float) ($priceSplit['muthowif_net'] ?? 0.0);
                             $muthowifFeeIdr = (float) ($priceSplit['muthowif_fee'] ?? 0.0);
                             $customerGrossIdr = (float) ($priceSplit['customer_gross'] ?? 0.0);
@@ -130,35 +134,35 @@
                                                 <dl class="divide-y divide-slate-100 text-[11px] sm:text-xs">
                                                     <div class="flex justify-between gap-3 px-3 py-1.5">
                                                         <dt class="text-slate-600">{{ __('muthowif.booking_show.subtotal_service') }}</dt>
-                                                        <dd class="font-medium tabular-nums text-slate-900">Rp {{ IndonesianNumber::formatThousands((string) (int) round($serviceSubtotal)) }}</dd>
+                                                        <dd class="font-medium tabular-nums text-slate-900">{{ \App\Support\Currency::format($serviceSubtotal) }}</dd>
                                                     </div>
                                                     @if ($addonLines->isNotEmpty())
                                                         @foreach ($addonLines as $ad)
                                                             <div class="flex justify-between gap-3 px-3 py-1.5">
                                                                 <dt class="text-slate-500">+ {{ $ad->name }}</dt>
-                                                                <dd class="font-medium tabular-nums text-slate-800">Rp {{ IndonesianNumber::formatThousands((string) (int) round((float) $ad->price)) }}</dd>
+                                                                <dd class="font-medium tabular-nums text-slate-800">{{ \App\Support\Currency::format((float) $ad->price) }}</dd>
                                                             </div>
                                                         @endforeach
                                                     @endif
                                                     @if ($sameHotelLine > 0)
                                                         <div class="flex justify-between gap-3 px-3 py-1.5">
                                                             <dt class="text-slate-500">{{ __('bookings.show.same_hotel_label', ['nights' => $nights, 'days' => __('common.days')]) }}</dt>
-                                                            <dd class="font-medium tabular-nums text-slate-800">Rp {{ IndonesianNumber::formatThousands((string) (int) round($sameHotelLine)) }}</dd>
+                                                            <dd class="font-medium tabular-nums text-slate-800">{{ \App\Support\Currency::format($sameHotelLine) }}</dd>
                                                         </div>
                                                     @endif
                                                     @if ($transportLine > 0)
                                                         <div class="flex justify-between gap-3 px-3 py-1.5">
                                                             <dt class="text-slate-500">{{ __('bookings.show.transport_label') }}</dt>
-                                                            <dd class="font-medium tabular-nums text-slate-800">Rp {{ IndonesianNumber::formatThousands((string) (int) round($transportLine)) }}</dd>
+                                                            <dd class="font-medium tabular-nums text-slate-800">{{ \App\Support\Currency::format($transportLine) }}</dd>
                                                         </div>
                                                     @endif
                                                     <div class="flex justify-between gap-3 px-3 py-1.5">
                                                         <dt class="text-red-600/80">{{ __('muthowif.booking_show.platform_fee_muthowif') }}</dt>
-                                                        <dd class="font-medium tabular-nums text-red-700/90">- Rp {{ IndonesianNumber::formatThousands((string) (int) round($muthowifFeeIdr)) }}</dd>
+                                                        <dd class="font-medium tabular-nums text-red-700/90">- {{ \App\Support\Currency::format($muthowifFeeIdr, 'IDR') }}</dd>
                                                     </div>
                                                     <div class="flex justify-between gap-3 bg-gradient-to-r from-brand-50/90 to-brand-50/40 px-3 py-2">
                                                         <dt class="font-bold text-slate-900">{{ __('muthowif.booking_show.net_earning') }}</dt>
-                                                        <dd class="font-bold tabular-nums text-brand-700 text-sm">Rp {{ IndonesianNumber::formatThousands((string) (int) round($muthowifNetIdr)) }}</dd>
+                                                        <dd class="font-bold tabular-nums text-brand-700 text-sm">{{ \App\Support\Currency::format($muthowifNetIdr, 'IDR') }}</dd>
                                                     </div>
                                                 </dl>
                                             </div>

@@ -1,7 +1,7 @@
-@php
-    use App\Support\IndonesianNumber;
+﻿@php
+    use App\Support\Currency;
 
-    $fmt = fn (float|int $n) => IndonesianNumber::formatThousands((string) (int) round((float) $n));
+    $fmt = fn (float|int $n) => \App\Support\Currency::format((float) $n);
 @endphp
 
 <x-app-layout>
@@ -20,11 +20,11 @@
             <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <div class="rounded-2xl border border-brand-200 bg-gradient-to-br from-brand-50 to-white p-6 shadow-sm">
                     <p class="text-xs font-semibold uppercase tracking-wide text-brand-800">{{ __('admin.finance.platform_total') }}</p>
-                    <p class="mt-2 text-2xl font-bold text-brand-900">Rp {{ $fmt($totalPlatformFees) }}</p>
+                    <p class="mt-2 text-2xl font-bold text-brand-900">{{ $fmt($totalPlatformFees) }}</p>
                 </div>
                 <div class="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm">
                     <p class="text-xs font-semibold uppercase tracking-wide text-slate-500">{{ __('admin.finance.gross_volume') }}</p>
-                    <p class="mt-2 text-2xl font-bold text-slate-900">Rp {{ $fmt($totalVolume) }}</p>
+                    <p class="mt-2 text-2xl font-bold text-slate-900">{{ $fmt($totalVolume) }}</p>
                 </div>
             </div>
 
@@ -51,3 +51,4 @@
         </div>
     </div>
 </x-app-layout>
+
