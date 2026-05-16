@@ -81,7 +81,7 @@
                     </div>
                 </div>
                 <div class="flex flex-col gap-3 w-full sm:w-auto shrink-0 mt-4 sm:mt-0">
-                    <a href="{{ route('messages.show', $b->muthowifProfile->user) }}" class="inline-flex w-full sm:w-[130px] items-center justify-center gap-2 rounded-xl border border-slate-200 bg-white px-4 py-2.5 text-xs font-semibold text-slate-700 shadow-sm transition hover:bg-slate-50">
+                    <a href="{{ route('bookings.chat', $b) }}" class="inline-flex w-full sm:w-[130px] items-center justify-center gap-2 rounded-xl border border-slate-200 bg-white px-4 py-2.5 text-xs font-semibold text-slate-700 shadow-sm transition hover:bg-slate-50">
                         <svg class="h-4 w-4 text-emerald-600" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z" /></svg>
                         Chat
                     </a>
