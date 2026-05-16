@@ -35,10 +35,8 @@
     $transportLine = (float) ($b->transport_price_snapshot ?? ($b->with_transport && $service ? (float) $service->transport_price_flat : 0.0));
 
     $totalGross = (float) ($serviceSubtotal + $addonsSum + $sameHotelLine + $transportLine);
-    
-    // Konversi Gross ke IDR untuk perhitungan Fee & Pendapatan Muthowif
-    $idrTotalGross = app(\App\Services\CurrencyService::class)->convertUsdToIdr($totalGross);
-    $split = PlatformFee::split($idrTotalGross);
+    // Hitung Fee & Pendapatan Muthowif dalam USD murni
+    $split = PlatformFee::split($totalGross);
     
     $muthowifNet = (float) ($split['muthowif_net'] ?? 0.0);
     $muthowifFee = (float) ($split['muthowif_fee'] ?? 0.0);
@@ -190,17 +188,17 @@
                                 @endif
                                 <div class="flex justify-between gap-4 border-t border-slate-200/60 pt-2">
                                     <dt class="text-red-600/80">{{ __('muthowif.booking_show.platform_fee_muthowif') }}</dt>
-                                    <dd class="font-medium tabular-nums text-red-700/90">- {{ \App\Support\Currency::format($muthowifFee, 'IDR') }}</dd>
+                                    <dd class="font-medium tabular-nums text-red-700/90">- {{ \App\Support\Currency::format($muthowifFee) }}</dd>
                                 </div>
                                 @if ($referralRewardFromPay > 0)
                                     <div class="flex justify-between gap-4 border-t border-slate-200/60 pt-2">
                                         <dt class="text-violet-700/90">{{ __('muthowif.booking_show.peer_referral_deduction') }}</dt>
-                                        <dd class="font-medium tabular-nums text-violet-800">- {{ \App\Support\Currency::format($referralRewardFromPay, 'IDR') }}</dd>
+                                        <dd class="font-medium tabular-nums text-violet-800">- {{ \App\Support\Currency::format($referralRewardFromPay) }}</dd>
                                     </div>
                                 @endif
                                 <div class="flex justify-between gap-4 border-t border-slate-200 pt-2.5 text-sm">
                                     <dt class="font-bold text-slate-900">{{ __('muthowif.booking_show.net_earning') }}</dt>
-                                    <dd class="font-bold tabular-nums text-brand-700">{{ \App\Support\Currency::format($muthowifNetAfterReferral, 'IDR') }}</dd>
+                                    <dd class="font-bold tabular-nums text-brand-700">{{ \App\Support\Currency::format($muthowifNetAfterReferral) }}</dd>
                                 </div>
                             </dl>
                             <p class="text-[10px] leading-relaxed text-slate-500 italic">

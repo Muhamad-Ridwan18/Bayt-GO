@@ -213,11 +213,11 @@
                             @endif
                             <div class="flex justify-between gap-4 border-t border-slate-200/80 pt-3">
                                 <dt class="text-slate-600">{{ __('bookings.show.platform_fee') }}</dt>
-                                <dd class="font-medium tabular-nums text-slate-900">{{ \App\Support\Currency::format($customerPlatformFee, 'IDR') }}</dd>
+                                <dd class="font-medium tabular-nums text-slate-900">{{ \App\Support\Currency::format($customerPlatformFee) }}</dd>
                             </div>
                             <div class="flex justify-between gap-4 border-t border-slate-200 pt-3 text-base">
                                 <dt class="font-semibold text-slate-900">{{ __('bookings.show.total_customer') }}</dt>
-                                <dd class="font-bold tabular-nums text-brand-700">{{ \App\Support\Currency::format($customerTotal, 'IDR') }}</dd>
+                                <dd class="font-bold tabular-nums text-brand-700">{{ \App\Support\Currency::format($customerTotal) }}</dd>
                             </div>
                         </dl>
 

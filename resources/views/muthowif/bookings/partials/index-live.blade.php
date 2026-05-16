@@ -72,9 +72,8 @@
 
                             $totalGross = (float) ($serviceSubtotal + $addonsSum + $sameHotelLine + $transportLine);
                             
-                            // Konversi Gross ke IDR untuk perhitungan Fee & Pendapatan Muthowif
-                            $idrTotalGross = app(\App\Services\CurrencyService::class)->convertUsdToIdr($totalGross);
-                            $priceSplit = PlatformFee::split($idrTotalGross);
+                            // Hitung Fee & Pendapatan Muthowif dalam USD murni
+                            $priceSplit = PlatformFee::split($totalGross);
                             
                             $muthowifNetIdr = (float) ($priceSplit['muthowif_net'] ?? 0.0);
                             $muthowifFeeIdr = (float) ($priceSplit['muthowif_fee'] ?? 0.0);
@@ -158,11 +157,11 @@
                                                     @endif
                                                     <div class="flex justify-between gap-3 px-3 py-1.5">
                                                         <dt class="text-red-600/80">{{ __('muthowif.booking_show.platform_fee_muthowif') }}</dt>
-                                                        <dd class="font-medium tabular-nums text-red-700/90">- {{ \App\Support\Currency::format($muthowifFeeIdr, 'IDR') }}</dd>
+                                                        <dd class="font-medium tabular-nums text-red-700/90">- {{ \App\Support\Currency::format($muthowifFeeIdr) }}</dd>
                                                     </div>
                                                     <div class="flex justify-between gap-3 bg-gradient-to-r from-brand-50/90 to-brand-50/40 px-3 py-2">
                                                         <dt class="font-bold text-slate-900">{{ __('muthowif.booking_show.net_earning') }}</dt>
-                                                        <dd class="font-bold tabular-nums text-brand-700 text-sm">{{ \App\Support\Currency::format($muthowifNetIdr, 'IDR') }}</dd>
+                                                        <dd class="font-bold tabular-nums text-brand-700 text-sm">{{ \App\Support\Currency::format($muthowifNetIdr) }}</dd>
                                                     </div>
                                                 </dl>
                                             </div>
