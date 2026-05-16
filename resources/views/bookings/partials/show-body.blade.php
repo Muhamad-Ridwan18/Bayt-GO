@@ -31,7 +31,8 @@
     $sameHotelPrice = (float) ($b->same_hotel_price_snapshot ?? ($service ? $service->same_hotel_price_per_day : 0.0));
     $sameHotelLine = $b->with_same_hotel ? ($nights * $sameHotelPrice) : 0.0;
 
-    $transportLine = (float) ($b->transport_price_snapshot ?? ($b->with_transport && $service ? (float) $service->transport_price_flat : 0.0));
+    $transportPrice = (float) ($b->transport_price_snapshot ?? ($service ? $service->transport_price_flat : 0.0));
+    $transportLine = $b->with_transport ? $transportPrice : 0.0;
 
     $baseTotal = (float) ($baseSubtotal + $addonsSum + $sameHotelLine + $transportLine);
     $review = $b->review;
