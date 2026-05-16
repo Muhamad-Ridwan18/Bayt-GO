@@ -35,7 +35,7 @@ class CurrencyService
                 return (float) $fallback;
             }
 
-            return (float) config('app.currency.fallback_usd_rate', 16000.0);
+            return (float) config('app.currency.fallback_usd_rate', 17626.0);
         });
     }
 
