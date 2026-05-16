@@ -1,4 +1,4 @@
-﻿<div class="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
+<div class="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
     <h3 class="font-semibold text-slate-900">{{ __('admin.withdrawals.summary') }}</h3>
     <div class="mt-3 grid grid-cols-1 sm:grid-cols-3 gap-3">
         <div class="rounded-xl bg-slate-50 border border-slate-200 p-4">
@@ -51,10 +51,13 @@
                             {{ $user?->name ?? 'â€”' }}
                         </td>
                         <td class="px-4 py-3 font-medium text-slate-900 whitespace-nowrap">
-                            {{ \App\Support\Currency::format((float) $w->amount) }}
+                            <div>{{ \App\Support\Currency::format((float) $w->amount) }}</div>
+                            <div class="text-xs text-slate-500 font-normal">
+                                Rp {{ \App\Support\IndonesianNumber::formatThousands((string) (int) round(app(\App\Services\CurrencyService::class)->convertUsdToIdr((float) $w->amount))) }}
+                            </div>
                         </td>
                         <td class="px-4 py-3 text-slate-800 whitespace-nowrap">
-                            {{ $w->beneficiary_bank }} â€¢ {{ $w->beneficiary_account }}
+                            {{ $w->beneficiary_bank }} - {{ $w->beneficiary_account }}
                         </td>
                         <td class="px-4 py-3 whitespace-nowrap">
                             <span class="inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-semibold ring-1 {{ $tagClass }}">
@@ -86,7 +89,7 @@
                                         data-proof-button
                                         data-action="{{ route('admin.withdrawals.mark_transferred', $w) }}"
                                         data-name="{{ $user?->name ?? 'Muthowif' }}"
-                                        data-amount="{{ \App\Support\Currency::format((float) $w->amount) }}"
+                                        data-amount="{{ \App\Support\Currency::format((float) $w->amount) }} (Rp {{ \App\Support\IndonesianNumber::formatThousands((string) (int) round(app(\App\Services\CurrencyService::class)->convertUsdToIdr((float) $w->amount))) }})"
                                     >
                                         {{ __('admin.withdrawals.mark_transferred') }}
                                     </button>
@@ -98,7 +101,7 @@
                                     </form>
                                 </div>
                             @else
-                                <span class="text-xs text-slate-500">â€”</span>
+                                <span class="text-xs text-slate-500">-</span>
                             @endif
                         </td>
                     </tr>

@@ -609,7 +609,8 @@ class MuthowifBookingWhatsAppNotifier
         $proofUrl = url(Storage::disk('public')->url($refund->transfer_proof_path));
         $ext = strtolower((string) pathinfo($refund->transfer_proof_path, PATHINFO_EXTENSION));
         $filename = $ext === 'pdf' ? basename($refund->transfer_proof_path) : null;
-        $amountFmt = IndonesianNumber::formatThousands((string) (int) round((float) $refund->net_refund_customer));
+        $idrAmount = app(\App\Services\CurrencyService::class)->convertUsdToIdr((float) $refund->net_refund_customer);
+        $amountFmt = IndonesianNumber::formatThousands((string) (int) round($idrAmount));
         $appName = config('app.name', 'BaytGo');
         $detailUrl = route('bookings.show', $booking);
 
@@ -672,7 +673,8 @@ class MuthowifBookingWhatsAppNotifier
         $proofUrl = url(Storage::disk('public')->url($withdrawal->transfer_proof_path));
         $ext = strtolower((string) pathinfo($withdrawal->transfer_proof_path, PATHINFO_EXTENSION));
         $filename = $ext === 'pdf' ? basename($withdrawal->transfer_proof_path) : null;
-        $amountFmt = IndonesianNumber::formatThousands((string) (int) round((float) $withdrawal->amount));
+        $idrAmount = app(\App\Services\CurrencyService::class)->convertUsdToIdr((float) $withdrawal->amount);
+        $amountFmt = IndonesianNumber::formatThousands((string) (int) round($idrAmount));
         $appName = config('app.name', 'BaytGo');
         $panelUrl = route('muthowif.withdrawals.index');
 

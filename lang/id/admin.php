@@ -123,6 +123,7 @@ return [
         'mark_complete' => 'Tandai transfer selesai',
     ],
     'withdrawals' => [
+        'new_request_toast' => 'Ada request withdraw baru!',
         'summary' => 'Ringkasan',
         'pending_count' => 'Jumlah pending',
         'pending_amount' => 'Nominal pending',
