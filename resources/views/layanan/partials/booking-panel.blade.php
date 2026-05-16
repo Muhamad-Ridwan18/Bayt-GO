@@ -336,7 +336,7 @@
 
                         <fieldset class="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm ring-1 ring-slate-100/80 sm:p-6">
                             <legend class="px-1 text-base font-bold text-slate-900">{{ __('marketplace.panel.docs_heading') }}</legend>
-                            <p class="mt-2 max-w-4xl px-1 text-xs leading-relaxed text-slate-600 sm:text-sm">{{ __('marketplace.panel.docs_intro') }}</p>
+                            <p class="mt-2 max-w-4xl px-1 text-xs leading-relaxed text-slate-600 sm:text-sm">{!! __('marketplace.panel.docs_intro') !!}</p>
 
                             <div class="mt-5 grid grid-cols-1 gap-x-6 gap-y-5 sm:grid-cols-2">
                                 <div class="sm:col-span-1">

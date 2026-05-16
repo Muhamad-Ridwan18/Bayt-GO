@@ -94,7 +94,7 @@ return [
         'no_private_addons' => 'No private add-ons available yet.',
         'consent_html' => 'By submitting, you agree the muthowif will review your request (status <strong>Pending</strong>).',
         'docs_heading' => 'Travel documents',
-        'docs_intro' => 'Upload round-trip flight tickets and passport (all required). Itinerary is required for Group; optional for Private. Visa is optional. Accepted: PDF or image (JPG/PNG), max 10 MB per file.',
+        'docs_intro' => 'Upload round-trip flight tickets and passport (all required). Itinerary is required for Group; optional for Private. Visa is optional. Format: PDF or image (JPG/PNG), max. 10 MB per file <span class="text-red-600">(*required)</span>',
         'doc_ticket_outbound' => 'Flight ticket (outbound)',
         'doc_ticket_return' => 'Flight ticket (return)',
         'doc_ticket_outbound_help' => 'Required — e-ticket or booking confirmation for your outbound flight.',
