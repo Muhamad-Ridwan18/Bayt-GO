@@ -27,7 +27,6 @@
             <x-input-label for="email" :value="__('profile.fields.email')" />
             <x-text-input id="email" name="email" type="email" class="mt-1 block w-full" :value="old('email', $user->email)" required autocomplete="username" />
             <x-input-error class="mt-2" :messages="$errors->get('email')" />
-
             @if ($user instanceof \Illuminate\Contracts\Auth\MustVerifyEmail && ! $user->hasVerifiedEmail())
                 <div>
                     <p class="mt-2 text-sm text-slate-800">
@@ -37,9 +36,14 @@
                             {{ __('profile.verification.resend') }}
                         </button>
                     </p>
-
                 </div>
             @endif
+        </div>
+        
+        <div>
+            <x-input-label for="phone" :value="__('profile.fields.whatsapp')" />
+            <x-text-input id="phone" name="phone" type="text" class="mt-1 block w-full" :value="old('phone', $user->phone)" autocomplete="tel" />
+            <x-input-error class="mt-2" :messages="$errors->get('phone')" />
         </div>
 
         <div class="flex items-center gap-4">

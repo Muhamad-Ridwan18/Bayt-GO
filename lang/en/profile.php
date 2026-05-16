@@ -18,6 +18,7 @@ return [
     'fields' => [
         'name' => 'Name',
         'email' => 'Email',
+        'whatsapp' => 'WhatsApp Number',
     ],
     'verification' => [
         'unverified' => 'Your email address is unverified.',

@@ -18,6 +18,7 @@ return [
     'fields' => [
         'name' => 'Nama',
         'email' => 'Email',
+        'whatsapp' => 'Nomor WhatsApp',
     ],
     'verification' => [
         'unverified' => 'Email Anda belum diverifikasi.',
