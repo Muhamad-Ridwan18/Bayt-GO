@@ -37,11 +37,10 @@
     $review = $b->review;
     $dateLocale = app()->getLocale() === 'id' ? 'id-ID' : 'en-GB';
 
-    // Konversi Base Total ke IDR untuk perhitungan Fee Platform & Total Tagihan
-    $idrBaseTotal = app(\App\Services\CurrencyService::class)->convertUsdToIdr($baseTotal);
-    $split = \App\Support\PlatformFee::split($idrBaseTotal);
+    // Hitung Fee Platform & Total Tagihan (murni dalam USD)
+    $split = \App\Support\PlatformFee::split($baseTotal);
     
-    $customerTotal = (float) ($split['customer_gross'] ?? $idrBaseTotal);
+    $customerTotal = (float) ($split['customer_gross'] ?? $baseTotal);
     $customerPlatformFee = (float) ($split['customer_fee'] ?? 0.0);
     $muthowifNet = (float) ($split['muthowif_net'] ?? 0.0);
 
