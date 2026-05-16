@@ -224,9 +224,9 @@ class BookingController extends Controller
             ]);
         }
 
-        $baseInt = (int) round($booking->resolvedAmountDue());
-        if ($baseInt < 1) {
-            PaymentFlowLog::warning('web.payment.invalid_total', ['booking_id' => $booking->getKey(), 'base_int' => $baseInt]);
+        $baseAmount = (float) $booking->resolvedAmountDue();
+        if ($baseAmount < 0.01) {
+            PaymentFlowLog::warning('web.payment.invalid_total', ['booking_id' => $booking->getKey(), 'base_amount' => $baseAmount]);
 
             return redirect()
                 ->route('bookings.show', $booking)
@@ -242,7 +242,7 @@ class BookingController extends Controller
                 ->with('error', __('bookings.flash.method_not_supported'));
         }
 
-        $split = PlatformFee::split((float) $baseInt);
+        $split = PlatformFee::split($baseAmount);
 
         if ($selectedMethod === '') {
             $payment = $booking->bookingPayments()
@@ -262,7 +262,7 @@ class BookingController extends Controller
                     'muthowif_booking_id' => $booking->getKey(),
                     'booking_code' => $booking->booking_code,
                     'order_id' => $orderId,
-                    'gross_amount' => (int) round($split['customer_gross']),
+                    'gross_amount' => $split['customer_gross'],
                     'platform_fee_amount' => $split['platform_fee_total'],
                     'muthowif_net_amount' => $split['muthowif_net'],
                     'referrer_muthowif_profile_id' => $referral['referrer_muthowif_profile_id'],
@@ -294,11 +294,10 @@ class BookingController extends Controller
         }
 
         if (BookingSnapPaymentCatalog::driver() === 'moota') {
-            $expectedGross = (int) round($split['customer_gross']);
+            $expectedGross = $split['customer_gross'];
             $existingPending = $booking->bookingPayments()
                 ->where('status', 'pending')
                 ->where('payment_type', $selectedMethod)
-                ->where('gross_amount', $expectedGross)
                 ->whereNotNull('gateway_transaction_id')
                 ->latest('id')
                 ->first();
@@ -348,7 +347,7 @@ class BookingController extends Controller
             'booking_code' => $booking->booking_code,
             'order_id' => $orderId,
             // Nominal yang dibayar customer (base + fee customer).
-            'gross_amount' => (int) round($split['customer_gross']),
+            'gross_amount' => $split['customer_gross'],
             // Total biaya platform = fee customer + fee muthowif (masing-masing 7,5% dari base).
             'platform_fee_amount' => $split['platform_fee_total'],
             // Yang masuk ke saldo muthowif (base - fee muthowif).
