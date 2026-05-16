@@ -249,10 +249,14 @@ class MuthowifDirectoryController extends Controller
         ];
     }
 
-    public function photo(MuthowifProfile $publicProfile): Response
+    public function photo(MuthowifProfile $publicProfile)
     {
+        if (str_starts_with((string) $publicProfile->photo_path, 'http')) {
+            return redirect($publicProfile->photo_path);
+        }
+
         $disk = Storage::disk('local');
-        if (! $disk->exists($publicProfile->photo_path)) {
+        if (! $disk->exists((string) $publicProfile->photo_path)) {
             abort(404);
         }
 

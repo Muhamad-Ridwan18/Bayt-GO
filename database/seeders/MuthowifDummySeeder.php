@@ -23,15 +23,20 @@ class MuthowifDummySeeder extends Seeder
 
         $parentProfileId = null;
 
+        $names = [
+            'Muhammad', 'Tariq', 'Khalid', 'Bilal', 'Zaid', 'Sulaiman', 'Harun', 'Abdurrahman', 'Abdullah', 'Faisal',
+            'Hamzah', 'Saad', 'Zubair', 'Talhah', 'Abu Ubaidah', 'Anas', 'Jabir', 'Zain', 'Imran', 'Irfan'
+        ];
+
         for ($i = 1; $i <= 20; $i++) {
-            $suffix = str_pad((string) $i, 2, '0', STR_PAD_LEFT);
-            $email = "dummy.muthowif.{$suffix}@baytgo.test";
+            $name = $names[$i - 1] . ' ' . $faker->lastName();
+            $email = strtolower(str_replace(' ', '.', $name)) . '@baytgo.test';
             $phone = sprintf('0899%08d', 1_000_000 + $i);
 
             $user = User::query()->updateOrCreate(
                 ['email' => $email],
                 [
-                    'name' => $faker->name(),
+                    'name' => $name,
                     'password' => Hash::make('password'),
                     'remember_token' => Str::random(10),
                     'role' => UserRole::Muthowif,
@@ -53,12 +58,12 @@ class MuthowifDummySeeder extends Seeder
                     'address' => $faker->address(),
                     'nik' => sprintf('32010101%08d', $i),
                     'birth_date' => $faker->dateTimeBetween('-55 years', '-25 years')->format('Y-m-d'),
-                    'passport_number' => sprintf('A%s%06d', $suffix, 100000 + $i),
+                    'passport_number' => sprintf('A%08d', 100000 + $i),
                     'languages' => ['Indonesia', 'Arab'],
-                    'educations' => ['Formal: '.$faker->randomElement(['STAI', 'UIN', 'Pesantren'])],
+                    'educations' => ['Formal: '.$faker->randomElement(['STAI', 'UIN', 'Pesantren', 'Universitas Islam Madinah', 'Al-Azhar Kairo'])],
                     'work_experiences' => ['Pembimbing umrah & haji (dummy seed)'],
                     'reference_text' => 'Akun dummy untuk pengujian — '.$email,
-                    'photo_path' => 'seed/dummy/muthowif-photo.png',
+                    'photo_path' => 'https://ui-avatars.com/api/?name=' . urlencode($name) . '&color=FFFFFF&background=0F172A',
                     'ktp_image_path' => 'seed/dummy/muthowif-ktp.png',
                     'verification_status' => MuthowifVerificationStatus::Approved,
                     'verified_at' => now(),
@@ -79,16 +84,35 @@ class MuthowifDummySeeder extends Seeder
 
             // Tanpa baris muthowif_services, profil tidak muncul di dropdown rekomendasi / marketplace card harga.
             [$groupService, $privateService] = MuthowifService::ensurePairForProfile($profile);
+            
             $groupService->update([
-                'daily_price' => 25,
+                'daily_price' => $faker->randomElement([20, 25, 30]),
                 'min_pilgrims' => 1,
                 'max_pilgrims' => 50,
             ]);
+            
             $privateService->update([
-                'daily_price' => 55,
+                'daily_price' => $faker->randomElement([50, 55, 60]),
                 'min_pilgrims' => 1,
                 'max_pilgrims' => 50,
             ]);
+
+            // Add addons
+            $privateService->addOns()->delete();
+            $addons = $faker->randomElements([
+                ['name' => 'Tur Sejarah Kota Madinah', 'price' => 15],
+                ['name' => 'Kajian Eksklusif', 'price' => 20],
+                ['name' => 'Pendampingan Kursi Roda', 'price' => 30],
+                ['name' => 'Ziarah Tambahan (Taif)', 'price' => 50],
+                ['name' => 'Penerjemah Lokal', 'price' => 40],
+            ], $faker->numberBetween(1, 3));
+
+            foreach ($addons as $addon) {
+                $privateService->addOns()->create([
+                    'name' => $addon['name'],
+                    'price' => $addon['price'],
+                ]);
+            }
         }
     }
 }

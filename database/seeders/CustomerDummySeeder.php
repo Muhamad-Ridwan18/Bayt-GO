@@ -17,15 +17,20 @@ class CustomerDummySeeder extends Seeder
     {
         $faker = fake('id_ID');
 
+        $names = [
+            'Ahmad', 'Ali', 'Umar', 'Usman', 'Hasan', 'Husain', 'Yusuf', 'Ibrahim', 'Ismail', 'Musa',
+            'Khadijah', 'Aisyah', 'Fatimah', 'Zainab', 'Ruqayyah', 'Ummu Kultsum', 'Hafshah', 'Asma', 'Maryam', 'Aminah',
+        ];
+
         for ($i = 1; $i <= 10; $i++) {
-            $suffix = str_pad((string) $i, 2, '0', STR_PAD_LEFT);
-            $email = "dummy.customer.{$suffix}@baytgo.test";
+            $name = $faker->randomElement($names) . ' ' . $faker->lastName();
+            $email = strtolower(str_replace(' ', '.', $name)) . '@baytgo.test';
             $phone = sprintf('0812%08d', 1_000_000 + $i);
 
             User::query()->updateOrCreate(
                 ['email' => $email],
                 [
-                    'name' => 'Jamaah ' . $faker->firstName(),
+                    'name' => $name,
                     'password' => Hash::make('password'),
                     'remember_token' => Str::random(10),
                     'role' => UserRole::Customer,
