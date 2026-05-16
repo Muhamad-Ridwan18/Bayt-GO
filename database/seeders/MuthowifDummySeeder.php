@@ -28,9 +28,9 @@ class MuthowifDummySeeder extends Seeder
             'Hamzah', 'Saad', 'Zubair', 'Talhah', 'Abu Ubaidah', 'Anas', 'Jabir', 'Zain', 'Imran', 'Irfan'
         ];
 
-        for ($i = 1; $i <= 20; $i++) {
+        for ($i = 1; $i <= 10; $i++) {
             $name = $names[$i - 1] . ' ' . $faker->lastName();
-            $email = strtolower(str_replace(' ', '.', $name)) . '@baytgo.test';
+            $email = strtolower(str_replace(' ', '.', $name)) . '@gmail.com';
             $phone = sprintf('0899%08d', 1_000_000 + $i);
 
             $user = User::query()->updateOrCreate(

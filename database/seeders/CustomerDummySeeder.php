@@ -24,7 +24,7 @@ class CustomerDummySeeder extends Seeder
 
         for ($i = 1; $i <= 10; $i++) {
             $name = $faker->randomElement($names) . ' ' . $faker->lastName();
-            $email = strtolower(str_replace(' ', '.', $name)) . '@baytgo.test';
+            $email = strtolower(str_replace(' ', '.', $name)) . '@gmail.com';
             $phone = sprintf('0812%08d', 1_000_000 + $i);
 
             User::query()->updateOrCreate(
