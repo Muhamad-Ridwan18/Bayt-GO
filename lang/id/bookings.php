@@ -23,6 +23,7 @@ return [
         'start_past' => 'Tanggal mulai tidak boleh sebelum hari ini.',
         'range_max' => 'Rentang maksimal :days hari.',
         'slot_unavailable' => 'Slot ini tidak lagi tersedia (libur atau sudah terisi). Perbarui pencarian Anda.',
+        'jadwal_tidak_tersedia' => 'Jadwal yang dipilih tidak lagi tersedia untuk muthowif ini.',
         'service_unavailable' => 'Layanan yang dipilih tidak tersedia untuk muthowif ini.',
         'pilgrim_count_between' => 'Jumlah jemaah harus antara :min dan :max untuk layanan ini.',
         'addon_invalid' => 'Satu atau lebih add-on tidak valid untuk layanan ini.',

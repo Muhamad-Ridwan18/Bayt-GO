@@ -17,6 +17,7 @@ return [
         'moota_bank_account_required' => 'Choose which Moota-connected account to use before paying.',
         'moota_bank_account_invalid' => 'Could not resolve a valid Moota bank account for this payment.',
         'moota_invalid_account_choice' => 'That Moota bank option is invalid. Refresh and choose again.',
+        'booking_already_exists' => 'You already have a pending booking for this muthowif on the same dates.',
     ],
     'validation' => [
         'start_past' => 'Start date cannot be before today.',
@@ -31,6 +32,8 @@ return [
         'new_start_past' => 'New start date cannot be before today.',
         'new_range_max' => 'Service range exceeds the maximum (:days calendar days).',
         'new_slot_unavailable' => 'The new date range is not available (leave or another booking).',
+        'jadwal_tidak_tersedia' => 'The selected dates are no longer available for this muthowif.',
+        'jadwal_baru_tidak_tersedia' => 'The new date range is no longer available.',
         'reschedule_new_start_too_soon' => 'The new start date must be at least :days full calendar days after the day you submit this request (H-:days rule).',
         'refund_account_number_format' => 'Account number may only contain digits, spaces, or hyphens (at least one digit).',
         'itinerary_required_group' => 'Itinerary upload is required for group service.',
