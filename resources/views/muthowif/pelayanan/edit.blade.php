@@ -260,7 +260,7 @@
                                     <p class="text-xs text-slate-500 mt-0.5">Tambahkan opsi add ons tambahan untuk layanan ini.</p>
                                 </div>
                                 <button type="button" @click="rows.push({ name: '', price: '' })"
-                                        class="shrink-0 text-xs font-semibold text-brand-700 hover:text-brand-800">+ Baris</button>
+                                        class="shrink-0 text-xs font-semibold text-brand-700 hover:text-brand-800">+ Add Ons</button>
                             </div>
                             <x-input-error class="mt-0" :messages="$errors->get('add_ons')" />
                             <template x-for="(row, index) in rows" :key="index">

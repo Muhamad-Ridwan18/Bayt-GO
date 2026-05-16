@@ -196,7 +196,7 @@ export default function EditServiceScreen({ route, user, navigation }) {
                 <View style={styles.addOnHeader}>
                   <Text style={styles.addOnTitle}>+ Add Ons</Text>
                   <TouchableOpacity onPress={addAddOnRow}>
-                    <Text style={styles.addMoreBtn}>+ Baris</Text>
+                    <Text style={styles.addMoreBtn}>+ Tambah Add Ons</Text>
                   </TouchableOpacity>
                 </View>
                 <Text style={styles.addOnSub}>Tambahkan opsi add ons tambahan untuk layanan ini.</Text>
