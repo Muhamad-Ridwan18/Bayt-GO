@@ -29,6 +29,9 @@
                 {{ __('bookings.show.referral_network_empty') }}
             </p>
         @else
+            <p class="mt-5 text-sm leading-relaxed text-slate-700">
+                {{ __('bookings.show.referral_network_subtitle', ['name' => $booking->muthowifProfile?->user?->name ?? '—']) }}
+            </p>
             <ul class="mt-5 space-y-3">
                 @foreach ($referralNetworkAlternatives as $profile)
                     <li class="flex flex-col gap-3 rounded-2xl border border-slate-200/90 bg-white/95 p-4 shadow-sm ring-1 ring-slate-100/80 sm:flex-row sm:items-center sm:justify-between">

@@ -159,6 +159,7 @@ return [
         'muthowif_jadwal_full_apology' => 'Mohon maaf — :name tidak dapat menerima pesanan ini karena jadwal pendampingan pada tanggal tersebut sudah penuh.',
         'muthowif_rejection_note_label' => 'Catatan muthowif:',
         'referral_network_empty' => 'Saat ini belum ada muthowif dalam jaringan referral tersebut yang memenuhi syarat. Anda bisa mencari muthowif lain di daftar layanan.',
+        'referral_network_subtitle' => 'Agar perjalanan Anda tetap lancar, :name merekomendasikan rekan-rekan muthowif berikut yang juga tersedia pada jadwal pilihan Anda:',
         'referral_network_view_profile' => 'Lihat profil & pesanan',
         'completed_rating_heading' => 'Rating & review',
         'completed_rating_intro' => 'Bagikan pengalaman Anda menggunakan layanan muthowif ini.',
