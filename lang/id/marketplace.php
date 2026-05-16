@@ -99,6 +99,8 @@ return [
         'doc_ticket_return' => 'Tiket pesawat (pulang)',
         'doc_ticket_outbound_help' => 'E-ticket atau bukti pemesanan untuk penerbangan berangkat.',
         'doc_ticket_return_help' => 'E-ticket atau bukti pemesanan untuk penerbangan pulang.',
+        'jadwal_tidak_tersedia_html' => 'Jadwal Tidak Tersedia',
+        'jadwal_tersedia' => 'Jadwal Tersedia',
         'doc_passport' => 'Paspor',
         'doc_passport_help' => 'Scan atau foto jelas halaman data paspor (Private dan Group).',
         'doc_itinerary' => 'Itinerary',

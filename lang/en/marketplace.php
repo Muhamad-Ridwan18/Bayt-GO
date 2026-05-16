@@ -112,6 +112,8 @@ return [
         'tc_cancel' => 'Cancel',
         'tc_submit' => 'Agree and submit',
         'submit' => 'Submit booking request',
+        'jadwal_tidak_tersedia_html' => 'The schedule for <strong>:range</strong> is not available. Try a different date via :link.',
+        'jadwal_tersedia' => 'Schedule available',
     ],
     'sidebar' => [
         'aria_label' => 'Booking summary',
