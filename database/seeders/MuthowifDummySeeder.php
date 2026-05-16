@@ -31,7 +31,7 @@ class MuthowifDummySeeder extends Seeder
         for ($i = 1; $i <= 10; $i++) {
             $name = $names[$i - 1] . ' ' . $faker->lastName();
             $email = strtolower(str_replace(' ', '.', $name)) . '@gmail.com';
-            $phone = sprintf('0899%08d', 1_000_000 + $i);
+            $phone = $faker->unique()->numerify('0899########');
 
             $user = User::query()->updateOrCreate(
                 ['email' => $email],
@@ -63,7 +63,7 @@ class MuthowifDummySeeder extends Seeder
                     'educations' => ['Formal: '.$faker->randomElement(['STAI', 'UIN', 'Pesantren', 'Universitas Islam Madinah', 'Al-Azhar Kairo'])],
                     'work_experiences' => ['Pembimbing umrah & haji (dummy seed)'],
                     'reference_text' => 'Akun dummy untuk pengujian — '.$email,
-                    'photo_path' => 'https://ui-avatars.com/api/?name=' . urlencode($name) . '&color=FFFFFF&background=0F172A',
+                    'photo_path' => 'https://randomuser.me/api/portraits/men/' . ($i + 10) . '.jpg',
                     'ktp_image_path' => 'seed/dummy/muthowif-ktp.png',
                     'verification_status' => MuthowifVerificationStatus::Approved,
                     'verified_at' => now(),
