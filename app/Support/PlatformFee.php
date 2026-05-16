@@ -24,18 +24,16 @@ final class PlatformFee
      *     muthowif_net: float
      * }
      */
-    public static function split(float $grossIdr): array
+    public static function split(float $base): array
     {
-        $base = round($grossIdr, 2);
-
         // Customer fee 7,5% ditambahkan ke tagihan yang dibayar.
-        $customerFee = round($base * self::RATE, 2);
+        $customerFee = $base * self::RATE;
         // Muthowif fee 7,5% dipotong dari bagian muthowif (net yang masuk ke saldo).
-        $muthowifFee = round($base * self::RATE, 2);
+        $muthowifFee = $base * self::RATE;
 
-        $platformFeeTotal = round($customerFee + $muthowifFee, 2);
-        $customerGross = round($base + $customerFee, 2);
-        $muthowifNet = round($base - $muthowifFee, 2);
+        $platformFeeTotal = $customerFee + $muthowifFee;
+        $customerGross = $base + $customerFee;
+        $muthowifNet = $base - $muthowifFee;
 
         return [
             'base' => $base,
