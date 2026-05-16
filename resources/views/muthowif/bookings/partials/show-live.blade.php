@@ -206,7 +206,7 @@
                             </p>
                         </div>
 
-                        @include('bookings.partials.booking-documents', ['booking' => $b, 'routeName' => 'muthowif.bookings.documents.show'])
+                        @include('bookings.partials.booking-documents', ['booking' => $b, 'routeName' => 'muthowif.bookings.documents.show', 'compact' => true])
 
                         @if ($st === BookingStatus::Completed && $b->payment_status === PaymentStatus::Paid)
                             <p class="text-sm font-medium text-emerald-800">{{ __('muthowif.bookings.completed_notice') }}</p>

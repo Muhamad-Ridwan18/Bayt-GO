@@ -147,7 +147,7 @@
                             </div>
                         </div>
 
-                        @include('bookings.partials.booking-documents', ['booking' => $b, 'routeName' => 'bookings.documents.show'])
+                        @include('bookings.partials.booking-documents', ['booking' => $b, 'routeName' => 'bookings.documents.show', 'compact' => true])
                     </div>
                 </div>
             </article>
