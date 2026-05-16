@@ -22,9 +22,14 @@
                 <div class="flex items-start justify-between gap-4 flex-col sm:flex-row">
                     <div>
                         <p class="text-sm text-slate-500">Saldo dompet muthowif</p>
-                        <p class="mt-1 text-2xl font-bold text-slate-900 tabular-nums">
-                            {{ \App\Support\Currency::format($balance) }}
-                        </p>
+                        <div class="mt-1 flex items-baseline gap-2">
+                            <p class="text-2xl font-bold text-slate-900 tabular-nums">
+                                {{ \App\Support\Currency::format($balance) }}
+                            </p>
+                            <p class="text-sm font-medium text-slate-500">
+                                (Rp {{ \App\Support\IndonesianNumber::formatThousands((string) (int) round(app(\App\Services\CurrencyService::class)->convertUsdToIdr($balance))) }})
+                            </p>
+                        </div>
                         <p class="mt-2 text-sm text-slate-600 leading-relaxed">
                             Withdraw akan diproses setelah admin menyetujui dan menyelesaikan transfer manual ke rekening Anda.
                         </p>
@@ -57,7 +62,7 @@
                                     $signed = (float) $entry['signed_amount'];
                                     $isNeutralAmount = abs($signed) < 0.005;
                                     $amountClass = $isNeutralAmount ? 'text-slate-600' : ($signed >= 0 ? 'text-emerald-700' : 'text-rose-700');
-                                    $prefix = $signed >= 0 ? '+' : '−';
+                                    $prefix = $signed >= 0 ? '+' : '-';
                                     $abs = \App\Support\Currency::format(abs($signed));
                                     $typeLabel = match ($entry['kind']) {
                                         'booking_credit' => __('dashboard_muthowif.wallet_ledger_kind_booking_credit'),
