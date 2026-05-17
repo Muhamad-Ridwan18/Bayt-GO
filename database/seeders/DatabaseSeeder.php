@@ -10,6 +10,7 @@ class DatabaseSeeder extends Seeder
     {
         $this->call([
             AdminSeeder::class,
+            SettingSeeder::class,
             ArticleSeeder::class,
             MuthowifDummySeeder::class,
             MuthowifReferralCodesSeeder::class,
