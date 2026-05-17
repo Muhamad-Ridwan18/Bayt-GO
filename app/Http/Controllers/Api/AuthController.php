@@ -35,6 +35,12 @@ class AuthController extends Controller
             ], 422);
         }
 
+        if ($user->isCompanyCustomer() && ! $user->is_company_approved) {
+            return response()->json([
+                'message' => 'Akun perusahaan Anda belum disetujui oleh admin. Anda belum dapat masuk.',
+            ], 403);
+        }
+
         $token = $user->createToken($request->device_name)->plainTextToken;
 
         return response()->json([
@@ -172,6 +178,12 @@ class AuthController extends Controller
             }
 
             throw $e;
+        }
+
+        if ($user->isCompanyCustomer() && ! $user->is_company_approved) {
+            return response()->json([
+                'message' => 'Pendaftaran berhasil. Akun perusahaan Anda sedang menunggu persetujuan admin.',
+            ], 201);
         }
 
         $token = $user->createToken($request->device_name)->plainTextToken;

@@ -99,4 +99,19 @@ class UserManagementController extends Controller
             ->route('admin.users.index')
             ->with('status', __('admin.users.updated'));
     }
+
+    public function approveCompany(User $user): RedirectResponse
+    {
+        if (!$user->isCompanyCustomer()) {
+            return back()->with('error', 'User bukan customer perusahaan.');
+        }
+
+        $user->is_company_approved = true;
+        $user->save();
+
+        // Broadcast to specific user channel if we want realtime
+        broadcast(new \App\Events\CompanyApproved($user))->toOthers();
+
+        return back()->with('status', 'Akun perusahaan berhasil disetujui.');
+    }
 }

@@ -1,5 +1,11 @@
 <x-guest-layout>
     <x-auth-session-status class="mb-4" :status="session('status')" />
+    
+    @if(request()->has('approved'))
+        <div class="mb-4 rounded-lg bg-emerald-50 p-4 text-sm font-medium text-emerald-800">
+            Akun perusahaan Anda telah disetujui! Silakan masuk dengan kredensial Anda.
+        </div>
+    @endif
 
     <div class="mb-6">
         <h1 class="text-xl font-semibold text-slate-900">Masuk</h1>

@@ -130,6 +130,14 @@ Route::get('/muthowif/daftar/menunggu', function () {
     return view('auth.muthowif-registration-pending');
 })->name('muthowif.registration.pending');
 
+Route::get('/perusahaan/daftar/menunggu', function () {
+    $pendingId = session('pending_company_id');
+    if (!$pendingId) {
+        return redirect()->route('login');
+    }
+    return view('auth.company-registration-pending', ['pendingId' => $pendingId]);
+})->name('company.registration.pending');
+
 Route::get('/dashboard', function () {
     return view('dashboard');
 })->middleware(['auth'])->name('dashboard');
@@ -244,6 +252,7 @@ Route::middleware('auth')->group(function () {
         Route::get('pengguna', [UserManagementController::class, 'index'])->name('users.index');
         Route::get('pengguna/{user}/ubah', [UserManagementController::class, 'edit'])->name('users.edit');
         Route::patch('pengguna/{user}', [UserManagementController::class, 'update'])->name('users.update');
+        Route::post('pengguna/{user}/approve-company', [UserManagementController::class, 'approveCompany'])->name('users.approve_company');
         Route::get('refund-menunggu', [BookingRefundController::class, 'index'])->name('refunds.index');
         Route::post('refund-menunggu/{refund}/selesai', [BookingRefundController::class, 'complete'])->name('refunds.complete');
         Route::get('keuangan', [FinanceController::class, 'index'])->name('finance.index');

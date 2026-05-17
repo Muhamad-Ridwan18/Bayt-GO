@@ -72,6 +72,14 @@ class LoginRequest extends FormRequest
             }
         }
 
+        if ($user && $user->isCompanyCustomer() && ! $user->is_company_approved) {
+            Auth::guard('web')->logout();
+
+            throw ValidationException::withMessages([
+                'email' => 'Akun perusahaan Anda belum disetujui oleh admin. Anda belum dapat masuk.',
+            ]);
+        }
+
         RateLimiter::clear($this->throttleKey());
     }
 

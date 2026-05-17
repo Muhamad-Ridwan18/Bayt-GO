@@ -380,6 +380,11 @@ class RegisteredUserController extends Controller
             return redirect()->route('muthowif.registration.pending');
         }
 
+        if ($user->isCompanyCustomer() && ! $user->is_company_approved) {
+            session(['pending_company_id' => $user->id]);
+            return redirect()->route('company.registration.pending');
+        }
+
         Auth::login($user);
 
         return redirect(route('dashboard', absolute: false));
@@ -490,6 +495,11 @@ class RegisteredUserController extends Controller
 
         if ($user->isMuthowif()) {
             return redirect()->route('muthowif.registration.pending');
+        }
+
+        if ($user->isCompanyCustomer() && ! $user->is_company_approved) {
+            session(['pending_company_id' => $user->id]);
+            return redirect()->route('company.registration.pending');
         }
 
         Auth::login($user);
