@@ -101,6 +101,7 @@
                                     <th class="px-4 py-3">{{ __('admin.users.col_name') }}</th>
                                     <th class="px-4 py-3">{{ __('admin.users.col_contact') }}</th>
                                     <th class="px-4 py-3">{{ __('admin.users.col_role') }}</th>
+                                    <th class="px-4 py-3">{{ ('customer type') }}</th>
                                     <th class="px-4 py-3 whitespace-nowrap">{{ __('admin.users.col_registered') }}</th>
                                     <th class="px-4 py-3 text-right">{{ __('admin.users.col_actions') }}</th>
                                 </tr>
@@ -127,6 +128,9 @@
                                                 ])">
                                                 {{ $u->role->label() }}
                                             </span>
+                                        </td>
+                                        <td class="px-4 py-3">
+                                            {{ $u->customer_type ?? '-' }}
                                         </td>
                                         <td class="whitespace-nowrap px-4 py-3 text-xs text-slate-600">
                                             {{ $u->created_at?->format('d/m/Y H:i') ?? '—' }}
