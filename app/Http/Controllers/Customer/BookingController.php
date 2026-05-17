@@ -242,7 +242,7 @@ class BookingController extends Controller
                 ->with('error', __('bookings.flash.method_not_supported'));
         }
 
-        $split = PlatformFee::split((float) $baseInt);
+        $split = PlatformFee::split((float) $baseInt, $booking->customer?->isCompanyCustomer() ?? false);
 
         if ($selectedMethod === '') {
             $payment = $booking->bookingPayments()

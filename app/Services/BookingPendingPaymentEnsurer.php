@@ -47,7 +47,7 @@ final class BookingPendingPaymentEnsurer
                 return null;
             }
 
-            $split = PlatformFee::split((float) $baseInt);
+            $split = PlatformFee::split((float) $baseInt, $booking->customer?->isCompanyCustomer() ?? false);
 
             /** Sudah ada sesi charge (Moota trx / SNAP): jangan buat kedua; biarkan satu baris aktif. */
             $withGateway = $booking->bookingPayments()

@@ -10,7 +10,7 @@
         <div class="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 space-y-8">
             <div class="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
                 <p class="text-sm text-slate-600">
-                    {{ __('admin.finance.intro', ['pct' => \App\Support\PlatformFee::TOTAL_RATE * 100]) }}
+                    {{ __('admin.finance.intro', ['pct' => \App\Support\PlatformFee::getTotalRate() * 100]) }}
                 </p>
                 <a href="{{ route('admin.refunds.index') }}" class="inline-flex items-center justify-center rounded-xl border border-amber-200 bg-amber-50 px-4 py-2 text-sm font-semibold text-amber-900 hover:bg-amber-100">
                     {{ __('admin.finance.refund_cta') }}

@@ -88,7 +88,7 @@ class MootaTestBookingPaymentCommand extends Command
             $this->line('Pending lama ditandai cancelled: '.$superseded.' baris.');
         }
 
-        $split = PlatformFee::split((float) $baseInt);
+        $split = PlatformFee::split((float) $baseInt, $booking->customer?->isCompanyCustomer() ?? false);
         $ids = BookingPayment::newPrimaryKeyAndOrderId((string) $booking->getKey());
         $orderId = $ids['order_id'];
 

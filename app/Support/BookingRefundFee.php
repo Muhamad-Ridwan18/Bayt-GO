@@ -4,18 +4,25 @@ namespace App\Support;
 
 use App\Models\BookingPayment;
 use App\Models\MuthowifBooking;
+use App\Models\SiteSetting;
 
 /**
- * Refund: layanan batal — potongan platform 15% dari harga dasar; bagian muthowif 1% dari harga dasar.
+ * Refund: layanan batal — potongan platform dari harga dasar; bagian muthowif dari harga dasar.
  * Net jamaah = harga dasar − potongan admin − bagian muthowif. Saat admin menyelesaikan refund, nominal bagian muthowif dikreditkan ke saldo dompet muthowif.
  */
 final class BookingRefundFee
 {
-    /** Potongan admin/platform saat refund: 15% dari harga dasar. */
-    public const PLATFORM_REFUND_RATE = 0.15;
+    /** Potongan admin/platform saat refund: default 15% dari harga dasar. */
+    public static function getPlatformRefundRate(): float
+    {
+        return (float) SiteSetting::getValue('platform_refund_rate', '0.15');
+    }
 
-    /** Bagian muthowif (1% dari harga dasar): mengurangi net refund jamaah; masuk ke saldo muthowif saat refund selesai. */
-    public const MUTHOWIF_REFUND_RATE = 0.01;
+    /** Bagian muthowif (default 1% dari harga dasar): mengurangi net refund jamaah; masuk ke saldo muthowif saat refund selesai. */
+    public static function getMuthowifRefundRate(): float
+    {
+        return (float) SiteSetting::getValue('muthowif_refund_rate', '0.01');
+    }
 
     /**
      * @return array{
@@ -28,9 +35,9 @@ final class BookingRefundFee
      */
     public static function snapshot(MuthowifBooking $booking, BookingPayment $payment): array
     {
-        $base = (float) PlatformFee::split((float) $booking->resolvedAmountDue())['base'];
-        $feePlatform = (int) round($base * self::PLATFORM_REFUND_RATE);
-        $feeMuthowif = (int) round($base * self::MUTHOWIF_REFUND_RATE);
+        $base = (float) PlatformFee::split((float) $booking->resolvedAmountDue(), $booking->customer?->isCompanyCustomer() ?? false)['base'];
+        $feePlatform = (int) round($base * self::getPlatformRefundRate());
+        $feeMuthowif = (int) round($base * self::getMuthowifRefundRate());
         $paid = (int) $payment->gross_amount;
         $baseIdr = (int) round($base);
         $net = max(0, $baseIdr - $feePlatform - $feeMuthowif);

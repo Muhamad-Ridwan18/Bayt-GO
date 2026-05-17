@@ -295,7 +295,7 @@ class BookingApiController extends Controller
             return response()->json(['message' => 'Total pembayaran tidak valid'], 400);
         }
 
-        $split = PlatformFee::split((float) $baseInt);
+        $split = PlatformFee::split((float) $baseInt, $booking->customer?->isCompanyCustomer() ?? false);
 
         $superseded = $booking->bookingPayments()->where('status', 'pending')->update(['status' => 'cancelled']);
         if ($superseded > 0) {
