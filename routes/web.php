@@ -252,7 +252,8 @@ Route::middleware('auth')->group(function () {
         Route::get('pengguna', [UserManagementController::class, 'index'])->name('users.index');
         Route::get('pengguna/{user}/ubah', [UserManagementController::class, 'edit'])->name('users.edit');
         Route::patch('pengguna/{user}', [UserManagementController::class, 'update'])->name('users.update');
-        Route::post('pengguna/{user}/approve-company', [UserManagementController::class, 'approveCompany'])->name('users.approve_company');
+        Route::get('perusahaan-menunggu', [\App\Http\Controllers\Admin\CompanyApprovalController::class, 'index'])->name('company_approval.index');
+        Route::post('perusahaan-menunggu/{user}/approve', [\App\Http\Controllers\Admin\CompanyApprovalController::class, 'approve'])->name('company_approval.approve');
         Route::get('refund-menunggu', [BookingRefundController::class, 'index'])->name('refunds.index');
         Route::post('refund-menunggu/{refund}/selesai', [BookingRefundController::class, 'complete'])->name('refunds.complete');
         Route::get('keuangan', [FinanceController::class, 'index'])->name('finance.index');

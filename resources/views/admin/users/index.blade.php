@@ -137,14 +137,6 @@
                                         </td>
                                         <td class="px-4 py-3 text-right">
                                             <div class="flex items-center justify-end gap-2">
-                                                @if ($u->isCompanyCustomer() && !$u->is_company_approved)
-                                                    <form action="{{ route('admin.users.approve_company', $u) }}" method="POST" class="inline">
-                                                        @csrf
-                                                        <button type="submit" class="inline-flex items-center gap-1 rounded-lg bg-emerald-600 px-3 py-1.5 text-xs font-semibold text-white shadow-sm transition hover:bg-emerald-700">
-                                                            Setujui
-                                                        </button>
-                                                    </form>
-                                                @endif
                                                 <a href="{{ route('admin.users.edit', $u) }}" class="inline-flex items-center gap-1 rounded-lg border border-slate-200 bg-white px-3 py-1.5 text-xs font-semibold text-slate-800 shadow-sm transition hover:border-brand-300 hover:text-brand-800">
                                                     {{ __('admin.users.edit') }}
                                                 </a>
