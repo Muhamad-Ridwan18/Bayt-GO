@@ -373,32 +373,6 @@
                         </a>
                     </div>
                 </div>
-
-                <div class="rounded-3xl border border-slate-200/90 bg-gradient-to-br from-slate-50 to-white p-5 shadow-sm ring-1 ring-slate-100/90">
-                    <h2 class="text-base font-bold text-slate-900">{{ __('dashboard.platform_fee_note_title') }}</h2>
-                    <p class="mt-2 text-sm leading-relaxed text-slate-600">
-                        {{ __('dashboard.platform_fee_note_body') }}
-                    </p>
-                </div>
-
-                <div class="rounded-3xl border border-slate-200/90 bg-white p-5 shadow-md ring-1 ring-slate-100/90">
-                    <h2 class="text-base font-bold text-slate-900">{{ __('dashboard.system_status_title') }}</h2>
-                    <ul class="mt-4 space-y-3">
-                        @foreach ([
-                            __('dashboard.system_db'),
-                            __('dashboard.system_payment'),
-                            __('dashboard.system_notify'),
-                        ] as $sysLabel)
-                            <li class="flex items-center justify-between gap-3 rounded-xl border border-emerald-100/90 bg-emerald-50/60 px-3 py-2.5">
-                                <span class="text-sm font-medium text-slate-800">{{ $sysLabel }}</span>
-                                <span class="inline-flex items-center gap-1.5 text-xs font-semibold text-emerald-800">
-                                    <svg class="h-4 w-4 text-emerald-600" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true"><path fill-rule="evenodd" d="M16.704 4.153a.75.75 0 01.143 1.052l-8 10.5a.75.75 0 01-1.127.075l-4.5-4.5a.75.75 0 011.06-1.06l3.894 3.893 7.48-9.817a.75.75 0 011.05-.143z" clip-rule="evenodd" /></svg>
-                                    {{ __('dashboard.system_ok') }}
-                                </span>
-                            </li>
-                        @endforeach
-                    </ul>
-                </div>
             </aside>
         </div>
 
