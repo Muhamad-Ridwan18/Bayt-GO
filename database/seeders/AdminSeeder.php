@@ -14,7 +14,7 @@ class AdminSeeder extends Seeder
      */
     public function run(): void
     {
-        $email = strtolower(trim((string) env('ADMIN_EMAIL', 'baytgo.admin@gmail.com')));
+        $email = strtolower(trim((string) env('ADMIN_EMAIL', 'admin@gmail.com')));
 
         User::query()->updateOrCreate(
             ['email' => $email],
