@@ -131,7 +131,8 @@
                             $transportLine = (float) ($booking->transport_price_snapshot ?? ($booking->with_transport && $service ? (float) $service->transport_price_flat : 0.0));
 
                             $totalDue = (float) ($serviceSubtotal + $addonsSum + $sameHotelLine + $transportLine);
-                            $split = \App\Support\PlatformFee::split($totalDue);
+                            $isCompany = $booking->customer?->isCompanyCustomer() ?? false;
+                            $split = \App\Support\PlatformFee::split($totalDue, $isCompany);
                             $customerGross = (float) ($split['customer_gross'] ?? $totalDue);
                             $customerFee = (float) ($split['customer_fee'] ?? 0.0);
                         @endphp
@@ -229,10 +230,12 @@
                                                     <dd class="font-medium tabular-nums text-slate-800">Rp {{ IndonesianNumber::formatThousands((string) (int) round($transportLine)) }}</dd>
                                                 </div>
                                             @endif
-                                            <div class="flex justify-between gap-3 px-3 py-1.5">
-                                                <dt class="text-slate-600">{{ __('bookings.show.platform_fee') }}</dt>
-                                                <dd class="font-medium tabular-nums text-slate-900">+ Rp {{ IndonesianNumber::formatThousands((string) (int) round($customerFee)) }}</dd>
-                                            </div>
+                                            @if ($customerFee > 0)
+                                                <div class="flex justify-between gap-3 px-3 py-1.5">
+                                                    <dt class="text-slate-600">{{ __('bookings.show.platform_fee') }}</dt>
+                                                    <dd class="font-medium tabular-nums text-slate-900">+ Rp {{ IndonesianNumber::formatThousands((string) (int) round($customerFee)) }}</dd>
+                                                </div>
+                                            @endif
                                             <div class="flex justify-between gap-3 bg-brand-50/60 px-3 py-2">
                                                 <dt class="font-bold text-slate-900">{{ __('bookings.invoice.total') }}</dt>
                                                 <dd class="font-bold tabular-nums text-brand-700 sm:text-sm">Rp {{ IndonesianNumber::formatThousands((string) (int) round($customerGross)) }}</dd>

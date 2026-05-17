@@ -23,7 +23,8 @@
         }
     }
 
-    $split = PlatformFee::split((float) $booking->resolvedAmountDue());
+    $isCompany = $booking->customer?->isCompanyCustomer() ?? false;
+    $split = PlatformFee::split((float) $booking->resolvedAmountDue(), $isCompany);
     $customerPlatformFee = (float) ($split['customer_fee'] ?? 0.0);
     $customerTotal = (float) ($split['customer_gross'] ?? 0.0);
     $fmt = fn (float $n) => IndonesianNumber::formatThousands((string) (int) round($n));
@@ -249,10 +250,12 @@
                                         {{ Carbon::parse($booking->starts_on)->format('d/m/Y') }} – {{ Carbon::parse($booking->ends_on)->format('d/m/Y') }}
                                     </dd>
                                 </div>
-                                <div class="flex justify-between gap-3 border-t border-slate-100 pt-3">
-                                    <dt class="text-slate-500">{{ __('bookings.show.platform_fee') }}</dt>
-                                    <dd class="font-medium tabular-nums text-slate-900">Rp {{ $fmt($customerPlatformFee) }}</dd>
-                                </div>
+                                @if ($customerPlatformFee > 0)
+                                    <div class="flex justify-between gap-3 border-t border-slate-100 pt-3">
+                                        <dt class="text-slate-500">{{ __('bookings.show.platform_fee') }}</dt>
+                                        <dd class="font-medium tabular-nums text-slate-900">Rp {{ $fmt($customerPlatformFee) }}</dd>
+                                    </div>
+                                @endif
                                 <div class="flex items-end justify-between gap-3 rounded-xl bg-gradient-to-br from-brand-600/10 via-brand-50/90 to-emerald-50/50 px-3 py-3 ring-1 ring-brand-200/60">
                                     <dt class="text-sm font-bold text-slate-900">{{ __('bookings.invoice.total') }}</dt>
                                     <dd class="text-xl font-bold tabular-nums text-brand-700 sm:text-2xl">Rp {{ $fmt($customerTotal) }}</dd>

@@ -34,7 +34,8 @@
     $transportLine = (float) ($b->transport_price_snapshot ?? ($b->with_transport && $service ? (float) $service->transport_price_flat : 0.0));
 
     $baseTotal = (float) ($baseSubtotal + $addonsSum + $sameHotelLine + $transportLine);
-    $split = \App\Support\PlatformFee::split($baseTotal);
+    $isCompany = $b->customer?->isCompanyCustomer() ?? false;
+    $split = \App\Support\PlatformFee::split($baseTotal, $isCompany);
     $customerTotal = (float) ($split['customer_gross'] ?? $baseTotal);
     $customerPlatformFee = (float) ($split['customer_fee'] ?? 0.0);
     $muthowifNet = (float) ($split['muthowif_net'] ?? 0.0);
@@ -209,10 +210,12 @@
                                     <dd class="font-medium tabular-nums text-slate-900">Rp {{ $fmt($transportLine) }}</dd>
                                 </div>
                             @endif
-                            <div class="flex justify-between gap-4 border-t border-slate-200/80 pt-3">
-                                <dt class="text-slate-600">{{ __('bookings.show.platform_fee') }}</dt>
-                                <dd class="font-medium tabular-nums text-slate-900">Rp {{ $fmt($customerPlatformFee) }}</dd>
-                            </div>
+                            @if ($customerPlatformFee > 0)
+                                <div class="flex justify-between gap-4 border-t border-slate-200/80 pt-3">
+                                    <dt class="text-slate-600">{{ __('bookings.show.platform_fee') }}</dt>
+                                    <dd class="font-medium tabular-nums text-slate-900">Rp {{ $fmt($customerPlatformFee) }}</dd>
+                                </div>
+                            @endif
                             <div class="flex justify-between gap-4 border-t border-slate-200 pt-3 text-base">
                                 <dt class="font-semibold text-slate-900">{{ __('bookings.show.total_customer') }}</dt>
                                 <dd class="font-bold tabular-nums text-brand-700">Rp {{ $fmt($customerTotal) }}</dd>
