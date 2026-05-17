@@ -109,6 +109,16 @@ class UserManagementController extends Controller
         $user->is_company_approved = true;
         $user->save();
 
+        if ($user->phone) {
+            try {
+                $whatsapp = app(\App\Services\FonnteService::class);
+                $message = "Halo *{$user->name}*,\n\nAkun perusahaan Anda telah *disetujui* oleh Administrator. Anda sekarang sudah bisa masuk (login) ke website " . config('app.name', 'BaytGo') . " dan mulai menggunakan layanan kami.\n\nTerima kasih!";
+                $whatsapp->sendText($user->phone, $message);
+            } catch (\Throwable $e) {
+                \Illuminate\Support\Facades\Log::warning('Gagal kirim WA notif approval perusahaan: ' . $e->getMessage());
+            }
+        }
+
         // Broadcast to specific user channel if we want realtime
         broadcast(new \App\Events\CompanyApproved($user))->toOthers();
 
