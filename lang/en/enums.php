@@ -57,7 +57,7 @@ return [
         'closed' => 'Closed',
     ],
     'muthowif_booking_muthowif_rejection_kind' => [
-        'slot_full' => 'Muthowif schedule full',
+        'jadwal_full' => 'Muthowif schedule full',
         'other' => 'Other reason',
     ],
 ];
