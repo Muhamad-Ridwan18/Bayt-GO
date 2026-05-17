@@ -28,7 +28,6 @@
     </div>
 
     @push('scripts')
-        @vite(['resources/js/echo.js'])
         <script type="module">
             document.addEventListener('DOMContentLoaded', () => {
                 const pendingId = '{{ $pendingId }}';
