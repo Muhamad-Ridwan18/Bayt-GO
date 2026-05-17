@@ -4,7 +4,8 @@
     use Carbon\Carbon;
 
     $fmt = fn (float|int $n) => IndonesianNumber::formatThousands((string) (int) round((float) $n));
-    $split = PlatformFee::split((float) $booking->resolvedAmountDue());
+    $isCompany = $booking->customer?->isCompanyCustomer() ?? false;
+    $split = PlatformFee::split((float) $booking->resolvedAmountDue(), $isCompany);
     $base = (float) ($split['base'] ?? 0.0);
     $customerPlatformFee = (float) ($split['customer_fee'] ?? 0.0);
     $gross = (float) ($split['customer_gross'] ?? 0.0);
@@ -127,10 +128,12 @@
                         <dt class="text-sm text-slate-600">{{ __('bookings.invoice.subtotal') }}</dt>
                         <dd class="text-sm font-semibold tabular-nums text-slate-900">Rp {{ $fmt($base) }}</dd>
                     </div>
-                    <div class="flex items-center justify-between gap-4 border-b border-slate-100 px-4 py-3.5 sm:px-5">
-                        <dt class="text-sm text-slate-600">{{ __('bookings.invoice.platform_fee_pct') }}</dt>
-                        <dd class="text-sm font-semibold tabular-nums text-slate-900">Rp {{ $fmt($customerPlatformFee) }}</dd>
-                    </div>
+                    @if ($customerPlatformFee > 0)
+                        <div class="flex items-center justify-between gap-4 border-b border-slate-100 px-4 py-3.5 sm:px-5">
+                            <dt class="text-sm text-slate-600">{{ __('bookings.invoice.platform_fee_pct') }}</dt>
+                            <dd class="text-sm font-semibold tabular-nums text-slate-900">Rp {{ $fmt($customerPlatformFee) }}</dd>
+                        </div>
+                    @endif
                     <div class="flex items-center justify-between gap-4 bg-gradient-to-r from-brand-50/90 to-brand-50/40 px-4 py-4 sm:px-5">
                         <dt class="text-base font-bold text-slate-900">{{ __('bookings.invoice.total') }}</dt>
                         <dd class="text-xl font-bold tabular-nums text-brand-700 sm:text-2xl">Rp {{ $fmt($gross) }}</dd>
