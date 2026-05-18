@@ -100,12 +100,14 @@ class WithdrawalsController extends Controller
                     'failed_reason' => null,
                 ]);
             });
+            broadcast(new \App\Events\WithdrawalUpdated($withdrawal->fresh()));
         } catch (Throwable $e) {
             $withdrawal->update([
                 'status' => 'failed',
                 'failed_at' => now(),
                 'failed_reason' => $e->getMessage(),
             ]);
+            broadcast(new \App\Events\WithdrawalUpdated($withdrawal->fresh()));
 
             return redirect()
                 ->route('admin.withdrawals.index')
@@ -134,6 +136,7 @@ class WithdrawalsController extends Controller
         ]);
 
         NotifyMuthowifOfWithdrawalTransferProof::dispatchAfterResponse((string) $withdrawal->getKey());
+        broadcast(new \App\Events\WithdrawalUpdated($withdrawal->fresh()));
 
         return redirect()
             ->route('admin.withdrawals.index')
@@ -164,6 +167,7 @@ class WithdrawalsController extends Controller
                 'failed_reason' => 'Transfer gagal atau dibatalkan (saldo dikembalikan).',
             ]);
         });
+        broadcast(new \App\Events\WithdrawalUpdated($withdrawal->fresh()));
 
         return redirect()
             ->route('admin.withdrawals.index')

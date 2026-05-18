@@ -18,3 +18,7 @@ Broadcast::channel('admin.moota-webhooks', function ($user) {
 Broadcast::channel('admin.withdrawals', function ($user) {
     return $user->isAdmin();
 });
+
+Broadcast::channel('admin.support-tickets', function ($user) {
+    return $user->isAdmin();
+});

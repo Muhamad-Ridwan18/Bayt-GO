@@ -45,7 +45,8 @@ class UserManagementController extends Controller
             'muthowif' => 0,
         ];
         $roleRows = User::query()
-            ->select('role', DB::raw('COUNT(*) as aggregate'))
+            ->select('role')
+            ->selectRaw('count(*) as aggregate')
             ->groupBy('role')
             ->get();
         foreach ($roleRows as $row) {

@@ -115,6 +115,8 @@ class BookingRefundController extends Controller
 
         NotifyCustomerOfRefundTransferProof::dispatchAfterResponse((string) $refund->getKey());
 
+        broadcast(new \App\Events\CustomerBookingUpdated($booking->fresh()));
+
         return redirect()
             ->route('admin.refunds.index')
             ->with('status', 'Transfer refund dicatat selesai. Bukti akan dikirim ke WhatsApp jamaah jika nomor valid.');

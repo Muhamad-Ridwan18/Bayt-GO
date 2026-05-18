@@ -39,7 +39,8 @@ class MuthowifVerificationController extends Controller
         }
 
         $countRows = MuthowifProfile::query()
-            ->select('verification_status', DB::raw('COUNT(*) as aggregate'))
+            ->select('verification_status')
+            ->selectRaw('count(*) as aggregate')
             ->groupBy('verification_status')
             ->get();
 
@@ -117,6 +118,8 @@ class MuthowifVerificationController extends Controller
             $waFlash = ' FONNTE_TOKEN kosong — notifikasi WA dilewati.';
         }
 
+        broadcast(new \App\Events\MuthowifVerificationUpdated($profile->fresh()));
+
         return redirect()
             ->route('admin.muthowif.show', $profile)
             ->with('status', 'Pendaftaran muthowif disetujui.'.$waFlash);
@@ -139,6 +142,8 @@ class MuthowifVerificationController extends Controller
             'verified_at' => null,
             'rejection_reason' => $validated['rejection_reason'] ?? null,
         ]);
+
+        broadcast(new \App\Events\MuthowifVerificationUpdated($profile->fresh()));
 
         return redirect()
             ->route('admin.muthowif.show', $profile)

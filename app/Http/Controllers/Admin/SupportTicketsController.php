@@ -37,7 +37,7 @@ class SupportTicketsController extends Controller
             ->when(is_string($statusFilter) && $statusFilter !== '' && SupportTicketStatus::tryFrom($statusFilter), function ($query) use ($statusFilter): void {
                 $query->where('status', SupportTicketStatus::from($statusFilter));
             })
-            ->orderByDesc(DB::raw('COALESCE(last_activity_at, created_at)'))
+            ->orderByDesc('last_activity_at')
             ->paginate(25)
             ->withQueryString();
 
@@ -101,6 +101,8 @@ class SupportTicketsController extends Controller
             $ticket->save();
         });
 
+        broadcast(new \App\Events\SupportTicketUpdated($ticket, 'reply'));
+
         return redirect()
             ->route('admin.support-tickets.show', $ticket)
             ->with('status', __('support.flash.admin_reply_sent'));
@@ -134,6 +136,8 @@ class SupportTicketsController extends Controller
         $ticket->last_activity_at = now();
         $ticket->save();
 
+        broadcast(new \App\Events\SupportTicketUpdated($ticket, 'status_updated'));
+
         return redirect()
             ->route('admin.support-tickets.show', $ticket)
             ->with('status', __('support.flash.ticket_updated'));
@@ -149,6 +153,8 @@ class SupportTicketsController extends Controller
         }
         $ticket->last_activity_at = now();
         $ticket->save();
+
+        broadcast(new \App\Events\SupportTicketUpdated($ticket, 'assigned'));
 
         return redirect()
             ->route('admin.support-tickets.show', $ticket)

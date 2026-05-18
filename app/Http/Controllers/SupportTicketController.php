@@ -23,7 +23,7 @@ class SupportTicketController extends Controller
         $tickets = SupportTicket::query()
             ->where('user_id', $user->getKey())
             ->withCount('messages')
-            ->orderByDesc(DB::raw('COALESCE(last_activity_at, created_at)'))
+            ->orderByDesc('last_activity_at')
             ->paginate(15)
             ->withQueryString();
 
@@ -78,6 +78,8 @@ class SupportTicketController extends Controller
             return $ticket;
         });
 
+        broadcast(new \App\Events\SupportTicketUpdated($ticket, 'created'));
+
         return redirect()
             ->route('support.show', $ticket)
             ->with('status', __('support.flash.created'));
@@ -126,6 +128,8 @@ class SupportTicketController extends Controller
             $ticket->last_activity_at = now();
             $ticket->save();
         });
+
+        broadcast(new \App\Events\SupportTicketUpdated($ticket, 'reply'));
 
         return redirect()
             ->route('support.show', $ticket)
