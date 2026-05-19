@@ -1,6 +1,4 @@
 <x-app-layout>
-    {{-- Load heic2any for client-side HEIC/HEIF to JPEG conversion --}}
-    <script src="https://cdn.jsdelivr.net/npm/heic2any@1.3.0/dist/heic2any.min.js"></script>
 
     <div class="relative min-h-[calc(100vh-4rem)] overflow-hidden bg-gradient-to-b from-slate-100 via-slate-50 to-white py-6 sm:py-8">
         <div class="pointer-events-none absolute inset-0 bg-[radial-gradient(ellipse_80%_40%_at_50%_-10%,rgba(14,165,233,0.06),transparent)]"></div>
@@ -66,69 +64,25 @@
                                         <textarea id="description" name="description" rows="3" class="mt-1 block w-full rounded-lg border-slate-300 shadow-sm focus:border-brand-500 focus:ring-brand-500 text-sm" placeholder="Ceritakan singkat pelayanan Anda di foto ini...">{{ old('description') }}</textarea>
                                         <x-input-error class="mt-2" :messages="$errors->get('description')" />
                                     </div>
-                                    <div x-data="{ imagePreview: null, imageLoading: false }">
+                                    <div x-data="{ imagePreview: null }">
                                         <x-input-label for="image" value="Unggah Foto" />
                                         <div class="mt-1 relative flex justify-center rounded-xl border border-dashed border-slate-300 bg-slate-50/50 px-4 py-5 transition hover:bg-slate-50 min-h-[140px] items-center">
                                             
-                                            {{-- Conversion Loading Spinner --}}
-                                            <div x-show="imageLoading" x-cloak class="flex flex-col items-center justify-center space-y-3 py-4">
-                                                <svg class="animate-spin h-8 w-8 text-brand-600" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
-                                                    <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
-                                                    <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
-                                                </svg>
-                                                <p class="text-xs font-semibold text-slate-700">Mengonversi foto iPhone (HEIC)...</p>
-                                                <p class="text-[10px] text-slate-400">Proses ini berjalan aman langsung di perangkat Anda.</p>
-                                            </div>
-
-                                            {{-- Upload placeholder (visible when no image is selected and not loading) --}}
-                                            <div x-show="!imagePreview && !imageLoading" class="space-y-1 text-center">
+                                            {{-- Upload placeholder (visible when no image is selected) --}}
+                                            <div x-show="!imagePreview" class="space-y-1 text-center">
                                                 <svg class="mx-auto h-10 w-10 text-slate-400" stroke="currentColor" fill="none" viewBox="0 0 48 48" aria-hidden="true">
                                                     <path d="M28 8H12a4 4 0 00-4 4v20m32-12v8m0 0v8a4 4 0 01-4 4H12a4 4 0 01-4-4v-4m32-4l-3.172-3.172a4 4 0 00-5.656 0L28 28M8 32l9.172-9.172a4 4 0 015.656 0L28 28m0 0l4 4m4-24h8m-4-4v8m-12 4h.02" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" />
                                                 </svg>
                                                 <div class="flex text-xs text-slate-600 justify-center">
                                                     <label for="image" class="relative cursor-pointer rounded-md font-semibold text-brand-600 focus-within:outline-none focus-within:ring-2 focus-within:ring-brand-500 focus-within:ring-offset-2 hover:text-brand-500">
                                                         <span>Pilih berkas</span>
-                                                        <input id="image" name="image" type="file" class="sr-only" accept="image/*,.heic,.heif" required
+                                                        <input id="image" name="image" type="file" class="sr-only" accept="image/*" required
                                                                @change="
                                                                    const file = $event.target.files[0];
                                                                    if (file) {
-                                                                       const ext = file.name.split('.').pop().toLowerCase();
-                                                                       if (ext === 'heic' || ext === 'heif') {
-                                                                           imageLoading = true;
-                                                                           imagePreview = null;
-                                                                           if (typeof heic2any !== 'undefined') {
-                                                                               heic2any({
-                                                                                   blob: file,
-                                                                                   toType: 'image/jpeg',
-                                                                                   quality: 0.8
-                                                                               }).then((convertedBlob) => {
-                                                                                   const convertedFile = new File([convertedBlob], file.name.replace(/\.(heic|heif)$/i, '.jpg'), { type: 'image/jpeg' });
-                                                                                   const container = new DataTransfer();
-                                                                                   container.items.add(convertedFile);
-                                                                                   $event.target.files = container.files;
-                                                                                   
-                                                                                   const reader = new FileReader();
-                                                                                   reader.onload = (e) => { 
-                                                                                       imagePreview = e.target.result;
-                                                                                       imageLoading = false;
-                                                                                   };
-                                                                                   reader.readAsDataURL(convertedFile);
-                                                                               }).catch((err) => {
-                                                                                   alert('Gagal mengonversi foto iPhone (HEIC). Silakan coba format lain.');
-                                                                                   imagePreview = null;
-                                                                                   imageLoading = false;
-                                                                                   $event.target.value = '';
-                                                                               });
-                                                                           } else {
-                                                                               alert('Alat konversi sedang dimuat. Silakan tunggu sebentar dan coba lagi.');
-                                                                               imageLoading = false;
-                                                                               $event.target.value = '';
-                                                                           }
-                                                                       } else {
-                                                                           const reader = new FileReader();
-                                                                           reader.onload = (e) => { imagePreview = e.target.result; };
-                                                                           reader.readAsDataURL(file);
-                                                                       }
+                                                                       const reader = new FileReader();
+                                                                       reader.onload = (e) => { imagePreview = e.target.result; };
+                                                                       reader.readAsDataURL(file);
                                                                    } else {
                                                                        imagePreview = null;
                                                                    }
@@ -136,11 +90,11 @@
                                                     </label>
                                                     <p class="pl-1">atau seret ke sini</p>
                                                 </div>
-                                                <p class="text-[10px] text-slate-400">PNG, JPG, JPEG, WEBP, HEIC, HEIF hingga 10MB</p>
+                                                <p class="text-[10px] text-slate-400">PNG, JPG, JPEG, WEBP hingga 10MB</p>
                                             </div>
 
-                                            {{-- Beautiful Image Preview (visible when an image is selected and not loading) --}}
-                                            <div x-show="imagePreview && !imageLoading" x-cloak class="w-full flex flex-col items-center">
+                                            {{-- Beautiful Image Preview (visible when an image is selected) --}}
+                                            <div x-show="imagePreview" x-cloak class="w-full flex flex-col items-center">
                                                 <div class="relative w-full aspect-video rounded-lg overflow-hidden border border-slate-200 shadow-sm bg-slate-100">
                                                     <img :src="imagePreview" class="h-full w-full object-cover">
                                                     <button 
