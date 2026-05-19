@@ -63,27 +63,28 @@ class MuthowifPortfolioController extends Controller
             $file = $request->file('image');
             $tempPath = $file->getRealPath();
             
-            // Check if uploaded file is HEIC/HEIF and converter library is available
-            $isHeic = false;
+            // Check if uploaded file is HEIC or HEIF and converter library is available
+            $isHeicOrHeif = false;
             $hasConverter = class_exists('\Maestroerror\HeicToJpg');
 
             if ($hasConverter) {
                 try {
+                    // Detect by magic signature OR file extension (.heic or .heif)
                     if (\Maestroerror\HeicToJpg::isHeic($tempPath) || in_array(strtolower($file->getClientOriginalExtension()), ['heic', 'heif'], true)) {
-                        $isHeic = true;
+                        $isHeicOrHeif = true;
                     }
                 } catch (\Throwable $e) {
-                    Log::warning('Error checking if file is HEIC: ' . $e->getMessage());
+                    Log::warning('Error checking if file is HEIC/HEIF: ' . $e->getMessage());
                 }
             } else {
-                Log::warning('HEIC conversion library (Maestroerror\HeicToJpg) is not loaded or missing. Skipping HEIC conversion.');
+                Log::warning('HEIC/HEIF conversion library (Maestroerror\HeicToJpg) is not loaded or missing. Skipping conversion.');
             }
 
-            if ($isHeic && $hasConverter) {
+            if ($isHeicOrHeif && $hasConverter) {
                 // Generate a temp path for the converted JPEG
-                $tempJpg = tempnam(sys_get_temp_dir(), 'heic_') . '.jpg';
+                $tempJpg = tempnam(sys_get_temp_dir(), 'heic_heif_') . '.jpg';
                 try {
-                    // Convert HEIC to JPG
+                    // Convert both HEIC and HEIF to standard JPEG
                     \Maestroerror\HeicToJpg::convert($tempPath)->saveAs($tempJpg);
                     
                     // Store the converted JPG
@@ -94,7 +95,7 @@ class MuthowifPortfolioController extends Controller
                         unlink($tempJpg);
                     }
                 } catch (\Throwable $e) {
-                    Log::error('HEIC conversion to JPEG failed: ' . $e->getMessage());
+                    Log::error('HEIC/HEIF conversion to JPEG failed: ' . $e->getMessage());
                     // Fallback to storing original file
                     $path = $file->store('portfolio/' . $profile->id, 'local');
                 }
