@@ -63,21 +63,42 @@
                                         <textarea id="description" name="description" rows="3" class="mt-1 block w-full rounded-lg border-slate-300 shadow-sm focus:border-brand-500 focus:ring-brand-500 text-sm" placeholder="Ceritakan singkat pelayanan Anda di foto ini...">{{ old('description') }}</textarea>
                                         <x-input-error class="mt-2" :messages="$errors->get('description')" />
                                     </div>
-                                    <div>
+                                    <div x-data="{ imagePreview: null }">
                                         <x-input-label for="image" value="Unggah Foto" />
-                                        <div class="mt-1 flex justify-center rounded-xl border border-dashed border-slate-300 bg-slate-50/50 px-4 py-5 transition hover:bg-slate-50">
-                                            <div class="space-y-1 text-center">
+                                        <div class="mt-1 relative flex justify-center rounded-xl border border-dashed border-slate-300 bg-slate-50/50 px-4 py-5 transition hover:bg-slate-50 min-h-[140px] items-center">
+                                            
+                                            {{-- Upload placeholder (visible when no image is selected) --}}
+                                            <div x-show="!imagePreview" class="space-y-1 text-center">
                                                 <svg class="mx-auto h-10 w-10 text-slate-400" stroke="currentColor" fill="none" viewBox="0 0 48 48" aria-hidden="true">
                                                     <path d="M28 8H12a4 4 0 00-4 4v20m32-12v8m0 0v8a4 4 0 01-4 4H12a4 4 0 01-4-4v-4m32-4l-3.172-3.172a4 4 0 00-5.656 0L28 28M8 32l9.172-9.172a4 4 0 015.656 0L28 28m0 0l4 4m4-24h8m-4-4v8m-12 4h.02" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" />
                                                 </svg>
-                                                <div class="flex text-xs text-slate-600">
+                                                <div class="flex text-xs text-slate-600 justify-center">
                                                     <label for="image" class="relative cursor-pointer rounded-md font-semibold text-brand-600 focus-within:outline-none focus-within:ring-2 focus-within:ring-brand-500 focus-within:ring-offset-2 hover:text-brand-500">
                                                         <span>Pilih berkas</span>
-                                                        <input id="image" name="image" type="file" class="sr-only" accept="image/*" required>
+                                                        <input id="image" name="image" type="file" class="sr-only" accept="image/*" required
+                                                               @change="const file = $event.target.files[0]; if (file) { const reader = new FileReader(); reader.onload = (e) => { imagePreview = e.target.result; }; reader.readAsDataURL(file); } else { imagePreview = null; }">
                                                     </label>
                                                     <p class="pl-1">atau seret ke sini</p>
                                                 </div>
                                                 <p class="text-[10px] text-slate-400">PNG, JPG, JPEG, WEBP hingga 10MB</p>
+                                            </div>
+
+                                            {{-- Beautiful Image Preview (visible when an image is selected) --}}
+                                            <div x-show="imagePreview" x-cloak class="w-full flex flex-col items-center">
+                                                <div class="relative w-full aspect-video rounded-lg overflow-hidden border border-slate-200 shadow-sm bg-slate-100">
+                                                    <img :src="imagePreview" class="h-full w-full object-cover">
+                                                    <button 
+                                                        type="button"
+                                                        @click="imagePreview = null; document.getElementById('image').value = ''" 
+                                                        class="absolute top-2 right-2 flex h-8 w-8 items-center justify-center rounded-full bg-slate-900/70 text-white hover:bg-slate-900/90 shadow transition"
+                                                        title="Hapus pilihan foto"
+                                                    >
+                                                        <svg class="h-4.5 w-4.5" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+                                                        </svg>
+                                                    </button>
+                                                </div>
+                                                <p class="mt-2 text-xs text-slate-500">Foto terpilih. Klik silang di sudut kanan atas untuk membatalkan.</p>
                                             </div>
                                         </div>
                                         <x-input-error class="mt-2" :messages="$errors->get('image')" />
@@ -146,6 +167,12 @@
                                     </div>
                                 @endforeach
                             </div>
+
+                            @if ($portfolios->hasPages())
+                                <div class="mt-6 flex justify-center border-t border-slate-100 pt-4">
+                                    {{ $portfolios->links() }}
+                                </div>
+                            @endif
                         @endif
                     </div>
                 </div>

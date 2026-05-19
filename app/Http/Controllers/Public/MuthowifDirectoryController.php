@@ -249,6 +249,22 @@ class MuthowifDirectoryController extends Controller
         ];
     }
 
+    public function portfolioIndex(Request $request, MuthowifProfile $publicProfile): View
+    {
+        $publicProfile->load(['user']);
+
+        $portfolios = $publicProfile->portfolios()
+            ->orderBy('sort_order')
+            ->orderByDesc('created_at')
+            ->paginate(9)
+            ->withQueryString();
+
+        return view('layanan.portfolio.index', [
+            'profile' => $publicProfile,
+            'portfolios' => $portfolios,
+        ]);
+    }
+
     public function photo(MuthowifProfile $publicProfile): Response
     {
         $disk = Storage::disk('local');

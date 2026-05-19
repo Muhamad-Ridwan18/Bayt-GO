@@ -95,6 +95,7 @@ Route::get('/layanan', [MuthowifDirectoryController::class, 'index'])->name('lay
 Route::get('/layanan/{publicProfile}/foto', [MuthowifDirectoryController::class, 'photo'])->name('layanan.photo');
 Route::get('/layanan/portfolio/{portfolio}/foto', [MuthowifDirectoryController::class, 'portfolioPhoto'])->name('layanan.portfolio.photo');
 Route::get('/layanan/{publicProfile}/booking', [MuthowifDirectoryController::class, 'booking'])->name('layanan.book');
+Route::get('/layanan/{publicProfile}/portfolio', [MuthowifDirectoryController::class, 'portfolioIndex'])->name('layanan.portfolio.index');
 Route::get('/layanan/{publicProfile}', [MuthowifDirectoryController::class, 'show'])->name('layanan.show');
 
 Route::get('/terms', TermsController::class)->name('terms');

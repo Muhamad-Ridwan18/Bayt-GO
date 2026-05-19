@@ -14,7 +14,11 @@ class MuthowifPortfolioController extends Controller
     public function index(Request $request): View
     {
         $profile = $request->user()->muthowifProfile;
-        $portfolios = $profile->portfolios;
+        $portfolios = $profile->portfolios()
+            ->orderBy('sort_order')
+            ->orderByDesc('created_at')
+            ->paginate(6)
+            ->withQueryString();
 
         return view('muthowif.portfolio.index', compact('portfolios'));
     }

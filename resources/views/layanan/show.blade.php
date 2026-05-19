@@ -256,7 +256,7 @@
                             <p class="text-sm text-slate-600">Muthowif belum menambahkan foto portfolio.</p>
                         @else
                             <div class="grid grid-cols-2 gap-4 sm:grid-cols-3">
-                                @foreach ($profile->portfolios as $portfolio)
+                                @foreach ($profile->portfolios->take(6) as $portfolio)
                                     <div 
                                         @click="lightboxOpen = true; activeImage = '{{ route('layanan.portfolio.photo', $portfolio) }}'; activeTitle = '{{ e($portfolio->title) }}'; activeDesc = '{{ e($portfolio->description ?? '') }}'"
                                         class="group relative aspect-square overflow-hidden rounded-xl border border-slate-200 bg-slate-100 shadow-sm cursor-pointer hover:border-brand-300 hover:shadow-md transition duration-200"
@@ -271,6 +271,15 @@
                                     </div>
                                 @endforeach
                             </div>
+
+                            @if ($profile->portfolios->count() > 6)
+                                <div class="mt-5 text-center">
+                                    <a href="{{ route('layanan.portfolio.index', $profile) }}" class="inline-flex items-center gap-2 rounded-xl border border-slate-200 bg-white px-4 py-2 text-xs font-bold text-slate-700 shadow-sm hover:border-brand-300 hover:text-brand-700 transition">
+                                        <span>Lihat Semua Foto ({{ $profile->portfolios->count() }})</span>
+                                        <svg class="h-4 w-4" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M13.5 4.5L21 12m0 0l-7.5 7.5M21 12H3" /></svg>
+                                    </a>
+                                </div>
+                            @endif
 
                             {{-- Lightbox Modal Container --}}
                             <div 
