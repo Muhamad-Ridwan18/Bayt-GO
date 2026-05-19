@@ -28,6 +28,15 @@ class MuthowifPortfolioController extends Controller
     {
         $profile = $request->user()->muthowifProfile;
 
+        Log::info('--- MuthowifPortfolio Store Request Started ---', [
+            'muthowif_id' => $profile->id ?? null,
+            'title' => $request->input('title'),
+            'has_file_key' => $request->hasFile('image'),
+            'files_array' => array_keys($request->allFiles()),
+            'server_post_limit' => ini_get('post_max_size'),
+            'server_upload_limit' => ini_get('upload_max_filesize'),
+        ]);
+
         $validated = $request->validate([
             'title' => ['required', 'string', 'max:255'],
             'description' => ['nullable', 'string', 'max:2000'],
@@ -35,22 +44,47 @@ class MuthowifPortfolioController extends Controller
                 'required',
                 'max:10240',
                 function ($attribute, $value, $fail) {
-                    if (!$value->isValid()) {
-                        return $fail('Berkas foto tidak valid.');
+                    if (!$value) {
+                        Log::warning('Validation: Image file object is null.');
+                        return $fail('Berkas foto tidak ditemukan.');
                     }
+
+                    Log::info('Validation: File Object Status Checked', [
+                        'isValid' => $value->isValid(),
+                        'error_code' => $value->getError(),
+                        'error_message' => $value->getErrorMessage(),
+                        'client_name' => $value->getClientOriginalName(),
+                        'client_extension' => $value->getClientOriginalExtension(),
+                        'mime_type' => $value->getMimeType(),
+                        'size_bytes' => $value->getSize(),
+                    ]);
+
+                    if (!$value->isValid()) {
+                        Log::error('Validation Failed: Uploaded file is not valid', [
+                            'error_code' => $value->getError(),
+                            'error_message' => $value->getErrorMessage()
+                        ]);
+                        return $fail('Berkas foto tidak valid: ' . $value->getErrorMessage());
+                    }
+
                     $extension = strtolower($value->getClientOriginalExtension());
                     $allowedExtensions = ['jpeg', 'jpg', 'png', 'webp', 'heic', 'heif'];
                     if (!in_array($extension, $allowedExtensions, true)) {
+                        Log::warning('Validation Failed: Extension not allowed', ['ext' => $extension]);
                         return $fail('Format gambar harus jpeg, jpg, png, webp, heic, atau heif.');
                     }
+
                     $mime = $value->getMimeType();
                     $allowedMimes = [
                         'image/jpeg', 'image/png', 'image/webp', 'image/heic', 'image/heif',
                         'image/heic-sequence', 'image/heif-sequence', 'application/octet-stream'
                     ];
                     if (!in_array($mime, $allowedMimes, true) && !str_starts_with($mime, 'image/')) {
+                        Log::warning('Validation Failed: Mime-type not allowed', ['mime' => $mime]);
                         return $fail('Berkas yang diunggah harus berupa gambar.');
                     }
+
+                    Log::info('Validation: File validated successfully.');
                 }
             ],
         ], [
@@ -59,18 +93,39 @@ class MuthowifPortfolioController extends Controller
             'image.max' => 'Ukuran gambar maksimal adalah 10 MB.',
         ]);
 
+        Log::info('Validation: Request passed validation.');
+
         if ($request->hasFile('image')) {
             $file = $request->file('image');
             $tempPath = $file->getRealPath();
             
+            Log::info('Storage Process: Handling file upload...', [
+                'temp_path' => $tempPath,
+                'client_name' => $file->getClientOriginalName(),
+                'size' => $file->getSize(),
+            ]);
+
             // Check if uploaded file is HEIC or HEIF and converter library is available
             $isHeicOrHeif = false;
             $hasConverter = class_exists('\Maestroerror\HeicToJpg');
 
+            Log::info('Converter Check:', [
+                'has_converter_class' => $hasConverter,
+                'extension' => $file->getClientOriginalExtension(),
+            ]);
+
             if ($hasConverter) {
                 try {
                     // Detect by magic signature OR file extension (.heic or .heif)
-                    if (\Maestroerror\HeicToJpg::isHeic($tempPath) || in_array(strtolower($file->getClientOriginalExtension()), ['heic', 'heif'], true)) {
+                    $magicIsHeic = \Maestroerror\HeicToJpg::isHeic($tempPath);
+                    $extensionIsHeic = in_array(strtolower($file->getClientOriginalExtension()), ['heic', 'heif'], true);
+                    
+                    Log::info('HEIC/HEIF Detection Details:', [
+                        'magic_is_heic' => $magicIsHeic,
+                        'extension_is_heic_or_heif' => $extensionIsHeic
+                    ]);
+
+                    if ($magicIsHeic || $extensionIsHeic) {
                         $isHeicOrHeif = true;
                     }
                 } catch (\Throwable $e) {
@@ -83,34 +138,64 @@ class MuthowifPortfolioController extends Controller
             if ($isHeicOrHeif && $hasConverter) {
                 // Generate a temp path for the converted JPEG
                 $tempJpg = tempnam(sys_get_temp_dir(), 'heic_heif_') . '.jpg';
+                Log::info('HEIC/HEIF Conversion Triggered:', [
+                    'source_path' => $tempPath,
+                    'target_temp_jpg' => $tempJpg
+                ]);
+
                 try {
                     // Convert both HEIC and HEIF to standard JPEG
                     \Maestroerror\HeicToJpg::convert($tempPath)->saveAs($tempJpg);
                     
+                    Log::info('HEIC/HEIF Conversion Success on Temp Path:', [
+                        'exists' => file_exists($tempJpg),
+                        'size' => file_exists($tempJpg) ? filesize($tempJpg) : 0,
+                    ]);
+
                     // Store the converted JPG
                     $path = Storage::disk('local')->putFile('portfolio/' . $profile->id, new \Illuminate\Http\File($tempJpg));
-                    
+                    Log::info('Storage Process: Saved converted file to disk', ['path' => $path]);
+
                     // Clean up temp file
                     if (file_exists($tempJpg)) {
                         unlink($tempJpg);
+                        Log::info('Storage Process: Cleaned up temporary JPEG file.');
                     }
                 } catch (\Throwable $e) {
-                    Log::error('HEIC/HEIF conversion to JPEG failed: ' . $e->getMessage());
+                    Log::error('HEIC/HEIF conversion to JPEG failed: ' . $e->getMessage(), [
+                        'trace' => $e->getTraceAsString()
+                    ]);
                     // Fallback to storing original file
                     $path = $file->store('portfolio/' . $profile->id, 'local');
+                    Log::info('Storage Process: Saved fallback original file to disk', ['path' => $path]);
                 }
             } else {
                 // Standard image file or missing converter library
+                Log::info('Storage Process: Treating as standard image / bypassing converter.');
                 $path = $file->store('portfolio/' . $profile->id, 'local');
+                Log::info('Storage Process: Saved standard file to disk', ['path' => $path]);
             }
 
-            $profile->portfolios()->create([
+            Log::info('Database Process: Creating MuthowifPortfolio record...', [
+                'title' => $validated['title'],
+                'image_path' => $path,
+            ]);
+
+            $portfolioRecord = $profile->portfolios()->create([
                 'title' => $validated['title'],
                 'description' => $validated['description'] ?? null,
                 'image_path' => $path,
                 'sort_order' => $profile->portfolios()->count() + 1,
             ]);
+
+            Log::info('Database Process: Portfolio record created successfully.', [
+                'id' => $portfolioRecord->id
+            ]);
+        } else {
+            Log::warning('Storage Process: No file found in request under key "image".');
         }
+
+        Log::info('--- MuthowifPortfolio Store Request Completed Successfully ---');
 
         return redirect()
             ->route('muthowif.portfolio.index')
