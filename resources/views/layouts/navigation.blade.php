@@ -114,11 +114,6 @@
                             </span>
                         </x-nav-link>
                     @endif
-                    @if ($contactLink)
-                        <a href="{{ $contactLink }}" target="_blank" rel="noopener noreferrer" class="inline-flex items-center text-sm font-semibold text-gold-muted hover:text-baytgo transition-colors">
-                            {{ __('nav.contact_us') }}
-                        </a>
-                    @endif
                 </div>
             </div>
 
@@ -242,11 +237,6 @@
                         ></span>
                     </span>
                 </x-responsive-nav-link>
-            @endif
-            @if ($contactLink)
-                <a href="{{ $contactLink }}" target="_blank" rel="noopener noreferrer" class="block px-4 py-2.5 text-sm font-semibold text-gold-muted hover:bg-slate-50 transition-colors">
-                    {{ __('nav.contact_us') }}
-                </a>
             @endif
         </div>
 

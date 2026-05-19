@@ -30,11 +30,6 @@
         <div class="relative z-10 flex shrink-0 items-center gap-2">
             <div class="hidden items-center gap-2 sm:gap-3 lg:flex">
                 <x-language-switcher variant="segment" />
-                @if ($contactLink)
-                    <a href="{{ $contactLink }}" target="_blank" rel="noopener noreferrer" class="inline-flex items-center rounded-xl bg-baytgo px-4 py-2.5 text-sm font-semibold text-white shadow-md shadow-baytgo/20 transition hover:bg-baytgo-800">
-                        {{ __('nav.contact_us') }}
-                    </a>
-                @endif
                 @auth
                     <a href="{{ route('dashboard') }}" class="inline-flex rounded-xl border border-slate-200 px-3 py-2 text-sm font-semibold text-slate-700 transition hover:border-baytgo hover:text-baytgo">{{ __('nav.home') }}</a>
                 @else
@@ -81,9 +76,6 @@
             </div>
         </div>
         <div class="flex flex-wrap gap-2 border-t border-slate-100 px-4 py-4 sm:px-6">
-            @if ($contactLink)
-                <a href="{{ $contactLink }}" target="_blank" rel="noopener noreferrer" class="inline-flex flex-1 min-w-[8rem] items-center justify-center rounded-xl bg-baytgo px-4 py-2.5 text-sm font-semibold text-white shadow-md shadow-baytgo/20 transition hover:bg-baytgo-800">{{ __('nav.contact_us') }}</a>
-            @endif
             @auth
                 <a href="{{ route('dashboard') }}" class="inline-flex flex-1 min-w-[8rem] items-center justify-center rounded-xl border border-slate-200 px-3 py-2.5 text-sm font-semibold text-slate-700 transition hover:border-baytgo hover:text-baytgo">{{ __('nav.home') }}</a>
             @else
