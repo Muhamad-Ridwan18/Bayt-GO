@@ -102,6 +102,17 @@ Route::get('/artikel/{slug}', [ArticleController::class, 'show'])->name('article
 
 Route::get('/locale/{locale}', [LocaleController::class, 'switch'])->name('locale.switch');
 
+Route::get('/sitemap.xml', function () {
+    $articles = \App\Models\Article::query()->published()->latest()->get();
+    $muthowifs = \App\Models\MuthowifProfile::query()
+        ->where('verification_status', \App\Enums\MuthowifVerificationStatus::Approved)
+        ->get();
+
+    return response()
+        ->view('seo.sitemap', compact('articles', 'muthowifs'))
+        ->header('Content-Type', 'text/xml');
+})->name('seo.sitemap');
+
 Route::get('/', WelcomeController::class)->name('welcome');
 
 /** Hanya local: beberapa panel uji hanya bisa POST ke root URL tunnel (tanpa path). */

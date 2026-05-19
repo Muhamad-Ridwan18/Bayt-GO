@@ -14,7 +14,26 @@
     <head>
         <meta charset="utf-8">
         <meta name="viewport" content="width=device-width, initial-scale=1">
-        <title>{{ config('app.name', 'BaytGo') }} — {{ __('welcome.page_title') }}</title>
+        @php
+            $homeSchema = [
+                '@context' => 'https://schema.org',
+                '@type' => 'WebSite',
+                'name' => config('app.name', 'Bayt-GO'),
+                'url' => url('/'),
+                'description' => 'Platform penghubung Muthowif profesional terverifikasi & jasa tour guide ibadah Umroh dan Haji.',
+                'potentialAction' => [
+                    '@type' => 'SearchAction',
+                    'target' => url('/layanan') . '?q={search_term_string}',
+                    'query-input' => 'required name=search_term_string'
+                ]
+            ];
+            $homeDesc = "Temukan Muthowif terbaik dan jasa tour guide ibadah Umroh & Haji terpercaya di Bayt-GO. Bandingkan rating, ulasan, harga, dan pesan langsung asisten ibadah terverifikasi Anda secara mudah.";
+        @endphp
+        <x-seo-meta 
+            title="Jasa Tour Guide Ibadah Umroh & Haji | Muthowif Terpercaya" 
+            :description="$homeDesc" 
+            :schema="$homeSchema" 
+        />
         <link rel="preconnect" href="https://fonts.bunny.net">
         <link href="https://fonts.bunny.net/css?family=inter:400,500,600,700&family=plus-jakarta-sans:400,500,600,700&display=swap" rel="stylesheet">
         @vite(['resources/css/app.css', 'resources/js/app.js'])

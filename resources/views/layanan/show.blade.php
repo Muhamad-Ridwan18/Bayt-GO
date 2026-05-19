@@ -27,11 +27,40 @@
         .htmlspecialchars($initial, ENT_XML1 | ENT_QUOTES, 'UTF-8')
         .'</text></svg>'
     );
-
     $hasBackground = $profile->educationsForDisplay() !== [] || $profile->workExperiencesForDisplay() !== [];
+
+    $prices = collect([$group?->daily_price, $private?->daily_price])->filter();
+    $minPrice = $prices->min();
+
+    $muthowifSchema = [
+        '@context' => 'https://schema.org',
+        '@type' => 'LocalBusiness',
+        'name' => $profile->user->name,
+        'image' => route('layanan.photo', $profile),
+        'description' => "Jasa Muthowif profesional & tour guide ibadah Umroh dan Haji oleh " . $profile->user->name . " di Bayt-GO. Bandingkan rating, ulasan, dan pesan langsung.",
+        'url' => route('layanan.show', $profile),
+        'priceRange' => $minPrice ? "IDR " . number_format($minPrice, 0, ',', '.') : 'Hubungi Kontak',
+        'address' => [
+            '@type' => 'PostalAddress',
+            'addressCountry' => 'ID',
+        ],
+    ];
+
+    if ($reviewsCount > 0 && $avgRating !== null) {
+        $muthowifSchema['aggregateRating'] = [
+            '@type' => 'AggregateRating',
+            'ratingValue' => number_format((float)$avgRating, 1),
+            'reviewCount' => $reviewsCount,
+            'bestRating' => '5',
+            'worstRating' => '1',
+        ];
+    }
+
+    $seoTitle = "Muthowif " . $profile->user->name . " — Jasa Tour Guide Umroh & Haji Terpercaya";
+    $seoDesc = "Pesan jasa Muthowif " . $profile->user->name . " di Bayt-GO. Tour guide profesional terverifikasi untuk memandu ibadah Umroh & Haji Anda secara khusyuk dan aman.";
 @endphp
 
-<x-marketplace-layout :title="$profile->user->name" wide>
+<x-marketplace-layout :title="$seoTitle" :meta-description="$seoDesc" :schema="$muthowifSchema" wide>
     {{-- overflow-hidden: blob dekoratif (-left/-right) jangan memperlebar scroll horizontal di mobile --}}
     <div class="relative min-w-0 space-y-6 overflow-x-hidden">
         <div class="pointer-events-none absolute -left-24 top-0 h-64 w-64 rounded-full bg-brand-200/15 blur-3xl" aria-hidden="true"></div>

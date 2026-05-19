@@ -2,10 +2,31 @@
     $rtl = app()->getLocale() === 'ar';
     $title = $article->localized('title');
     $author = $article->localized('author');
+
+    $articleSchema = [
+        '@context' => 'https://schema.org',
+        '@type' => 'BlogPosting',
+        'headline' => $title,
+        'description' => $metaDescription,
+        'datePublished' => $article->published_at?->toIso8601String(),
+        'author' => [
+            '@type' => 'Person',
+            'name' => $author ?: 'Tim Bayt-GO',
+        ],
+        'publisher' => [
+            '@type' => 'Organization',
+            'name' => config('app.name', 'Bayt-GO'),
+            'logo' => [
+                '@type' => 'ImageObject',
+                'url' => asset('images/logo.png'),
+            ]
+        ]
+    ];
 @endphp
 <x-layouts.marketing-public
     :title="$title"
     :meta-description="$metaDescription"
+    :schema="$articleSchema"
     active-nav="articles"
 >
     <article class="border-b border-slate-100 bg-gradient-to-b from-welcomeCanvas to-white">

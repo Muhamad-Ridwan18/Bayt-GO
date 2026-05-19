@@ -1,2 +1,10 @@
 User-agent: *
-Disallow:
+Allow: /
+Allow: /layanan
+Allow: /artikel
+Disallow: /admin/
+Disallow: /dashboard/
+Disallow: /bookings/
+Disallow: /muthowif/bookings/
+
+Sitemap: https://baytgo.com/sitemap.xml

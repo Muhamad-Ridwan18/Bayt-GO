@@ -7,9 +7,14 @@
         'q' => $searchQuery !== '' ? $searchQuery : null,
     ]);
     $listQueryString = http_build_query($listQuery);
+    $seoTitle = __('layanan.page_title') . " | Jasa Tour Guide Umroh & Haji Terpercaya";
+    if (filled($searchQuery)) {
+        $seoTitle = "Cari Jasa Tour Guide Umroh/Haji '" . e($searchQuery) . "' — Muthowif Terverifikasi";
+    }
+    $seoDesc = "Temukan dan sewa jasa Muthowif profesional terverifikasi serta asisten tour guide ibadah Umroh & Haji terbaik di Bayt-GO. Bandingkan tarif harian, rating, dan ulasan.";
 @endphp
 
-<x-marketplace-layout :title="__('layanan.page_title')">
+<x-marketplace-layout :title="$seoTitle" :meta-description="$seoDesc">
     <div class="relative min-w-0 space-y-10 overflow-x-hidden">
         <div class="pointer-events-none absolute -left-24 top-0 h-72 w-72 rounded-full bg-brand-200/20 blur-3xl" aria-hidden="true"></div>
         <div class="pointer-events-none absolute -right-16 top-40 h-64 w-64 rounded-full bg-amber-200/20 blur-3xl" aria-hidden="true"></div>

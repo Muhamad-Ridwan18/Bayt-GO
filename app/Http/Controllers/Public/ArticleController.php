@@ -13,9 +13,13 @@ class ArticleController extends Controller
     {
         $articles = Article::query()->published()->ordered()->get();
 
+        $seoTitle = "Tips & Panduan Ibadah Umroh & Haji Terpercaya";
+        $seoDesc = "Kumpulan artikel edukasi terbaru, tips praktis, panduan ibadah Umroh dan Haji, serta panduan memilih asisten Muthowif & jasa tour guide terbaik dari Bayt-GO.";
+
         return view('articles.index', [
             'articles' => $articles,
-            'metaDescription' => __('articles.index_meta_description'),
+            'title' => $seoTitle,
+            'metaDescription' => $seoDesc,
         ]);
     }
 
