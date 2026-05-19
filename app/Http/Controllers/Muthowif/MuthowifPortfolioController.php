@@ -30,12 +30,31 @@ class MuthowifPortfolioController extends Controller
         $validated = $request->validate([
             'title' => ['required', 'string', 'max:255'],
             'description' => ['nullable', 'string', 'max:2000'],
-            'image' => ['required', 'image', 'mimes:jpeg,jpg,png,webp', 'max:10240'],
+            'image' => [
+                'required',
+                'max:10240',
+                function ($attribute, $value, $fail) {
+                    if (!$value->isValid()) {
+                        return $fail('Berkas foto tidak valid.');
+                    }
+                    $extension = strtolower($value->getClientOriginalExtension());
+                    $allowedExtensions = ['jpeg', 'jpg', 'png', 'webp', 'heic', 'heif'];
+                    if (!in_array($extension, $allowedExtensions, true)) {
+                        return $fail('Format gambar harus jpeg, jpg, png, webp, heic, atau heif.');
+                    }
+                    $mime = $value->getMimeType();
+                    $allowedMimes = [
+                        'image/jpeg', 'image/png', 'image/webp', 'image/heic', 'image/heif',
+                        'image/heic-sequence', 'image/heif-sequence', 'application/octet-stream'
+                    ];
+                    if (!in_array($mime, $allowedMimes, true) && !str_starts_with($mime, 'image/')) {
+                        return $fail('Berkas yang diunggah harus berupa gambar.');
+                    }
+                }
+            ],
         ], [
             'title.required' => 'Judul foto wajib diisi.',
             'image.required' => 'Foto wajib diunggah.',
-            'image.image' => 'File harus berupa gambar.',
-            'image.mimes' => 'Format gambar harus jpeg, jpg, png, atau webp.',
             'image.max' => 'Ukuran gambar maksimal adalah 10 MB.',
         ]);
 
