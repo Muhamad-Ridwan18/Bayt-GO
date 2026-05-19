@@ -67,7 +67,8 @@ class MuthowifDashboardCalendarDataBuilder
         $blockedDatesThisMonth = $mp->blockedDates()
             ->whereBetween('blocked_on', [$monthStartStr, $monthEndStr])
             ->orderBy('blocked_on')
-            ->get(['id', 'blocked_on', 'note']);
+            ->paginate(5, ['id', 'blocked_on', 'note'], 'blocked_page')
+            ->withQueryString();
 
         $blockedSet = $blockedDates
             ->pluck('blocked_on')

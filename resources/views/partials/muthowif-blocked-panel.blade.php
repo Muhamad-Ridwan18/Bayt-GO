@@ -20,5 +20,10 @@
                 </li>
             @endforeach
         </ul>
+        @if ($blockedDatesThisMonth->hasPages())
+            <div class="mt-4 border-t border-slate-100 pt-3">
+                {{ $blockedDatesThisMonth->links() }}
+            </div>
+        @endif
     @endif
 </div>
