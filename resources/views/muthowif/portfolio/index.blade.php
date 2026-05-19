@@ -76,7 +76,7 @@
                                                 <div class="flex text-xs text-slate-600 justify-center">
                                                     <label for="image" class="relative cursor-pointer rounded-md font-semibold text-brand-600 focus-within:outline-none focus-within:ring-2 focus-within:ring-brand-500 focus-within:ring-offset-2 hover:text-brand-500">
                                                         <span>Pilih berkas</span>
-                                                        <input id="image" name="image" type="file" class="sr-only" accept="image/*" required
+                                                        <input id="image" name="image" type="file" class="sr-only" accept="image/*,.heic,.heif" required
                                                                @change="
                                                                    const file = $event.target.files[0];
                                                                    if (file) {
@@ -90,7 +90,7 @@
                                                     </label>
                                                     <p class="pl-1">atau seret ke sini</p>
                                                 </div>
-                                                <p class="text-[10px] text-slate-400">PNG, JPG, JPEG, WEBP hingga 10MB</p>
+                                                <p class="text-[10px] text-slate-400">PNG, JPG, JPEG, WEBP, HEIC, HEIF hingga 10MB</p>
                                             </div>
 
                                             {{-- Beautiful Image Preview (visible when an image is selected) --}}

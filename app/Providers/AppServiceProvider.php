@@ -19,6 +19,15 @@ class AppServiceProvider extends ServiceProvider
      */
     public function register(): void
     {
+        // Manual Autoloader Registration Fallback for maestroerror/php-heic-to-jpg
+        if (file_exists(base_path('vendor/autoload.php'))) {
+            $loader = require base_path('vendor/autoload.php');
+            if ($loader instanceof \Composer\Autoload\ClassLoader) {
+                $loader->setPsr4('Maestroerror\\', base_path('vendor/maestroerror/php-heic-to-jpg/src'));
+                $loader->setPsr4('Maestroerror\\HeifConverter\\', base_path('vendor/maestroerror/heif-converter/src'));
+            }
+        }
+
         $this->app->bind(SnapPaymentProviderInterface::class, function ($app): SnapPaymentProviderInterface {
             return match (config('services.booking.payment_driver', 'doku')) {
                 'moota' => $app->make(MootaSnapPaymentProvider::class),

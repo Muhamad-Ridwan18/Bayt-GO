@@ -7,6 +7,7 @@ use App\Models\MuthowifPortfolio;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Storage;
+use Illuminate\Support\Facades\Log;
 use Illuminate\View\View;
 
 class MuthowifPortfolioController extends Controller
@@ -59,7 +60,42 @@ class MuthowifPortfolioController extends Controller
         ]);
 
         if ($request->hasFile('image')) {
-            $path = $request->file('image')->store('portfolio/' . $profile->id, 'local');
+            $file = $request->file('image');
+            $tempPath = $file->getRealPath();
+            
+            // Check if uploaded file is HEIC/HEIF
+            $isHeic = false;
+            try {
+                if (\Maestroerror\HeicToJpg::isHeic($tempPath) || in_array(strtolower($file->getClientOriginalExtension()), ['heic', 'heif'], true)) {
+                    $isHeic = true;
+                }
+            } catch (\Exception $e) {
+                Log::warning('Error checking if file is HEIC: ' . $e->getMessage());
+            }
+
+            if ($isHeic) {
+                // Generate a temp path for the converted JPEG
+                $tempJpg = tempnam(sys_get_temp_dir(), 'heic_') . '.jpg';
+                try {
+                    // Convert HEIC to JPG
+                    \Maestroerror\HeicToJpg::convert($tempPath)->saveAs($tempJpg);
+                    
+                    // Store the converted JPG
+                    $path = Storage::disk('local')->putFile('portfolio/' . $profile->id, new \Illuminate\Http\File($tempJpg));
+                    
+                    // Clean up temp file
+                    if (file_exists($tempJpg)) {
+                        unlink($tempJpg);
+                    }
+                } catch (\Exception $e) {
+                    Log::error('HEIC conversion to JPEG failed: ' . $e->getMessage());
+                    // Fallback to storing original file
+                    $path = $file->store('portfolio/' . $profile->id, 'local');
+                }
+            } else {
+                // Standard image file
+                $path = $file->store('portfolio/' . $profile->id, 'local');
+            }
 
             $profile->portfolios()->create([
                 'title' => $validated['title'],
