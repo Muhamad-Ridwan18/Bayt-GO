@@ -63,17 +63,23 @@ class MuthowifPortfolioController extends Controller
             $file = $request->file('image');
             $tempPath = $file->getRealPath();
             
-            // Check if uploaded file is HEIC/HEIF
+            // Check if uploaded file is HEIC/HEIF and converter library is available
             $isHeic = false;
-            try {
-                if (\Maestroerror\HeicToJpg::isHeic($tempPath) || in_array(strtolower($file->getClientOriginalExtension()), ['heic', 'heif'], true)) {
-                    $isHeic = true;
+            $hasConverter = class_exists('\Maestroerror\HeicToJpg');
+
+            if ($hasConverter) {
+                try {
+                    if (\Maestroerror\HeicToJpg::isHeic($tempPath) || in_array(strtolower($file->getClientOriginalExtension()), ['heic', 'heif'], true)) {
+                        $isHeic = true;
+                    }
+                } catch (\Throwable $e) {
+                    Log::warning('Error checking if file is HEIC: ' . $e->getMessage());
                 }
-            } catch (\Exception $e) {
-                Log::warning('Error checking if file is HEIC: ' . $e->getMessage());
+            } else {
+                Log::warning('HEIC conversion library (Maestroerror\HeicToJpg) is not loaded or missing. Skipping HEIC conversion.');
             }
 
-            if ($isHeic) {
+            if ($isHeic && $hasConverter) {
                 // Generate a temp path for the converted JPEG
                 $tempJpg = tempnam(sys_get_temp_dir(), 'heic_') . '.jpg';
                 try {
@@ -87,13 +93,13 @@ class MuthowifPortfolioController extends Controller
                     if (file_exists($tempJpg)) {
                         unlink($tempJpg);
                     }
-                } catch (\Exception $e) {
+                } catch (\Throwable $e) {
                     Log::error('HEIC conversion to JPEG failed: ' . $e->getMessage());
                     // Fallback to storing original file
                     $path = $file->store('portfolio/' . $profile->id, 'local');
                 }
             } else {
-                // Standard image file
+                // Standard image file or missing converter library
                 $path = $file->store('portfolio/' . $profile->id, 'local');
             }
 
