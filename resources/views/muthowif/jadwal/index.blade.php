@@ -30,20 +30,28 @@
                     <div class="w-1 shrink-0 bg-amber-500" aria-hidden="true"></div>
                     <div class="min-w-0 flex-1 p-5 sm:p-6">
                         <h2 class="font-semibold text-slate-900">{{ __('muthowif.jadwal.add_title') }}</h2>
-                        <form method="POST" action="{{ route('muthowif.jadwal.store') }}" class="mt-4 grid grid-cols-1 gap-4 sm:grid-cols-2">
+                        <form method="POST" action="{{ route('muthowif.jadwal.store') }}" class="mt-4 space-y-4">
                             @csrf
-                            <div>
-                                <x-input-label for="blocked_on" :value="__('muthowif.jadwal.date_label')" />
-                                <x-text-input id="blocked_on" name="blocked_on" type="date" class="mt-1 block w-full" required
-                                              :value="old('blocked_on')" min="{{ now()->toDateString() }}" />
-                                <x-input-error class="mt-2" :messages="$errors->get('blocked_on')" />
+                            <div class="grid grid-cols-1 gap-4 sm:grid-cols-2">
+                                <div>
+                                    <x-input-label for="start_date" value="Tanggal Mulai" />
+                                    <x-text-input id="start_date" name="start_date" type="date" class="mt-1 block w-full border-slate-300" required
+                                                  :value="old('start_date', now()->toDateString())" min="{{ now()->toDateString() }}" />
+                                    <x-input-error class="mt-2" :messages="$errors->get('start_date')" />
+                                </div>
+                                <div>
+                                    <x-input-label for="end_date" value="Tanggal Selesai" />
+                                    <x-text-input id="end_date" name="end_date" type="date" class="mt-1 block w-full border-slate-300" required
+                                                  :value="old('end_date', now()->toDateString())" min="{{ now()->toDateString() }}" />
+                                    <x-input-error class="mt-2" :messages="$errors->get('end_date')" />
+                                </div>
                             </div>
                             <div>
                                 <x-input-label for="note" :value="__('muthowif.jadwal.note_label')" />
-                                <x-text-input id="note" name="note" type="text" class="mt-1 block w-full" :value="old('note')" :placeholder="__('muthowif.jadwal.note_placeholder')" />
+                                <x-text-input id="note" name="note" type="text" class="mt-1 block w-full border-slate-300" :value="old('note')" :placeholder="__('muthowif.jadwal.note_placeholder')" />
                                 <x-input-error class="mt-2" :messages="$errors->get('note')" />
                             </div>
-                            <div class="sm:col-span-2">
+                            <div>
                                 <x-primary-button type="submit">{{ __('muthowif.jadwal.submit') }}</x-primary-button>
                             </div>
                         </form>

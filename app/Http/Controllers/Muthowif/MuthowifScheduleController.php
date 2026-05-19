@@ -31,21 +31,30 @@ class MuthowifScheduleController extends Controller
         $profile = $request->user()->muthowifProfile;
 
         $validated = $request->validate([
-            'blocked_on' => [
+            'start_date' => [
                 'required',
                 'date',
                 'after_or_equal:today',
-                Rule::unique('muthowif_blocked_dates', 'blocked_on')->where(
-                    fn ($q) => $q->where('muthowif_profile_id', $profile->id)
-                ),
+            ],
+            'end_date' => [
+                'required',
+                'date',
+                'after_or_equal:start_date',
             ],
             'note' => ['nullable', 'string', 'max:255'],
         ]);
 
-        $profile->blockedDates()->create([
-            'blocked_on' => $validated['blocked_on'],
-            'note' => $validated['note'] ?? null,
-        ]);
+        $startDate = \Carbon\Carbon::parse($validated['start_date']);
+        $endDate = \Carbon\Carbon::parse($validated['end_date']);
+
+        $current = $startDate->copy();
+        while ($current->lte($endDate)) {
+            $profile->blockedDates()->firstOrCreate(
+                ['blocked_on' => $current->toDateString()],
+                ['note' => $validated['note'] ?? null]
+            );
+            $current->addDay();
+        }
 
         return redirect()
             ->route('muthowif.jadwal.index')
