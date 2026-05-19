@@ -50,7 +50,7 @@
                     @endphp
                     <a href="{{ $logoHref }}" class="flex min-w-0 items-center gap-2">
                         <x-site-logo variant="nav" />
-                        <span class="hidden text-lg font-semibold text-slate-900 sm:inline">Bayt<span class="text-brand-600">Go</span></span>
+                        <span class="hidden text-lg font-bold tracking-tight text-baytgo sm:inline">Bayt<span class="text-gold-muted">Go</span></span>
                     </a>
                 </div>
 
@@ -112,7 +112,7 @@
                         </x-nav-link>
                     @endif
                     @if ($contactLink)
-                        <a href="{{ $contactLink }}" target="_blank" rel="noopener noreferrer" class="inline-flex items-center text-sm font-medium text-brand-700 hover:text-brand-800">
+                        <a href="{{ $contactLink }}" target="_blank" rel="noopener noreferrer" class="inline-flex items-center text-sm font-semibold text-gold-muted hover:text-baytgo transition-colors">
                             {{ __('nav.contact_us') }}
                         </a>
                     @endif
@@ -238,7 +238,7 @@
                 </x-responsive-nav-link>
             @endif
             @if ($contactLink)
-                <a href="{{ $contactLink }}" target="_blank" rel="noopener noreferrer" class="block px-4 py-2 text-sm font-medium text-brand-700 hover:bg-slate-50">
+                <a href="{{ $contactLink }}" target="_blank" rel="noopener noreferrer" class="block px-4 py-2.5 text-sm font-semibold text-gold-muted hover:bg-slate-50 transition-colors">
                     {{ __('nav.contact_us') }}
                 </a>
             @endif

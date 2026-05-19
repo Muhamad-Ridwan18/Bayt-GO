@@ -17,17 +17,17 @@
             <header class="shrink-0 px-4 sm:px-6 py-4 flex items-center justify-between max-w-lg mx-auto w-full sm:max-w-md">
                 <a href="{{ url('/') }}" class="flex items-center gap-2 group">
                     <x-site-logo variant="guest" />
-                    <span class="text-lg font-semibold tracking-tight text-slate-900">Bayt<span class="text-brand-600">Go</span></span>
+                    <span class="text-lg font-bold tracking-tight text-baytgo">Bayt<span class="text-gold-muted">Go</span></span>
                 </a>
                 <nav class="flex items-center gap-2 text-sm">
                     @auth
-                        <a href="{{ route('dashboard') }}" class="text-slate-600 hover:text-brand-700 font-medium transition">{{ __('nav.home') }}</a>
+                        <a href="{{ route('dashboard') }}" class="text-slate-600 hover:text-baytgo font-medium transition">{{ __('nav.home') }}</a>
                     @else
                         @if (Route::has('login'))
                             <a href="{{ route('login') }}" class="px-3 py-1.5 rounded-lg text-slate-600 hover:bg-white/80 font-medium transition">{{ __('layanan.guest_header_login') }}</a>
                         @endif
                         @if (Route::has('register'))
-                            <a href="{{ route('register') }}" class="px-3 py-1.5 rounded-lg bg-brand-600 text-white font-medium shadow-sm hover:bg-brand-700 transition">{{ __('layanan.guest_header_register') }}</a>
+                            <a href="{{ route('register') }}" class="px-3 py-1.5 rounded-lg bg-baytgo text-white font-semibold shadow-sm hover:bg-baytgo-800 transition">{{ __('layanan.guest_header_register') }}</a>
                         @endif
                     @endauth
                 </nav>

@@ -21,30 +21,7 @@
             @auth
                 @include('layouts.navigation')
             @else
-                <header class="sticky top-0 z-20 w-full border-b border-white/40 bg-white/75 shadow-sm shadow-slate-900/5 backdrop-blur-xl">
-                    <div class="mx-auto flex w-full min-w-0 {{ $wide ? 'max-w-7xl' : 'max-w-6xl' }} items-center justify-between gap-4 px-4 py-3.5 sm:px-6">
-                        <a href="{{ url('/') }}" class="group flex items-center gap-3">
-                            <x-site-logo variant="marketplace" />
-                            <span class="text-lg font-bold tracking-tight text-slate-900">Bayt<span class="text-brand-600">Go</span></span>
-                        </a>
-                        <nav class="flex flex-wrap items-center justify-end gap-1.5 text-sm sm:gap-2">
-                            <a href="{{ route('layanan.index') }}" class="rounded-xl px-3 py-2 font-medium text-slate-700 transition hover:bg-slate-100 {{ request()->routeIs('layanan.*') ? 'bg-brand-50 font-semibold text-brand-800 ring-1 ring-brand-200/70' : '' }}">
-                                {{ __('layanan.find_muthowif') }}
-                            </a>
-                            @if ($contactLink)
-                                <a href="{{ $contactLink }}" target="_blank" rel="noopener noreferrer" class="rounded-xl px-3 py-2 font-medium text-brand-700 transition hover:bg-brand-50/80">
-                                    {{ __('marketplace.layout.contact_us') }}
-                                </a>
-                            @endif
-                            @if (Route::has('login'))
-                                <a href="{{ route('login') }}" class="rounded-xl px-3 py-2 font-medium text-slate-700 transition hover:bg-slate-100">{{ __('layanan.guest_header_login') }}</a>
-                            @endif
-                            @if (Route::has('register'))
-                                <a href="{{ route('register') }}" class="rounded-xl bg-gradient-to-r from-brand-600 to-brand-700 px-4 py-2 font-semibold text-white shadow-md shadow-brand-600/20 transition hover:from-brand-500 hover:to-brand-600">{{ __('layanan.guest_header_register') }}</a>
-                            @endif
-                        </nav>
-                    </div>
-                </header>
+                <x-marketing-public-header active="layanan" />
             @endauth
 
             <main class="w-full min-w-0 flex-1 px-4 py-8 sm:px-6 sm:py-12">

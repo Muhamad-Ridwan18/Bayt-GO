@@ -6,9 +6,9 @@
     $contactDigits = preg_replace('/\D+/', '', $contactRaw ?? '') ?? '';
     $contactLink = $contactDigits !== '' ? 'https://wa.me/'.$contactDigits : null;
     $homeUrl = url('/');
-    $linkBase = 'rounded-lg px-3 py-2 transition text-sm font-semibold';
+    $linkBase = 'rounded-lg px-1.5 xl:px-3 py-2 transition text-xs xl:text-sm font-semibold whitespace-nowrap';
     $inactive = 'text-slate-600 hover:text-baytgo';
-    $activeClass = 'relative text-baytgo after:absolute after:inset-x-3 after:-bottom-0.5 after:h-0.5 after:rounded-full after:bg-gold';
+    $activeClass = 'relative text-baytgo after:absolute after:inset-x-1.5 xl:after:inset-x-3 after:-bottom-0.5 after:h-0.5 after:rounded-full after:bg-gold';
 @endphp
 <header class="sticky top-0 z-[100] border-b border-slate-100 bg-white/95 backdrop-blur-sm shadow-sm" x-data="{ open: false }" @keydown.window.escape="open = false" @resize.window="if (window.innerWidth >= 1024) open = false">
     <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 relative flex min-h-[4.25rem] items-center justify-between gap-3 lg:gap-6">
@@ -17,12 +17,13 @@
             <span class="truncate text-lg font-bold tracking-tight text-baytgo">Bayt<span class="text-gold-muted">Go</span></span>
         </a>
 
-        <nav class="hidden lg:flex absolute left-1/2 top-1/2 max-w-none -translate-x-1/2 -translate-y-1/2 items-center gap-0.5" aria-label="{{ __('welcome.nav_primary_aria') }}">
+        <nav class="hidden lg:flex absolute left-1/2 top-1/2 max-w-none -translate-x-1/2 -translate-y-1/2 items-center gap-0 xl:gap-0.5" aria-label="{{ __('welcome.nav_primary_aria') }}">
             <a href="{{ route('welcome') }}" class="{{ $linkBase }} {{ $active === 'welcome' ? $activeClass : $inactive }}">{{ __('welcome.nav_home') }}</a>
             <a href="{{ $homeUrl }}#cara-kerja" class="{{ $linkBase }} {{ $inactive }}">{{ __('welcome.nav_how') }}</a>
             <a href="{{ route('layanan.index') }}" class="{{ $linkBase }} {{ $active === 'layanan' ? $activeClass : $inactive }}">{{ __('welcome.nav_muthowif') }}</a>
             <a href="{{ route('articles.index') }}" class="{{ $linkBase }} {{ $active === 'articles' ? $activeClass : $inactive }}">{{ __('nav.articles') }}</a>
             <a href="{{ $homeUrl }}#harga" class="{{ $linkBase }} {{ $inactive }}">{{ __('welcome.nav_pricing') }}</a>
+            <a href="{{ $homeUrl }}#tentang" class="{{ $linkBase }} {{ $inactive }}">{{ __('welcome.nav_about') }}</a>
             <a href="{{ $homeUrl }}#faq" class="{{ $linkBase }} {{ $inactive }}">{{ __('welcome.nav_faq') }}</a>
         </nav>
 
@@ -70,6 +71,7 @@
             <a href="{{ route('layanan.index') }}" @click="open = false" class="block rounded-lg px-3 py-2.5 text-sm font-semibold {{ $active === 'layanan' ? 'bg-baytgo/8 text-baytgo' : 'text-slate-700 hover:bg-slate-50' }}">{{ __('welcome.nav_muthowif') }}</a>
             <a href="{{ route('articles.index') }}" @click="open = false" class="block rounded-lg px-3 py-2.5 text-sm font-semibold {{ $active === 'articles' ? 'bg-baytgo/8 text-baytgo' : 'text-slate-700 hover:bg-slate-50' }}">{{ __('nav.articles') }}</a>
             <a href="{{ $homeUrl }}#harga" @click="open = false" class="block rounded-lg px-3 py-2.5 text-sm font-semibold text-slate-700 hover:bg-slate-50">{{ __('welcome.nav_pricing') }}</a>
+            <a href="{{ $homeUrl }}#tentang" @click="open = false" class="block rounded-lg px-3 py-2.5 text-sm font-semibold text-slate-700 hover:bg-slate-50">{{ __('welcome.nav_about') }}</a>
             <a href="{{ $homeUrl }}#faq" @click="open = false" class="block rounded-lg px-3 py-2.5 text-sm font-semibold text-slate-700 hover:bg-slate-50">{{ __('welcome.nav_faq') }}</a>
         </nav>
         <div class="border-t border-slate-100 px-4 py-4 sm:px-6">
