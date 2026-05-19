@@ -164,6 +164,12 @@
 
             <div>
                 <x-input-label for="photo" value="Upload foto profil" />
+                @if (session()->has('registration_files.photo'))
+                    <div class="mb-2 p-2 bg-emerald-50 border border-emerald-200 rounded-lg flex items-center justify-between text-xs text-emerald-800">
+                        <span class="font-medium">✓ File terunggah: {{ session('registration_files.photo.original_name') }}</span>
+                        <span class="text-slate-400 font-normal italic">(Unggah file baru untuk mengganti)</span>
+                    </div>
+                @endif
                 <x-input-file id="photo" name="photo" accept="image/jpeg,image/png,image/webp" />
                 <p class="mt-1 text-xs text-slate-500">Wajah jelas — JPG, PNG, atau WebP, maks. 5 MB.</p>
                 <x-input-error :messages="$errors->get('photo')" class="mt-2" />
@@ -171,6 +177,12 @@
 
             <div>
                 <x-input-label for="ktp_image" value="Foto / scan KTP" />
+                @if (session()->has('registration_files.ktp_image'))
+                    <div class="mb-2 p-2 bg-emerald-50 border border-emerald-200 rounded-lg flex items-center justify-between text-xs text-emerald-800">
+                        <span class="font-medium">✓ File terunggah: {{ session('registration_files.ktp_image.original_name') }}</span>
+                        <span class="text-slate-400 font-normal italic">(Unggah file baru untuk mengganti)</span>
+                    </div>
+                @endif
                 <x-input-file id="ktp_image" name="ktp_image" accept="image/jpeg,image/png,image/webp" />
                 <p class="mt-1 text-xs text-slate-500">Pastikan teks pada KTP terbaca.</p>
                 <x-input-error :messages="$errors->get('ktp_image')" class="mt-2" />
@@ -215,6 +227,20 @@
                 <p class="mt-1 text-xs text-slate-500">{{ __('auth_custom.muthowif_referral_code_hint') }}</p>
                 <x-input-error :messages="$errors->get('muthowif_referral_code')" class="mt-2" />
             </div>
+
+            @if (session()->has('registration_files.supporting_documents') && count(session('registration_files.supporting_documents')) > 0)
+                <div class="space-y-2">
+                    <span class="block text-sm font-medium text-slate-700">Dokumen pendukung yang sudah terunggah:</span>
+                    <div class="grid grid-cols-1 gap-2">
+                        @foreach (session('registration_files.supporting_documents') as $doc)
+                            <div class="p-2 bg-emerald-50 border border-emerald-200 rounded-lg flex items-center justify-between text-xs text-emerald-800 font-medium">
+                                <span>✓ {{ $doc['original_name'] }}</span>
+                            </div>
+                        @endforeach
+                    </div>
+                    <p class="text-xs text-slate-500 italic mt-1">Anda bisa menambahkan dokumen baru di bawah ini jika diperlukan:</p>
+                </div>
+            @endif
 
             <x-repeating-file-field
                 name="supporting_documents"

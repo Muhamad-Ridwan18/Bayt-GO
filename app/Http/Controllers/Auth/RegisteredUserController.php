@@ -34,6 +34,12 @@ class RegisteredUserController extends Controller
         $registrationOtp = app(RegistrationOtpService::class);
         $otpEnabled = $registrationOtp->otpEnabled();
 
+        if (! session()->has('errors')) {
+            $sessionId = session()->getId();
+            Storage::disk('local')->deleteDirectory("tmp_registration/{$sessionId}");
+            session()->forget('registration_files');
+        }
+
         return view('auth.register', [
             'otpEnabled' => $otpEnabled,
         ]);
@@ -76,6 +82,8 @@ class RegisteredUserController extends Controller
      */
     public function store(Request $request): RedirectResponse
     {
+        $this->cacheUploadedFiles($request);
+
         $this->validateRegistrationRequest($request);
 
         $registrationOtp = app(RegistrationOtpService::class);
@@ -239,8 +247,8 @@ class RegisteredUserController extends Controller
             'work_experiences' => ['nullable', 'array'],
             'work_experiences.*' => ['nullable', 'string', 'max:2000'],
             'reference_text' => ['nullable', 'string', 'max:10000'],
-            'photo' => ['required_if:role,muthowif', 'nullable', 'file', 'mimes:jpeg,jpg,png,webp', 'max:5120'],
-            'ktp_image' => ['required_if:role,muthowif', 'nullable', 'file', 'mimes:jpeg,jpg,png,webp', 'max:5120'],
+            'photo' => [Rule::requiredIf(fn() => $request->input('role') === 'muthowif' && !session()->has('registration_files.photo')), 'nullable', 'file', 'mimes:jpeg,jpg,png,webp', 'max:5120'],
+            'ktp_image' => [Rule::requiredIf(fn() => $request->input('role') === 'muthowif' && !session()->has('registration_files.ktp_image')), 'nullable', 'file', 'mimes:jpeg,jpg,png,webp', 'max:5120'],
             'supporting_documents' => ['nullable', 'array', 'max:20'],
             'supporting_documents.*' => ['file', 'mimes:pdf,jpeg,jpg,png,webp', 'max:10240'],
             'muthowif_referral_code' => ['nullable', 'string', 'max:16'],
@@ -313,9 +321,27 @@ class RegisteredUserController extends Controller
 
             if ($user->isMuthowif()) {
                 $storedDir = 'muthowif_documents/'.$user->id;
+                Storage::disk('local')->makeDirectory($storedDir);
 
-                $photoPath = $request->file('photo')->store($storedDir, 'local');
-                $ktpPath = $request->file('ktp_image')->store($storedDir, 'local');
+                // Handle Photo (uploaded or cached)
+                $photoFile = $request->file('photo');
+                if ($photoFile && $photoFile->isValid()) {
+                    $photoPath = $photoFile->store($storedDir, 'local');
+                } else {
+                    $cachedPhoto = session('registration_files.photo');
+                    $photoPath = $storedDir . '/' . basename($cachedPhoto['path']);
+                    Storage::disk('local')->move($cachedPhoto['path'], $photoPath);
+                }
+
+                // Handle KTP Image (uploaded or cached)
+                $ktpFile = $request->file('ktp_image');
+                if ($ktpFile && $ktpFile->isValid()) {
+                    $ktpPath = $ktpFile->store($storedDir, 'local');
+                } else {
+                    $cachedKtp = session('registration_files.ktp_image');
+                    $ktpPath = $storedDir . '/' . basename($cachedKtp['path']);
+                    Storage::disk('local')->move($cachedKtp['path'], $ktpPath);
+                }
 
                 $languages = $this->requestStringList($request->input('languages'));
                 $educations = $this->requestStringList($request->input('educations'));
@@ -342,24 +368,43 @@ class RegisteredUserController extends Controller
                     'referred_by_muthowif_profile_id' => $referredById,
                 ]);
 
+                $supportingPaths = [];
                 $files = $request->file('supporting_documents', []);
                 if (! is_array($files)) {
                     $files = array_filter([$files]);
                 }
                 foreach ($files as $index => $file) {
-                    if (! $file || ! $file->isValid()) {
-                        continue;
+                    if ($file && $file->isValid()) {
+                        $path = $file->store($storedDir, 'local');
+                        $profile->supportingDocuments()->create([
+                            'path' => $path,
+                            'original_name' => $file->getClientOriginalName(),
+                            'sort_order' => count($supportingPaths),
+                        ]);
+                        $supportingPaths[] = $path;
                     }
-                    $path = $file->store($storedDir, 'local');
-                    $profile->supportingDocuments()->create([
-                        'path' => $path,
-                        'original_name' => $file->getClientOriginalName(),
-                        'sort_order' => (int) $index,
-                    ]);
+                }
+
+                $cachedDocs = session('registration_files.supporting_documents', []);
+                foreach ($cachedDocs as $doc) {
+                    if (Storage::disk('local')->exists($doc['path'])) {
+                        $dest = $storedDir . '/' . basename($doc['path']);
+                        Storage::disk('local')->move($doc['path'], $dest);
+                        $profile->supportingDocuments()->create([
+                            'path' => $dest,
+                            'original_name' => $doc['original_name'],
+                            'sort_order' => count($supportingPaths),
+                        ]);
+                        $supportingPaths[] = $dest;
+                    }
                 }
             }
 
             DB::commit();
+
+            session()->forget('registration_files');
+            $sessionId = session()->getId();
+            Storage::disk('local')->deleteDirectory("tmp_registration/{$sessionId}");
 
             if ($registrationOtp->otpEnabled()) {
                 $registrationOtp->clearVerificationSession();
@@ -534,23 +579,56 @@ class RegisteredUserController extends Controller
 
         $muthowifFiles = null;
         if ($request->string('role')->toString() === UserRole::Muthowif->value) {
-            $photoPath = $request->file('photo')->store($base, 'local');
-            $ktpPath = $request->file('ktp_image')->store($base, 'local');
+            Storage::disk('local')->makeDirectory($base);
+
+            // Handle Photo (uploaded or cached)
+            $photoFile = $request->file('photo');
+            if ($photoFile && $photoFile->isValid()) {
+                $photoPath = $photoFile->store($base, 'local');
+            } else {
+                $cachedPhoto = session('registration_files.photo');
+                $photoPath = $base . '/' . basename($cachedPhoto['path']);
+                Storage::disk('local')->move($cachedPhoto['path'], $photoPath);
+            }
+
+            // Handle KTP Image (uploaded or cached)
+            $ktpFile = $request->file('ktp_image');
+            if ($ktpFile && $ktpFile->isValid()) {
+                $ktpPath = $ktpFile->store($base, 'local');
+            } else {
+                $cachedKtp = session('registration_files.ktp_image');
+                $ktpPath = $base . '/' . basename($cachedKtp['path']);
+                Storage::disk('local')->move($cachedKtp['path'], $ktpPath);
+            }
+
             $supporting = [];
             $files = $request->file('supporting_documents', []);
             if (! is_array($files)) {
                 $files = array_filter([$files]);
             }
             foreach ($files as $index => $file) {
-                if (! $file || ! $file->isValid()) {
-                    continue;
+                if ($file && $file->isValid()) {
+                    $supporting[] = [
+                        'path' => $file->store($base, 'local'),
+                        'original_name' => $file->getClientOriginalName(),
+                        'sort_order' => count($supporting),
+                    ];
                 }
-                $supporting[] = [
-                    'path' => $file->store($base, 'local'),
-                    'original_name' => $file->getClientOriginalName(),
-                    'sort_order' => (int) $index,
-                ];
             }
+
+            $cachedDocs = session('registration_files.supporting_documents', []);
+            foreach ($cachedDocs as $doc) {
+                if (Storage::disk('local')->exists($doc['path'])) {
+                    $dest = $base . '/' . basename($doc['path']);
+                    Storage::disk('local')->move($doc['path'], $dest);
+                    $supporting[] = [
+                        'path' => $dest,
+                        'original_name' => $doc['original_name'],
+                        'sort_order' => count($supporting),
+                    ];
+                }
+            }
+
             $muthowifFiles = [
                 'photo_path' => $photoPath,
                 'ktp_path' => $ktpPath,
@@ -566,6 +644,10 @@ class RegisteredUserController extends Controller
                 'muthowif_files' => $muthowifFiles,
             ],
         ]);
+
+        session()->forget('registration_files');
+        $sessionId = session()->getId();
+        Storage::disk('local')->deleteDirectory("tmp_registration/{$sessionId}");
     }
 
     /**
@@ -620,5 +702,63 @@ class RegisteredUserController extends Controller
             array_map(static fn ($s): string => is_string($s) ? trim($s) : '', $input),
             static fn (string $s): bool => $s !== ''
         ));
+    }
+
+    private function cacheUploadedFiles(Request $request): void
+    {
+        $sessionId = session()->getId();
+        $baseDir = "tmp_registration/{$sessionId}";
+
+        // Cache photo
+        if ($request->hasFile('photo') && $request->file('photo')->isValid()) {
+            $oldPhoto = session('registration_files.photo');
+            if ($oldPhoto && Storage::disk('local')->exists($oldPhoto['path'])) {
+                Storage::disk('local')->delete($oldPhoto['path']);
+            }
+            $path = $request->file('photo')->store($baseDir . '/photo', 'local');
+            session([
+                'registration_files.photo' => [
+                    'path' => $path,
+                    'original_name' => $request->file('photo')->getClientOriginalName(),
+                ]
+            ]);
+        }
+
+        // Cache KTP Image
+        if ($request->hasFile('ktp_image') && $request->file('ktp_image')->isValid()) {
+            $oldKtp = session('registration_files.ktp_image');
+            if ($oldKtp && Storage::disk('local')->exists($oldKtp['path'])) {
+                Storage::disk('local')->delete($oldKtp['path']);
+            }
+            $path = $request->file('ktp_image')->store($baseDir . '/ktp_image', 'local');
+            session([
+                'registration_files.ktp_image' => [
+                    'path' => $path,
+                    'original_name' => $request->file('ktp_image')->getClientOriginalName(),
+                ]
+            ]);
+        }
+
+        // Cache supporting documents
+        if ($request->has('supporting_documents')) {
+            $files = $request->file('supporting_documents');
+            if (! is_array($files)) {
+                $files = array_filter([$files]);
+            }
+
+            $cachedDocs = session('registration_files.supporting_documents', []);
+
+            foreach ($files as $file) {
+                if ($file && $file->isValid()) {
+                    $path = $file->store($baseDir . '/supporting', 'local');
+                    $cachedDocs[] = [
+                        'path' => $path,
+                        'original_name' => $file->getClientOriginalName(),
+                    ];
+                }
+            }
+
+            session(['registration_files.supporting_documents' => $cachedDocs]);
+        }
     }
 }
