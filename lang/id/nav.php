@@ -26,4 +26,5 @@ return [
     'lang_en' => 'English',
     'lang_id' => 'Bahasa Indonesia',
     'lang_ar' => 'Arab',
+    'portfolio' => 'Portofolio',
 ];

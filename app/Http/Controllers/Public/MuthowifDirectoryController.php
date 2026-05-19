@@ -259,6 +259,16 @@ class MuthowifDirectoryController extends Controller
         return $disk->response($publicProfile->photo_path);
     }
 
+    public function portfolioPhoto(\App\Models\MuthowifPortfolio $portfolio): Response
+    {
+        $disk = Storage::disk('local');
+        if (! $disk->exists($portfolio->image_path)) {
+            abort(404);
+        }
+
+        return $disk->response($portfolio->image_path);
+    }
+
     private function emptyPaginator(Request $request): LengthAwarePaginator
     {
         return new LengthAwarePaginator([], 0, 12, 1, [

@@ -28,6 +28,7 @@ return [
         'packages_compact_hint' => 'Ringkasan harga di halaman ini. Untuk formulir lengkap paket dan dokumen, gunakan kartu pemesanan di atas.',
         'summary_packages' => 'Deskripsi lengkap, add-on & opsi',
         'summary_background' => 'Studi & pengalaman',
+        'summary_portfolio' => 'Galeri Foto & Portofolio bersama Jamaah',
         'summary_reviews' => 'Semua ulasan (:count)',
         'summary_reviews_none' => 'Ulasan (belum ada)',
         'summary_blocked' => 'Tanggal tidak tersedia (:count)',

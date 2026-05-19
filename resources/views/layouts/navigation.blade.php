@@ -93,6 +93,9 @@
                         <x-nav-link :href="route('muthowif.jadwal.index')" :active="request()->routeIs('muthowif.jadwal.*')">
                             {{ __('nav.day_off') }}
                         </x-nav-link>
+                        <x-nav-link :href="route('muthowif.portfolio.index')" :active="request()->routeIs('muthowif.portfolio.*')">
+                            {{ __('nav.portfolio') }}
+                        </x-nav-link>
                         <x-nav-link :href="route('muthowif.bookings.index')" :active="request()->routeIs('muthowif.bookings.*')">
                             <span class="inline-flex items-center gap-2">
                                 {{ __('nav.booking_requests') }}
@@ -218,6 +221,9 @@
                 </x-responsive-nav-link>
                 <x-responsive-nav-link :href="route('muthowif.jadwal.index')" :active="request()->routeIs('muthowif.jadwal.*')">
                     {{ __('nav.day_off') }}
+                </x-responsive-nav-link>
+                <x-responsive-nav-link :href="route('muthowif.portfolio.index')" :active="request()->routeIs('muthowif.portfolio.*')">
+                    {{ __('nav.portfolio') }}
                 </x-responsive-nav-link>
                 <x-responsive-nav-link :href="route('muthowif.bookings.index')" :active="request()->routeIs('muthowif.bookings.*')">
                     <span class="inline-flex items-center gap-2">

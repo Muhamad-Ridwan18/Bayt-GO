@@ -246,6 +246,66 @@
                     </div>
                 @endif
 
+                <details class="group rounded-2xl border border-slate-200/80 bg-white shadow-sm ring-1 ring-slate-100/80 open:shadow-md" {{ $profile->portfolios->isNotEmpty() ? 'open' : '' }}>
+                    <summary class="flex cursor-pointer list-none items-center justify-between gap-2 px-4 py-3 text-sm font-semibold text-slate-900 [&::-webkit-details-marker]:hidden">
+                        <span>{{ __('marketplace.show.summary_portfolio') }}</span>
+                        <svg class="h-5 w-5 shrink-0 text-slate-400 transition group-open:rotate-180" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true"><path fill-rule="evenodd" d="M5.23 7.21a.75.75 0 011.06.02L10 11.168l3.71-3.938a.75.75 0 111.08 1.04l-4.25 4.5a.75.75 0 01-1.08 0l-4.25-4.5a.75.75 0 01.02-1.06z" clip-rule="evenodd" /></svg>
+                    </summary>
+                    <div class="border-t border-slate-100 px-4 py-4" x-data="{ lightboxOpen: false, activeImage: '', activeTitle: '', activeDesc: '' }">
+                        @if ($profile->portfolios->isEmpty())
+                            <p class="text-sm text-slate-600">Muthowif belum menambahkan foto portfolio.</p>
+                        @else
+                            <div class="grid grid-cols-2 gap-4 sm:grid-cols-3">
+                                @foreach ($profile->portfolios as $portfolio)
+                                    <div 
+                                        @click="lightboxOpen = true; activeImage = '{{ route('layanan.portfolio.photo', $portfolio) }}'; activeTitle = '{{ e($portfolio->title) }}'; activeDesc = '{{ e($portfolio->description ?? '') }}'"
+                                        class="group relative aspect-square overflow-hidden rounded-xl border border-slate-200 bg-slate-100 shadow-sm cursor-pointer hover:border-brand-300 hover:shadow-md transition duration-200"
+                                    >
+                                        <img src="{{ route('layanan.portfolio.photo', $portfolio) }}" alt="{{ $portfolio->title }}" class="h-full w-full object-cover transition duration-300 group-hover:scale-105" loading="lazy">
+                                        <div class="absolute inset-0 bg-gradient-to-t from-slate-950/80 via-slate-950/20 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300 flex flex-col justify-end p-3">
+                                            <p class="text-xs font-bold text-white line-clamp-1">{{ $portfolio->title }}</p>
+                                            @if ($portfolio->description)
+                                                <p class="text-[10px] text-slate-200 line-clamp-1 mt-0.5">{{ $portfolio->description }}</p>
+                                            @endif
+                                        </div>
+                                    </div>
+                                @endforeach
+                            </div>
+
+                            {{-- Lightbox Modal Container --}}
+                            <div 
+                                x-show="lightboxOpen" 
+                                x-cloak
+                                class="fixed inset-0 z-[100] flex items-center justify-center bg-slate-950/90 p-4 backdrop-blur-sm"
+                                @keydown.escape.window="lightboxOpen = false"
+                            >
+                                <div 
+                                    class="relative max-w-3xl w-full bg-white rounded-2xl overflow-hidden shadow-2xl flex flex-col"
+                                    @click.away="lightboxOpen = false"
+                                >
+                                    {{-- Image --}}
+                                    <div class="relative bg-slate-950 max-h-[70vh] flex items-center justify-center">
+                                        <img :src="activeImage" :alt="activeTitle" class="max-h-[70vh] max-w-full object-contain">
+                                        <button 
+                                            @click="lightboxOpen = false" 
+                                            class="absolute top-4 right-4 flex h-10 w-10 items-center justify-center rounded-full bg-slate-950/60 text-white hover:bg-slate-950/80 transition"
+                                        >
+                                            <svg class="h-6 w-6" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+                                            </svg>
+                                        </button>
+                                    </div>
+                                    {{-- Info Panel --}}
+                                    <div class="p-5 border-t border-slate-100 bg-white">
+                                        <h3 class="text-lg font-bold text-slate-950" x-text="activeTitle"></h3>
+                                        <p class="mt-2 text-sm text-slate-600 leading-relaxed" x-text="activeDesc || 'Tidak ada keterangan tambahan.'"></p>
+                                    </div>
+                                </div>
+                            </div>
+                        @endif
+                    </div>
+                </details>
+
                 @if ($hasBackground)
                     <details class="group rounded-2xl border border-slate-200/80 bg-white shadow-sm ring-1 ring-slate-100/80 open:shadow-md">
                         <summary class="flex cursor-pointer list-none items-center justify-between gap-2 px-4 py-3 text-sm font-semibold text-slate-900 [&::-webkit-details-marker]:hidden">

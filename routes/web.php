@@ -19,6 +19,7 @@ use App\Http\Controllers\LocaleController;
 use App\Http\Controllers\MootaWebhookController;
 use App\Http\Controllers\Muthowif\BookingController as MuthowifBookingController;
 use App\Http\Controllers\Muthowif\MuthowifDashboardCalendarController;
+use App\Http\Controllers\Muthowif\MuthowifPortfolioController;
 use App\Http\Controllers\Muthowif\MuthowifScheduleController;
 use App\Http\Controllers\Muthowif\MuthowifServiceController;
 use App\Http\Controllers\Muthowif\WithdrawController as MuthowifWithdrawController;
@@ -92,6 +93,7 @@ Route::middleware(['moota.ip'])
 
 Route::get('/layanan', [MuthowifDirectoryController::class, 'index'])->name('layanan.index');
 Route::get('/layanan/{publicProfile}/foto', [MuthowifDirectoryController::class, 'photo'])->name('layanan.photo');
+Route::get('/layanan/portfolio/{portfolio}/foto', [MuthowifDirectoryController::class, 'portfolioPhoto'])->name('layanan.portfolio.photo');
 Route::get('/layanan/{publicProfile}/booking', [MuthowifDirectoryController::class, 'booking'])->name('layanan.book');
 Route::get('/layanan/{publicProfile}', [MuthowifDirectoryController::class, 'show'])->name('layanan.show');
 
@@ -227,6 +229,10 @@ Route::middleware('auth')->group(function () {
             Route::get('jadwal', [MuthowifScheduleController::class, 'index'])->name('jadwal.index');
             Route::post('jadwal', [MuthowifScheduleController::class, 'store'])->name('jadwal.store');
             Route::delete('jadwal/{blockedDate}', [MuthowifScheduleController::class, 'destroy'])->name('jadwal.destroy');
+
+            Route::get('portfolio', [MuthowifPortfolioController::class, 'index'])->name('portfolio.index');
+            Route::post('portfolio', [MuthowifPortfolioController::class, 'store'])->name('portfolio.store');
+            Route::delete('portfolio/{portfolio}', [MuthowifPortfolioController::class, 'destroy'])->name('portfolio.destroy');
 
             Route::get('bookings/live-index-fragment', [MuthowifBookingController::class, 'indexLiveFragment'])->name('bookings.index.live-fragment');
             Route::get('bookings/pending-incoming-count', [MuthowifBookingController::class, 'pendingIncomingCount'])->name('bookings.pending-incoming-count');

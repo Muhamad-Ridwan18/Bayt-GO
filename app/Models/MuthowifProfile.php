@@ -99,6 +99,11 @@ class MuthowifProfile extends Model
         return $this->hasMany(MuthowifBlockedDate::class)->orderBy('blocked_on');
     }
 
+    public function portfolios(): HasMany
+    {
+        return $this->hasMany(MuthowifPortfolio::class)->orderBy('sort_order')->orderBy('created_at', 'desc');
+    }
+
     public function bookings(): HasMany
     {
         return $this->hasMany(MuthowifBooking::class);

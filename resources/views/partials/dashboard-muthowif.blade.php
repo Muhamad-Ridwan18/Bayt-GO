@@ -239,6 +239,18 @@
                         <span class="mt-0.5 text-xs text-slate-500">{{ __('dashboard_muthowif.qa_help_desc') }}</span>
                     </a>
                 </div>
+                <a href="{{ route('muthowif.portfolio.index') }}" class="mt-3 group flex items-center justify-between gap-3 rounded-2xl border border-slate-200/90 bg-gradient-to-r from-sky-50 to-blue-50/50 p-4 shadow-sm transition hover:border-sky-300 hover:shadow-md focus:outline-none focus-visible:ring-2 focus-visible:ring-sky-500">
+                    <div class="flex items-center gap-3">
+                        <span class="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-sky-100 text-sky-700 ring-1 ring-sky-200" aria-hidden="true">
+                            <svg class="h-5 w-5" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.75" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M2.25 15.75l5.159-5.159a2.25 2.25 0 013.182 0l5.159 5.159m-1.5-1.5l1.409-1.409a2.25 2.25 0 013.182 0l2.909 2.909m-18 3.75h16.5a1.5 1.5 0 001.5-1.5V6a1.5 1.5 0 00-1.5-1.5H3.75A1.5 1.5 0 002.25 6v12a1.5 1.5 0 001.5 1.5zm10.5-11.25h.008v.008h-.008V8.25zm.375 0a.375.375 0 11-.75 0 .375.375 0 01.75 0z" /></svg>
+                        </span>
+                        <div class="text-left">
+                            <span class="block text-sm font-semibold text-slate-900">Kelola Galeri Foto</span>
+                            <span class="block text-[11px] text-slate-500">Upload portfolio bersama jamaah</span>
+                        </div>
+                    </div>
+                    <svg class="h-5 w-5 text-slate-400 transition-transform group-hover:translate-x-1" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M7.21 14.77a.75.75 0 01.02-1.06L11.168 10 7.23 6.29a.75.75 0 111.04-1.08l4.5 4.25a.75.75 0 010 1.08l-4.5 4.25a.75.75 0 01-1.06-.02z" clip-rule="evenodd" /></svg>
+                </a>
             </div>
 
             <div class="space-y-3">

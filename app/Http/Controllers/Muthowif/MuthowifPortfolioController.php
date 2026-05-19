@@ -1,0 +1,74 @@
+<?php
+
+namespace App\Http\Controllers\Muthowif;
+
+use App\Http\Controllers\Controller;
+use App\Models\MuthowifPortfolio;
+use Illuminate\Http\RedirectResponse;
+use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Storage;
+use Illuminate\View\View;
+
+class MuthowifPortfolioController extends Controller
+{
+    public function index(Request $request): View
+    {
+        $profile = $request->user()->muthowifProfile;
+        $portfolios = $profile->portfolios;
+
+        return view('muthowif.portfolio.index', compact('portfolios'));
+    }
+
+    public function store(Request $request): RedirectResponse
+    {
+        $profile = $request->user()->muthowifProfile;
+
+        $validated = $request->validate([
+            'title' => ['required', 'string', 'max:255'],
+            'description' => ['nullable', 'string', 'max:2000'],
+            'image' => ['required', 'image', 'mimes:jpeg,jpg,png,webp', 'max:10240'],
+        ], [
+            'title.required' => 'Judul foto wajib diisi.',
+            'image.required' => 'Foto wajib diunggah.',
+            'image.image' => 'File harus berupa gambar.',
+            'image.mimes' => 'Format gambar harus jpeg, jpg, png, atau webp.',
+            'image.max' => 'Ukuran gambar maksimal adalah 10 MB.',
+        ]);
+
+        if ($request->hasFile('image')) {
+            $path = $request->file('image')->store('portfolio/' . $profile->id, 'local');
+
+            $profile->portfolios()->create([
+                'title' => $validated['title'],
+                'description' => $validated['description'] ?? null,
+                'image_path' => $path,
+                'sort_order' => $profile->portfolios()->count() + 1,
+            ]);
+        }
+
+        return redirect()
+            ->route('muthowif.portfolio.index')
+            ->with('status', 'Foto portofolio berhasil ditambahkan!');
+    }
+
+    public function destroy(Request $request, MuthowifPortfolio $portfolio): RedirectResponse
+    {
+        $profile = $request->user()->muthowifProfile;
+
+        // Ensure owner
+        if ($portfolio->muthowif_profile_id !== $profile->id) {
+            abort(403);
+        }
+
+        // Delete file from disk
+        if (Storage::disk('local')->exists($portfolio->image_path)) {
+            Storage::disk('local')->delete($portfolio->image_path);
+        }
+
+        $portfolio->delete();
+
+        return redirect()
+            ->route('muthowif.portfolio.index')
+            ->with('status', 'Foto portofolio berhasil dihapus!');
+    }
+}

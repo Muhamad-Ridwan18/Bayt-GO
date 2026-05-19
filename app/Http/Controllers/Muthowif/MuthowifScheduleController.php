@@ -18,7 +18,7 @@ class MuthowifScheduleController extends Controller
         $upcoming = $profile->blockedDates()
             ->where('blocked_on', '>=', now()->toDateString())
             ->orderBy('blocked_on')
-            ->paginate(20)
+            ->paginate(5)
             ->withQueryString();
 
         return view('muthowif.jadwal.index', [

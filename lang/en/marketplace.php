@@ -28,6 +28,7 @@ return [
         'packages_compact_hint' => 'Pricing summary stays on this profile. Full package and upload fields are on the dedicated booking link above.',
         'summary_packages' => 'Full descriptions, add-ons & options',
         'summary_background' => 'Education & experience',
+        'summary_portfolio' => 'Photo Gallery & Portfolio with Pilgrims',
         'summary_reviews' => 'All reviews (:count)',
         'summary_reviews_none' => 'Reviews (none yet)',
         'summary_blocked' => 'Unavailable dates (:count)',
