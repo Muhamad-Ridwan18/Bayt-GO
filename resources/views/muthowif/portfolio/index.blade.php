@@ -65,7 +65,29 @@
                                         <textarea id="description" name="description" rows="3" class="mt-1 block w-full rounded-lg border-slate-300 shadow-sm focus:border-brand-500 focus:ring-brand-500 text-sm" placeholder="Ceritakan singkat pelayanan Anda di foto ini...">{{ old('description') }}</textarea>
                                         <x-input-error class="mt-2" :messages="$errors->get('description')" />
                                     </div>
-                                    <div x-data="{ previews: [] }">
+                                    <div
+                                        x-data="{
+                                            previews: [],
+                                            syncFiles(input) {
+                                                const transfer = new DataTransfer();
+                                                this.previews.forEach((preview) => transfer.items.add(preview.file));
+                                                input.files = transfer.files;
+                                            },
+                                            loadFiles(event) {
+                                                this.previews.forEach((preview) => URL.revokeObjectURL(preview.url));
+                                                this.previews = Array.from(event.target.files || []).map((file) => ({
+                                                    file,
+                                                    name: file.name,
+                                                    url: URL.createObjectURL(file),
+                                                }));
+                                            },
+                                            removeFile(index, input) {
+                                                URL.revokeObjectURL(this.previews[index].url);
+                                                this.previews.splice(index, 1);
+                                                this.syncFiles(input);
+                                            },
+                                        }"
+                                    >
                                         <x-input-label for="images" value="Unggah Foto (bisa banyak)" />
                                         <div class="mt-1 relative flex min-w-0 justify-center rounded-2xl border border-dashed border-sky-300 bg-sky-50/60 px-3 py-5 transition hover:border-sky-400 hover:bg-sky-50 min-h-[150px] items-center">
                                             <div class="min-w-0 space-y-1 text-center">
@@ -76,7 +98,7 @@
                                                     <label for="images" class="relative cursor-pointer rounded-xl bg-white px-3 py-2 font-semibold text-sky-700 shadow-sm ring-1 ring-sky-200 focus-within:outline-none focus-within:ring-2 focus-within:ring-sky-500 focus-within:ring-offset-2 hover:text-sky-800">
                                                         <span>Pilih banyak foto</span>
                                                         <input id="images" name="images[]" type="file" class="sr-only" accept="image/*,.heic,.heif" required multiple
-                                                            @change="previews = Array.from($event.target.files || []).map(file => ({ name: file.name, url: URL.createObjectURL(file) }))">
+                                                            @change="loadFiles($event)">
                                                     </label>
                                                 </div>
                                                 <p class="mx-auto max-w-[13rem] text-[10px] leading-snug text-slate-400">PNG/JPG/WEBP/HEIC, maks. 10MB per foto. Maks. 20 foto.</p>
@@ -95,7 +117,15 @@
                                         <template x-if="previews.length > 0">
                                             <div class="mt-3 grid max-h-48 grid-cols-2 gap-2 overflow-y-auto pr-1 sm:grid-cols-3">
                                                 <template x-for="preview in previews" :key="preview.url">
-                                                    <div class="overflow-hidden rounded-xl border border-slate-200 bg-white shadow-sm">
+                                                    <div class="relative overflow-hidden rounded-xl border border-slate-200 bg-white shadow-sm">
+                                                        <button
+                                                            type="button"
+                                                            class="absolute right-1.5 top-1.5 z-10 flex h-6 w-6 items-center justify-center rounded-full bg-slate-950/75 text-xs font-bold text-white shadow transition hover:bg-rose-600"
+                                                            title="Hapus foto dari pilihan"
+                                                            @click="removeFile(previews.indexOf(preview), document.getElementById('images'))"
+                                                        >
+                                                            &times;
+                                                        </button>
                                                         <img :src="preview.url" :alt="preview.name" class="h-16 w-full object-cover">
                                                         <p class="truncate px-2 py-1 text-[10px] font-medium text-slate-600" x-text="preview.name"></p>
                                                     </div>
@@ -212,7 +242,30 @@
                                                     >{{ old('description', $portfolio->description) }}</textarea>
                                                 </div>
 
-                                                <div x-data="{ previews: [] }">
+                                                <div
+                                                    x-data="{
+                                                        previews: [],
+                                                        inputId: 'portfolio_images_{{ $portfolio->id }}',
+                                                        syncFiles(input) {
+                                                            const transfer = new DataTransfer();
+                                                            this.previews.forEach((preview) => transfer.items.add(preview.file));
+                                                            input.files = transfer.files;
+                                                        },
+                                                        loadFiles(event) {
+                                                            this.previews.forEach((preview) => URL.revokeObjectURL(preview.url));
+                                                            this.previews = Array.from(event.target.files || []).map((file) => ({
+                                                                file,
+                                                                name: file.name,
+                                                                url: URL.createObjectURL(file),
+                                                            }));
+                                                        },
+                                                        removeFile(index, input) {
+                                                            URL.revokeObjectURL(this.previews[index].url);
+                                                            this.previews.splice(index, 1);
+                                                            this.syncFiles(input);
+                                                        },
+                                                    }"
+                                                >
                                                     <x-input-label for="portfolio_images_{{ $portfolio->id }}" value="Tambah Foto Baru (opsional)" />
                                                     <input
                                                         type="file"
@@ -221,7 +274,7 @@
                                                         accept="image/*,.heic,.heif"
                                                         multiple
                                                         class="mt-1 block w-full text-sm text-slate-600 file:mr-4 file:rounded-lg file:border-0 file:bg-sky-50 file:px-4 file:py-2 file:text-sm file:font-semibold file:text-sky-700 hover:file:bg-sky-100"
-                                                        @change="previews = Array.from($event.target.files || []).map(file => ({ name: file.name, url: URL.createObjectURL(file) }))"
+                                                        @change="loadFiles($event)"
                                                     />
                                                     <p class="mt-1 text-[11px] text-slate-500">Bisa pilih beberapa foto sekaligus.</p>
                                                     <template x-if="previews.length > 0">
@@ -229,7 +282,15 @@
                                                             <p class="mb-2 text-xs font-semibold text-slate-800"><span x-text="previews.length"></span> foto baru dipilih</p>
                                                             <div class="grid grid-cols-3 gap-2">
                                                                 <template x-for="preview in previews" :key="preview.url">
-                                                                    <div class="overflow-hidden rounded-lg bg-white shadow-sm ring-1 ring-slate-200">
+                                                                    <div class="relative overflow-hidden rounded-lg bg-white shadow-sm ring-1 ring-slate-200">
+                                                                        <button
+                                                                            type="button"
+                                                                            class="absolute right-1 top-1 z-10 flex h-5 w-5 items-center justify-center rounded-full bg-slate-950/75 text-[10px] font-bold text-white shadow transition hover:bg-rose-600"
+                                                                            title="Hapus foto dari pilihan"
+                                                                            @click="removeFile(previews.indexOf(preview), document.getElementById(inputId))"
+                                                                        >
+                                                                            &times;
+                                                                        </button>
                                                                         <img :src="preview.url" :alt="preview.name" class="h-16 w-full object-cover">
                                                                         <p class="truncate px-1.5 py-1 text-[10px] text-slate-600" x-text="preview.name"></p>
                                                                     </div>
