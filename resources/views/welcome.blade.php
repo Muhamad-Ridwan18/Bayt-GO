@@ -124,6 +124,27 @@
                     </div>
                 </section>
 
+                {{-- CTA --}}
+                <section class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-14">
+                    <div class="rounded-2xl bg-gradient-to-br from-baytgo via-baytgo-800 to-baytgo-950 p-8 sm:p-10 text-white shadow-xl relative overflow-hidden">
+                        <div class="absolute top-0 right-0 w-64 h-64 bg-gold/10 rounded-full blur-3xl -translate-y-1/2 translate-x-1/2 pointer-events-none" aria-hidden="true"></div>
+                        <div class="relative flex flex-col lg:flex-row lg:items-center lg:justify-between gap-8">
+                            <div>
+                                <p class="font-bold text-xl sm:text-2xl">{{ __('welcome.cta_title') }}</p>
+                                <p class="mt-2 text-white/85 text-sm sm:text-base max-w-xl">{{ __('welcome.cta_sub') }}</p>
+                            </div>
+                            <div class="flex flex-col sm:flex-row gap-3 shrink-0">
+                                @guest
+                                    <a href="{{ route('register') }}" class="inline-flex justify-center items-center px-6 py-3 rounded-xl bg-gold font-semibold text-baytgo-950 shadow hover:bg-gold-muted transition">{{ __('welcome.cta_register_pilgrim') }}</a>
+                                    <a href="{{ route('register') }}" class="inline-flex justify-center items-center px-6 py-3 rounded-xl border-2 border-white/30 text-white font-semibold hover:bg-white/10 transition">{{ __('welcome.cta_register_muthowif') }}</a>
+                                @else
+                                    <a href="{{ route('dashboard') }}" class="inline-flex justify-center items-center px-6 py-3 rounded-xl bg-gold font-semibold text-baytgo-950 shadow hover:bg-gold-muted transition">{{ __('welcome.cta_dashboard') }}</a>
+                                @endguest
+                            </div>
+                        </div>
+                    </div>
+                </section>
+
                 {{-- <div class="h-14 bg-white sm:h-16" aria-hidden="true"></div> --}}
 
                 {{-- Value Proposition --}}
@@ -472,27 +493,6 @@
                                 </div>
                             @endforeach
                         </dl>
-                    </div>
-                </section>
-
-                {{-- CTA --}}
-                <section class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-14">
-                    <div class="rounded-2xl bg-gradient-to-br from-baytgo via-baytgo-800 to-baytgo-950 p-8 sm:p-10 text-white shadow-xl relative overflow-hidden">
-                        <div class="absolute top-0 right-0 w-64 h-64 bg-gold/10 rounded-full blur-3xl -translate-y-1/2 translate-x-1/2 pointer-events-none" aria-hidden="true"></div>
-                        <div class="relative flex flex-col lg:flex-row lg:items-center lg:justify-between gap-8">
-                            <div>
-                                <p class="font-bold text-xl sm:text-2xl">{{ __('welcome.cta_title') }}</p>
-                                <p class="mt-2 text-white/85 text-sm sm:text-base max-w-xl">{{ __('welcome.cta_sub') }}</p>
-                            </div>
-                            <div class="flex flex-col sm:flex-row gap-3 shrink-0">
-                                @guest
-                                    <a href="{{ route('register') }}" class="inline-flex justify-center items-center px-6 py-3 rounded-xl bg-gold font-semibold text-baytgo-950 shadow hover:bg-gold-muted transition">{{ __('welcome.cta_register_pilgrim') }}</a>
-                                    <a href="{{ route('register') }}" class="inline-flex justify-center items-center px-6 py-3 rounded-xl border-2 border-white/30 text-white font-semibold hover:bg-white/10 transition">{{ __('welcome.cta_register_muthowif') }}</a>
-                                @else
-                                    <a href="{{ route('dashboard') }}" class="inline-flex justify-center items-center px-6 py-3 rounded-xl bg-gold font-semibold text-baytgo-950 shadow hover:bg-gold-muted transition">{{ __('welcome.cta_dashboard') }}</a>
-                                @endguest
-                            </div>
-                        </div>
                     </div>
                 </section>
             </main>
