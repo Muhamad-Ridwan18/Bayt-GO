@@ -11,8 +11,13 @@
         'bookings as pending_bookings_count' => fn ($q) => $q->where('status', BookingStatus::Pending),
         'bookings as confirmed_bookings_count' => fn ($q) => $q->where('status', BookingStatus::Confirmed),
     ]);
-    $mp->loadCount('services');
-    $hasServices = $mp->services_count > 0;
+    $validServicesCount = $mp->services()
+        ->whereNotNull('name')
+        ->where('name', '<>', '')
+        ->whereNotNull('daily_price')
+        ->where('daily_price', '>', 0)
+        ->count();
+    $hasServices = $validServicesCount > 0;
     $balance = (float) ($mp->wallet_balance ?? 0);
     $balanceFormatted = IndonesianNumber::formatThousands((string) (int) round($balance));
 
