@@ -247,7 +247,7 @@
                 label="Dokumen pendukung :"
                 item-label="Dokumen"
                 add-label="Tambah dokumen"
-                hint="PDF atau gambar — tiap file maks. 10 MB, hingga 20 file total."
+                hint="Contoh: CV, portofolio, sertifikat; PDF atau gambar — tiap file maks. 10 MB, hingga 20 file total."
             />
 
             <p class="text-sm font-medium text-slate-800 pt-2 border-t border-slate-100">Alamat &amp; identitas</p>
