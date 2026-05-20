@@ -32,7 +32,7 @@
         </div>
 
         <div class="flex items-center gap-4">
-            <x-primary-button>{{ __('profile.save') }}</x-primary-button>
+            <x-primary-button>Ubah password</x-primary-button>
         </div>
     </form>
 </section>

@@ -1,19 +1,43 @@
 <section>
     <header>
         <h2 class="text-lg font-semibold text-slate-900">
-            {{ __('profile_public.title') }}
+            Profil utama
         </h2>
 
         <p class="mt-1 text-sm text-slate-600">
-            {{ __('profile_public.subtitle') }}
+            Kelola data akun, profil publik, dan dokumen dari satu tempat.
         </p>
     </header>
+
+    <form id="send-verification" method="post" action="{{ route('verification.send') }}">
+        @csrf
+    </form>
 
     <form method="post" action="{{ route('profile.public.update') }}" enctype="multipart/form-data" class="mt-6 space-y-6">
         @csrf
         @method('patch')
 
         <div class="grid grid-cols-1 gap-4 sm:grid-cols-2">
+            <div>
+                <x-input-label for="public_name" :value="__('profile.fields.name')" />
+                <x-text-input id="public_name" name="name" type="text" class="mt-1 block w-full" :value="old('name', $user->name)" required autocomplete="name" />
+                <x-input-error class="mt-2" :messages="$errors->get('name')" />
+            </div>
+
+            <div>
+                <x-input-label for="public_email" :value="__('profile.fields.email')" />
+                <x-text-input id="public_email" name="email" type="email" class="mt-1 block w-full" :value="old('email', $user->email)" required autocomplete="username" />
+                <x-input-error class="mt-2" :messages="$errors->get('email')" />
+                @if ($user instanceof \Illuminate\Contracts\Auth\MustVerifyEmail && ! $user->hasVerifiedEmail())
+                    <p class="mt-2 text-xs text-slate-700">
+                        {{ __('profile.verification.unverified') }}
+                        <button form="send-verification" type="submit" class="font-medium text-brand-700 underline decoration-brand-700/30 underline-offset-2 hover:text-brand-800">
+                            {{ __('profile.verification.resend') }}
+                        </button>
+                    </p>
+                @endif
+            </div>
+
             <div>
                 <x-input-label for="public_phone" :value="__('profile_public.phone')" />
                 <x-text-input id="public_phone" name="phone" type="text" class="mt-1 block w-full" :value="old('phone', $muthowifProfile->phone)" />

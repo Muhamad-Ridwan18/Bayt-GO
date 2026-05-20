@@ -13,6 +13,7 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Redirect;
 use Illuminate\Support\Facades\Storage;
+use Illuminate\Validation\Rule;
 use Illuminate\Validation\ValidationException;
 use Illuminate\View\View;
 use Symfony\Component\HttpFoundation\Response;
@@ -55,6 +56,15 @@ class ProfileController extends Controller
         abort_unless($profile !== null, 403);
 
         $validated = $request->validate([
+            'name' => ['required', 'string', 'max:255'],
+            'email' => [
+                'required',
+                'string',
+                'lowercase',
+                'email',
+                'max:255',
+                Rule::unique(User::class)->ignore($user->id),
+            ],
             'phone' => ['nullable', 'string', 'max:32'],
             'address' => ['nullable', 'string', 'max:2000'],
             'birth_date' => ['nullable', 'date', 'before:today'],
@@ -74,6 +84,13 @@ class ProfileController extends Controller
             'delete_supporting_documents.*' => ['string'],
             'inviter_referral_code' => ['nullable', 'string', 'max:16'],
         ]);
+
+        $user->name = $validated['name'];
+        $user->email = $validated['email'];
+        if ($user->isDirty('email')) {
+            $user->email_verified_at = null;
+        }
+        $user->save();
 
         $profile->phone = $validated['phone'] ?? null;
         $profile->address = $validated['address'] ?? null;

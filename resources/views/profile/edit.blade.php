@@ -24,50 +24,46 @@
                 </div>
             </div>
 
-            <div class="overflow-hidden rounded-2xl border border-slate-200/90 bg-gradient-to-b from-white to-slate-50/80 shadow-sm ring-1 ring-slate-100/80">
-                <div class="flex min-w-0">
-                    <div class="w-1 shrink-0 bg-brand-500" aria-hidden="true"></div>
-                    <div class="min-w-0 flex-1 p-5 sm:p-6">
-                        <div class="max-w-xl">
-                            @include('profile.partials.update-profile-information-form')
-                        </div>
-                    </div>
-                </div>
-            </div>
-
-            <div class="overflow-hidden rounded-2xl border border-slate-200/90 bg-gradient-to-b from-white to-slate-50/80 shadow-sm ring-1 ring-slate-100/80">
-                <div class="flex min-w-0">
-                    <div class="w-1 shrink-0 bg-violet-500" aria-hidden="true"></div>
-                    <div class="min-w-0 flex-1 p-5 sm:p-6">
-                        <div class="max-w-xl">
-                            @include('profile.partials.update-password-form')
-                        </div>
-                    </div>
-                </div>
-            </div>
-
             @if ($muthowifProfile)
                 <div class="overflow-hidden rounded-2xl border border-slate-200/90 bg-gradient-to-b from-white to-slate-50/80 shadow-sm ring-1 ring-slate-100/80">
                     <div class="flex min-w-0">
-                        <div class="w-1 shrink-0 bg-emerald-500" aria-hidden="true"></div>
+                        <div class="w-1 shrink-0 bg-brand-500" aria-hidden="true"></div>
                         <div class="min-w-0 flex-1 p-5 sm:p-6">
-                            <div class="max-w-3xl">
+                            <div class="max-w-none">
                                 @include('profile.partials.update-public-profile-form')
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            @else
+                <div class="overflow-hidden rounded-2xl border border-slate-200/90 bg-gradient-to-b from-white to-slate-50/80 shadow-sm ring-1 ring-slate-100/80">
+                    <div class="flex min-w-0">
+                        <div class="w-1 shrink-0 bg-brand-500" aria-hidden="true"></div>
+                        <div class="min-w-0 flex-1 p-5 sm:p-6">
+                            <div class="max-w-xl">
+                                @include('profile.partials.update-profile-information-form')
                             </div>
                         </div>
                     </div>
                 </div>
             @endif
 
-            <div class="overflow-hidden rounded-2xl border border-slate-200/90 bg-gradient-to-b from-white to-slate-50/80 shadow-sm ring-1 ring-slate-100/80">
-                <div class="flex min-w-0">
-                    <div class="w-1 shrink-0 bg-rose-500" aria-hidden="true"></div>
-                    <div class="min-w-0 flex-1 p-5 sm:p-6">
-                        <div class="max-w-xl">
+            <div class="overflow-hidden rounded-2xl border border-slate-200/90 bg-white shadow-sm ring-1 ring-slate-100/80">
+                <details>
+                    <summary class="flex cursor-pointer items-center justify-between gap-4 px-5 py-4 text-sm font-semibold text-slate-900 transition hover:bg-slate-50 sm:px-6">
+                        <span>Keamanan akun</span>
+                        <span class="text-xs font-medium text-slate-500">Password & hapus akun</span>
+                    </summary>
+
+                    <div class="grid grid-cols-1 gap-6 border-t border-slate-100 p-5 sm:p-6 lg:grid-cols-2">
+                        <div class="rounded-2xl border border-slate-200 bg-slate-50/70 p-4">
+                            @include('profile.partials.update-password-form')
+                        </div>
+                        <div class="rounded-2xl border border-rose-100 bg-rose-50/50 p-4">
                             @include('profile.partials.delete-user-form')
                         </div>
                     </div>
-                </div>
+                </details>
             </div>
         </div>
     </div>
