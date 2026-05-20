@@ -150,17 +150,56 @@
                                             <img src="{{ route('layanan.portfolio.photo', $portfolio) }}" alt="{{ $portfolio->title }}" class="h-full w-full object-cover transition duration-300 group-hover:scale-105" loading="lazy">
                                         </div>
 
-                                        {{-- Info --}}
-                                        <div class="p-4 space-y-1">
-                                            <h3 class="font-bold text-slate-950 text-sm line-clamp-1">{{ $portfolio->title }}</h3>
-                                            @if ($portfolio->description)
-                                                <p class="text-xs text-slate-600 line-clamp-2 leading-relaxed">{{ $portfolio->description }}</p>
-                                            @else
-                                                <p class="text-xs text-slate-400 italic">Tidak ada keterangan.</p>
-                                            @endif
-                                        </div>
+                                        {{-- Edit Form --}}
+                                        <form method="POST" action="{{ route('muthowif.portfolio.update', $portfolio) }}" enctype="multipart/form-data" class="border-t border-slate-200 bg-white p-4 space-y-3">
+                                            @csrf
+                                            @method('PATCH')
 
-                                        {{-- Delete Button Overlay / Bottom Bar --}}
+                                            <div>
+                                                <x-input-label for="portfolio_title_{{ $portfolio->id }}" value="Judul Kegiatan" />
+                                                <x-text-input
+                                                    id="portfolio_title_{{ $portfolio->id }}"
+                                                    name="title"
+                                                    type="text"
+                                                    class="mt-1 block w-full border-slate-300 text-sm"
+                                                    required
+                                                    value="{{ old('title', $portfolio->title) }}"
+                                                />
+                                            </div>
+
+                                            <div>
+                                                <x-input-label for="portfolio_description_{{ $portfolio->id }}" value="Keterangan / Deskripsi" />
+                                                <textarea
+                                                    id="portfolio_description_{{ $portfolio->id }}"
+                                                    name="description"
+                                                    rows="2"
+                                                    class="mt-1 block w-full rounded-lg border-slate-300 text-sm shadow-sm focus:border-brand-500 focus:ring-brand-500"
+                                                >{{ old('description', $portfolio->description) }}</textarea>
+                                            </div>
+
+                                            <div>
+                                                <x-input-label for="portfolio_image_{{ $portfolio->id }}" value="Ganti Foto (opsional)" />
+                                                <x-input-file
+                                                    id="portfolio_image_{{ $portfolio->id }}"
+                                                    name="image"
+                                                    accept="image/*,.heic,.heif"
+                                                    class="mt-1"
+                                                />
+                                                <p class="mt-1 text-[11px] text-slate-500">Kosongkan jika ingin tetap memakai foto saat ini.</p>
+                                            </div>
+
+                                            <x-input-error class="mt-2" :messages="$errors->get('title')" />
+                                            <x-input-error class="mt-2" :messages="$errors->get('description')" />
+                                            <x-input-error class="mt-2" :messages="$errors->get('image')" />
+
+                                            <div class="flex justify-end">
+                                                <x-primary-button type="submit" class="justify-center text-xs">
+                                                    Simpan Perubahan
+                                                </x-primary-button>
+                                            </div>
+                                        </form>
+
+                                        {{-- Delete Button Bottom Bar --}}
                                         <div class="border-t border-slate-200 bg-white/80 p-2.5 flex justify-end">
                                             <form action="{{ route('muthowif.portfolio.destroy', $portfolio) }}" method="POST" onsubmit="return confirm('Apakah Anda yakin ingin menghapus foto portofolio ini?');">
                                                 @csrf

@@ -237,6 +237,7 @@ Route::middleware('auth')->group(function () {
 
             Route::get('portfolio', [MuthowifPortfolioController::class, 'index'])->name('portfolio.index');
             Route::post('portfolio', [MuthowifPortfolioController::class, 'store'])->name('portfolio.store');
+            Route::patch('portfolio/{portfolio}', [MuthowifPortfolioController::class, 'update'])->name('portfolio.update');
             Route::delete('portfolio/{portfolio}', [MuthowifPortfolioController::class, 'destroy'])->name('portfolio.destroy');
 
             Route::get('bookings/live-index-fragment', [MuthowifBookingController::class, 'indexLiveFragment'])->name('bookings.index.live-fragment');
