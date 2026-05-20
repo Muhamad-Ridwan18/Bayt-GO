@@ -182,6 +182,10 @@ Route::middleware('auth')->group(function () {
     Route::get('/profile', [ProfileController::class, 'edit'])->name('profile.edit');
     Route::patch('/profile', [ProfileController::class, 'update'])->name('profile.update');
     Route::patch('/profile/public', [ProfileController::class, 'updatePublicProfile'])->name('profile.public.update');
+    Route::get('/profile/public/photo', [ProfileController::class, 'publicPhoto'])->name('profile.public.photo');
+    Route::get('/profile/public/ktp', [ProfileController::class, 'publicKtp'])->name('profile.public.ktp');
+    Route::get('/profile/public/documents/{document}', [ProfileController::class, 'publicSupportingDocument'])
+        ->name('profile.public.document');
     Route::delete('/profile', [ProfileController::class, 'destroy'])->name('profile.destroy');
 
     Route::get('/chat/conversations', [GlobalChatController::class, 'index'])->name('chat.conversations');

@@ -39,11 +39,111 @@
             <x-input-error class="mt-2" :messages="$errors->get('address')" />
         </div>
 
-        <div>
-            <x-input-label for="public_photo" :value="__('profile_public.photo')" />
-            <x-input-file id="public_photo" name="photo" accept="image/jpeg,image/png,image/webp" />
-            <p class="mt-1 text-xs text-slate-500">{{ __('profile_public.photo_hint') }}</p>
-            <x-input-error class="mt-2" :messages="$errors->get('photo')" />
+        <div class="space-y-4 rounded-xl border border-slate-200 bg-slate-50/70 p-4">
+            <div>
+                <x-input-label for="public_photo" :value="__('profile_public.photo')" />
+                @if (filled($muthowifProfile->photo_path))
+                    <div class="mt-2 overflow-hidden rounded-xl border border-slate-200 bg-white p-3">
+                        <p class="mb-2 text-xs font-medium text-slate-600">{{ __('profile_public.current_photo') }}</p>
+                        <img
+                            src="{{ route('profile.public.photo') }}"
+                            alt="{{ __('profile_public.current_photo') }}"
+                            class="max-h-64 w-full rounded-lg bg-slate-100 object-contain"
+                        />
+                    </div>
+                @endif
+                <x-input-file id="public_photo" name="photo" accept="image/jpeg,image/png,image/webp" class="mt-2" />
+                <p class="mt-1 text-xs text-slate-500">{{ __('profile_public.photo_hint') }}</p>
+                <x-input-error class="mt-2" :messages="$errors->get('photo')" />
+            </div>
+
+            <div>
+                <x-input-label for="public_ktp_image" :value="__('profile_public.ktp_image')" />
+                @if (filled($muthowifProfile->ktp_image_path))
+                    <div class="mt-2 overflow-hidden rounded-xl border border-slate-200 bg-white p-3">
+                        <p class="mb-2 text-xs font-medium text-slate-600">{{ __('profile_public.current_ktp_image') }}</p>
+                        <img
+                            src="{{ route('profile.public.ktp') }}"
+                            alt="{{ __('profile_public.current_ktp_image') }}"
+                            class="max-h-64 w-full rounded-lg bg-slate-100 object-contain"
+                        />
+                    </div>
+                @endif
+                <x-input-file id="public_ktp_image" name="ktp_image" accept="image/jpeg,image/png,image/webp" class="mt-2" />
+                <p class="mt-1 text-xs text-slate-500">{{ __('profile_public.ktp_image_hint') }}</p>
+                <x-input-error class="mt-2" :messages="$errors->get('ktp_image')" />
+            </div>
+
+            <div>
+                <p class="text-sm font-medium text-slate-700">{{ __('profile_public.supporting_documents') }}</p>
+                @if ($muthowifProfile->supportingDocuments->isNotEmpty())
+                    <div class="mt-2 space-y-2">
+                        @foreach ($muthowifProfile->supportingDocuments as $document)
+                            @php
+                                $documentName = $document->original_name ?? basename($document->path);
+                                $documentUrl = route('profile.public.document', $document);
+                                $documentExtension = strtolower(pathinfo($documentName, PATHINFO_EXTENSION) ?: pathinfo($document->path, PATHINFO_EXTENSION));
+                                $isImageDocument = in_array($documentExtension, ['jpg', 'jpeg', 'png', 'webp'], true);
+                            @endphp
+                            <div class="space-y-3 rounded-lg border border-slate-200 bg-white p-3 text-sm">
+                                <div class="flex flex-wrap items-center justify-between gap-3">
+                                    <span class="min-w-0 flex-1 truncate text-slate-700">
+                                        {{ $documentName }}
+                                    </span>
+                                    <span class="flex items-center gap-3">
+                                        <a
+                                            href="{{ $documentUrl }}"
+                                            target="_blank"
+                                            rel="noopener"
+                                            class="font-medium text-brand-700 hover:text-brand-800"
+                                        >
+                                            {{ __('profile_public.open_preview') }}
+                                        </a>
+                                        <label class="inline-flex items-center gap-1.5 text-xs text-rose-700">
+                                            <input
+                                                type="checkbox"
+                                                name="delete_supporting_documents[]"
+                                                value="{{ $document->id }}"
+                                                class="rounded border-slate-300 text-rose-600 focus:ring-rose-500"
+                                            />
+                                            {{ __('profile_public.delete_document') }}
+                                        </label>
+                                    </span>
+                                </div>
+                                <div class="overflow-hidden rounded-lg border border-slate-100 bg-slate-50">
+                                    @if ($isImageDocument)
+                                        <img
+                                            src="{{ $documentUrl }}"
+                                            alt="{{ $documentName }}"
+                                            class="max-h-64 w-full object-contain"
+                                        />
+                                    @else
+                                        <iframe
+                                            src="{{ $documentUrl }}"
+                                            title="{{ $documentName }}"
+                                            class="h-64 w-full"
+                                        ></iframe>
+                                    @endif
+                                </div>
+                            </div>
+                        @endforeach
+                    </div>
+                    <p class="mt-2 text-xs text-slate-500">{{ __('profile_public.delete_document_hint') }}</p>
+                @else
+                    <p class="mt-1 text-xs text-slate-500">{{ __('profile_public.no_supporting_documents') }}</p>
+                @endif
+
+                <div class="mt-3">
+                    <x-repeating-file-field
+                        name="supporting_documents"
+                        :label="__('profile_public.add_supporting_documents')"
+                        :item-label="__('profile_public.supporting_document_item')"
+                        :add-label="__('profile_public.supporting_document_add')"
+                        :hint="__('profile_public.supporting_documents_hint')"
+                    />
+                </div>
+                <x-input-error class="mt-2" :messages="$errors->get('delete_supporting_documents')" />
+            </div>
         </div>
 
         <x-repeating-text-field
