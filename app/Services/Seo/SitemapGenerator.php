@@ -12,17 +12,17 @@ class SitemapGenerator
     {
         $types = ['home', 'categories', 'services', 'articles'];
 
-        $content = '<?xml version="1.0" encoding="UTF-8"?>\n';
-        $content .= '<sitemapindex xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">\n';
+        $content = "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n";
+        $content .= "<sitemapindex xmlns=\"http://www.sitemaps.org/schemas/sitemap/0.9\">\n";
 
         foreach ($types as $type) {
             $count = $this->pageCount($type);
 
             for ($page = 1; $page <= $count; $page++) {
-                $content .= '  <sitemap>\n';
-                $content .= '    <loc>' . e(route('seo.sitemap.page', ['type' => $type, 'page' => $page], true)) . '</loc>\n';
-                $content .= '    <lastmod>' . Carbon::now()->toIso8601String() . '</lastmod>\n';
-                $content .= '  </sitemap>\n';
+                $content .= "  <sitemap>\n";
+                $content .= "    <loc>" . e(route('seo.sitemap.page', ['type' => $type, 'page' => $page], true)) . "</loc>\n";
+                $content .= "    <lastmod>" . Carbon::now()->toIso8601String() . "</lastmod>\n";
+                $content .= "  </sitemap>\n";
             }
         }
 
@@ -41,16 +41,16 @@ class SitemapGenerator
             default => [],
         };
 
-        $content = '<?xml version="1.0" encoding="UTF-8"?>\n';
-        $content .= '<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">\n';
+        $content = "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n";
+        $content .= "<urlset xmlns=\"http://www.sitemaps.org/schemas/sitemap/0.9\">\n";
 
         foreach ($items as $item) {
-            $content .= '  <url>\n';
-            $content .= '    <loc>' . e($item['loc']) . '</loc>\n';
-            $content .= '    <lastmod>' . e($item['lastmod']) . '</lastmod>\n';
-            $content .= '    <changefreq>' . e($item['changefreq']) . '</changefreq>\n';
-            $content .= '    <priority>' . e($item['priority']) . '</priority>\n';
-            $content .= '  </url>\n';
+            $content .= "  <url>\n";
+            $content .= "    <loc>" . e($item['loc']) . "</loc>\n";
+            $content .= "    <lastmod>" . e($item['lastmod']) . "</lastmod>\n";
+            $content .= "    <changefreq>" . e($item['changefreq']) . "</changefreq>\n";
+            $content .= "    <priority>" . e($item['priority']) . "</priority>\n";
+            $content .= "  </url>\n";
         }
 
         $content .= '</urlset>';
