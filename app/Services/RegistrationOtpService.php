@@ -67,12 +67,8 @@ class RegistrationOtpService
         $greeting = $recipientName !== '' ? "Halo {$recipientName},\n\n" : '';
         $loginLink = rtrim(config('app.url', ''), '/') . route('login', [], false);
 
-        $message = "{$greeting}Pendaftaran muthowif Anda di {$appName} telah disetujui.\n\n" .
-            "Anda sekarang dapat masuk ke akun menggunakan email terdaftar.\n" .
-            "dan menentukan rate card harian mu😉\n" .
-            "{$loginLink}\n\n" .
-            "Terima kasih.\n\n" .
-            "Kode verifikasi Anda: *{$otp}*";
+        $message = "Kode verifikasi baytgo Anda: {$otp}\n\n" .
+            "Jangan bagikan kode ini kepada siapa pun. Berlaku 10 menit.";
 
         try {
             $this->fonnte->sendText(

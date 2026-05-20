@@ -96,7 +96,7 @@ class MuthowifVerificationController extends Controller
         if ($fonnteDial !== null && filled($token)) {
             $appName = config('app.name', 'BaytGo');
             $name = $profile->user->name;
-            $message = "Halo *{$name}*,\n\nPendaftaran muthowif Anda di *{$appName}* telah *disetujui*.\n\nAnda sekarang dapat masuk ke akun menggunakan email terdaftar.\n\nTerima kasih.";
+            $message = "Halo *{$name}*,\n\nPendaftaran muthowif Anda di *{$appName}* telah *disetujui*.\n\nAnda sekarang dapat masuk ke akun menggunakan email terdaftar.\nDan menentukan rate card harian mu😉\nhttps://baytgo.id/login\n\nTerima kasih.";
 
             try {
                 $this->fonnte->sendText(
