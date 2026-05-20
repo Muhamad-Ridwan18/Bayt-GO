@@ -39,45 +39,62 @@
             <x-input-error class="mt-2" :messages="$errors->get('address')" />
         </div>
 
-        <div class="space-y-4 rounded-xl border border-slate-200 bg-slate-50/70 p-4">
-            <div>
-                <x-input-label for="public_photo" :value="__('profile_public.photo')" />
-                @if (filled($muthowifProfile->photo_path))
-                    <div class="mt-2 overflow-hidden rounded-xl border border-slate-200 bg-white p-3">
-                        <p class="mb-2 text-xs font-medium text-slate-600">{{ __('profile_public.current_photo') }}</p>
-                        <img
-                            src="{{ route('profile.public.photo') }}"
-                            alt="{{ __('profile_public.current_photo') }}"
-                            class="max-h-64 w-full rounded-lg bg-slate-100 object-contain"
-                        />
-                    </div>
-                @endif
-                <x-input-file id="public_photo" name="photo" accept="image/jpeg,image/png,image/webp" class="mt-2" />
-                <p class="mt-1 text-xs text-slate-500">{{ __('profile_public.photo_hint') }}</p>
-                <x-input-error class="mt-2" :messages="$errors->get('photo')" />
+        <div class="rounded-2xl border border-slate-200 bg-white shadow-sm">
+            <div class="border-b border-slate-100 px-4 py-3">
+                <p class="text-sm font-semibold text-slate-900">Foto & dokumen</p>
+                <p class="mt-0.5 text-xs text-slate-500">Preview file lama tampil ringkas. Unggah file baru hanya jika ingin mengganti.</p>
             </div>
 
-            <div>
-                <x-input-label for="public_ktp_image" :value="__('profile_public.ktp_image')" />
-                @if (filled($muthowifProfile->ktp_image_path))
-                    <div class="mt-2 overflow-hidden rounded-xl border border-slate-200 bg-white p-3">
-                        <p class="mb-2 text-xs font-medium text-slate-600">{{ __('profile_public.current_ktp_image') }}</p>
-                        <img
-                            src="{{ route('profile.public.ktp') }}"
-                            alt="{{ __('profile_public.current_ktp_image') }}"
-                            class="max-h-64 w-full rounded-lg bg-slate-100 object-contain"
-                        />
+            <div class="space-y-5 p-4">
+                <div class="grid grid-cols-1 gap-4 sm:grid-cols-2">
+                    <div class="rounded-xl border border-slate-200 bg-slate-50/70 p-3">
+                        <x-input-label for="public_photo" :value="__('profile_public.photo')" />
+                        <div class="mt-2 overflow-hidden rounded-lg border border-slate-200 bg-white">
+                            @if (filled($muthowifProfile->photo_path))
+                                <img
+                                    src="{{ route('profile.public.photo') }}"
+                                    alt="{{ __('profile_public.current_photo') }}"
+                                    class="h-40 w-full object-cover"
+                                />
+                            @else
+                                <div class="flex h-40 items-center justify-center text-xs text-slate-400">Belum ada foto</div>
+                            @endif
+                        </div>
+                        <x-input-file id="public_photo" name="photo" accept="image/jpeg,image/png,image/webp" class="mt-3" />
+                        <p class="mt-1 text-xs text-slate-500">{{ __('profile_public.photo_hint') }}</p>
+                        <x-input-error class="mt-2" :messages="$errors->get('photo')" />
                     </div>
-                @endif
-                <x-input-file id="public_ktp_image" name="ktp_image" accept="image/jpeg,image/png,image/webp" class="mt-2" />
-                <p class="mt-1 text-xs text-slate-500">{{ __('profile_public.ktp_image_hint') }}</p>
-                <x-input-error class="mt-2" :messages="$errors->get('ktp_image')" />
-            </div>
 
-            <div>
-                <p class="text-sm font-medium text-slate-700">{{ __('profile_public.supporting_documents') }}</p>
+                    <div class="rounded-xl border border-slate-200 bg-slate-50/70 p-3">
+                        <x-input-label for="public_ktp_image" :value="__('profile_public.ktp_image')" />
+                        <div class="mt-2 overflow-hidden rounded-lg border border-slate-200 bg-white">
+                            @if (filled($muthowifProfile->ktp_image_path))
+                                <img
+                                    src="{{ route('profile.public.ktp') }}"
+                                    alt="{{ __('profile_public.current_ktp_image') }}"
+                                    class="h-40 w-full object-cover"
+                                />
+                            @else
+                                <div class="flex h-40 items-center justify-center text-xs text-slate-400">Belum ada KTP</div>
+                            @endif
+                        </div>
+                        <x-input-file id="public_ktp_image" name="ktp_image" accept="image/jpeg,image/png,image/webp" class="mt-3" />
+                        <p class="mt-1 text-xs text-slate-500">{{ __('profile_public.ktp_image_hint') }}</p>
+                        <x-input-error class="mt-2" :messages="$errors->get('ktp_image')" />
+                    </div>
+                </div>
+
+                <div class="rounded-xl border border-slate-200 bg-slate-50/70 p-3">
+                    <div class="flex items-center justify-between gap-3">
+                        <div>
+                            <p class="text-sm font-medium text-slate-700">{{ __('profile_public.supporting_documents') }}</p>
+                            <p class="text-xs text-slate-500">{{ __('profile_public.supporting_documents_hint') }}</p>
+                        </div>
+                    </div>
+                    
+                    <div class="mt-3">
                 @if ($muthowifProfile->supportingDocuments->isNotEmpty())
-                    <div class="mt-2 space-y-2">
+                    <div class="grid grid-cols-1 gap-3 sm:grid-cols-2">
                         @foreach ($muthowifProfile->supportingDocuments as $document)
                             @php
                                 $documentName = $document->original_name ?? basename($document->path);
@@ -85,7 +102,7 @@
                                 $documentExtension = strtolower(pathinfo($documentName, PATHINFO_EXTENSION) ?: pathinfo($document->path, PATHINFO_EXTENSION));
                                 $isImageDocument = in_array($documentExtension, ['jpg', 'jpeg', 'png', 'webp'], true);
                             @endphp
-                            <div class="space-y-3 rounded-lg border border-slate-200 bg-white p-3 text-sm">
+                            <div class="rounded-lg border border-slate-200 bg-white p-3 text-sm shadow-sm">
                                 <div class="flex flex-wrap items-center justify-between gap-3">
                                     <span class="min-w-0 flex-1 truncate text-slate-700">
                                         {{ $documentName }}
@@ -110,21 +127,26 @@
                                         </label>
                                     </span>
                                 </div>
-                                <div class="overflow-hidden rounded-lg border border-slate-100 bg-slate-50">
-                                    @if ($isImageDocument)
-                                        <img
-                                            src="{{ $documentUrl }}"
-                                            alt="{{ $documentName }}"
-                                            class="max-h-64 w-full object-contain"
-                                        />
-                                    @else
-                                        <iframe
-                                            src="{{ $documentUrl }}"
-                                            title="{{ $documentName }}"
-                                            class="h-64 w-full"
-                                        ></iframe>
-                                    @endif
-                                </div>
+                                <details class="mt-3 rounded-lg border border-slate-100 bg-slate-50">
+                                    <summary class="cursor-pointer px-3 py-2 text-xs font-medium text-slate-600 hover:text-brand-700">
+                                        Tampilkan preview
+                                    </summary>
+                                    <div class="overflow-hidden border-t border-slate-100 bg-white">
+                                        @if ($isImageDocument)
+                                            <img
+                                                src="{{ $documentUrl }}"
+                                                alt="{{ $documentName }}"
+                                                class="h-48 w-full object-contain"
+                                            />
+                                        @else
+                                            <iframe
+                                                src="{{ $documentUrl }}"
+                                                title="{{ $documentName }}"
+                                                class="h-48 w-full"
+                                            ></iframe>
+                                        @endif
+                                    </div>
+                                </details>
                             </div>
                         @endforeach
                     </div>
@@ -133,45 +155,59 @@
                     <p class="mt-1 text-xs text-slate-500">{{ __('profile_public.no_supporting_documents') }}</p>
                 @endif
 
-                <div class="mt-3">
-                    <x-repeating-file-field
-                        name="supporting_documents"
-                        :label="__('profile_public.add_supporting_documents')"
-                        :item-label="__('profile_public.supporting_document_item')"
-                        :add-label="__('profile_public.supporting_document_add')"
-                        :hint="__('profile_public.supporting_documents_hint')"
-                    />
+                    </div>
+
+                    <details class="mt-4 rounded-lg border border-dashed border-slate-300 bg-white">
+                        <summary class="cursor-pointer px-3 py-2 text-sm font-medium text-brand-700 hover:bg-brand-50/60">
+                            {{ __('profile_public.add_supporting_documents') }}
+                        </summary>
+                        <div class="border-t border-slate-100 p-3">
+                            <x-repeating-file-field
+                                name="supporting_documents"
+                                :item-label="__('profile_public.supporting_document_item')"
+                                :add-label="__('profile_public.supporting_document_add')"
+                                :hint="__('profile_public.supporting_documents_hint')"
+                            />
+                        </div>
+                    </details>
+                    <x-input-error class="mt-2" :messages="$errors->get('delete_supporting_documents')" />
                 </div>
-                <x-input-error class="mt-2" :messages="$errors->get('delete_supporting_documents')" />
             </div>
         </div>
 
-        <x-repeating-text-field
-            name="languages"
-            :label="__('profile_public.languages')"
-            :item-label="__('profile_public.language_item')"
-            :placeholder="__('profile_public.language_placeholder')"
-            :add-label="__('profile_public.language_add')"
-            :items="$muthowifProfile->languagesForDisplay() ?: ['']"
-        />
+        <details class="rounded-2xl border border-slate-200 bg-white shadow-sm">
+            <summary class="cursor-pointer px-4 py-3 text-sm font-semibold text-slate-900 hover:bg-slate-50">
+                Bahasa, pendidikan & pengalaman
+            </summary>
+            <div class="space-y-5 border-t border-slate-100 p-4">
+                <x-repeating-text-field
+                    name="languages"
+                    :label="__('profile_public.languages')"
+                    :item-label="__('profile_public.language_item')"
+                    :placeholder="__('profile_public.language_placeholder')"
+                    :add-label="__('profile_public.language_add')"
+                    :items="$muthowifProfile->languagesForDisplay() ?: ['']"
+                />
 
-        <x-repeating-text-field
-            name="educations"
-            :label="__('profile_public.education')"
-            :item-label="__('profile_public.education_item')"
-            :placeholder="__('profile_public.education_placeholder')"
-            :add-label="__('profile_public.education_add')"
-            :items="$muthowifProfile->educationsForDisplay() ?: ['']"
-        />
+                <x-repeating-text-field
+                    name="educations"
+                    :label="__('profile_public.education')"
+                    :item-label="__('profile_public.education_item')"
+                    :placeholder="__('profile_public.education_placeholder')"
+                    :add-label="__('profile_public.education_add')"
+                    :items="$muthowifProfile->educationsForDisplay() ?: ['']"
+                />
 
-        <x-repeating-text-field
-            name="work_experiences"
-            :label="__('profile_public.work')"
-            :item-label="__('profile_public.work_item')"
-            :placeholder="__('profile_public.work_placeholder')"
-            :add-label="__('profile_public.work_add')"
-            :items="$muthowifProfile->workExperiencesForDisplay() ?: ['']"
-        />
+                <x-repeating-text-field
+                    name="work_experiences"
+                    :label="__('profile_public.work')"
+                    :item-label="__('profile_public.work_item')"
+                    :placeholder="__('profile_public.work_placeholder')"
+                    :add-label="__('profile_public.work_add')"
+                    :items="$muthowifProfile->workExperiencesForDisplay() ?: ['']"
+                />
+            </div>
+        </details>
 
         <div>
             <x-input-label for="public_reference_text" :value="__('profile_public.reference')" />
