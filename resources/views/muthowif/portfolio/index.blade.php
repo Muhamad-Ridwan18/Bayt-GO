@@ -65,7 +65,7 @@
                                         <textarea id="description" name="description" rows="3" class="mt-1 block w-full rounded-lg border-slate-300 shadow-sm focus:border-brand-500 focus:ring-brand-500 text-sm" placeholder="Ceritakan singkat pelayanan Anda di foto ini...">{{ old('description') }}</textarea>
                                         <x-input-error class="mt-2" :messages="$errors->get('description')" />
                                     </div>
-                                    <div x-data="{ files: [] }">
+                                    <div x-data="{ previews: [] }">
                                         <x-input-label for="images" value="Unggah Foto (bisa banyak)" />
                                         <div class="mt-1 relative flex justify-center rounded-2xl border border-dashed border-sky-300 bg-sky-50/60 px-4 py-5 transition hover:border-sky-400 hover:bg-sky-50 min-h-[150px] items-center">
                                             <div class="space-y-1 text-center">
@@ -76,18 +76,28 @@
                                                     <label for="images" class="relative cursor-pointer rounded-xl bg-white px-3 py-2 font-semibold text-sky-700 shadow-sm ring-1 ring-sky-200 focus-within:outline-none focus-within:ring-2 focus-within:ring-sky-500 focus-within:ring-offset-2 hover:text-sky-800">
                                                         <span>Pilih banyak foto</span>
                                                         <input id="images" name="images[]" type="file" class="sr-only" accept="image/*,.heic,.heif" required multiple
-                                                            @change="files = Array.from($event.target.files || [])">
+                                                            @change="previews = Array.from($event.target.files || []).map(file => ({ name: file.name, url: URL.createObjectURL(file) }))">
                                                     </label>
                                                 </div>
                                                 <p class="text-[10px] text-slate-400">PNG, JPG, JPEG, WEBP, HEIC, HEIF hingga 10MB per foto (maks. 20 foto)</p>
-                                                <template x-if="files.length > 0">
+                                                <template x-if="previews.length > 0">
                                                     <div class="mt-3 rounded-xl border border-sky-100 bg-white px-3 py-2 text-left shadow-sm">
-                                                        <p class="text-xs font-semibold text-slate-800"><span x-text="files.length"></span> foto dipilih</p>
-                                                        <p class="mt-1 truncate text-[11px] text-slate-500" x-text="files.map(file => file.name).join(', ')"></p>
+                                                        <p class="text-xs font-semibold text-slate-800"><span x-text="previews.length"></span> foto dipilih</p>
+                                                        <p class="mt-1 truncate text-[11px] text-slate-500" x-text="previews.map(file => file.name).join(', ')"></p>
                                                     </div>
                                                 </template>
                                             </div>
                                         </div>
+                                        <template x-if="previews.length > 0">
+                                            <div class="mt-3 grid grid-cols-3 gap-2">
+                                                <template x-for="preview in previews" :key="preview.url">
+                                                    <div class="overflow-hidden rounded-xl border border-slate-200 bg-white shadow-sm">
+                                                        <img :src="preview.url" :alt="preview.name" class="h-20 w-full object-cover">
+                                                        <p class="truncate px-2 py-1 text-[10px] font-medium text-slate-600" x-text="preview.name"></p>
+                                                    </div>
+                                                </template>
+                                            </div>
+                                        </template>
                                         <x-input-error class="mt-2" :messages="$errors->get('images')" />
                                         @foreach ($errors->messages() as $key => $messages)
                                             @if (str_starts_with($key, 'images.'))
@@ -198,16 +208,31 @@
                                                     >{{ old('description', $portfolio->description) }}</textarea>
                                                 </div>
 
-                                                <div>
+                                                <div x-data="{ previews: [] }">
                                                     <x-input-label for="portfolio_images_{{ $portfolio->id }}" value="Tambah Foto Baru (opsional)" />
-                                                    <x-input-file
+                                                    <input
+                                                        type="file"
                                                         id="portfolio_images_{{ $portfolio->id }}"
                                                         name="images[]"
                                                         accept="image/*,.heic,.heif"
-                                                        class="mt-1"
                                                         multiple
+                                                        class="mt-1 block w-full text-sm text-slate-600 file:mr-4 file:rounded-lg file:border-0 file:bg-sky-50 file:px-4 file:py-2 file:text-sm file:font-semibold file:text-sky-700 hover:file:bg-sky-100"
+                                                        @change="previews = Array.from($event.target.files || []).map(file => ({ name: file.name, url: URL.createObjectURL(file) }))"
                                                     />
                                                     <p class="mt-1 text-[11px] text-slate-500">Bisa pilih beberapa foto sekaligus.</p>
+                                                    <template x-if="previews.length > 0">
+                                                        <div class="mt-3 rounded-xl border border-sky-100 bg-sky-50/60 p-2">
+                                                            <p class="mb-2 text-xs font-semibold text-slate-800"><span x-text="previews.length"></span> foto baru dipilih</p>
+                                                            <div class="grid grid-cols-3 gap-2">
+                                                                <template x-for="preview in previews" :key="preview.url">
+                                                                    <div class="overflow-hidden rounded-lg bg-white shadow-sm ring-1 ring-slate-200">
+                                                                        <img :src="preview.url" :alt="preview.name" class="h-16 w-full object-cover">
+                                                                        <p class="truncate px-1.5 py-1 text-[10px] text-slate-600" x-text="preview.name"></p>
+                                                                    </div>
+                                                                </template>
+                                                            </div>
+                                                        </div>
+                                                    </template>
                                                 </div>
 
                                                 @if ($portfolio->images->isNotEmpty())
