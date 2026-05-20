@@ -255,9 +255,9 @@
                             <div class="flex items-start justify-between gap-2">
                                 <div>
                                     <p class="text-sm font-semibold text-slate-900 flex items-center gap-1">
-                                        <span class="text-brand-600 text-lg leading-none">+</span> Add Ons
+                                        <span class="text-brand-600 text-lg leading-none"></span> Add Ons
                                     </p>
-                                    <p class="text-xs text-slate-500 mt-0.5">Tambahkan opsi add ons tambahan untuk layanan ini.</p>
+                                    <p class="text-xs text-slate-500 mt-0.5">Tambahkan opsi add ons untuk layanan ini beserta jumlah orang disetiap add-ons nya.</p>
                                 </div>
                                 <button type="button" @click="rows.push({ name: '', price: '' })"
                                         class="shrink-0 text-xs font-semibold text-brand-700 hover:text-brand-800">+ Baris</button>
@@ -269,7 +269,7 @@
                                         <label class="block text-xs font-medium text-slate-600 mb-1">Nama Add Ons</label>
                                         <input type="text" :name="'add_ons[' + index + '][name]'" x-model="row.name"
                                                class="block w-full rounded-lg border-slate-300 text-sm shadow-sm focus:border-brand-500 focus:ring-brand-500"
-                                               placeholder="Contoh: City Tour Thaif" />
+                                               placeholder="Contoh: City Tour Thaif small family (1-4 orang)" />
                                     </div>
                                     <div class="flex gap-2 items-end">
                                         <div class="flex-1">
