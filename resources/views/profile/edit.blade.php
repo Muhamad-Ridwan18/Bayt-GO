@@ -1,41 +1,117 @@
 <x-app-layout>
-    <div class="relative min-h-[calc(100vh-4rem)] overflow-hidden bg-gradient-to-b from-slate-100 via-slate-50 to-white py-6 sm:py-8">
-        <div class="pointer-events-none absolute inset-0 bg-[radial-gradient(ellipse_80%_40%_at_50%_-10%,rgba(120,53,15,0.06),transparent)]"></div>
-        <div class="relative mx-auto max-w-4xl space-y-6 px-4 sm:px-6 lg:px-8">
-            {{-- Hero --}}
-            <div class="relative overflow-hidden rounded-2xl bg-gradient-to-br from-slate-900 via-violet-950 to-brand-900 p-5 text-white shadow-lg shadow-violet-900/25 ring-1 ring-white/10 sm:rounded-3xl sm:p-6">
-                <div class="pointer-events-none absolute inset-0 bg-[url('data:image/svg+xml,%3Csvg width=\'60\' height=\'60\' viewBox=\'0 0 60 60\' xmlns=\'http://www.w3.org/2000/svg\'%3E%3Cg fill=\'none\' fill-rule=\'evenodd\'%3E%3Cg fill=\'%23ffffff\' fill-opacity=\'0.05\'%3E%3Cpath d=\'M36 34v-4h-2v4h-4v2h4v4h2v-4h4v-2h-4zm0-30V0h-2v4h-4v2h4v4h2V6h4V4h-4zM6 34v-4H4v4H0v2h4v4h2v-4h4v-2H6zM6 4V0H4v4H0v2h4v4h2V6h4V4H6z\'/%3E%3C/g%3E%3C/g%3E%3C/svg%3E')] opacity-40"></div>
-                <div class="pointer-events-none absolute -right-12 top-0 h-40 w-40 rounded-full bg-violet-500/20 blur-3xl"></div>
-                <div class="relative flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
-                    <div class="flex items-start gap-3">
-                        <span class="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-white/15 ring-1 ring-white/20" aria-hidden="true">
-                            <svg class="h-6 w-6" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-6-3a2 2 0 11-4 0 2 2 0 014 0zm-2 4a5 5 0 00-4.546 2.916A5.986 5.986 0 0010 16a5.986 5.986 0 004.546-2.084A5 5 0 0010 11z" clip-rule="evenodd" /></svg>
-                        </span>
-                        <div class="min-w-0">
-                            <p class="text-[11px] font-semibold uppercase tracking-wider text-violet-200/90">{{ __('profile.page_eyebrow') }}</p>
-                            <h1 class="mt-1 text-xl font-bold tracking-tight text-white sm:text-2xl">{{ __('profile.page_title') }}</h1>
-                            <p class="mt-2 max-w-xl text-sm leading-relaxed text-violet-100/85">{{ __('profile.page_subtitle') }}</p>
-                        </div>
-                    </div>
-                    <a href="{{ route('dashboard') }}" class="inline-flex shrink-0 items-center gap-2 self-start rounded-xl border border-white/20 bg-white/10 px-4 py-2.5 text-sm font-semibold text-white backdrop-blur-sm transition hover:bg-white/20">
-                        <svg class="h-4 w-4" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true"><path fill-rule="evenodd" d="M9.293 2.293a1 1 0 011.414 0l7 7A1 1 0 0117 11h-1v6a1 1 0 01-1 1h-2a1 1 0 01-1-1v-3a1 1 0 00-1-1H9a1 1 0 00-1 1v3a1 1 0 01-1 1H5a1 1 0 01-1-1v-6H3a1 1 0 01-.707-1.707l7-7z" clip-rule="evenodd" /></svg>
-                        {{ __('profile.back_dashboard') }}
-                    </a>
-                </div>
-            </div>
+    <div class="min-h-[calc(100vh-4rem)] bg-slate-50 py-6 sm:py-8">
+        @if ($muthowifProfile)
+            @php
+                $profileChecks = [
+                    filled($user->name) && filled($user->email),
+                    filled($muthowifProfile->phone) && filled($muthowifProfile->address) && filled($muthowifProfile->birth_date),
+                    filled($muthowifProfile->photo_path),
+                    filled($muthowifProfile->ktp_image_path),
+                    filled($muthowifProfile->passport_number),
+                    count($muthowifProfile->languagesForDisplay()) > 0 || count($muthowifProfile->workExperiencesForDisplay()) > 0,
+                ];
+                $profileComplete = collect($profileChecks)->filter()->count();
+                $profilePercent = (int) round(($profileComplete / count($profileChecks)) * 100);
+                $publicPreviewUrl = $muthowifProfile->isApproved() ? route('layanan.show', $muthowifProfile) : null;
+            @endphp
 
-            @if ($muthowifProfile)
-                <div class="overflow-hidden rounded-2xl border border-slate-200/90 bg-gradient-to-b from-white to-slate-50/80 shadow-sm ring-1 ring-slate-100/80">
-                    <div class="flex min-w-0">
-                        <div class="w-1 shrink-0 bg-brand-500" aria-hidden="true"></div>
-                        <div class="min-w-0 flex-1 p-5 sm:p-6">
-                            <div class="max-w-none">
-                                @include('profile.partials.update-public-profile-form')
+            <div class="mx-auto grid max-w-7xl grid-cols-1 gap-6 px-4 sm:px-6 lg:grid-cols-[17rem_minmax(0,1fr)] lg:px-8">
+                <aside class="space-y-4 lg:sticky lg:top-6 lg:self-start">
+                    <div class="overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm">
+                        <div class="h-20 bg-gradient-to-br from-brand-500 to-emerald-500"></div>
+                        <div class="-mt-12 px-5 pb-5 text-center">
+                            <div class="relative mx-auto h-24 w-24 overflow-hidden rounded-full border-4 border-white bg-slate-100 shadow-sm">
+                                @if (filled($muthowifProfile->photo_path))
+                                    <img src="{{ route('profile.public.photo') }}" alt="{{ $user->name }}" class="h-full w-full object-cover">
+                                @else
+                                    <div class="flex h-full w-full items-center justify-center text-2xl font-bold text-slate-400">
+                                        {{ strtoupper(\Illuminate\Support\Str::substr($user->name, 0, 1)) }}
+                                    </div>
+                                @endif
                             </div>
+
+                            <h2 class="mt-3 text-base font-bold text-slate-950">{{ $user->name }}</h2>
+                            <p class="text-xs font-medium text-slate-500">Muthowif Profesional</p>
+
+                            <div class="mt-5 text-left">
+                                <div class="flex items-center justify-between text-xs font-semibold text-slate-700">
+                                    <span>Profil Anda</span>
+                                    <span>{{ $profilePercent }}% lengkap</span>
+                                </div>
+                                <div class="mt-2 h-2 overflow-hidden rounded-full bg-slate-100">
+                                    <div class="h-full rounded-full bg-brand-600" style="width: {{ $profilePercent }}%"></div>
+                                </div>
+                            </div>
+
+                            <div class="mt-5 space-y-2 text-left text-xs">
+                                <div class="flex items-center gap-2 text-slate-700">
+                                    <span class="flex h-5 w-5 items-center justify-center rounded-full {{ $profileChecks[0] ? 'bg-emerald-50 text-emerald-700' : 'bg-amber-50 text-amber-700' }}">✓</span>
+                                    Data pribadi
+                                </div>
+                                <div class="flex items-center gap-2 text-slate-700">
+                                    <span class="flex h-5 w-5 items-center justify-center rounded-full {{ $profileChecks[2] && $profileChecks[3] ? 'bg-emerald-50 text-emerald-700' : 'bg-amber-50 text-amber-700' }}">✓</span>
+                                    Dokumen identitas
+                                </div>
+                                <div class="flex items-center gap-2 text-slate-700">
+                                    <span class="flex h-5 w-5 items-center justify-center rounded-full {{ $profileChecks[5] ? 'bg-emerald-50 text-emerald-700' : 'bg-amber-50 text-amber-700' }}">✓</span>
+                                    Pengalaman
+                                </div>
+                                <div class="flex items-center gap-2 text-slate-700">
+                                    <span class="flex h-5 w-5 items-center justify-center rounded-full {{ filled($muthowifProfile->referral_code) || filled($muthowifProfile->referred_by_muthowif_profile_id) ? 'bg-emerald-50 text-emerald-700' : 'bg-slate-100 text-slate-400' }}">✓</span>
+                                    Referensi
+                                </div>
+                            </div>
+
+                            @if ($publicPreviewUrl)
+                                <a href="{{ $publicPreviewUrl }}" target="_blank" rel="noopener" class="mt-5 inline-flex w-full items-center justify-center rounded-xl border border-slate-200 bg-white px-4 py-2.5 text-sm font-semibold text-slate-700 transition hover:border-brand-200 hover:bg-brand-50">
+                                    Preview Profil Publik
+                                </a>
+                            @else
+                                <div class="mt-5 rounded-xl border border-slate-200 bg-slate-50 px-4 py-2.5 text-center text-xs font-medium text-slate-500">
+                                    Preview aktif setelah disetujui
+                                </div>
+                            @endif
                         </div>
                     </div>
-                </div>
-            @else
+
+                    <div class="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm">
+                        <p class="text-sm font-bold text-slate-900">Butuh bantuan?</p>
+                        <p class="mt-1 text-xs text-slate-500">Hubungi tim jika ada kendala dokumen atau identitas.</p>
+                        @if (Route::has('support.index'))
+                            <a href="{{ route('support.index') }}" class="mt-4 inline-flex w-full items-center justify-between rounded-xl border border-slate-200 bg-slate-50 px-3 py-2 text-sm font-semibold text-slate-700 transition hover:bg-slate-100">
+                                Tiket Bantuan
+                                <span>&rarr;</span>
+                            </a>
+                        @endif
+                    </div>
+                </aside>
+
+                <main class="min-w-0">
+                    <div class="rounded-2xl border border-slate-200 bg-white shadow-sm">
+                        @include('profile.partials.update-public-profile-form', ['publicPreviewUrl' => $publicPreviewUrl])
+                    </div>
+
+                    <div id="profile-security" class="mt-5 overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm">
+                        <details>
+                            <summary class="flex cursor-pointer items-center justify-between gap-4 px-5 py-4 text-sm font-semibold text-slate-900 transition hover:bg-slate-50 sm:px-6">
+                                <span>Keamanan akun</span>
+                                <span class="text-xs font-medium text-slate-500">Password & hapus akun</span>
+                            </summary>
+
+                            <div class="grid grid-cols-1 gap-6 border-t border-slate-100 p-5 sm:p-6 lg:grid-cols-2">
+                                <div class="rounded-2xl border border-slate-200 bg-slate-50/70 p-4">
+                                    @include('profile.partials.update-password-form')
+                                </div>
+                                <div class="rounded-2xl border border-rose-100 bg-rose-50/50 p-4">
+                                    @include('profile.partials.delete-user-form')
+                                </div>
+                            </div>
+                        </details>
+                    </div>
+                </main>
+            </div>
+        @else
+            <div class="relative mx-auto max-w-4xl space-y-6 px-4 sm:px-6 lg:px-8">
                 <div class="overflow-hidden rounded-2xl border border-slate-200/90 bg-gradient-to-b from-white to-slate-50/80 shadow-sm ring-1 ring-slate-100/80">
                     <div class="flex min-w-0">
                         <div class="w-1 shrink-0 bg-brand-500" aria-hidden="true"></div>
@@ -46,25 +122,23 @@
                         </div>
                     </div>
                 </div>
-            @endif
-
-            <div class="overflow-hidden rounded-2xl border border-slate-200/90 bg-white shadow-sm ring-1 ring-slate-100/80">
-                <details>
-                    <summary class="flex cursor-pointer items-center justify-between gap-4 px-5 py-4 text-sm font-semibold text-slate-900 transition hover:bg-slate-50 sm:px-6">
-                        <span>Keamanan akun</span>
-                        <span class="text-xs font-medium text-slate-500">Password & hapus akun</span>
-                    </summary>
-
-                    <div class="grid grid-cols-1 gap-6 border-t border-slate-100 p-5 sm:p-6 lg:grid-cols-2">
-                        <div class="rounded-2xl border border-slate-200 bg-slate-50/70 p-4">
-                            @include('profile.partials.update-password-form')
+                <div class="overflow-hidden rounded-2xl border border-slate-200/90 bg-white shadow-sm ring-1 ring-slate-100/80">
+                    <details>
+                        <summary class="flex cursor-pointer items-center justify-between gap-4 px-5 py-4 text-sm font-semibold text-slate-900 transition hover:bg-slate-50 sm:px-6">
+                            <span>Keamanan akun</span>
+                            <span class="text-xs font-medium text-slate-500">Password & hapus akun</span>
+                        </summary>
+                        <div class="grid grid-cols-1 gap-6 border-t border-slate-100 p-5 sm:p-6 lg:grid-cols-2">
+                            <div class="rounded-2xl border border-slate-200 bg-slate-50/70 p-4">
+                                @include('profile.partials.update-password-form')
+                            </div>
+                            <div class="rounded-2xl border border-rose-100 bg-rose-50/50 p-4">
+                                @include('profile.partials.delete-user-form')
+                            </div>
                         </div>
-                        <div class="rounded-2xl border border-rose-100 bg-rose-50/50 p-4">
-                            @include('profile.partials.delete-user-form')
-                        </div>
-                    </div>
-                </details>
+                    </details>
+                </div>
             </div>
-        </div>
+        @endif
     </div>
 </x-app-layout>
