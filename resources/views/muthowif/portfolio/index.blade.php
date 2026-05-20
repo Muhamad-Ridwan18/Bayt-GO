@@ -44,13 +44,14 @@
                 
                 {{-- Upload Form --}}
                 <div class="lg:col-span-1">
-                    <div class="sticky top-6 overflow-hidden rounded-2xl border border-slate-200/90 bg-gradient-to-b from-white to-slate-50/80 shadow-sm ring-1 ring-slate-100/80">
+                    <div class="sticky top-6 overflow-hidden rounded-3xl border border-slate-200/90 bg-white shadow-sm ring-1 ring-slate-100/80">
+                        <div class="bg-gradient-to-br from-sky-600 via-blue-700 to-slate-950 px-5 py-5 text-white sm:px-6">
+                            <p class="text-[11px] font-bold uppercase tracking-wider text-sky-100">Album baru</p>
+                            <h2 class="mt-1 text-lg font-bold">Tambah Portofolio</h2>
+                            <p class="mt-1 text-xs leading-relaxed text-sky-50/85">Buat satu judul kegiatan, lalu unggah beberapa foto sekaligus sebagai album.</p>
+                        </div>
                         <div class="flex min-w-0">
-                            <div class="w-1 shrink-0 bg-sky-500" aria-hidden="true"></div>
                             <div class="min-w-0 flex-1 p-5 sm:p-6">
-                                <h2 class="font-semibold text-slate-900">Tambah Foto Portofolio</h2>
-                                <p class="mt-1 text-xs text-slate-500">Isi keterangan dan unggah foto dokumentasi kegiatan pelayanan Anda.</p>
-                                
                                 <form method="POST" action="{{ route('muthowif.portfolio.store') }}" enctype="multipart/form-data" class="mt-4 space-y-4">
                                     @csrf
                                     <div>
@@ -64,54 +65,37 @@
                                         <textarea id="description" name="description" rows="3" class="mt-1 block w-full rounded-lg border-slate-300 shadow-sm focus:border-brand-500 focus:ring-brand-500 text-sm" placeholder="Ceritakan singkat pelayanan Anda di foto ini...">{{ old('description') }}</textarea>
                                         <x-input-error class="mt-2" :messages="$errors->get('description')" />
                                     </div>
-                                    <div x-data="{ imagePreview: null }">
-                                        <x-input-label for="image" value="Unggah Foto" />
-                                        <div class="mt-1 relative flex justify-center rounded-xl border border-dashed border-slate-300 bg-slate-50/50 px-4 py-5 transition hover:bg-slate-50 min-h-[140px] items-center">
-                                            
-                                            {{-- Upload placeholder (visible when no image is selected) --}}
-                                            <div x-show="!imagePreview" class="space-y-1 text-center">
-                                                <svg class="mx-auto h-10 w-10 text-slate-400" stroke="currentColor" fill="none" viewBox="0 0 48 48" aria-hidden="true">
+                                    <div x-data="{ files: [] }">
+                                        <x-input-label for="images" value="Unggah Foto (bisa banyak)" />
+                                        <div class="mt-1 relative flex justify-center rounded-2xl border border-dashed border-sky-300 bg-sky-50/60 px-4 py-5 transition hover:border-sky-400 hover:bg-sky-50 min-h-[150px] items-center">
+                                            <div class="space-y-1 text-center">
+                                                <svg class="mx-auto h-10 w-10 text-sky-500" stroke="currentColor" fill="none" viewBox="0 0 48 48" aria-hidden="true">
                                                     <path d="M28 8H12a4 4 0 00-4 4v20m32-12v8m0 0v8a4 4 0 01-4 4H12a4 4 0 01-4-4v-4m32-4l-3.172-3.172a4 4 0 00-5.656 0L28 28M8 32l9.172-9.172a4 4 0 015.656 0L28 28m0 0l4 4m4-24h8m-4-4v8m-12 4h.02" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" />
                                                 </svg>
                                                 <div class="flex text-xs text-slate-600 justify-center">
-                                                    <label for="image" class="relative cursor-pointer rounded-md font-semibold text-brand-600 focus-within:outline-none focus-within:ring-2 focus-within:ring-brand-500 focus-within:ring-offset-2 hover:text-brand-500">
-                                                        <span>Pilih berkas</span>
-                                                        <input id="image" name="image" type="file" class="sr-only" accept="image/*,.heic,.heif" required
-                                                               @change="
-                                                                   const file = $event.target.files[0];
-                                                                   if (file) {
-                                                                       const reader = new FileReader();
-                                                                       reader.onload = (e) => { imagePreview = e.target.result; };
-                                                                       reader.readAsDataURL(file);
-                                                                   } else {
-                                                                       imagePreview = null;
-                                                                   }
-                                                               ">
+                                                    <label for="images" class="relative cursor-pointer rounded-xl bg-white px-3 py-2 font-semibold text-sky-700 shadow-sm ring-1 ring-sky-200 focus-within:outline-none focus-within:ring-2 focus-within:ring-sky-500 focus-within:ring-offset-2 hover:text-sky-800">
+                                                        <span>Pilih banyak foto</span>
+                                                        <input id="images" name="images[]" type="file" class="sr-only" accept="image/*,.heic,.heif" required multiple
+                                                            @change="files = Array.from($event.target.files || [])">
                                                     </label>
-                                                    <p class="pl-1">atau seret ke sini</p>
                                                 </div>
-                                                <p class="text-[10px] text-slate-400">PNG, JPG, JPEG, WEBP, HEIC, HEIF hingga 10MB</p>
-                                            </div>
-
-                                            {{-- Beautiful Image Preview (visible when an image is selected) --}}
-                                            <div x-show="imagePreview" x-cloak class="w-full flex flex-col items-center">
-                                                <div class="relative w-full aspect-video rounded-lg overflow-hidden border border-slate-200 shadow-sm bg-slate-100">
-                                                    <img :src="imagePreview" class="h-full w-full object-cover">
-                                                    <button 
-                                                        type="button"
-                                                        @click="imagePreview = null; document.getElementById('image').value = ''" 
-                                                        class="absolute top-2 right-2 flex h-8 w-8 items-center justify-center rounded-full bg-slate-900/70 text-white hover:bg-slate-900/90 shadow transition"
-                                                        title="Hapus pilihan foto"
-                                                    >
-                                                        <svg class="h-4.5 w-4.5" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
-                                                        </svg>
-                                                    </button>
-                                                </div>
-                                                <p class="mt-2 text-xs text-slate-500">Foto terpilih. Klik silang di sudut kanan atas untuk membatalkan.</p>
+                                                <p class="text-[10px] text-slate-400">PNG, JPG, JPEG, WEBP, HEIC, HEIF hingga 10MB per foto (maks. 20 foto)</p>
+                                                <template x-if="files.length > 0">
+                                                    <div class="mt-3 rounded-xl border border-sky-100 bg-white px-3 py-2 text-left shadow-sm">
+                                                        <p class="text-xs font-semibold text-slate-800"><span x-text="files.length"></span> foto dipilih</p>
+                                                        <p class="mt-1 truncate text-[11px] text-slate-500" x-text="files.map(file => file.name).join(', ')"></p>
+                                                    </div>
+                                                </template>
                                             </div>
                                         </div>
-                                        <x-input-error class="mt-2" :messages="$errors->get('image')" />
+                                        <x-input-error class="mt-2" :messages="$errors->get('images')" />
+                                        @foreach ($errors->messages() as $key => $messages)
+                                            @if (str_starts_with($key, 'images.'))
+                                                @foreach ($messages as $message)
+                                                    <p class="mt-1 text-sm text-red-600">{{ $message }}</p>
+                                                @endforeach
+                                            @endif
+                                        @endforeach
                                     </div>
                                     <div class="pt-2">
                                         <x-primary-button type="submit" class="w-full justify-center">
@@ -127,8 +111,15 @@
                 {{-- Portfolio Gallery List --}}
                 <div class="lg:col-span-2 space-y-4">
                     <div class="rounded-2xl border border-slate-200/90 bg-white p-5 shadow-sm sm:p-6">
-                        <h2 class="font-semibold text-slate-900 text-lg">Daftar Portofolio Anda</h2>
-                        <p class="text-sm text-slate-500">Semua foto yang diunggah akan muncul sebagai album galeri di halaman profil publik Anda.</p>
+                        <div class="flex flex-col gap-2 sm:flex-row sm:items-end sm:justify-between">
+                            <div>
+                                <h2 class="font-semibold text-slate-900 text-lg">Album Portofolio Anda</h2>
+                                <p class="text-sm text-slate-500">Satu kartu adalah satu judul kegiatan dengan banyak foto.</p>
+                            </div>
+                            <span class="inline-flex self-start rounded-full bg-sky-50 px-3 py-1 text-xs font-semibold text-sky-700 ring-1 ring-sky-100">
+                                {{ $portfolios->total() }} album
+                            </span>
+                        </div>
                         
                         @if ($portfolios->isEmpty())
                             <div class="mt-6 border border-dashed border-slate-200 rounded-2xl px-5 py-12 text-center sm:px-6 sm:py-16 bg-slate-50/50">
@@ -143,11 +134,14 @@
                         @else
                             <div class="mt-6 grid grid-cols-1 gap-4 sm:grid-cols-2">
                                 @foreach ($portfolios as $portfolio)
-                                    <div class="group relative overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm transition hover:-translate-y-0.5 hover:border-sky-200 hover:shadow-lg">
-                                        
-                                        {{-- Image Container --}}
-                                        <div class="aspect-video w-full overflow-hidden bg-slate-200">
-                                            <img src="{{ route('layanan.portfolio.photo', $portfolio) }}" alt="{{ $portfolio->title }}" class="h-full w-full object-cover transition duration-300 group-hover:scale-105" loading="lazy">
+                                    <div class="group relative overflow-hidden rounded-3xl border border-slate-200 bg-white shadow-sm transition hover:-translate-y-0.5 hover:border-sky-200 hover:shadow-xl">
+                                        <div class="relative aspect-video w-full overflow-hidden bg-slate-200">
+                                            <img src="{{ route('layanan.portfolio.photo', $portfolio) }}" alt="{{ $portfolio->title }}" class="h-full w-full object-cover transition duration-500 group-hover:scale-105" loading="lazy">
+                                            <div class="absolute inset-x-0 bottom-0 bg-gradient-to-t from-slate-950/80 to-transparent p-3">
+                                                <span class="inline-flex rounded-full bg-white/90 px-2.5 py-1 text-[11px] font-bold text-slate-800 shadow-sm">
+                                                    {{ $portfolio->images->count() }} foto
+                                                </span>
+                                            </div>
                                         </div>
 
                                         {{-- Info --}}
@@ -160,9 +154,23 @@
                                             @endif
                                         </div>
 
+                                        @if ($portfolio->images->isNotEmpty())
+                                            <div class="grid grid-cols-4 gap-1.5 border-t border-slate-100 bg-slate-50 p-2">
+                                                @foreach ($portfolio->images->take(4) as $image)
+                                                    <a href="{{ route('muthowif.portfolio.image', $image) }}" target="_blank" rel="noopener" class="relative aspect-square overflow-hidden rounded-lg bg-slate-200 ring-1 ring-white">
+                                                        <img src="{{ route('muthowif.portfolio.image', $image) }}" alt="{{ $portfolio->title }}" class="h-full w-full object-cover transition hover:scale-105">
+                                                        @if ($loop->last && $portfolio->images->count() > 4)
+                                                            <span class="absolute inset-0 flex items-center justify-center bg-slate-950/55 text-xs font-bold text-white">+{{ $portfolio->images->count() - 4 }}</span>
+                                                        @endif
+                                                    </a>
+                                                @endforeach
+                                            </div>
+                                        @endif
+
                                         <details class="border-t border-slate-100 bg-slate-50/80">
-                                            <summary class="cursor-pointer px-4 py-3 text-xs font-semibold text-sky-700 transition hover:bg-sky-50">
-                                                Edit portofolio
+                                            <summary class="flex cursor-pointer items-center justify-between px-4 py-3 text-xs font-semibold text-sky-700 transition hover:bg-sky-50">
+                                                <span>Edit album</span>
+                                                <span class="text-slate-400">Judul, deskripsi, foto</span>
                                             </summary>
                                             <form method="POST" action="{{ route('muthowif.portfolio.update', $portfolio) }}" enctype="multipart/form-data" class="space-y-3 border-t border-slate-100 bg-white p-4">
                                                 @csrf
@@ -191,19 +199,38 @@
                                                 </div>
 
                                                 <div>
-                                                    <x-input-label for="portfolio_image_{{ $portfolio->id }}" value="Ganti Foto (opsional)" />
+                                                    <x-input-label for="portfolio_images_{{ $portfolio->id }}" value="Tambah Foto Baru (opsional)" />
                                                     <x-input-file
-                                                        id="portfolio_image_{{ $portfolio->id }}"
-                                                        name="image"
+                                                        id="portfolio_images_{{ $portfolio->id }}"
+                                                        name="images[]"
                                                         accept="image/*,.heic,.heif"
                                                         class="mt-1"
+                                                        multiple
                                                     />
-                                                    <p class="mt-1 text-[11px] text-slate-500">Kosongkan jika ingin tetap memakai foto saat ini.</p>
+                                                    <p class="mt-1 text-[11px] text-slate-500">Bisa pilih beberapa foto sekaligus.</p>
                                                 </div>
+
+                                                @if ($portfolio->images->isNotEmpty())
+                                                    <div>
+                                                        <p class="text-xs font-semibold text-slate-700">Foto saat ini (centang untuk hapus)</p>
+                                                        <div class="mt-2 grid grid-cols-3 gap-2">
+                                                            @foreach ($portfolio->images as $image)
+                                                                <label class="space-y-1 rounded-lg border border-slate-200 bg-slate-50 p-1.5">
+                                                                    <img src="{{ route('muthowif.portfolio.image', $image) }}" alt="{{ $portfolio->title }}" class="h-16 w-full rounded object-cover">
+                                                                    <span class="inline-flex items-center gap-1 text-[10px] text-rose-700">
+                                                                        <input type="checkbox" name="delete_image_ids[]" value="{{ $image->id }}" class="rounded border-slate-300 text-rose-600 focus:ring-rose-500" />
+                                                                        Hapus
+                                                                    </span>
+                                                                </label>
+                                                            @endforeach
+                                                        </div>
+                                                    </div>
+                                                @endif
 
                                                 <x-input-error class="mt-2" :messages="$errors->get('title')" />
                                                 <x-input-error class="mt-2" :messages="$errors->get('description')" />
-                                                <x-input-error class="mt-2" :messages="$errors->get('image')" />
+                                                <x-input-error class="mt-2" :messages="$errors->get('images')" />
+                                                <x-input-error class="mt-2" :messages="$errors->get('delete_image_ids')" />
 
                                                 <div class="flex flex-wrap justify-end gap-2">
                                                     <x-primary-button type="submit" class="justify-center px-3 py-2 text-xs">

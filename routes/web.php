@@ -94,6 +94,7 @@ Route::middleware(['moota.ip'])
 Route::get('/layanan', [MuthowifDirectoryController::class, 'index'])->name('layanan.index');
 Route::get('/layanan/{publicProfile}/foto', [MuthowifDirectoryController::class, 'photo'])->name('layanan.photo');
 Route::get('/layanan/portfolio/{portfolio}/foto', [MuthowifDirectoryController::class, 'portfolioPhoto'])->name('layanan.portfolio.photo');
+Route::get('/layanan/portfolio/foto/{image}', [MuthowifDirectoryController::class, 'portfolioImage'])->name('layanan.portfolio.image');
 Route::get('/layanan/{publicProfile}/booking', [MuthowifDirectoryController::class, 'booking'])->name('layanan.book');
 Route::get('/layanan/{publicProfile}/portfolio', [MuthowifDirectoryController::class, 'portfolioIndex'])->name('layanan.portfolio.index');
 Route::get('/layanan/{publicProfile}', [MuthowifDirectoryController::class, 'show'])->name('layanan.show');
@@ -237,6 +238,7 @@ Route::middleware('auth')->group(function () {
 
             Route::get('portfolio', [MuthowifPortfolioController::class, 'index'])->name('portfolio.index');
             Route::post('portfolio', [MuthowifPortfolioController::class, 'store'])->name('portfolio.store');
+            Route::get('portfolio/images/{image}', [MuthowifPortfolioController::class, 'image'])->name('portfolio.image');
             Route::patch('portfolio/{portfolio}', [MuthowifPortfolioController::class, 'update'])->name('portfolio.update');
             Route::delete('portfolio/{portfolio}', [MuthowifPortfolioController::class, 'destroy'])->name('portfolio.destroy');
 

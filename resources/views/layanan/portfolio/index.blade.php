@@ -42,7 +42,29 @@
             </div>
 
             {{-- Grid of Portfolios --}}
-            <div class="space-y-6" x-data="{ lightboxOpen: false, activeImage: '', activeTitle: '', activeDesc: '' }">
+            <div
+                class="space-y-6"
+                x-data="{
+                    lightboxOpen: false,
+                    activeImages: [],
+                    activeIndex: 0,
+                    activeTitle: '',
+                    activeDesc: '',
+                    openAlbum(images, title, desc) {
+                        this.activeImages = images;
+                        this.activeIndex = 0;
+                        this.activeTitle = title;
+                        this.activeDesc = desc;
+                        this.lightboxOpen = true;
+                    },
+                    next() {
+                        if (this.activeImages.length > 0) this.activeIndex = (this.activeIndex + 1) % this.activeImages.length;
+                    },
+                    prev() {
+                        if (this.activeImages.length > 0) this.activeIndex = (this.activeIndex - 1 + this.activeImages.length) % this.activeImages.length;
+                    }
+                }"
+            >
                 @if ($portfolios->isEmpty())
                     <div class="rounded-3xl border border-slate-200/80 bg-white py-16 px-4 text-center ring-1 ring-slate-100/80 shadow-sm">
                         <span class="mx-auto flex h-14 w-14 items-center justify-center rounded-2xl bg-amber-50 text-amber-700 ring-1 ring-amber-200/80" aria-hidden="true">
@@ -54,18 +76,43 @@
                 @else
                     <div class="grid grid-cols-1 gap-6 sm:grid-cols-2 md:grid-cols-3">
                         @foreach ($portfolios as $portfolio)
+                            @php
+                                $portfolioImages = $portfolio->images;
+                                $previewImage = $portfolioImages->first();
+                                $previewUrl = $previewImage ? route('layanan.portfolio.image', $previewImage) : route('layanan.portfolio.photo', $portfolio);
+                                $albumUrls = $portfolioImages->isNotEmpty()
+                                    ? $portfolioImages->map(fn ($image) => route('layanan.portfolio.image', $image))->values()
+                                    : collect([$previewUrl]);
+                            @endphp
                             <div 
-                                @click="lightboxOpen = true; activeImage = '{{ route('layanan.portfolio.photo', $portfolio) }}'; activeTitle = '{{ e($portfolio->title) }}'; activeDesc = '{{ e($portfolio->description ?? '') }}'"
-                                class="group flex flex-col overflow-hidden rounded-2xl border border-slate-200/80 bg-white shadow-sm cursor-pointer hover:border-brand-300 hover:shadow-md transition duration-200"
+                                @click="openAlbum(@js($albumUrls), @js($portfolio->title), @js($portfolio->description ?? ''))"
+                                class="group flex cursor-pointer flex-col overflow-hidden rounded-3xl border border-slate-200/80 bg-white shadow-sm transition duration-200 hover:-translate-y-0.5 hover:border-brand-300 hover:shadow-xl"
                             >
                                 <div class="relative aspect-[4/3] overflow-hidden bg-slate-100">
-                                    <img src="{{ route('layanan.portfolio.photo', $portfolio) }}" alt="{{ $portfolio->title }}" class="h-full w-full object-cover transition duration-300 group-hover:scale-105" loading="lazy">
-                                    <div class="absolute inset-0 bg-slate-950/20 opacity-0 group-hover:opacity-100 transition-opacity duration-200 flex items-center justify-center">
+                                    <img src="{{ $previewUrl }}" alt="{{ $portfolio->title }}" class="h-full w-full object-cover transition duration-500 group-hover:scale-105" loading="lazy">
+                                    <div class="absolute inset-x-0 bottom-0 bg-gradient-to-t from-slate-950/80 to-transparent p-3">
+                                        <span class="inline-flex rounded-full bg-white/90 px-2.5 py-1 text-[11px] font-bold text-slate-800 shadow-sm">
+                                            {{ $portfolioImages->count() }} foto
+                                        </span>
+                                    </div>
+                                    <div class="absolute inset-0 flex items-center justify-center bg-slate-950/20 opacity-0 transition-opacity duration-200 group-hover:opacity-100">
                                         <span class="flex h-10 w-10 items-center justify-center rounded-full bg-white/90 text-slate-800 shadow">
                                             <svg class="h-5 w-5" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M21 21l-5.197-5.197m0 0A7.5 7.5 0 105.196 5.196a7.5 7.5 0 0010.607 10.607zM10.5 7.5v6m3-3h-6" /></svg>
                                         </span>
                                     </div>
                                 </div>
+                                @if ($portfolioImages->count() > 1)
+                                    <div class="grid grid-cols-4 gap-1.5 bg-slate-50 p-2">
+                                        @foreach ($portfolioImages->skip(1)->take(4) as $image)
+                                            <div class="relative aspect-square overflow-hidden rounded-lg bg-slate-200">
+                                                <img src="{{ route('layanan.portfolio.image', $image) }}" alt="{{ $portfolio->title }}" class="h-full w-full object-cover">
+                                                @if ($loop->last && $portfolioImages->count() > 5)
+                                                    <span class="absolute inset-0 flex items-center justify-center bg-slate-950/55 text-xs font-bold text-white">+{{ $portfolioImages->count() - 5 }}</span>
+                                                @endif
+                                            </div>
+                                        @endforeach
+                                    </div>
+                                @endif
                                 <div class="flex flex-1 flex-col p-4">
                                     <h3 class="font-bold text-slate-900 group-hover:text-brand-700 transition line-clamp-1">{{ $portfolio->title }}</h3>
                                     @if ($portfolio->description)
@@ -96,7 +143,25 @@
                         >
                             {{-- Image --}}
                             <div class="relative bg-slate-950 max-h-[70vh] flex items-center justify-center">
-                                <img :src="activeImage" :alt="activeTitle" class="max-h-[70vh] max-w-full object-contain">
+                                <img :src="activeImages[activeIndex]" :alt="activeTitle" class="max-h-[70vh] max-w-full object-contain">
+                                <button
+                                    x-show="activeImages.length > 1"
+                                    type="button"
+                                    @click.stop="prev()"
+                                    class="absolute left-4 top-1/2 flex h-10 w-10 -translate-y-1/2 items-center justify-center rounded-full bg-white/90 text-slate-900 shadow transition hover:bg-white"
+                                >
+                                    <span class="sr-only">Sebelumnya</span>
+                                    &lsaquo;
+                                </button>
+                                <button
+                                    x-show="activeImages.length > 1"
+                                    type="button"
+                                    @click.stop="next()"
+                                    class="absolute right-4 top-1/2 flex h-10 w-10 -translate-y-1/2 items-center justify-center rounded-full bg-white/90 text-slate-900 shadow transition hover:bg-white"
+                                >
+                                    <span class="sr-only">Berikutnya</span>
+                                    &rsaquo;
+                                </button>
                                 <button 
                                     @click="lightboxOpen = false" 
                                     class="absolute top-4 right-4 flex h-10 w-10 items-center justify-center rounded-full bg-slate-950/60 text-white hover:bg-slate-950/80 transition"
@@ -108,8 +173,20 @@
                             </div>
                             {{-- Info Panel --}}
                             <div class="p-5 border-t border-slate-100 bg-white">
-                                <h3 class="text-lg font-bold text-slate-950" x-text="activeTitle"></h3>
-                                <p class="mt-2 text-sm text-slate-600 leading-relaxed" x-text="activeDesc || 'Tidak ada keterangan tambahan.'"></p>
+                                <div class="flex flex-wrap items-start justify-between gap-3">
+                                    <div>
+                                        <h3 class="text-lg font-bold text-slate-950" x-text="activeTitle"></h3>
+                                        <p class="mt-2 text-sm text-slate-600 leading-relaxed" x-text="activeDesc || 'Tidak ada keterangan tambahan.'"></p>
+                                    </div>
+                                    <span class="rounded-full bg-brand-50 px-3 py-1 text-xs font-bold text-brand-700" x-text="(activeIndex + 1) + ' / ' + activeImages.length"></span>
+                                </div>
+                                <div x-show="activeImages.length > 1" class="mt-4 flex gap-2 overflow-x-auto">
+                                    <template x-for="(image, index) in activeImages" :key="image">
+                                        <button type="button" @click="activeIndex = index" class="h-14 w-14 shrink-0 overflow-hidden rounded-lg ring-2 transition" :class="activeIndex === index ? 'ring-brand-500' : 'ring-transparent opacity-70 hover:opacity-100'">
+                                            <img :src="image" alt="" class="h-full w-full object-cover">
+                                        </button>
+                                    </template>
+                                </div>
                             </div>
                         </div>
                     </div>

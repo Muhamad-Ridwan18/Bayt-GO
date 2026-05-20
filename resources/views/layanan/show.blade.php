@@ -251,19 +251,50 @@
                         <span>{{ __('marketplace.show.summary_portfolio') }}</span>
                         <svg class="h-5 w-5 shrink-0 text-slate-400 transition group-open:rotate-180" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true"><path fill-rule="evenodd" d="M5.23 7.21a.75.75 0 011.06.02L10 11.168l3.71-3.938a.75.75 0 111.08 1.04l-4.25 4.5a.75.75 0 01-1.08 0l-4.25-4.5a.75.75 0 01.02-1.06z" clip-rule="evenodd" /></svg>
                     </summary>
-                    <div class="border-t border-slate-100 px-4 py-4" x-data="{ lightboxOpen: false, activeImage: '', activeTitle: '', activeDesc: '' }">
+                    <div
+                        class="border-t border-slate-100 px-4 py-4"
+                        x-data="{
+                            lightboxOpen: false,
+                            activeImages: [],
+                            activeIndex: 0,
+                            activeTitle: '',
+                            activeDesc: '',
+                            openAlbum(images, title, desc) {
+                                this.activeImages = images;
+                                this.activeIndex = 0;
+                                this.activeTitle = title;
+                                this.activeDesc = desc;
+                                this.lightboxOpen = true;
+                            },
+                            next() {
+                                if (this.activeImages.length > 0) this.activeIndex = (this.activeIndex + 1) % this.activeImages.length;
+                            },
+                            prev() {
+                                if (this.activeImages.length > 0) this.activeIndex = (this.activeIndex - 1 + this.activeImages.length) % this.activeImages.length;
+                            }
+                        }"
+                    >
                         @if ($profile->portfolios->isEmpty())
                             <p class="text-sm text-slate-600">Muthowif belum menambahkan foto portfolio.</p>
                         @else
                             <div class="grid grid-cols-2 gap-4 sm:grid-cols-3">
                                 @foreach ($profile->portfolios->take(6) as $portfolio)
+                                    @php
+                                        $portfolioImages = $portfolio->images;
+                                        $previewImage = $portfolio->images->first();
+                                        $previewUrl = $previewImage ? route('layanan.portfolio.image', $previewImage) : route('layanan.portfolio.photo', $portfolio);
+                                        $albumUrls = $portfolioImages->isNotEmpty()
+                                            ? $portfolioImages->map(fn ($image) => route('layanan.portfolio.image', $image))->values()
+                                            : collect([$previewUrl]);
+                                    @endphp
                                     <div 
-                                        @click="lightboxOpen = true; activeImage = '{{ route('layanan.portfolio.photo', $portfolio) }}'; activeTitle = '{{ e($portfolio->title) }}'; activeDesc = '{{ e($portfolio->description ?? '') }}'"
+                                        @click="openAlbum(@js($albumUrls), @js($portfolio->title), @js($portfolio->description ?? ''))"
                                         class="group relative aspect-square overflow-hidden rounded-xl border border-slate-200 bg-slate-100 shadow-sm cursor-pointer hover:border-brand-300 hover:shadow-md transition duration-200"
                                     >
-                                        <img src="{{ route('layanan.portfolio.photo', $portfolio) }}" alt="{{ $portfolio->title }}" class="h-full w-full object-cover transition duration-300 group-hover:scale-105" loading="lazy">
+                                        <img src="{{ $previewUrl }}" alt="{{ $portfolio->title }}" class="h-full w-full object-cover transition duration-300 group-hover:scale-105" loading="lazy">
                                         <div class="absolute inset-0 bg-gradient-to-t from-slate-950/80 via-slate-950/20 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300 flex flex-col justify-end p-3">
                                             <p class="text-xs font-bold text-white line-clamp-1">{{ $portfolio->title }}</p>
+                                            <p class="text-[10px] text-slate-200">{{ $portfolio->images->count() }} foto</p>
                                             @if ($portfolio->description)
                                                 <p class="text-[10px] text-slate-200 line-clamp-1 mt-0.5">{{ $portfolio->description }}</p>
                                             @endif
@@ -294,7 +325,23 @@
                                 >
                                     {{-- Image --}}
                                     <div class="relative bg-slate-950 max-h-[70vh] flex items-center justify-center">
-                                        <img :src="activeImage" :alt="activeTitle" class="max-h-[70vh] max-w-full object-contain">
+                                        <img :src="activeImages[activeIndex]" :alt="activeTitle" class="max-h-[70vh] max-w-full object-contain">
+                                        <button
+                                            x-show="activeImages.length > 1"
+                                            type="button"
+                                            @click.stop="prev()"
+                                            class="absolute left-4 top-1/2 flex h-10 w-10 -translate-y-1/2 items-center justify-center rounded-full bg-white/90 text-slate-900 shadow transition hover:bg-white"
+                                        >
+                                            &lsaquo;
+                                        </button>
+                                        <button
+                                            x-show="activeImages.length > 1"
+                                            type="button"
+                                            @click.stop="next()"
+                                            class="absolute right-4 top-1/2 flex h-10 w-10 -translate-y-1/2 items-center justify-center rounded-full bg-white/90 text-slate-900 shadow transition hover:bg-white"
+                                        >
+                                            &rsaquo;
+                                        </button>
                                         <button 
                                             @click="lightboxOpen = false" 
                                             class="absolute top-4 right-4 flex h-10 w-10 items-center justify-center rounded-full bg-slate-950/60 text-white hover:bg-slate-950/80 transition"
@@ -306,8 +353,13 @@
                                     </div>
                                     {{-- Info Panel --}}
                                     <div class="p-5 border-t border-slate-100 bg-white">
-                                        <h3 class="text-lg font-bold text-slate-950" x-text="activeTitle"></h3>
-                                        <p class="mt-2 text-sm text-slate-600 leading-relaxed" x-text="activeDesc || 'Tidak ada keterangan tambahan.'"></p>
+                                        <div class="flex flex-wrap items-start justify-between gap-3">
+                                            <div>
+                                                <h3 class="text-lg font-bold text-slate-950" x-text="activeTitle"></h3>
+                                                <p class="mt-2 text-sm text-slate-600 leading-relaxed" x-text="activeDesc || 'Tidak ada keterangan tambahan.'"></p>
+                                            </div>
+                                            <span class="rounded-full bg-brand-50 px-3 py-1 text-xs font-bold text-brand-700" x-text="(activeIndex + 1) + ' / ' + activeImages.length"></span>
+                                        </div>
                                     </div>
                                 </div>
                             </div>

@@ -141,6 +141,10 @@ class MuthowifDirectoryController extends Controller
         $publicProfile->load([
             'user',
             'services.addOns',
+            'portfolios' => fn ($q) => $q
+                ->with('images')
+                ->orderBy('sort_order')
+                ->orderByDesc('created_at'),
             'bookingReviews' => fn ($q) => $q
                 ->with('customer')
                 ->latest()
@@ -254,6 +258,7 @@ class MuthowifDirectoryController extends Controller
         $publicProfile->load(['user']);
 
         $portfolios = $publicProfile->portfolios()
+            ->with('images')
             ->orderBy('sort_order')
             ->orderByDesc('created_at')
             ->paginate(9)
@@ -278,11 +283,27 @@ class MuthowifDirectoryController extends Controller
     public function portfolioPhoto(\App\Models\MuthowifPortfolio $portfolio): Response
     {
         $disk = Storage::disk('local');
-        if (! $disk->exists($portfolio->image_path)) {
+        $coverPath = $portfolio->coverImagePath();
+        if (! is_string($coverPath) || $coverPath === '' || ! $disk->exists($coverPath)) {
             abort(404);
         }
 
-        return $disk->response($portfolio->image_path);
+        return $disk->response($coverPath);
+    }
+
+    public function portfolioImage(\App\Models\MuthowifPortfolioImage $image): Response
+    {
+        $image->loadMissing('portfolio.muthowifProfile');
+        if (! $image->portfolio?->muthowifProfile?->isApproved()) {
+            abort(404);
+        }
+
+        $disk = Storage::disk('local');
+        if (! $disk->exists($image->path)) {
+            abort(404);
+        }
+
+        return $disk->response($image->path);
     }
 
     private function emptyPaginator(Request $request): LengthAwarePaginator
