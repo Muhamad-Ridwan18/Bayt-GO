@@ -9,7 +9,7 @@ return [
         'bio_fallback' => 'Pendamping umrah berpengalaman · layanan di Tanah Suci.',
         'package_unset' => 'Paket belum diatur',
         'from' => 'Mulai dari',
-        'price_contact' => 'Muthowif Belum menambahkan detail layanan',
+        'price_contact' => 'Muthowif belum menambahkan detail layanan',
         'bookings_confirmed' => ':count pesanan terkonfirmasi lewat BaytGo',
         'new_marketplace' => 'Baru di marketplace · siap mendampingi',
         'view_profile' => 'Lihat profil',
