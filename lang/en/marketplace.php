@@ -9,7 +9,7 @@ return [
         'bio_fallback' => 'Experienced umrah companion · services in the Holy Land.',
         'package_unset' => 'Packages not set up',
         'from' => 'From',
-        'price_contact' => 'Price — contact muthowif',
+        'price_contact' => 'Muthowif has not added service details yet',
         'bookings_confirmed' => ':count confirmed bookings on BaytGo',
         'new_marketplace' => 'New on the marketplace · ready to guide',
         'view_profile' => 'View profile',
