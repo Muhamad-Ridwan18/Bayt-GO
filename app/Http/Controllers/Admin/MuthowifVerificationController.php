@@ -118,7 +118,14 @@ class MuthowifVerificationController extends Controller
             $waFlash = ' FONNTE_TOKEN kosong — notifikasi WA dilewati.';
         }
 
-        broadcast(new \App\Events\MuthowifVerificationUpdated($profile->fresh()));
+        try {
+            broadcast(new \App\Events\MuthowifVerificationUpdated($profile->fresh()));
+        } catch (Throwable $e) {
+            Log::warning('Broadcast muthowif verification failed', [
+                'profile_id' => $profile->id,
+                'exception' => $e->getMessage(),
+            ]);
+        }
 
         return redirect()
             ->route('admin.muthowif.show', $profile)
