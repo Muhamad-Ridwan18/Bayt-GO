@@ -17,8 +17,8 @@ final class WelcomeController extends Controller
             ->where('verification_status', MuthowifVerificationStatus::Approved)
             ->withCount('bookingReviews')
             ->withAvg('bookingReviews', 'rating')
-            ->orderByDesc('booking_reviews_count')
-            ->orderByDesc('verified_at')
+            ->orderBy('booking_reviews_count')
+            ->orderBy('verified_at')
             ->limit(14)
             ->get();
 
