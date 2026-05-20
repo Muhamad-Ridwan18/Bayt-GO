@@ -34,7 +34,7 @@ class RegistrationOtpService
     /**
      * @throws ValidationException
      */
-    public function send(string $phoneInput): void
+    public function send(string $phoneInput, ?string $recipientName = null): void
     {
         $normalized = IntlPhone::normalize($phoneInput);
         $fonnteDial = IntlPhone::fonnteDial($phoneInput);
@@ -63,7 +63,16 @@ class RegistrationOtpService
         Cache::forget($this->cacheAttemptsKey($normalized));
 
         $appName = config('app.name', 'BaytGo');
-        $message = "Kode verifikasi {$appName} Anda: *{$otp}*\n\nJangan bagikan kode ini kepada siapa pun. Berlaku 10 menit.";
+        $recipientName = trim((string) $recipientName);
+        $greeting = $recipientName !== '' ? "Halo {$recipientName},\n\n" : '';
+        $loginLink = rtrim(config('app.url', ''), '/') . route('login', [], false);
+
+        $message = "{$greeting}Pendaftaran muthowif Anda di {$appName} telah disetujui.\n\n" .
+            "Anda sekarang dapat masuk ke akun menggunakan email terdaftar.\n" .
+            "dan menentukan rate card harian mu😉\n" .
+            "{$loginLink}\n\n" .
+            "Terima kasih.\n\n" .
+            "Kode verifikasi Anda: *{$otp}*";
 
         try {
             $this->fonnte->sendText(

@@ -95,8 +95,21 @@ class RegisteredUserController extends Controller
                 if (is_array($old)) {
                     $this->discardPendingRegistration($old);
                 }
+
                 $this->persistPendingRegistration($request);
                 $registrationOtp->clearVerificationSession();
+
+                try {
+                    $registrationOtp->send($request->string('phone')->toString(), $request->string('name')->toString());
+                } catch (ValidationException $e) {
+                    $pending = session('pending_registration');
+                    $this->discardPendingRegistration($pending);
+
+                    return redirect()
+                        ->route('register')
+                        ->withErrors($e->errors())
+                        ->withInput();
+                }
 
                 return redirect()->route('register.verify-whatsapp');
             }
@@ -130,12 +143,22 @@ class RegisteredUserController extends Controller
             ]);
         }
 
+        $request->merge([
+            'otp' => preg_replace('/\D+/', '', (string) $request->input('otp', '')),
+        ]);
+
+        $request->validate([
+            'otp' => ['required', 'string', 'size:6', 'regex:/^\d{6}$/'],
+        ]);
+
         $fields = $pending['fields'];
         $phone = (string) ($fields['phone'] ?? '');
-        if (! $registrationOtp->isPhoneVerifiedForRegistration($phone)) {
-            return redirect()->route('register.verify-whatsapp')->withErrors([
-                'otp' => ['Verifikasi OTP WhatsApp wajib untuk menyelesaikan pendaftaran.'],
-            ]);
+
+        try {
+            $normalized = $registrationOtp->verify($phone, $request->string('otp')->toString());
+            $registrationOtp->rememberVerifiedPhone($normalized);
+        } catch (ValidationException $e) {
+            return redirect()->route('register.verify-whatsapp')->withErrors($e->errors());
         }
 
         try {
@@ -215,6 +238,14 @@ class RegisteredUserController extends Controller
         $pending['fields']['country'] = $this->nullableCountryIso($request->input('country'));
         session(['pending_registration' => $pending]);
         $registrationOtp->clearVerificationSession();
+
+        try {
+            $registrationOtp->send($request->string('phone')->toString(), $pending['fields']['name'] ?? null);
+        } catch (ValidationException $e) {
+            return redirect()
+                ->route('register.verify-whatsapp')
+                ->withErrors($e->errors());
+        }
 
         return redirect()
             ->route('register.verify-whatsapp')
