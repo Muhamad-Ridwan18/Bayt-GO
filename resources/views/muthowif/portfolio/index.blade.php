@@ -43,7 +43,7 @@
             <div class="grid grid-cols-1 gap-6 lg:grid-cols-3">
                 
                 {{-- Upload Form --}}
-                <div class="lg:col-span-1">
+                <div class="min-w-0 lg:col-span-1">
                     <div class="sticky top-6 overflow-hidden rounded-3xl border border-slate-200/90 bg-white shadow-sm ring-1 ring-slate-100/80">
                         <div class="bg-gradient-to-br from-sky-600 via-blue-700 to-slate-950 px-5 py-5 text-white sm:px-6">
                             <p class="text-[11px] font-bold uppercase tracking-wider text-sky-100">Album baru</p>
@@ -51,7 +51,7 @@
                             <p class="mt-1 text-xs leading-relaxed text-sky-50/85">Buat satu judul kegiatan, lalu unggah beberapa foto sekaligus sebagai album.</p>
                         </div>
                         <div class="flex min-w-0">
-                            <div class="min-w-0 flex-1 p-5 sm:p-6">
+                            <div class="min-w-0 flex-1 p-4 sm:p-5">
                                 <form method="POST" action="{{ route('muthowif.portfolio.store') }}" enctype="multipart/form-data" class="mt-4 space-y-4">
                                     @csrf
                                     <div>
@@ -67,8 +67,8 @@
                                     </div>
                                     <div x-data="{ previews: [] }">
                                         <x-input-label for="images" value="Unggah Foto (bisa banyak)" />
-                                        <div class="mt-1 relative flex justify-center rounded-2xl border border-dashed border-sky-300 bg-sky-50/60 px-4 py-5 transition hover:border-sky-400 hover:bg-sky-50 min-h-[150px] items-center">
-                                            <div class="space-y-1 text-center">
+                                        <div class="mt-1 relative flex min-w-0 justify-center rounded-2xl border border-dashed border-sky-300 bg-sky-50/60 px-3 py-5 transition hover:border-sky-400 hover:bg-sky-50 min-h-[150px] items-center">
+                                            <div class="min-w-0 space-y-1 text-center">
                                                 <svg class="mx-auto h-10 w-10 text-sky-500" stroke="currentColor" fill="none" viewBox="0 0 48 48" aria-hidden="true">
                                                     <path d="M28 8H12a4 4 0 00-4 4v20m32-12v8m0 0v8a4 4 0 01-4 4H12a4 4 0 01-4-4v-4m32-4l-3.172-3.172a4 4 0 00-5.656 0L28 28M8 32l9.172-9.172a4 4 0 015.656 0L28 28m0 0l4 4m4-24h8m-4-4v8m-12 4h.02" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" />
                                                 </svg>
@@ -79,20 +79,24 @@
                                                             @change="previews = Array.from($event.target.files || []).map(file => ({ name: file.name, url: URL.createObjectURL(file) }))">
                                                     </label>
                                                 </div>
-                                                <p class="text-[10px] text-slate-400">PNG, JPG, JPEG, WEBP, HEIC, HEIF hingga 10MB per foto (maks. 20 foto)</p>
+                                                <p class="mx-auto max-w-[13rem] text-[10px] leading-snug text-slate-400">PNG/JPG/WEBP/HEIC, maks. 10MB per foto. Maks. 20 foto.</p>
                                                 <template x-if="previews.length > 0">
-                                                    <div class="mt-3 rounded-xl border border-sky-100 bg-white px-3 py-2 text-left shadow-sm">
+                                                    <div class="mt-3 min-w-0 rounded-xl border border-sky-100 bg-white px-3 py-2 text-left shadow-sm">
                                                         <p class="text-xs font-semibold text-slate-800"><span x-text="previews.length"></span> foto dipilih</p>
-                                                        <p class="mt-1 truncate text-[11px] text-slate-500" x-text="previews.map(file => file.name).join(', ')"></p>
+                                                        <div class="mt-1 max-h-14 space-y-0.5 overflow-y-auto pr-1">
+                                                            <template x-for="preview in previews" :key="preview.url + '-name'">
+                                                                <p class="truncate text-[11px] text-slate-500" x-text="preview.name"></p>
+                                                            </template>
+                                                        </div>
                                                     </div>
                                                 </template>
                                             </div>
                                         </div>
                                         <template x-if="previews.length > 0">
-                                            <div class="mt-3 grid grid-cols-3 gap-2">
+                                            <div class="mt-3 grid max-h-48 grid-cols-2 gap-2 overflow-y-auto pr-1 sm:grid-cols-3">
                                                 <template x-for="preview in previews" :key="preview.url">
                                                     <div class="overflow-hidden rounded-xl border border-slate-200 bg-white shadow-sm">
-                                                        <img :src="preview.url" :alt="preview.name" class="h-20 w-full object-cover">
+                                                        <img :src="preview.url" :alt="preview.name" class="h-16 w-full object-cover">
                                                         <p class="truncate px-2 py-1 text-[10px] font-medium text-slate-600" x-text="preview.name"></p>
                                                     </div>
                                                 </template>
