@@ -128,9 +128,9 @@ return [
     ],
 
     'cta_title' => 'Belum punya akun?',
-    'cta_sub' => 'Daftar sebagai jamaah atau muthowif — gratis mulai.',
-    'cta_register_pilgrim' => 'Daftar jamaah',
-    'cta_register_muthowif' => 'Daftar muthowif',
+    'cta_sub' => 'Daftar sekarang sebagai jamaah atau muthowif — gratis.',
+    'cta_register_pilgrim' => 'Daftar sebagai jamaah',
+    'cta_register_muthowif' => 'Daftar sebagai muthowif',
     'cta_dashboard' => 'Ke beranda',
 
     'how_title' => 'Cara pakai marketplace',

@@ -129,7 +129,7 @@ return [
     ],
 
     'cta_title' => 'No account yet?',
-    'cta_sub' => 'Register as pilgrim or muthowif — start free.',
+    'cta_sub' => 'Register now as pilgrim or muthowif — free.',
     'cta_register_pilgrim' => 'Register as pilgrim',
     'cta_register_muthowif' => 'Register as muthowif',
     'cta_dashboard' => 'Go to dashboard',
