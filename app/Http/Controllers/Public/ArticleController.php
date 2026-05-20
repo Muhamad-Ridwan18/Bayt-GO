@@ -4,8 +4,10 @@ namespace App\Http\Controllers\Public;
 
 use App\Http\Controllers\Controller;
 use App\Models\Article;
+use App\Models\MuthowifProfile;
 use Illuminate\Contracts\View\View;
 use Illuminate\Database\Eloquent\ModelNotFoundException;
+use Illuminate\Support\Str;
 
 class ArticleController extends Controller
 {
@@ -35,10 +37,39 @@ class ArticleController extends Controller
         }
 
         $excerpt = strip_tags($article->localized('excerpt'));
+        $relatedServices = $this->relatedServicesForArticle($article);
 
         return view('articles.show', [
             'article' => $article,
             'metaDescription' => $excerpt !== '' ? $excerpt : strip_tags($article->localized('title')),
+            'relatedServices' => $relatedServices,
         ]);
+    }
+
+    private function relatedServicesForArticle(Article $article)
+    {
+        $text = Str::lower($article->localized('title') . ' ' . $article->localized('excerpt') . ' ' . strip_tags($article->localized('body')));
+
+        $query = MuthowifProfile::query()->approved();
+
+        if (Str::contains($text, 'jakarta')) {
+            $query->where('city', 'Jakarta');
+        } elseif (Str::contains($text, 'madinah')) {
+            $query->where('city', 'Madinah');
+        } elseif (Str::contains($text, 'bahasa indonesia') || Str::contains($text, 'indonesia')) {
+            $query->whereJsonContains('languages', 'Bahasa Indonesia');
+        }
+
+        $services = $query->orderByDesc('updated_at')->limit(5)->get();
+
+        if ($services->isEmpty()) {
+            return MuthowifProfile::query()
+                ->approved()
+                ->orderByDesc('updated_at')
+                ->limit(5)
+                ->get();
+        }
+
+        return $services;
     }
 }

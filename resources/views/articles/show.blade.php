@@ -63,6 +63,26 @@
             {!! $article->localized('body') !!}
         </div>
 
+        @if(isset($relatedServices) && $relatedServices->isNotEmpty())
+            <section class="mt-16 rounded-3xl border border-slate-200 bg-white p-8 shadow-sm">
+                <div class="flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
+                    <div>
+                        <p class="text-sm font-semibold uppercase tracking-[0.24em] text-baytgo">{{ __('articles.related_services_title') }}</p>
+                        <h2 class="mt-3 text-2xl font-bold text-slate-900">{{ __('articles.related_services_subtitle') }}</h2>
+                    </div>
+                    <a href="{{ route('layanan.index') }}" class="inline-flex items-center gap-2 text-sm font-semibold text-baytgo hover:text-baytgo-700">
+                        {{ __('articles.view_all_services') }}
+                        <svg class="h-4 w-4" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true"><path fill-rule="evenodd" d="M10.293 15.707a1 1 0 010-1.414L13.586 11H4a1 1 0 110-2h9.586l-3.293-3.293a1 1 0 111.414-1.414l5 5a1 1 0 010 1.414l-5 5a1 1 0 01-1.414 0z" clip-rule="evenodd" /></svg>
+                    </a>
+                </div>
+                <div class="mt-8 grid gap-4 md:grid-cols-2 xl:grid-cols-3">
+                    @foreach($relatedServices as $service)
+                        <x-marketplace.profile-card :profile="$service" />
+                    @endforeach
+                </div>
+            </section>
+        @endif
+
         <div class="mt-16 rounded-2xl border border-slate-200 bg-welcomeCanvas p-8 text-center">
             <p class="text-lg font-semibold text-slate-900">{{ __('articles.cta_title') }}</p>
             <p class="mt-2 text-sm text-slate-600">{{ __('articles.cta_sub') }}</p>

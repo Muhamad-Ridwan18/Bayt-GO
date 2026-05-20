@@ -122,6 +122,35 @@
                             ])
                         </div>
                     </div>
+
+                    @if(isset($landingPages) && $landingPages->isNotEmpty())
+                        <section class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-10">
+                            <div class="rounded-3xl border border-slate-200 bg-white p-6 shadow-sm">
+                                <div class="flex flex-col gap-6 md:flex-row md:items-end md:justify-between">
+                                    <div>
+                                        <p class="text-sm font-semibold uppercase tracking-[0.24em] text-baytgo">Kategori Pencarian</p>
+                                        <h2 class="mt-3 text-2xl font-bold text-slate-900">Temukan muthowif berdasarkan kebutuhan ibadah Anda</h2>
+                                    </div>
+                                    <a href="{{ route('layanan.index') }}" class="text-sm font-semibold text-baytgo hover:text-baytgo-700">Lihat semua layanan</a>
+                                </div>
+
+                                <div class="mt-8 grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+                                    @foreach($landingPages as $landing)
+                                        <a href="{{ route('seo.landing', ['keyword' => $landing['slug']]) }}" class="group rounded-3xl border border-slate-200 p-6 transition hover:border-baytgo/50 hover:bg-baytgo/5">
+                                            <p class="text-sm font-semibold uppercase tracking-[0.24em] text-baytgo">{{ $landing['title'] }}</p>
+                                            <p class="mt-3 text-sm leading-relaxed text-slate-600">{{ $landing['subtitle'] }}</p>
+                                            <span class="mt-5 inline-flex items-center gap-2 text-sm font-semibold text-baytgo group-hover:text-baytgo-800">
+                                                Jelajahi
+                                                <svg class="h-4 w-4" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true">
+                                                    <path fill-rule="evenodd" d="M10.293 15.707a1 1 0 010-1.414L13.586 11H4a1 1 0 110-2h9.586l-3.293-3.293a1 1 0 111.414-1.414l5 5a1 1 0 010 1.414l-5 5a1 1 0 01-1.414 0z" clip-rule="evenodd" />
+                                                </svg>
+                                            </span>
+                                        </a>
+                                    @endforeach
+                                </div>
+                            </div>
+                        </section>
+                    @endif
                 </section>
 
                 {{-- CTA --}}

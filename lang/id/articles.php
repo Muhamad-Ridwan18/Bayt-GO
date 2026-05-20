@@ -17,5 +17,9 @@ return [
     'cta_browse' => 'Jelajahi direktori',
     'back_to_list' => 'Artikel lainnya',
 
+    'related_services_title' => 'Layanan relevan',
+    'related_services_subtitle' => 'Muthowif yang paling cocok berdasarkan topik artikel ini.',
+    'view_all_services' => 'Lihat semua layanan',
+
     'permalink_title' => 'Tautan ke bagian ini',
 ];

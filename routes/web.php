@@ -27,6 +27,7 @@ use App\Http\Controllers\PaymentWebhookController;
 use App\Http\Controllers\ProfileController;
 use App\Http\Controllers\Public\ArticleController;
 use App\Http\Controllers\Public\MuthowifDirectoryController;
+use App\Http\Controllers\Public\SeoLandingController;
 use App\Http\Controllers\Public\WelcomeController;
 use App\Http\Controllers\SupportTicketController;
 use App\Http\Controllers\TermsController;
@@ -40,10 +41,16 @@ use Illuminate\Support\Facades\Route;
 use Illuminate\Support\Str;
 
 Route::bind('publicProfile', function (string $value) {
-    return MuthowifProfile::query()
-        ->whereKey($value)
-        ->where('verification_status', MuthowifVerificationStatus::Approved)
-        ->firstOrFail();
+    $query = MuthowifProfile::query()
+        ->where('verification_status', MuthowifVerificationStatus::Approved);
+
+    if (Str::of($value)->isUuid()) {
+        $query->whereKey($value);
+    } else {
+        $query->where('slug', $value);
+    }
+
+    return $query->firstOrFail();
 });
 
 Route::bind('blockedDate', function (string $value) {
@@ -98,24 +105,23 @@ Route::get('/layanan/portfolio/foto/{image}', [MuthowifDirectoryController::clas
 Route::get('/layanan/{publicProfile}/booking', [MuthowifDirectoryController::class, 'booking'])->name('layanan.book');
 Route::get('/layanan/{publicProfile}/portfolio', [MuthowifDirectoryController::class, 'portfolioIndex'])->name('layanan.portfolio.index');
 Route::get('/layanan/{publicProfile}', [MuthowifDirectoryController::class, 'show'])->name('layanan.show');
+Route::get('/muthowif/{keyword}', [SeoLandingController::class, 'showKeyword'])
+    ->where('keyword', '[a-z0-9\-]+')
+    ->name('seo.landing');
 
 Route::get('/terms', TermsController::class)->name('terms');
-
 Route::get('/artikel', [ArticleController::class, 'index'])->name('articles.index');
 Route::get('/artikel/{slug}', [ArticleController::class, 'show'])->name('articles.show');
 
 Route::get('/locale/{locale}', [LocaleController::class, 'switch'])->name('locale.switch');
 
-Route::get('/sitemap.xml', function () {
-    $articles = \App\Models\Article::query()->published()->latest()->get();
-    $muthowifs = \App\Models\MuthowifProfile::query()
-        ->where('verification_status', \App\Enums\MuthowifVerificationStatus::Approved)
-        ->get();
-
-    return response()
-        ->view('seo.sitemap', compact('articles', 'muthowifs'))
-        ->header('Content-Type', 'text/xml');
-})->name('seo.sitemap');
+Route::get('/sitemap.xml', [SeoLandingController::class, 'sitemapIndex'])->name('seo.sitemap.index');
+Route::get('/sitemap-{type}.xml', [SeoLandingController::class, 'sitemapPage'])
+    ->where('type', 'home|categories|services|articles');
+Route::get('/sitemap-{type}-{page}.xml', [SeoLandingController::class, 'sitemapPage'])
+    ->where('type', 'home|categories|services|articles')
+    ->where('page', '[0-9]+')
+    ->name('seo.sitemap.page');
 
 Route::get('/', WelcomeController::class)->name('welcome');
 

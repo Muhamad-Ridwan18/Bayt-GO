@@ -28,9 +28,21 @@ final class WelcomeController extends Controller
             ->limit(3)
             ->get();
 
+        $landingPages = collect(config('seo.landing_pages', []))
+            ->map(fn ($landing, $slug) => array_merge($landing, ['slug' => $slug]));
+
+        $latestServices = MuthowifProfile::query()
+            ->approved()
+            ->with('user:id,name')
+            ->orderByDesc('updated_at')
+            ->limit(4)
+            ->get();
+
         return view('welcome', [
             'featuredMuthowifs' => $featuredMuthowifs,
             'latestArticles' => $latestArticles,
+            'landingPages' => $landingPages,
+            'latestServices' => $latestServices,
         ]);
     }
 }

@@ -25,6 +25,7 @@
 <!-- Meta Tags Dasar -->
 <title>{{ $fullTitle }}</title>
 <meta name="description" content="{{ $metaDesc }}">
+<meta name="robots" content="index, follow">
 <link rel="canonical" href="{{ $currentUrl }}">
 
 <!-- Alternatif Bahasa (Multibahasa SEO) -->

@@ -38,10 +38,19 @@ class MuthowifProfile extends Model
         'wallet_balance',
         'referral_code',
         'referred_by_muthowif_profile_id',
+        'slug',
     ];
 
     protected static function booted(): void
     {
+        static::creating(function (MuthowifProfile $profile): void {
+            if ($profile->slug === null) {
+                $profile->slug = $profile->user?->name
+                    ? \Illuminate\Support\Str::slug($profile->user->name)
+                    : (string) $profile->uuid;
+            }
+        });
+
         static::deleting(function (MuthowifProfile $profile): void {
             $disk = Storage::disk('local');
             foreach ($profile->supportingDocuments as $doc) {
@@ -51,6 +60,16 @@ class MuthowifProfile extends Model
             }
             $profile->supportingDocuments()->delete();
         });
+    }
+
+    public function getRouteKeyName(): string
+    {
+        return 'slug';
+    }
+
+    public function scopeApproved($query)
+    {
+        return $query->where('verification_status', MuthowifVerificationStatus::Approved);
     }
 
     protected function casts(): array
