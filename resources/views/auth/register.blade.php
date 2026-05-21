@@ -17,7 +17,29 @@
         action="{{ route('register') }}"
         enctype="multipart/form-data"
         class="space-y-5"
-        x-data="registerFormData(@json(old('role', 'customer')), @json(old('customer_type', 'personal')))"
+        x-data='{
+            selectedRole: @json(old("role", "customer")),
+            customerType: @json(old("customer_type", "personal")),
+            termsModalOpen: false,
+            termsAccepted: false,
+
+            handleRegisterSubmit() {
+                if (this.termsAccepted) {
+                    this.$refs.registerForm.submit();
+                    return;
+                }
+
+                this.termsModalOpen = true;
+            },
+
+            agreeAndSubmit() {
+                this.termsAccepted = true;
+                this.termsModalOpen = false;
+                this.$nextTick(() => {
+                    this.$refs.registerForm.submit();
+                });
+            },
+        }'
         @submit.prevent="handleRegisterSubmit"
     >
         @csrf
@@ -312,31 +334,5 @@
         </div>
     </form>
 
-    <script>
-        window.registerFormData = function (selectedRole, customerType) {
-            return {
-                selectedRole,
-                customerType,
-                termsModalOpen: false,
-                termsAccepted: false,
-
-                handleRegisterSubmit() {
-                    if (this.termsAccepted) {
-                        this.$refs.registerForm.submit();
-                        return;
-                    }
-
-                    this.termsModalOpen = true;
-                },
-
-                agreeAndSubmit() {
-                    this.termsAccepted = true;
-                    this.termsModalOpen = false;
-                    this.$nextTick(() => {
-                        this.$refs.registerForm.submit();
-                    });
-                },
-            };
-        };
-    </script>
+    
 </x-guest-layout>
