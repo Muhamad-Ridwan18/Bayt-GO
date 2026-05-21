@@ -80,7 +80,7 @@
                             href="{{ route('admin.muthowif.show', $p) }}"
                             class="group flex flex-col overflow-hidden rounded-3xl border border-slate-200 bg-white shadow-sm transition-all duration-300 hover:-translate-y-1 hover:border-slate-300 hover:shadow-xl"
                         >
-                            {{-- Card Header: nama + badge sejajar --}}
+                            {{-- Card Header: nama + badge sejajar, tidak tumpang tindih --}}
                             <div class="flex items-center justify-between gap-3 border-b border-slate-100 px-5 py-4">
                                 <h2 class="min-w-0 flex-1 truncate text-sm font-semibold text-slate-900 group-hover:text-brand-600">
                                     {{ $p->user->name }}
@@ -102,8 +102,9 @@
                                 </span>
                             </div>
 
-                            {{-- Card Body: foto + detail --}}
+                            {{-- Card Body --}}
                             <div class="flex flex-1 items-start gap-4 px-5 py-4">
+
                                 {{-- Avatar --}}
                                 <div class="shrink-0">
                                     @if ($p->photo_path)
