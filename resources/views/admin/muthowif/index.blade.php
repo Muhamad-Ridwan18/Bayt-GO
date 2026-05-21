@@ -81,28 +81,8 @@
                             class="group relative overflow-hidden rounded-3xl border border-slate-200 bg-white p-5 shadow-sm transition-all duration-300 hover:-translate-y-1 hover:border-slate-300 hover:shadow-xl"
                         >
 
-                            {{-- Status Badge --}}
-                            <div class="absolute right-4 top-4">
-                                <span class="inline-flex items-center rounded-full px-3 py-1 text-xs font-semibold tracking-wide
-                                    @switch($p->verification_status)
-                                        @case(\App\Enums\MuthowifVerificationStatus::Pending)
-                                            bg-amber-100 text-amber-800
-                                            @break
-
-                                        @case(\App\Enums\MuthowifVerificationStatus::Approved)
-                                            bg-emerald-100 text-emerald-800
-                                            @break
-
-                                        @default
-                                            bg-rose-100 text-rose-800
-                                    @endswitch
-                                ">
-                                    {{ $p->verification_status->label() }}
-                                </span>
-                            </div>
-
                             {{-- Profile --}}
-                            <div class="flex items-start gap-4">
+                            <div class="flex items-start gap-4 justify-between">
                                 <div class="shrink-0">
                                     @if ($p->photo_path)
                                         <img
@@ -117,11 +97,30 @@
                                     @endif
                                 </div>
 
-                                <div class="min-w-0 flex-1 pe-2">
-                                    <h2 class="truncate text-base font-semibold text-slate-900 group-hover:text-brand-600">
-                                        {{ $p->user->name }}
-                                    </h2>
+                                <div class="min-w-0 flex-1">
+                                    <div class="flex items-start justify-between gap-3">
+                                        <h2 class="truncate text-base font-semibold text-slate-900 group-hover:text-brand-600">
+                                            {{ $p->user->name }}
+                                        </h2>
+                                        
+                                        {{-- Status Badge --}}
+                                        <span class="inline-flex shrink-0 items-center rounded-full px-2.5 py-1 text-xs font-semibold tracking-wide
+                                            @switch($p->verification_status)
+                                                @case(\App\Enums\MuthowifVerificationStatus::Pending)
+                                                    bg-amber-100 text-amber-800
+                                                    @break
 
+                                                @case(\App\Enums\MuthowifVerificationStatus::Approved)
+                                                    bg-emerald-100 text-emerald-800
+                                                    @break
+
+                                                @default
+                                                    bg-rose-100 text-rose-800
+                                            @endswitch
+                                        ">
+                                            {{ $p->verification_status->label() }}
+                                        </span>
+                                    </div>
                                     <p class="mt-1 truncate text-sm text-slate-500">
                                         {{ $p->user->email }}
                                     </p>
