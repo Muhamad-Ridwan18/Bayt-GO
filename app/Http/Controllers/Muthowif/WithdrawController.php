@@ -81,7 +81,12 @@ class WithdrawController extends Controller
 
         $amount = round((float) $validated['amount'], 2);
         if ($amount <= 0) {
-            return back()->with('error', 'Nominal withdraw tidak valid.');
+            return back()->withInput()->with('error', 'Nominal withdraw tidak valid.');
+        }
+
+        $walletBalance = round((float) $profile->wallet_balance, 2);
+        if ($amount > $walletBalance) {
+            return back()->withInput()->with('error', 'Saldo tidak cukup untuk melakukan withdraw.');
         }
 
         $withdrawal = MuthowifWithdrawal::query()->create([
@@ -95,7 +100,11 @@ class WithdrawController extends Controller
             'requested_at' => now(),
         ]);
 
-        WithdrawalRequested::dispatch($withdrawal);
+        try {
+            WithdrawalRequested::dispatch($withdrawal);
+        } catch (\Throwable $e) {
+            report($e);
+        }
 
         return redirect()
             ->route('muthowif.withdrawals.index')
