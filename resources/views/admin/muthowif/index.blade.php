@@ -1,7 +1,7 @@
 <x-app-layout>
 
     <div class="py-8 sm:py-10">
-        <div class="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 space-y-6">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 space-y-6">
             @if (session('status'))
                 <div class="rounded-xl border border-emerald-200 bg-emerald-50 px-4 py-3 text-sm text-emerald-800">
                     {{ session('status') }}
@@ -32,13 +32,10 @@
                 @endforeach
             </div>
 
-            <div class="grid gap-6 grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4">
+            <div class="grid gap-6 grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 items-stretch">
                 @forelse ($profiles as $p)
                     <div>
-                        <a
-                            href="{{ route('admin.muthowif.show', $p) }}"
-                            class="group block rounded-[1.25rem] border border-slate-200 bg-white p-4 shadow-sm transition hover:border-slate-300 hover:shadow-lg sm:p-5 h-full"
-                        >
+                        <a href="{{ route('admin.muthowif.show', $p) }}" class="group flex flex-col justify-between rounded-[1.25rem] border border-slate-200 bg-white p-4 shadow-sm transition hover:border-slate-300 hover:shadow-lg sm:p-5 h-full">
                             <div class="flex items-start gap-4">
                                 <div class="flex-shrink-0">
                                     @if ($p->photo_path)
@@ -64,23 +61,23 @@
                                     </div>
                                 </div>
 
-                                <div class="ms-3 flex flex-col items-end gap-2">
-                                    <span class="text-sm text-slate-500">&nbsp;</span>
-                                    <span class="inline-flex rounded-full px-3 py-1 text-xs font-semibold tracking-wide text-slate-800
-                                        @switch($p->verification_status)
-                                            @case(\App\Enums\MuthowifVerificationStatus::Pending)
-                                                bg-amber-100 text-amber-900
-                                                @break
-                                            @case(\App\Enums\MuthowifVerificationStatus::Approved)
-                                                bg-emerald-100 text-emerald-900
-                                                @break
-                                            @default
-                                                bg-rose-100 text-rose-900
-                                        @endswitch
-                                    ">
-                                        {{ $p->verification_status->label() }}
-                                    </span>
-                                </div>
+                            </div>
+                            <div class="mt-4 ms-3 flex items-center justify-end">
+                                <span class="inline-flex rounded-full px-3 py-1 text-xs font-semibold tracking-wide text-slate-800
+                                    @switch($p->verification_status)
+                                        @case(\App\Enums\MuthowifVerificationStatus::Pending)
+                                            bg-amber-100 text-amber-900
+                                            @break
+                                        @case(\App\Enums\MuthowifVerificationStatus::Approved)
+                                            bg-emerald-100 text-emerald-900
+                                            @break
+                                        @default
+                                            bg-rose-100 text-rose-900
+                                    @endswitch
+                                ">
+                                    {{ $p->verification_status->label() }}
+                                </span>
+                            </div>
                             </div>
                         </a>
                     </div>
@@ -89,8 +86,13 @@
                 @endforelse
             </div>
 
-            <div class="px-1">
-                {{ $profiles->links() }}
+            <div class="mt-6 flex items-center justify-between">
+                <div class="text-sm text-slate-500">Showing {{ $profiles->firstItem() ?? 0 }} to {{ $profiles->lastItem() ?? 0 }} of {{ $profiles->total() }} results</div>
+                <div class="px-1">
+                    <nav class="flex justify-center">
+                        {{ $profiles->links() }}
+                    </nav>
+                </div>
             </div>
         </div>
     </div>
