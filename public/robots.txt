@@ -8,4 +8,8 @@ Disallow: /dashboard/
 Disallow: /bookings/
 Disallow: /muthowif/bookings/
 
-Sitemap: https://baytgo.com/sitemap.xml
+Sitemap: https://baytgo.id/sitemap.xml
+Sitemap: https://baytgo.id/sitemap-home-1.xml
+Sitemap: https://baytgo.id/sitemap-categories-1.xml
+Sitemap: https://baytgo.id/sitemap-services-1.xml
+Sitemap: https://baytgo.id/sitemap-articles-1.xml

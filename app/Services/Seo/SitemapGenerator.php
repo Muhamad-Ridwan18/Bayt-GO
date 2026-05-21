@@ -89,12 +89,19 @@ class SitemapGenerator
 
     protected function categoryItems(): array
     {
-        return collect(config('seo.landing_pages', []))->map(fn ($landing, $slug) => [
-            'loc' => route('seo.landing', ['keyword' => $slug], true),
-            'lastmod' => Carbon::now()->toIso8601String(),
-            'changefreq' => config('seo.sitemap.changefreq.categories', 'daily'),
-            'priority' => config('seo.sitemap.priorities.categories', '0.9'),
-        ])->toArray();
+        $landingPages = config('seo.landing_pages', []);
+        $items = [];
+
+        foreach ($landingPages as $slug => $landing) {
+            $items[] = [
+                'loc' => route('seo.landing', ['keyword' => $slug], true),
+                'lastmod' => Carbon::now()->toIso8601String(),
+                'changefreq' => config('seo.sitemap.changefreq.categories', 'daily'),
+                'priority' => config('seo.sitemap.priorities.categories', '0.9'),
+            ];
+        }
+
+        return $items;
     }
 
     protected function serviceItems(int $page): array
