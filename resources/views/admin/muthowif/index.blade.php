@@ -45,17 +45,17 @@
             <div class="mb-6 overflow-x-auto">
                 <div class="flex w-max gap-2 rounded-2xl border border-slate-200 bg-white p-1 shadow-sm">
                     @foreach ([
-                        'pending'  => __('admin.muthowif.tab_pending'),
+                        'pending' => __('admin.muthowif.tab_pending'),
                         'approved' => __('admin.muthowif.tab_approved'),
                         'rejected' => __('admin.muthowif.tab_rejected'),
-                        'all'      => __('admin.muthowif.tab_all'),
+                        'all' => __('admin.muthowif.tab_all'),
                     ] as $key => $label)
-                        
+                        <a
                             href="{{ route('admin.muthowif.index', ['status' => $key]) }}"
                             class="inline-flex items-center gap-2 rounded-xl px-4 py-2 text-sm font-medium transition-all duration-200
-                                {{ $currentStatus === $key
-                                    ? 'bg-brand-600 text-white shadow-sm'
-                                    : 'text-slate-600 hover:bg-slate-100 hover:text-slate-900' }}"
+                            {{ $currentStatus === $key
+                                ? 'bg-brand-600 text-white shadow-sm'
+                                : 'text-slate-600 hover:bg-slate-100 hover:text-slate-900' }}"
                         >
                             {{ $label }}
 
@@ -76,24 +76,23 @@
             @if ($profiles->count())
                 <div class="grid grid-cols-1 gap-5 sm:grid-cols-2 xl:grid-cols-3 2xl:grid-cols-4">
                     @foreach ($profiles as $p)
-                        
+                        <a
                             href="{{ route('admin.muthowif.show', $p) }}"
-                            class="group flex flex-col overflow-hidden rounded-3xl border border-slate-200 bg-white shadow-sm transition-all duration-300 hover:-translate-y-1 hover:border-slate-300 hover:shadow-xl"
+                            class="group relative overflow-hidden rounded-3xl border border-slate-200 bg-white p-5 shadow-sm transition-all duration-300 hover:-translate-y-1 hover:border-slate-300 hover:shadow-xl"
                         >
-                            {{-- Card Header: nama + badge sejajar, tidak tumpang tindih --}}
-                            <div class="flex items-center justify-between gap-3 border-b border-slate-100 px-5 py-4">
-                                <h2 class="min-w-0 flex-1 truncate text-sm font-semibold text-slate-900 group-hover:text-brand-600">
-                                    {{ $p->user->name }}
-                                </h2>
 
-                                <span class="inline-flex shrink-0 items-center rounded-full px-3 py-1 text-xs font-semibold tracking-wide
+                            {{-- Status Badge --}}
+                            <div class="absolute right-4 top-4">
+                                <span class="inline-flex items-center rounded-full px-3 py-1 text-xs font-semibold tracking-wide
                                     @switch($p->verification_status)
                                         @case(\App\Enums\MuthowifVerificationStatus::Pending)
                                             bg-amber-100 text-amber-800
                                             @break
+
                                         @case(\App\Enums\MuthowifVerificationStatus::Approved)
                                             bg-emerald-100 text-emerald-800
                                             @break
+
                                         @default
                                             bg-rose-100 text-rose-800
                                     @endswitch
@@ -102,58 +101,67 @@
                                 </span>
                             </div>
 
-                            {{-- Card Body --}}
-                            <div class="flex flex-1 items-start gap-4 px-5 py-4">
-
-                                {{-- Avatar --}}
+                            {{-- Profile --}}
+                            <div class="flex items-start gap-4">
                                 <div class="shrink-0">
                                     @if ($p->photo_path)
                                         <img
                                             src="{{ route('admin.muthowif.photo', $p) }}"
                                             alt="{{ $p->user->name }}"
-                                            class="h-16 w-16 rounded-2xl object-cover ring-4 ring-slate-100"
+                                            class="h-20 w-20 rounded-2xl object-cover ring-4 ring-slate-100"
                                         >
                                     @else
-                                        <div class="flex h-16 w-16 items-center justify-center rounded-2xl bg-gradient-to-br from-slate-100 to-slate-200 text-base font-bold text-slate-600">
+                                        <div class="flex h-20 w-20 items-center justify-center rounded-2xl bg-gradient-to-br from-slate-100 to-slate-200 text-lg font-bold text-slate-700">
                                             {{ strtoupper(substr($p->user->name, 0, 2)) }}
                                         </div>
                                     @endif
                                 </div>
 
-                                {{-- Info --}}
-                                <div class="min-w-0 flex-1">
-                                    <p class="truncate text-sm text-slate-500">
+                                <div class="min-w-0 flex-1 pe-2">
+                                    <h2 class="truncate text-base font-semibold text-slate-900 group-hover:text-brand-600">
+                                        {{ $p->user->name }}
+                                    </h2>
+
+                                    <p class="mt-1 truncate text-sm text-slate-500">
                                         {{ $p->user->email }}
                                     </p>
 
-                                    <div class="mt-3 space-y-2 text-sm">
-                                        <div class="flex items-center gap-2 text-slate-600">
-                                            <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="M3 5a2 2 0 012-2h3.28a1 1 0 01.948.684l1.498 4.493a1 1 0 01-.502 1.21l-2.257 1.13a11.042 11.042 0 005.516 5.516l1.13-2.257a1 1 0 011.21-.502l4.493 1.498a1 1 0 01.684.949V19a2 2 0 01-2 2h-1C9.716 21 3 14.284 3 6V5z" />
+                                    <div class="mt-4 space-y-2 text-sm">
+                                        <div class="flex items-start gap-2 text-slate-600">
+                                            <svg xmlns="http://www.w3.org/2000/svg" class="mt-0.5 h-4 w-4 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="M3 5h2l3.6 7.59a1 1 0 00.91.58h7.72a1 1 0 00.91-.58L21 5H7" />
                                             </svg>
-                                            <span class="truncate">{{ $p->phone ?: '-' }}</span>
-                                        </div>
 
-                                        <div class="flex items-center gap-2 text-slate-600">
-                                            <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="M8 7V3m8 4V3m-9 8h10m-11 9h12a2 2 0 002-2V7a2 2 0 00-2-2H6a2 2 0 00-2 2v11a2 2 0 002 2z" />
-                                            </svg>
-                                            <span>{{ $p->created_at->translatedFormat('d M Y') }}</span>
+                                            <span class="truncate">
+                                                {{ $p->phone ?: '-' }}
+                                            </span>
                                         </div>
 
                                         <div class="flex items-start gap-2 text-slate-600">
                                             <svg xmlns="http://www.w3.org/2000/svg" class="mt-0.5 h-4 w-4 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" />
-                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" />
+                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="M8 7V3m8 4V3m-9 8h10m-11 9h12a2 2 0 002-2V7a2 2 0 00-2-2H6a2 2 0 00-2 2v11a2 2 0 002 2z" />
                                             </svg>
-                                            <span class="line-clamp-2">{{ $p->address ?: 'No address available' }}</span>
+
+                                            <span>
+                                                {{ $p->created_at->translatedFormat('d M Y') }}
+                                            </span>
+                                        </div>
+
+                                        <div class="flex items-start gap-2 text-slate-600">
+                                            <svg xmlns="http://www.w3.org/2000/svg" class="mt-0.5 h-4 w-4 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="M17.657 16.657L13.414 12.414a2 2 0 010-2.828l4.243-4.243m0 0A8 8 0 105.343 16.657a8 8 0 0012.314 0z" />
+                                            </svg>
+
+                                            <span class="line-clamp-2">
+                                                {{ $p->address ?: 'No address available' }}
+                                            </span>
                                         </div>
                                     </div>
                                 </div>
                             </div>
 
-                            {{-- Card Footer --}}
-                            <div class="flex items-center justify-between border-t border-slate-100 px-5 py-3">
+                            {{-- Footer --}}
+                            <div class="mt-5 flex items-center justify-between border-t border-slate-100 pt-4">
                                 <span class="text-sm font-medium text-slate-500 group-hover:text-brand-600">
                                     View Details
                                 </span>
@@ -165,7 +173,6 @@
                         </a>
                     @endforeach
                 </div>
-
             @else
                 <div class="rounded-3xl border border-dashed border-slate-300 bg-white px-6 py-16 text-center shadow-sm">
                     <div class="mx-auto mb-4 flex h-16 w-16 items-center justify-center rounded-2xl bg-slate-100">
@@ -174,7 +181,9 @@
                         </svg>
                     </div>
 
-                    <h3 class="text-lg font-semibold text-slate-900">No Data Found</h3>
+                    <h3 class="text-lg font-semibold text-slate-900">
+                        No Data Found
+                    </h3>
 
                     <p class="mt-2 text-sm text-slate-500">
                         {{ __('admin.muthowif.empty_filter') }}
