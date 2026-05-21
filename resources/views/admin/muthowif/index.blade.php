@@ -82,7 +82,7 @@
                         >
 
                             {{-- Profile --}}
-                            <div class="flex items-start gap-4 justify-between">
+                            <div class="flex items-start gap-4">
                                 <div class="shrink-0">
                                     @if ($p->photo_path)
                                         <img
@@ -98,8 +98,8 @@
                                 </div>
 
                                 <div class="min-w-0 flex-1">
-                                    <div class="flex items-start justify-between gap-3">
-                                        <h2 class="truncate text-base font-semibold text-slate-900 group-hover:text-brand-600">
+                                    <div class="mb-1 flex items-start justify-between gap-3">
+                                        <h2 class="text-base font-semibold text-slate-900 group-hover:text-brand-600">
                                             {{ $p->user->name }}
                                         </h2>
                                         
