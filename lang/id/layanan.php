@@ -26,7 +26,7 @@ return [
     'empty_state_title_strong' => 'Cari',
     'empty_state_sub' => 'Daftar muthowif hanya muncul setelah tanggal diisi — supaya Anda tidak membuang waktu pada yang tidak available.',
     'range_prefix' => 'Rentang',
-    'companions_ready' => ':count Muthowif tersediap',
+    'companions_ready' => ':count Muthowif tersedia',
     'no_results_title' => 'Belum ada muthowif yang cocok pada rentang ini',
     'no_results_sub' => 'Semua sedang libur atau jadwal sudah terisi. Coba ubah tanggal atau kata kunci nama.',
     'breadcrumb_find' => 'Cari muthowif',

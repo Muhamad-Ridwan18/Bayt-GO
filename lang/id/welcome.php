@@ -139,7 +139,7 @@ return [
         ['title' => 'Tanggal & nama', 'desc' => 'Cari rentang perjalanan dan opsional filter nama muthowif.'],
         ['title' => 'Lihat profil', 'desc' => 'Layanan group/private, harga harian, add-on, dan jadwal libur.'],
         ['title' => 'Pesan & bayar', 'desc' => 'Jadwal yang bentrok otomatis disembunyikan dari pencarian.'],
-        ['title' => 'Berangkat', 'desc' => 'Muthowif tersediap di Tanah Suci sesuai kesepakatan.'],
+        ['title' => 'Berangkat', 'desc' => 'Muthowif tersedia di Tanah Suci sesuai kesepakatan.'],
     ],
 
     'footer_tagline' => 'Marketplace umrah — jamaah & muthowif',

@@ -12,11 +12,13 @@
     {{-- x-data pakai kutip tunggal: @json mengeluarkan "..." sehingga tidak memutus atribut HTML --}}
     <form
         id="register-form"
+        x-ref="registerForm"
         method="POST"
         action="{{ route('register') }}"
         enctype="multipart/form-data"
         class="space-y-5"
-        x-data='{ selectedRole: @json(old("role", "customer")), customerType: @json(old("customer_type", "personal")) }'
+        x-data="registerFormData(@json(old('role', 'customer')), @json(old('customer_type', 'personal')))"
+        @submit.prevent="handleRegisterSubmit"
     >
         @csrf
 
@@ -273,5 +275,68 @@
                 Daftar
             </x-primary-button>
         </div>
+
+        <div
+            x-show="termsModalOpen"
+            x-cloak
+            class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/60"
+            role="dialog"
+            aria-modal="true"
+        >
+            <div class="max-w-lg w-full rounded-3xl bg-white shadow-2xl ring-1 ring-slate-200 overflow-hidden">
+                <div class="px-6 py-5 border-b border-slate-200">
+                    <h2 class="text-lg font-semibold text-slate-900">Syarat & Ketentuan</h2>
+                    <p class="mt-2 text-sm text-slate-600">Sebelum mendaftar, pastikan Anda sudah membaca dan menyetujui syarat & ketentuan.</p>
+                </div>
+                <div class="px-6 py-5 space-y-4 text-sm text-slate-700">
+                    <p>Dengan mengklik "Setuju dan Daftar", Anda menyetujui <a href="{{ route('terms') }}" target="_blank" rel="noopener noreferrer" class="font-semibold text-brand-700 hover:text-brand-800">Syarat & Ketentuan</a> kami.</p>
+                    <p class="text-slate-500">Jika ingin memeriksa kembali dokumen sebelum mendaftar, klik "Batal" dan baca syarat terlebih dahulu.</p>
+                </div>
+                <div class="px-6 py-4 bg-slate-50 flex flex-col gap-3 sm:flex-row sm:justify-end">
+                    <button
+                        type="button"
+                        @click="termsModalOpen = false"
+                        class="inline-flex justify-center rounded-xl border border-slate-300 bg-white px-4 py-2 text-sm font-semibold text-slate-700 hover:bg-slate-100"
+                    >
+                        Batal
+                    </button>
+                    <button
+                        type="button"
+                        @click="agreeAndSubmit"
+                        class="inline-flex justify-center rounded-xl bg-brand-600 px-4 py-2 text-sm font-semibold text-white hover:bg-brand-700"
+                    >
+                        Setuju dan Daftar
+                    </button>
+                </div>
+            </div>
+        </div>
     </form>
+
+    <script>
+        window.registerFormData = function (selectedRole, customerType) {
+            return {
+                selectedRole,
+                customerType,
+                termsModalOpen: false,
+                termsAccepted: false,
+
+                handleRegisterSubmit() {
+                    if (this.termsAccepted) {
+                        this.$refs.registerForm.submit();
+                        return;
+                    }
+
+                    this.termsModalOpen = true;
+                },
+
+                agreeAndSubmit() {
+                    this.termsAccepted = true;
+                    this.termsModalOpen = false;
+                    this.$nextTick(() => {
+                        this.$refs.registerForm.submit();
+                    });
+                },
+            };
+        };
+    </script>
 </x-guest-layout>
