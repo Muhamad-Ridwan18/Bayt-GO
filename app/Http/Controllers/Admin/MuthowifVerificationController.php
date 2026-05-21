@@ -59,7 +59,7 @@ class MuthowifVerificationController extends Controller
         }
 
         return view('admin.muthowif.index', [
-            'profiles' => $query->paginate(15)->withQueryString(),
+            'profiles' => $query->paginate(8)->withQueryString(),
             'currentStatus' => $status,
             'counts' => $counts,
         ]);

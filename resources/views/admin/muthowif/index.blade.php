@@ -32,80 +32,58 @@
                 @endforeach
             </div>
 
-            <div class="rounded-2xl border border-slate-200 bg-white shadow-sm overflow-hidden">
+            <div class="grid gap-6 grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4">
                 @forelse ($profiles as $p)
-                    <a
-                        href="{{ route('admin.muthowif.show', $p) }}"
-                        class="group block rounded-[1.75rem] border border-slate-200 bg-white p-4 shadow-sm transition hover:border-slate-300 hover:shadow-lg sm:p-5"
-                    >
-                        <div class="grid gap-4 sm:grid-cols-[96px_minmax(0,1fr)_240px] sm:items-center">
-                            <div class="flex items-center justify-center">
-                                @if ($p->photo_path)
-                                    <img
-                                        src="{{ route('admin.muthowif.photo', $p) }}"
-                                        alt="Foto {{ $p->user->name }}"
-                                        class="h-24 w-24 rounded-[1.5rem] object-cover bg-slate-100"
-                                    />
-                                @else
-                                    <div class="flex h-24 w-24 items-center justify-center rounded-[1.5rem] bg-slate-100 text-lg font-semibold text-slate-600">
-                                        {{ strtoupper(substr($p->user->name, 0, 2)) }}
-                                    </div>
-                                @endif
-                            </div>
+                    <div>
+                        <a
+                            href="{{ route('admin.muthowif.show', $p) }}"
+                            class="group block rounded-[1.25rem] border border-slate-200 bg-white p-4 shadow-sm transition hover:border-slate-300 hover:shadow-lg sm:p-5 h-full"
+                        >
+                            <div class="flex items-start gap-4">
+                                <div class="flex-shrink-0">
+                                    @if ($p->photo_path)
+                                        <img
+                                            src="{{ route('admin.muthowif.photo', $p) }}"
+                                            alt="Foto {{ $p->user->name }}"
+                                            class="h-20 w-20 rounded-2xl object-cover bg-slate-100"
+                                        />
+                                    @else
+                                        <div class="flex h-20 w-20 items-center justify-center rounded-2xl bg-slate-100 text-lg font-semibold text-slate-600">
+                                            {{ strtoupper(substr($p->user->name, 0, 2)) }}
+                                        </div>
+                                    @endif
+                                </div>
 
-                            <div class="space-y-3">
-                                <div class="flex flex-col gap-1">
-                                    <p class="text-lg font-semibold text-slate-900">{{ $p->user->name }}</p>
+                                <div class="flex-1">
+                                    <p class="font-semibold text-slate-900">{{ $p->user->name }}</p>
                                     <p class="text-sm text-slate-500">{{ $p->user->email }}</p>
+                                    <div class="mt-3 grid gap-2 text-sm text-slate-500">
+                                        <p class="truncate"><strong class="text-slate-700">WA:</strong> {{ $p->phone }}</p>
+                                        <p class="truncate"><strong class="text-slate-700">{{ __('admin.muthowif.registered_at', ['datetime' => $p->created_at->translatedFormat('d M Y')]) }}</strong></p>
+                                        <p class="truncate">{{ $p->address ? \Illuminate\Support\Str::limit($p->address, 80) : '—' }}</p>
+                                    </div>
                                 </div>
 
-                                <div class="grid gap-2 sm:grid-cols-2 text-sm text-slate-500">
-                                    <div class="flex items-center gap-2">
-                                        <span class="inline-flex h-7 w-7 items-center justify-center rounded-xl bg-emerald-100 text-emerald-700">
-                                            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" class="h-4 w-4" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                                                <path d="M16 5c1.1 0 2 .9 2 2v12a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V7c0-1.1.9-2 2-2h10Zm-5 3.5a1.5 1.5 0 1 0 0-3 1.5 1.5 0 0 0 0 3Zm3.5 9.5H7" />
-                                            </svg>
-                                        </span>
-                                        <span class="truncate">{{ $p->phone }}</span>
-                                    </div>
-                                    <div class="flex items-center gap-2">
-                                        <span class="inline-flex h-7 w-7 items-center justify-center rounded-xl bg-slate-100 text-slate-600">
-                                            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" class="h-4 w-4" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                                                <path d="M21 10c0 7-9 13-9 13S3 17 3 10a9 9 0 1 1 18 0Z" />
-                                                <circle cx="12" cy="10" r="3" />
-                                            </svg>
-                                        </span>
-                                        <span class="truncate">{{ $p->address ? \Illuminate\Support\Str::limit($p->address, 80) : 'Alamat tidak tersedia' }}</span>
-                                    </div>
+                                <div class="ms-3 flex flex-col items-end gap-2">
+                                    <span class="text-sm text-slate-500">&nbsp;</span>
+                                    <span class="inline-flex rounded-full px-3 py-1 text-xs font-semibold tracking-wide text-slate-800
+                                        @switch($p->verification_status)
+                                            @case(\App\Enums\MuthowifVerificationStatus::Pending)
+                                                bg-amber-100 text-amber-900
+                                                @break
+                                            @case(\App\Enums\MuthowifVerificationStatus::Approved)
+                                                bg-emerald-100 text-emerald-900
+                                                @break
+                                            @default
+                                                bg-rose-100 text-rose-900
+                                        @endswitch
+                                    ">
+                                        {{ $p->verification_status->label() }}
+                                    </span>
                                 </div>
                             </div>
-
-                            <div class="flex flex-col justify-between gap-4 text-right">
-                                <div class="text-sm text-slate-500">
-                                    <div class="inline-flex items-center gap-2 rounded-full bg-slate-100 px-3 py-1">
-                                        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" class="h-4 w-4" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                                            <path d="M8 7V3M16 7V3M4 11h16M5 21h14a2 2 0 0 0 2-2V7a2 2 0 0 0-2-2H5a2 2 0 0 0-2 2v12a2 2 0 0 0 2 2Z" />
-                                        </svg>
-                                        <span>{{ __('admin.muthowif.registered_at', ['datetime' => $p->created_at->translatedFormat('d M Y')]) }}</span>
-                                    </div>
-                                </div>
-                                <span class="inline-flex self-end rounded-full px-4 py-1.5 text-xs font-semibold tracking-wide text-slate-800
-                                    @switch($p->verification_status)
-                                        @case(\App\Enums\MuthowifVerificationStatus::Pending)
-                                            bg-amber-100 text-amber-900
-                                            @break
-                                        @case(\App\Enums\MuthowifVerificationStatus::Approved)
-                                            bg-emerald-100 text-emerald-900
-                                            @break
-                                        @default
-                                            bg-rose-100 text-rose-900
-                                    @endswitch
-                                ">
-                                    {{ $p->verification_status->label() }}
-                                </span>
-                            </div>
-                        </div>
-                    </a>
+                        </a>
+                    </div>
                 @empty
                     <p class="px-4 py-10 text-center text-sm text-slate-500">{{ __('admin.muthowif.empty_filter') }}</p>
                 @endforelse
