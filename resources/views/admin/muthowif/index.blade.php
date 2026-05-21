@@ -36,27 +36,52 @@
                 @forelse ($profiles as $p)
                     <a
                         href="{{ route('admin.muthowif.show', $p) }}"
-                        class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2 px-4 py-4 border-b border-slate-100 last:border-b-0 hover:bg-slate-50/80 transition"
+                        class="group block rounded-[1.25rem] border border-slate-200 bg-white px-4 py-4 transition hover:border-brand-300 hover:shadow-[0_20px_60px_-35px_rgba(15,23,42,0.45)]"
                     >
-                        <div>
-                            <p class="font-semibold text-slate-900">{{ $p->user->name }}</p>
-                            <p class="text-sm text-slate-500">{{ $p->user->email }} · {{ $p->phone }}</p>
-                            <p class="text-xs text-slate-400 mt-1">{{ __('admin.muthowif.registered_at', ['datetime' => $p->created_at->translatedFormat('d M Y H:i')]) }}</p>
+                        <div class="grid gap-4 sm:grid-cols-[80px_minmax(0,1fr)] sm:items-center">
+                            <div class="flex items-center justify-center">
+                                @if ($p->photo_path)
+                                    <img
+                                        src="{{ route('admin.muthowif.photo', $p) }}"
+                                        alt="Foto {{ $p->user->name }}"
+                                        class="h-20 w-20 rounded-2xl object-cover bg-slate-100"
+                                    />
+                                @else
+                                    <div class="flex h-20 w-20 items-center justify-center rounded-2xl bg-slate-100 text-sm font-semibold text-slate-600">
+                                        {{ strtoupper(substr($p->user->name, 0, 2)) }}
+                                    </div>
+                                @endif
+                            </div>
+
+                            <div class="space-y-2">
+                                <div class="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
+                                    <div>
+                                        <p class="font-semibold text-slate-900">{{ $p->user->name }}</p>
+                                        <p class="text-sm text-slate-500">{{ $p->user->email }}</p>
+                                    </div>
+                                    <span class="inline-flex shrink-0 rounded-full px-3 py-1 text-xs font-semibold tracking-wide
+                                        @switch($p->verification_status)
+                                            @case(\App\Enums\MuthowifVerificationStatus::Pending)
+                                                bg-amber-100 text-amber-900
+                                                @break
+                                            @case(\App\Enums\MuthowifVerificationStatus::Approved)
+                                                bg-emerald-100 text-emerald-900
+                                                @break
+                                            @default
+                                                bg-rose-100 text-rose-900
+                                        @endswitch
+                                    ">
+                                        {{ $p->verification_status->label() }}
+                                    </span>
+                                </div>
+
+                                <div class="grid gap-2 sm:grid-cols-2 text-sm text-slate-500">
+                                    <p class="truncate"><strong class="text-slate-700">WA:</strong> {{ $p->phone }}</p>
+                                    <p class="truncate">{{ __('admin.muthowif.registered_at', ['datetime' => $p->created_at->translatedFormat('d M Y')]) }}</p>
+                                </div>
+                                <p class="text-sm text-slate-500">{{ $p->address ? \Illuminate\Support\Str::limit($p->address, 70) : '—' }}</p>
+                            </div>
                         </div>
-                        <span class="inline-flex shrink-0 rounded-lg px-2.5 py-1 text-xs font-medium
-                            @switch($p->verification_status)
-                                @case(\App\Enums\MuthowifVerificationStatus::Pending)
-                                    bg-amber-100 text-amber-900
-                                    @break
-                                @case(\App\Enums\MuthowifVerificationStatus::Approved)
-                                    bg-emerald-100 text-emerald-900
-                                    @break
-                                @default
-                                    bg-rose-100 text-rose-900
-                            @endswitch
-                        ">
-                            {{ $p->verification_status->label() }}
-                        </span>
                     </a>
                 @empty
                     <p class="px-4 py-10 text-center text-sm text-slate-500">{{ __('admin.muthowif.empty_filter') }}</p>
