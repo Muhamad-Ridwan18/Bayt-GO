@@ -1,29 +1,31 @@
 <x-app-layout>
     <div class="min-h-screen bg-slate-50 py-8">
-        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 space-y-6">
+        <div class="max-w-[1600px] mx-auto px-4 lg:px-8 space-y-6">
 
             {{-- ALERT --}}
             @if (session('status'))
-                <div class="rounded-2xl border border-emerald-200 bg-emerald-50 px-5 py-4 text-sm text-emerald-800 shadow-sm">
+                <div class="rounded-3xl border border-emerald-200 bg-emerald-50 px-5 py-4 text-sm text-emerald-800 shadow-sm">
                     {{ session('status') }}
                 </div>
             @endif
 
             @if (session('error'))
-                <div class="rounded-2xl border border-rose-200 bg-rose-50 px-5 py-4 text-sm text-rose-800 shadow-sm">
+                <div class="rounded-3xl border border-rose-200 bg-rose-50 px-5 py-4 text-sm text-rose-800 shadow-sm">
                     {{ session('error') }}
                 </div>
             @endif
 
             {{-- HEADER --}}
-            <div class="rounded-3xl border border-slate-200 bg-white p-6 shadow-sm">
-                <div class="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-6">
+            <div
+                class="rounded-[32px] border border-slate-200 bg-gradient-to-r from-white to-slate-50 p-7 shadow-sm"
+            >
+                <div class="flex flex-col xl:flex-row xl:items-center xl:justify-between gap-6">
 
                     <div class="flex items-center gap-5">
                         <img
                             src="{{ route('admin.muthowif.photo', $profile) }}"
                             alt="{{ __('admin.muthowif.photo_alt') }}"
-                            class="w-24 h-24 rounded-3xl object-cover border border-slate-200 shadow-sm"
+                            class="h-28 w-28 rounded-[28px] object-cover border border-slate-200 shadow-sm"
                         >
 
                         <div>
@@ -31,7 +33,7 @@
                                 {{ __('admin.muthowif.name') }}
                             </p>
 
-                            <h1 class="text-2xl font-bold text-slate-900">
+                            <h1 class="text-3xl font-bold text-slate-900">
                                 {{ $profile->user->name }}
                             </h1>
 
@@ -39,9 +41,9 @@
                                 {{ $profile->user->email }}
                             </p>
 
-                            <div class="mt-3 flex flex-wrap items-center gap-3">
+                            <div class="mt-4 flex flex-wrap gap-3">
 
-                                <span class="inline-flex items-center rounded-full px-4 py-2 text-sm font-semibold
+                                <span class="rounded-full px-4 py-2 text-sm font-semibold
                                     @switch($profile->verification_status)
                                         @case(\App\Enums\MuthowifVerificationStatus::Pending)
                                             bg-amber-100 text-amber-800
@@ -56,7 +58,7 @@
                                     {{ $profile->verification_status->label() }}
                                 </span>
 
-                                <span class="text-sm text-slate-500">
+                                <span class="rounded-full bg-slate-100 px-4 py-2 text-sm text-slate-700">
                                     {{ $profile->birth_date?->translatedFormat('d M Y') }}
                                 </span>
 
@@ -65,257 +67,190 @@
                     </div>
 
                     @if ($profile->isPending())
-                        <div class="flex flex-wrap gap-3">
+                        <form
+                            method="POST"
+                            action="{{ route('admin.muthowif.approve', $profile) }}"
+                        >
+                            @csrf
 
-                            <form method="POST" action="{{ route('admin.muthowif.approve', $profile) }}">
-                                @csrf
-
-                                <button
-                                    type="submit"
-                                    class="inline-flex items-center justify-center rounded-2xl bg-emerald-600 px-5 py-3 text-sm font-semibold text-white transition hover:bg-emerald-700 shadow-sm"
-                                >
-                                    {{ __('admin.muthowif.approve_registration') }}
-                                </button>
-                            </form>
-
-                        </div>
+                            <button
+                                type="submit"
+                                class="rounded-2xl bg-emerald-600 px-6 py-4 text-sm font-semibold text-white transition hover:-translate-y-0.5 hover:bg-emerald-700 hover:shadow-lg"
+                            >
+                                {{ __('admin.muthowif.approve_registration') }}
+                            </button>
+                        </form>
                     @endif
                 </div>
             </div>
 
-            {{-- MAIN GRID --}}
-            <div class="grid grid-cols-12 gap-6">
+            {{-- BIODATA FULL WIDTH --}}
+            <div class="rounded-[32px] border border-slate-200 bg-white p-8 shadow-sm">
 
-                {{-- LEFT --}}
-                <div class="col-span-12 lg:col-span-8 space-y-6">
+                <div class="mb-8">
+                    <h2 class="text-xl font-bold text-slate-900">
+                        Biodata
+                    </h2>
 
-                    {{-- BIODATA --}}
-                    <div class="rounded-3xl border border-slate-200 bg-white p-6 shadow-sm">
-
-                        <div class="mb-6">
-                            <h2 class="text-lg font-bold text-slate-900">
-                                Biodata
-                            </h2>
-
-                            <p class="text-sm text-slate-500">
-                                Informasi lengkap muthowif
-                            </p>
-                        </div>
-
-                        <div class="grid grid-cols-1 md:grid-cols-2 gap-6 text-sm">
-
-                            <div>
-                                <p class="text-slate-400 mb-1">
-                                    WhatsApp
-                                </p>
-
-                                <h3 class="font-semibold text-slate-900">
-                                    {{ $profile->phone }}
-                                </h3>
-                            </div>
-
-                            <div>
-                                <p class="text-slate-400 mb-1">
-                                    Tanggal Lahir
-                                </p>
-
-                                <h3 class="font-semibold text-slate-900">
-                                    {{ $profile->birth_date?->translatedFormat('d M Y') }}
-                                </h3>
-                            </div>
-
-                            <div>
-                                <p class="text-slate-400 mb-1">
-                                    NIK
-                                </p>
-
-                                <h3 class="font-semibold text-slate-900">
-                                    {{ $profile->nik }}
-                                </h3>
-                            </div>
-
-                            <div>
-                                <p class="text-slate-400 mb-1">
-                                    Passport
-                                </p>
-
-                                <h3 class="font-semibold text-slate-900">
-                                    {{ $profile->passport_number ?? '—' }}
-                                </h3>
-                            </div>
-
-                            <div class="md:col-span-2">
-                                <p class="text-slate-400 mb-1">
-                                    Alamat
-                                </p>
-
-                                <h3 class="font-semibold text-slate-900 whitespace-pre-line leading-relaxed">
-                                    {{ $profile->address }}
-                                </h3>
-                            </div>
-
-                        </div>
-                    </div>
-
-                    {{-- BAHASA --}}
-                    <div class="rounded-3xl border border-slate-200 bg-white p-6 shadow-sm">
-                        <h2 class="text-lg font-bold text-slate-900 mb-5">
-                            Bahasa
-                        </h2>
-
-                        <div class="flex flex-wrap gap-3">
-                            @foreach ($profile->languagesForDisplay() as $item)
-                                <span class="rounded-2xl bg-slate-100 px-4 py-2 text-sm font-medium text-slate-700">
-                                    {{ $item }}
-                                </span>
-                            @endforeach
-                        </div>
-                    </div>
-
-                    {{-- PENDIDIKAN --}}
-                    <div class="rounded-3xl border border-slate-200 bg-white p-6 shadow-sm">
-                        <h2 class="text-lg font-bold text-slate-900 mb-5">
-                            Pendidikan
-                        </h2>
-
-                        <div class="space-y-3">
-                            @foreach ($profile->educationsForDisplay() as $item)
-                                <div class="rounded-2xl border border-slate-100 bg-slate-50 px-4 py-4">
-                                    <p class="font-medium text-slate-800">
-                                        {{ $item }}
-                                    </p>
-                                </div>
-                            @endforeach
-                        </div>
-                    </div>
-
-                    {{-- PENGALAMAN --}}
-                    <div class="rounded-3xl border border-slate-200 bg-white p-6 shadow-sm">
-                        <h2 class="text-lg font-bold text-slate-900 mb-5">
-                            Pengalaman Kerja
-                        </h2>
-
-                        <div class="space-y-3">
-                            @foreach ($profile->workExperiencesForDisplay() as $item)
-                                <div class="rounded-2xl border border-slate-100 bg-slate-50 px-4 py-4">
-                                    <p class="font-medium text-slate-800">
-                                        {{ $item }}
-                                    </p>
-                                </div>
-                            @endforeach
-                        </div>
-                    </div>
-
-                    {{-- REFERENSI --}}
-                    @if (filled($profile->reference_text))
-                        <div class="rounded-3xl border border-slate-200 bg-white p-6 shadow-sm">
-                            <h2 class="text-lg font-bold text-slate-900 mb-4">
-                                Referensi
-                            </h2>
-
-                            <p class="text-slate-700 leading-relaxed whitespace-pre-line">
-                                {{ $profile->reference_text }}
-                            </p>
-                        </div>
-                    @endif
-
+                    <p class="text-sm text-slate-500">
+                        Informasi lengkap muthowif
+                    </p>
                 </div>
 
-                {{-- RIGHT --}}
-                <div class="col-span-12 lg:col-span-4 space-y-6">
+                <div class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-6">
 
-                    {{-- FOTO --}}
-                    <div class="rounded-3xl border border-slate-200 bg-white p-5 shadow-sm sticky top-24">
-                        <h2 class="text-lg font-bold text-slate-900 mb-4">
-                            Foto Profil
-                        </h2>
+                    <div>
+                        <p class="text-sm text-slate-400 mb-1">
+                            WhatsApp
+                        </p>
 
-                        <div class="rounded-3xl overflow-hidden bg-slate-100 p-3">
-                            <img
-                                src="{{ route('admin.muthowif.photo', $profile) }}"
-                                alt="{{ __('admin.muthowif.photo_alt') }}"
-                                class="w-full rounded-2xl object-cover"
-                            />
-                        </div>
+                        <p class="font-semibold text-slate-900">
+                            {{ $profile->phone }}
+                        </p>
                     </div>
 
-                    {{-- KTP --}}
-                    <div class="rounded-3xl border border-slate-200 bg-white p-5 shadow-sm">
-                        <h2 class="text-lg font-bold text-slate-900 mb-4">
-                            KTP
-                        </h2>
+                    <div>
+                        <p class="text-sm text-slate-400 mb-1">
+                            Tanggal Lahir
+                        </p>
 
-                        <div class="rounded-3xl overflow-hidden bg-slate-100 p-3">
-                            <img
-                                src="{{ route('admin.muthowif.ktp', $profile) }}"
-                                alt="{{ __('admin.muthowif.ktp_alt') }}"
-                                class="w-full rounded-2xl object-cover"
-                            />
-                        </div>
+                        <p class="font-semibold text-slate-900">
+                            {{ $profile->birth_date?->translatedFormat('d M Y') }}
+                        </p>
                     </div>
 
-                    {{-- DOKUMEN --}}
-                    @if ($profile->supportingDocuments->isNotEmpty())
-                        <div class="rounded-3xl border border-slate-200 bg-white p-5 shadow-sm">
-                            <h2 class="text-lg font-bold text-slate-900 mb-4">
-                                Dokumen Pendukung
-                            </h2>
+                    <div>
+                        <p class="text-sm text-slate-400 mb-1">
+                            NIK
+                        </p>
 
-                            <div class="space-y-3">
-                                @foreach ($profile->supportingDocuments as $doc)
-                                    <a
-                                        href="{{ route('admin.muthowif.document', [$profile, $doc]) }}"
-                                        target="_blank"
-                                        class="flex items-center justify-between rounded-2xl border border-slate-100 bg-slate-50 px-4 py-4 transition hover:bg-slate-100"
-                                    >
-                                        <span class="text-sm font-medium text-slate-700">
-                                            {{ $doc->original_name ?? basename($doc->path) }}
-                                        </span>
+                        <p class="font-semibold text-slate-900">
+                            {{ $profile->nik }}
+                        </p>
+                    </div>
 
-                                        <span class="text-sm font-semibold text-brand-700">
-                                            Buka
-                                        </span>
-                                    </a>
-                                @endforeach
+                    <div>
+                        <p class="text-sm text-slate-400 mb-1">
+                            Passport
+                        </p>
+
+                        <p class="font-semibold text-slate-900">
+                            {{ $profile->passport_number ?? '—' }}
+                        </p>
+                    </div>
+
+                    <div class="xl:col-span-4">
+                        <p class="text-sm text-slate-400 mb-1">
+                            Alamat
+                        </p>
+
+                        <p class="font-semibold text-slate-900 whitespace-pre-line">
+                            {{ $profile->address }}
+                        </p>
+                    </div>
+
+                </div>
+            </div>
+
+            {{-- CONTENT GRID --}}
+            <div class="grid grid-cols-1 lg:grid-cols-2 xl:grid-cols-3 gap-6">
+
+                {{-- FOTO --}}
+                <div class="rounded-[32px] border border-slate-200 bg-white p-6 shadow-sm transition hover:shadow-xl">
+                    <h2 class="text-lg font-bold mb-5">
+                        Foto Profil
+                    </h2>
+
+                    <img
+                        src="{{ route('admin.muthowif.photo', $profile) }}"
+                        class="w-full aspect-[3/4] rounded-[28px] object-cover bg-slate-100"
+                    />
+                </div>
+
+                {{-- KTP --}}
+                <div class="rounded-[32px] border border-slate-200 bg-white p-6 shadow-sm transition hover:shadow-xl">
+                    <h2 class="text-lg font-bold mb-5">
+                        KTP
+                    </h2>
+
+                    <img
+                        src="{{ route('admin.muthowif.ktp', $profile) }}"
+                        class="w-full aspect-video rounded-[28px] object-cover bg-slate-100"
+                    />
+                </div>
+
+                {{-- BAHASA --}}
+                <div class="rounded-[32px] border border-slate-200 bg-white p-6 shadow-sm">
+                    <h2 class="text-lg font-bold mb-5">
+                        Bahasa
+                    </h2>
+
+                    <div class="flex flex-wrap gap-3">
+                        @foreach ($profile->languagesForDisplay() as $item)
+                            <span class="rounded-2xl border border-brand-100 bg-brand-50 px-4 py-2 text-sm font-medium text-brand-700">
+                                {{ $item }}
+                            </span>
+                        @endforeach
+                    </div>
+                </div>
+
+                {{-- PENDIDIKAN --}}
+                <div class="rounded-[32px] border border-slate-200 bg-white p-6 shadow-sm">
+                    <h2 class="text-lg font-bold mb-5">
+                        Pendidikan
+                    </h2>
+
+                    <div class="space-y-3">
+                        @foreach ($profile->educationsForDisplay() as $item)
+                            <div class="rounded-2xl border border-slate-100 bg-slate-50 p-4">
+                                {{ $item }}
                             </div>
-                        </div>
-                    @endif
+                        @endforeach
+                    </div>
+                </div>
 
-                    {{-- REJECT --}}
-                    @if ($profile->isPending())
-                        <div class="rounded-3xl border border-rose-200 bg-white p-5 shadow-sm">
-                            <h2 class="text-lg font-bold text-rose-700 mb-4">
-                                Tolak Pendaftaran
-                            </h2>
+                {{-- PENGALAMAN --}}
+                <div class="rounded-[32px] border border-slate-200 bg-white p-6 shadow-sm">
+                    <h2 class="text-lg font-bold mb-5">
+                        Pengalaman Kerja
+                    </h2>
 
-                            <form
-                                method="POST"
-                                action="{{ route('admin.muthowif.reject', $profile) }}"
-                                class="space-y-4"
-                            >
-                                @csrf
+                    <div class="space-y-3">
+                        @foreach ($profile->workExperiencesForDisplay() as $item)
+                            <div class="rounded-2xl border border-slate-100 bg-slate-50 p-4">
+                                {{ $item }}
+                            </div>
+                        @endforeach
+                    </div>
+                </div>
 
-                                <textarea
-                                    id="rejection_reason"
-                                    name="rejection_reason"
-                                    rows="4"
-                                    class="block w-full rounded-2xl border-slate-300 text-sm shadow-sm focus:border-rose-500 focus:ring-rose-500"
-                                    placeholder="{{ __('admin.muthowif.reject_placeholder') }}"
-                                >{{ old('rejection_reason') }}</textarea>
+                {{-- DOKUMEN --}}
+                @if ($profile->supportingDocuments->isNotEmpty())
+                    <div class="rounded-[32px] border border-slate-200 bg-white p-6 shadow-sm">
+                        <h2 class="text-lg font-bold mb-5">
+                            Dokumen Pendukung
+                        </h2>
 
-                                <x-input-error :messages="$errors->get('rejection_reason')" />
-
-                                <button
-                                    type="submit"
-                                    class="w-full rounded-2xl bg-rose-600 px-5 py-3 text-sm font-semibold text-white transition hover:bg-rose-700"
+                        <div class="space-y-3">
+                            @foreach ($profile->supportingDocuments as $doc)
+                                <a
+                                    href="{{ route('admin.muthowif.document', [$profile, $doc]) }}"
+                                    target="_blank"
+                                    class="flex items-center justify-between rounded-2xl border border-slate-100 bg-slate-50 p-4 hover:bg-slate-100 transition"
                                 >
-                                    {{ __('admin.muthowif.reject_submit') }}
-                                </button>
-                            </form>
-                        </div>
-                    @endif
+                                    <span class="truncate">
+                                        {{ $doc->original_name ?? basename($doc->path) }}
+                                    </span>
 
-                </div>
+                                    <span class="font-semibold text-brand-700">
+                                        Buka
+                                    </span>
+                                </a>
+                            @endforeach
+                        </div>
+                    </div>
+                @endif
+
             </div>
         </div>
     </div>
