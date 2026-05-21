@@ -67,6 +67,9 @@
     $pendingRefundCount = (int) \App\Models\BookingRefundRequest::query()
         ->where('status', \App\Enums\BookingChangeRequestStatus::Pending)
         ->count();
+    $pendingMuthowifCount = (int) MuthowifProfile::query()
+        ->where('verification_status', MuthowifVerificationStatus::Pending)
+        ->count();
 
     $chart = AdminFinanceSummary::chartDailySeriesForMonth($now);
 
@@ -147,6 +150,56 @@
             </p>
         </div>
     </section>
+
+    @if ($pendingMuthowifCount > 0 || $pendingWithdrawCount > 0 || $pendingRefundCount > 0)
+        <div class="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
+            <div class="overflow-hidden rounded-3xl border border-slate-200/90 bg-white p-4 shadow-sm sm:p-5">
+                <div class="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+                    <div class="flex min-w-0 items-start gap-4">
+                        <div class="flex h-14 w-14 items-center justify-center rounded-3xl bg-slate-100 text-slate-900 shadow-sm">
+                            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" class="h-7 w-7" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                <path d="M12 8v4" />
+                                <path d="M12 16h.01" />
+                                <path d="M4 6h16M4 18h16" />
+                            </svg>
+                        </div>
+                        <div class="min-w-0">
+                            <p class="text-sm font-semibold text-slate-900">{{ __('dashboard.pending_admin_notifications_title') }}</p>
+                            <p class="mt-1 text-sm leading-relaxed text-slate-600">{{ __('dashboard.pending_admin_notifications_body') }}</p>
+                            <div class="mt-3 flex flex-wrap gap-2 text-sm">
+                                @if ($pendingMuthowifCount > 0)
+                                    <span class="inline-flex items-center rounded-full bg-violet-50 px-3 py-1 text-violet-700">{{ __('dashboard.pending_admin_notifications_muthowif', ['count' => $pendingMuthowifCount]) }}</span>
+                                @endif
+                                @if ($pendingWithdrawCount > 0)
+                                    <span class="inline-flex items-center rounded-full bg-sky-50 px-3 py-1 text-sky-700">{{ __('dashboard.pending_admin_notifications_withdraw', ['count' => $pendingWithdrawCount]) }}</span>
+                                @endif
+                                @if ($pendingRefundCount > 0)
+                                    <span class="inline-flex items-center rounded-full bg-amber-50 px-3 py-1 text-amber-700">{{ __('dashboard.pending_admin_notifications_refund', ['count' => $pendingRefundCount]) }}</span>
+                                @endif
+                            </div>
+                        </div>
+                    </div>
+                    <div class="flex flex-wrap gap-2">
+                        @if ($pendingMuthowifCount > 0)
+                            <a href="{{ route('admin.muthowif.index', ['status' => 'pending']) }}" class="inline-flex items-center justify-center rounded-2xl bg-violet-700 px-4 py-2 text-sm font-semibold text-white shadow-sm transition hover:bg-violet-800">
+                                {{ __('dashboard.pending_admin_notifications_cta_muthowif') }}
+                            </a>
+                        @endif
+                        @if ($pendingWithdrawCount > 0)
+                            <a href="{{ route('admin.withdrawals.index') }}" class="inline-flex items-center justify-center rounded-2xl bg-sky-700 px-4 py-2 text-sm font-semibold text-white shadow-sm transition hover:bg-sky-800">
+                                {{ __('dashboard.pending_admin_notifications_cta_withdraw') }}
+                            </a>
+                        @endif
+                        @if ($pendingRefundCount > 0)
+                            <a href="{{ route('admin.refunds.index') }}" class="inline-flex items-center justify-center rounded-2xl bg-amber-700 px-4 py-2 text-sm font-semibold text-white shadow-sm transition hover:bg-amber-800">
+                                {{ __('dashboard.pending_admin_notifications_cta_refund') }}
+                            </a>
+                        @endif
+                    </div>
+                </div>
+            </div>
+        </div>
+    @endif
 
     <div class="mx-auto max-w-7xl space-y-8 px-4 sm:px-6 lg:px-8">
         <div class="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-5">

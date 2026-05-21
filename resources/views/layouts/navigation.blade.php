@@ -1,6 +1,8 @@
 @php
     use App\Enums\BookingStatus;
+    use App\Enums\MuthowifVerificationStatus;
     use App\Models\MuthowifBooking;
+    use App\Models\MuthowifProfile;
 
     $contactRaw = (string) (config('app.contact_whatsapp') ?: config('app.contact_phone'));
     $contactDigits = preg_replace('/\D+/', '', $contactRaw ?? '') ?? '';
@@ -18,7 +20,12 @@
     }
 
     $adminHubActive = false;
+    $adminPendingMuthowifCount = 0;
     if (Auth::check() && Auth::user()->isAdmin()) {
+        $adminPendingMuthowifCount = MuthowifProfile::query()
+            ->where('verification_status', MuthowifVerificationStatus::Pending)
+            ->count();
+
         $adminHubActive = request()->routeIs([
             'admin.settings.index',
             'admin.site-appearance.*',
@@ -81,6 +88,16 @@
                         </x-nav-link>
                         <x-nav-link :href="route('admin.withdrawals.index')" :active="request()->routeIs('admin.withdrawals.*')">
                             {{ __('nav.withdraw') }}
+                        </x-nav-link>
+                        <x-nav-link :href="route('admin.muthowif.index', ['status' => 'pending'])" :active="request()->routeIs('admin.muthowif.*')">
+                            <span class="inline-flex items-center gap-2">
+                                {{ __('nav.verify_muthowif') }}
+                                @if ($adminPendingMuthowifCount > 0)
+                                    <span class="inline-flex min-h-[1.125rem] min-w-[1.125rem] items-center justify-center rounded-full bg-rose-600 px-2 text-[10px] font-semibold leading-none text-white">
+                                        {{ $adminPendingMuthowifCount }}
+                                    </span>
+                                @endif
+                            </span>
                         </x-nav-link>
                         <x-nav-link :href="route('admin.settings.index')" :active="$adminHubActive">
                             {{ __('nav.admin_settings') }}
@@ -205,6 +222,16 @@
                 </x-responsive-nav-link>
                 <x-responsive-nav-link :href="route('admin.withdrawals.index')" :active="request()->routeIs('admin.withdrawals.*')">
                     {{ __('nav.withdraw') }}
+                </x-responsive-nav-link>
+                <x-responsive-nav-link :href="route('admin.muthowif.index', ['status' => 'pending'])" :active="request()->routeIs('admin.muthowif.*')">
+                    <span class="inline-flex items-center gap-2">
+                        {{ __('nav.verify_muthowif') }}
+                        @if ($adminPendingMuthowifCount > 0)
+                            <span class="inline-flex min-h-[1.125rem] min-w-[1.125rem] items-center justify-center rounded-full bg-rose-600 px-2 text-[10px] font-semibold leading-none text-white">
+                                {{ $adminPendingMuthowifCount }}
+                            </span>
+                        @endif
+                    </span>
                 </x-responsive-nav-link>
                 <x-responsive-nav-link :href="route('admin.settings.index')" :active="$adminHubActive">
                     {{ __('nav.admin_settings') }}
