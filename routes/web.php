@@ -105,9 +105,6 @@ Route::get('/layanan/portfolio/foto/{image}', [MuthowifDirectoryController::clas
 Route::get('/layanan/{publicProfile}/booking', [MuthowifDirectoryController::class, 'booking'])->name('layanan.book');
 Route::get('/layanan/{publicProfile}/portfolio', [MuthowifDirectoryController::class, 'portfolioIndex'])->name('layanan.portfolio.index');
 Route::get('/layanan/{publicProfile}', [MuthowifDirectoryController::class, 'show'])->name('layanan.show');
-Route::get('/muthowif/{keyword}', [SeoLandingController::class, 'showKeyword'])
-    ->where('keyword', '[a-z0-9\-]+')
-    ->name('seo.landing');
 
 Route::get('/terms', TermsController::class)->name('terms');
 Route::get('/artikel', [ArticleController::class, 'index'])->name('articles.index');
@@ -313,6 +310,10 @@ Route::middleware('auth')->group(function () {
 });
 
 require __DIR__.'/auth.php';
+
+Route::get('/muthowif/{keyword}', [SeoLandingController::class, 'showKeyword'])
+    ->where('keyword', '[a-z0-9\-]+')
+    ->name('seo.landing');
 
 Route::get('/php-test', function () {
     return [
