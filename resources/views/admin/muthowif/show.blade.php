@@ -1,241 +1,185 @@
 <x-app-layout>
     <div class="min-h-screen bg-slate-50 py-8">
-        <div class="mx-auto max-w-[1500px] px-4 sm:px-6 lg:px-8 space-y-6">
+        <div class="mx-auto max-w-[1400px] px-4 sm:px-6 lg:px-8 space-y-5">
 
             {{-- ALERT --}}
             @if (session('status'))
-                <div
-                    class="rounded-3xl border border-emerald-200 bg-emerald-50 px-5 py-4 text-sm text-emerald-800 shadow-sm">
+                <div class="flex items-center gap-3 rounded-2xl border border-emerald-200 bg-emerald-50 px-5 py-4 text-sm text-emerald-800">
+                    <svg class="h-4 w-4 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/></svg>
                     {{ session('status') }}
                 </div>
             @endif
 
             @if (session('error'))
-                <div class="rounded-3xl border border-rose-200 bg-rose-50 px-5 py-4 text-sm text-rose-800 shadow-sm">
+                <div class="flex items-center gap-3 rounded-2xl border border-rose-200 bg-rose-50 px-5 py-4 text-sm text-rose-800">
+                    <svg class="h-4 w-4 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg>
                     {{ session('error') }}
                 </div>
             @endif
 
-            {{-- HEADER --}}
-            <div class="rounded-[32px] border border-slate-200 bg-white p-7 shadow-sm">
+            {{-- STATUS BANNER --}}
+            @if ($profile->isPending())
+                <div class="flex items-center gap-3 rounded-2xl border border-amber-200 bg-amber-50 px-5 py-3.5 text-sm font-medium text-amber-800">
+                    <svg class="h-4 w-4 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+                    Pendaftaran muthowif ini sedang menunggu persetujuan admin
+                </div>
+            @endif
 
-                <div class="flex flex-col xl:flex-row xl:items-center xl:justify-between gap-6">
+            {{-- HEADER CARD --}}
+            <div class="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm">
+                <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-5">
 
-                    {{-- PROFILE --}}
-                    <div class="flex items-center gap-5">
-
-                        <div
-                            class="h-28 w-28 overflow-hidden rounded-[28px] border border-slate-200 bg-slate-100 shadow-sm">
+                    {{-- PROFILE INFO --}}
+                    <div class="flex items-center gap-4">
+                        <div class="relative h-16 w-16 flex-shrink-0 overflow-hidden rounded-xl border border-slate-200 bg-slate-100">
                             <img src="{{ route('admin.muthowif.photo', $profile) }}"
-                                alt="{{ __('admin.muthowif.photo_alt') }}" class="h-full w-full object-cover">
+                                alt="{{ __('admin.muthowif.photo_alt') }}"
+                                class="h-full w-full object-cover">
                         </div>
 
                         <div>
-
-                            <p class="text-sm text-slate-500">
-                                {{ __('admin.muthowif.name') }}
-                            </p>
-
-                            <h1 class="mt-1 text-3xl font-bold tracking-tight text-slate-900">
-                                {{ $profile->user->name }}
-                            </h1>
-
-                            <p class="mt-1 text-slate-600">
-                                {{ $profile->user->email }}
-                            </p>
-
-                            <div class="mt-4 flex flex-wrap items-center gap-3">
-
-                                <span
-                                    class="inline-flex items-center rounded-full px-4 py-2 text-sm font-semibold
+                            <div class="flex flex-wrap items-center gap-2 mb-1">
+                                <h1 class="text-lg font-semibold text-slate-900">{{ $profile->user->name }}</h1>
+                                <span class="inline-flex items-center gap-1 rounded-full px-2.5 py-0.5 text-xs font-medium
+                                    @switch($profile->verification_status)
+                                        @case(\App\Enums\MuthowifVerificationStatus::Pending) bg-amber-100 text-amber-700 @break
+                                        @case(\App\Enums\MuthowifVerificationStatus::Approved) bg-emerald-100 text-emerald-700 @break
+                                        @default bg-rose-100 text-rose-700
+                                    @endswitch">
                                     @switch($profile->verification_status)
                                         @case(\App\Enums\MuthowifVerificationStatus::Pending)
-                                            bg-amber-100 text-amber-800
-                                            @break
-
+                                            <svg class="h-3 w-3" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+                                        @break
                                         @case(\App\Enums\MuthowifVerificationStatus::Approved)
-                                            bg-emerald-100 text-emerald-700
-                                            @break
-
+                                            <svg class="h-3 w-3" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/></svg>
+                                        @break
                                         @default
-                                            bg-rose-100 text-rose-700
+                                            <svg class="h-3 w-3" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg>
                                     @endswitch
-                                ">
                                     {{ $profile->verification_status->label() }}
                                 </span>
-
-                                <span class="rounded-full bg-slate-100 px-4 py-2 text-sm font-medium text-slate-700">
+                            </div>
+                            <p class="text-sm text-slate-500">{{ $profile->user->email }}</p>
+                            <div class="mt-1.5 flex flex-wrap gap-2">
+                                <span class="inline-flex items-center gap-1 rounded-full bg-slate-100 px-2.5 py-0.5 text-xs text-slate-600">
+                                    <svg class="h-3 w-3" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"/></svg>
                                     {{ $profile->birth_date?->translatedFormat('d M Y') }}
                                 </span>
-
+                                @if ($profile->phone)
+                                    <span class="inline-flex items-center gap-1 rounded-full bg-slate-100 px-2.5 py-0.5 text-xs text-slate-600">
+                                        <svg class="h-3 w-3" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 5a2 2 0 012-2h3.28a1 1 0 01.948.684l1.498 4.493a1 1 0 01-.502 1.21l-2.257 1.13a11.042 11.042 0 005.516 5.516l1.13-2.257a1 1 0 011.21-.502l4.493 1.498a1 1 0 01.684.949V19a2 2 0 01-2 2h-1C9.716 21 3 14.284 3 6V5z"/></svg>
+                                        {{ $profile->phone }}
+                                    </span>
+                                @endif
                             </div>
                         </div>
                     </div>
 
                     {{-- ACTION --}}
                     @if ($profile->isPending())
-                        <div class="flex flex-wrap gap-3">
-
-                            {{-- APPROVE --}}
-                            <form method="POST" action="{{ route('admin.muthowif.approve', $profile) }}">
-                                @csrf
-
-                                <button type="submit"
-                                    class="rounded-2xl bg-emerald-600 px-6 py-4 text-sm font-semibold text-white shadow-sm transition-all duration-300 hover:-translate-y-1 hover:bg-emerald-700 hover:shadow-xl">
-                                    {{ __('admin.muthowif.approve_registration') }}
-                                </button>
-                            </form>
-
-                        </div>
+                        <form method="POST" action="{{ route('admin.muthowif.approve', $profile) }}" class="flex-shrink-0">
+                            @csrf
+                            <button type="submit"
+                                class="inline-flex items-center gap-2 rounded-xl bg-emerald-600 px-5 py-2.5 text-sm font-medium text-white shadow-sm transition hover:bg-emerald-700 active:scale-95">
+                                <svg class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/></svg>
+                                {{ __('admin.muthowif.approve_registration') }}
+                            </button>
+                        </form>
                     @endif
 
                 </div>
             </div>
 
-            <div class="grid grid-cols-12 gap-6">
+            {{-- MAIN GRID --}}
+            <div class="grid grid-cols-12 gap-5">
 
                 {{-- LEFT --}}
-                <div class="col-span-12 xl:col-span-8 space-y-6">
+                <div class="col-span-12 xl:col-span-8 space-y-5">
 
                     {{-- BIODATA --}}
-                    <div class="rounded-[32px] border border-slate-200 bg-white p-8 shadow-sm">
-
-                        <div class="mb-8">
-                            <h2 class="text-xl font-bold text-slate-900">
-                                Biodata
-                            </h2>
-
-                            <p class="mt-1 text-sm text-slate-500">
-                                Informasi lengkap muthowif
-                            </p>
+                    <div class="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm">
+                        <div class="flex items-center gap-2.5 mb-5">
+                            <div class="flex h-8 w-8 items-center justify-center rounded-lg bg-violet-50">
+                                <svg class="h-4 w-4 text-violet-600" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 6H5a2 2 0 00-2 2v9a2 2 0 002 2h14a2 2 0 002-2V8a2 2 0 00-2-2h-5m-4 0V5a2 2 0 114 0v1m-4 0a2 2 0 104 0m-5 8a2 2 0 100-4 2 2 0 000 4zm0 0c1.306 0 2.417.835 2.83 2M9 14a3.001 3.001 0 00-2.83 2"/></svg>
+                            </div>
+                            <h2 class="text-base font-semibold text-slate-900">Biodata</h2>
                         </div>
 
-                        <div class="grid grid-cols-1 md:grid-cols-2 gap-8">
-
+                        <div class="grid grid-cols-1 sm:grid-cols-2 gap-x-8 gap-y-5">
                             <div>
-                                <p class="text-sm text-slate-400">
-                                    WhatsApp
-                                </p>
-
-                                <p class="mt-2 text-base font-semibold text-slate-900">
-                                    {{ $profile->phone }}
-                                </p>
+                                <p class="text-xs text-slate-400 mb-1">NIK</p>
+                                <p class="text-sm font-medium text-slate-900">{{ $profile->nik }}</p>
                             </div>
-
                             <div>
-                                <p class="text-sm text-slate-400">
-                                    Tanggal Lahir
-                                </p>
-
-                                <p class="mt-2 text-base font-semibold text-slate-900">
-                                    {{ $profile->birth_date?->translatedFormat('d M Y') }}
-                                </p>
+                                <p class="text-xs text-slate-400 mb-1">Nomor Passport</p>
+                                <p class="text-sm font-medium text-slate-900">{{ $profile->passport_number ?? '—' }}</p>
                             </div>
-
                             <div>
-                                <p class="text-sm text-slate-400">
-                                    NIK
-                                </p>
-
-                                <p class="mt-2 text-base font-semibold text-slate-900">
-                                    {{ $profile->nik }}
-                                </p>
+                                <p class="text-xs text-slate-400 mb-1">Tanggal Lahir</p>
+                                <p class="text-sm font-medium text-slate-900">{{ $profile->birth_date?->translatedFormat('d M Y') }}</p>
                             </div>
-
                             <div>
-                                <p class="text-sm text-slate-400">
-                                    Passport
-                                </p>
-
-                                <p class="mt-2 text-base font-semibold text-slate-900">
-                                    {{ $profile->passport_number ?? '—' }}
-                                </p>
+                                <p class="text-xs text-slate-400 mb-1">WhatsApp</p>
+                                <p class="text-sm font-medium text-slate-900">{{ $profile->phone }}</p>
                             </div>
-
-                            <div class="md:col-span-2">
-                                <p class="text-sm text-slate-400">
-                                    Alamat
-                                </p>
-
-                                <p class="mt-2 text-base font-semibold leading-relaxed text-slate-900">
-                                    {{ $profile->address }}
-                                </p>
+                            <div class="sm:col-span-2">
+                                <p class="text-xs text-slate-400 mb-1">Alamat</p>
+                                <p class="text-sm font-medium leading-relaxed text-slate-900">{{ $profile->address }}</p>
                             </div>
-
                         </div>
                     </div>
 
                     {{-- PENGALAMAN --}}
-                    <div class="rounded-[32px] border border-slate-200 bg-white p-8 shadow-sm">
-
-                        <div class="mb-6">
-                            <h2 class="text-xl font-bold text-slate-900">
-                                Pengalaman Kerja
-                            </h2>
+                    <div class="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm">
+                        <div class="flex items-center gap-2.5 mb-5">
+                            <div class="flex h-8 w-8 items-center justify-center rounded-lg bg-violet-50">
+                                <svg class="h-4 w-4 text-violet-600" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 13.255A23.931 23.931 0 0112 15c-3.183 0-6.22-.62-9-1.745M16 6V4a2 2 0 00-2-2h-4a2 2 0 00-2 2v2m4 6h.01M5 20h14a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"/></svg>
+                            </div>
+                            <h2 class="text-base font-semibold text-slate-900">Pengalaman Kerja</h2>
                         </div>
 
-                        <div class="space-y-4">
-
+                        <div class="space-y-2.5">
                             @foreach ($profile->workExperiencesForDisplay() as $item)
-                                <div class="rounded-2xl border border-slate-100 bg-slate-50 p-5">
-
-                                    <div class="flex items-start gap-4">
-
-                                        <div class="mt-2 h-3 w-3 rounded-full bg-brand-500"></div>
-
-                                        <p class="font-medium text-slate-800">
-                                            {{ $item }}
-                                        </p>
-
-                                    </div>
-
+                                <div class="flex items-start gap-3 rounded-xl border border-slate-100 bg-slate-50 px-4 py-3">
+                                    <span class="mt-1.5 h-2 w-2 flex-shrink-0 rounded-full bg-emerald-500"></span>
+                                    <p class="text-sm text-slate-700">{{ $item }}</p>
                                 </div>
                             @endforeach
-
                         </div>
                     </div>
 
-                    {{-- BOTTOM GRID --}}
-                    <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                    {{-- BAHASA & PENDIDIKAN --}}
+                    <div class="grid grid-cols-1 lg:grid-cols-2 gap-5">
 
-                        {{-- BAHASA --}}
-                        <div class="rounded-[32px] border border-slate-200 bg-white p-8 shadow-sm">
-
-                            <h2 class="mb-5 text-xl font-bold text-slate-900">
-                                Bahasa
-                            </h2>
-
-                            <div class="flex flex-wrap gap-3">
-
+                        <div class="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm">
+                            <div class="flex items-center gap-2.5 mb-5">
+                                <div class="flex h-8 w-8 items-center justify-center rounded-lg bg-violet-50">
+                                    <svg class="h-4 w-4 text-violet-600" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 5h12M9 3v2m1.048 9.5A18.022 18.022 0 016.412 9m6.088 9h7M11 21l5-10 5 10M12.751 5C11.783 10.77 8.07 15.61 3 18.129"/></svg>
+                                </div>
+                                <h2 class="text-base font-semibold text-slate-900">Bahasa</h2>
+                            </div>
+                            <div class="flex flex-wrap gap-2">
                                 @foreach ($profile->languagesForDisplay() as $item)
-                                    <span
-                                        class="rounded-2xl border border-emerald-100 bg-emerald-50 px-4 py-2 text-sm font-semibold text-emerald-700">
+                                    <span class="rounded-full border border-teal-100 bg-teal-50 px-3 py-1 text-xs font-medium text-teal-700">
                                         {{ $item }}
                                     </span>
                                 @endforeach
-
                             </div>
                         </div>
 
-                        {{-- PENDIDIKAN --}}
-                        <div class="rounded-[32px] border border-slate-200 bg-white p-8 shadow-sm">
-
-                            <h2 class="mb-5 text-xl font-bold text-slate-900">
-                                Pendidikan
-                            </h2>
-
-                            <div class="space-y-3">
-
+                        <div class="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm">
+                            <div class="flex items-center gap-2.5 mb-5">
+                                <div class="flex h-8 w-8 items-center justify-center rounded-lg bg-violet-50">
+                                    <svg class="h-4 w-4 text-violet-600" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path d="M12 14l9-5-9-5-9 5 9 5z"/><path d="M12 14l6.16-3.422a12.083 12.083 0 01.665 6.479A11.952 11.952 0 0012 20.055a11.952 11.952 0 00-6.824-2.998 12.078 12.078 0 01.665-6.479L12 14z"/><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 14l9-5-9-5-9 5 9 5zm0 0l6.16-3.422a12.083 12.083 0 01.665 6.479A11.952 11.952 0 0012 20.055a11.952 11.952 0 00-6.824-2.998 12.078 12.078 0 01.665-6.479L12 14zm-4 6v-7.5l4-2.222"/></svg>
+                                </div>
+                                <h2 class="text-base font-semibold text-slate-900">Pendidikan</h2>
+                            </div>
+                            <div class="space-y-2">
                                 @foreach ($profile->educationsForDisplay() as $item)
-                                    <div class="rounded-2xl border border-slate-100 bg-slate-50 p-4">
-
-                                        <p class="font-medium text-slate-800">
-                                            {{ $item }}
-                                        </p>
-
+                                    <div class="rounded-xl border border-slate-100 bg-slate-50 px-4 py-2.5">
+                                        <p class="text-sm text-slate-700">{{ $item }}</p>
                                     </div>
                                 @endforeach
-
                             </div>
                         </div>
 
@@ -244,107 +188,91 @@
                 </div>
 
                 {{-- RIGHT --}}
-                <div class="col-span-12 xl:col-span-4 space-y-6">
+                <div class="col-span-12 xl:col-span-4 space-y-5">
 
-                    {{-- FOTO --}}
-                    <div class="rounded-[32px] border border-slate-200 bg-white p-6 shadow-sm">
-
-                        <h2 class="mb-5 text-xl font-bold text-slate-900">
-                            Foto Profil
-                        </h2>
-
-                        <div class="rounded-[28px] bg-slate-100 p-4">
-
+                    {{-- FOTO PROFIL --}}
+                    <div class="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
+                        <div class="flex items-center gap-2 mb-4">
+                            <svg class="h-4 w-4 text-slate-400" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5.121 17.804A13.937 13.937 0 0112 16c2.5 0 4.847.655 6.879 1.804M15 10a3 3 0 11-6 0 3 3 0 016 0zm6 2a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+                            <h2 class="text-sm font-semibold text-slate-700">Foto Profil</h2>
+                        </div>
+                        <div class="overflow-hidden rounded-xl bg-slate-100">
                             <img src="{{ route('admin.muthowif.photo', $profile) }}"
                                 alt="{{ __('admin.muthowif.photo_alt') }}"
-                                class="w-full max-h-[500px] rounded-2xl object-contain">
-
+                                class="w-full max-h-72 object-contain">
                         </div>
-
                     </div>
 
                     {{-- KTP --}}
-                    <div class="rounded-[32px] border border-slate-200 bg-white p-6 shadow-sm">
-
-                        <h2 class="mb-5 text-xl font-bold text-slate-900">
-                            KTP
-                        </h2>
-
-                        <div class="rounded-[28px] bg-slate-100 p-4">
-
-                            <img src="{{ route('admin.muthowif.ktp', $profile) }}"
-                                alt="{{ __('admin.muthowif.ktp_alt') }}" class="w-full rounded-2xl object-contain">
-
+                    <div class="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
+                        <div class="flex items-center gap-2 mb-4">
+                            <svg class="h-4 w-4 text-slate-400" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 6H5a2 2 0 00-2 2v9a2 2 0 002 2h14a2 2 0 002-2V8a2 2 0 00-2-2h-5m-4 0V5a2 2 0 114 0v1m-4 0a2 2 0 104 0"/></svg>
+                            <h2 class="text-sm font-semibold text-slate-700">KTP</h2>
                         </div>
-
+                        <div class="overflow-hidden rounded-xl bg-slate-100">
+                            <img src="{{ route('admin.muthowif.ktp', $profile) }}"
+                                alt="{{ __('admin.muthowif.ktp_alt') }}"
+                                class="w-full object-contain">
+                        </div>
                     </div>
 
-                    {{-- DOKUMEN --}}
+                    {{-- DOKUMEN PENDUKUNG --}}
                     @if ($profile->supportingDocuments->isNotEmpty())
-
-                        <div class="rounded-[32px] border border-slate-200 bg-white p-6 shadow-sm">
-
-                            <h2 class="mb-5 text-xl font-bold text-slate-900">
-                                Dokumen Pendukung
-                            </h2>
-
-                            <div class="space-y-3">
-
+                        <div class="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
+                            <div class="flex items-center gap-2 mb-4">
+                                <svg class="h-4 w-4 text-slate-400" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15.172 7l-6.586 6.586a2 2 0 102.828 2.828l6.414-6.586a4 4 0 00-5.656-5.656l-6.415 6.585a6 6 0 108.486 8.486L20.5 13"/></svg>
+                                <h2 class="text-sm font-semibold text-slate-700">Dokumen Pendukung</h2>
+                            </div>
+                            <div class="space-y-2">
                                 @foreach ($profile->supportingDocuments as $doc)
                                     <a href="{{ route('admin.muthowif.document', [$profile, $doc]) }}" target="_blank"
-                                        class="flex items-center justify-between rounded-2xl border border-slate-100 bg-slate-50 px-4 py-4 hover:bg-slate-100">
-
-                                        <span class="truncate text-sm font-medium text-slate-700">
-                                            {{ $doc->original_name ?? basename($doc->path) }}
-                                        </span>
-
-                                        <span class="ml-4 text-sm font-semibold text-brand-700">
-                                            Buka
-                                        </span>
-
+                                        class="flex items-center justify-between rounded-xl border border-slate-100 bg-slate-50 px-4 py-3 transition hover:bg-slate-100">
+                                        <div class="flex items-center gap-2.5 min-w-0">
+                                            <svg class="h-4 w-4 flex-shrink-0 text-slate-400" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/></svg>
+                                            <span class="truncate text-xs font-medium text-slate-700">
+                                                {{ $doc->original_name ?? basename($doc->path) }}
+                                            </span>
+                                        </div>
+                                        <span class="ml-3 flex-shrink-0 text-xs font-semibold text-violet-600">Buka ↗</span>
                                     </a>
                                 @endforeach
-
                             </div>
-
                         </div>
-
                     @endif
 
                 </div>
-
             </div>
 
             {{-- REJECT --}}
             @if ($profile->isPending())
-                <div class="rounded-[32px] border border-rose-200 bg-white p-8 shadow-sm">
-
-                    <div class="mb-6">
-                        <h2 class="text-xl font-bold text-rose-700">
-                            Tolak Pendaftaran
-                        </h2>
-
-                        <p class="mt-1 text-sm text-slate-500">
-                            Berikan alasan penolakan registrasi
-                        </p>
+                <div class="rounded-2xl border border-rose-100 bg-white p-6 shadow-sm">
+                    <div class="flex items-center gap-2.5 mb-1">
+                        <div class="flex h-8 w-8 items-center justify-center rounded-lg bg-rose-50">
+                            <svg class="h-4 w-4 text-rose-600" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg>
+                        </div>
+                        <h2 class="text-base font-semibold text-rose-700">Tolak Pendaftaran</h2>
                     </div>
+                    <p class="mb-5 ml-10 text-sm text-slate-500">{{ __('admin.muthowif.reject_placeholder_hint', ['default' => 'Berikan alasan penolakan agar muthowif dapat memperbaiki pendaftarannya']) }}</p>
 
-                    <form method="POST" action="{{ route('admin.muthowif.reject', $profile) }}" class="space-y-5">
+                    <form method="POST" action="{{ route('admin.muthowif.reject', $profile) }}" class="space-y-4">
                         @csrf
 
-                        <textarea id="rejection_reason" name="rejection_reason" rows="5"
-                            class="block w-full rounded-3xl border-slate-300 text-sm shadow-sm focus:border-rose-500 focus:ring-rose-500"
-                            placeholder="{{ __('admin.muthowif.reject_placeholder') }}">{{ old('rejection_reason') }}</textarea>
+                        <textarea
+                            id="rejection_reason"
+                            name="rejection_reason"
+                            rows="4"
+                            placeholder="{{ __('admin.muthowif.reject_placeholder') }}"
+                            class="block w-full rounded-xl border border-slate-200 bg-slate-50 px-4 py-3 text-sm text-slate-900 placeholder-slate-400 shadow-sm transition focus:border-rose-400 focus:bg-white focus:outline-none focus:ring-2 focus:ring-rose-100">{{ old('rejection_reason') }}</textarea>
 
                         <x-input-error :messages="$errors->get('rejection_reason')" />
 
                         <button type="submit"
-                            class="rounded-2xl bg-rose-600 px-6 py-4 text-sm font-semibold text-white shadow-sm transition-all duration-300 hover:-translate-y-1 hover:bg-rose-700 hover:shadow-xl">
+                            class="inline-flex items-center gap-2 rounded-xl bg-rose-600 px-5 py-2.5 text-sm font-medium text-white shadow-sm transition hover:bg-rose-700 active:scale-95">
+                            <svg class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 19l9 2-9-18-9 18 9-2zm0 0v-8"/></svg>
                             {{ __('admin.muthowif.reject_submit') }}
                         </button>
 
                     </form>
-
                 </div>
             @endif
 
