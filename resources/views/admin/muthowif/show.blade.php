@@ -4,7 +4,8 @@
 
             {{-- ALERT --}}
             @if (session('status'))
-                <div class="rounded-3xl border border-emerald-200 bg-emerald-50 px-5 py-4 text-sm text-emerald-800 shadow-sm">
+                <div
+                    class="rounded-3xl border border-emerald-200 bg-emerald-50 px-5 py-4 text-sm text-emerald-800 shadow-sm">
                     {{ session('status') }}
                 </div>
             @endif
@@ -23,12 +24,10 @@
                     {{-- PROFILE --}}
                     <div class="flex items-center gap-5">
 
-                        <div class="h-28 w-28 overflow-hidden rounded-[28px] border border-slate-200 bg-slate-100 shadow-sm">
-                            <img
-                                src="{{ route('admin.muthowif.photo', $profile) }}"
-                                alt="{{ __('admin.muthowif.photo_alt') }}"
-                                class="h-full w-full object-cover"
-                            >
+                        <div
+                            class="h-28 w-28 overflow-hidden rounded-[28px] border border-slate-200 bg-slate-100 shadow-sm">
+                            <img src="{{ route('admin.muthowif.photo', $profile) }}"
+                                alt="{{ __('admin.muthowif.photo_alt') }}" class="h-full w-full object-cover">
                         </div>
 
                         <div>
@@ -47,7 +46,8 @@
 
                             <div class="mt-4 flex flex-wrap items-center gap-3">
 
-                                <span class="inline-flex items-center rounded-full px-4 py-2 text-sm font-semibold
+                                <span
+                                    class="inline-flex items-center rounded-full px-4 py-2 text-sm font-semibold
                                     @switch($profile->verification_status)
                                         @case(\App\Enums\MuthowifVerificationStatus::Pending)
                                             bg-amber-100 text-amber-800
@@ -77,16 +77,11 @@
                         <div class="flex flex-wrap gap-3">
 
                             {{-- APPROVE --}}
-                            <form
-                                method="POST"
-                                action="{{ route('admin.muthowif.approve', $profile) }}"
-                            >
+                            <form method="POST" action="{{ route('admin.muthowif.approve', $profile) }}">
                                 @csrf
 
-                                <button
-                                    type="submit"
-                                    class="rounded-2xl bg-emerald-600 px-6 py-4 text-sm font-semibold text-white shadow-sm transition-all duration-300 hover:-translate-y-1 hover:bg-emerald-700 hover:shadow-xl"
-                                >
+                                <button type="submit"
+                                    class="rounded-2xl bg-emerald-600 px-6 py-4 text-sm font-semibold text-white shadow-sm transition-all duration-300 hover:-translate-y-1 hover:bg-emerald-700 hover:shadow-xl">
                                     {{ __('admin.muthowif.approve_registration') }}
                                 </button>
                             </form>
@@ -97,13 +92,13 @@
                 </div>
             </div>
 
-            {{-- ROW 1 --}}
             <div class="grid grid-cols-12 gap-6">
 
-                {{-- BIODATA --}}
-                <div class="col-span-12 xl:col-span-8">
+                {{-- LEFT --}}
+                <div class="col-span-12 xl:col-span-8 space-y-6">
 
-                    <div class="rounded-[32px] border border-slate-200 bg-white p-8 shadow-sm transition-all duration-300 hover:shadow-xl">
+                    {{-- BIODATA --}}
+                    <div class="rounded-[32px] border border-slate-200 bg-white p-8 shadow-sm">
 
                         <div class="mb-8">
                             <h2 class="text-xl font-bold text-slate-900">
@@ -115,7 +110,7 @@
                             </p>
                         </div>
 
-                        <div class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-8">
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-8">
 
                             <div>
                                 <p class="text-sm text-slate-400">
@@ -139,6 +134,16 @@
 
                             <div>
                                 <p class="text-sm text-slate-400">
+                                    NIK
+                                </p>
+
+                                <p class="mt-2 text-base font-semibold text-slate-900">
+                                    {{ $profile->nik }}
+                                </p>
+                            </div>
+
+                            <div>
+                                <p class="text-sm text-slate-400">
                                     Passport
                                 </p>
 
@@ -147,257 +152,171 @@
                                 </p>
                             </div>
 
-                            <div>
-                                <p class="text-sm text-slate-400">
-                                    NIK
-                                </p>
-
-                                <p class="mt-2 text-base font-semibold text-slate-900 break-all">
-                                    {{ $profile->nik }}
-                                </p>
-                            </div>
-
                             <div class="md:col-span-2">
                                 <p class="text-sm text-slate-400">
                                     Alamat
                                 </p>
 
-                                <p class="mt-2 text-base font-semibold leading-relaxed text-slate-900 whitespace-pre-line">
+                                <p class="mt-2 text-base font-semibold leading-relaxed text-slate-900">
                                     {{ $profile->address }}
                                 </p>
                             </div>
 
                         </div>
                     </div>
-                </div>
 
-                {{-- FOTO --}}
-                <div class="col-span-12 xl:col-span-4">
-
-                    <div class="rounded-[32px] border border-slate-200 bg-white p-6 shadow-sm transition-all duration-300 hover:shadow-xl">
-
-                        <div class="mb-5">
-                            <h2 class="text-xl font-bold text-slate-900">
-                                Foto Profil
-                            </h2>
-
-                            <p class="mt-1 text-sm text-slate-500">
-                                Foto resmi muthowif
-                            </p>
-                        </div>
-
-                        <div class="rounded-[28px] bg-slate-100 p-4">
-                            <img
-                                src="{{ route('admin.muthowif.photo', $profile) }}"
-                                alt="{{ __('admin.muthowif.photo_alt') }}"
-                                class="h-[500px] w-full rounded-2xl object-contain"
-                            >
-                        </div>
-
-                    </div>
-                </div>
-
-            </div>
-
-            {{-- ROW 2 --}}
-            <div class="grid grid-cols-12 gap-6">
-
-                {{-- PENGALAMAN --}}
-                <div class="col-span-12 xl:col-span-8">
-
-                    <div class="rounded-[32px] border border-slate-200 bg-white p-8 shadow-sm transition-all duration-300 hover:shadow-xl">
+                    {{-- PENGALAMAN --}}
+                    <div class="rounded-[32px] border border-slate-200 bg-white p-8 shadow-sm">
 
                         <div class="mb-6">
                             <h2 class="text-xl font-bold text-slate-900">
                                 Pengalaman Kerja
                             </h2>
-
-                            <p class="mt-1 text-sm text-slate-500">
-                                Riwayat pengalaman dan pekerjaan
-                            </p>
                         </div>
 
                         <div class="space-y-4">
 
                             @foreach ($profile->workExperiencesForDisplay() as $item)
-
                                 <div class="rounded-2xl border border-slate-100 bg-slate-50 p-5">
 
                                     <div class="flex items-start gap-4">
 
                                         <div class="mt-2 h-3 w-3 rounded-full bg-brand-500"></div>
 
-                                        <div>
-                                            <p class="font-medium leading-relaxed text-slate-800">
-                                                {{ $item }}
-                                            </p>
-                                        </div>
+                                        <p class="font-medium text-slate-800">
+                                            {{ $item }}
+                                        </p>
 
                                     </div>
 
                                 </div>
-
                             @endforeach
 
                         </div>
                     </div>
-                </div>
 
-                {{-- KTP --}}
-                <div class="col-span-12 xl:col-span-4">
+                    {{-- BOTTOM GRID --}}
+                    <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
 
-                    <div class="rounded-[32px] border border-slate-200 bg-white p-6 shadow-sm transition-all duration-300 hover:shadow-xl">
+                        {{-- BAHASA --}}
+                        <div class="rounded-[32px] border border-slate-200 bg-white p-8 shadow-sm">
 
-                        <div class="mb-5">
-                            <h2 class="text-xl font-bold text-slate-900">
-                                KTP
-                            </h2>
-
-                            <p class="mt-1 text-sm text-slate-500">
-                                Dokumen identitas resmi
-                            </p>
-                        </div>
-
-                        <div class="rounded-[28px] bg-slate-100 p-4">
-
-                            <img
-                                src="{{ route('admin.muthowif.ktp', $profile) }}"
-                                alt="{{ __('admin.muthowif.ktp_alt') }}"
-                                class="h-[260px] w-full rounded-2xl object-contain"
-                            >
-
-                        </div>
-
-                    </div>
-                </div>
-
-            </div>
-
-            {{-- ROW 3 --}}
-            <div class="grid grid-cols-12 gap-6">
-
-                {{-- BAHASA --}}
-                <div class="col-span-12 lg:col-span-4">
-
-                    <div class="rounded-[32px] border border-slate-200 bg-white p-8 shadow-sm transition-all duration-300 hover:shadow-xl">
-
-                        <div class="mb-6">
-                            <h2 class="text-xl font-bold text-slate-900">
+                            <h2 class="mb-5 text-xl font-bold text-slate-900">
                                 Bahasa
                             </h2>
 
-                            <p class="mt-1 text-sm text-slate-500">
-                                Bahasa yang dikuasai
-                            </p>
+                            <div class="flex flex-wrap gap-3">
+
+                                @foreach ($profile->languagesForDisplay() as $item)
+                                    <span
+                                        class="rounded-2xl border border-emerald-100 bg-emerald-50 px-4 py-2 text-sm font-semibold text-emerald-700">
+                                        {{ $item }}
+                                    </span>
+                                @endforeach
+
+                            </div>
                         </div>
 
-                        <div class="flex flex-wrap gap-3">
+                        {{-- PENDIDIKAN --}}
+                        <div class="rounded-[32px] border border-slate-200 bg-white p-8 shadow-sm">
 
-                            @foreach ($profile->languagesForDisplay() as $item)
-
-                                <span class="rounded-2xl border border-emerald-100 bg-emerald-50 px-4 py-2 text-sm font-semibold text-emerald-700">
-                                    {{ $item }}
-                                </span>
-
-                            @endforeach
-
-                        </div>
-                    </div>
-                </div>
-
-                {{-- PENDIDIKAN --}}
-                <div class="col-span-12 lg:col-span-4">
-
-                    <div class="rounded-[32px] border border-slate-200 bg-white p-8 shadow-sm transition-all duration-300 hover:shadow-xl">
-
-                        <div class="mb-6">
-                            <h2 class="text-xl font-bold text-slate-900">
+                            <h2 class="mb-5 text-xl font-bold text-slate-900">
                                 Pendidikan
                             </h2>
 
-                            <p class="mt-1 text-sm text-slate-500">
-                                Riwayat pendidikan
-                            </p>
-                        </div>
+                            <div class="space-y-3">
 
-                        <div class="space-y-4">
+                                @foreach ($profile->educationsForDisplay() as $item)
+                                    <div class="rounded-2xl border border-slate-100 bg-slate-50 p-4">
 
-                            @foreach ($profile->educationsForDisplay() as $item)
-
-                                <div class="rounded-2xl border border-slate-100 bg-slate-50 p-5">
-
-                                    <div class="flex items-start gap-4">
-
-                                        <div class="mt-2 h-3 w-3 rounded-full bg-brand-500"></div>
-
-                                        <div>
-                                            <p class="font-medium leading-relaxed text-slate-800">
-                                                {{ $item }}
-                                            </p>
-                                        </div>
+                                        <p class="font-medium text-slate-800">
+                                            {{ $item }}
+                                        </p>
 
                                     </div>
+                                @endforeach
 
-                                </div>
-
-                            @endforeach
-
+                            </div>
                         </div>
+
                     </div>
+
                 </div>
 
-                {{-- DOKUMEN --}}
-                <div class="col-span-12 lg:col-span-4">
+                {{-- RIGHT --}}
+                <div class="col-span-12 xl:col-span-4 space-y-6">
 
-                    <div class="rounded-[32px] border border-slate-200 bg-white p-8 shadow-sm transition-all duration-300 hover:shadow-xl">
+                    {{-- FOTO --}}
+                    <div class="rounded-[32px] border border-slate-200 bg-white p-6 shadow-sm">
 
-                        <div class="mb-6">
-                            <h2 class="text-xl font-bold text-slate-900">
+                        <h2 class="mb-5 text-xl font-bold text-slate-900">
+                            Foto Profil
+                        </h2>
+
+                        <div class="rounded-[28px] bg-slate-100 p-4">
+
+                            <img src="{{ route('admin.muthowif.photo', $profile) }}"
+                                alt="{{ __('admin.muthowif.photo_alt') }}"
+                                class="w-full max-h-[500px] rounded-2xl object-contain">
+
+                        </div>
+
+                    </div>
+
+                    {{-- KTP --}}
+                    <div class="rounded-[32px] border border-slate-200 bg-white p-6 shadow-sm">
+
+                        <h2 class="mb-5 text-xl font-bold text-slate-900">
+                            KTP
+                        </h2>
+
+                        <div class="rounded-[28px] bg-slate-100 p-4">
+
+                            <img src="{{ route('admin.muthowif.ktp', $profile) }}"
+                                alt="{{ __('admin.muthowif.ktp_alt') }}" class="w-full rounded-2xl object-contain">
+
+                        </div>
+
+                    </div>
+
+                    {{-- DOKUMEN --}}
+                    @if ($profile->supportingDocuments->isNotEmpty())
+
+                        <div class="rounded-[32px] border border-slate-200 bg-white p-6 shadow-sm">
+
+                            <h2 class="mb-5 text-xl font-bold text-slate-900">
                                 Dokumen Pendukung
                             </h2>
 
-                            <p class="mt-1 text-sm text-slate-500">
-                                File tambahan pendukung
-                            </p>
-                        </div>
+                            <div class="space-y-3">
 
-                        <div class="space-y-3">
+                                @foreach ($profile->supportingDocuments as $doc)
+                                    <a href="{{ route('admin.muthowif.document', [$profile, $doc]) }}" target="_blank"
+                                        class="flex items-center justify-between rounded-2xl border border-slate-100 bg-slate-50 px-4 py-4 hover:bg-slate-100">
 
-                            @forelse ($profile->supportingDocuments as $doc)
+                                        <span class="truncate text-sm font-medium text-slate-700">
+                                            {{ $doc->original_name ?? basename($doc->path) }}
+                                        </span>
 
-                                <a
-                                    href="{{ route('admin.muthowif.document', [$profile, $doc]) }}"
-                                    target="_blank"
-                                    class="flex items-center justify-between rounded-2xl border border-slate-100 bg-slate-50 px-4 py-4 transition-all duration-300 hover:bg-slate-100"
-                                >
+                                        <span class="ml-4 text-sm font-semibold text-brand-700">
+                                            Buka
+                                        </span>
 
-                                    <span class="truncate text-sm font-medium text-slate-700">
-                                        {{ $doc->original_name ?? basename($doc->path) }}
-                                    </span>
+                                    </a>
+                                @endforeach
 
-                                    <span class="ml-4 text-sm font-semibold text-brand-700">
-                                        Buka
-                                    </span>
-
-                                </a>
-
-                            @empty
-
-                                <div class="rounded-2xl border border-dashed border-slate-200 bg-slate-50 p-5 text-sm text-slate-500">
-                                    Tidak ada dokumen pendukung.
-                                </div>
-
-                            @endforelse
+                            </div>
 
                         </div>
-                    </div>
+
+                    @endif
+
                 </div>
 
             </div>
 
             {{-- REJECT --}}
             @if ($profile->isPending())
-
                 <div class="rounded-[32px] border border-rose-200 bg-white p-8 shadow-sm">
 
                     <div class="mb-6">
@@ -410,34 +329,23 @@
                         </p>
                     </div>
 
-                    <form
-                        method="POST"
-                        action="{{ route('admin.muthowif.reject', $profile) }}"
-                        class="space-y-5"
-                    >
+                    <form method="POST" action="{{ route('admin.muthowif.reject', $profile) }}" class="space-y-5">
                         @csrf
 
-                        <textarea
-                            id="rejection_reason"
-                            name="rejection_reason"
-                            rows="5"
+                        <textarea id="rejection_reason" name="rejection_reason" rows="5"
                             class="block w-full rounded-3xl border-slate-300 text-sm shadow-sm focus:border-rose-500 focus:ring-rose-500"
-                            placeholder="{{ __('admin.muthowif.reject_placeholder') }}"
-                        >{{ old('rejection_reason') }}</textarea>
+                            placeholder="{{ __('admin.muthowif.reject_placeholder') }}">{{ old('rejection_reason') }}</textarea>
 
                         <x-input-error :messages="$errors->get('rejection_reason')" />
 
-                        <button
-                            type="submit"
-                            class="rounded-2xl bg-rose-600 px-6 py-4 text-sm font-semibold text-white shadow-sm transition-all duration-300 hover:-translate-y-1 hover:bg-rose-700 hover:shadow-xl"
-                        >
+                        <button type="submit"
+                            class="rounded-2xl bg-rose-600 px-6 py-4 text-sm font-semibold text-white shadow-sm transition-all duration-300 hover:-translate-y-1 hover:bg-rose-700 hover:shadow-xl">
                             {{ __('admin.muthowif.reject_submit') }}
                         </button>
 
                     </form>
 
                 </div>
-
             @endif
 
         </div>
