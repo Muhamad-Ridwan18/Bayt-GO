@@ -64,11 +64,20 @@ class RegistrationOtpService
 
         $appName = config('app.name', 'BaytGo');
         $recipientName = trim((string) $recipientName);
-        $greeting = $recipientName !== '' ? "Halo {$recipientName},\n\n" : '';
-        $loginLink = rtrim(config('app.url', ''), '/') . route('login', [], false);
+        $greeting = $recipientName !== '' ? __('auth_otp.otp_greeting', ['name' => $recipientName]) . "\n\n" : '';
 
-        $message = "Kode verifikasi baytgo Anda: {$otp}\n\n" .
-            "Jangan bagikan kode ini kepada siapa pun. Berlaku 10 menit.";
+        $otpMessage = __('auth_otp.otp_message', [
+            'otp' => $otp,
+            'app' => $appName,
+        ]);
+
+        // Guard: jika translation gagal resolve (mengembalikan key literal atau kosong),
+        // gunakan pesan fallback agar OTP tetap terbaca.
+        if (! is_string($otpMessage) || trim($otpMessage) === '' || $otpMessage === 'auth_otp.otp_message') {
+            $otpMessage = "Kode verifikasi {$appName} Anda: {$otp}\n\nJangan bagikan kode ini kepada siapa pun. Berlaku 10 menit.";
+        }
+
+        $message = $greeting . $otpMessage;
 
         try {
             $this->fonnte->sendText(
