@@ -27,7 +27,7 @@ return [
     'save_new_phone' => 'Simpan nomor',
     'phone_updated' => 'Nomor WhatsApp berhasil diperbarui. Kode OTP baru telah dikirim.',
     'otp_resent' => 'Kode OTP baru berhasil dikirim ulang ke nomor WhatsApp Anda.',
-    'otp_greeting' => 'Halo :name',
+    'otp_greeting' => '',
     'otp_message' => "Kode verifikasi :app Anda: :otp\n\nJangan bagikan kode ini kepada siapa pun. Berlaku 10 menit.",
     'reset_message' => "Kode reset password :app: *:otp*\n\nJangan bagikan kode ini kepada siapa pun. Berlaku 10 menit.",
 ];
