@@ -150,7 +150,17 @@ class MuthowifVerificationController extends Controller
             'rejection_reason' => $validated['rejection_reason'] ?? null,
         ]);
 
-        broadcast(new \App\Events\MuthowifVerificationUpdated($profile->fresh()));
+        try {
+            broadcast(
+                new \App\Events\MuthowifVerificationUpdated($profile->fresh())
+            );
+        } catch (\Throwable $e) {
+            \Log::error('Gagal broadcast MuthowifVerificationUpdated', [
+                'profile_id' => $profile->id,
+                'message' => $e->getMessage(),
+            ]);
+        }
+
 
         return redirect()
             ->route('admin.muthowif.show', $profile)

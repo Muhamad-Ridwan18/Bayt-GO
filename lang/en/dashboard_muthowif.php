@@ -103,4 +103,11 @@ return [
     'wallet_ledger_refund_caption_fee' => 'Muthowif share credited to your wallet: 1% of the service base price.',
     'referral_code_heading' => 'Your referral code (invite peer muthowifs)',
     'referral_code_hint' => 'Share this code when colleagues register as muthowifs. After they are verified, they join your network. On each of their completed bookings, you receive 0.5% of their service net (after platform fees) as a wallet credit. The code appears once admin approves your profile.',
+
+    'share_profile_heading' => 'Share your profile',
+    'share_copy'            => 'Copy',
+    'share_copied'          => 'Copied!',
+    'share_to_sosmed'       => 'Share to social media',
+    'share_wa_text'         => 'Hi! I am :name, a muthowif on BaytGo. Check out my profile and services here: :url',
+    'share_tweet_text'      => 'Check out my muthowif profile on BaytGo — :name',
 ];

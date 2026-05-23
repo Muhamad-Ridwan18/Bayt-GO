@@ -103,4 +103,11 @@ return [
     'wallet_ledger_refund_caption_fee' => 'Bagian muthowif masuk saldo: 1% dari harga dasar layanan.',
     'referral_code_heading' => 'Kode referral Anda (undang rekan muthowif)',
     'referral_code_hint' => 'Bagikan kode ini saat rekan mendaftar sebagai muthowif. Setelah mereka terverifikasi, mereka terhubung ke jaringan Anda. Dari setiap pesanan mereka yang selesai, Anda menerima 0,5% dari bagian net layanan mereka ke saldo Anda. Kode muncul setelah persetujuan admin.',
+
+    'share_profile_heading' => 'Bagikan profil Anda',
+    'share_copy'            => 'Salin',
+    'share_copied'          => 'Tersalin!',
+    'share_to_sosmed'       => 'Bagikan ke media sosial',
+    'share_wa_text'         => 'Halo! Saya :name, muthowif di BaytGo. Lihat profil dan layanan saya di sini: :url',
+    'share_tweet_text'      => 'Lihat profil muthowif saya di BaytGo — :name',
 ];
