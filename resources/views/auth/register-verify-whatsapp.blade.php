@@ -61,6 +61,17 @@
                 Kode OTP telah dikirim ke WhatsApp Anda di
                 <span class="font-semibold">{{ $maskedPhone }}</span>.
             </p>
+            <div class="pt-2 border-t border-brand-200/60 flex items-center justify-between gap-2">
+                <span class="text-xs text-slate-500">{{ __('auth_otp.resend_label') }}</span>
+                <form method="POST" action="{{ route('register.pending-phone') }}" class="inline">
+                    @csrf
+                    <input type="hidden" name="phone" value="{{ $pendingPhone }}" />
+                    <input type="hidden" name="country" value="{{ $pendingCountry }}" />
+                    <button type="submit" class="text-xs font-semibold text-brand-700 hover:text-brand-800 transition focus:outline-none">
+                        {{ __('auth_otp.resend_btn') }}
+                    </button>
+                </form>
+            </div>
         </div>
 
         <form method="POST" action="{{ route('register.complete') }}" class="pt-2 border-t border-slate-100 space-y-4">

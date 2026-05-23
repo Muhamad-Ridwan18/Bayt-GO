@@ -64,19 +64,21 @@ class RegistrationOtpService
 
         $appName = config('app.name', 'BaytGo');
         $recipientName = trim((string) $recipientName);
-        $greeting = $recipientName !== '' ? __('auth_otp.otp_greeting', ['name' => $recipientName]) . "\n\n" : '';
-
+        // Build greeting (always included)
+        $greeting = __('auth_otp.otp_greeting', ['name' => $recipientName]);
+        if (! is_string($greeting) || trim($greeting) === '' || $greeting === 'auth_otp.otp_greeting') {
+            $greeting = '';
+        } else {
+            $greeting .= "\n\n"; // separate from OTP message
+        }
         $otpMessage = __('auth_otp.otp_message', [
             'otp' => $otp,
             'app' => $appName,
         ]);
-
-        // Guard: jika translation gagal resolve (mengembalikan key literal atau kosong),
-        // gunakan pesan fallback agar OTP tetap terbaca.
+        // Guard: if translation fails, use a hard‑coded fallback.
         if (! is_string($otpMessage) || trim($otpMessage) === '' || $otpMessage === 'auth_otp.otp_message') {
             $otpMessage = "Kode verifikasi {$appName} Anda: {$otp}\n\nJangan bagikan kode ini kepada siapa pun. Berlaku 10 menit.";
         }
-
         $message = $greeting . $otpMessage;
 
         try {

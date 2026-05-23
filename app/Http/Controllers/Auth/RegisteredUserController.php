@@ -230,9 +230,7 @@ class RegisteredUserController extends Controller
 
         $previousPhone = (string) ($pending['fields']['phone'] ?? '');
         $prevNormalized = IntlPhone::normalize($previousPhone);
-        if ($prevNormalized !== null && $prevNormalized === $normalized) {
-            return redirect()->route('register.verify-whatsapp');
-        }
+        $isResend = ($prevNormalized !== null && $prevNormalized === $normalized);
 
         $pending['fields']['phone'] = $phoneInput;
         $pending['fields']['country'] = $this->nullableCountryIso($request->input('country'));
@@ -247,9 +245,11 @@ class RegisteredUserController extends Controller
                 ->withErrors($e->errors());
         }
 
+        $statusKey = $isResend ? 'auth_otp.otp_resent' : 'auth_otp.phone_updated';
+
         return redirect()
             ->route('register.verify-whatsapp')
-            ->with('status', __('auth_otp.phone_updated'));
+            ->with('status', __($statusKey));
     }
 
     private function validateRegistrationRequest(Request $request): void

@@ -84,7 +84,10 @@ class PasswordResetOtpService
         }
 
         $appName = config('app.name', 'BaytGo');
-        $message = "Kode reset password {$appName}: *{$otp}*\n\nJangan bagikan kode ini kepada siapa pun. Berlaku 10 menit.";
+        $message = __('auth_otp.reset_message', [
+            'otp' => $otp,
+            'app' => $appName,
+        ], app()->getLocale());
 
         try {
             $this->fonnte->sendText(
