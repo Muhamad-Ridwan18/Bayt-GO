@@ -364,6 +364,100 @@
                     </div>
                 </section>
 
+                {{-- Running Photo Gallery --}}
+                @php
+                    $galleryImages = $galleryImages ?? collect();
+                    // Pad to at least 10 items so the strip never looks empty
+                    $galleryChunked = $galleryImages->count() >= 2
+                        ? $galleryImages->chunk((int) ceil($galleryImages->count() / 2))
+                        : collect();
+                    $row1 = $galleryChunked->get(0, collect());
+                    $row2 = $galleryChunked->get(1, collect());
+                @endphp
+
+                @if ($galleryImages->isNotEmpty())
+                <section class="relative overflow-hidden bg-baytgo-950 py-12 sm:py-16" aria-label="Galeri Perjalanan Muthowif">
+                    {{-- Decorative radial glow --}}
+                    <div class="pointer-events-none absolute inset-0 opacity-30 bg-[radial-gradient(ellipse_at_center,_#C5A059_0%,_transparent_65%)]" aria-hidden="true"></div>
+
+                    <div class="relative z-10 mb-8 text-center px-4">
+                        <p class="text-xs font-bold uppercase tracking-[0.22em] text-gold mb-2">Galeri Perjalanan</p>
+                        <h2 class="text-2xl sm:text-3xl font-bold text-white">Momen Bersama Muthowif Kami</h2>
+                        <span class="mx-auto mt-4 block h-0.5 w-10 rounded-full bg-gold/60" aria-hidden="true"></span>
+                    </div>
+
+                    {{-- Row 1: left-to-right --}}
+                    <div class="marquee-wrap mb-3">
+                        <div class="marquee-track">
+                            {{-- First copy --}}
+                            @foreach ($row1 as $img)
+                                <div class="mx-1.5 shrink-0 overflow-hidden rounded-xl w-48 h-32 sm:w-56 sm:h-36 lg:w-64 lg:h-40 ring-1 ring-white/10 shadow-lg">
+                                    <img
+                                        src="{{ route('layanan.portfolio.image', $img->id) }}"
+                                        alt=""
+                                        class="h-full w-full object-cover transition duration-500 hover:scale-105"
+                                        loading="lazy"
+                                        decoding="async"
+                                    >
+                                </div>
+                            @endforeach
+                            {{-- Duplicate for seamless loop --}}
+                            @foreach ($row1 as $img)
+                                <div class="mx-1.5 shrink-0 overflow-hidden rounded-xl w-48 h-32 sm:w-56 sm:h-36 lg:w-64 lg:h-40 ring-1 ring-white/10 shadow-lg" aria-hidden="true">
+                                    <img
+                                        src="{{ route('layanan.portfolio.image', $img->id) }}"
+                                        alt=""
+                                        class="h-full w-full object-cover transition duration-500 hover:scale-105"
+                                        loading="lazy"
+                                        decoding="async"
+                                    >
+                                </div>
+                            @endforeach
+                        </div>
+                    </div>
+
+                    {{-- Row 2: right-to-left --}}
+                    @if ($row2->isNotEmpty())
+                    <div class="marquee-wrap">
+                        <div class="marquee-track-reverse">
+                            {{-- First copy --}}
+                            @foreach ($row2 as $img)
+                                <div class="mx-1.5 shrink-0 overflow-hidden rounded-xl w-48 h-32 sm:w-56 sm:h-36 lg:w-64 lg:h-40 ring-1 ring-white/10 shadow-lg">
+                                    <img
+                                        src="{{ route('layanan.portfolio.image', $img->id) }}"
+                                        alt=""
+                                        class="h-full w-full object-cover transition duration-500 hover:scale-105"
+                                        loading="lazy"
+                                        decoding="async"
+                                    >
+                                </div>
+                            @endforeach
+                            {{-- Duplicate for seamless loop --}}
+                            @foreach ($row2 as $img)
+                                <div class="mx-1.5 shrink-0 overflow-hidden rounded-xl w-48 h-32 sm:w-56 sm:h-36 lg:w-64 lg:h-40 ring-1 ring-white/10 shadow-lg" aria-hidden="true">
+                                    <img
+                                        src="{{ route('layanan.portfolio.image', $img->id) }}"
+                                        alt=""
+                                        class="h-full w-full object-cover transition duration-500 hover:scale-105"
+                                        loading="lazy"
+                                        decoding="async"
+                                    >
+                                </div>
+                            @endforeach
+                        </div>
+                    </div>
+                    @endif
+
+                    {{-- Bottom CTA overlay --}}
+                    <div class="relative z-10 mt-8 text-center">
+                        <a href="{{ route('layanan.index') }}" class="inline-flex items-center gap-2 rounded-full border border-white/25 bg-white/10 px-6 py-2.5 text-sm font-semibold text-white backdrop-blur-sm transition hover:bg-white/20">
+                            Lihat Semua Muthowif
+                            <svg class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="m8.25 4.5 7.5 7.5-7.5 7.5"/></svg>
+                        </a>
+                    </div>
+                </section>
+                @endif
+
                 {{-- Latest Articles --}}
                 @if ($latestArticles->isNotEmpty())
                     <section id="artikel-terbaru" class="py-16 sm:py-20 border-t border-slate-100 bg-welcomeCanvas">
