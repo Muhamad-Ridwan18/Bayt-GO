@@ -1,5 +1,29 @@
 <x-app-layout>
-    <div class="min-h-[calc(100vh-4rem)] bg-slate-50 py-6 sm:py-8">
+    <div id="profile-container" class="min-h-[calc(100vh-4rem)] bg-slate-50 py-6 sm:py-8">
+        @if (session('status'))
+            @php
+                $statusKey = session('status');
+                $statusMessage = match ($statusKey) {
+                    'profile-updated', 'password-updated' => __('profile.saved'),
+                    'public-profile-updated' => __('profile_public.saved'),
+                    'verification-link-sent' => __('profile.verification.sent'),
+                    default => $statusKey,
+                };
+            @endphp
+            <div class="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 mb-6">
+                <div class="rounded-xl border border-emerald-200 bg-emerald-50 px-4 py-3 text-sm text-emerald-900 shadow-sm">
+                    {{ $statusMessage }}
+                </div>
+            </div>
+        @endif
+        @if (session('error'))
+            <div class="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 mb-6">
+                <div class="rounded-xl border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-900 shadow-sm">
+                    {{ session('error') }}
+                </div>
+            </div>
+        @endif
+
         @if ($muthowifProfile)
             @php
                 $profileChecks = [

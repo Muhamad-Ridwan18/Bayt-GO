@@ -1,4 +1,4 @@
-<section>
+<section x-data="profileForm">
     <form id="send-verification" method="post" action="{{ route('verification.send') }}">
         @csrf
     </form>
@@ -15,8 +15,9 @@
                         Preview Profil
                     </a>
                 @endif
-                <button form="profile-main-form" type="submit" class="inline-flex items-center justify-center rounded-xl bg-brand-600 px-4 py-2 text-sm font-semibold text-white shadow-sm transition hover:bg-brand-700 focus:outline-none focus:ring-2 focus:ring-brand-500 focus:ring-offset-2">
-                    Simpan Perubahan
+                <button form="profile-main-form" type="submit" :disabled="loading" class="inline-flex items-center justify-center rounded-xl bg-brand-600 px-4 py-2 text-sm font-semibold text-white shadow-sm transition hover:bg-brand-700 focus:outline-none focus:ring-2 focus:ring-brand-500 focus:ring-offset-2 disabled:opacity-50 disabled:cursor-not-allowed">
+                    <span x-show="loading" class="mr-2 h-4 w-4 animate-spin rounded-full border-2 border-white border-t-transparent" x-cloak></span>
+                    <span x-text="loading ? 'Menyimpan...' : 'Simpan Perubahan'"></span>
                 </button>
             </div>
         </div>
@@ -30,9 +31,21 @@
         </nav>
     </div>
 
-    <form id="profile-main-form" method="post" action="{{ route('profile.public.update') }}" enctype="multipart/form-data" class="space-y-6 p-5 sm:p-6">
+    <form id="profile-main-form" method="post" action="{{ route('profile.public.update') }}" enctype="multipart/form-data" @submit="submit" class="space-y-6 p-5 sm:p-6">
         @csrf
         @method('patch')
+
+        <!-- Error alert banner -->
+        <div x-show="errorMessage" class="rounded-xl border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-900 shadow-sm" x-cloak>
+            <p class="font-semibold" x-text="errorMessage"></p>
+            <ul class="mt-1.5 list-disc list-inside space-y-0.5 text-xs text-red-850">
+                <template x-for="(messages, key) in errors" :key="key">
+                    <template x-for="msg in messages" :key="msg">
+                        <li x-text="msg"></li>
+                    </template>
+                </template>
+            </ul>
+        </div>
 
         <section id="profile-basic" class="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm sm:p-5">
             <div class="mb-4 flex items-center gap-2">
@@ -47,13 +60,13 @@
                 <div>
                     <x-input-label for="public_name" :value="__('profile.fields.name')" />
                     <x-text-input id="public_name" name="name" type="text" class="mt-1 block w-full" :value="old('name', $user->name)" required autocomplete="name" />
-                    <x-input-error class="mt-2" :messages="$errors->get('name')" />
+                    <x-input-error class="mt-2" :messages="$errors->get('name')" field="name" />
                 </div>
 
                 <div>
                     <x-input-label for="public_email" :value="__('profile.fields.email')" />
                     <x-text-input id="public_email" name="email" type="email" class="mt-1 block w-full" :value="old('email', $user->email)" required autocomplete="username" />
-                    <x-input-error class="mt-2" :messages="$errors->get('email')" />
+                    <x-input-error class="mt-2" :messages="$errors->get('email')" field="email" />
                     @if ($user instanceof \Illuminate\Contracts\Auth\MustVerifyEmail && ! $user->hasVerifiedEmail())
                         <p class="mt-2 text-xs text-slate-700">
                             {{ __('profile.verification.unverified') }}
@@ -67,25 +80,25 @@
                 <div>
                     <x-input-label for="public_phone" :value="__('profile_public.phone')" />
                     <x-text-input id="public_phone" name="phone" type="text" class="mt-1 block w-full" :value="old('phone', $muthowifProfile->phone)" autocomplete="tel" />
-                    <x-input-error class="mt-2" :messages="$errors->get('phone')" />
+                    <x-input-error class="mt-2" :messages="$errors->get('phone')" field="phone" />
                 </div>
 
                 <div>
                     <x-input-label for="public_passport_number" :value="__('profile_public.passport')" />
                     <x-text-input id="public_passport_number" name="passport_number" type="text" class="mt-1 block w-full" :value="old('passport_number', $muthowifProfile->passport_number)" />
-                    <x-input-error class="mt-2" :messages="$errors->get('passport_number')" />
+                    <x-input-error class="mt-2" :messages="$errors->get('passport_number')" field="passport_number" />
                 </div>
 
                 <div>
                     <x-input-label for="public_birth_date" :value="__('profile_public.birth_date')" />
                     <x-text-input id="public_birth_date" name="birth_date" type="date" class="mt-1 block w-full" :value="old('birth_date', optional($muthowifProfile->birth_date)->toDateString())" />
-                    <x-input-error class="mt-2" :messages="$errors->get('birth_date')" />
+                    <x-input-error class="mt-2" :messages="$errors->get('birth_date')" field="birth_date" />
                 </div>
 
                 <div class="md:col-span-2">
                     <x-input-label for="public_address" :value="__('profile_public.address')" />
                     <textarea id="public_address" name="address" rows="2" class="mt-1 block w-full rounded-lg border-slate-300 text-sm shadow-sm focus:border-brand-500 focus:ring-brand-500">{{ old('address', $muthowifProfile->address) }}</textarea>
-                    <x-input-error class="mt-2" :messages="$errors->get('address')" />
+                    <x-input-error class="mt-2" :messages="$errors->get('address')" field="address" />
                 </div>
             </div>
         </section>
@@ -111,7 +124,7 @@
                         @endif
                     </div>
                     <x-input-file id="public_photo" name="photo" accept="image/jpeg,image/png,image/webp" class="mt-3" />
-                    <x-input-error class="mt-2" :messages="$errors->get('photo')" />
+                    <x-input-error class="mt-2" :messages="$errors->get('photo')" field="photo" />
                 </div>
 
                 <div class="rounded-xl border border-slate-200 bg-slate-50 p-3">
@@ -125,7 +138,7 @@
                         @endif
                     </div>
                     <x-input-file id="public_ktp_image" name="ktp_image" accept="image/jpeg,image/png,image/webp" class="mt-3" />
-                    <x-input-error class="mt-2" :messages="$errors->get('ktp_image')" />
+                    <x-input-error class="mt-2" :messages="$errors->get('ktp_image')" field="ktp_image" />
                 </div>
 
                 <div class="rounded-xl border border-slate-200 bg-slate-50 p-3 md:col-span-2 xl:col-span-1">
@@ -163,7 +176,7 @@
                             />
                         </div>
                     </details>
-                    <x-input-error class="mt-2" :messages="$errors->get('delete_supporting_documents')" />
+                    <x-input-error class="mt-2" :messages="$errors->get('delete_supporting_documents')" field="delete_supporting_documents" />
                 </div>
             </div>
         </section>
@@ -211,7 +224,7 @@
             <div class="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm sm:p-5">
             <x-input-label for="public_reference_text" :value="__('profile_public.reference')" />
                 <textarea id="public_reference_text" name="reference_text" rows="4" class="mt-1 block w-full rounded-lg border-slate-300 text-sm shadow-sm focus:border-brand-500 focus:ring-brand-500">{{ old('reference_text', $muthowifProfile->reference_text) }}</textarea>
-            <x-input-error class="mt-2" :messages="$errors->get('reference_text')" />
+            <x-input-error class="mt-2" :messages="$errors->get('reference_text')" field="reference_text" />
             </div>
 
             <div class="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm sm:p-5">
@@ -252,7 +265,7 @@
                         :placeholder="__('profile_public.inviter_code_placeholder')"
                     />
                     <p class="mt-1 text-xs text-slate-500">{{ __('profile_public.inviter_code_hint') }}</p>
-                    <x-input-error class="mt-2" :messages="$errors->get('inviter_referral_code')" />
+                    <x-input-error class="mt-2" :messages="$errors->get('inviter_referral_code')" field="inviter_referral_code" />
                 @endif
             </div>
             </div>

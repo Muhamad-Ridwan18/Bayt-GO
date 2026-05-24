@@ -18,6 +18,89 @@ document.addEventListener('alpine:init', () => {
         },
     }));
 
+    Alpine.data('profileForm', () => ({
+        loading: false,
+        errors: {},
+        errorMessage: '',
+
+        csrf() {
+            return document.querySelector('meta[name="csrf-token"]')?.getAttribute('content') ?? '';
+        },
+
+        async submit(e) {
+            e.preventDefault();
+            if (this.loading) return;
+            this.loading = true;
+            this.errors = {};
+            this.errorMessage = '';
+
+            const form = e.target;
+            const formData = new FormData(form);
+
+            try {
+                const response = await fetch(form.action, {
+                    method: 'POST',
+                    body: formData,
+                    headers: {
+                        'Accept': 'application/json',
+                        'X-Requested-With': 'XMLHttpRequest',
+                        'X-CSRF-TOKEN': this.csrf(),
+                    },
+                });
+
+                if (response.status === 422) {
+                    const data = await response.json();
+                    this.errors = data.errors || {};
+                    this.errorMessage = data.message || 'Silakan periksa kembali input Anda.';
+                    
+                    // Focus ke input pertama yang error
+                    const firstErrorField = Object.keys(this.errors)[0];
+                    if (firstErrorField) {
+                        const el = form.querySelector(`[name="${firstErrorField}"], [name="${firstErrorField}[]"]`);
+                        if (el) el.focus();
+                    }
+                    return;
+                }
+
+                if (!response.ok) {
+                    throw new Error('Terjadi kesalahan saat menyimpan profil.');
+                }
+
+                const html = await response.text();
+                const parser = new DOMParser();
+                const doc = parser.parseFromString(html, 'text/html');
+
+                const currentContainer = document.getElementById('profile-container');
+                const newContainer = doc.getElementById('profile-container');
+
+                if (currentContainer && newContainer) {
+                    // Tambahkan cache buster ke gambar profil dan KTP yang baru
+                    const ts = new Date().getTime();
+                    newContainer.querySelectorAll('img').forEach(img => {
+                        const src = img.getAttribute('src');
+                        if (src && (src.includes('profile/public/photo') || src.includes('profile/public/ktp'))) {
+                            img.setAttribute('src', `${src.split('?')[0]}?t=${ts}`);
+                        }
+                    });
+
+                    if (typeof Alpine.destroyTree === 'function') {
+                        Alpine.destroyTree(currentContainer);
+                    }
+                    currentContainer.innerHTML = newContainer.innerHTML;
+                    Alpine.initTree(currentContainer);
+                } else {
+                    window.location.reload();
+                }
+            } catch (err) {
+                console.error(err);
+                this.errorMessage = err.message || 'Terjadi kesalahan sistem.';
+            } finally {
+                this.loading = false;
+            }
+        }
+    }));
+
+
     Alpine.data('adminWithdrawalsLive', (config) => ({
         fragmentUrl: config.fragmentUrl ?? null,
         toastLabel: config.toastLabel ?? 'Ada permintaan withdraw baru!',
