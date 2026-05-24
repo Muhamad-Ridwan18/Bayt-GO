@@ -45,10 +45,14 @@ class MuthowifProfile extends Model
     {
         static::creating(function (MuthowifProfile $profile): void {
             if ($profile->slug === null) {
-                $profile->slug = $profile->user?->name
+                $baseSlug = $profile->user?->name
                     ? \Illuminate\Support\Str::slug($profile->user->name)
-                    : (string) $profile->uuid;
+                    : \Illuminate\Support\Str::slug((string) $profile->uuid);
+            } else {
+                $baseSlug = \Illuminate\Support\Str::slug($profile->slug);
             }
+
+            $profile->slug = static::generateUniqueSlug($baseSlug);
         });
 
         static::deleting(function (MuthowifProfile $profile): void {
@@ -222,5 +226,33 @@ class MuthowifProfile extends Model
             $value,
             fn (mixed $s): bool => is_string($s) && trim($s) !== ''
         ));
+    }
+
+    /**
+     * Generate a unique slug based on $base.
+     * If $base already exists in the table, append -1, -2, … until it is unique.
+     *
+     * @param  string       $base      The desired base slug (already slugified).
+     * @param  string|null  $excludeId UUID of the record to exclude (useful for updates).
+     */
+    public static function generateUniqueSlug(string $base, ?string $excludeId = null): string
+    {
+        $slug = $base;
+        $index = 1;
+
+        while (true) {
+            $query = static::where('slug', $slug);
+
+            if ($excludeId !== null) {
+                $query->where('id', '!=', $excludeId);
+            }
+
+            if (! $query->exists()) {
+                return $slug;
+            }
+
+            $slug = $base . '-' . $index;
+            $index++;
+        }
     }
 }

@@ -8,6 +8,7 @@
     "require": {
         "php": "^8.3",
         "giggsey/libphonenumber-for-php": "^9.0",
+        "intervention/image": "3",
         "laravel/framework": "^13.0",
         "laravel/octane": "^2.17",
         "laravel/reverb": "^1.10",
