@@ -113,7 +113,7 @@
             </div>
 
             <div class="grid grid-cols-1 gap-4 md:grid-cols-2 xl:grid-cols-3">
-                <div class="rounded-xl border border-slate-200 bg-slate-50 p-3">
+                <div class="rounded-xl border border-slate-200 bg-slate-50 p-3" x-data="{ showInput: false }">
                     <p class="text-sm font-semibold text-slate-900">Foto Profil</p>
                     <p class="text-xs text-slate-500">Foto profesional opsional</p>
                     <div class="mt-3 overflow-hidden rounded-lg bg-white ring-1 ring-slate-200">
@@ -123,11 +123,19 @@
                             <div class="flex h-36 items-center justify-center text-xs text-slate-400">Belum ada foto</div>
                         @endif
                     </div>
-                    <x-input-file id="public_photo" name="photo" accept="image/jpeg,image/png,image/webp" class="mt-3" />
+                    <button type="button" @click="showInput = !showInput" class="mt-3 inline-flex items-center gap-2 rounded-md bg-brand-600 px-3 py-1.5 text-sm font-medium text-white hover:bg-brand-700 focus:outline-none focus:ring-2 focus:ring-brand-500 focus:ring-offset-2">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" viewBox="0 0 20 20" fill="currentColor">
+                            <path d="M13.586 3.586a2 2 0 112.828 2.828l-.793.793-2.828-2.828.793-.793zM11.379 5.793L3 14.172V17h2.828l8.38-8.379-2.83-2.828z" />
+                        </svg>
+                        <span x-text="showInput ? 'Batal' : 'Ubah foto'"></span>
+                    </button>
+                    <div x-show="showInput" x-transition class="mt-2">
+                        <x-input-file id="public_photo" name="photo" accept="image/jpeg,image/png,image/webp" />
+                    </div>
                     <x-input-error class="mt-2" :messages="$errors->get('photo')" field="photo" />
                 </div>
 
-                <div class="rounded-xl border border-slate-200 bg-slate-50 p-3">
+                <div class="rounded-xl border border-slate-200 bg-slate-50 p-3" x-data="{ showInput: false }">
                     <p class="text-sm font-semibold text-slate-900">KTP</p>
                     <p class="text-xs text-slate-500">Maksimal 5MB, JPG/PNG/WebP</p>
                     <div class="mt-3 overflow-hidden rounded-lg bg-white ring-1 ring-slate-200">
@@ -137,7 +145,15 @@
                             <div class="flex h-36 items-center justify-center text-xs text-slate-400">Belum ada KTP</div>
                         @endif
                     </div>
-                    <x-input-file id="public_ktp_image" name="ktp_image" accept="image/jpeg,image/png,image/webp" class="mt-3" />
+                    <button type="button" @click="showInput = !showInput" class="mt-3 inline-flex items-center gap-2 rounded-md bg-brand-600 px-3 py-1.5 text-sm font-medium text-white hover:bg-brand-700 focus:outline-none focus:ring-2 focus:ring-brand-500 focus:ring-offset-2">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" viewBox="0 0 20 20" fill="currentColor">
+                            <path d="M13.586 3.586a2 2 0 112.828 2.828l-.793.793-2.828-2.828.793-.793zM11.379 5.793L3 14.172V17h2.828l8.38-8.379-2.83-2.828z" />
+                        </svg>
+                        <span x-text="showInput ? 'Batal' : 'Ubah KTP'"></span>
+                    </button>
+                    <div x-show="showInput" x-transition class="mt-2">
+                        <x-input-file id="public_ktp_image" name="ktp_image" accept="image/jpeg,image/png,image/webp" />
+                    </div>
                     <x-input-error class="mt-2" :messages="$errors->get('ktp_image')" field="ktp_image" />
                 </div>
 
