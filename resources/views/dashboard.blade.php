@@ -3,14 +3,14 @@
         $customerDashBg = Auth::user()->isCustomer();
         $adminDash = Auth::user()->isAdmin();
     @endphp
-    <div class="relative min-h-[calc(100vh-4rem)] {{ $customerDashBg ? 'overflow-x-hidden bg-gradient-to-b from-welcomeCanvas via-white to-slate-50 py-6 sm:py-8' : ($adminDash ? 'overflow-x-hidden bg-slate-50/95 py-0' : 'overflow-hidden bg-gradient-to-b from-slate-100 via-slate-50 to-white py-8 sm:py-12') }} @if (Auth::user()->isVerifiedMuthowif()) !py-5 sm:!py-6 @endif">
+    <div class="relative min-h-[calc(100vh-4rem)] {{ $customerDashBg ? 'overflow-x-hidden bg-gradient-to-b from-welcomeCanvas via-white to-slate-50' : ($adminDash ? 'overflow-x-hidden bg-slate-50/95' : 'overflow-hidden bg-gradient-to-b from-slate-100 via-slate-50 to-white') }} @if (Auth::user()->isVerifiedMuthowif()) !pt-0 !pb-0 @endif">
         @unless ($customerDashBg || $adminDash)
             <div class="pointer-events-none absolute inset-0 bg-[radial-gradient(ellipse_80%_50%_at_50%_-20%,rgba(120,53,15,0.08),transparent)]"></div>
             <div class="pointer-events-none absolute right-0 top-24 h-72 w-72 rounded-full bg-brand-400/5 blur-3xl"></div>
             <div class="pointer-events-none absolute -left-20 bottom-0 h-64 w-64 rounded-full bg-violet-400/5 blur-3xl"></div>
         @endunless
 
-        <div class="relative mx-auto {{ $adminDash ? 'max-w-none' : 'max-w-7xl' }} space-y-10 {{ $adminDash ? 'px-0' : 'px-4 sm:px-6 lg:px-8' }}">
+        <div class="relative mx-auto {{ $adminDash ? 'max-w-none' : 'max-w-7xl' }} space-y-4 {{ $adminDash ? 'px-0' : 'px-4 sm:px-6 lg:px-8' }}">
 
             @if (Auth::user()->isCustomer())
                 @include('partials.dashboard-customer')
