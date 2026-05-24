@@ -59,7 +59,7 @@
         </div>
 
         <div class="flex items-center gap-4">
-            <x-primary-button :disabled="loading">
+            <x-primary-button x-bind:disabled="loading">
                 <span x-show="loading" class="mr-2 h-4 w-4 animate-spin rounded-full border-2 border-white border-t-transparent" x-cloak></span>
                 <span x-text="loading ? 'Menyimpan...' : '{{ __('profile.save') }}'"></span>
             </x-primary-button>
