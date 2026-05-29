@@ -49,12 +49,18 @@ final class WelcomeController extends Controller
             ->limit(30)
             ->get();
 
+        $activeCampaigns = \App\Models\Campaign::active()
+            ->orderBy('sort_order')
+            ->orderByDesc('start_date')
+            ->get();
+
         return view('welcome', [
             'featuredMuthowifs' => $featuredMuthowifs,
             'latestArticles' => $latestArticles,
             'landingPages' => $landingPages,
             'latestServices' => $latestServices,
             'galleryImages' => $galleryImages,
+            'activeCampaigns' => $activeCampaigns,
         ]);
     }
 }

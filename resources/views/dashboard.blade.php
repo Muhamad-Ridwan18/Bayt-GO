@@ -12,6 +12,10 @@
 
         <div class="relative mx-auto {{ $adminDash ? 'max-w-none' : 'max-w-7xl' }} space-y-4 {{ $adminDash ? 'px-0' : 'px-4 sm:px-6 lg:px-8' }}">
 
+            @unless($adminDash)
+                <x-campaign-carousel :campaigns="$activeCampaigns ?? collect()" />
+            @endunless
+
             @if (Auth::user()->isCustomer())
                 @include('partials.dashboard-customer')
             @elseif (Auth::user()->isVerifiedMuthowif())

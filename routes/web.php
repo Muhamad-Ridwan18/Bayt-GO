@@ -109,6 +109,7 @@ Route::get('/layanan/{publicProfile}', [MuthowifDirectoryController::class, 'sho
 Route::get('/terms', TermsController::class)->name('terms');
 Route::get('/artikel', [ArticleController::class, 'index'])->name('articles.index');
 Route::get('/artikel/{slug}', [ArticleController::class, 'show'])->name('articles.show');
+Route::get('/campaign/{slug}', [\App\Http\Controllers\Public\CampaignController::class, 'show'])->name('campaigns.show');
 
 Route::get('/locale/{locale}', [LocaleController::class, 'switch'])->name('locale.switch');
 
@@ -157,7 +158,11 @@ Route::get('/perusahaan/daftar/menunggu', function () {
 })->name('company.registration.pending');
 
 Route::get('/dashboard', function () {
-    return view('dashboard');
+    $activeCampaigns = \App\Models\Campaign::active()
+        ->orderBy('sort_order')
+        ->orderByDesc('start_date')
+        ->get();
+    return view('dashboard', compact('activeCampaigns'));
 })->middleware(['auth'])->name('dashboard');
 
 Route::get('/dashboard/muthowif-calendar', MuthowifDashboardCalendarController::class)
@@ -277,6 +282,7 @@ Route::middleware('auth')->group(function () {
             ->names('articles');
         Route::get('tampilan/logo', [SiteAppearanceController::class, 'edit'])->name('site-appearance.edit');
         Route::post('tampilan/logo', [SiteAppearanceController::class, 'update'])->name('site-appearance.update');
+        Route::resource('campaign', \App\Http\Controllers\Admin\CampaignsAdminController::class);
         Route::get('pengguna', [UserManagementController::class, 'index'])->name('users.index');
         Route::get('pengguna/{user}/ubah', [UserManagementController::class, 'edit'])->name('users.edit');
         Route::patch('pengguna/{user}', [UserManagementController::class, 'update'])->name('users.update');

@@ -123,6 +123,10 @@
                         </div>
                     </div>
 
+                    <div class="relative z-20 mx-auto mt-8 max-w-7xl w-full px-4 sm:px-6 lg:px-8">
+                        <x-campaign-carousel :campaigns="$activeCampaigns ?? collect()" />
+                    </div>
+
                     @if(isset($landingPages) && $landingPages->isNotEmpty())
                         <section class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-10">
                             <div class="rounded-3xl border border-slate-200 bg-white p-6 shadow-sm">
