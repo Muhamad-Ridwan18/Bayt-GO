@@ -33,7 +33,7 @@
         <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 -mt-8 relative z-20">
             <div class="bg-white rounded-3xl shadow-xl p-6 md:p-10 border border-slate-100 flex flex-col md:flex-row gap-8 items-center justify-between">
                 <div>
-                    <h3 class="text-lg font-semibold text-slate-800">Promo Berakhir Dalam:</h3>
+                    <h3 class="text-lg font-semibold text-slate-800">Mulai Dalam:</h3>
                     <div class="mt-4 flex gap-4 text-center" id="countdown-timer">
                         <div class="bg-slate-50 border border-slate-100 rounded-xl p-3 min-w-[70px]">
                             <div class="text-2xl font-bold" style="color: {{ $themeColor }}" id="days">00</div>
