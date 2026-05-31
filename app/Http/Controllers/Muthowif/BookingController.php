@@ -29,6 +29,8 @@ use Illuminate\Support\Facades\DB;
 use Illuminate\Validation\Rule;
 use Illuminate\View\View;
 use RuntimeException;
+use Illuminate\Support\Facades\Log;
+use Throwable;
 
 class BookingController extends Controller
 {
@@ -208,6 +210,8 @@ class BookingController extends Controller
             ->with('status', 'Booking disetujui. Jamaah dapat melanjutkan pembayaran.');
     }
 
+    
+
     public function cancel(Request $request, MuthowifBooking $booking): RedirectResponse
     {
         $this->authorize('cancelAsMuthowif', $booking);
@@ -215,39 +219,60 @@ class BookingController extends Controller
         $rules = [
             'muthowif_rejection_note' => ['nullable', 'string', 'max:2000'],
         ];
+
         if ($booking->status === BookingStatus::Pending) {
-            $rules['muthowif_rejection_kind'] = ['required', Rule::enum(MuthowifBookingMuthowifRejectionKind::class)];
+            $rules['muthowif_rejection_kind'] = [
+                'required',
+                Rule::enum(MuthowifBookingMuthowifRejectionKind::class),
+            ];
         }
 
         $validated = $request->validate($rules);
 
-        $kind = null;
-        $note = null;
-        if ($booking->status === BookingStatus::Pending) {
-            $rawKind = $validated['muthowif_rejection_kind'];
-            $kind = $rawKind instanceof MuthowifBookingMuthowifRejectionKind
-                ? $rawKind
-                : MuthowifBookingMuthowifRejectionKind::from((string) $rawKind);
-            $note = filled($validated['muthowif_rejection_note'] ?? null)
-                ? trim((string) $validated['muthowif_rejection_note'])
-                : null;
+        try {
+            $kind = null;
+            $note = null;
+
+            if ($booking->status === BookingStatus::Pending) {
+                $rawKind = $validated['muthowif_rejection_kind'];
+
+                $kind = $rawKind instanceof MuthowifBookingMuthowifRejectionKind
+                    ? $rawKind
+                    : MuthowifBookingMuthowifRejectionKind::from((string) $rawKind);
+
+                $note = filled($validated['muthowif_rejection_note'] ?? null)
+                    ? trim((string) $validated['muthowif_rejection_note'])
+                    : null;
+            }
+
+            $booking->update([
+                'status' => BookingStatus::Cancelled,
+                'muthowif_rejection_kind' => $kind,
+                'muthowif_rejection_note' => $note,
+            ]);
+
+            if ($kind === MuthowifBookingMuthowifRejectionKind::JadwalFull) {
+                NotifyCustomerOfBookingRejectedJadwalFull::dispatchAfterResponse(
+                    (string) $booking->getKey()
+                );
+            }
+
+            broadcast(new CustomerBookingUpdated($booking->fresh()));
+
+            return redirect()
+                ->route('muthowif.bookings.index')
+                ->with('status', 'Booking ditolak atau dibatalkan.');
+        } catch (Throwable $e) {
+            Log::error('Failed to cancel booking', [
+                'booking_id' => $booking->id,
+                'error' => $e->getMessage(),
+                'trace' => $e->getTraceAsString(),
+            ]);
+
+            return back()->withErrors([
+                'error' => 'Terjadi kesalahan saat membatalkan booking. Silakan coba lagi.',
+            ]);
         }
-
-        $booking->update([
-            'status' => BookingStatus::Cancelled,
-            'muthowif_rejection_kind' => $kind,
-            'muthowif_rejection_note' => $note,
-        ]);
-
-        if ($kind === MuthowifBookingMuthowifRejectionKind::JadwalFull) {
-            NotifyCustomerOfBookingRejectedJadwalFull::dispatchAfterResponse((string) $booking->getKey());
-        }
-
-        broadcast(new CustomerBookingUpdated($booking->fresh()));
-
-        return redirect()
-            ->route('muthowif.bookings.index')
-            ->with('status', 'Booking ditolak atau dibatalkan.');
     }
 
     public function recommendToPeer(Request $request, MuthowifBooking $booking): RedirectResponse
