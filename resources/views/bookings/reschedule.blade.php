@@ -76,7 +76,7 @@
                                     <p class="mb-1.5 block text-sm font-semibold text-slate-700">{{ __('bookings.show.end_auto') }}</p>
                                     <div class="flex min-h-[46px] items-center rounded-xl border border-slate-200 bg-slate-50/80 px-4 text-sm font-medium text-slate-800 shadow-inner" x-text="endLabel"></div>
                                     <p class="mt-1.5 text-[11px] text-slate-500">{{ __('bookings.show.end_follows', ['nights' => $nights]) }}</p>
-                                </x-page-container>
+                                </div>
                             </div>
 
                             <div>
@@ -109,6 +109,6 @@
                     @endif
                 </div>
             </div>
-        </div>
+        </x-page-container>
     </div>
 </x-app-layout>

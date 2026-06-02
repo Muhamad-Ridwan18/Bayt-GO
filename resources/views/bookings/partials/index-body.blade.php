@@ -61,7 +61,7 @@
                                             </span>
                                         @endif
                                     @endforeach
-                                </x-page-container>
+                                </div>
                             </div>
                         @endif
                     </div>
@@ -299,4 +299,4 @@
                     </div>
                 </div>
             @endif
-        </div>
+        </x-page-container>

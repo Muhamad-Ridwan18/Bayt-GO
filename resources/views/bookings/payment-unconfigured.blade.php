@@ -36,8 +36,8 @@
                     <p class="mt-1 break-all rounded-xl border border-amber-200/80 bg-white/80 px-3 py-2.5 font-mono text-[11px] leading-snug text-amber-950 ring-1 ring-amber-100/80">
                         {{ $paymentDriver === 'moota' ? route('webhooks.moota', absolute: true) : route('payments.doku.notification', absolute: true) }}
                     </p>
-                </x-page-container>
+                </div>
             </div>
-        </div>
+        </x-page-container>
     </div>
 </x-app-layout>

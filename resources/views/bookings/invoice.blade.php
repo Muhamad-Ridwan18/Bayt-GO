@@ -68,7 +68,7 @@
                         <p class="mt-1 text-xl font-bold tabular-nums text-white sm:text-2xl">
                             {{ $booking->paid_at?->timezone(config('app.timezone'))->format('d/m/Y H:i') ?? '—' }}
                         </p>
-                    </x-page-container>
+                    </div>
                 </div>
             </header>
 
@@ -157,6 +157,6 @@
                 <p class="mx-auto mt-4 max-w-md text-xs leading-relaxed text-slate-400">{{ __('bookings.invoice.electronic_doc') }}</p>
             </footer>
         </div>
-    </div>
+    </x-page-container>
 </body>
 </html>

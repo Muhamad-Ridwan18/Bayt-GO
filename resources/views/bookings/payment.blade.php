@@ -208,7 +208,7 @@
                         <div class="shrink-0 rounded-2xl border border-brand-200/80 bg-gradient-to-br from-brand-50 to-emerald-50/50 px-5 py-4 text-right shadow-inner ring-1 ring-brand-100/60">
                             <p class="text-[11px] font-semibold uppercase tracking-wide text-brand-800">{{ __('bookings.invoice.total') }}</p>
                             <p class="mt-1 text-2xl font-bold tabular-nums tracking-tight text-brand-700 sm:text-3xl">Rp {{ $fmt($customerTotal) }}</p>
-                        </x-page-container>
+                        </div>
                     </div>
                 </div>
             </header>
@@ -555,5 +555,6 @@
                 })();
             </script>
         @endif
+        </x-page-container>
     </div>
 </x-app-layout>

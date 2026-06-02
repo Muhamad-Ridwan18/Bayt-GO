@@ -43,7 +43,7 @@
                                     'platform' => $fmt((float) $refundPreview['refund_fee_platform']),
                                     'muthowif' => $fmt((float) $refundPreview['refund_fee_muthowif']),
                                 ]) !!}</p>
-                            </x-page-container>
+                            </div>
                         </div>
 
                         <form method="POST" action="{{ route('bookings.refund_request.store', $b) }}" class="space-y-6" onsubmit="return confirm(@js(__('bookings.show.refund_confirm')));">
@@ -97,6 +97,6 @@
                     @endif
                 </div>
             </div>
-        </div>
+        </x-page-container>
     </div>
 </x-app-layout>
