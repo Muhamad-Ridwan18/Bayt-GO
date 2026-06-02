@@ -30,7 +30,7 @@
     active-nav="articles"
 >
     <article class="border-b border-slate-100 bg-gradient-to-b from-welcomeCanvas to-white">
-        <div class="mx-auto max-w-3xl px-4 py-10 sm:px-6 sm:py-14 lg:px-8">
+        <x-page-container class="py-10 sm:py-14">
             <nav class="text-sm text-slate-500" aria-label="{{ __('articles.breadcrumb_aria') }}">
                 <ol class="flex flex-wrap items-center gap-2">
                     <li><a href="{{ route('welcome') }}" class="font-medium hover:text-baytgo">{{ __('nav.home') }}</a></li>
@@ -58,7 +58,7 @@
         </div>
     </article>
 
-    <div class="mx-auto max-w-3xl px-4 py-12 sm:px-6 lg:px-8">
+    <x-page-container class="py-12">
         <div class="article-prose {{ $rtl ? 'text-right' : '' }}" dir="{{ $rtl ? 'rtl' : 'ltr' }}">
             {!! $article->localized('body') !!}
         </div>
@@ -79,7 +79,7 @@
                     @foreach($relatedServices as $service)
                         <x-marketplace.profile-card :profile="$service" />
                     @endforeach
-                </div>
+                </x-page-container>
             </section>
         @endif
 
@@ -89,7 +89,7 @@
             <div class="mt-6 flex flex-wrap justify-center gap-3">
                 <a href="{{ route('layanan.index') }}" class="inline-flex items-center justify-center rounded-xl bg-baytgo px-5 py-3 text-sm font-bold text-white shadow-md shadow-baytgo/25 transition hover:bg-baytgo-800">{{ __('articles.cta_browse') }}</a>
                 <a href="{{ route('articles.index') }}" class="inline-flex items-center justify-center rounded-xl border-2 border-slate-200 bg-white px-5 py-3 text-sm font-bold text-slate-800 transition hover:border-baytgo/30">{{ __('articles.back_to_list') }}</a>
-            </div>
+            </x-page-container>
         </div>
     </div>
 </x-layouts.marketing-public>

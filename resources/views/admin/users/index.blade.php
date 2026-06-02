@@ -17,7 +17,7 @@
 <x-app-layout>
     <div class="relative min-h-[calc(100vh-4rem)] overflow-hidden bg-gradient-to-b from-slate-100 via-slate-50 to-white py-8 sm:py-12">
         <div class="pointer-events-none absolute inset-0 bg-[radial-gradient(ellipse_80%_40%_at_50%_-10%,rgba(120,53,15,0.06),transparent)]"></div>
-        <div class="relative mx-auto max-w-6xl space-y-8 px-4 sm:px-6 lg:px-8">
+        <x-page-container class="relative space-y-8">
             @if (session('status'))
                 <div class="rounded-2xl border border-emerald-200 bg-emerald-50 px-4 py-3 text-sm font-medium text-emerald-900 shadow-sm">
                     {{ session('status') }}
@@ -36,7 +36,7 @@
                             <p class="text-[11px] font-semibold uppercase tracking-wider text-brand-200/90">{{ __('admin.users.badge') }}</p>
                             <h1 class="mt-1 text-2xl font-bold tracking-tight sm:text-3xl">{{ __('admin.users.title') }}</h1>
                             <p class="mt-2 max-w-xl text-sm leading-relaxed text-white/75">{{ __('admin.users.subtitle') }}</p>
-                        </div>
+                        </x-page-container>
                     </div>
                     <a href="{{ route('dashboard') }}" class="inline-flex shrink-0 items-center gap-2 self-start rounded-2xl border border-white/20 bg-white/10 px-4 py-2.5 text-sm font-semibold text-white backdrop-blur-sm transition hover:bg-white/20">
                         <svg class="h-4 w-4" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true"><path fill-rule="evenodd" d="M9.293 2.293a1 1 0 011.414 0l7 7A1 1 0 0117 11h-1v6a1 1 0 01-1 1h-2a1 1 0 01-1-1v-3a1 1 0 00-1-1H9a1 1 0 00-1 1v3a1 1 0 01-1 1H5a1 1 0 01-1-1v-6H3a1 1 0 01-.707-1.707l7-7z" clip-rule="evenodd" /></svg>

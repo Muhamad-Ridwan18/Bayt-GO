@@ -10,7 +10,7 @@
             <div class="pointer-events-none absolute -left-20 bottom-0 h-64 w-64 rounded-full bg-violet-400/5 blur-3xl"></div>
         @endunless
 
-        <div class="relative mx-auto {{ $adminDash ? 'max-w-none' : 'max-w-7xl' }} space-y-4 {{ $adminDash ? 'px-0' : 'px-4 sm:px-6 lg:px-8' }}">
+        <x-page-container class="relative space-y-4">
 
             @unless($adminDash)
                 <x-campaign-carousel :campaigns="$activeCampaigns ?? collect()" />
@@ -77,6 +77,6 @@
             @unless (Auth::user()->isAdmin())
                 @include('partials.dashboard-next-profile-row')
             @endunless
-        </div>
+        </x-page-container>
     </div>
 </x-app-layout>

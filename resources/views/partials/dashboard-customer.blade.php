@@ -104,7 +104,7 @@
         <div class="pointer-events-none absolute inset-0 z-[1] hidden bg-gradient-to-r from-welcomeCanvas from-[36%] via-welcomeCanvas/92 via-[60%] to-welcomeCanvas/10 sm:block lg:from-[40%] lg:via-[64%] lg:to-transparent" aria-hidden="true"></div>
         <div class="pointer-events-none absolute inset-x-0 bottom-0 z-[1] h-16 bg-gradient-to-t from-welcomeCanvas via-welcomeCanvas/50 to-transparent sm:h-24" aria-hidden="true"></div>
 
-        <div class="relative z-10 mx-auto max-w-7xl px-4 pt-10 sm:px-6 sm:pt-12 lg:px-8 lg:pt-14">
+        <x-page-container class="relative z-10 pt-10 sm:pt-12 lg:pt-14">
             <div class="max-w-2xl">
                 <p class="mb-5 inline-flex items-center gap-2.5 rounded-full border border-emerald-200/60 bg-emerald-50 px-4 py-2 text-[11px] font-bold uppercase tracking-[0.1em] text-emerald-900">
                     <span class="flex h-6 w-6 items-center justify-center rounded-full bg-white text-emerald-600 shadow-sm" aria-hidden="true">
@@ -129,9 +129,9 @@
                     @endforeach
                 </div>
             </div>
-        </div>
+        </x-page-container>
 
-        <div class="relative z-20 mx-auto mt-10 max-w-7xl w-full px-4 sm:mt-11 sm:px-6 lg:mt-12 lg:px-8">
+        <x-page-container class="relative z-20 mt-10 w-full sm:mt-11 lg:mt-12">
             <div class="rounded-3xl border border-gray-100/90 bg-white shadow-[0_24px_64px_-12px_rgba(15,42,37,0.12),0_12px_24px_-14px_rgba(0,0,0,0.06)]">
                 @include('layanan.partials.date-search-form', [
                     'startDate' => '',
@@ -143,7 +143,7 @@
                     'welcomeFlush' => true,
                 ])
             </div>
-        </div>
+        </x-page-container>
     </section>
 
     {{-- Konten utama: kiri direktori + panduan | kanan status & perjalanan --}}

@@ -14,7 +14,7 @@
             <div class="absolute -left-20 top-32 h-80 w-80 rounded-full bg-slate-400/10 blur-3xl"></div>
         </div>
 
-        <div class="relative z-10 mx-auto max-w-2xl px-4 pb-16 pt-8 sm:px-6 lg:px-8">
+        <x-page-container class="relative z-10 pb-16 pt-8">
             <a href="{{ route('bookings.show', $b) }}" class="mb-6 inline-flex items-center gap-2 text-sm font-semibold text-slate-600 transition hover:text-slate-800">
                 <svg class="h-4 w-4" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true">
                     <path fill-rule="evenodd" d="M17 10a.75.75 0 01-.75.75H5.612l4.158 3.96a.75.75 0 11-1.04 1.08l-5.5-5.25a.75.75 0 010-1.08l5.5-5.25a.75.75 0 111.04 1.08L5.612 9.25H16.25A.75.75 0 0117 10z" clip-rule="evenodd" />
@@ -76,7 +76,7 @@
                                     <p class="mb-1.5 block text-sm font-semibold text-slate-700">{{ __('bookings.show.end_auto') }}</p>
                                     <div class="flex min-h-[46px] items-center rounded-xl border border-slate-200 bg-slate-50/80 px-4 text-sm font-medium text-slate-800 shadow-inner" x-text="endLabel"></div>
                                     <p class="mt-1.5 text-[11px] text-slate-500">{{ __('bookings.show.end_follows', ['nights' => $nights]) }}</p>
-                                </div>
+                                </x-page-container>
                             </div>
 
                             <div>

@@ -16,21 +16,21 @@
                 @endif
                 <div class="absolute inset-0 bg-gradient-to-t from-slate-900/80 via-slate-900/20 to-transparent"></div>
                 <div class="absolute bottom-0 w-full p-6 md:p-12 text-white">
-                    <div class="max-w-7xl mx-auto">
+                    <x-page-container>
                         <h1 class="text-3xl md:text-5xl font-bold drop-shadow-md">{{ $campaign->title }}</h1>
-                    </div>
+                    </x-page-container>
                 </div>
             </div>
         @else
             <div class="w-full relative py-20" style="background-color: {{ $themeColor }}">
                 <div class="absolute inset-0 opacity-20 bg-[radial-gradient(circle_at_center,rgba(255,255,255,0.8)_0,transparent_100%)]"></div>
-                <div class="max-w-7xl mx-auto px-6 text-white relative z-10 text-center">
+                <x-page-container class="relative z-10 px-6 text-center text-white">
                     <h1 class="text-3xl md:text-5xl font-bold">{{ $campaign->title }}</h1>
-                </div>
+                </x-page-container>
             </div>
         @endif
 
-        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 -mt-8 relative z-20">
+        <x-page-container class="-mt-8 relative z-20">
             <div class="bg-white rounded-3xl shadow-xl p-6 md:p-10 border border-slate-100 flex flex-col md:flex-row gap-8 items-center justify-between">
                 <div>
                     <h3 class="text-lg font-semibold text-slate-800">Mulai Dalam:</h3>
@@ -68,7 +68,7 @@
                     {!! nl2br(e($campaign->body)) !!}
                 </div>
             @endif
-        </div>
+        </x-page-container>
     </div>
 
     @push('scripts')

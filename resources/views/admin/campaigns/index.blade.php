@@ -1,6 +1,6 @@
 <x-app-layout>
     <div class="relative min-h-[calc(100vh-4rem)] overflow-hidden bg-gradient-to-b from-slate-100 via-slate-50 to-white py-8 sm:py-12">
-        <div class="relative mx-auto max-w-6xl space-y-8 px-4 sm:px-6 lg:px-8">
+        <x-page-container class="relative space-y-8">
             @if (session('status'))
                 <div class="rounded-2xl border border-emerald-200 bg-emerald-50 px-4 py-3 text-sm font-medium text-emerald-900 shadow-sm">
                     {{ session('status') }}
@@ -20,7 +20,7 @@
                     <a href="{{ route('admin.campaign.create') }}" class="inline-flex items-center rounded-xl bg-baytgo px-4 py-2.5 text-sm font-semibold text-white shadow-md shadow-baytgo/20 transition hover:bg-baytgo-800">
                         Campaign Baru
                     </a>
-                </div>
+                </x-page-container>
             </div>
 
             <div class="overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm">

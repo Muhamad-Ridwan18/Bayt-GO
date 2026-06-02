@@ -26,7 +26,7 @@
 <x-app-layout>
 
     <div class="py-8 sm:py-12">
-        <div class="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8">
+        <x-page-container>
             <div x-data="{ activeTab: 'group' }" class="space-y-5">
                 <div class="rounded-2xl border border-slate-200 bg-white p-3 shadow-sm">
                     <div class="grid grid-cols-2 gap-2">
@@ -303,6 +303,6 @@
                     </form>
                 </div>
             </div>
-        </div>
+        </x-page-container>
     </div>
 </x-app-layout>

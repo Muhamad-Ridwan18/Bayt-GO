@@ -30,16 +30,17 @@
 @endphp
 <div class="min-h-screen flex flex-col">
     <header class="sticky top-0 z-20 border-b border-white/10 bg-slate-900/95 backdrop-blur-md text-white">
-        <div class="max-w-4xl mx-auto px-4 sm:px-6 py-3.5 flex items-center justify-between gap-4">
+        <x-page-container class="flex items-center justify-between gap-4 py-3.5">
             <a href="{{ url('/') }}" class="flex items-center gap-2.5 group">
                 <x-site-logo variant="docs" />
                 <span class="text-base font-bold tracking-tight">Bayt<span class="text-brand-300">Go</span></span>
             </a>
             <a href="{{ route('layanan.index') }}" class="text-sm font-medium text-white/90 hover:text-white">{{ __('layanan.find_muthowif') }}</a>
-        </div>
+        </x-page-container>
     </header>
 
-    <main class="flex-1 max-w-4xl mx-auto px-4 sm:px-6 py-10 w-full space-y-10">
+    <main class="flex-1 w-full">
+        <x-page-container class="space-y-10 py-10">
         <div class="space-y-2">
             <p class="text-sm font-semibold text-brand-700">Referensi singkat · internal</p>
             <h1 class="text-3xl font-bold tracking-tight text-slate-900">Dokumentasi webhook Moota</h1>
@@ -98,6 +99,7 @@ if (! hash_equals($expected, $provided)) {
                 Pengujian: gunakan sandbox Moota; pastikan <code class="text-[0.6875rem] bg-slate-100 px-1 rounded">secret</code> dan serialisasi tubuh sama persis pada permintaan uji dengan produksi.
             </p>
         </section>
+        </x-page-container>
     </main>
 
     <footer class="border-t border-slate-200 bg-white mt-auto py-8 text-center text-sm text-slate-500">

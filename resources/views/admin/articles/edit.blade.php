@@ -5,7 +5,7 @@
     >
         {{-- Header Bar --}}
         <div class="sticky top-0 z-20 border-b border-slate-200 bg-white/80 backdrop-blur-xl px-4 py-4 sm:px-6 lg:px-8">
-            <div class="mx-auto flex max-w-[1600px] flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+            <x-page-container class="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
                 <div>
                     <h1 class="text-xl font-bold tracking-tight text-slate-900">{{ __('admin.articles.edit_title') }}</h1>
                     <div class="mt-1 flex items-center gap-2 text-sm text-slate-500">
@@ -16,7 +16,7 @@
                                 {{ __('admin.articles.preview_public') }}
                             </a>
                         @endif
-                    </div>
+                    </x-page-container>
                 </div>
                 <div class="flex items-center gap-3">
                     <span class="text-sm font-medium text-emerald-600 flex items-center gap-1">
@@ -30,11 +30,11 @@
                     <button type="button" class="inline-flex items-center justify-center rounded-lg bg-emerald-600 px-4 py-2 text-sm font-semibold text-white shadow-sm transition hover:bg-emerald-500" @click="setPublished(true)">
                         Terbitkan artikel
                     </button>
-                </div>
+                </x-page-container>
             </div>
         </div>
 
-        <div class="mx-auto max-w-[1600px] px-4 py-8 sm:px-6 lg:px-8">
+        <x-page-container class="py-8">
             <div class="grid gap-8 xl:grid-cols-[minmax(0,1fr)_minmax(300px,400px)] 2xl:grid-cols-[minmax(0,1fr)_440px]">
                 <div class="min-w-0">
                     <form id="article-admin-form" action="{{ route('admin.articles.update', $article) }}" method="post" class="space-y-6" novalidate>

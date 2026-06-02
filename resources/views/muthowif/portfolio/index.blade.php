@@ -2,7 +2,7 @@
 
     <div class="relative min-h-[calc(100vh-4rem)] overflow-hidden bg-gradient-to-b from-slate-100 via-slate-50 to-white py-6 sm:py-8">
         <div class="pointer-events-none absolute inset-0 bg-[radial-gradient(ellipse_80%_40%_at_50%_-10%,rgba(14,165,233,0.06),transparent)]"></div>
-        <div class="relative mx-auto max-w-5xl space-y-6 px-4 sm:px-6 lg:px-8">
+        <x-page-container class="relative space-y-6">
             
             {{-- Hero Section --}}
             <div class="relative overflow-hidden rounded-2xl bg-gradient-to-br from-slate-900 via-sky-950 to-blue-950 p-5 text-white shadow-lg shadow-sky-950/30 ring-1 ring-white/10 sm:rounded-3xl sm:p-6">
@@ -21,7 +21,7 @@
                             <p class="mt-2 max-w-xl text-sm leading-relaxed text-sky-50/90">
                                 Unggah foto-foto terbaik Anda saat membimbing ibadah Umroh atau Haji bersama jamaah. Ini akan ditampilkan secara elegan di halaman profil Anda sebagai bukti pelayanan premium dan tepercaya.
                             </p>
-                        </div>
+                        </x-page-container>
                     </div>
                     <a href="{{ route('dashboard') }}" class="inline-flex shrink-0 items-center gap-2 self-start rounded-xl border border-white/20 bg-white/10 px-4 py-2.5 text-sm font-semibold text-white backdrop-blur-sm transition hover:bg-white/20">
                         <svg class="h-4 w-4" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true"><path fill-rule="evenodd" d="M9.293 2.293a1 1 0 011.414 0l7 7A1 1 0 0117 11h-1v6a1 1 0 01-1 1h-2a1 1 0 01-1-1v-3a1 1 0 00-1-1H9a1 1 0 00-1 1v3a1 1 0 01-1 1H5a1 1 0 01-1-1v-6H3a1 1 0 01-.707-1.707l7-7z" clip-rule="evenodd" /></svg>

@@ -12,8 +12,8 @@
 
 <x-layouts.marketing-public :title="$title" :meta-description="$description" :schema="$schema" active-nav="layanan">
     <section class="bg-gradient-to-b from-welcomeCanvas to-white pb-16 pt-10">
-        <div class="mx-auto max-w-6xl px-4 sm:px-6 lg:px-8">
-            <div class="mx-auto max-w-4xl text-center">
+        <x-page-container>
+            <div class="text-center">
                 <p class="text-sm font-semibold uppercase tracking-[0.3em] text-baytgo/90">Muthowif</p>
                 <h1 class="mt-4 text-4xl font-bold tracking-tight text-slate-900 sm:text-5xl">{{ $landing['title'] }}</h1>
                 <p class="mx-auto mt-5 max-w-2xl text-lg leading-8 text-slate-600">{{ $landing['subtitle'] }}</p>
@@ -38,7 +38,7 @@
                     <li class="rounded-3xl bg-slate-50 p-5 text-sm text-slate-700">Komunikasi langsung dengan muthowif sebelum memesan.</li>
                     <li class="rounded-3xl bg-slate-50 p-5 text-sm text-slate-700">Pencarian cepat berdasarkan kota dan bahasa.</li>
                 </ul>
-            </div>
+            </x-page-container>
         </div>
     </section>
 </x-layouts.marketing-public>

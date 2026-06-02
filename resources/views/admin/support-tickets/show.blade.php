@@ -3,7 +3,7 @@
         $openAssignable = $ticket->assigned_admin_id === null || $ticket->assigned_admin_id !== auth()->id();
     @endphp
     <div class="py-8 sm:py-12">
-        <div class="mx-auto max-w-4xl space-y-6 px-4 sm:px-6 lg:px-8">
+        <x-page-container class="space-y-6">
             <div class="flex flex-col gap-2 sm:flex-row sm:items-start sm:justify-between">
                 <div>
                     <div class="flex flex-wrap items-center gap-2">
@@ -34,7 +34,7 @@
                         </form>
                     @endif
                     <a href="{{ route('admin.support-tickets.index') }}" class="text-sm font-semibold text-brand-700 hover:text-brand-800">{{ __('support.back_admin') }}</a>
-                </div>
+                </x-page-container>
             </div>
 
             @if (session('status'))

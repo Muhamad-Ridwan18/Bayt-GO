@@ -26,7 +26,7 @@
     <body class="font-sans antialiased text-slate-800 bg-slate-50 min-h-screen terms-content">
         <div class="min-h-screen flex flex-col">
             <header class="sticky top-0 z-20 border-b border-white/10 bg-slate-900/95 backdrop-blur-md text-white">
-                <div class="max-w-4xl mx-auto px-4 sm:px-6 py-3.5 flex items-center justify-between gap-4">
+                <x-page-container class="flex items-center justify-between gap-4 py-3.5">
                     <a href="{{ url('/') }}" class="flex items-center gap-2.5 group shrink-0">
                         <x-site-logo variant="welcome" />
                         <span class="text-lg font-bold tracking-tight">Bayt<span class="text-brand-300">Go</span></span>
@@ -37,10 +37,11 @@
                             <a href="{{ url('/') }}" class="px-3 py-2 rounded-xl font-medium text-white/90 hover:bg-white/10 transition">{{ __('nav.home') }}</a>
                         </nav>
                     </div>
-                </div>
+                </x-page-container>
             </header>
 
-            <main class="flex-1 max-w-4xl mx-auto w-full px-4 sm:px-6 py-10 sm:py-14">
+            <main class="flex-1 w-full">
+                <x-page-container class="py-10 sm:py-14">
                 <p class="text-sm font-semibold uppercase tracking-wide text-brand-700 mb-2">{{ config('app.name') }}</p>
                 <h1 class="text-3xl sm:text-4xl font-bold text-slate-900 mb-6">{{ __('terms.page_title') }}</h1>
                 <p class="text-slate-600 leading-relaxed mb-10">{{ __('terms.intro') }}</p>
@@ -67,10 +68,11 @@
                         @endif
                     @endforeach
                 </div>
+                </x-page-container>
             </main>
 
             <footer class="border-t border-slate-200 bg-white mt-auto">
-                <div class="max-w-4xl mx-auto px-4 sm:px-6 py-8 flex flex-col sm:flex-row items-center justify-between gap-4 text-sm text-slate-500">
+                <x-page-container class="flex flex-col gap-4 py-8 text-sm text-slate-500 sm:flex-row sm:items-center sm:justify-between">
                     <span>&copy; {{ date('Y') }} {{ config('app.name') }}</span>
                     <div class="flex flex-col items-center gap-2 sm:items-end">
                         <x-language-switcher variant="compact" />
@@ -80,7 +82,7 @@
                             </a>
                         @endif
                     </div>
-                </div>
+                </x-page-container>
             </footer>
         </div>
     </body>

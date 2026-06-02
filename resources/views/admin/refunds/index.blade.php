@@ -5,7 +5,7 @@
 
 <x-app-layout>
     <div class="py-8 sm:py-12">
-        <div class="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 space-y-6">
+        <x-page-container class="space-y-6">
             <div class="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
                 <div>
                     <h2 class="text-lg font-semibold text-slate-900">{{ __('admin.refunds.title') }}</h2>
@@ -88,7 +88,7 @@
                                 @endforeach
                             </tbody>
                         </table>
-                    </div>
+                    </x-page-container>
                 </div>
                 <div class="mt-4">
                     {{ $pendingRefunds->links() }}

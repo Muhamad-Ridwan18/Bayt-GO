@@ -7,7 +7,7 @@
     use Carbon\Carbon;
     $peerRecommendByBooking = $peerRecommendByBooking ?? [];
 @endphp
-        <div class="relative mx-auto max-w-5xl space-y-6 px-4 sm:px-6 lg:px-8">
+        <x-page-container class="relative space-y-6">
             {{-- Header --}}
             <div class="relative overflow-hidden rounded-2xl bg-gradient-to-br from-slate-900 via-violet-950 to-brand-900 p-5 text-white shadow-lg shadow-violet-900/25 ring-1 ring-white/10 sm:rounded-3xl sm:p-6">
                 <div class="pointer-events-none absolute inset-0 bg-[url('data:image/svg+xml,%3Csvg width=\'60\' height=\'60\' viewBox=\'0 0 60 60\' xmlns=\'http://www.w3.org/2000/svg\'%3E%3Cg fill=\'none\' fill-rule=\'evenodd\'%3E%3Cg fill=\'%23ffffff\' fill-opacity=\'0.05\'%3E%3Cpath d=\'M36 34v-4h-2v4h-4v2h4v4h2v-4h4v-2h-4zm0-30V0h-2v4h-4v2h4v4h2V6h4V4h-4zM6 34v-4H4v4H0v2h4v4h2v-4h4v-2H6zM6 4V0H4v4H0v2h4v4h2V6h4V4H6z\'/%3E%3C/g%3E%3C/g%3E%3C/svg%3E')] opacity-40"></div>
@@ -21,7 +21,7 @@
                             <p class="text-[11px] font-semibold uppercase tracking-wider text-violet-200/90">{{ __('dashboard_muthowif.nav_bookings') }}</p>
                             <h1 class="mt-1 text-xl font-bold tracking-tight text-white sm:text-2xl">{{ __('muthowif.bookings.page_title') }}</h1>
                             <p class="mt-2 max-w-xl text-sm leading-relaxed text-violet-100/85">{{ __('muthowif.bookings.page_subtitle') }}</p>
-                        </div>
+                        </x-page-container>
                     </div>
                     <a href="{{ route('dashboard') }}" class="inline-flex shrink-0 items-center gap-2 self-start rounded-xl border border-white/20 bg-white/10 px-4 py-2.5 text-sm font-semibold text-white backdrop-blur-sm transition hover:bg-white/20">
                         <svg class="h-4 w-4" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true"><path fill-rule="evenodd" d="M9.293 2.293a1 1 0 011.414 0l7 7A1 1 0 0117 11h-1v6a1 1 0 01-1 1h-2a1 1 0 01-1-1v-3a1 1 0 00-1-1H9a1 1 0 00-1 1v3a1 1 0 01-1 1H5a1 1 0 01-1-1v-6H3a1 1 0 01-.707-1.707l7-7z" clip-rule="evenodd" /></svg>

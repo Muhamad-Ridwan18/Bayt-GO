@@ -1,6 +1,6 @@
 <x-app-layout>
     <div class="relative min-h-[calc(100vh-4rem)] overflow-hidden bg-gradient-to-b from-slate-100 via-slate-50 to-white py-8 sm:py-12">
-        <div class="relative mx-auto max-w-4xl space-y-8 px-4 sm:px-6 lg:px-8">
+        <x-page-container class="relative space-y-8">
             
             <div class="flex items-center gap-4">
                 <a href="{{ route('admin.campaign.index') }}" class="rounded-full bg-white p-2 text-slate-400 shadow-sm transition hover:bg-slate-50 hover:text-slate-600">
@@ -11,7 +11,7 @@
                 <div>
                     <h1 class="text-2xl font-bold text-slate-900">Buat Campaign Baru</h1>
                     <p class="mt-1 text-sm text-slate-600">Tambahkan promosi atau event baru.</p>
-                </div>
+                </x-page-container>
             </div>
 
             <form action="{{ route('admin.campaign.store') }}" method="POST" enctype="multipart/form-data" class="space-y-6">

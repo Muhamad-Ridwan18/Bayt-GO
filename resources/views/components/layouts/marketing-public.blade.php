@@ -31,7 +31,7 @@
     </main>
 
     <footer class="border-t border-slate-200 bg-welcomeCanvas.soft mt-auto">
-        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-10 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-6">
+        <x-page-container py-10 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-6">
             <div>
                 <p class="text-sm font-semibold text-baytgo">{{ config('app.name') }}</p>
                 <p class="mt-1 text-sm text-slate-600 max-w-md">{{ __('articles.footer_tagline') }}</p>
@@ -44,7 +44,7 @@
                 </div>
                 <x-language-switcher variant="segment" />
                 <p class="text-xs text-slate-500">&copy; {{ date('Y') }} {{ config('app.name') }}</p>
-            </div>
+            </x-page-container>
         </div>
     </footer>
 </div>

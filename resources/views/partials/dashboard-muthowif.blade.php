@@ -124,7 +124,7 @@
         <div class="pointer-events-none absolute inset-x-0 bottom-0 z-[1] h-32 bg-gradient-to-t from-welcomeCanvas via-welcomeCanvas/80 to-transparent sm:h-40" aria-hidden="true"></div>
 
         {{-- Content Container --}}
-        <div class="relative z-10 mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
+        <x-page-container class="relative z-10">
             
             {{-- 1. Hero Content --}}
             <div class="flex flex-col gap-5 sm:max-w-xl sm:flex-row sm:items-start sm:gap-6 lg:max-w-2xl">
@@ -276,7 +276,7 @@
                 </div>
             </div>
             
-        </div>
+        </x-page-container>
     </section>
 
     <div class="grid grid-cols-1 gap-8 lg:grid-cols-12 lg:items-start">

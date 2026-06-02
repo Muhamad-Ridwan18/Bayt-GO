@@ -42,7 +42,7 @@
 
 <nav x-data="{ open: false }" class="relative z-[90] bg-white/90 backdrop-blur border-b border-slate-200/80 shadow-sm" @resize.window="if (window.innerWidth >= 1024) open = false">
     <!-- Primary Navigation Menu -->
-    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+    <x-page-container>
         <div class="flex min-h-16 min-w-0 items-center justify-between gap-2">
             <div class="flex min-w-0 flex-1 items-center lg:flex-initial lg:gap-0">
                 <!-- Logo -->
@@ -138,7 +138,7 @@
                             </span>
                         </x-nav-link>
                     @endif
-                </div>
+                </x-page-container>
             </div>
 
             <div class="flex shrink-0 items-center gap-1.5 sm:gap-2 sm:ms-4 lg:ms-6">

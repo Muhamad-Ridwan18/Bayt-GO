@@ -21,7 +21,7 @@
     @php($webhookUrl = route('webhooks.moota', absolute: true))
 
     <div class="py-8 sm:py-10 space-y-6">
-        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 space-y-6">
+        <x-page-container class="space-y-6">
             @if (! $realtimeEnabled)
                 <div class="rounded-xl border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-950">
                     {{ __('admin.moota_webhooks.realtime_off') }}
@@ -65,7 +65,7 @@
                         <span x-show="!copied">{{ __('admin.moota_webhooks_testing.copy') }}</span>
                         <span x-show="copied" x-cloak class="text-white">{{ __('admin.moota_webhooks_testing.copied') }}</span>
                     </button>
-                </div>
+                </x-page-container>
             </section>
 
             <section aria-labelledby="live-feed-heading">

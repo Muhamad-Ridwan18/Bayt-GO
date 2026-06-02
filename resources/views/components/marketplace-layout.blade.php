@@ -1,4 +1,4 @@
-@props(['title' => null, 'metaDescription' => null, 'schema' => null, 'wide' => false])
+@props(['title' => null, 'metaDescription' => null, 'schema' => null, 'wide' => true])
 @php
     $contactRaw = (string) (config('app.contact_whatsapp') ?: config('app.contact_phone'));
     $contactDigits = preg_replace('/\D+/', '', $contactRaw ?? '') ?? '';
@@ -26,21 +26,21 @@
                 <x-marketing-public-header active="layanan" />
             @endauth
 
-            <main class="w-full min-w-0 flex-1 px-4 py-8 sm:px-6 sm:py-12">
-                <div class="mx-auto w-full min-w-0 {{ $wide ? 'max-w-7xl' : 'max-w-6xl' }}">
+            <main class="w-full min-w-0 flex-1 py-8 sm:py-12">
+                <x-page-container class="min-w-0">
                     {{ $slot }}
-                </div>
+                </x-page-container>
             </main>
 
             <footer class="mt-auto w-full border-t border-slate-200/80 bg-gradient-to-b from-white to-slate-50/90">
-                <div class="mx-auto flex w-full min-w-0 {{ $wide ? 'max-w-7xl' : 'max-w-6xl' }} flex-col gap-3 px-4 py-8 text-xs text-slate-500 sm:flex-row sm:items-center sm:justify-between sm:px-6">
+                <x-page-container class="flex min-w-0 flex-col gap-3 py-8 text-xs text-slate-500 sm:flex-row sm:items-center sm:justify-between">
                     <span class="font-medium">&copy; {{ date('Y') }} {{ config('app.name') }}</span>
                     @if ($contactLink)
                         <a href="{{ $contactLink }}" target="_blank" rel="noopener noreferrer" class="font-semibold text-brand-700 transition hover:text-brand-800">
                             {{ __('marketplace.footer_contact', ['contact' => $contactRaw]) }}
                         </a>
                     @endif
-                </div>
+                </x-page-container>
             </footer>
         </div>
     </body>

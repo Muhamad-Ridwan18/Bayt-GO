@@ -6,14 +6,14 @@
     <section class="relative overflow-hidden border-b border-slate-100 bg-gradient-to-br from-welcomeCanvas via-white to-brand-50/30">
         <div class="pointer-events-none absolute -right-24 top-0 h-72 w-72 rounded-full bg-gold/15 blur-3xl" aria-hidden="true"></div>
         <div class="pointer-events-none absolute -left-20 bottom-0 h-56 w-56 rounded-full bg-baytgo/5 blur-3xl" aria-hidden="true"></div>
-        <div class="relative mx-auto max-w-7xl px-4 py-16 sm:px-6 sm:py-20 lg:px-8">
+        <x-page-container class="relative py-16 sm:py-20">
             <p class="text-sm font-semibold uppercase tracking-wider text-baytgo/90">{{ __('articles.index_kicker') }}</p>
             <h1 class="mt-3 max-w-3xl text-4xl font-bold tracking-tight text-slate-900 sm:text-5xl">{{ __('articles.index_headline') }}</h1>
             <p class="mt-5 max-w-2xl text-lg leading-relaxed text-slate-600">{{ __('articles.index_sub') }}</p>
-        </div>
+        </x-page-container>
     </section>
 
-    <div class="mx-auto max-w-7xl px-4 py-14 sm:px-6 lg:px-8">
+    <x-page-container class="py-14">
         @if ($articles->isEmpty())
             <p class="rounded-2xl border border-slate-200 bg-slate-50 px-6 py-12 text-center text-slate-600">{{ __('articles.empty') }}</p>
         @else
@@ -35,7 +35,7 @@
                                     <span>{{ $featured->published_at?->translatedFormat('d M Y') }}</span>
                                     <span class="h-1 w-1 rounded-full bg-white/40" aria-hidden="true"></span>
                                     <span>{{ __('articles.reading_minutes', ['count' => $featured->readingMinutes()]) }}</span>
-                                </div>
+                                </x-page-container>
                             </div>
                         </div>
                         <div class="flex flex-col justify-center p-8 lg:col-span-7 lg:p-12">

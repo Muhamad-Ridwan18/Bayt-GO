@@ -1,5 +1,5 @@
 <x-app-layout>
-    <div class="mx-auto max-w-3xl px-4 py-8 sm:px-6" x-data="muthowifRecruitmentLive()">
+    <x-page-container class="py-8" x-data="muthowifRecruitmentLive()">
         <div class="flex flex-wrap items-center justify-between gap-3">
             <div>
                 <h1 class="text-lg font-bold text-slate-900">{{ __('incidents.muthowif.opportunities_title') }}</h1>
@@ -44,6 +44,6 @@
             @empty
                 <p class="text-sm text-slate-500">{{ __('incidents.muthowif.opportunities_empty') }}</p>
             @endforelse
-        </div>
+        </x-page-container>
     </div>
 </x-app-layout>

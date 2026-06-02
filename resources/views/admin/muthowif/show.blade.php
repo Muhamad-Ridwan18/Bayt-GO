@@ -1,6 +1,6 @@
 <x-app-layout>
     <div class="min-h-screen bg-slate-50 py-8">
-        <div class="mx-auto max-w-[1400px] px-4 sm:px-6 lg:px-8 space-y-5">
+        <x-page-container class="space-y-5">
 
             {{-- ALERT --}}
             @if (session('status'))
@@ -71,7 +71,7 @@
                                         {{ $profile->phone }}
                                     </span>
                                 @endif
-                            </div>
+                            </x-page-container>
                         </div>
                     </div>
 

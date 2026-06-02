@@ -29,9 +29,9 @@
             <!-- Page Heading -->
             @if(!blank($header ?? null))
                 <header class="bg-white shadow">
-                    <div class="max-w-7xl mx-auto py-6 px-4 sm:px-6 lg:px-8">
+                    <x-page-container class="py-6">
                         {{ $header }}
-                    </div>
+                    </x-page-container>
                 </header>
             @endif
 
@@ -47,18 +47,18 @@
                             default => $statusKey,
                         };
                     @endphp
-                    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-4">
+                    <x-page-container class="pt-4">
                         <div class="rounded-xl border border-emerald-200 bg-emerald-50 px-4 py-3 text-sm text-emerald-900">
                             {{ $statusMessage }}
                         </div>
-                    </div>
+                    </x-page-container>
                 @endif
                 @if (session('error'))
-                    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-4">
+                    <x-page-container class="pt-4">
                         <div class="rounded-xl border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-900">
                             {{ session('error') }}
                         </div>
-                    </div>
+                    </x-page-container>
                 @endif
                 {{ $slot }}
             </main>

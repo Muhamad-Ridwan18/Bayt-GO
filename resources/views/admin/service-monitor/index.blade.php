@@ -30,14 +30,14 @@
             realtimeEnabled: @js($realtimeEnabled),
         })"
     >
-        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 space-y-5">
+        <x-page-container class="space-y-5">
             <div x-ref="liveRoot">
                 @include('admin.service-monitor.partials.feed', [
                     'counts' => $counts,
                     'bookings' => $bookings,
                     'filter' => $filter,
                 ])
-            </div>
+            </x-page-container>
         </div>
     </div>
 </x-app-layout>

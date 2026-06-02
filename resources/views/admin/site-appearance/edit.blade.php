@@ -1,6 +1,6 @@
 <x-app-layout>
     <div class="py-8 sm:py-12">
-        <div class="mx-auto max-w-2xl space-y-6 px-4 sm:px-6 lg:px-8">
+        <x-page-container class="space-y-6">
             <div class="relative overflow-hidden rounded-3xl border border-slate-200 bg-gradient-to-br from-slate-900 via-brand-900 to-amber-950 p-8 text-white shadow-xl ring-1 ring-white/10">
                 <div class="relative">
                     <p class="text-[11px] font-semibold uppercase tracking-wider text-brand-200/90">{{ __('admin.appearance.badge') }}</p>
@@ -10,7 +10,7 @@
                         <a href="{{ route('dashboard') }}" class="inline-flex items-center rounded-xl bg-white px-5 py-2.5 text-sm font-semibold text-slate-900 shadow-sm hover:bg-brand-50">
                             {{ __('admin.appearance.back_dashboard') }}
                         </a>
-                    </div>
+                    </x-page-container>
                 </div>
             </div>
 

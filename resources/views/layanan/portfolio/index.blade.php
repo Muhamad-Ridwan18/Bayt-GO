@@ -13,7 +13,7 @@
         <div class="pointer-events-none absolute -left-20 top-40 h-72 w-72 rounded-full bg-brand-400/5 blur-3xl"></div>
         <div class="pointer-events-none absolute -right-20 bottom-20 h-80 w-80 rounded-full bg-violet-400/5 blur-3xl"></div>
 
-        <div class="relative mx-auto max-w-5xl px-4 sm:px-6 lg:px-8 space-y-8">
+        <x-page-container class="relative space-y-8">
             {{-- Navigation back & breadcrumb --}}
             <div class="flex items-center justify-between">
                 <a href="{{ route('layanan.show', $profile) }}" class="inline-flex items-center gap-2 rounded-xl border border-slate-200/90 bg-white px-4 py-2.5 text-xs font-bold text-slate-700 shadow-sm transition hover:border-brand-300 hover:text-brand-700 hover:shadow">
@@ -37,7 +37,7 @@
                         <p class="text-[11px] font-bold uppercase tracking-wider text-brand-700">Portofolio & Dokumentasi Kegiatan</p>
                         <h1 class="mt-1 text-2xl font-extrabold tracking-tight text-slate-900">{{ $profile->user->name }}</h1>
                         <p class="mt-1 text-sm text-slate-600">Dokumentasi momen berharga bersama jamaah saat mendampingi ibadah di Tanah Suci.</p>
-                    </div>
+                    </x-page-container>
                 </div>
             </div>
 

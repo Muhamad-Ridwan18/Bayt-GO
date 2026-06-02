@@ -1,5 +1,5 @@
 <x-app-layout>
-    <div class="mx-auto max-w-3xl px-4 py-8 sm:px-6">
+    <x-page-container class="py-8">
         <h1 class="text-lg font-bold text-slate-900">Penugasan pengganti</h1>
         <p class="mt-1 text-sm text-slate-600">Konfirmasi ketersediaan sebelum penawaran ke jamaah (sesuai SOP BaytGo).</p>
 
@@ -24,5 +24,5 @@
         </div>
 
         {{ $replacements->links() }}
-    </div>
+    </x-page-container>
 </x-app-layout>

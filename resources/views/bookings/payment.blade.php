@@ -184,7 +184,7 @@
             <div class="absolute bottom-0 left-1/2 h-48 w-[120%] -translate-x-1/2 bg-gradient-to-t from-white to-transparent"></div>
         </div>
 
-        <div class="relative z-10 mx-auto max-w-6xl px-4 pb-16 pt-8 sm:px-6 lg:px-8">
+        <x-page-container class="relative z-10 pb-16 pt-8">
             <a href="{{ route('bookings.show', $booking) }}" class="mb-6 inline-flex items-center gap-2 rounded-xl px-3 py-2 text-sm font-semibold text-brand-800 ring-1 ring-brand-200/50 transition hover:bg-white/80 hover:ring-brand-300/80">
                 <svg class="h-4 w-4 shrink-0" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true">
                     <path fill-rule="evenodd" d="M17 10a.75.75 0 01-.75.75H5.612l4.158 3.96a.75.75 0 11-1.04 1.08l-5.5-5.25a.75.75 0 010-1.08l5.5-5.25a.75.75 0 111.04 1.08L5.612 9.25H16.25A.75.75 0 0117 10z" clip-rule="evenodd" />
@@ -208,7 +208,7 @@
                         <div class="shrink-0 rounded-2xl border border-brand-200/80 bg-gradient-to-br from-brand-50 to-emerald-50/50 px-5 py-4 text-right shadow-inner ring-1 ring-brand-100/60">
                             <p class="text-[11px] font-semibold uppercase tracking-wide text-brand-800">{{ __('bookings.invoice.total') }}</p>
                             <p class="mt-1 text-2xl font-bold tabular-nums tracking-tight text-brand-700 sm:text-3xl">Rp {{ $fmt($customerTotal) }}</p>
-                        </div>
+                        </x-page-container>
                     </div>
                 </div>
             </header>

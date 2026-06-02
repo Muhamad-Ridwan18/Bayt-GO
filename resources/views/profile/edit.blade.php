@@ -10,17 +10,17 @@
                     default => $statusKey,
                 };
             @endphp
-            <div class="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 mb-6">
+            <x-page-container class="mb-6">
                 <div class="rounded-xl border border-emerald-200 bg-emerald-50 px-4 py-3 text-sm text-emerald-900 shadow-sm">
                     {{ $statusMessage }}
-                </div>
+                </x-page-container>
             </div>
         @endif
         @if (session('error'))
-            <div class="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 mb-6">
+            <x-page-container class="mb-6">
                 <div class="rounded-xl border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-900 shadow-sm">
                     {{ session('error') }}
-                </div>
+                </x-page-container>
             </div>
         @endif
 
@@ -39,7 +39,7 @@
                 $publicPreviewUrl = $muthowifProfile->isApproved() ? route('layanan.show', $muthowifProfile) : null;
             @endphp
 
-            <div class="mx-auto grid max-w-7xl grid-cols-1 gap-6 px-4 sm:px-6 lg:grid-cols-[17rem_minmax(0,1fr)] lg:px-8">
+            <x-page-container class="grid grid-cols-1 gap-6 lg:grid-cols-[17rem_minmax(0,1fr)]">
                 <aside class="space-y-4 lg:sticky lg:top-6 lg:self-start">
                     <div class="overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm">
                         <div class="h-20 bg-gradient-to-br from-brand-500 to-emerald-500"></div>
@@ -64,7 +64,7 @@
                                 </div>
                                 <div class="mt-2 h-2 overflow-hidden rounded-full bg-slate-100">
                                     <div class="h-full rounded-full bg-brand-600" style="width: {{ $profilePercent }}%"></div>
-                                </div>
+                                </x-page-container>
                             </div>
 
                             <div class="mt-5 space-y-2 text-left text-xs">
@@ -83,7 +83,7 @@
                                 <div class="flex items-center gap-2 text-slate-700">
                                     <span class="flex h-5 w-5 items-center justify-center rounded-full {{ filled($muthowifProfile->referral_code) || filled($muthowifProfile->referred_by_muthowif_profile_id) ? 'bg-emerald-50 text-emerald-700' : 'bg-slate-100 text-slate-400' }}">✓</span>
                                     Referensi
-                                </div>
+                                </x-page-container>
                             </div>
 
                             @if ($publicPreviewUrl)
@@ -135,7 +135,7 @@
                 </main>
             </div>
         @else
-            <div class="relative mx-auto max-w-4xl space-y-6 px-4 sm:px-6 lg:px-8">
+            <x-page-container class="relative space-y-6">
                 <div class="overflow-hidden rounded-2xl border border-slate-200/90 bg-gradient-to-b from-white to-slate-50/80 shadow-sm ring-1 ring-slate-100/80">
                     <div class="flex min-w-0">
                         <div class="w-1 shrink-0 bg-brand-500" aria-hidden="true"></div>

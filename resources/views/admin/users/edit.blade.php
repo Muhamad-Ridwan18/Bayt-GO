@@ -6,7 +6,7 @@
 <x-app-layout>
     <div class="relative min-h-[calc(100vh-4rem)] overflow-hidden bg-gradient-to-b from-slate-100 via-slate-50 to-white py-8 sm:py-12" x-data="{ role: '{{ old('role', $editUser->role->value) }}' }">
         <div class="pointer-events-none absolute inset-0 bg-[radial-gradient(ellipse_80%_40%_at_50%_-10%,rgba(120,53,15,0.06),transparent)]"></div>
-        <div class="relative mx-auto max-w-3xl space-y-6 px-4 sm:px-6 lg:px-8">
+        <x-page-container class="relative space-y-6">
             <div class="relative overflow-hidden rounded-2xl bg-gradient-to-br from-slate-900 via-violet-950 to-brand-900 p-6 text-white shadow-lg shadow-violet-900/25 ring-1 ring-white/10 sm:rounded-3xl">
                 <div class="pointer-events-none absolute -right-10 top-0 h-40 w-40 rounded-full bg-violet-500/25 blur-3xl"></div>
                 <div class="relative flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
@@ -18,7 +18,7 @@
                             <p class="text-[11px] font-semibold uppercase tracking-wider text-violet-200/90">{{ __('admin.users.edit_badge') }}</p>
                             <h1 class="mt-1 text-xl font-bold tracking-tight sm:text-2xl">{{ $editUser->name }}</h1>
                             <p class="mt-1 text-sm text-violet-100/80">{{ __('admin.users.edit_subtitle') }}</p>
-                        </div>
+                        </x-page-container>
                     </div>
                     <a href="{{ route('admin.users.index') }}" class="inline-flex shrink-0 items-center gap-2 self-start rounded-xl border border-white/20 bg-white/10 px-4 py-2.5 text-sm font-semibold text-white backdrop-blur-sm transition hover:bg-white/20">
                         {{ __('admin.users.back_list') }}

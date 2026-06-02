@@ -182,8 +182,8 @@
 
                 {{-- Value Proposition --}}
                 <section class="bg-white pt-12 pb-16 sm:pt-16 sm:pb-20">
-                    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-                        <div class="text-center max-w-3xl mx-auto mb-10 sm:mb-12">
+                    <x-page-container>
+                        <div class="mb-10 text-center sm:mb-12">
                             <p class="text-xs font-bold uppercase tracking-widest text-gold mb-3">{{ __('welcome.value_kicker') }}</p>
                             <h2 class="text-xl font-bold text-slate-900 sm:text-2xl">{{ __('welcome.value_title') }}</h2>
                             <span class="mx-auto mt-5 block h-1 w-12 rounded-full bg-gold" aria-hidden="true"></span>
@@ -573,17 +573,17 @@
 
                 {{-- Pricing / Directory --}}
                 <section id="harga" class="py-16 sm:py-20 bg-white border-t border-slate-100">
-                    <div class="max-w-3xl mx-auto px-4 text-center">
+                    <x-page-container class="text-center">
                         <h2 class="text-2xl sm:text-3xl font-bold text-baytgo">{{ __('welcome.pricing_title') }}</h2>
                         <p class="mt-3 text-slate-600">{{ __('welcome.pricing_sub') }}</p>
                         <a href="{{ route('layanan.index') }}" class="mt-8 inline-flex items-center rounded-xl bg-baytgo px-6 py-3 text-sm font-semibold text-white shadow-lg shadow-baytgo/20 hover:bg-baytgo-800 transition">{{ __('welcome.pricing_cta') }}</a>
-                    </div>
+                    </x-page-container>
                 </section>
 
                 {{-- How it works --}}
                 <section id="cara-kerja" class="py-16 sm:py-20 bg-slate-50 border-t border-slate-100">
-                    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-                        <div class="max-w-2xl mx-auto text-center mb-12">
+                    <x-page-container>
+                        <div class="mx-auto mb-12 max-w-2xl text-center">
                             <h2 class="text-2xl sm:text-3xl font-bold text-baytgo">{{ __('welcome.how_title') }}</h2>
                             <p class="mt-2 text-slate-600">{{ __('welcome.how_sub') }}</p>
                         </div>
@@ -597,20 +597,20 @@
                                 </article>
                             @endforeach
                         </div>
-                    </div>
+                    </x-page-container>
                 </section>
 
                 {{-- About --}}
                 <section id="tentang" class="py-16 bg-white border-t border-slate-100">
-                    <div class="max-w-3xl mx-auto px-4 text-center">
+                    <x-page-container class="text-center">
                         <h2 class="text-2xl font-bold text-baytgo">{{ __('welcome.about_title') }}</h2>
                         <p class="mt-4 text-slate-600 leading-relaxed">{{ __('welcome.about_sub') }}</p>
-                    </div>
+                    </x-page-container>
                 </section>
 
                 {{-- FAQ --}}
                 <section id="faq" class="py-16 bg-slate-50 border-t border-slate-100">
-                    <div class="max-w-3xl mx-auto px-4">
+                    <x-page-container>
                         <h2 class="text-2xl font-bold text-baytgo text-center mb-10">{{ __('welcome.faq_title') }}</h2>
                         <dl class="space-y-4">
                             @foreach (__('welcome.faq_items') as $item)
@@ -620,12 +620,12 @@
                                 </div>
                             @endforeach
                         </dl>
-                    </div>
+                    </x-page-container>
                 </section>
             </main>
 
             <footer class="border-t border-slate-200 bg-white mt-auto">
-                <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 flex flex-col sm:flex-row items-center justify-between gap-4 text-sm text-slate-500">
+                <x-page-container class="flex flex-col gap-4 py-8 text-sm text-slate-500 sm:flex-row sm:items-center sm:justify-between">
                     <div class="flex flex-col items-center gap-2 sm:items-start sm:flex-row sm:gap-4">
                         <span>&copy; {{ date('Y') }} {{ config('app.name') }}</span>
                         <a href="{{ route('terms') }}" class="text-xs font-semibold text-baytgo hover:text-baytgo-800">{{ __('terms.footer_link') }}</a>
@@ -638,7 +638,7 @@
                             </a>
                         @endif
                     </div>
-                </div>
+                </x-page-container>
             </footer>
         </div>
     </body>

@@ -140,7 +140,7 @@
         <div class="pointer-events-none absolute inset-0 z-[1] hidden bg-gradient-to-r from-welcomeCanvas from-[40%] via-welcomeCanvas/90 via-[62%] to-welcomeCanvas/20 sm:block lg:from-[44%] lg:via-[64%]" aria-hidden="true"></div>
         <div class="pointer-events-none absolute inset-x-0 bottom-0 z-[1] h-16 bg-gradient-to-t from-welcomeCanvas via-welcomeCanvas/50 to-transparent sm:h-20" aria-hidden="true"></div>
 
-        <div class="relative z-10 mx-auto max-w-7xl px-4 pb-8 pt-10 sm:px-6 sm:pb-10 sm:pt-12 lg:px-8 lg:pb-11 lg:pt-14">
+        <x-page-container class="relative z-10 pb-8 pt-10 sm:pb-10 sm:pt-12 lg:pb-11 lg:pt-14">
             <p class="text-xs font-semibold uppercase tracking-wider text-slate-800/90">{{ __('dashboard.admin_label') }}</p>
             <h1 class="mt-2 max-w-2xl text-2xl font-bold leading-tight tracking-tight text-slate-900 sm:text-3xl lg:text-4xl">
                 {!! __('dashboard.admin_hero_welcome', ['name' => e(Auth::user()->name)]) !!}
@@ -148,11 +148,11 @@
             <p class="mt-3 max-w-xl text-sm leading-relaxed text-slate-800 sm:text-base">
                 {{ __('dashboard.admin_hero_lead') }}
             </p>
-        </div>
+        </x-page-container>
     </section>
 
     @if ($pendingMuthowifCount > 0 || $pendingWithdrawCount > 0 || $pendingRefundCount > 0)
-        <div class="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
+        <x-page-container>
             <div class="overflow-hidden rounded-3xl border border-slate-200/90 bg-white p-4 shadow-sm sm:p-5">
                 <div class="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
                     <div class="flex min-w-0 items-start gap-4">
@@ -198,10 +198,10 @@
                     </div>
                 </div>
             </div>
-        </div>
+        </x-page-container>
     @endif
 
-    <div class="mx-auto max-w-7xl space-y-8 px-4 sm:px-6 lg:px-8">
+    <x-page-container class="space-y-8">
         <div class="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-5">
             @foreach ([
                 [
@@ -438,5 +438,5 @@
         <div class="mt-10 border-t border-slate-200/70 pt-8">
             @include('partials.dashboard-next-profile-row')
         </div>
-    </div>
+    </x-page-container>
 </div>

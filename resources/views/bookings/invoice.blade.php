@@ -31,7 +31,7 @@
 <body class="min-h-screen bg-slate-100 font-sans antialiased text-slate-800">
     <div class="pointer-events-none fixed inset-0 bg-gradient-to-br from-brand-100/30 via-slate-50 to-slate-200/80 print:hidden" aria-hidden="true"></div>
 
-    <div class="relative mx-auto max-w-3xl px-4 py-8 print:max-w-none print:px-0 print:py-0">
+    <x-page-container class="relative py-8 print:max-w-none print:px-0 print:py-0">
         <div class="no-print mb-6 flex flex-wrap items-center justify-between gap-3">
             <a
                 href="{{ route('bookings.show', $booking) }}"
@@ -68,7 +68,7 @@
                         <p class="mt-1 text-xl font-bold tabular-nums text-white sm:text-2xl">
                             {{ $booking->paid_at?->timezone(config('app.timezone'))->format('d/m/Y H:i') ?? '—' }}
                         </p>
-                    </div>
+                    </x-page-container>
                 </div>
             </header>
 

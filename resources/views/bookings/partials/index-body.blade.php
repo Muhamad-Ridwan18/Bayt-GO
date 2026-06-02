@@ -28,7 +28,7 @@
         ],
     ];
 @endphp
-        <div class="relative z-10 mx-auto max-w-5xl px-4 pb-16 pt-10 sm:px-6 lg:px-8">
+        <x-page-container class="relative z-10 pb-16 pt-10">
             {{-- Hero --}}
             <div class="relative overflow-hidden rounded-3xl border border-white/60 bg-white/90 p-6 shadow-xl shadow-slate-900/5 backdrop-blur-sm sm:p-8">
                 <div class="absolute -right-16 -top-16 h-48 w-48 rounded-full bg-gradient-to-br from-brand-200/50 to-transparent blur-2xl"></div>
@@ -61,7 +61,7 @@
                                             </span>
                                         @endif
                                     @endforeach
-                                </div>
+                                </x-page-container>
                             </div>
                         @endif
                     </div>

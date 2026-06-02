@@ -1,6 +1,6 @@
 <x-app-layout>
     <div class="py-6 sm:py-8">
-        <div class="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
+        <x-page-container>
 
             {{-- Header --}}
             <div class="mb-6 flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
@@ -29,7 +29,7 @@
                             <p class="text-lg font-semibold text-amber-600">
                                 {{ $counts['pending'] ?? 0 }}
                             </p>
-                        </div>
+                        </x-page-container>
                     </div>
                 </div>
             </div>

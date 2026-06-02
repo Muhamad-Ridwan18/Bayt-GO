@@ -5,7 +5,7 @@
             <div class="absolute -left-16 bottom-20 h-64 w-64 rounded-full bg-slate-300/20 blur-3xl"></div>
         </div>
 
-        <div class="relative z-10 mx-auto max-w-xl px-4 pb-16 pt-10 sm:px-6">
+        <x-page-container class="relative z-10 pb-16 pt-10">
             <a href="{{ route('bookings.show', $booking) }}" class="mb-6 inline-flex items-center gap-2 text-sm font-semibold text-brand-700 transition hover:text-brand-800">
                 <svg class="h-4 w-4 shrink-0" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true">
                     <path fill-rule="evenodd" d="M17 10a.75.75 0 01-.75.75H5.612l4.158 3.96a.75.75 0 11-1.04 1.08l-5.5-5.25a.75.75 0 010-1.08l5.5-5.25a.75.75 0 111.04 1.08L5.612 9.25H16.25A.75.75 0 0117 10z" clip-rule="evenodd" />
@@ -36,7 +36,7 @@
                     <p class="mt-1 break-all rounded-xl border border-amber-200/80 bg-white/80 px-3 py-2.5 font-mono text-[11px] leading-snug text-amber-950 ring-1 ring-amber-100/80">
                         {{ $paymentDriver === 'moota' ? route('webhooks.moota', absolute: true) : route('payments.doku.notification', absolute: true) }}
                     </p>
-                </div>
+                </x-page-container>
             </div>
         </div>
     </div>

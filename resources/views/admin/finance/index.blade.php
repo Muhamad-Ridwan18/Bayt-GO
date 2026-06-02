@@ -7,7 +7,7 @@
 <x-app-layout>
 
     <div class="py-8 sm:py-12">
-        <div class="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 space-y-8">
+        <x-page-container class="space-y-8">
             <div class="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
                 <p class="text-sm text-slate-600">
                     {{ __('admin.finance.intro', ['pct' => \App\Support\PlatformFee::getTotalRate() * 100]) }}
@@ -25,7 +25,7 @@
                 <div class="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm">
                     <p class="text-xs font-semibold uppercase tracking-wide text-slate-500">{{ __('admin.finance.gross_volume') }}</p>
                     <p class="mt-2 text-2xl font-bold text-slate-900">Rp {{ $fmt($totalVolume) }}</p>
-                </div>
+                </x-page-container>
             </div>
 
             <div class="rounded-2xl border border-slate-200 bg-white overflow-hidden shadow-sm">

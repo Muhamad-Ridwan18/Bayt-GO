@@ -9,7 +9,7 @@
         class="py-8 sm:py-12"
         x-data="adminIncidentLive({ incidentId: @js($incident->getKey()) })"
     >
-        <div class="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 space-y-6">
+        <x-page-container class="space-y-6">
             <a href="{{ route('admin.incidents.index') }}" class="text-sm font-semibold text-brand-700">← {{ __('incidents.admin.index_title') }}</a>
 
             @if (session('status'))
@@ -91,6 +91,6 @@
                     </form>
                 </div>
             </details>
-        </div>
+        </x-page-container>
     </div>
 </x-app-layout>
