@@ -297,7 +297,7 @@ return [
         'title' => 'DOKU payments are not configured',
         'body' => 'Set <code>DOKU_CLIENT_ID</code> and <code>DOKU_SECRET_KEY</code> in your <code>.env</code> file. In the DOKU Back Office, ensure the notification URL matches the address below (or rely on the checkout override):',
         'title_moota' => 'Moota payments are not configured',
-        'body_moota' => 'Set <code>MOOTA_API_EMAIL</code>, <code>MOOTA_API_PASSWORD</code>, and <code>MOOTA_BANK_ACCOUNT_ID</code> in your <code>.env</code>. In the Moota dashboard, register this mutation webhook URL; match <code>MOOTA_WEBHOOK_SIGNING_SECRET</code> if signatures are enabled and allow sender IPs in <code>MOOTA_WEBHOOK_IPS</code>.',
+        'body_moota' => 'Set <code>MOOTA_API_EMAIL</code>, <code>MOOTA_API_PASSWORD</code>, and <code>MOOTA_BANK_ACCOUNT_ID</code> in <code>.env</code>. Register the webhook URL in Moota; match <code>MOOTA_WEBHOOK_SIGNING_SECRET</code> if signatures are enabled. Sender IPs are in <code>config/services.php</code> (moota.webhook_ips).',
         'notification_url_label' => 'HTTP notification URL (webhook)',
         'moota_webhook_url_label' => 'Moota mutation webhook URL (POST)',
         'back' => '← Back to booking details',

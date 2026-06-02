@@ -1,18 +1,5 @@
 <?php
 
-/*
-| MOOTA_WEBHOOK_IPS — bila .env mengisi string kosong, fallback ke daftar IP pengirim Moota resmi.
-| Tanpa fallback, daftar kosong membuat middleware memblokir semua POST /webhooks/moota (403).
-*/
-$mootaWebhookIpsCsv = env('MOOTA_WEBHOOK_IPS');
-if (! is_string($mootaWebhookIpsCsv) || trim($mootaWebhookIpsCsv) === '') {
-    $mootaWebhookIpsCsv = '103.236.201.178,212.38.74.36,128.199.173.138';
-}
-$mootaWebhookIpAllowList = array_values(array_filter(array_map('trim', explode(',', $mootaWebhookIpsCsv))));
-if ($mootaWebhookIpAllowList === []) {
-    $mootaWebhookIpAllowList = ['103.236.201.178', '212.38.74.36', '128.199.173.138'];
-}
-
 return [
 
     /*
@@ -104,7 +91,11 @@ return [
 
     /** Webhook mutasi bank: hanya IPv4 dalam daftar yang boleh mengakses POST /webhooks/moota. */
     'moota' => [
-        'webhook_ips' => $mootaWebhookIpAllowList,
+        'webhook_ips' => [
+            '103.236.201.178',
+            '212.38.74.36',
+            '128.199.173.138',
+        ],
         /** Secret untuk verifikasi header Signature (HMAC-SHA256 atas raw POST body); samakan dengan Moota. */
         'signing_secret' => (string) env('MOOTA_WEBHOOK_SIGNING_SECRET', ''),
         /** Outbound API v2 (Create Transaction). */

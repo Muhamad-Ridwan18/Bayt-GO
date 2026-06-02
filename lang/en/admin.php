@@ -190,7 +190,7 @@ return [
         'step_sandbox' => 'Use the Moota sandbox / test webhook runner with the URL below.',
         'step_tunnel' => 'Expose your app over HTTPS when needed (for example Cloudflare Tunnel: cloudflared tunnel — Moota cannot call http://127.0.0.1 directly).',
         'step_app_url' => 'Set APP_URL in .env to the same public HTTPS base you give Moota.',
-        'step_ip_whitelist' => 'Match MOOTA_WEBHOOK_IPS to IPs Moota uses (sandbox “check URL” may differ from prod; add any IP you see logged as rejected).',
+        'step_ip_whitelist' => 'Sender IPs are listed in config/services.php (moota.webhook_ips). If “check URL” fails, add the IP from moota.webhook.ip_rejected logs to that file.',
         'step_signing_optional' => 'Optional: set MOOTA_WEBHOOK_SIGNING_SECRET to verify the Signature header (HMAC-SHA256 over the raw POST body).',
         'step_reverb' => 'Realtime table: run php artisan reverb:start and set BROADCAST_CONNECTION=reverb; npm run dev or build assets.',
         'webhook_url_heading' => 'Webhook endpoint URL',

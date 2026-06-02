@@ -298,7 +298,7 @@ return [
         'title' => 'Pembayaran DOKU belum dikonfigurasi',
         'body' => 'Isi <code>DOKU_CLIENT_ID</code> dan <code>DOKU_SECRET_KEY</code> di file <code>.env</code>. Di Back Office DOKU, pastikan URL notifikasi mengarah ke alamat di bawah (atau biarkan override dari sistem):',
         'title_moota' => 'Pembayaran Moota belum dikonfigurasi',
-        'body_moota' => 'Isi <code>MOOTA_API_EMAIL</code>, <code>MOOTA_API_PASSWORD</code>, dan <code>MOOTA_BANK_ACCOUNT_ID</code> di <code>.env</code>. Di dashboard Moota, daftarkan webhook mutasi ke URL di bawah; samakan <code>MOOTA_WEBHOOK_SIGNING_SECRET</code> bila fitur Signature aktif, dan pastikan IP pengirim ada di <code>MOOTA_WEBHOOK_IPS</code>.',
+        'body_moota' => 'Isi <code>MOOTA_API_EMAIL</code>, <code>MOOTA_API_PASSWORD</code>, dan <code>MOOTA_BANK_ACCOUNT_ID</code> di <code>.env</code>. Di dashboard Moota, daftarkan webhook mutasi ke URL di bawah; samakan <code>MOOTA_WEBHOOK_SIGNING_SECRET</code> bila Signature aktif. IP pengirim webhook diatur di <code>config/services.php</code> (moota.webhook_ips).',
         'notification_url_label' => 'URL notifikasi HTTP (webhook)',
         'moota_webhook_url_label' => 'URL webhook mutasi Moota (POST)',
         'back' => '← Kembali ke detail pesanan',

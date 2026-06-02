@@ -17,7 +17,7 @@ final class AllowMootaWebhookIp
         if ($allowed === []) {
             Log::warning('moota.webhook.abort_no_ips_configured');
 
-            abort(Response::HTTP_FORBIDDEN, 'Forbidden');
+            return $this->forbidden('Daftar IP webhook Moota kosong di config/services.php.');
         }
 
         $resolved = self::resolveWebhookSourceIp($request);
@@ -25,6 +25,7 @@ final class AllowMootaWebhookIp
         if (! is_string($resolved) || ! in_array($resolved, $allowed, true)) {
             Log::warning('moota.webhook.ip_rejected', [
                 'resolved_ip' => $resolved,
+                'allowed_ips' => $allowed,
                 'laravel_ip' => $request->ip(),
                 'cf_connecting_ip' => $request->headers->get('CF-Connecting-IP'),
                 'x_forwarded_for' => $request->headers->get('X-Forwarded-For'),
@@ -32,7 +33,11 @@ final class AllowMootaWebhookIp
                 'path' => $request->path(),
             ]);
 
-            abort(Response::HTTP_FORBIDDEN, 'Forbidden');
+            $hint = config('app.debug')
+                ? 'IP terdeteksi: '.($resolved ?? 'tidak diketahui').'. Tambahkan ke services.moota.webhook_ips di config/services.php.'
+                : 'Forbidden';
+
+            return $this->forbidden($hint);
         }
 
         Log::info('moota.webhook.ip_allowed', [
@@ -67,5 +72,10 @@ final class AllowMootaWebhookIp
         $ip = $request->ip();
 
         return is_string($ip) && $ip !== '' ? $ip : null;
+    }
+
+    private function forbidden(string $message): Response
+    {
+        return response()->json(['message' => $message], Response::HTTP_FORBIDDEN);
     }
 }

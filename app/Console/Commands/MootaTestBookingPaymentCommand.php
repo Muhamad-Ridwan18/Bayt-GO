@@ -23,7 +23,7 @@ class MootaTestBookingPaymentCommand extends Command
 {
     protected $signature = 'moota:test-booking-payment
                             {booking_id? : UUID booking (Confirmed + bayar pending); default: booking pertama yang cocok}
-                            {--post-local-webhook : Setelah charge, POST payload mutasi ke app (butuh MOOTA_WEBHOOK_IPS + URL bisa dijangkau)}
+                            {--post-local-webhook : Setelah charge, POST payload mutasi ke app (butuh webhook_ips di config + URL bisa dijangkau)}
                             {--allow-production : Izinkan jalan walau APP_ENV=production (hati-hati)}';
 
     protected $description = 'Buat transaksi pembayaran Moota untuk booking tes: cetak payment_url & order_id; opsional simulasikan webhook mutasi.';
@@ -155,7 +155,7 @@ class MootaTestBookingPaymentCommand extends Command
         /** @var list<string>|array<int, string> $allowed */
         $allowed = config('services.moota.webhook_ips', []);
         if ($allowed === []) {
-            $this->error('MOOTA_WEBHOOK_IPS kosong; webhook akan ditolak middleware.');
+            $this->error('services.moota.webhook_ips kosong; webhook akan ditolak middleware.');
 
             return false;
         }

@@ -165,7 +165,7 @@ class MootaRegisterWebhookCommand extends Command
         }
 
         $this->newLine();
-        $this->line('Pastikan <fg=yellow>MOOTA_WEBHOOK_IPS</> mencakup IP pengirim Moota, dan (jika pakai HTTPS) sertifikat valid.');
+        $this->line('Pastikan <fg=yellow>config/services.php → moota.webhook_ips</> mencakup IP pengirim Moota, dan (jika pakai HTTPS) sertifikat valid.');
 
         return self::SUCCESS;
     }

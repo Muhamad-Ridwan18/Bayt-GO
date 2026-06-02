@@ -190,7 +190,7 @@ return [
         'step_sandbox' => 'Gunakan sandbox atau uji webhook di dashboard Moota dengan URL berikut.',
         'step_tunnel' => 'Pakai HTTPS publik bila perlu (mis. Cloudflare Tunnel dengan cloudflared — Moota tidak bisa memanggil http://127.0.0.1 langsung).',
         'step_app_url' => 'Samakan APP_URL di .env dengan basis HTTPS yang Anda berikan ke Moota.',
-        'step_ip_whitelist' => 'Sesuaikan MOOTA_WEBHOOK_IPS dengan IP Moota (fitur «Cek URL» kadang pakai IP lain; tambahkan IP yang Anda lihat di log tolak).',
+        'step_ip_whitelist' => 'Whitelist IP pengirim ada di config/services.php (moota.webhook_ips). Jika «Cek URL» ditolak, tambahkan IP dari log moota.webhook.ip_rejected ke file tersebut.',
         'step_signing_optional' => 'Opsional: isi MOOTA_WEBHOOK_SIGNING_SECRET untuk memverifikasi header Signature (HMAC-SHA256 atas body POST mentah).',
         'step_reverb' => 'Tabel realtime: jalankan php artisan reverb:start, set BROADCAST_CONNECTION=reverb; npm run dev atau npm run build untuk JS.',
         'webhook_url_heading' => 'URL endpoint webhook',

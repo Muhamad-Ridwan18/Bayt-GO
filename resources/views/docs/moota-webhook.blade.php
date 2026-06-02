@@ -53,7 +53,7 @@
 
         <section class="rounded-3xl border border-slate-200/80 bg-white p-6 sm:p-8 shadow-sm ring-1 ring-slate-900/5 space-y-3">
             <h2 class="text-lg font-bold text-slate-900">Endpoint BaytGo</h2>
-            <p class="text-slate-600 text-sm leading-relaxed">Metode <code class="text-sm bg-slate-100 px-1.5 py-0.5 rounded-md font-mono text-brand-900">POST</code>, dilindungi whitelist IP (<code class="text-xs bg-slate-100 px-1 rounded">AllowMootaWebhookIp</code>) — daftar IP di konfigurasi <code class="text-xs bg-slate-100 px-1 rounded">MOOTA_WEBHOOK_IPS</code>.</p>
+            <p class="text-slate-600 text-sm leading-relaxed">Metode <code class="text-sm bg-slate-100 px-1.5 py-0.5 rounded-md font-mono text-brand-900">POST</code>, dilindungi whitelist IP (<code class="text-xs bg-slate-100 px-1 rounded">AllowMootaWebhookIp</code>) — daftar IP di <code class="text-xs bg-slate-100 px-1 rounded">config/services.php</code> (<code class="text-xs bg-slate-100 px-1 rounded">moota.webhook_ips</code>).</p>
             <div class="rounded-2xl bg-slate-900 text-brand-50 px-4 py-3 font-mono text-sm break-all">{{ $webhookUrl }}</div>
         </section>
 
