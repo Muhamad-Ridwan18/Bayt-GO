@@ -95,6 +95,7 @@ return [
             '103.236.201.178',
             '212.38.74.36',
             '128.199.173.138',
+            '108.165.253.123', // Moota «Cek URL» / sandbox (dev.baytgo.id log)
         ],
         /** Secret untuk verifikasi header Signature (HMAC-SHA256 atas raw POST body); samakan dengan Moota. */
         'signing_secret' => (string) env('MOOTA_WEBHOOK_SIGNING_SECRET', ''),
