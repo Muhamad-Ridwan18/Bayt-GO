@@ -16,6 +16,7 @@
                 'peerRecommendTargets' => $peerRecommendTargets,
                 'openIncident' => $openIncident ?? null,
                 'incomingReplacement' => $incomingReplacement ?? null,
+                'peerReplacementsAwaitingConfirm' => $peerReplacementsAwaitingConfirm ?? collect(),
             ])
         </div>
     </div>

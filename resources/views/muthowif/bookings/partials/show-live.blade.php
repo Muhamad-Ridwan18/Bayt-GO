@@ -75,6 +75,7 @@
                 'booking' => $b,
                 'openIncident' => $openIncident ?? null,
                 'incomingReplacement' => $incomingReplacement ?? null,
+                'peerReplacementsAwaitingConfirm' => $peerReplacementsAwaitingConfirm ?? collect(),
             ])
 
             {{-- Sidebar ringkas di mobile (status + pendapatan) --}}

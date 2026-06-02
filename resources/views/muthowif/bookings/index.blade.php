@@ -14,6 +14,7 @@
                 'bookings' => $bookings,
                 'addonsById' => $addonsById,
                 'peerRecommendByBooking' => $peerRecommendByBooking,
+                'pendingReplacementInvites' => $pendingReplacementInvites ?? collect(),
             ])
         </div>
     </div>

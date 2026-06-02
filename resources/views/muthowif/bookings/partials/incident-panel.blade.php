@@ -1,44 +1,25 @@
 @php
     use App\Enums\BookingIncidentCaseType;
+    use App\Enums\BookingIncidentStatus;
     use App\Enums\BookingReplacementStatus;
     use App\Enums\BookingStatus;
     use App\Enums\PaymentStatus;
 
     $openIncident = $openIncident ?? null;
     $incomingReplacement = $incomingReplacement ?? null;
+    $peerReplacementsAwaitingConfirm = $peerReplacementsAwaitingConfirm ?? collect();
     $b = $booking;
+    $ownsBooking = auth()->user()?->muthowifProfile
+        && (string) $b->muthowif_profile_id === (string) auth()->user()->muthowifProfile->getKey();
 @endphp
 
 @if ($b->status === BookingStatus::Confirmed && $b->payment_status === PaymentStatus::Paid)
-    @if ($incomingReplacement && $incomingReplacement->status === BookingReplacementStatus::AwaitingMuthowifConfirm)
-        <section class="rounded-2xl border border-violet-200 bg-violet-50 p-5">
-            <h3 class="text-sm font-bold text-violet-950">{{ __('incidents.replacement_offer_title') }}</h3>
-            <p class="mt-1 text-xs text-violet-900">
-                {{ __('incidents.admin.propose_replacement') }}
-                — {{ $incomingReplacement->incident->muthowifBooking?->booking_code }}
-            </p>
-            @if (filled($incomingReplacement->admin_note))
-                <p class="mt-2 text-sm text-violet-900">{{ $incomingReplacement->admin_note }}</p>
-            @endif
-            <div class="mt-4 flex flex-wrap gap-2">
-                <form method="POST" action="{{ route('muthowif.bookings.replacements.confirm', [$b, $incomingReplacement]) }}">
-                    @csrf
-                    <button type="submit" class="rounded-xl bg-emerald-700 px-4 py-2 text-sm font-semibold text-white">
-                        {{ __('incidents.muthowif_confirm_replacement') }}
-                    </button>
-                </form>
-                <form method="POST" action="{{ route('muthowif.bookings.replacements.decline', [$b, $incomingReplacement]) }}" class="space-y-2">
-                    @csrf
-                    <input type="text" name="note" class="w-full rounded-lg border-violet-200 text-xs" placeholder="Catatan (opsional)">
-                    <button type="submit" class="rounded-xl border border-violet-300 bg-white px-4 py-2 text-sm font-semibold text-violet-900">
-                        {{ __('incidents.muthowif_decline_replacement') }}
-                    </button>
-                </form>
-            </div>
-        </section>
+    {{-- Hanya muthowif pengganti (bukan pemilik pesanan) yang melihat form konfirmasi --}}
+    @if (! $ownsBooking && $incomingReplacement && $incomingReplacement->status === BookingReplacementStatus::AwaitingMuthowifConfirm)
+        @include('muthowif.bookings.partials.replacement-invite-card', ['replacement' => $incomingReplacement])
     @endif
 
-    @if ($openIncident?->replacement_recruitment_open && ! $incomingReplacement)
+    @if ($ownsBooking && $openIncident?->replacement_recruitment_open)
         <section class="rounded-2xl border border-violet-100 bg-violet-50/80 p-4 text-sm">
             <a href="{{ route('muthowif.replacements.opportunities') }}" class="font-semibold text-violet-800 hover:text-violet-950">
                 {{ __('incidents.muthowif.browse_opportunities') }}
@@ -46,7 +27,7 @@
         </section>
     @endif
 
-    @if (! $openIncident && auth()->user()?->can('reportAsMuthowif', $b))
+    @if ($ownsBooking && ! $openIncident && auth()->user()?->can('reportAsMuthowif', $b))
         <section class="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
             <h3 class="text-sm font-bold text-slate-900">{{ __('incidents.muthowif_report_title') }}</h3>
             <form method="POST" action="{{ route('muthowif.bookings.incident.report', $b) }}" enctype="multipart/form-data" class="mt-3 space-y-3">
@@ -62,10 +43,28 @@
                 </button>
             </form>
         </section>
-    @elseif ($openIncident)
+    @elseif ($ownsBooking && $openIncident)
         <section class="rounded-2xl border border-amber-200 bg-amber-50 p-4 text-sm text-amber-950">
-            {{ __('incidents.status_banner_open') }}
-            <span class="font-semibold">{{ $openIncident->case_type->label() }}</span>
+            <p>{{ __('incidents.status_banner_open') }}</p>
+            <p class="mt-2 text-base font-bold text-amber-950">
+                {{ $openIncident->case_type->label() }}
+                <span class="font-normal text-amber-800">·</span>
+                {{ $openIncident->status->label() }}
+            </p>
+            @if ($openIncident->status === BookingIncidentStatus::AwaitingReplacement)
+                <p class="mt-2 text-xs leading-relaxed text-amber-900/90">{{ __('incidents.muthowif.own_incident_awaiting_replacement') }}</p>
+            @endif
+            @if ($peerReplacementsAwaitingConfirm->isNotEmpty())
+                <ul class="mt-3 space-y-1 border-t border-amber-200/80 pt-3 text-xs text-amber-900">
+                    <li class="font-semibold">{{ __('incidents.muthowif.owner_waiting_peer_confirm') }}</li>
+                    @foreach ($peerReplacementsAwaitingConfirm as $peer)
+                        <li>
+                            {{ $peer->replacementProfile?->user?->name ?? '—' }}
+                            <span class="text-amber-700">— {{ __('incidents.replacement_status.awaiting_muthowif_confirm') }}</span>
+                        </li>
+                    @endforeach
+                </ul>
+            @endif
         </section>
     @endif
 @endif

@@ -265,6 +265,9 @@ Route::middleware('auth')->group(function () {
             Route::post('bookings/{booking}/incident-report', [MuthowifBookingIncidentController::class, 'report'])->name('bookings.incident.report');
             Route::post('bookings/{booking}/replacements/{replacement}/confirm', [MuthowifBookingIncidentController::class, 'confirmReplacement'])->name('bookings.replacements.confirm');
             Route::post('bookings/{booking}/replacements/{replacement}/decline', [MuthowifBookingIncidentController::class, 'declineReplacement'])->name('bookings.replacements.decline');
+            Route::post('replacements/{replacement}/confirm', [MuthowifBookingIncidentController::class, 'confirmReplacementById'])->name('replacements.confirm');
+            Route::post('replacements/{replacement}/decline', [MuthowifBookingIncidentController::class, 'declineReplacementById'])->name('replacements.decline');
+            Route::get('replacements/pending-count', [MuthowifBookingIncidentController::class, 'pendingReplacementConfirmCount'])->name('replacements.pending-count');
             Route::get('replacements/pending', [MuthowifBookingIncidentController::class, 'pendingReplacements'])->name('replacements.pending');
             Route::get('replacements/opportunities', [MuthowifBookingIncidentController::class, 'recruitmentOpportunities'])->name('replacements.opportunities');
             Route::post('replacements/incident/{incident}/volunteer', [MuthowifBookingIncidentController::class, 'volunteer'])->name('replacements.volunteer');

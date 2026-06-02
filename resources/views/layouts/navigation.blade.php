@@ -1,6 +1,8 @@
 @php
+    use App\Enums\BookingReplacementStatus;
     use App\Enums\BookingStatus;
     use App\Enums\MuthowifVerificationStatus;
+    use App\Models\BookingReplacement;
     use App\Models\MuthowifBooking;
     use App\Models\MuthowifProfile;
 
@@ -9,12 +11,18 @@
     $contactLink = $contactDigits !== '' ? 'https://wa.me/'.$contactDigits : null;
 
     $muthowifPendingIncomingCount = 0;
+    $muthowifPendingReplacementCount = 0;
     if (Auth::check() && Auth::user()->isVerifiedMuthowif()) {
         $mpNav = Auth::user()->muthowifProfile;
         if ($mpNav) {
             $muthowifPendingIncomingCount = MuthowifBooking::query()
                 ->where('muthowif_profile_id', $mpNav->id)
                 ->where('status', BookingStatus::Pending)
+                ->count();
+            $muthowifPendingReplacementCount = BookingReplacement::query()
+                ->where('replacement_muthowif_profile_id', $mpNav->getKey())
+                ->where('status', BookingReplacementStatus::AwaitingMuthowifConfirm)
+                ->whereColumn('replacement_muthowif_profile_id', '!=', 'original_muthowif_profile_id')
                 ->count();
         }
     }
@@ -120,7 +128,7 @@
                         <x-nav-link :href="route('muthowif.portfolio.index')" :active="request()->routeIs('muthowif.portfolio.*')">
                             {{ __('nav.portfolio') }}
                         </x-nav-link>
-                        <x-nav-link :href="route('muthowif.bookings.index')" :active="request()->routeIs('muthowif.bookings.*')">
+                        <x-nav-link :href="route('muthowif.bookings.index')" :active="request()->routeIs('muthowif.bookings.*') && ! request()->routeIs('muthowif.replacements.*')">
                             <span class="inline-flex items-center gap-2">
                                 {{ __('nav.booking_requests') }}
                                 <span
@@ -137,8 +145,28 @@
                                 ></span>
                             </span>
                         </x-nav-link>
+                        <x-nav-link :href="route('muthowif.replacements.pending')" :active="request()->routeIs('muthowif.replacements.pending')">
+                            <span class="inline-flex items-center gap-2">
+                                {{ __('incidents.muthowif.nav_pending_replacements') }}
+                                <span
+                                    x-data="muthowifPendingBookingsBadge({
+                                        userId: @js(auth()->id()),
+                                        countUrl: @js(route('muthowif.replacements.pending-count')),
+                                        initialCount: @js($muthowifPendingReplacementCount),
+                                    })"
+                                    x-show="count > 0"
+                                    x-cloak
+                                    class="inline-flex min-h-[1.125rem] min-w-[1.125rem] items-center justify-center rounded-full bg-violet-600 px-1 text-[10px] font-bold leading-none text-white shadow-sm"
+                                    x-bind:aria-label="count > 0 ? '{{ __('incidents.muthowif.nav_pending_replacements') }}: ' + displayLabel : null"
+                                    x-text="displayLabel"
+                                ></span>
+                            </span>
+                        </x-nav-link>
+                        <x-nav-link :href="route('muthowif.replacements.opportunities')" :active="request()->routeIs('muthowif.replacements.opportunities')">
+                            {{ __('nav.replacement_opportunities') }}
+                        </x-nav-link>
                     @endif
-                </x-page-container>
+                </div>
             </div>
 
             <div class="flex shrink-0 items-center gap-1.5 sm:gap-2 sm:ms-4 lg:ms-6">
@@ -260,7 +288,7 @@
                 <x-responsive-nav-link :href="route('muthowif.portfolio.index')" :active="request()->routeIs('muthowif.portfolio.*')">
                     {{ __('nav.portfolio') }}
                 </x-responsive-nav-link>
-                <x-responsive-nav-link :href="route('muthowif.bookings.index')" :active="request()->routeIs('muthowif.bookings.*')">
+                <x-responsive-nav-link :href="route('muthowif.bookings.index')" :active="request()->routeIs('muthowif.bookings.*') && ! request()->routeIs('muthowif.replacements.*')">
                     <span class="inline-flex items-center gap-2">
                         {{ __('nav.booking_requests') }}
                         <span
@@ -276,6 +304,26 @@
                             x-text="displayLabel"
                         ></span>
                     </span>
+                </x-responsive-nav-link>
+                <x-responsive-nav-link :href="route('muthowif.replacements.pending')" :active="request()->routeIs('muthowif.replacements.pending')">
+                    <span class="inline-flex items-center gap-2">
+                        {{ __('incidents.muthowif.nav_pending_replacements') }}
+                        <span
+                            x-data="muthowifPendingBookingsBadge({
+                                userId: @js(auth()->id()),
+                                countUrl: @js(route('muthowif.replacements.pending-count')),
+                                initialCount: @js($muthowifPendingReplacementCount),
+                            })"
+                            x-show="count > 0"
+                            x-cloak
+                            class="inline-flex min-h-[1.125rem] min-w-[1.125rem] items-center justify-center rounded-full bg-violet-600 px-1 text-[10px] font-bold leading-none text-white shadow-sm"
+                            x-bind:aria-label="count > 0 ? '{{ __('incidents.muthowif.nav_pending_replacements') }}: ' + displayLabel : null"
+                            x-text="displayLabel"
+                        ></span>
+                    </span>
+                </x-responsive-nav-link>
+                <x-responsive-nav-link :href="route('muthowif.replacements.opportunities')" :active="request()->routeIs('muthowif.replacements.opportunities')">
+                    {{ __('nav.replacement_opportunities') }}
                 </x-responsive-nav-link>
             @endif
         </div>

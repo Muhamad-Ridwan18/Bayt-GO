@@ -1,6 +1,8 @@
 @php
+    use App\Enums\BookingReplacementStatus;
     use App\Enums\BookingStatus;
     use App\Enums\MuthowifServiceType;
+    use App\Models\BookingReplacement;
     use Carbon\Carbon;
     use App\Support\IndonesianNumber;
     use App\Support\MuthowifFinanceSummary;
@@ -57,6 +59,20 @@
     }
 
     $userInitial = mb_strtoupper(mb_substr(Auth::user()->name, 0, 1));
+
+    $pendingReplacementInvites = BookingReplacement::query()
+        ->with(['incident.muthowifBooking.customer', 'incident.muthowifProfile.user'])
+        ->where('replacement_muthowif_profile_id', $mp->getKey())
+        ->where('status', BookingReplacementStatus::AwaitingMuthowifConfirm)
+        ->whereColumn('replacement_muthowif_profile_id', '!=', 'original_muthowif_profile_id')
+        ->orderByDesc('created_at')
+        ->limit(3)
+        ->get();
+    $pendingReplacementCount = BookingReplacement::query()
+        ->where('replacement_muthowif_profile_id', $mp->getKey())
+        ->where('status', BookingReplacementStatus::AwaitingMuthowifConfirm)
+        ->whereColumn('replacement_muthowif_profile_id', '!=', 'original_muthowif_profile_id')
+        ->count();
 @endphp
 
 <div
@@ -163,6 +179,17 @@
                             </svg>
                             {{ __('dashboard_muthowif.hero_btn_calendar') }}
                         </a>
+                        @if ($pendingReplacementCount > 0)
+                            <a
+                                href="{{ route('muthowif.replacements.pending') }}"
+                                class="inline-flex items-center justify-center gap-2 rounded-xl border border-violet-300/90 bg-violet-600 px-5 py-2.5 text-sm font-semibold text-white shadow-md shadow-violet-600/25 transition hover:bg-violet-700"
+                            >
+                                {{ __('dashboard_muthowif.hero_btn_replacements') }}
+                                <span class="inline-flex min-h-[1.25rem] min-w-[1.25rem] items-center justify-center rounded-full bg-white/20 px-1.5 text-xs font-bold tabular-nums">
+                                    {{ $pendingReplacementCount }}
+                                </span>
+                            </a>
+                        @endif
                     </div>
                 </div>
             </div>
@@ -279,6 +306,68 @@
         </x-page-container>
     </section>
 
+    <nav
+        class="sticky top-16 z-20 -mx-4 border-b border-slate-200/80 bg-white/95 px-4 py-2.5 shadow-sm backdrop-blur-sm sm:-mx-6 sm:px-6 lg:top-[4.25rem]"
+        aria-label="{{ __('dashboard_muthowif.sticky_nav_aria') }}"
+    >
+        <div class="mx-auto flex max-w-7xl gap-2 overflow-x-auto pb-0.5 [-ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
+            <a href="{{ route('muthowif.bookings.index') }}" class="shrink-0 rounded-full border border-slate-200 bg-white px-3.5 py-1.5 text-xs font-semibold text-slate-800 transition hover:border-baytgo/40 hover:text-baytgo">
+                {{ __('dashboard_muthowif.nav_bookings') }}
+            </a>
+            <a href="{{ route('muthowif.replacements.pending') }}" class="inline-flex shrink-0 items-center gap-1.5 rounded-full border px-3.5 py-1.5 text-xs font-semibold transition {{ $pendingReplacementCount > 0 ? 'border-violet-300 bg-violet-50 text-violet-900 hover:bg-violet-100' : 'border-slate-200 bg-white text-slate-800 hover:border-violet-200 hover:text-violet-800' }}">
+                {{ __('dashboard_muthowif.nav_replacements') }}
+                @if ($pendingReplacementCount > 0)
+                    <span class="inline-flex min-h-[1.125rem] min-w-[1.125rem] items-center justify-center rounded-full bg-violet-600 px-1 text-[10px] font-bold leading-none text-white">
+                        {{ $pendingReplacementCount }}
+                    </span>
+                @endif
+            </a>
+            <a href="{{ route('muthowif.replacements.opportunities') }}" class="shrink-0 rounded-full border border-slate-200 bg-white px-3.5 py-1.5 text-xs font-semibold text-slate-800 transition hover:border-violet-200 hover:text-violet-800">
+                {{ __('dashboard_muthowif.nav_opportunities') }}
+            </a>
+            <a href="#muthowif-schedule" class="shrink-0 rounded-full border border-slate-200 bg-white px-3.5 py-1.5 text-xs font-semibold text-slate-800 transition hover:border-baytgo/40 hover:text-baytgo">
+                {{ __('dashboard_muthowif.nav_calendar') }}
+            </a>
+            <a href="{{ route('muthowif.pelayanan.edit') }}" class="shrink-0 rounded-full border border-slate-200 bg-white px-3.5 py-1.5 text-xs font-semibold text-slate-800 transition hover:border-baytgo/40 hover:text-baytgo">
+                {{ __('dashboard_muthowif.nav_services') }}
+            </a>
+            <a href="{{ route('muthowif.jadwal.index') }}" class="shrink-0 rounded-full border border-slate-200 bg-white px-3.5 py-1.5 text-xs font-semibold text-slate-800 transition hover:border-baytgo/40 hover:text-baytgo">
+                {{ __('dashboard_muthowif.nav_time_off') }}
+            </a>
+            <a href="{{ route('muthowif.withdrawals.index') }}" class="shrink-0 rounded-full border border-slate-200 bg-white px-3.5 py-1.5 text-xs font-semibold text-slate-800 transition hover:border-baytgo/40 hover:text-baytgo">
+                {{ __('dashboard_muthowif.nav_wallet') }}
+            </a>
+        </div>
+    </nav>
+
+    @if ($pendingReplacementInvites->isNotEmpty())
+        <section class="rounded-2xl border-2 border-violet-200 bg-violet-50/60 p-4 shadow-sm ring-1 ring-violet-100 sm:p-5" aria-labelledby="dashboard-replacement-invites-heading">
+            <div class="flex flex-wrap items-start justify-between gap-3">
+                <div>
+                    <h2 id="dashboard-replacement-invites-heading" class="text-sm font-bold text-violet-950">
+                        {{ __('dashboard_muthowif.replacement_alert_title') }}
+                    </h2>
+                    <p class="mt-1 text-xs text-violet-900/90">{{ __('dashboard_muthowif.replacement_alert_body', ['count' => $pendingReplacementCount]) }}</p>
+                </div>
+                <a href="{{ route('muthowif.replacements.pending') }}" class="shrink-0 text-xs font-semibold text-violet-800 hover:text-violet-950">
+                    {{ __('dashboard_muthowif.replacement_alert_cta') }} →
+                </a>
+            </div>
+            <div class="mt-4 space-y-3">
+                @foreach ($pendingReplacementInvites as $replacement)
+                    @include('muthowif.bookings.partials.replacement-invite-card', ['replacement' => $replacement])
+                @endforeach
+            </div>
+            @if ($pendingReplacementCount > $pendingReplacementInvites->count())
+                <p class="mt-3 text-center text-xs font-medium text-violet-800">
+                    <a href="{{ route('muthowif.replacements.pending') }}" class="hover:underline">
+                        {{ __('dashboard_muthowif.replacement_alert_more', ['count' => $pendingReplacementCount - $pendingReplacementInvites->count()]) }}
+                    </a>
+                </p>
+            @endif
+        </section>
+    @endif
+
     <div class="grid grid-cols-1 gap-8 lg:grid-cols-12 lg:items-start">
         {{-- Kolom kiri: booking + kalender --}}
         <div class="space-y-8 lg:col-span-8">
@@ -392,6 +481,25 @@
                         </span>
                         <span class="mt-3 text-sm font-semibold text-slate-900">{{ __('dashboard_muthowif.qa_help_title') }}</span>
                         <span class="mt-0.5 text-xs text-slate-500">{{ __('dashboard_muthowif.qa_help_desc') }}</span>
+                    </a>
+                    <a href="{{ route('muthowif.replacements.pending') }}" class="group relative flex flex-col rounded-2xl border p-4 shadow-sm transition focus:outline-none focus-visible:ring-2 focus-visible:ring-violet-500 {{ $pendingReplacementCount > 0 ? 'border-violet-300 bg-violet-50/80 hover:border-violet-400 hover:shadow-md' : 'border-slate-200/90 bg-white hover:border-violet-200 hover:shadow-md' }}">
+                        @if ($pendingReplacementCount > 0)
+                            <span class="absolute end-3 top-3 inline-flex min-h-[1.25rem] min-w-[1.25rem] items-center justify-center rounded-full bg-violet-600 px-1.5 text-[10px] font-bold text-white">
+                                {{ $pendingReplacementCount }}
+                            </span>
+                        @endif
+                        <span class="flex h-10 w-10 items-center justify-center rounded-xl bg-violet-50 text-violet-700 ring-1 ring-violet-100" aria-hidden="true">
+                            <svg class="h-5 w-5" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.75" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M18 18.72a9.094 9.094 0 003.741-.479 3 3 0 00-4.682-2.72m.94 3.198.001.031c0 .225-.012.447-.037.666A11.944 11.944 0 0112 21c-2.17 0-4.207-.576-5.963-1.584A6.062 6.062 0 016 18.719m12 0a5.971 5.971 0 00-.941-3.197m0 0A5.995 5.995 0 0012 12.75a5.995 5.995 0 00-5.058 2.772m0 0a3 3 0 00-4.681 2.72 8.986 8.986 0 003.74.477m.94-3.197a5.971 5.971 0 00-5.058-2.772m0 0A5.995 5.995 0 0112 6.75c2.17 0 4.207.576 5.963 1.584a6.062 6.062 0 014.718 2.135M6 18.719V15.75a2.25 2.25 0 012.25-2.25h7.5A2.25 2.25 0 0118 15.75v2.969" /></svg>
+                        </span>
+                        <span class="mt-3 text-sm font-semibold text-slate-900">{{ __('dashboard_muthowif.qa_replacements_title') }}</span>
+                        <span class="mt-0.5 text-xs text-slate-500">{{ __('dashboard_muthowif.qa_replacements_desc') }}</span>
+                    </a>
+                    <a href="{{ route('muthowif.replacements.opportunities') }}" class="group flex flex-col rounded-2xl border border-slate-200/90 bg-white p-4 shadow-sm transition hover:border-violet-200 hover:shadow-md focus:outline-none focus-visible:ring-2 focus-visible:ring-violet-500">
+                        <span class="flex h-10 w-10 items-center justify-center rounded-xl bg-violet-50 text-violet-700 ring-1 ring-violet-100" aria-hidden="true">
+                            <svg class="h-5 w-5" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.75" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M9.813 15.904L9 18.75l-.813-2.846a4.5 4.5 0 00-3.09-3.09L2.25 12l2.846-.813a4.5 4.5 0 003.09-3.09L9 5.25l.813 2.846a4.5 4.5 0 003.09 3.09L15.75 12l-2.846.813a4.5 4.5 0 00-3.09 3.09zM18.259 8.715L18 9.75l-.259-1.035a3.375 3.375 0 00-2.455-2.456L14.25 6l1.036-.259a3.375 3.375 0 002.455-2.456L18 2.25l.259 1.035a3.375 3.375 0 002.455 2.456L21.75 6l-1.036.259a3.375 3.375 0 00-2.455 2.456zM16.894 20.567L16.5 21.75l-.394-1.183a2.25 2.25 0 00-1.423-1.423L13.5 18.75l1.183-.394a2.25 2.25 0 001.423-1.423l.394-1.183.394 1.183a2.25 2.25 0 001.423 1.423l1.183.394-1.183.394a2.25 2.25 0 00-1.423 1.423z" /></svg>
+                        </span>
+                        <span class="mt-3 text-sm font-semibold text-slate-900">{{ __('dashboard_muthowif.qa_opportunities_title') }}</span>
+                        <span class="mt-0.5 text-xs text-slate-500">{{ __('dashboard_muthowif.qa_opportunities_desc') }}</span>
                     </a>
                 </div>
                 <a href="{{ route('muthowif.portfolio.index') }}" class="mt-3 group flex items-center justify-between gap-3 rounded-2xl border border-slate-200/90 bg-gradient-to-r from-sky-50 to-blue-50/50 p-4 shadow-sm transition hover:border-sky-300 hover:shadow-md focus:outline-none focus-visible:ring-2 focus-visible:ring-sky-500">

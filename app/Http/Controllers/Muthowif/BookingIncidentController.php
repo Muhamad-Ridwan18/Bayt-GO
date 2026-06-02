@@ -12,6 +12,7 @@ use App\Services\Incident\BookingReplacementCandidateService;
 use App\Services\Incident\BookingIncidentService;
 use App\Services\Incident\BookingReplacementService;
 use App\Enums\BookingReplacementStatus;
+use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Validation\Rule;
@@ -19,15 +20,30 @@ use Illuminate\View\View;
 
 class BookingIncidentController extends Controller
 {
+    public function pendingReplacementConfirmCount(Request $request): JsonResponse
+    {
+        $profile = $request->user()->muthowifProfile;
+        abort_unless($profile, 403);
+
+        $n = BookingReplacement::query()
+            ->where('replacement_muthowif_profile_id', $profile->getKey())
+            ->where('status', BookingReplacementStatus::AwaitingMuthowifConfirm)
+            ->whereColumn('replacement_muthowif_profile_id', '!=', 'original_muthowif_profile_id')
+            ->count();
+
+        return response()->json(['pending_count' => $n]);
+    }
+
     public function pendingReplacements(Request $request): View
     {
         $profile = $request->user()->muthowifProfile;
         abort_unless($profile, 403);
 
         $replacements = BookingReplacement::query()
-            ->with(['incident.muthowifBooking.customer', 'originalProfile.user'])
+            ->with(['incident.muthowifBooking.customer', 'originalProfile.user', 'replacementProfile.user'])
             ->where('replacement_muthowif_profile_id', $profile->getKey())
             ->where('status', BookingReplacementStatus::AwaitingMuthowifConfirm)
+            ->whereColumn('replacement_muthowif_profile_id', '!=', 'original_muthowif_profile_id')
             ->orderByDesc('created_at')
             ->paginate(20);
 
@@ -167,22 +183,66 @@ class BookingIncidentController extends Controller
     public function confirmReplacement(Request $request, MuthowifBooking $booking, BookingReplacement $replacement): RedirectResponse
     {
         $this->authorize('confirmReplacement', $replacement);
+        abort_unless(
+            (string) $replacement->incident?->muthowif_booking_id === (string) $booking->getKey(),
+            404,
+        );
 
+        return $this->performConfirmReplacement($request, $replacement);
+    }
+
+    public function confirmReplacementById(Request $request, BookingReplacement $replacement): RedirectResponse
+    {
+        $this->authorize('confirmReplacement', $replacement);
+
+        return $this->performConfirmReplacement($request, $replacement);
+    }
+
+    public function declineReplacement(Request $request, MuthowifBooking $booking, BookingReplacement $replacement): RedirectResponse
+    {
+        $this->authorize('confirmReplacement', $replacement);
+        abort_unless(
+            (string) $replacement->incident?->muthowif_booking_id === (string) $booking->getKey(),
+            404,
+        );
+
+        return $this->performDeclineReplacement($request, $replacement);
+    }
+
+    public function declineReplacementById(Request $request, BookingReplacement $replacement): RedirectResponse
+    {
+        $this->authorize('confirmReplacement', $replacement);
+
+        return $this->performDeclineReplacement($request, $replacement);
+    }
+
+    private function performConfirmReplacement(Request $request, BookingReplacement $replacement): RedirectResponse
+    {
         try {
             app(BookingReplacementService::class)->replacementMuthowifConfirm($replacement, $request->user());
         } catch (\RuntimeException $e) {
             return back()->with('error', $e->getMessage());
         }
 
+        $booking = $replacement->incident?->muthowifBooking;
+        $profile = $request->user()->muthowifProfile;
+        $ownsBooking = $booking !== null
+            && $profile !== null
+            && (string) $booking->muthowif_profile_id === (string) $profile->getKey();
+
+        if ($ownsBooking) {
+            return redirect()
+                ->route('muthowif.bookings.show', $booking)
+                ->with('status', __('incidents.flash.replacement_confirmed'));
+        }
+
         return redirect()
-            ->route('muthowif.bookings.show', $booking)
+            ->route('muthowif.replacements.pending')
             ->with('status', __('incidents.flash.replacement_confirmed'));
     }
 
-    public function declineReplacement(Request $request, MuthowifBooking $booking, BookingReplacement $replacement): RedirectResponse
+    private function performDeclineReplacement(Request $request, BookingReplacement $replacement): RedirectResponse
     {
-        $this->authorize('confirmReplacement', $replacement);
-
         $validated = $request->validate([
             'note' => ['nullable', 'string', 'max:2000'],
         ]);
@@ -198,7 +258,7 @@ class BookingIncidentController extends Controller
         }
 
         return redirect()
-            ->route('muthowif.bookings.index')
+            ->route('muthowif.replacements.pending')
             ->with('status', __('incidents.flash.replacement_declined'));
     }
 }

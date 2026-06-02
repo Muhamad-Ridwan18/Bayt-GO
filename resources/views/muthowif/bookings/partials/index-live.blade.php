@@ -1,5 +1,6 @@
 @php
     $peerRecommendByBooking = $peerRecommendByBooking ?? [];
+    $pendingReplacementInvites = $pendingReplacementInvites ?? collect();
 @endphp
 
 <x-page-container class="space-y-6 py-2 sm:py-4">
@@ -13,6 +14,20 @@
             {{ __('muthowif.bookings.back_dashboard') }}
         </a>
     </div>
+
+    @if ($pendingReplacementInvites->isNotEmpty())
+        <section class="space-y-3">
+            <div class="flex flex-wrap items-center justify-between gap-2">
+                <h2 class="text-sm font-bold text-violet-950">{{ __('incidents.muthowif.index_pending_invites_heading') }}</h2>
+                <a href="{{ route('muthowif.replacements.pending') }}" class="text-xs font-semibold text-brand-700 hover:text-brand-800">
+                    {{ __('incidents.muthowif.pending_invites') }} →
+                </a>
+            </div>
+            @foreach ($pendingReplacementInvites as $replacement)
+                @include('muthowif.bookings.partials.replacement-invite-card', ['replacement' => $replacement])
+            @endforeach
+        </section>
+    @endif
 
     @if ($bookings->isEmpty())
         <div class="rounded-2xl border border-dashed border-slate-300 bg-white px-6 py-12 text-center shadow-sm sm:py-14">
