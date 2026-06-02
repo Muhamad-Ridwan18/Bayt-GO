@@ -22,11 +22,9 @@ final class AdminServiceMonitorService
 
     public const FILTER_INCIDENT = 'incident';
 
-    public const FILTER_H1_PENDING = 'h1_pending';
-
     /**
      * @return array{
-     *   counts: array{active: int, in_service: int, incident: int, h1_pending: int},
+     *   counts: array{active: int, in_service: int, incident: int},
      *   bookings: Collection<int, MuthowifBooking>,
      *   filter: string
      * }
@@ -51,7 +49,7 @@ final class AdminServiceMonitorService
     }
 
     /**
-     * @return array{active: int, in_service: int, incident: int, h1_pending: int}
+     * @return array{active: int, in_service: int, incident: int}
      */
     public function counts(): array
     {
@@ -59,7 +57,6 @@ final class AdminServiceMonitorService
             'active' => $this->filteredQuery(self::FILTER_ACTIVE)->count(),
             'in_service' => $this->filteredQuery(self::FILTER_IN_SERVICE)->count(),
             'incident' => $this->filteredQuery(self::FILTER_INCIDENT)->count(),
-            'h1_pending' => $this->filteredQuery(self::FILTER_H1_PENDING)->count(),
         ];
     }
 
@@ -69,7 +66,6 @@ final class AdminServiceMonitorService
             self::FILTER_ACTIVE,
             self::FILTER_IN_SERVICE,
             self::FILTER_INCIDENT,
-            self::FILTER_H1_PENDING,
         ], true) ? $filter : self::FILTER_ACTIVE;
     }
 
@@ -87,13 +83,6 @@ final class AdminServiceMonitorService
                 $q->where('incident_status', BookingIncidentOverlayStatus::Open->value)
                     ->orWhereHas('incidents', fn (Builder $iq) => $iq->whereIn('status', $this->openIncidentStatuses()));
             }),
-            self::FILTER_H1_PENDING => $query
-                ->whereNull('h1_confirmed_at')
-                ->where('service_phase', BookingServicePhase::PreService->value)
-                ->whereBetween('starts_on', [
-                    now()->startOfDay()->toDateString(),
-                    now()->addDay()->endOfDay()->toDateString(),
-                ]),
             default => $query->where('status', '!=', BookingStatus::Completed->value),
         };
     }
@@ -119,22 +108,6 @@ final class AdminServiceMonitorService
                 "CASE WHEN incident_status = 'open' THEN 0 WHEN service_phase = 'in_service' THEN 1 WHEN service_phase = 'pre_service' THEN 2 ELSE 3 END"
             )
             ->orderBy('starts_on');
-    }
-
-    public function needsH1Attention(MuthowifBooking $booking): bool
-    {
-        if ($booking->h1_confirmed_at !== null || $booking->service_phase !== BookingServicePhase::PreService) {
-            return false;
-        }
-
-        $start = $booking->starts_on?->copy()->startOfDay();
-        if ($start === null) {
-            return false;
-        }
-
-        $today = now()->startOfDay();
-
-        return $start->lte($today->copy()->addDay()) && $start->gte($today);
     }
 
     public function escrowLabel(MuthowifBooking $booking): string

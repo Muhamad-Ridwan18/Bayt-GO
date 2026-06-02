@@ -25,7 +25,6 @@ return [
         'lost_contact_in_service' => 'Hilang kontak saat pendampingan',
         'abandoned_service' => 'Meninggalkan pendampingan',
         'no_show' => 'Tidak hadir (hari H)',
-        'unresponsive_pre_h' => 'Tidak respons sebelum hari H',
         'last_minute_cancel' => 'Pembatalan mendadak',
         'force_majeure' => 'Force majeure',
         'false_alarm' => 'Laporan tidak terbukti',

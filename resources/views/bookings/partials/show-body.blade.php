@@ -41,130 +41,45 @@
     $muthowifNet = (float) ($split['muthowif_net'] ?? 0.0);
     $review = $b->review;
     $fmt = fn (float $n) => IndonesianNumber::formatThousands((string) (int) round($n));
-    $dateLocale = app()->getLocale() === 'id' ? 'id-ID' : 'en-GB';
-
-    $statusCardStyles = [
-        BookingStatus::Pending->value => [
-            'bar' => 'from-amber-400 via-amber-500 to-orange-500',
-            'glow' => 'shadow-amber-500/10',
-            'badge' => 'bg-amber-100 text-amber-950 ring-amber-200/80',
-        ],
-        BookingStatus::Confirmed->value => [
-            'bar' => 'from-emerald-400 via-emerald-500 to-teal-600',
-            'glow' => 'shadow-emerald-500/10',
-            'badge' => 'bg-emerald-100 text-emerald-950 ring-emerald-200/80',
-        ],
-        BookingStatus::Completed->value => [
-            'bar' => 'from-brand-400 via-brand-500 to-brand-700',
-            'glow' => 'shadow-brand-500/15',
-            'badge' => 'bg-brand-100 text-brand-950 ring-brand-200/80',
-        ],
-        BookingStatus::Cancelled->value => [
-            'bar' => 'from-red-300 via-red-400 to-red-500',
-            'glow' => 'shadow-red-500/10',
-            'badge' => 'bg-red-100 text-red-800 ring-red-200/80',
-        ],
-    ];
-    $cardStyle = $statusCardStyles[$st->value] ?? $statusCardStyles[BookingStatus::Pending->value];
 @endphp
-            {{-- Hero --}}
-            <article class="relative overflow-hidden rounded-3xl border border-slate-200/80 bg-white shadow-lg shadow-slate-900/5 transition hover:shadow-xl hover:shadow-slate-900/10 {{ $cardStyle['glow'] }}">
-                <div class="flex flex-col sm:flex-row">
-                    <div class="relative h-1.5 w-full shrink-0 self-stretch sm:h-auto sm:w-1.5">
-                        <div class="h-full min-h-[4px] w-full bg-gradient-to-r sm:bg-gradient-to-b {{ $cardStyle['bar'] }}"></div>
-                    </div>
-                    <div class="min-w-0 flex-1 p-6 sm:p-8">
-                        <p class="inline-flex items-center gap-2 text-xs font-semibold uppercase tracking-wider text-slate-500">
-                            <svg class="h-3.5 w-3.5 text-brand-600" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true">
-                                <path fill-rule="evenodd" d="M4.75 2a.75.75 0 01.75.75V4h7V2.75a.75.75 0 011.5 0V4h.25A2.75 2.75 0 0118 6.75v8.5A2.75 2.75 0 0115.25 18H4.75A2.75 2.75 0 012 15.25v-8.5A2.75 2.75 0 014.75 4H5V2.75A.75.75 0 014.75 2zm-1 5.5c-.69 0-1.25.56-1.25 1.25v6.5c0 .69.56 1.25 1.25 1.25h10.5c.69 0 1.25-.56 1.25-1.25v-6.5c0-.69-.56-1.25-1.25-1.25H3.75z" clip-rule="evenodd" />
-                            </svg>
-                            {{ __('bookings.show.detail_kicker') }}
-                        </p>
 
-                        <div class="mt-4 flex flex-col gap-6 sm:flex-row sm:items-start sm:justify-between">
-                            <div class="flex min-w-0 gap-4">
-                                <img
-                                    src="{{ route('layanan.photo', $b->muthowifProfile) }}"
-                                    alt="{{ __('bookings.index.photo_alt', ['name' => $b->muthowifProfile->user->name]) }}"
-                                    class="h-20 w-20 shrink-0 rounded-2xl object-cover shadow-md ring-2 ring-white sm:h-24 sm:w-24"
-                                    loading="lazy"
-                                >
-                                <div class="min-w-0 flex-1 space-y-3">
-                                    <div>
-                                        <h1 class="text-xl font-bold tracking-tight text-slate-900 sm:text-2xl">
-                                            {{ $b->muthowifProfile->user->name }}
-                                        </h1>
-                                        <a
-                                            href="{{ route('layanan.show', $b->muthowifProfile) }}"
-                                            class="mt-1 inline-flex items-center gap-1 text-sm font-semibold text-brand-700 hover:text-brand-800"
-                                        >
-                                            {{ __('marketplace.card.view_profile') }}
-                                            <svg class="h-3.5 w-3.5" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true">
-                                                <path fill-rule="evenodd" d="M3 10a.75.75 0 01.75-.75h10.638L10.23 5.29a.75.75 0 111.04-1.08l5.5 5.25a.75.75 0 010 1.08l-5.5 5.25a.75.75 0 11-1.04-1.08l4.158-3.96H3.75A.75.75 0 013 10z" clip-rule="evenodd" />
-                                            </svg>
-                                        </a>
-                                    </div>
-                                    @if (filled($b->booking_code))
-                                        <div class="rounded-xl border border-slate-100 bg-slate-50/90 px-3 py-2 ring-1 ring-slate-100">
-                                            <p class="text-[0.65rem] font-semibold uppercase tracking-wide text-slate-500">{{ __('bookings.show.booking_code') }}</p>
-                                            <p class="font-mono text-sm font-semibold tracking-tight text-slate-900">{{ $b->booking_code }}</p>
-                                        </div>
-                                    @endif
-                                    <div class="flex flex-wrap gap-2">
-                                        <span class="inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-semibold ring-1 {{ $cardStyle['badge'] }}">
-                                            {{ $st->label() }}
-                                        </span>
-                                        @if ($b->payment_status !== PaymentStatus::Pending)
-                                            <span class="inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-semibold ring-1 {{ match ($b->payment_status) {
-                                                PaymentStatus::Paid => 'bg-emerald-100 text-emerald-950 ring-emerald-200/80',
-                                                PaymentStatus::RefundPending => 'bg-amber-50 text-amber-950 ring-amber-200/80',
-                                                PaymentStatus::Refunded => 'bg-red-100 text-red-800 ring-red-200/80',
-                                                default => 'bg-orange-50 text-orange-950 ring-orange-200/80',
-                                            } }}">
-                                                {{ $b->payment_status->label() }}
-                                            </span>
-                                        @endif
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
+<div class="grid grid-cols-1 gap-6 lg:grid-cols-12 lg:gap-8">
+    <div class="min-w-0 space-y-6 lg:col-span-8">
+        @include('bookings.partials.show-detail-card', ['booking' => $b])
 
-                        <div class="mt-6 grid grid-cols-1 gap-4 sm:grid-cols-2">
-                            <div class="rounded-2xl bg-slate-50/90 p-4 ring-1 ring-slate-200/60">
-                                <p class="text-[0.65rem] font-semibold uppercase tracking-wide text-slate-500">{{ __('bookings.show.period') }}</p>
-                                <p class="mt-1 text-sm font-semibold tabular-nums text-slate-900">
-                                    {{ Carbon::parse($b->starts_on)->format('d/m/Y') }}
-                                    <span class="mx-1 font-normal text-slate-400">-</span>
-                                    {{ Carbon::parse($b->ends_on)->format('d/m/Y') }}
-                                </p>
-                                <p class="mt-1 text-xs text-slate-500">{{ __('bookings.show.service_days_line', ['count' => $nights]) }}</p>
-                            </div>
-                            <div class="rounded-2xl bg-slate-50/90 p-4 ring-1 ring-slate-200/60">
-                                <p class="text-[0.65rem] font-semibold uppercase tracking-wide text-slate-500">{{ __('bookings.show.service') }}</p>
-                                <p class="mt-1 text-sm font-semibold text-slate-900">{{ $b->service_type?->label() ?? '-' }}</p>
-                                <p class="mt-1 text-xs text-slate-500">{{ __('bookings.index.pilgrims_count', ['count' => $b->pilgrim_count, 'pilgrims_word' => __('common.pilgrims')]) }}</p>
-                            </div>
-                        </div>
+        @include('bookings.partials.show-cancellation-alert', [
+            'booking' => $b,
+            'showReferralNetworkPanel' => $showReferralNetworkPanel ?? false,
+            'referralNetworkAlternatives' => $referralNetworkAlternatives ?? collect(),
+        ])
 
-                        @include('bookings.partials.booking-documents', ['booking' => $b, 'routeName' => 'bookings.documents.show'])
-                    </div>
+        @if (! empty($showReferralNetworkPanel) && $showReferralNetworkPanel)
+            <section id="booking-recommendations-mobile" class="scroll-mt-24 rounded-2xl border border-slate-200/90 bg-white p-5 shadow-sm ring-1 ring-slate-100/80 sm:p-6 lg:hidden">
+                <h2 class="text-sm font-bold text-slate-900">{{ __('bookings.show.recommendations_title') }}</h2>
+                <p class="mt-1 text-xs leading-relaxed text-slate-600">{{ __('bookings.show.recommendations_subtitle') }}</p>
+                <div class="mt-4">
+                    @include('bookings.partials.show-recommendations-list', [
+                        'booking' => $b,
+                        'referralNetworkAlternatives' => $referralNetworkAlternatives ?? collect(),
+                    ])
                 </div>
-            </article>
+            </section>
+        @endif
 
-            @include('bookings.partials.incident-panel', [
-                'booking' => $b,
-                'openIncident' => $openIncident ?? null,
-                'offeredReplacement' => $offeredReplacement ?? null,
-            ])
+        @include('bookings.partials.incident-panel', [
+            'booking' => $b,
+            'openIncident' => $openIncident ?? null,
+            'selectableReplacements' => $selectableReplacements ?? collect(),
+        ])
 
-            @include('bookings.partials.referral-network-alternatives', [
-                'booking' => $b,
-                'referralNetworkAlternatives' => $referralNetworkAlternatives ?? collect(),
-                'showReferralNetworkPanel' => $showReferralNetworkPanel ?? false,
-            ])
+        @include('bookings.partials.booking-documents', [
+            'booking' => $b,
+            'routeName' => 'bookings.documents.show',
+            'variant' => 'cards',
+        ])
 
             @if (in_array($st, [BookingStatus::Confirmed, BookingStatus::Completed], true) || ($st === BookingStatus::Cancelled && $b->paid_at))
-                <div class="mt-8 overflow-hidden rounded-3xl border border-slate-200/80 bg-white shadow-md shadow-slate-900/5">
+                <div class="overflow-hidden rounded-2xl border border-slate-200/90 bg-white shadow-sm ring-1 ring-slate-100/80">
                     <div class="border-b border-slate-100 bg-gradient-to-r from-slate-50 to-white px-6 py-4 sm:px-8">
                         <h2 class="flex items-center gap-2 text-base font-bold text-slate-900">
                             <span class="flex h-8 w-8 items-center justify-center rounded-lg bg-brand-100 text-brand-700">
@@ -260,7 +175,7 @@
             @endif
 
             @if ($st === BookingStatus::Confirmed)
-                <div class="mt-8 space-y-6 rounded-3xl border border-slate-200/80 bg-white p-6 shadow-md shadow-slate-900/5 sm:p-8">
+                <div class="space-y-6 rounded-2xl border border-slate-200/90 bg-white p-6 shadow-sm ring-1 ring-slate-100/80 sm:p-8">
                     <div>
                         <h2 class="text-lg font-bold text-slate-900">{{ __('bookings.show.refund_reschedule_heading') }}</h2>
                         <p class="mt-2 text-xs leading-relaxed text-slate-600">
@@ -332,7 +247,7 @@
 
             @if ($st === BookingStatus::Cancelled && $b->isRefundPending())
                 @php $pend = $b->pendingRefundRequest(); @endphp
-                <div class="mt-8 rounded-3xl border border-amber-200 bg-gradient-to-br from-amber-50 to-amber-50/40 p-6 text-sm text-amber-950 shadow-md shadow-amber-900/5 ring-1 ring-amber-200/60">
+                <div class="rounded-2xl border border-amber-200 bg-gradient-to-br from-amber-50 to-amber-50/40 p-6 text-sm text-amber-950 shadow-sm ring-1 ring-amber-200/60">
                     <p class="font-bold">{{ __('bookings.show.refund_pending_title') }}</p>
                     <p class="mt-2 leading-relaxed">
                         {!! __('bookings.show.refund_pending_body_html', ['amount' => $pend ? $fmt((float) $pend->net_refund_customer) : __('common.em_dash')]) !!}
@@ -341,13 +256,13 @@
             @endif
 
             @if ($st === BookingStatus::Cancelled && $b->isRefunded())
-                <div class="mt-8 rounded-3xl border border-slate-200 bg-slate-50 p-6 text-sm text-slate-700 shadow-sm">
+                <div class="rounded-2xl border border-slate-200 bg-slate-50 p-6 text-sm text-slate-700 shadow-sm">
                     {{ __('bookings.show.refunded_done') }}
                 </div>
             @endif
 
             @if ($st === BookingStatus::Confirmed && $b->payment_status === PaymentStatus::Paid && empty($openIncident))
-                <div class="mt-8 overflow-hidden rounded-3xl border border-brand-200 bg-gradient-to-br from-brand-50/90 to-white p-6 shadow-md shadow-brand-900/5 ring-1 ring-brand-200/50 sm:p-8">
+                <div class="overflow-hidden rounded-2xl border border-brand-200 bg-gradient-to-br from-brand-50/90 to-white p-6 shadow-sm ring-1 ring-brand-200/50 sm:p-8">
                     <h2 class="text-lg font-bold text-slate-900">{{ __('bookings.show.complete_service_heading') }}</h2>
                     <p class="mt-1 text-sm text-slate-600">
                         {{ __('bookings.show.complete_service_intro') }}
@@ -386,7 +301,7 @@
             @endif
 
             @if ($st === BookingStatus::Pending || $b->isAwaitingPayment())
-                <form method="POST" action="{{ route('bookings.cancel', $b) }}" class="mt-8 rounded-3xl border border-red-200/80 bg-gradient-to-br from-red-50/90 to-white p-5 shadow-sm ring-1 ring-red-100/80" onsubmit="return confirm(@json(__('bookings.show.cancel_booking_confirm')));">
+                <form method="POST" action="{{ route('bookings.cancel', $b) }}" class="rounded-2xl border border-red-200/80 bg-gradient-to-br from-red-50/90 to-white p-5 shadow-sm ring-1 ring-red-100/80" onsubmit="return confirm(@json(__('bookings.show.cancel_booking_confirm')));">
                     @csrf
                     <p class="text-sm font-bold text-red-900">{{ __('bookings.show.cancel_section_title') }}</p>
                     <p class="mt-1 text-xs text-red-800/90">{{ __('bookings.show.cancel_section_hint') }}</p>
@@ -397,7 +312,7 @@
             @endif
 
             @if ($st === BookingStatus::Completed)
-                <div class="mt-8 rounded-3xl border border-slate-200/80 bg-white p-6 shadow-md shadow-slate-900/5 sm:p-8">
+                <div class="rounded-2xl border border-slate-200/90 bg-white p-6 shadow-sm ring-1 ring-slate-100/80 sm:p-8">
                     <h2 class="text-lg font-bold text-slate-900">{{ __('bookings.show.completed_rating_heading') }}</h2>
                     <p class="mt-1 text-sm text-slate-600">{{ __('bookings.show.completed_rating_intro') }}</p>
 
@@ -432,3 +347,11 @@
                     </form>
                 </div>
             @endif
+    </div>
+
+    @include('bookings.partials.show-sidebar', [
+        'booking' => $b,
+        'showReferralNetworkPanel' => $showReferralNetworkPanel ?? false,
+        'referralNetworkAlternatives' => $referralNetworkAlternatives ?? collect(),
+    ])
+</div>

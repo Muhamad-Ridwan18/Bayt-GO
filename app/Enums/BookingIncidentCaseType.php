@@ -8,7 +8,6 @@ enum BookingIncidentCaseType: string
     case LostContactInService = 'lost_contact_in_service';
     case AbandonedService = 'abandoned_service';
     case NoShow = 'no_show';
-    case UnresponsivePreH = 'unresponsive_pre_h';
     case LastMinuteCancel = 'last_minute_cancel';
     case ForceMajeure = 'force_majeure';
     case FalseAlarm = 'false_alarm';

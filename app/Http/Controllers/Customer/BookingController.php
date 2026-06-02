@@ -132,7 +132,9 @@ class BookingController extends Controller
         [$openIncident, $selectableReplacements] = $this->incidentContextForCustomer($booking);
 
         $networkReferral = app(MuthowifNetworkReferralService::class);
-        $referralNetworkAlternatives = $networkReferral->alternativesForCustomerAfterJadwalRejection($booking);
+        $referralNetworkAlternatives = $this->referralAlternativesWithStats(
+            $networkReferral->alternativesForCustomerAfterJadwalRejection($booking),
+        );
         $showReferralNetworkPanel = $networkReferral->shouldShowCustomerReferralPanel($booking);
 
         return view('bookings.show', [
@@ -162,7 +164,9 @@ class BookingController extends Controller
         $addonsById = $this->addOnsKeyByIdForBooking($booking);
 
         $networkReferral = app(MuthowifNetworkReferralService::class);
-        $referralNetworkAlternatives = $networkReferral->alternativesForCustomerAfterJadwalRejection($booking);
+        $referralNetworkAlternatives = $this->referralAlternativesWithStats(
+            $networkReferral->alternativesForCustomerAfterJadwalRejection($booking),
+        );
         $showReferralNetworkPanel = $networkReferral->shouldShowCustomerReferralPanel($booking);
 
         $booking->syncServicePhase();
@@ -1061,6 +1065,22 @@ class BookingController extends Controller
         }
 
         return app(MootaApiClient::class)->bankAccountIds();
+    }
+
+    /**
+     * @param  Collection<int, MuthowifProfile>  $profiles
+     * @return Collection<int, MuthowifProfile>
+     */
+    private function referralAlternativesWithStats(Collection $profiles): Collection
+    {
+        if ($profiles->isEmpty()) {
+            return $profiles;
+        }
+
+        $profiles->loadAvg('bookingReviews', 'rating');
+        $profiles->loadCount('bookingReviews');
+
+        return $profiles;
     }
 
 }

@@ -3,12 +3,11 @@
     $monitor = app(AdminServiceMonitorService::class);
 @endphp
 <div class="space-y-5">
-    <div class="grid grid-cols-2 gap-3 sm:grid-cols-4">
+    <div class="grid grid-cols-1 gap-3 sm:grid-cols-3">
         @foreach ([
             AdminServiceMonitorService::FILTER_ACTIVE => __('admin.service_monitor.tab_active'),
             AdminServiceMonitorService::FILTER_IN_SERVICE => __('admin.service_monitor.tab_in_service'),
             AdminServiceMonitorService::FILTER_INCIDENT => __('admin.service_monitor.tab_incident'),
-            AdminServiceMonitorService::FILTER_H1_PENDING => __('admin.service_monitor.tab_h1'),
         ] as $tab => $label)
             <a
                 href="{{ route('admin.service_monitor.index', ['filter' => $tab]) }}"
@@ -40,7 +39,6 @@
                         @php
                             $incident = $monitor->openIncidentFor($booking);
                             $escrow = $monitor->escrowLabel($booking);
-                            $h1Pending = $monitor->needsH1Attention($booking);
                         @endphp
                         <tr class="hover:bg-slate-50/80 {{ $incident ? 'bg-rose-50/40' : '' }}">
                             <td class="px-4 py-3 whitespace-nowrap">
@@ -66,16 +64,6 @@
                                     @if ($incident)
                                         <span class="inline-flex rounded-full bg-rose-100 px-2 py-0.5 text-[10px] font-bold text-rose-900">
                                             {{ $incident->case_type->label() }}
-                                        </span>
-                                    @endif
-                                    @if ($h1Pending)
-                                        <span class="inline-flex rounded-full bg-amber-100 px-2 py-0.5 text-[10px] font-bold text-amber-950">
-                                            {{ __('admin.service_monitor.badge_h1') }}
-                                        </span>
-                                    @endif
-                                    @if ($booking->h1_confirmed_at)
-                                        <span class="inline-flex rounded-full bg-emerald-100 px-2 py-0.5 text-[10px] font-semibold text-emerald-900">
-                                            H-1 ✓
                                         </span>
                                     @endif
                                     @if ($booking->muthowif_checked_in_at)

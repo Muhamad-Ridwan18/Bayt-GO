@@ -19,7 +19,6 @@ return [
         'lost_contact_in_service' => 'Lost contact during service',
         'abandoned_service' => 'Abandoned service',
         'no_show' => 'No-show (service day)',
-        'unresponsive_pre_h' => 'Unresponsive before service day',
         'last_minute_cancel' => 'Last-minute cancellation',
         'force_majeure' => 'Force majeure',
         'false_alarm' => 'Unfounded report',

@@ -152,7 +152,7 @@ flowchart TB
 
 | Case | Replacement | Refund penuh | Voucher | Sanksi muthowif |
 |------|-------------|--------------|---------|-----------------|
-| Tidak respons (pra-H) | Ya, prioritas | Jika gagal 24 jam | Opsional | Warning → suspend |
+| ~~Tidak respons (pra-H)~~ *(dihapus)* | — | — | — | — |
 | No-show H | Ya, darurat | Jika gagal 4 jam | Ya | Strike + suspend |
 | Cancel mendadak < 24 jam | Ya | Default jika paid | Ya | Strike berat |
 | Cancel < 1 jam | Refund penuh | Ya | Ya | Suspend + review |
@@ -524,11 +524,13 @@ Gunakan `append-only` events (no update/delete); koreksi via event `note.amended
 
 ## 13. Analisis per case (1–6)
 
-### Case 1 — Muthowif tidak merespons sebelum hari H
+### Case 1 — Muthowif tidak merespons sebelum hari H *(dihapus dari produk)*
+
+> **Status:** Tipe insiden `unresponsive_pre_h` tidak lagi dipakai. SLA chat / reminder muthowif bisa tetap operasional lewat CS tanpa membuka insiden otomatis tipe ini.
 
 | Aspek | Detail |
 |-------|--------|
-| **Alur kejadian** | Booking confirmed + paid → jamaah chat → muthowif tidak balas ≥ 4 jam (H-3..H-1) → sistem warning → CS hubungi → jika tetap silence → insiden `unresponsive_pre_h` |
+| **Alur kejadian** | *(arsip desain)* Booking confirmed + paid → jamaah chat → muthowif tidak balas ≥ 4 jam → CS hubungi manual; tidak ada auto-insiden pra-H |
 | **Trigger** | `last_muthowif_chat_at` > 4h AND `starts_on` > today AND `starts_on` <= today+3 |
 | **SOP operasional** | CS hubungi WA muthowif & jamaah → 2 jam tanpa respons muthowif → eskalasi admin → tawarkan replacement atau refund jika H < 2 |
 | **Sistem otomatis** | Notif reminder muthowif; buka insiden `severity=medium`; suggest replacement candidates |
@@ -658,11 +660,11 @@ Gunakan `append-only` events (no update/delete); koreksi via event `note.amended
 ```php
 enum BookingIncidentCaseType: string
 {
-    case UnresponsivePreH = 'unresponsive_pre_h';
-    case NoShow = 'no_show';
-    case LastMinuteCancel = 'last_minute_cancel';
     case MuthowifUnavailable = 'muthowif_unavailable';
     case LostContactInService = 'lost_contact_in_service';
+    case AbandonedService = 'abandoned_service';
+    case NoShow = 'no_show';
+    case LastMinuteCancel = 'last_minute_cancel';
     case ForceMajeure = 'force_majeure';
     case FalseAlarm = 'false_alarm';
 }
@@ -1047,7 +1049,7 @@ final class BookingIncidentService
             return BookingIncidentCaseType::NoShow;
         }
 
-        return BookingIncidentCaseType::UnresponsivePreH;
+        return BookingIncidentCaseType::LostContactInService;
     }
 
     private function assertCanReportEmergency(MuthowifBooking $booking, User $customer): void
