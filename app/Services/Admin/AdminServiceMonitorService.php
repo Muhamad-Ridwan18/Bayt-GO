@@ -96,7 +96,12 @@ final class AdminServiceMonitorService
             ->with([
                 'customer:id,name,email',
                 'muthowifProfile.user:id,name',
-                'latestSettledBookingPayment:id,muthowif_booking_id,wallet_credited_at',
+                'latestSettledBookingPayment' => fn ($q) => $q->select(
+                    'booking_payments.id',
+                    'booking_payments.muthowif_booking_id',
+                    'booking_payments.settled_at',
+                    'booking_payments.wallet_credited_at',
+                ),
                 'incidents' => fn ($q) => $q
                     ->whereIn('status', $this->openIncidentStatuses())
                     ->orderByDesc('opened_at')

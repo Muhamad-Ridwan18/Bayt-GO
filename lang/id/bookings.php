@@ -150,6 +150,7 @@ return [
         'refund_breakdown_html' => 'Dari harga dasar Rp :base: potongan admin Rp :platform dan potongan muthowif Rp :muthowif (order batal). Total yang Anda bayar Rp :paid (sudah termasuk biaya platform di pembayaran).',
         'refund_confirm' => 'Pesanan akan dibatalkan dan admin akan mentransfer refund (nominal bersih setelah potongan). Lanjutkan?',
         'note_optional' => 'Catatan (opsional)',
+        'customer_note_placeholder' => 'Ceritakan situasi darurat secara singkat (opsional)',
         'refund_bank_name' => 'Nama bank',
         'refund_bank_name_placeholder' => 'Contoh: BCA, Mandiri, BRI',
         'refund_account_holder' => 'Nama pemilik rekening',

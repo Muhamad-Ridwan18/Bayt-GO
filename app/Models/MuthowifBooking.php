@@ -160,7 +160,7 @@ class MuthowifBooking extends Model
     public function latestSettledBookingPayment(): HasOne
     {
         return $this->hasOne(BookingPayment::class, 'muthowif_booking_id')
-            ->whereIn('status', ['settlement', 'capture'])
+            ->whereIn('booking_payments.status', ['settlement', 'capture'])
             ->latestOfMany(['settled_at', 'id']);
     }
 
