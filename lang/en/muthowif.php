@@ -61,7 +61,8 @@ return [
     ],
     'replacements' => [
         'page_invites_title' => 'Replacement requests',
-        'page_invites_subtitle' => 'Like a new booking — review schedule, documents, and net earnings before you confirm.',
+        'page_invites_subtitle' => 'One place for BaytGo invites and open recruitment — review like a booking request, then confirm or apply.',
+        'empty_pending' => 'No invites or open recruitment waiting for your action.',
         'page_opportunities_title' => 'Replacement opportunities',
         'page_opportunities_subtitle' => 'Bookings with open incidents — accept if your schedule fits.',
         'badge_invite' => 'Replacement invite',

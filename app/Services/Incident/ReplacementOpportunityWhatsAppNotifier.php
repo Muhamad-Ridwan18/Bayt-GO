@@ -34,7 +34,7 @@ final class ReplacementOpportunityWhatsAppNotifier
         }
 
         $locale = $profile->user?->locale === 'en' ? 'en' : 'id';
-        $url = route('muthowif.replacements.opportunities');
+        $url = route('muthowif.replacements.pending', ['tab' => 'pending']);
 
         $message = __('incidents.whatsapp.muthowif_opportunity', [
             'code' => $booking->booking_code ?? '—',

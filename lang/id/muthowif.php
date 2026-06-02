@@ -61,7 +61,8 @@ return [
     ],
     'replacements' => [
         'page_invites_title' => 'Permintaan menggantikan',
-        'page_invites_subtitle' => 'Sama seperti pesanan masuk — tinjau jadwal, dokumen, dan pendapatan sebelum konfirmasi.',
+        'page_invites_subtitle' => 'Satu tempat untuk undangan BaytGo dan rekrutmen terbuka — tinjau seperti permintaan pesanan, lalu konfirmasi atau lamar.',
+        'empty_pending' => 'Tidak ada undangan atau rekrutmen yang menunggu tindakan Anda.',
         'page_opportunities_title' => 'Peluang menggantikan',
         'page_opportunities_subtitle' => 'Pesanan dengan insiden terbuka — terima jika jadwal Anda cocok.',
         'badge_invite' => 'Undangan pengganti',

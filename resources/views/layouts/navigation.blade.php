@@ -1,8 +1,6 @@
 @php
-    use App\Enums\BookingReplacementStatus;
     use App\Enums\BookingStatus;
     use App\Enums\MuthowifVerificationStatus;
-    use App\Models\BookingReplacement;
     use App\Models\MuthowifBooking;
     use App\Models\MuthowifProfile;
 
@@ -19,11 +17,8 @@
                 ->where('muthowif_profile_id', $mpNav->id)
                 ->where('status', BookingStatus::Pending)
                 ->count();
-            $muthowifPendingReplacementCount = BookingReplacement::query()
-                ->where('replacement_muthowif_profile_id', $mpNav->getKey())
-                ->where('status', BookingReplacementStatus::AwaitingMuthowifConfirm)
-                ->whereColumn('replacement_muthowif_profile_id', '!=', 'original_muthowif_profile_id')
-                ->count();
+            $muthowifPendingReplacementCount = app(\App\Services\Incident\MuthowifReplacementInboxService::class)
+                ->pendingActionCount($mpNav);
         }
     }
 
@@ -145,7 +140,7 @@
                                 ></span>
                             </span>
                         </x-nav-link>
-                        <x-nav-link :href="route('muthowif.replacements.pending')" :active="request()->routeIs('muthowif.replacements.pending')">
+                        <x-nav-link :href="route('muthowif.replacements.pending')" :active="request()->routeIs('muthowif.replacements.*')">
                             <span class="inline-flex items-center gap-2">
                                 {{ __('incidents.muthowif.nav_pending_replacements') }}
                                 <span
@@ -161,9 +156,6 @@
                                     x-text="displayLabel"
                                 ></span>
                             </span>
-                        </x-nav-link>
-                        <x-nav-link :href="route('muthowif.replacements.opportunities')" :active="request()->routeIs('muthowif.replacements.opportunities')">
-                            {{ __('nav.replacement_opportunities') }}
                         </x-nav-link>
                     @endif
                 </div>
@@ -305,7 +297,7 @@
                         ></span>
                     </span>
                 </x-responsive-nav-link>
-                <x-responsive-nav-link :href="route('muthowif.replacements.pending')" :active="request()->routeIs('muthowif.replacements.pending')">
+                <x-responsive-nav-link :href="route('muthowif.replacements.pending')" :active="request()->routeIs('muthowif.replacements.*')">
                     <span class="inline-flex items-center gap-2">
                         {{ __('incidents.muthowif.nav_pending_replacements') }}
                         <span
@@ -321,9 +313,6 @@
                             x-text="displayLabel"
                         ></span>
                     </span>
-                </x-responsive-nav-link>
-                <x-responsive-nav-link :href="route('muthowif.replacements.opportunities')" :active="request()->routeIs('muthowif.replacements.opportunities')">
-                    {{ __('nav.replacement_opportunities') }}
                 </x-responsive-nav-link>
             @endif
         </div>

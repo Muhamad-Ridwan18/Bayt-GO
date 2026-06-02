@@ -3,16 +3,15 @@
 namespace App\Http\Controllers\Muthowif;
 
 use App\Enums\BookingIncidentCaseType;
-use App\Enums\BookingIncidentStatus;
 use App\Http\Controllers\Controller;
 use App\Models\BookingIncident;
 use App\Models\BookingReplacement;
 use App\Models\MuthowifBooking;
 use App\Models\MuthowifProfile;
 use Illuminate\Database\Eloquent\Builder;
-use App\Services\Incident\BookingReplacementCandidateService;
 use App\Services\Incident\BookingIncidentService;
 use App\Services\Incident\BookingReplacementService;
+use App\Services\Incident\MuthowifReplacementInboxService;
 use App\Enums\BookingReplacementStatus;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
@@ -27,11 +26,7 @@ class BookingIncidentController extends Controller
         $profile = $request->user()->muthowifProfile;
         abort_unless($profile, 403);
 
-        $n = BookingReplacement::query()
-            ->where('replacement_muthowif_profile_id', $profile->getKey())
-            ->where('status', BookingReplacementStatus::AwaitingMuthowifConfirm)
-            ->whereColumn('replacement_muthowif_profile_id', '!=', 'original_muthowif_profile_id')
-            ->count();
+        $n = app(MuthowifReplacementInboxService::class)->pendingActionCount($profile);
 
         return response()->json(['pending_count' => $n]);
     }
@@ -46,10 +41,12 @@ class BookingIncidentController extends Controller
             $tab = 'pending';
         }
 
+        $inbox = app(MuthowifReplacementInboxService::class);
+        $openIncidents = $tab === 'pending' ? $inbox->openRecruitmentIncidents($profile) : collect();
+        $opportunityAddonsById = $tab === 'pending' ? $inbox->addonsByIdForIncidents($openIncidents) : collect();
+
         $counts = [
-            'pending' => $this->replacementAssignmentsQuery($profile)
-                ->where('status', BookingReplacementStatus::AwaitingMuthowifConfirm)
-                ->count(),
+            'pending' => $inbox->awaitingInviteCount($profile) + $openIncidents->count(),
             'active' => $this->replacementAssignmentsQuery($profile)
                 ->whereIn('status', array_map(fn (BookingReplacementStatus $s) => $s->value, $this->replacementStatusesForTab('active')))
                 ->count(),
@@ -73,6 +70,8 @@ class BookingIncidentController extends Controller
 
         return view('muthowif.replacements.pending', [
             'replacements' => $replacements,
+            'openIncidents' => $openIncidents,
+            'opportunityAddonsById' => $opportunityAddonsById,
             'tab' => $tab,
             'counts' => $counts,
         ]);
@@ -111,66 +110,9 @@ class BookingIncidentController extends Controller
         };
     }
 
-    public function recruitmentOpportunities(Request $request): View
+    public function recruitmentOpportunities(Request $request): RedirectResponse
     {
-        $profile = $request->user()->muthowifProfile;
-        abort_unless($profile, 403);
-
-        $candidateService = app(BookingReplacementCandidateService::class);
-
-        $incidents = BookingIncident::query()
-            ->with(['muthowifBooking.customer', 'muthowifBooking.muthowifProfile.user', 'muthowifBooking.muthowifProfile.services.addOns'])
-            ->where('replacement_recruitment_open', true)
-            ->whereNotIn('status', [
-                BookingIncidentStatus::Resolved->value,
-                BookingIncidentStatus::Cancelled->value,
-            ])
-            ->orderByDesc('replacement_recruitment_opened_at')
-            ->limit(50)
-            ->get()
-            ->filter(function (BookingIncident $incident) use ($profile, $candidateService) {
-                $booking = $incident->muthowifBooking;
-                if ($booking === null) {
-                    return false;
-                }
-
-                if ((string) $booking->muthowif_profile_id === (string) $profile->getKey()) {
-                    return false;
-                }
-
-                try {
-                    $candidateService->assertCanReplace($booking, $profile);
-
-                    return true;
-                } catch (\RuntimeException) {
-                    return false;
-                }
-            })
-            ->filter(function (BookingIncident $incident) use ($profile) {
-                return ! BookingReplacement::query()
-                    ->where('booking_incident_id', $incident->getKey())
-                    ->where('replacement_muthowif_profile_id', $profile->getKey())
-                    ->whereNotIn('status', [
-                        BookingReplacementStatus::RejectedByAdmin->value,
-                        BookingReplacementStatus::DeclinedByMuthowif->value,
-                        BookingReplacementStatus::Cancelled->value,
-                        BookingReplacementStatus::NotSelected->value,
-                    ])
-                    ->exists();
-            })
-            ->values();
-
-        $bookings = $incidents->map(fn ($i) => $i->muthowifBooking)->filter();
-        $addonIds = $bookings->flatMap(fn ($b) => $b->selected_add_on_ids ?? [])->unique()->filter()->values();
-        $addonsById = $addonIds->isEmpty()
-            ? collect()
-            : \App\Models\MuthowifServiceAddOn::query()->whereIn('id', $addonIds)->get()->keyBy('id');
-
-        return view('muthowif.replacements.opportunities', [
-            'incidents' => $incidents,
-            'profile' => $profile,
-            'addonsById' => $addonsById,
-        ]);
+        return redirect()->route('muthowif.replacements.pending', ['tab' => 'pending']);
     }
 
     public function declineOpportunity(Request $request, BookingIncident $incident): RedirectResponse
@@ -190,7 +132,9 @@ class BookingIncidentController extends Controller
             return back()->with('error', $e->getMessage());
         }
 
-        return back()->with('status', __('incidents.flash.opportunity_declined'));
+        return redirect()
+            ->route('muthowif.replacements.pending', ['tab' => 'pending'])
+            ->with('status', __('incidents.flash.opportunity_declined'));
     }
 
     public function volunteer(Request $request, BookingIncident $incident): RedirectResponse
