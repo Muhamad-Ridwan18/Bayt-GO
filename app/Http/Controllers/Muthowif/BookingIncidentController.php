@@ -8,6 +8,8 @@ use App\Http\Controllers\Controller;
 use App\Models\BookingIncident;
 use App\Models\BookingReplacement;
 use App\Models\MuthowifBooking;
+use App\Models\MuthowifProfile;
+use Illuminate\Database\Eloquent\Builder;
 use App\Services\Incident\BookingReplacementCandidateService;
 use App\Services\Incident\BookingIncidentService;
 use App\Services\Incident\BookingReplacementService;
@@ -39,7 +41,24 @@ class BookingIncidentController extends Controller
         $profile = $request->user()->muthowifProfile;
         abort_unless($profile, 403);
 
-        $replacements = BookingReplacement::query()
+        $tab = $request->query('tab', 'pending');
+        if (! in_array($tab, ['pending', 'active', 'history'], true)) {
+            $tab = 'pending';
+        }
+
+        $counts = [
+            'pending' => $this->replacementAssignmentsQuery($profile)
+                ->where('status', BookingReplacementStatus::AwaitingMuthowifConfirm)
+                ->count(),
+            'active' => $this->replacementAssignmentsQuery($profile)
+                ->whereIn('status', array_map(fn (BookingReplacementStatus $s) => $s->value, $this->replacementStatusesForTab('active')))
+                ->count(),
+            'history' => $this->replacementAssignmentsQuery($profile)
+                ->whereIn('status', array_map(fn (BookingReplacementStatus $s) => $s->value, $this->replacementStatusesForTab('history')))
+                ->count(),
+        ];
+
+        $replacements = $this->replacementAssignmentsQuery($profile)
             ->with([
                 'incident.muthowifBooking.customer',
                 'incident.muthowifBooking.muthowifProfile.user',
@@ -47,15 +66,49 @@ class BookingIncidentController extends Controller
                 'originalProfile.user',
                 'replacementProfile.user',
             ])
-            ->where('replacement_muthowif_profile_id', $profile->getKey())
-            ->where('status', BookingReplacementStatus::AwaitingMuthowifConfirm)
-            ->whereColumn('replacement_muthowif_profile_id', '!=', 'original_muthowif_profile_id')
+            ->whereIn('status', array_map(fn (BookingReplacementStatus $s) => $s->value, $this->replacementStatusesForTab($tab)))
             ->orderByDesc('created_at')
-            ->paginate(20);
+            ->paginate(20)
+            ->withQueryString();
 
         return view('muthowif.replacements.pending', [
             'replacements' => $replacements,
+            'tab' => $tab,
+            'counts' => $counts,
         ]);
+    }
+
+    /**
+     * @return Builder<BookingReplacement>
+     */
+    private function replacementAssignmentsQuery(MuthowifProfile $profile): Builder
+    {
+        return BookingReplacement::query()
+            ->where('replacement_muthowif_profile_id', $profile->getKey())
+            ->whereColumn('replacement_muthowif_profile_id', '!=', 'original_muthowif_profile_id');
+    }
+
+    /**
+     * @return list<BookingReplacementStatus>
+     */
+    private function replacementStatusesForTab(string $tab): array
+    {
+        return match ($tab) {
+            'active' => [
+                BookingReplacementStatus::PendingAdminApproval,
+                BookingReplacementStatus::ApprovedForCustomer,
+                BookingReplacementStatus::OfferedToCustomer,
+            ],
+            'history' => [
+                BookingReplacementStatus::DeclinedByMuthowif,
+                BookingReplacementStatus::RejectedByAdmin,
+                BookingReplacementStatus::NotSelected,
+                BookingReplacementStatus::AcceptedByCustomer,
+                BookingReplacementStatus::RejectedByCustomer,
+                BookingReplacementStatus::Cancelled,
+            ],
+            default => [BookingReplacementStatus::AwaitingMuthowifConfirm],
+        };
     }
 
     public function recruitmentOpportunities(Request $request): View
@@ -160,7 +213,7 @@ class BookingIncidentController extends Controller
         }
 
         return redirect()
-            ->route('muthowif.replacements.opportunities')
+            ->route('muthowif.replacements.pending', ['tab' => 'active'])
             ->with('status', __('incidents.flash.volunteered'));
     }
 
@@ -254,7 +307,7 @@ class BookingIncidentController extends Controller
         }
 
         return redirect()
-            ->route('muthowif.replacements.pending')
+            ->route('muthowif.replacements.pending', ['tab' => 'active'])
             ->with('status', __('incidents.flash.replacement_confirmed'));
     }
 
@@ -275,7 +328,7 @@ class BookingIncidentController extends Controller
         }
 
         return redirect()
-            ->route('muthowif.replacements.pending')
+            ->route('muthowif.replacements.pending', ['tab' => 'history'])
             ->with('status', __('incidents.flash.replacement_declined'));
     }
 }

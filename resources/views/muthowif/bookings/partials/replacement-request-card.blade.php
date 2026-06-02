@@ -1,4 +1,5 @@
 @php
+    use App\Enums\BookingReplacementStatus;
     use App\Enums\MuthowifServiceType;
     use App\Enums\PaymentStatus;
     use App\Support\IndonesianNumber;
@@ -11,6 +12,7 @@
     $replacement = $replacement ?? null;
     $addonsById = $addonsById ?? collect();
     $defaultOpen = $defaultOpen ?? false;
+    $interactive = $interactive ?? ($variant === 'opportunity');
 
     $booking->loadMissing(['customer', 'muthowifProfile.services.addOns']);
     $incident->loadMissing([]);
@@ -59,13 +61,20 @@
     $isCompany = $customer?->isCompanyCustomer() ?? false;
 
     $isInvite = $variant === 'invite';
-    $accentClass = $isInvite ? 'bg-violet-500' : 'bg-amber-500';
+    $replacementStatus = $replacement?->status;
+    $accentClass = match (true) {
+        $replacementStatus === BookingReplacementStatus::AcceptedByCustomer => 'bg-emerald-500',
+        in_array($replacementStatus, [BookingReplacementStatus::DeclinedByMuthowif, BookingReplacementStatus::RejectedByAdmin, BookingReplacementStatus::Cancelled], true) => 'bg-red-400',
+        in_array($replacementStatus, [BookingReplacementStatus::ApprovedForCustomer, BookingReplacementStatus::OfferedToCustomer, BookingReplacementStatus::PendingAdminApproval], true) => 'bg-sky-500',
+        $isInvite => 'bg-violet-500',
+        default => 'bg-amber-500',
+    };
     $badgeClass = $isInvite
         ? 'bg-violet-100 text-violet-950 ring-violet-200/90'
         : 'bg-amber-100 text-amber-950 ring-amber-200/90';
-    $badgeLabel = $isInvite
-        ? __('muthowif.replacements.badge_invite')
-        : __('muthowif.replacements.badge_opportunity');
+    $badgeLabel = $replacement
+        ? $replacement->status->label()
+        : ($isInvite ? __('muthowif.replacements.badge_invite') : __('muthowif.replacements.badge_opportunity'));
 @endphp
 
 <li
@@ -240,42 +249,63 @@
                     </div>
                 </div>
 
-                <div class="border-t border-slate-100 bg-slate-50/80 px-4 py-4 sm:px-5">
-                    <p class="text-xs font-semibold uppercase tracking-wide text-slate-500">{{ __('muthowif.replacements.pending_actions') }}</p>
-                    @if ($isInvite && $replacement)
-                        <div class="mt-3 flex flex-col gap-3 sm:flex-row sm:items-start">
-                            <form method="POST" action="{{ route('muthowif.replacements.confirm', $replacement) }}" class="sm:flex-1">
-                                @csrf
-                                <button type="submit" class="inline-flex w-full items-center justify-center gap-2 rounded-xl bg-brand-600 px-4 py-2.5 text-sm font-semibold text-white shadow-sm transition hover:bg-brand-700">
-                                    {{ __('incidents.muthowif_confirm_replacement') }}
-                                </button>
-                            </form>
-                            <form method="POST" action="{{ route('muthowif.replacements.decline', $replacement) }}" class="flex min-w-0 flex-col gap-2 sm:flex-1">
-                                @csrf
-                                <input type="text" name="note" class="w-full rounded-xl border-slate-200 text-sm" placeholder="{{ __('incidents.muthowif.decline_note_placeholder') }}">
-                                <button type="submit" class="inline-flex w-full items-center justify-center rounded-xl border border-slate-300 bg-white px-4 py-2.5 text-sm font-semibold text-slate-800 hover:bg-slate-50">
-                                    {{ __('incidents.muthowif_decline_replacement') }}
-                                </button>
-                            </form>
-                        </div>
-                    @else
-                        <div class="mt-3 flex flex-col gap-3 sm:flex-row sm:items-end">
-                            <form method="POST" action="{{ route('muthowif.replacements.volunteer', $incident) }}" class="flex min-w-0 flex-1 flex-col gap-2">
-                                @csrf
-                                <input type="text" name="note" class="w-full rounded-xl border-slate-200 text-sm" placeholder="{{ __('incidents.muthowif.volunteer_note_placeholder') }}">
-                                <button type="submit" class="inline-flex w-full items-center justify-center gap-2 rounded-xl bg-brand-600 px-4 py-2.5 text-sm font-semibold text-white shadow-sm transition hover:bg-brand-700">
-                                    {{ __('incidents.muthowif.accept_offer') }}
-                                </button>
-                            </form>
-                            <form method="POST" action="{{ route('muthowif.replacements.decline', $incident) }}" class="sm:shrink-0" onsubmit="return confirm(@json(__('incidents.muthowif.decline_confirm')));">
-                                @csrf
-                                <button type="submit" class="inline-flex w-full items-center justify-center rounded-xl border border-slate-300 bg-white px-4 py-2.5 text-sm font-semibold text-slate-700 hover:bg-slate-50 sm:w-auto">
-                                    {{ __('incidents.muthowif.decline_offer') }}
-                                </button>
-                            </form>
-                        </div>
-                    @endif
-                </div>
+                @if ($interactive)
+                    <div class="border-t border-slate-100 bg-slate-50/80 px-4 py-4 sm:px-5">
+                        <p class="text-xs font-semibold uppercase tracking-wide text-slate-500">{{ __('muthowif.replacements.pending_actions') }}</p>
+                        @if ($isInvite && $replacement)
+                            <div class="mt-3 flex flex-col gap-3 sm:flex-row sm:items-start">
+                                <form method="POST" action="{{ route('muthowif.replacements.confirm', $replacement) }}" class="sm:flex-1">
+                                    @csrf
+                                    <button type="submit" class="inline-flex w-full items-center justify-center gap-2 rounded-xl bg-brand-600 px-4 py-2.5 text-sm font-semibold text-white shadow-sm transition hover:bg-brand-700">
+                                        {{ __('incidents.muthowif_confirm_replacement') }}
+                                    </button>
+                                </form>
+                                <form method="POST" action="{{ route('muthowif.replacements.decline', $replacement) }}" class="flex min-w-0 flex-col gap-2 sm:flex-1">
+                                    @csrf
+                                    <input type="text" name="note" class="w-full rounded-xl border-slate-200 text-sm" placeholder="{{ __('incidents.muthowif.decline_note_placeholder') }}">
+                                    <button type="submit" class="inline-flex w-full items-center justify-center rounded-xl border border-slate-300 bg-white px-4 py-2.5 text-sm font-semibold text-slate-800 hover:bg-slate-50">
+                                        {{ __('incidents.muthowif_decline_replacement') }}
+                                    </button>
+                                </form>
+                            </div>
+                        @else
+                            <div class="mt-3 flex flex-col gap-3 sm:flex-row sm:items-end">
+                                <form method="POST" action="{{ route('muthowif.replacements.volunteer', $incident) }}" class="flex min-w-0 flex-1 flex-col gap-2">
+                                    @csrf
+                                    <input type="text" name="note" class="w-full rounded-xl border-slate-200 text-sm" placeholder="{{ __('incidents.muthowif.volunteer_note_placeholder') }}">
+                                    <button type="submit" class="inline-flex w-full items-center justify-center gap-2 rounded-xl bg-brand-600 px-4 py-2.5 text-sm font-semibold text-white shadow-sm transition hover:bg-brand-700">
+                                        {{ __('incidents.muthowif.accept_offer') }}
+                                    </button>
+                                </form>
+                                <form method="POST" action="{{ route('muthowif.replacements.decline', $incident) }}" class="sm:shrink-0" onsubmit="return confirm(@json(__('incidents.muthowif.decline_confirm')));">
+                                    @csrf
+                                    <button type="submit" class="inline-flex w-full items-center justify-center rounded-xl border border-slate-300 bg-white px-4 py-2.5 text-sm font-semibold text-slate-700 hover:bg-slate-50 sm:w-auto">
+                                        {{ __('incidents.muthowif.decline_offer') }}
+                                    </button>
+                                </form>
+                            </div>
+                        @endif
+                    </div>
+                @elseif ($replacement)
+                    <div class="border-t border-slate-100 bg-slate-50/80 px-4 py-4 sm:px-5">
+                        <p class="text-xs font-semibold uppercase tracking-wide text-slate-500">{{ __('muthowif.replacements.status_heading') }}</p>
+                        <p class="mt-2 text-sm font-semibold text-slate-900">{{ $replacement->status->label() }}</p>
+                        <p class="mt-1 text-xs text-slate-600">
+                            @if ($replacement->status === BookingReplacementStatus::AcceptedByCustomer)
+                                {{ __('muthowif.replacements.hint_selected') }}
+                            @elseif (in_array($replacement->status, [BookingReplacementStatus::ApprovedForCustomer, BookingReplacementStatus::OfferedToCustomer, BookingReplacementStatus::PendingAdminApproval], true))
+                                {{ __('muthowif.replacements.hint_waiting_customer') }}
+                            @elseif ($replacement->status === BookingReplacementStatus::NotSelected)
+                                {{ __('muthowif.replacements.hint_not_selected') }}
+                            @else
+                                {{ __('muthowif.replacements.hint_closed') }}
+                            @endif
+                        </p>
+                        @if (filled($replacement->replacement_decline_note))
+                            <p class="mt-2 rounded-lg bg-white px-3 py-2 text-xs text-slate-700 ring-1 ring-slate-200">{{ $replacement->replacement_decline_note }}</p>
+                        @endif
+                    </div>
+                @endif
             </div>
         </div>
     </div>

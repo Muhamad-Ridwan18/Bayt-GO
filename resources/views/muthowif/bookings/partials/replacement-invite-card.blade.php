@@ -1,7 +1,10 @@
 @php
+    use App\Enums\BookingReplacementStatus;
+
     /** @var \App\Models\BookingReplacement $replacement */
     $booking = $replacement->incident?->muthowifBooking;
     $incident = $replacement->incident;
+    $interactive = ($interactive ?? null) ?? $replacement->status === BookingReplacementStatus::AwaitingMuthowifConfirm;
 @endphp
 
 @if ($booking && $incident)
@@ -12,5 +15,6 @@
         'replacement' => $replacement,
         'addonsById' => $addonsById ?? collect(),
         'defaultOpen' => $defaultOpen ?? false,
+        'interactive' => $interactive,
     ])
 @endif
