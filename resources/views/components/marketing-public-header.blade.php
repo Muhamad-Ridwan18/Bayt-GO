@@ -11,7 +11,7 @@
     $activeClass = 'relative text-baytgo after:absolute after:inset-x-1.5 xl:after:inset-x-3 after:-bottom-0.5 after:h-0.5 after:rounded-full after:bg-gold';
 @endphp
 <header class="sticky top-0 z-[100] border-b border-slate-100 bg-white/95 backdrop-blur-sm shadow-sm" x-data="{ open: false }" @keydown.window.escape="open = false" @resize.window="if (window.innerWidth >= 1024) open = false">
-    <x-page-container relative flex min-h-[4.25rem] items-center justify-between gap-3 lg:gap-6">
+    <x-page-container class="relative flex min-h-[4.25rem] items-center justify-between gap-3 lg:gap-6">
         <a href="{{ route('welcome') }}" class="relative z-10 flex min-w-0 shrink-0 items-center gap-2.5 group">
             <x-site-logo variant="welcome" class="rounded-xl ring-1 ring-slate-200/70 shrink-0" />
             <span class="truncate text-lg font-bold tracking-tight text-baytgo">Bayt<span class="text-gold-muted">Go</span></span>
@@ -52,15 +52,15 @@
                     <path :class="{'hidden': ! open, 'inline-flex': open }" class="hidden" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
                 </svg>
             </button>
-        </x-page-container>
-    </div>
+        </div>
+    </x-page-container>
 
     <div
         id="marketing-mobile-nav"
         :class="{'block': open, 'hidden': ! open}"
         class="hidden border-t border-slate-100 bg-white lg:hidden"
     >
-        <nav class="max-w-7xl mx-auto space-y-0.5 px-4 py-4 sm:px-6" aria-label="{{ __('welcome.nav_mobile_aria') }}">
+        <x-page-container class="space-y-0.5 py-4" tag="nav" aria-label="{{ __('welcome.nav_mobile_aria') }}">
             <a href="{{ route('welcome') }}" @click="open = false" class="block rounded-lg px-3 py-2.5 text-sm font-semibold {{ $active === 'welcome' ? 'bg-baytgo/8 text-baytgo' : 'text-slate-700 hover:bg-slate-50' }}">{{ __('welcome.nav_home') }}</a>
             <a href="{{ $homeUrl }}#cara-kerja" @click="open = false" class="block rounded-lg px-3 py-2.5 text-sm font-semibold text-slate-700 hover:bg-slate-50">{{ __('welcome.nav_how') }}</a>
             <a href="{{ route('layanan.index') }}" @click="open = false" class="block rounded-lg px-3 py-2.5 text-sm font-semibold {{ $active === 'layanan' ? 'bg-baytgo/8 text-baytgo' : 'text-slate-700 hover:bg-slate-50' }}">{{ __('welcome.nav_muthowif') }}</a>
@@ -68,14 +68,14 @@
             <a href="{{ $homeUrl }}#harga" @click="open = false" class="block rounded-lg px-3 py-2.5 text-sm font-semibold text-slate-700 hover:bg-slate-50">{{ __('welcome.nav_pricing') }}</a>
             <a href="{{ $homeUrl }}#tentang" @click="open = false" class="block rounded-lg px-3 py-2.5 text-sm font-semibold text-slate-700 hover:bg-slate-50">{{ __('welcome.nav_about') }}</a>
             <a href="{{ $homeUrl }}#faq" @click="open = false" class="block rounded-lg px-3 py-2.5 text-sm font-semibold text-slate-700 hover:bg-slate-50">{{ __('welcome.nav_faq') }}</a>
-        </nav>
-        <div class="border-t border-slate-100 px-4 py-4 sm:px-6">
+        </x-page-container>
+        <x-page-container class="border-t border-slate-100 py-4">
             <p class="text-[11px] font-semibold uppercase tracking-wide text-slate-500">{{ __('nav.language') }}</p>
             <div class="mt-3 flex justify-start">
                 <x-language-switcher variant="segment" />
             </div>
-        </div>
-        <div class="flex flex-wrap gap-2 border-t border-slate-100 px-4 py-4 sm:px-6">
+        </x-page-container>
+        <x-page-container class="flex flex-wrap gap-2 border-t border-slate-100 py-4">
             @auth
                 <a href="{{ route('dashboard') }}" class="inline-flex flex-1 min-w-[8rem] items-center justify-center rounded-xl border border-slate-200 px-3 py-2.5 text-sm font-semibold text-slate-700 transition hover:border-baytgo hover:text-baytgo">{{ __('nav.home') }}</a>
             @else
@@ -83,6 +83,6 @@
                     <a href="{{ route('login') }}" class="inline-flex flex-1 min-w-[8rem] items-center justify-center rounded-xl border border-slate-200 px-3 py-2.5 text-sm font-semibold text-slate-700 transition hover:text-baytgo">{{ __('layanan.guest_header_login') }}</a>
                 @endif
             @endauth
-        </div>
+        </x-page-container>
     </div>
 </header>
