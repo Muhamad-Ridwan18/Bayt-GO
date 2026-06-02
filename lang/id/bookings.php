@@ -92,6 +92,7 @@ return [
 
     'show' => [
         'back_to_bookings' => 'Booking saya',
+        'back_to_detail' => 'Kembali ke detail pesanan',
         'detail_kicker' => 'Detail pesanan',
         'booking_code' => 'Kode pesanan',
         'muthowif' => 'Muthowif',

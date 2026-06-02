@@ -13,6 +13,7 @@
             sendError: 'Gagal mengirim pesan.'
         }
     })"
+    @open-booking-chat.window="openBookingById($event.detail.bookingId)"
 >
     <!-- Modal Container -->
     <div 

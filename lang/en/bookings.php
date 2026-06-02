@@ -91,6 +91,7 @@ return [
 
     'show' => [
         'back_to_bookings' => 'My bookings',
+        'back_to_detail' => 'Back to booking details',
         'detail_kicker' => 'Booking details',
         'booking_code' => 'Booking code',
         'muthowif' => 'Muthowif',

@@ -3,6 +3,7 @@
     'routeName' => 'bookings.documents.show',
     'compact' => false,
     'variant' => 'default',
+    'maxVisible' => null,
 ])
 
 @php
@@ -50,7 +51,29 @@
 @endphp
 
 @if ($hasAny)
-    @if ($variant === 'cards')
+    @if ($variant === 'list')
+        @php
+            $visibleItems = collect($items)->filter(fn ($item) => filled($item['path']));
+            if ($maxVisible !== null) {
+                $visibleItems = $visibleItems->take((int) $maxVisible);
+            }
+        @endphp
+        <ul class="space-y-2">
+            @foreach ($visibleItems as $item)
+                <li class="flex items-center justify-between gap-2 rounded-lg border border-slate-100 bg-slate-50/60 px-3 py-2">
+                    <span class="inline-flex min-w-0 items-center gap-2 text-sm text-slate-800">
+                        <svg class="h-4 w-4 shrink-0 text-slate-400" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true">
+                            <path fill-rule="evenodd" d="M4.5 2A1.5 1.5 0 003 3.5v13A1.5 1.5 0 004.5 18h11a1.5 1.5 0 001.5-1.5V7.621a1.5 1.5 0 00-.44-1.06L11.939 3.44A1.5 1.5 0 0010.939 3H4.5zm2 1.5h6.439l3.122 3.12A.5.5 0 0116 7.121V16.5a.5.5 0 01-.5.5h-11a.5.5 0 01-.5-.5V4.5a.5.5 0 01.5-.5z" clip-rule="evenodd" />
+                        </svg>
+                        <span class="truncate font-medium">{{ $item['label'] }}</span>
+                    </span>
+                    <a href="{{ $downloadUrl($item['type']) }}" class="shrink-0 text-xs font-semibold text-emerald-700 hover:text-emerald-800 hover:underline">
+                        {{ __('bookings.show.doc_download') }}
+                    </a>
+                </li>
+            @endforeach
+        </ul>
+    @elseif ($variant === 'cards')
         <section class="overflow-hidden rounded-2xl border border-slate-200/90 bg-white shadow-sm ring-1 ring-slate-100/80">
             <div class="border-b border-slate-100 px-5 py-4 sm:px-6">
                 <h2 class="flex items-center gap-2 text-base font-bold text-slate-900">

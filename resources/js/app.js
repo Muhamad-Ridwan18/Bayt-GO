@@ -333,6 +333,27 @@ document.addEventListener('alpine:init', () => {
             this.clearImage();
             this.loadChatMessages();
         },
+
+        async openBookingById(bookingId) {
+            if (bookingId == null || bookingId === '') {
+                return;
+            }
+            this.isPanelExpanded = true;
+            const id = String(bookingId);
+            if (!this.conversations.length) {
+                await this.loadList();
+            }
+            let conv = this.conversations.find((c) => String(c.id) === id);
+            if (!conv) {
+                await this.loadList();
+                conv = this.conversations.find((c) => String(c.id) === id);
+            }
+            if (conv) {
+                this.openChat(conv);
+            } else {
+                this.view = 'list';
+            }
+        },
         
         closeChat() {
             this.activeConversation = null;
