@@ -131,6 +131,8 @@ return [
         'documents_intro_cards' => 'Berkas yang Anda lampirkan saat mengajukan pesanan.',
         'documents_privacy_note' => 'Dokumen bersifat pribadi. Jangan bagikan ke pihak lain.',
         'doc_view' => 'Lihat',
+        'doc_modal_close' => 'Tutup pratinjau',
+        'doc_preview_unsupported' => 'Pratinjau tidak tersedia untuk jenis berkas ini.',
         'doc_file' => 'Berkas',
         'subtotal_service' => 'Subtotal layanan',
         'platform_fee' => 'Biaya platform',

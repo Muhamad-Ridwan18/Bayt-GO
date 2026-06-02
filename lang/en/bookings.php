@@ -130,6 +130,8 @@ return [
         'documents_intro_cards' => 'Files you attached when submitting this booking.',
         'documents_privacy_note' => 'Documents are private. Do not share with others.',
         'doc_view' => 'View',
+        'doc_modal_close' => 'Close preview',
+        'doc_preview_unsupported' => 'Preview is not available for this file type.',
         'doc_file' => 'File',
         'subtotal_service' => 'Service subtotal',
         'platform_fee' => 'Platform fee',

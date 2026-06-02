@@ -48,6 +48,7 @@ return [
         'payment_info_heading' => 'Payment information',
         'view_breakdown' => 'View breakdown',
         'hide_breakdown' => 'Hide breakdown',
+        'hide_documents' => 'Hide documents',
         'view_all_documents' => 'View all documents',
         'view_payment_details' => 'View payment details',
         'total_bill' => 'Total due',

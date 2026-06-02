@@ -48,6 +48,7 @@ return [
         'payment_info_heading' => 'Informasi Pembayaran',
         'view_breakdown' => 'Lihat rincian',
         'hide_breakdown' => 'Sembunyikan rincian',
+        'hide_documents' => 'Sembunyikan dokumen',
         'view_all_documents' => 'Lihat semua dokumen',
         'view_payment_details' => 'Lihat informasi pembayaran',
         'total_bill' => 'Total Tagihan',
