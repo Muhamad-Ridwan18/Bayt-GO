@@ -46,6 +46,7 @@ class BookingIncidentController extends Controller
 
     public function selectReplacement(Request $request, MuthowifBooking $booking, BookingReplacement $replacement): RedirectResponse
     {
+        $replacement->loadMissing('incident.muthowifBooking');
         $this->authorize('acceptReplacement', $replacement);
         abort_unless((string) $replacement->incident->muthowif_booking_id === (string) $booking->getKey(), 404);
 
