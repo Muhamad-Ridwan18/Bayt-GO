@@ -8,7 +8,7 @@
 @endphp
 
 @if ($showPanel && $b->status === BookingStatus::Cancelled)
-    <section class="rounded-2xl border border-rose-200 bg-rose-50/90 p-5 shadow-sm ring-1 ring-rose-100/80 sm:p-6">
+    <section class="rounded-2xl border border-rose-200 bg-rose-50 p-5 shadow-sm sm:p-6">
         <div class="flex gap-3">
             <span class="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-rose-100 text-rose-700">
                 <svg class="h-5 w-5" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true">
@@ -34,14 +34,8 @@
                 @endif
                 @if (($referralNetworkAlternatives ?? collect())->isNotEmpty())
                     <a
-                        href="#booking-recommendations-mobile"
-                        class="mt-4 inline-flex items-center justify-center rounded-xl border border-brand-300 bg-white px-4 py-2.5 text-sm font-semibold text-brand-800 shadow-sm transition hover:bg-brand-50 lg:hidden"
-                    >
-                        {{ __('bookings.show.view_recommendations') }}
-                    </a>
-                    <a
                         href="#booking-recommendations"
-                        class="mt-4 hidden items-center justify-center rounded-xl border border-brand-300 bg-white px-4 py-2.5 text-sm font-semibold text-brand-800 shadow-sm transition hover:bg-brand-50 lg:inline-flex"
+                        class="mt-4 inline-flex items-center justify-center rounded-xl border border-brand-400 bg-white px-4 py-2 text-sm font-semibold text-brand-800 transition hover:bg-brand-50"
                     >
                         {{ __('bookings.show.view_recommendations') }}
                     </a>

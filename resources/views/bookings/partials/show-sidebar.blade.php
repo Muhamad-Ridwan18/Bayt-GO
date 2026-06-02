@@ -8,7 +8,7 @@
     $isJadwalFull = ($b->muthowif_rejection_kind ?? null) === MuthowifBookingMuthowifRejectionKind::JadwalFull;
 
     $statusBadge = match ($st) {
-        BookingStatus::Cancelled => 'bg-red-50 text-red-800 ring-red-200/80',
+        BookingStatus::Cancelled => 'bg-rose-50 text-rose-800 ring-rose-200/90',
         BookingStatus::Confirmed => 'bg-emerald-50 text-emerald-900 ring-emerald-200/80',
         BookingStatus::Completed => 'bg-brand-50 text-brand-900 ring-brand-200/80',
         BookingStatus::Pending => 'bg-amber-50 text-amber-950 ring-amber-200/80',
@@ -16,8 +16,8 @@
     };
 @endphp
 
-<aside class="space-y-6 lg:sticky lg:top-24 lg:self-start">
-    <section class="rounded-2xl border border-slate-200/90 bg-white p-5 shadow-sm ring-1 ring-slate-100/80 sm:p-6">
+<aside class="flex flex-col gap-6 lg:sticky lg:top-24 lg:self-start">
+    <section class="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm sm:p-6">
         <div class="flex items-start justify-between gap-3">
             <h2 class="text-sm font-bold text-slate-900">{{ __('bookings.show.status_card_title') }}</h2>
             <span class="inline-flex shrink-0 items-center rounded-full px-2.5 py-0.5 text-xs font-semibold ring-1 {{ $statusBadge }}">
@@ -43,7 +43,7 @@
 
         <a
             href="{{ route('support.create') }}"
-            class="mt-4 inline-flex w-full items-center justify-center gap-2 rounded-xl border border-brand-200 bg-white px-4 py-2.5 text-sm font-semibold text-brand-800 transition hover:bg-brand-50"
+            class="mt-4 inline-flex items-center gap-1.5 text-sm font-semibold text-brand-700 hover:text-brand-800"
         >
             <svg class="h-4 w-4" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true">
                 <path fill-rule="evenodd" d="M10 2a6 6 0 00-6 6v3.586l-.707.707A1 1 0 004 13h12a1 1 0 00.707-1.707L16 10.586V8a6 6 0 00-6-6zm0 16a3 3 0 01-3-3h6a3 3 0 01-3 3z" clip-rule="evenodd" />
@@ -53,7 +53,7 @@
     </section>
 
     @if ($showPanel)
-        <section id="booking-recommendations" class="scroll-mt-24 hidden rounded-2xl border border-slate-200/90 bg-white p-5 shadow-sm ring-1 ring-slate-100/80 sm:p-6 lg:block">
+        <section id="booking-recommendations" class="scroll-mt-24 rounded-2xl border border-slate-200 bg-white p-5 shadow-sm sm:p-6">
             <h2 class="text-sm font-bold text-slate-900">{{ __('bookings.show.recommendations_title') }}</h2>
             <p class="mt-1 text-xs leading-relaxed text-slate-600">{{ __('bookings.show.recommendations_subtitle') }}</p>
             <div class="mt-4">

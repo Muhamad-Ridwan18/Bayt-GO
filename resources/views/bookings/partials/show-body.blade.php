@@ -43,8 +43,8 @@
     $fmt = fn (float $n) => IndonesianNumber::formatThousands((string) (int) round($n));
 @endphp
 
-<div class="grid grid-cols-1 gap-6 lg:grid-cols-12 lg:gap-8">
-    <div class="min-w-0 space-y-6 lg:col-span-8">
+<div class="grid grid-cols-1 gap-6 lg:grid-cols-[minmax(0,1fr)_minmax(280px,360px)] lg:items-start lg:gap-8">
+    <div class="min-w-0 space-y-6">
         @include('bookings.partials.show-detail-card', ['booking' => $b])
 
         @include('bookings.partials.show-cancellation-alert', [
@@ -52,20 +52,17 @@
             'showReferralNetworkPanel' => $showReferralNetworkPanel ?? false,
             'referralNetworkAlternatives' => $referralNetworkAlternatives ?? collect(),
         ])
+    </div>
 
-        @if (! empty($showReferralNetworkPanel) && $showReferralNetworkPanel)
-            <section id="booking-recommendations-mobile" class="scroll-mt-24 rounded-2xl border border-slate-200/90 bg-white p-5 shadow-sm ring-1 ring-slate-100/80 sm:p-6 lg:hidden">
-                <h2 class="text-sm font-bold text-slate-900">{{ __('bookings.show.recommendations_title') }}</h2>
-                <p class="mt-1 text-xs leading-relaxed text-slate-600">{{ __('bookings.show.recommendations_subtitle') }}</p>
-                <div class="mt-4">
-                    @include('bookings.partials.show-recommendations-list', [
-                        'booking' => $b,
-                        'referralNetworkAlternatives' => $referralNetworkAlternatives ?? collect(),
-                    ])
-                </div>
-            </section>
-        @endif
+    <div class="min-w-0 lg:col-start-2 lg:row-start-1 lg:row-span-2">
+        @include('bookings.partials.show-sidebar', [
+            'booking' => $b,
+            'showReferralNetworkPanel' => $showReferralNetworkPanel ?? false,
+            'referralNetworkAlternatives' => $referralNetworkAlternatives ?? collect(),
+        ])
+    </div>
 
+    <div class="min-w-0 space-y-6 lg:col-start-1">
         @include('bookings.partials.incident-panel', [
             'booking' => $b,
             'openIncident' => $openIncident ?? null,
@@ -348,10 +345,4 @@
                 </div>
             @endif
     </div>
-
-    @include('bookings.partials.show-sidebar', [
-        'booking' => $b,
-        'showReferralNetworkPanel' => $showReferralNetworkPanel ?? false,
-        'referralNetworkAlternatives' => $referralNetworkAlternatives ?? collect(),
-    ])
 </div>
