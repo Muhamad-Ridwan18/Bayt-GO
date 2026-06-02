@@ -2,6 +2,7 @@
 
 namespace App\Events;
 
+use App\Events\Concerns\RescuesBroadcastFailures;
 use App\Models\MootaWebhookHistory;
 use Illuminate\Broadcasting\InteractsWithSockets;
 use Illuminate\Broadcasting\PrivateChannel;
@@ -13,7 +14,7 @@ use Illuminate\Queue\SerializesModels;
  * Live feed admin — dipanggil dari controller SETELAH event {@see MootaWebhookRecorded},
  * supaya gagal broadcast (Reverb mati) tidak memblokir listener settlement pembayaran.
  */
-class MootaWebhookRealtimeBroadcast implements ShouldBroadcastNow
+class MootaWebhookRealtimeBroadcast implements ShouldBroadcastNow, RescuesBroadcastFailures
 {
     use Dispatchable, InteractsWithSockets, SerializesModels;
 

@@ -284,7 +284,7 @@ return [
         'card_moota_test' => 'Moota webhooks (testing)',
         'card_moota_test_sub' => 'Sandbox / test traffic',
         'card_logs' => 'Application log',
-        'card_logs_sub' => 'View or clear laravel.log',
+        'card_logs_sub' => 'Search, filter levels, download, and manage log files',
     ],
     'articles' => [
         'badge' => 'Content',

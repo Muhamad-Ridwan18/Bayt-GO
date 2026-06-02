@@ -9,6 +9,7 @@ use App\Payments\Doku\DokuCheckoutPaymentProvider;
 use App\Payments\Moota\MootaSnapPaymentProvider;
 use Illuminate\Pagination\Paginator;
 use Illuminate\Support\Facades\Event;
+use Illuminate\Support\Facades\Gate;
 use Illuminate\Support\Facades\URL;
 use Illuminate\Support\ServiceProvider;
 
@@ -41,6 +42,14 @@ class AppServiceProvider extends ServiceProvider
      */
     public function boot(): void
     {
+        Gate::define('viewLogViewer', fn ($user) => $user->isAdmin());
+
+        $this->app->booted(function () {
+            config([
+                'log-viewer.back_to_system_url' => url('/admin/pengaturan'),
+            ]);
+        });
+
         Event::listen(MootaWebhookRecorded::class, ProcessMootaWebhookForBookingPayments::class);
         Paginator::useTailwind();
 

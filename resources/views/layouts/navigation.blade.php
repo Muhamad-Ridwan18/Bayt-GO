@@ -34,7 +34,7 @@
             'admin.muthowif.*',
             'admin.support-tickets.*',
             'admin.moota_webhooks.*',
-            'admin.logs.*',
+            'log-viewer.*',
         ]);
     }
 @endphp

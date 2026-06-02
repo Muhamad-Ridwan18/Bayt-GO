@@ -418,7 +418,7 @@
                             </span>
                             <span class="text-xs font-semibold text-slate-900">{{ __('nav.admin_settings') }}</span>
                         </a>
-                        <a href="{{ route('admin.logs.index') }}" class="group flex flex-col items-center gap-2 rounded-2xl border border-dashed border-slate-300/90 bg-slate-50 px-3 py-4 text-center transition hover:border-slate-400 hover:bg-white">
+                        <a href="{{ route('log-viewer.index') }}" class="group flex flex-col items-center gap-2 rounded-2xl border border-dashed border-slate-300/90 bg-slate-50 px-3 py-4 text-center transition hover:border-slate-400 hover:bg-white">
                             <span class="flex h-11 w-11 items-center justify-center rounded-xl bg-slate-200/80 text-slate-700" aria-hidden="true">
                                 <svg class="h-5 w-5" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M3.75 6.75h16.5M3.75 12h16.5m-16.5 5.25H12" /></svg>
                             </span>

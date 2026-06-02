@@ -5,7 +5,6 @@ use App\Http\Controllers\Admin\AdminSettingsHubController;
 use App\Http\Controllers\Admin\ArticlesAdminController;
 use App\Http\Controllers\Admin\BookingRefundController;
 use App\Http\Controllers\Admin\FinanceController;
-use App\Http\Controllers\Admin\LogsController;
 use App\Http\Controllers\Admin\MootaWebhookHistoriesLiveController;
 use App\Http\Controllers\Admin\MuthowifVerificationController;
 use App\Http\Controllers\Admin\SiteAppearanceController;
@@ -168,14 +167,6 @@ Route::get('/dashboard', function () {
 Route::get('/dashboard/muthowif-calendar', MuthowifDashboardCalendarController::class)
     ->middleware(['auth'])
     ->name('dashboard.muthowif-calendar');
-
-Route::get('/logs', [LogsController::class, 'index'])
-    ->middleware(['auth', EnsureUserRole::class.':admin'])
-    ->name('admin.logs.index');
-
-Route::post('/logs/clear', [LogsController::class, 'clear'])
-    ->middleware(['auth', EnsureUserRole::class.':admin'])
-    ->name('admin.logs.clear');
 
 Route::middleware('guest')->get('/masuk/setelah', function (Request $request) {
     $next = $request->query('next');

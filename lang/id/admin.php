@@ -284,7 +284,7 @@ return [
         'card_moota_test' => 'Webhook Moota (uji)',
         'card_moota_test_sub' => 'Sandbox / lalu lintas uji',
         'card_logs' => 'Log aplikasi',
-        'card_logs_sub' => 'Lihat atau kosongkan laravel.log',
+        'card_logs_sub' => 'Cari, filter level, unduh, dan kelola file log',
     ],
     'articles' => [
         'badge' => 'Konten',

@@ -67,15 +67,7 @@ final class MootaWebhookController extends Controller
 
         MootaWebhookRecorded::dispatch($history);
 
-        try {
-            broadcast(new MootaWebhookRealtimeBroadcast($history));
-        } catch (\Throwable $e) {
-            // Broadcast gagal tidak boleh menghalangi respons HTTP ke Moota.
-            Log::warning('moota.webhook.broadcast_failed', [
-                'history_id' => $history->id,
-                'message' => $e->getMessage(),
-            ]);
-        }
+        broadcast(new MootaWebhookRealtimeBroadcast($history));
 
         Log::info('moota.webhook.stored', [
             'ip' => $sourceIp ?: null,

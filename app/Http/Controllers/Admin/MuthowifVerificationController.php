@@ -118,14 +118,7 @@ class MuthowifVerificationController extends Controller
             $waFlash = ' FONNTE_TOKEN kosong — notifikasi WA dilewati.';
         }
 
-        try {
-            broadcast(new \App\Events\MuthowifVerificationUpdated($profile->fresh()));
-        } catch (Throwable $e) {
-            Log::warning('Broadcast muthowif verification failed', [
-                'profile_id' => $profile->id,
-                'exception' => $e->getMessage(),
-            ]);
-        }
+        broadcast(new \App\Events\MuthowifVerificationUpdated($profile->fresh()));
 
         return redirect()
             ->route('admin.muthowif.show', $profile)
@@ -150,17 +143,7 @@ class MuthowifVerificationController extends Controller
             'rejection_reason' => $validated['rejection_reason'] ?? null,
         ]);
 
-        try {
-            broadcast(
-                new \App\Events\MuthowifVerificationUpdated($profile->fresh())
-            );
-        } catch (\Throwable $e) {
-            \Log::error('Gagal broadcast MuthowifVerificationUpdated', [
-                'profile_id' => $profile->id,
-                'message' => $e->getMessage(),
-            ]);
-        }
-
+        broadcast(new \App\Events\MuthowifVerificationUpdated($profile->fresh()));
 
         return redirect()
             ->route('admin.muthowif.show', $profile)

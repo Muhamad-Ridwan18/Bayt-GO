@@ -2,6 +2,7 @@
 
 namespace App\Events;
 
+use App\Events\Concerns\RescuesBroadcastFailures;
 use App\Models\MuthowifWithdrawal;
 use Illuminate\Broadcasting\InteractsWithSockets;
 use Illuminate\Broadcasting\PrivateChannel;
@@ -9,7 +10,7 @@ use Illuminate\Contracts\Broadcasting\ShouldBroadcastNow;
 use Illuminate\Foundation\Events\Dispatchable;
 use Illuminate\Queue\SerializesModels;
 
-class WithdrawalRequested implements ShouldBroadcastNow
+class WithdrawalRequested implements ShouldBroadcastNow, RescuesBroadcastFailures
 {
     use Dispatchable, InteractsWithSockets, SerializesModels;
 
