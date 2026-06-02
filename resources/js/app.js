@@ -740,9 +740,13 @@ document.addEventListener('alpine:init', () => {
         init() {
             if (this.userId && window.Echo) {
                 this.channelName = `App.Models.User.${this.userId}`;
-                window.Echo.private(this.channelName).listen('.booking.updated', (e) => {
-                    this.onBookingSocket(e);
-                });
+                window.Echo.private(this.channelName)
+                    .listen('.booking.updated', (e) => {
+                        this.onBookingSocket(e);
+                    })
+                    .listen('.incident.replacement_pool.updated', (e) => {
+                        this.onIncidentPoolSocket(e);
+                    });
             } else if (this.fragmentUrl) {
                 const interval = this.liveMode === 'customer_payment' ? 12000 : 25000;
                 this.pollTimer = window.setInterval(() => this.onPollTick(), interval);
@@ -792,6 +796,15 @@ document.addEventListener('alpine:init', () => {
             this.refreshFragment();
         },
 
+        onIncidentPoolSocket(e) {
+            if (!e?.booking_id) return;
+            const isIndex = this.liveMode === 'customer_index' || this.liveMode === 'muthowif_index';
+            if (!isIndex && this.bookingId && String(e.booking_id) !== String(this.bookingId)) {
+                return;
+            }
+            this.refreshFragment();
+        },
+
         csrf() {
             return document.querySelector('meta[name="csrf-token"]')?.getAttribute('content') ?? '';
         },
@@ -831,6 +844,112 @@ document.addEventListener('alpine:init', () => {
         destroy() {
             if (this.pollTimer) window.clearInterval(this.pollTimer);
             if (window.Echo && this.channelName) {
+                window.Echo.leave(this.channelName);
+            }
+        },
+    }));
+
+    Alpine.data('adminServiceMonitorLive', (config) => ({
+        fragmentUrl: config.fragmentUrl ?? null,
+        filter: config.filter ?? 'active',
+        realtimeEnabled: config.realtimeEnabled ?? false,
+        channelName: 'admin.service-monitor',
+        refreshing: false,
+
+        init() {
+            if (!this.realtimeEnabled || !window.Echo) {
+                return;
+            }
+            window.Echo.private(this.channelName).listen('.service_monitor.updated', () => {
+                this.refreshFragment();
+            });
+            window.Echo.private('admin.incidents').listen('.incident.replacement_pool.updated', () => {
+                this.refreshFragment();
+            });
+        },
+
+        fragmentUrlWithFilter() {
+            const url = new URL(this.fragmentUrl, window.location.origin);
+            url.searchParams.set('filter', this.filter);
+            return url.toString();
+        },
+
+        async refreshFragment() {
+            if (!this.fragmentUrl || this.refreshing) {
+                return;
+            }
+            this.refreshing = true;
+            try {
+                const r = await fetch(this.fragmentUrlWithFilter(), {
+                    headers: {
+                        Accept: 'text/html',
+                        'X-Requested-With': 'XMLHttpRequest',
+                    },
+                    credentials: 'same-origin',
+                });
+                if (!r.ok) {
+                    return;
+                }
+                const html = await r.text();
+                const root = this.$refs.liveRoot;
+                if (!root) {
+                    return;
+                }
+                if (typeof Alpine.destroyTree === 'function') {
+                    Alpine.destroyTree(root);
+                }
+                root.innerHTML = html;
+                Alpine.initTree(root);
+            } catch (err) {
+                console.error(err);
+            } finally {
+                this.refreshing = false;
+            }
+        },
+
+        destroy() {
+            if (window.Echo) {
+                window.Echo.leave(this.channelName);
+                window.Echo.leave('admin.incidents');
+            }
+        },
+    }));
+
+    Alpine.data('adminIncidentLive', (config) => ({
+        incidentId: config.incidentId != null ? String(config.incidentId) : null,
+        channelName: 'admin.incidents',
+
+        init() {
+            if (!window.Echo) return;
+            window.Echo.private(this.channelName).listen('.incident.replacement_pool.updated', (e) => {
+                if (this.incidentId && e?.incident_id && String(e.incident_id) !== String(this.incidentId)) {
+                    return;
+                }
+                window.location.reload();
+            });
+        },
+
+        destroy() {
+            if (window.Echo) {
+                window.Echo.leave(this.channelName);
+            }
+        },
+    }));
+
+    Alpine.data('muthowifRecruitmentLive', () => ({
+        channelName: 'muthowif.recruitment',
+
+        init() {
+            if (!window.Echo) return;
+            window.Echo.private(this.channelName).listen('.incident.replacement_pool.updated', (e) => {
+                if (e?.recruitment_open) {
+                    window.location.reload();
+                }
+            });
+        },
+
+        destroy() {
+            if (window.Echo) {
                 window.Echo.leave(this.channelName);
             }
         },

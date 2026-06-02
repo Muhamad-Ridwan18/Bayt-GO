@@ -151,6 +151,12 @@
                 </div>
             </article>
 
+            @include('bookings.partials.incident-panel', [
+                'booking' => $b,
+                'openIncident' => $openIncident ?? null,
+                'offeredReplacement' => $offeredReplacement ?? null,
+            ])
+
             @include('bookings.partials.referral-network-alternatives', [
                 'booking' => $b,
                 'referralNetworkAlternatives' => $referralNetworkAlternatives ?? collect(),
@@ -340,7 +346,7 @@
                 </div>
             @endif
 
-            @if ($st === BookingStatus::Confirmed && $b->payment_status === PaymentStatus::Paid)
+            @if ($st === BookingStatus::Confirmed && $b->payment_status === PaymentStatus::Paid && empty($openIncident))
                 <div class="mt-8 overflow-hidden rounded-3xl border border-brand-200 bg-gradient-to-br from-brand-50/90 to-white p-6 shadow-md shadow-brand-900/5 ring-1 ring-brand-200/50 sm:p-8">
                     <h2 class="text-lg font-bold text-slate-900">{{ __('bookings.show.complete_service_heading') }}</h2>
                     <p class="mt-1 text-sm text-slate-600">

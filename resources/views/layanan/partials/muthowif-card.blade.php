@@ -3,6 +3,7 @@
     'group' => null,
     'private' => null,
     'listQueryString' => '',
+    'as' => 'li',
 ])
 
 @php
@@ -42,7 +43,7 @@
     $avgRating = $profile->average_rating !== null ? round((float) $profile->average_rating, 1) : null;
 @endphp
 
-<li class="h-full">
+<{{ $as }} class="h-full">
     <a
         href="{{ $href }}"
         class="group relative flex h-full flex-col overflow-hidden rounded-3xl border border-slate-200/90 bg-white shadow-md shadow-slate-900/5 ring-1 ring-slate-100/80 transition duration-300 hover:-translate-y-1 hover:border-brand-200/90 hover:shadow-xl hover:shadow-brand-900/10 hover:ring-brand-100/60 focus:outline-none focus-visible:ring-2 focus-visible:ring-brand-500 focus-visible:ring-offset-2"
@@ -126,4 +127,4 @@
             </div>
         </div>
     </a>
-</li>
+</{{ $as }}>

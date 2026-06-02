@@ -210,6 +210,12 @@
                             <p class="text-sm font-medium text-emerald-800">{{ __('muthowif.bookings.completed_notice') }}</p>
                         @endif
 
+                        @include('muthowif.bookings.partials.incident-panel', [
+                            'booking' => $b,
+                            'openIncident' => $openIncident ?? null,
+                            'incomingReplacement' => $incomingReplacement ?? null,
+                        ])
+
                         @if ($st === BookingStatus::Pending)
                             <div class="flex flex-col gap-2 border-t border-slate-100 pt-4 sm:flex-row sm:flex-wrap">
                                 <form method="POST" action="{{ route('muthowif.bookings.confirm', $b) }}" class="flex-1 min-w-[10rem]">

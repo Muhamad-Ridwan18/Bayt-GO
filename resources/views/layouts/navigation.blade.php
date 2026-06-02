@@ -33,6 +33,7 @@
             'admin.users.*',
             'admin.muthowif.*',
             'admin.support-tickets.*',
+            'admin.service_monitor.*',
             'admin.moota_webhooks.*',
             'log-viewer.*',
         ]);
@@ -82,6 +83,12 @@
                     @if (Auth::user()->isAdmin())
                         <x-nav-link :href="route('admin.finance.index')" :active="request()->routeIs('admin.finance.*')">
                             {{ __('nav.finance') }}
+                        </x-nav-link>
+                        <x-nav-link :href="route('admin.service_monitor.index')" :active="request()->routeIs('admin.service_monitor.*')">
+                            {{ __('nav.service_monitor') }}
+                        </x-nav-link>
+                        <x-nav-link :href="route('admin.incidents.index')" :active="request()->routeIs('admin.incidents.*')">
+                            {{ __('incidents.admin.index_title') }}
                         </x-nav-link>
                         <x-nav-link :href="route('admin.refunds.index')" :active="request()->routeIs('admin.refunds.*')">
                             {{ __('nav.refund') }}
@@ -216,6 +223,12 @@
             @if (Auth::user()->isAdmin())
                 <x-responsive-nav-link :href="route('admin.finance.index')" :active="request()->routeIs('admin.finance.*')">
                     {{ __('nav.finance') }}
+                </x-responsive-nav-link>
+                <x-responsive-nav-link :href="route('admin.service_monitor.index')" :active="request()->routeIs('admin.service_monitor.*')">
+                    {{ __('nav.service_monitor') }}
+                </x-responsive-nav-link>
+                <x-responsive-nav-link :href="route('admin.incidents.index')" :active="request()->routeIs('admin.incidents.*')">
+                    {{ __('incidents.admin.index_title') }}
                 </x-responsive-nav-link>
                 <x-responsive-nav-link :href="route('admin.refunds.index')" :active="request()->routeIs('admin.refunds.*')">
                     {{ __('nav.refund') }}

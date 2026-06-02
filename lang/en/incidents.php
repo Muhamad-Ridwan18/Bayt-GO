@@ -1,0 +1,126 @@
+<?php
+
+return [
+    'title' => 'Service incident',
+    'emergency_button' => 'Report emergency',
+    'emergency_hint' => 'BaytGo will contact you within 15 minutes (business hours).',
+    'status_banner_open' => 'An incident is being handled by BaytGo.',
+    'timeline_title' => 'Incident timeline',
+    'replacement_offer_title' => 'Replacement guide offer',
+    'replacement_accept' => 'Accept replacement',
+    'replacement_reject' => 'Decline — request other options',
+    'muthowif_report_title' => 'Report inability to attend',
+    'muthowif_report_submit' => 'Submit report to BaytGo',
+    'muthowif_confirm_replacement' => 'Confirm available to replace',
+    'muthowif_decline_replacement' => 'Decline assignment',
+
+    'case_type' => [
+        'muthowif_unavailable' => 'Guide unavailable',
+        'lost_contact_in_service' => 'Lost contact during service',
+        'abandoned_service' => 'Abandoned service',
+        'no_show' => 'No-show (service day)',
+        'unresponsive_pre_h' => 'Unresponsive before service day',
+        'last_minute_cancel' => 'Last-minute cancellation',
+        'force_majeure' => 'Force majeure',
+        'false_alarm' => 'Unfounded report',
+    ],
+
+    'severity' => [
+        'low' => 'Low',
+        'medium' => 'Medium',
+        'high' => 'High',
+        'critical' => 'Critical',
+    ],
+
+    'status' => [
+        'draft' => 'Draft',
+        'open' => 'Open',
+        'triage' => 'Triage',
+        'investigating' => 'Investigating',
+        'awaiting_replacement' => 'Awaiting replacement',
+        'awaiting_customer' => 'Awaiting customer',
+        'resolved' => 'Resolved',
+        'cancelled' => 'Cancelled',
+    ],
+
+    'resolution' => [
+        'replacement_completed' => 'Replacement accepted',
+        'full_refund' => 'Full refund',
+        'partial_refund' => 'Partial refund',
+        'service_continued' => 'Service continued',
+        'no_action' => 'No action',
+        'false_alarm' => 'Invalid report',
+    ],
+
+    'replacement_status' => [
+        'proposed' => 'Proposed',
+        'awaiting_muthowif_confirm' => 'Awaiting guide confirmation',
+        'muthowif_confirmed' => 'Guide confirmed',
+        'offered_to_customer' => 'Offered to pilgrim',
+        'accepted_by_customer' => 'Accepted by pilgrim',
+        'rejected_by_customer' => 'Rejected by pilgrim',
+        'declined_by_muthowif' => 'Declined by replacement guide',
+        'cancelled' => 'Cancelled',
+    ],
+
+    'service_phase' => [
+        'pre_service' => 'Before service',
+        'in_service' => 'In service',
+        'post_service' => 'After service',
+    ],
+
+    'overlay' => [
+        'none' => 'Normal',
+        'monitoring' => 'Monitoring',
+        'open' => 'Active incident',
+        'resolved' => 'Incident resolved',
+    ],
+
+    'errors' => [
+        'not_booking_owner' => 'You are not the owner of this booking.',
+        'not_booking_muthowif' => 'You are not the guide on this booking.',
+        'booking_not_eligible' => 'Booking must be confirmed and paid.',
+        'incident_already_open' => 'An active incident already exists for this booking.',
+        'emergency_rate_limit' => 'Emergency was reported recently. Please wait before reporting again.',
+        'escrow_frozen' => 'Escrow is frozen due to an active incident. Resolve the incident first.',
+        'target_unverified' => 'Replacement guide is not verified.',
+        'same_muthowif' => 'Cannot replace with the same guide.',
+        'incompatible_service' => 'Service or capacity does not match.',
+        'jadwal_unavailable' => 'Replacement guide schedule is not available.',
+        'replacement_already_active' => 'A replacement process is already active.',
+        'not_replacement_muthowif' => 'You are not the assigned replacement guide.',
+        'replacement_wrong_status' => 'Replacement status does not allow this action.',
+        'replacement_must_be_confirmed' => 'Replacement guide must confirm first.',
+        'replacement_not_offered' => 'Offer has not been approved for the pilgrim yet.',
+    ],
+
+    'flash' => [
+        'emergency_reported' => 'Emergency report received. BaytGo will contact you shortly.',
+        'muthowif_reported' => 'Your report was received. We will verify and find a replacement.',
+        'replacement_accepted' => 'Replacement accepted. Service continues.',
+        'replacement_rejected' => 'Replacement declined. Our team will offer other options.',
+        'replacement_confirmed' => 'Thank you — your confirmation is recorded. Awaiting admin approval for the pilgrim.',
+        'replacement_declined' => 'Replacement assignment declined.',
+        'assigned' => 'Incident assigned to you.',
+        'investigating' => 'Incident status: investigating.',
+        'replacement_proposed' => 'Replacement proposed — awaiting guide confirmation.',
+        'replacement_offered' => 'Offer sent to pilgrim.',
+        'settlement_proposed' => 'Payout split calculated.',
+        'settlement_released' => 'Funds released to guide wallets.',
+        'resolved' => 'Incident closed.',
+        'false_alarm' => 'Incident marked as invalid report.',
+    ],
+
+    'admin' => [
+        'index_title' => 'Incident queue',
+        'show_title' => 'Incident detail',
+        'assign' => 'Assign to me',
+        'investigate' => 'Start investigation',
+        'propose_replacement' => 'Propose replacement guide',
+        'offer_to_customer' => 'Offer to pilgrim',
+        'propose_settlement' => 'Calculate payout split',
+        'release_settlement' => 'Release to wallets',
+        'resolve' => 'Close incident',
+        'false_alarm' => 'Invalid report',
+    ],
+];

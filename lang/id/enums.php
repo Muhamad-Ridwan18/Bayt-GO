@@ -58,6 +58,8 @@ return [
     ],
     'muthowif_booking_muthowif_rejection_kind' => [
         'jadwal_full' => 'Jadwal muthowif penuh',
+        'illness' => 'Sakit / berhalangan',
+        'force_majeure' => 'Force majeure',
         'other' => 'Alasan lain',
     ],
 ];

@@ -2,7 +2,9 @@
 
 namespace App\Providers;
 
+use App\Events\CustomerBookingUpdated;
 use App\Events\MootaWebhookRecorded;
+use App\Listeners\NotifyAdminServiceMonitorOnBookingChange;
 use App\Listeners\ProcessMootaWebhookForBookingPayments;
 use App\Payments\Contracts\SnapPaymentProviderInterface;
 use App\Payments\Doku\DokuCheckoutPaymentProvider;
@@ -51,6 +53,7 @@ class AppServiceProvider extends ServiceProvider
         });
 
         Event::listen(MootaWebhookRecorded::class, ProcessMootaWebhookForBookingPayments::class);
+        Event::listen(CustomerBookingUpdated::class, NotifyAdminServiceMonitorOnBookingChange::class);
         Paginator::useTailwind();
 
         // Automatic Cache Invalidation on Mutation for Finance Dashboards

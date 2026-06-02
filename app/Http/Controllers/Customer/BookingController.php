@@ -3,7 +3,10 @@
 namespace App\Http\Controllers\Customer;
 
 use App\Enums\BookingChangeRequestStatus;
+use App\Enums\BookingReplacementStatus;
 use App\Enums\BookingStatus;
+use App\Models\BookingIncident;
+use App\Models\BookingReplacement;
 use App\Enums\MuthowifServiceType;
 use App\Enums\MuthowifVerificationStatus;
 use App\Events\CustomerBookingUpdated;
@@ -124,7 +127,9 @@ class BookingController extends Controller
             'refundRequests' => fn ($q) => $q->orderByDesc('created_at'),
             'rescheduleRequests' => fn ($q) => $q->orderByDesc('created_at'),
         ]);
+        $booking->syncServicePhase();
         $addonsById = $this->addOnsKeyByIdForBooking($booking);
+        [$openIncident, $selectableReplacements] = $this->incidentContextForCustomer($booking);
 
         $networkReferral = app(MuthowifNetworkReferralService::class);
         $referralNetworkAlternatives = $networkReferral->alternativesForCustomerAfterJadwalRejection($booking);
@@ -138,6 +143,8 @@ class BookingController extends Controller
             'refundPreview' => $this->refundPreviewForBooking($booking),
             'referralNetworkAlternatives' => $referralNetworkAlternatives,
             'showReferralNetworkPanel' => $showReferralNetworkPanel,
+            'openIncident' => $openIncident,
+            'selectableReplacements' => $selectableReplacements,
         ]);
     }
 
@@ -158,6 +165,9 @@ class BookingController extends Controller
         $referralNetworkAlternatives = $networkReferral->alternativesForCustomerAfterJadwalRejection($booking);
         $showReferralNetworkPanel = $networkReferral->shouldShowCustomerReferralPanel($booking);
 
+        $booking->syncServicePhase();
+        [$openIncident, $selectableReplacements] = $this->incidentContextForCustomer($booking);
+
         return view('bookings.partials.show-body', [
             'booking' => $booking,
             'addonsById' => $addonsById,
@@ -166,6 +176,8 @@ class BookingController extends Controller
             'refundPreview' => $this->refundPreviewForBooking($booking),
             'referralNetworkAlternatives' => $referralNetworkAlternatives,
             'showReferralNetworkPanel' => $showReferralNetworkPanel,
+            'openIncident' => $openIncident,
+            'selectableReplacements' => $selectableReplacements,
         ]);
     }
 
@@ -979,6 +991,34 @@ class BookingController extends Controller
             'expiry_time' => is_string($exp) && $exp !== '' ? $exp : null,
             'moota_expected_transfer_total' => is_numeric($totalHint) ? (int) round((float) $totalHint) : null,
         ], static fn ($v) => $v !== null && $v !== '');
+    }
+
+    /**
+     * @return array{0: ?BookingIncident, 1: \Illuminate\Support\Collection<int, BookingReplacement>}
+     */
+    private function incidentContextForCustomer(MuthowifBooking $booking): array
+    {
+        $openIncident = $booking->incidents()
+            ->with(['events' => fn ($q) => $q->orderByDesc('created_at')->limit(10)])
+            ->whereNotIn('status', ['resolved', 'cancelled'])
+            ->latest('opened_at')
+            ->first();
+
+        $selectableReplacements = collect();
+        if ($openIncident && $openIncident->customer_choice_opened_at !== null) {
+            $selectableReplacements = BookingReplacement::query()
+                ->with('replacementProfile.user')
+                ->where('booking_incident_id', $openIncident->getKey())
+                ->whereIn('status', array_map(
+                    fn (BookingReplacementStatus $s) => $s->value,
+                    BookingReplacementStatus::customerSelectable()
+                ))
+                ->orderBy('admin_approved_at')
+                ->orderBy('volunteered_at')
+                ->get();
+        }
+
+        return [$openIncident, $selectableReplacements];
     }
 
     /**

@@ -22,3 +22,15 @@ Broadcast::channel('admin.withdrawals', function ($user) {
 Broadcast::channel('admin.support-tickets', function ($user) {
     return $user->isAdmin();
 });
+
+Broadcast::channel('admin.incidents', function ($user) {
+    return $user->isAdmin();
+});
+
+Broadcast::channel('admin.service-monitor', function ($user) {
+    return $user->isAdmin();
+});
+
+Broadcast::channel('muthowif.recruitment', function ($user) {
+    return $user->isVerifiedMuthowif();
+});

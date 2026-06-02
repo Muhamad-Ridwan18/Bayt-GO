@@ -2,16 +2,23 @@
 
 namespace App\Services;
 
+use App\Enums\BookingSettlementStatus;
 use App\Enums\BookingStatus;
 use App\Models\BookingPayment;
 use App\Models\BookingReview;
+use App\Models\BookingSettlement;
 use App\Models\MuthowifBooking;
-use App\Models\MuthowifProfile;
+use App\Services\Incident\BookingSettlementService;
+use App\Services\Incident\EscrowFreezeGuard;
 use Carbon\CarbonInterface;
 use Illuminate\Support\Facades\DB;
 
 class BookingCompletionService
 {
+    public function __construct(
+        private readonly BookingSettlementService $settlements,
+    ) {}
+
     /**
      * Waktu mulai boleh auto-complete: awal hari setelah ends_on + jeda menit (APP_TIMEZONE).
      * Null jika ends_on kosong.
@@ -51,6 +58,12 @@ class BookingCompletionService
                     return;
                 }
 
+                if (EscrowFreezeGuard::isFrozen($booking)) {
+                    $error = __('incidents.errors.escrow_frozen');
+
+                    return;
+                }
+
                 /** @var BookingPayment|null $payment */
                 $payment = BookingPayment::query()
                     ->where('muthowif_booking_id', $booking->getKey())
@@ -66,36 +79,28 @@ class BookingCompletionService
                 }
 
                 if ($payment->wallet_credited_at === null) {
-                    /** @var MuthowifProfile $profile */
-                    $profile = MuthowifProfile::query()
-                        ->whereKey($booking->muthowif_profile_id)
-                        ->lockForUpdate()
-                        ->firstOrFail();
+                    $draftSettlement = BookingSettlement::query()
+                        ->where('muthowif_booking_id', $booking->getKey())
+                        ->whereIn('status', [
+                            BookingSettlementStatus::Draft->value,
+                            BookingSettlementStatus::Approved->value,
+                        ])
+                        ->latest()
+                        ->first();
 
-                    $reward = round((float) ($payment->referral_reward_amount ?? 0), 2);
-                    $payoutToService = $payment->muthowifWalletCreditAmount();
-                    $orphanReward = 0.0;
-
-                    if ($reward > 0.0 && filled($payment->referrer_muthowif_profile_id)) {
-                        $referrer = MuthowifProfile::query()
-                            ->whereKey((string) $payment->referrer_muthowif_profile_id)
-                            ->lockForUpdate()
-                            ->first();
-
-                        if ($referrer !== null) {
-                            $referrer->wallet_balance = round((float) $referrer->wallet_balance + $reward, 2);
-                            $referrer->save();
-                        } else {
-                            $orphanReward = $reward;
+                    if ($draftSettlement) {
+                        $result = $this->settlements->approveAndRelease($draftSettlement, null);
+                        $credited = $result['credited'];
+                        if ($result['error']) {
+                            $error = $result['error'];
+                        }
+                    } else {
+                        $result = $this->settlements->releaseOnCompletion($booking);
+                        $credited = $result['credited'];
+                        if ($result['error']) {
+                            $error = $result['error'];
                         }
                     }
-
-                    $profile->wallet_balance = round((float) $profile->wallet_balance + $payoutToService + $orphanReward, 2);
-                    $profile->save();
-
-                    $payment->wallet_credited_at = now();
-                    $payment->save();
-                    $credited = true;
                 }
 
                 $booking->status = BookingStatus::Completed;
@@ -127,6 +132,10 @@ class BookingCompletionService
     public function shouldAutoCompleteNow(MuthowifBooking $booking): bool
     {
         if ($booking->status !== BookingStatus::Confirmed || ! $booking->isPaid()) {
+            return false;
+        }
+
+        if (EscrowFreezeGuard::isFrozen($booking)) {
             return false;
         }
 

@@ -7,6 +7,7 @@ return [
     'find_muthowif' => 'Find muthowif',
     'my_bookings' => 'My bookings',
     'finance' => 'Finance',
+    'service_monitor' => 'Service monitor',
     'refund' => 'Refund',
     'withdraw' => 'Withdraw',
     'moota_webhooks' => 'Moota',

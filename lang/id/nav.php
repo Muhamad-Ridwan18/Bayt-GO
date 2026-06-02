@@ -7,6 +7,7 @@ return [
     'find_muthowif' => 'Cari muthowif',
     'my_bookings' => 'Pesanan Saya',
     'finance' => 'Keuangan',
+    'service_monitor' => 'Pantau layanan',
     'refund' => 'Refund',
     'withdraw' => 'Withdraw',
     'moota_webhooks' => 'Moota',

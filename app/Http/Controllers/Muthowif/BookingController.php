@@ -14,6 +14,9 @@ use App\Jobs\NotifyCustomerOfBookingRejectedJadwalFull;
 use App\Jobs\NotifyCustomerOfRescheduleApproved;
 use App\Jobs\NotifyCustomerOfRescheduleRejected;
 use App\Jobs\NotifyMuthowifOfNewBooking;
+use App\Enums\BookingReplacementStatus;
+use App\Models\BookingIncident;
+use App\Models\BookingReplacement;
 use App\Models\BookingRescheduleRequest;
 use App\Models\MuthowifBooking;
 use App\Models\MuthowifProfile;
@@ -112,11 +115,20 @@ class BookingController extends Controller
         }
 
         $peerRecommendTargets = app(BookingPeerReferralService::class)->listCandidates($booking, $profile);
+        $booking->syncServicePhase();
+        $openIncident = $booking->openIncident();
+        $incomingReplacement = BookingReplacement::query()
+            ->where('booking_incident_id', $openIncident?->getKey())
+            ->where('replacement_muthowif_profile_id', $profile->getKey())
+            ->where('status', BookingReplacementStatus::AwaitingMuthowifConfirm)
+            ->first();
 
         return view('muthowif.bookings.show', [
             'booking' => $booking,
             'addonsById' => $addonsById,
             'peerRecommendTargets' => $peerRecommendTargets,
+            'openIncident' => $openIncident,
+            'incomingReplacement' => $incomingReplacement,
         ]);
     }
 
@@ -140,10 +152,20 @@ class BookingController extends Controller
 
         $peerRecommendTargets = app(BookingPeerReferralService::class)->listCandidates($booking, $profile);
 
+        $booking->syncServicePhase();
+        $openIncident = $booking->openIncident();
+        $incomingReplacement = BookingReplacement::query()
+            ->where('booking_incident_id', $openIncident?->getKey())
+            ->where('replacement_muthowif_profile_id', $profile->getKey())
+            ->where('status', BookingReplacementStatus::AwaitingMuthowifConfirm)
+            ->first();
+
         return view('muthowif.bookings.partials.show-live', [
             'booking' => $booking,
             'addonsById' => $addonsById,
             'peerRecommendTargets' => $peerRecommendTargets,
+            'openIncident' => $openIncident,
+            'incomingReplacement' => $incomingReplacement,
         ]);
     }
 
