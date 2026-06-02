@@ -299,7 +299,7 @@
                                 </div>
                             </div>
                         </div>
-                    </div>
+                    </x-page-container>
                 </section>
 
 
