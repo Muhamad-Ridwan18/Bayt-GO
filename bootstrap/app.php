@@ -7,6 +7,7 @@ use App\Http\Middleware\EnsureVerifiedMuthowif;
 use App\Http\Middleware\SetLocale;
 use Illuminate\Broadcasting\BroadcastException;
 use Illuminate\Console\Scheduling\Schedule;
+use Illuminate\Http\Exceptions\PostTooLargeException;
 use Illuminate\Foundation\Application;
 use Illuminate\Foundation\Configuration\Exceptions;
 use Illuminate\Foundation\Configuration\Middleware;
@@ -66,5 +67,17 @@ return Application::configure(basePath: dirname(__DIR__))
             ]);
 
             return false;
+        });
+
+        $exceptions->renderable(function (PostTooLargeException $e, $request) {
+            if ($request->expectsJson()) {
+                return response()->json([
+                    'message' => __('bookings.validation.document_upload_failed'),
+                ], 413);
+            }
+
+            return redirect()->back()
+                ->withInput()
+                ->withErrors(['ticket_outbound' => __('bookings.validation.document_upload_failed')]);
         });
     })->create();

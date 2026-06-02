@@ -34,6 +34,10 @@ return [
         'reschedule_new_start_too_soon' => 'The new start date must be at least :days full calendar days after the day you submit this request (H-:days rule).',
         'refund_account_number_format' => 'Account number may only contain digits, spaces, or hyphens (at least one digit).',
         'itinerary_required_group' => 'Itinerary upload is required for group service.',
+        'document_upload_failed' => 'The file could not be uploaded. Check the size (max 10 MB) and PDF/JPG/PNG format, then try again.',
+        'document_store_failed' => 'The file could not be saved. Check application storage permissions.',
+        'document_temp_missing' => 'The temporary file was not found. Please upload the document again.',
+        'document_required' => 'This document is required.',
     ],
 
     'refund_eligibility' => [

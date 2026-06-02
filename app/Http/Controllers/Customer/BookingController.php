@@ -20,6 +20,7 @@ use App\Models\MuthowifService;
 use App\Models\MuthowifServiceAddOn;
 use App\Payments\Contracts\SnapPaymentProviderInterface;
 use App\Services\BookingCompletionService;
+use App\Services\BookingDocumentStore;
 use App\Services\BookingOrderCodeService;
 use App\Services\BookingPricingService;
 use App\Services\BookingRefundExecutor;
@@ -538,7 +539,9 @@ class BookingController extends Controller
     {
         $this->authorize('create', MuthowifBooking::class);
 
-        $rules = [
+        $documentStore = app(BookingDocumentStore::class);
+
+        $rules = array_merge([
             'muthowif_profile_id' => [
                 'required',
                 'uuid',
@@ -554,17 +557,7 @@ class BookingController extends Controller
             'add_on_ids.*' => ['uuid'],
             'with_same_hotel' => ['sometimes', 'boolean'],
             'with_transport' => ['sometimes', 'boolean'],
-            'ticket_outbound' => [$this->hasPersistentFile($request, 'ticket_outbound') ? 'nullable' : 'required', 'file', 'mimes:pdf,jpeg,jpg,png', 'max:10240'],
-            'ticket_return' => [$this->hasPersistentFile($request, 'ticket_return') ? 'nullable' : 'required', 'file', 'mimes:pdf,jpeg,jpg,png', 'max:10240'],
-            'passport' => [$this->hasPersistentFile($request, 'passport') ? 'nullable' : 'required', 'file', 'mimes:pdf,jpeg,jpg,png', 'max:10240'],
-            'itinerary' => [
-                $request->input('service_type') === 'group' && !$this->hasPersistentFile($request, 'itinerary') ? 'required' : 'nullable',
-                'file',
-                'mimes:pdf,jpeg,jpg,png',
-                'max:10240',
-            ],
-            'visa' => ['nullable', 'file', 'mimes:pdf,jpeg,jpg,png', 'max:10240'],
-        ];
+        ], $documentStore->validationRules($request));
 
         $validator = Validator::make($request->all(), $rules, [
             'itinerary.required' => __('bookings.validation.itinerary_required_group'),
@@ -577,7 +570,7 @@ class BookingController extends Controller
         ]);
 
         if ($validator->fails()) {
-            $this->saveTempFiles($request);
+            $documentStore->persistTempUploadsOnValidationFailure($request);
 
             return redirect()->back()->withErrors($validator)->withInput();
         }
@@ -617,7 +610,7 @@ class BookingController extends Controller
 
         $serviceType = MuthowifServiceType::from($validated['service_type']);
 
-        $booking = DB::transaction(function () use ($request, $profileId, $start, $end, $validated, $serviceType): MuthowifBooking {
+        $booking = DB::transaction(function () use ($request, $profileId, $start, $end, $validated, $serviceType, $documentStore): MuthowifBooking {
             /** @var MuthowifProfile $profile */
             $profile = MuthowifProfile::query()
                 ->with(['services.addOns'])
@@ -698,21 +691,18 @@ class BookingController extends Controller
             ]))));
 
             $dir = 'booking-documents/'.$booking->getKey();
-            $ticketOutbound = $this->movePersistentFile($request, 'ticket_outbound', $dir);
-            $ticketReturn = $this->movePersistentFile($request, 'ticket_return', $dir);
-            $passportPath = $this->movePersistentFile($request, 'passport', $dir);
-            $itineraryPath = $this->movePersistentFile($request, 'itinerary', $dir);
-            $visaPath = $this->movePersistentFile($request, 'visa', $dir);
-
             $booking->update([
-                'ticket_outbound_path' => $ticketOutbound,
-                'ticket_return_path' => $ticketReturn,
-                'passport_path' => $passportPath,
-                'itinerary_path' => $itineraryPath,
-                'visa_path' => $visaPath,
+                'ticket_outbound_path' => $documentStore->moveToBookingDirectory($request, 'ticket_outbound', $dir),
+                'ticket_return_path' => $documentStore->moveToBookingDirectory($request, 'ticket_return', $dir),
+                'passport_path' => $documentStore->moveToBookingDirectory($request, 'passport', $dir),
+                'itinerary_path' => $documentStore->moveToBookingDirectory($request, 'itinerary', $dir),
+                'visa_path' => $documentStore->moveToBookingDirectory($request, 'visa', $dir),
             ]);
 
-            return $booking->fresh();
+            $booking = $booking->fresh();
+            $documentStore->assertRequiredDocumentsStored($booking, $serviceType);
+
+            return $booking;
         });
 
         NotifyMuthowifOfNewBooking::dispatchAfterResponse((string) $booking->getKey());
@@ -750,9 +740,16 @@ class BookingController extends Controller
             abort(404);
         }
 
+        $filename = basename(str_replace('\\', '/', $path));
         $disposition = $request->boolean('download') ? 'attachment' : 'inline';
 
-        return $disk->response($path, basename($path), [], $disposition);
+        try {
+            return $disk->response($path, $filename, [], $disposition);
+        } catch (\Throwable) {
+            return $disk->download($path, $filename, [
+                'Content-Disposition' => $disposition.'; filename="'.$filename.'"',
+            ]);
+        }
     }
 
     public function storeRefundRequest(Request $request, MuthowifBooking $booking): RedirectResponse
@@ -1026,38 +1023,4 @@ class BookingController extends Controller
         return app(MootaApiClient::class)->bankAccountIds();
     }
 
-    private function hasPersistentFile(Request $request, string $key): bool
-    {
-        return $request->hasFile($key) || $request->filled("temp_{$key}_path");
-    }
-
-    private function saveTempFiles(Request $request): void
-    {
-        $fields = ['ticket_outbound', 'ticket_return', 'passport', 'itinerary', 'visa'];
-        foreach ($fields as $field) {
-            if ($request->hasFile($field) && $request->file($field)->isValid()) {
-                $file = $request->file($field);
-                $path = $file->store('temp-booking-documents', 'local');
-                session()->flash("temp_{$field}_path", $path);
-                session()->flash("temp_{$field}_name", $file->getClientOriginalName());
-            }
-        }
-    }
-
-    private function movePersistentFile(Request $request, string $key, string $targetDir): ?string
-    {
-        if ($request->hasFile($key)) {
-            return $request->file($key)->store($targetDir, 'local');
-        }
-
-        $tempPath = $request->input("temp_{$key}_path");
-        if ($tempPath && Storage::disk('local')->exists($tempPath)) {
-            $newPath = $targetDir . '/' . basename($tempPath);
-            Storage::disk('local')->move($tempPath, $newPath);
-
-            return $newPath;
-        }
-
-        return null;
-    }
 }

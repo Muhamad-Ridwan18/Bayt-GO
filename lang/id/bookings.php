@@ -35,6 +35,10 @@ return [
         'reschedule_new_start_too_soon' => 'Tanggal mulai baru harus minimal :days hari kalender penuh setelah hari Anda mengajukan permintaan ini (aturan H-:days).',
         'refund_account_number_format' => 'Nomor rekening hanya boleh angka, spasi, atau tanda hubung (minimal satu digit).',
         'itinerary_required_group' => 'Itinerary wajib diunggah untuk layanan group.',
+        'document_upload_failed' => 'Berkas gagal diunggah. Periksa ukuran (maks. 10 MB) dan format PDF/JPG/PNG, lalu coba lagi.',
+        'document_store_failed' => 'Berkas tidak dapat disimpan. Periksa izin folder storage aplikasi.',
+        'document_temp_missing' => 'Berkas sementara tidak ditemukan. Unggah ulang dokumen.',
+        'document_required' => 'Dokumen ini wajib diunggah.',
     ],
 
     'refund_eligibility' => [
