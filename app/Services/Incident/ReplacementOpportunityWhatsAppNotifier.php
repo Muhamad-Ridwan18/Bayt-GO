@@ -17,7 +17,7 @@ final class ReplacementOpportunityWhatsAppNotifier
 
     public function notifyOpportunity(BookingIncident $incident, MuthowifProfile $profile): void
     {
-        if (! config('services.fonnte.booking_notify_enabled', true)) {
+        if (! config('services.fonnte.incident_replacement_opportunity_notify_enabled', true)) {
             return;
         }
 
@@ -55,7 +55,7 @@ final class ReplacementOpportunityWhatsAppNotifier
 
     public function notifyCustomerPoolReady(BookingIncident $incident): void
     {
-        if (! config('services.fonnte.booking_notify_enabled', true)) {
+        if (! config('services.fonnte.incident_customer_replacement_pool_notify_enabled', true)) {
             return;
         }
 

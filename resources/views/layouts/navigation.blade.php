@@ -217,7 +217,7 @@
                 </button>
             </div>
         </div>
-    </div>
+    </x-page-container>
 
     <!-- Responsive Navigation Menu (< lg: hamburger; bahasa & menu dalam panel) -->
     <div

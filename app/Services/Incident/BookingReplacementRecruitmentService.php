@@ -59,7 +59,9 @@ final class BookingReplacementRecruitmentService
                 'auto' => true,
             ]);
 
-            BroadcastReplacementOpportunityToMuthowifsJob::dispatchAfterResponse((string) $incident->getKey());
+            if (config('services.fonnte.incident_replacement_opportunity_notify_enabled', true)) {
+                BroadcastReplacementOpportunityToMuthowifsJob::dispatchAfterResponse((string) $incident->getKey());
+            }
 
             $fresh = $incident->fresh();
             IncidentReplacementBroadcast::poolUpdated($fresh, 'recruitment_opened');
@@ -103,7 +105,8 @@ final class BookingReplacementRecruitmentService
         $incident = $incident->fresh();
         IncidentReplacementBroadcast::poolUpdated($incident, $firstOpen ? 'customer_choice_opened' : 'candidate_added');
 
-        if ($firstOpen || config('incident.notify_customer_on_each_new_candidate', false)) {
+        $customerWaEnabled = config('services.fonnte.incident_customer_replacement_pool_notify_enabled', true);
+        if ($customerWaEnabled && ($firstOpen || config('incident.notify_customer_on_each_new_candidate', false))) {
             NotifyCustomerOfReplacementPoolJob::dispatchAfterResponse((string) $incident->getKey());
         }
     }

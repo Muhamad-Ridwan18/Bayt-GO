@@ -29,4 +29,10 @@ return [
 
     /** Beri tahu jamaah WA setiap ada kandidat baru (false = hanya saat pilihan pertama dibuka). */
     'notify_customer_on_each_new_candidate' => false,
+
+    /*
+    | WhatsApp insiden (Fonnte) — aktif/nonaktif lewat .env:
+    | FONNTE_INCIDENT_REPLACEMENT_OPPORTUNITY_NOTIFY_ENABLED  → muthowif lain
+    | FONNTE_INCIDENT_CUSTOMER_REPLACEMENT_POOL_NOTIFY_ENABLED → jamaah (pool siap)
+    */
 ];

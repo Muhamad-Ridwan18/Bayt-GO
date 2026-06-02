@@ -62,6 +62,16 @@ return [
         'refund_transfer_proof_notify_enabled' => env('FONNTE_REFUND_TRANSFER_PROOF_NOTIFY_ENABLED', true),
         /** WA ke muthowif: bukti transfer withdraw (setelah admin tandai selesai). */
         'withdrawal_transfer_proof_notify_enabled' => env('FONNTE_WITHDRAWAL_TRANSFER_PROOF_NOTIFY_ENABLED', true),
+        /** WA ke muthowif lain saat rekrutmen pengganti insiden dibuka (broadcast peluang menggantikan). */
+        'incident_replacement_opportunity_notify_enabled' => filter_var(
+            env('FONNTE_INCIDENT_REPLACEMENT_OPPORTUNITY_NOTIFY_ENABLED', true),
+            FILTER_VALIDATE_BOOLEAN
+        ),
+        /** WA ke jamaah saat pool pengganti siap dipilih. */
+        'incident_customer_replacement_pool_notify_enabled' => filter_var(
+            env('FONNTE_INCIDENT_CUSTOMER_REPLACEMENT_POOL_NOTIFY_ENABLED', true),
+            FILTER_VALIDATE_BOOLEAN
+        ),
     ],
 
     'midtrans' => [
