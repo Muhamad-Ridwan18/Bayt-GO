@@ -1,49 +1,51 @@
 <x-app-layout>
-    <x-page-container class="py-8" x-data="muthowifRecruitmentLive()">
-        <div class="flex flex-wrap items-center justify-between gap-3">
-            <div>
-                <h1 class="text-lg font-bold text-slate-900">{{ __('incidents.muthowif.opportunities_title') }}</h1>
-                <p class="mt-1 text-sm text-slate-600">{{ __('incidents.muthowif.opportunities_subtitle_auto') }}</p>
+    <div
+        class="min-h-[calc(100vh-4rem)] bg-slate-100 py-6 sm:py-8"
+        x-data="muthowifRecruitmentLive()"
+    >
+        <x-page-container class="space-y-6 py-2 sm:py-4">
+            <div class="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
+                <div>
+                    <h1 class="text-2xl font-bold tracking-tight text-slate-900 sm:text-3xl">{{ __('muthowif.replacements.page_opportunities_title') }}</h1>
+                    <p class="mt-2 max-w-2xl text-sm leading-relaxed text-slate-600">{{ __('muthowif.replacements.page_opportunities_subtitle') }}</p>
+                </div>
+                <div class="flex shrink-0 flex-col gap-2 self-start sm:items-end">
+                    <a href="{{ route('muthowif.replacements.pending') }}" class="inline-flex items-center gap-2 rounded-xl border border-violet-200 bg-violet-50 px-4 py-2.5 text-sm font-semibold text-violet-900 shadow-sm transition hover:bg-violet-100">
+                        {{ __('incidents.muthowif.pending_invites') }}
+                    </a>
+                    <a href="{{ route('muthowif.bookings.index') }}" class="text-sm font-semibold text-brand-700 hover:text-brand-800">
+                        {{ __('muthowif.replacements.back_bookings') }} →
+                    </a>
+                </div>
             </div>
-            <a href="{{ route('muthowif.replacements.pending') }}" class="text-sm font-semibold text-brand-700">{{ __('incidents.muthowif.pending_invites') }}</a>
-        </div>
 
-        @if (session('status'))
-            <div class="mt-4 rounded-xl border border-emerald-200 bg-emerald-50 px-4 py-3 text-sm text-emerald-900">{{ session('status') }}</div>
-        @endif
-        @if (session('error'))
-            <div class="mt-4 rounded-xl border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-900">{{ session('error') }}</div>
-        @endif
+            @if (session('status'))
+                <div class="rounded-xl border border-emerald-200 bg-emerald-50 px-4 py-3 text-sm text-emerald-900">{{ session('status') }}</div>
+            @endif
+            @if (session('error'))
+                <div class="rounded-xl border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-900">{{ session('error') }}</div>
+            @endif
 
-        <div class="mt-6 space-y-4">
-            @forelse ($incidents as $incident)
-                @php $booking = $incident->muthowifBooking; @endphp
-                <article class="rounded-2xl border border-violet-200 bg-white p-5 shadow-sm">
-                    <p class="font-mono text-xs text-slate-500">{{ $booking?->booking_code }}</p>
-                    <p class="mt-1 font-semibold text-slate-900">{{ $booking?->customer?->name }}</p>
-                    <p class="mt-1 text-xs text-slate-600">
-                        {{ $booking?->starts_on?->format('d M Y') }} – {{ $booking?->ends_on?->format('d M Y') }}
-                        · {{ $incident->case_type->label() }}
-                    </p>
-                    <div class="mt-4 flex flex-col gap-2 sm:flex-row sm:flex-wrap">
-                        <form method="POST" action="{{ route('muthowif.replacements.volunteer', $incident) }}" class="flex-1 min-w-[12rem] space-y-2">
-                            @csrf
-                            <input type="text" name="note" class="w-full rounded-xl border-slate-200 text-sm" placeholder="{{ __('incidents.muthowif.volunteer_note_placeholder') }}">
-                            <button type="submit" class="w-full rounded-xl bg-emerald-700 px-4 py-2.5 text-sm font-bold text-white hover:bg-emerald-800">
-                                {{ __('incidents.muthowif.accept_offer') }}
-                            </button>
-                        </form>
-                        <form method="POST" action="{{ route('muthowif.replacements.decline', $incident) }}" class="sm:self-end" onsubmit="return confirm(@json(__('incidents.muthowif.decline_confirm')));">
-                            @csrf
-                            <button type="submit" class="w-full rounded-xl border border-slate-300 bg-white px-4 py-2.5 text-sm font-semibold text-slate-700 hover:bg-slate-50 sm:w-auto">
-                                {{ __('incidents.muthowif.decline_offer') }}
-                            </button>
-                        </form>
-                    </div>
-                </article>
-            @empty
-                <p class="text-sm text-slate-500">{{ __('incidents.muthowif.opportunities_empty') }}</p>
-            @endforelse
+            @if ($incidents->isEmpty())
+                <div class="rounded-2xl border border-dashed border-slate-300 bg-white px-6 py-12 text-center shadow-sm sm:py-14">
+                    <p class="text-base font-semibold text-slate-900">{{ __('incidents.muthowif.opportunities_empty') }}</p>
+                </div>
+            @else
+                <ul class="space-y-4">
+                    @foreach ($incidents as $incident)
+                        @php $booking = $incident->muthowifBooking; @endphp
+                        @if ($booking)
+                            @include('muthowif.bookings.partials.replacement-request-card', [
+                                'variant' => 'opportunity',
+                                'booking' => $booking,
+                                'incident' => $incident,
+                                'addonsById' => $addonsById ?? collect(),
+                                'defaultOpen' => $loop->first,
+                            ])
+                        @endif
+                    @endforeach
+                </ul>
+            @endif
         </x-page-container>
     </div>
 </x-app-layout>

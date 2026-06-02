@@ -61,7 +61,11 @@
     $userInitial = mb_strtoupper(mb_substr(Auth::user()->name, 0, 1));
 
     $pendingReplacementInvites = BookingReplacement::query()
-        ->with(['incident.muthowifBooking.customer', 'incident.muthowifProfile.user'])
+        ->with([
+            'incident.muthowifBooking.customer',
+            'incident.muthowifBooking.muthowifProfile.user',
+            'incident.muthowifBooking.muthowifProfile.services.addOns',
+        ])
         ->where('replacement_muthowif_profile_id', $mp->getKey())
         ->where('status', BookingReplacementStatus::AwaitingMuthowifConfirm)
         ->whereColumn('replacement_muthowif_profile_id', '!=', 'original_muthowif_profile_id')
@@ -341,23 +345,26 @@
     </nav>
 
     @if ($pendingReplacementInvites->isNotEmpty())
-        <section class="rounded-2xl border-2 border-violet-200 bg-violet-50/60 p-4 shadow-sm ring-1 ring-violet-100 sm:p-5" aria-labelledby="dashboard-replacement-invites-heading">
+        <section class="space-y-4" aria-labelledby="dashboard-replacement-invites-heading">
             <div class="flex flex-wrap items-start justify-between gap-3">
                 <div>
-                    <h2 id="dashboard-replacement-invites-heading" class="text-sm font-bold text-violet-950">
+                    <h2 id="dashboard-replacement-invites-heading" class="text-lg font-bold text-slate-900 sm:text-xl">
                         {{ __('dashboard_muthowif.replacement_alert_title') }}
                     </h2>
-                    <p class="mt-1 text-xs text-violet-900/90">{{ __('dashboard_muthowif.replacement_alert_body', ['count' => $pendingReplacementCount]) }}</p>
+                    <p class="mt-1 text-sm text-slate-600">{{ __('dashboard_muthowif.replacement_alert_body', ['count' => $pendingReplacementCount]) }}</p>
                 </div>
-                <a href="{{ route('muthowif.replacements.pending') }}" class="shrink-0 text-xs font-semibold text-violet-800 hover:text-violet-950">
+                <a href="{{ route('muthowif.replacements.pending') }}" class="shrink-0 text-sm font-semibold text-brand-700 hover:text-brand-800">
                     {{ __('dashboard_muthowif.replacement_alert_cta') }} →
                 </a>
             </div>
-            <div class="mt-4 space-y-3">
+            <ul class="space-y-4">
                 @foreach ($pendingReplacementInvites as $replacement)
-                    @include('muthowif.bookings.partials.replacement-invite-card', ['replacement' => $replacement])
+                    @include('muthowif.bookings.partials.replacement-invite-card', [
+                        'replacement' => $replacement,
+                        'defaultOpen' => $loop->first,
+                    ])
                 @endforeach
-            </div>
+            </ul>
             @if ($pendingReplacementCount > $pendingReplacementInvites->count())
                 <p class="mt-3 text-center text-xs font-medium text-violet-800">
                     <a href="{{ route('muthowif.replacements.pending') }}" class="hover:underline">

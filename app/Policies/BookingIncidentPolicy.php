@@ -55,8 +55,16 @@ class BookingIncidentPolicy
     {
         $booking = $replacement->incident->muthowifBooking;
 
-        return $user->isCustomer()
-            && (string) $booking->customer_id === (string) $user->id;
+        if (! $user->isCustomer() || (string) $booking->customer_id !== (string) $user->id) {
+            return false;
+        }
+
+        $profile = $user->muthowifProfile;
+        if ($profile !== null && (string) $booking->muthowif_profile_id === (string) $profile->getKey()) {
+            return false;
+        }
+
+        return true;
     }
 
     public function confirmReplacement(User $user, BookingReplacement $replacement): bool

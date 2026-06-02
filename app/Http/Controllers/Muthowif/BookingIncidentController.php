@@ -40,7 +40,13 @@ class BookingIncidentController extends Controller
         abort_unless($profile, 403);
 
         $replacements = BookingReplacement::query()
-            ->with(['incident.muthowifBooking.customer', 'originalProfile.user', 'replacementProfile.user'])
+            ->with([
+                'incident.muthowifBooking.customer',
+                'incident.muthowifBooking.muthowifProfile.user',
+                'incident.muthowifBooking.muthowifProfile.services.addOns',
+                'originalProfile.user',
+                'replacementProfile.user',
+            ])
             ->where('replacement_muthowif_profile_id', $profile->getKey())
             ->where('status', BookingReplacementStatus::AwaitingMuthowifConfirm)
             ->whereColumn('replacement_muthowif_profile_id', '!=', 'original_muthowif_profile_id')
@@ -60,7 +66,7 @@ class BookingIncidentController extends Controller
         $candidateService = app(BookingReplacementCandidateService::class);
 
         $incidents = BookingIncident::query()
-            ->with(['muthowifBooking.customer', 'muthowifBooking.muthowifProfile.user'])
+            ->with(['muthowifBooking.customer', 'muthowifBooking.muthowifProfile.user', 'muthowifBooking.muthowifProfile.services.addOns'])
             ->where('replacement_recruitment_open', true)
             ->whereNotIn('status', [
                 BookingIncidentStatus::Resolved->value,
@@ -72,6 +78,10 @@ class BookingIncidentController extends Controller
             ->filter(function (BookingIncident $incident) use ($profile, $candidateService) {
                 $booking = $incident->muthowifBooking;
                 if ($booking === null) {
+                    return false;
+                }
+
+                if ((string) $booking->muthowif_profile_id === (string) $profile->getKey()) {
                     return false;
                 }
 
@@ -97,9 +107,16 @@ class BookingIncidentController extends Controller
             })
             ->values();
 
+        $bookings = $incidents->map(fn ($i) => $i->muthowifBooking)->filter();
+        $addonIds = $bookings->flatMap(fn ($b) => $b->selected_add_on_ids ?? [])->unique()->filter()->values();
+        $addonsById = $addonIds->isEmpty()
+            ? collect()
+            : \App\Models\MuthowifServiceAddOn::query()->whereIn('id', $addonIds)->get()->keyBy('id');
+
         return view('muthowif.replacements.opportunities', [
             'incidents' => $incidents,
             'profile' => $profile,
+            'addonsById' => $addonsById,
         ]);
     }
 

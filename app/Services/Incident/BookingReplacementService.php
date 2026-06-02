@@ -74,6 +74,9 @@ final class BookingReplacementService
         }
 
         $booking = $incident->muthowifBooking;
+        if ((string) $booking->muthowif_profile_id === (string) $profile->getKey()) {
+            throw new \RuntimeException(__('incidents.errors.cannot_volunteer_own_booking'));
+        }
         $this->candidates->assertCanReplace($booking, $profile);
 
         if ($this->hasAcceptedReplacement($incident)) {
@@ -363,6 +366,11 @@ final class BookingReplacementService
         $booking = $incident->muthowifBooking;
 
         if ((string) $booking->customer_id !== (string) $customer->getKey()) {
+            throw new \RuntimeException(__('incidents.errors.not_booking_owner'));
+        }
+
+        $reporterProfile = $customer->muthowifProfile;
+        if ($reporterProfile !== null && (string) $booking->muthowif_profile_id === (string) $reporterProfile->getKey()) {
             throw new \RuntimeException(__('incidents.errors.not_booking_owner'));
         }
 

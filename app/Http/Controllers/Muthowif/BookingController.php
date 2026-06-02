@@ -139,14 +139,10 @@ class BookingController extends Controller
 
         $peerRecommendTargets = app(BookingPeerReferralService::class)->listCandidates($booking, $profile);
         $booking->syncServicePhase();
-        $openIncident = $booking->openIncident();
-        $ownsBooking = (string) $booking->muthowif_profile_id === (string) $profile->getKey();
-        $incomingReplacement = $ownsBooking
-            ? null
-            : $this->incomingReplacementAwaitingConfirm($profile, $booking);
-        $peerReplacementsAwaitingConfirm = ($ownsBooking && $openIncident)
-            ? $this->peerReplacementsAwaitingConfirm($openIncident, $profile)
-            : collect();
+        [$openIncident, $incomingReplacement, $peerReplacementsAwaitingConfirm, $customerChoicePool] = $this->incidentContextForMuthowifShow(
+            $booking,
+            $profile,
+        );
 
         return view('muthowif.bookings.show', [
             'booking' => $booking,
@@ -155,6 +151,7 @@ class BookingController extends Controller
             'openIncident' => $openIncident,
             'incomingReplacement' => $incomingReplacement,
             'peerReplacementsAwaitingConfirm' => $peerReplacementsAwaitingConfirm,
+            'customerChoicePool' => $customerChoicePool,
         ]);
     }
 
@@ -180,14 +177,10 @@ class BookingController extends Controller
         $peerRecommendTargets = app(BookingPeerReferralService::class)->listCandidates($booking, $profile);
 
         $booking->syncServicePhase();
-        $openIncident = $booking->openIncident();
-        $ownsBooking = (string) $booking->muthowif_profile_id === (string) $profile->getKey();
-        $incomingReplacement = $ownsBooking
-            ? null
-            : $this->incomingReplacementAwaitingConfirm($profile, $booking);
-        $peerReplacementsAwaitingConfirm = ($ownsBooking && $openIncident)
-            ? $this->peerReplacementsAwaitingConfirm($openIncident, $profile)
-            : collect();
+        [$openIncident, $incomingReplacement, $peerReplacementsAwaitingConfirm, $customerChoicePool] = $this->incidentContextForMuthowifShow(
+            $booking,
+            $profile,
+        );
 
         return view('muthowif.bookings.partials.show-live', [
             'booking' => $booking,
@@ -196,6 +189,7 @@ class BookingController extends Controller
             'openIncident' => $openIncident,
             'incomingReplacement' => $incomingReplacement,
             'peerReplacementsAwaitingConfirm' => $peerReplacementsAwaitingConfirm,
+            'customerChoicePool' => $customerChoicePool,
         ]);
     }
 
@@ -518,6 +512,32 @@ class BookingController extends Controller
         return MuthowifServiceAddOn::query()->whereIn('id', $ids)->get()->keyBy('id');
     }
 
+    /**
+     * @return array{0: ?\App\Models\BookingIncident, 1: ?BookingReplacement, 2: \Illuminate\Support\Collection, 3: \Illuminate\Support\Collection}
+     */
+    private function incidentContextForMuthowifShow(MuthowifBooking $booking, MuthowifProfile $profile): array
+    {
+        $openIncident = $booking->openIncident();
+        if ($openIncident !== null) {
+            $openIncident->load([
+                'events' => fn ($q) => $q->orderByDesc('created_at')->limit(10),
+            ]);
+        }
+
+        $ownsBooking = (string) $booking->muthowif_profile_id === (string) $profile->getKey();
+        $incomingReplacement = $ownsBooking
+            ? null
+            : $this->incomingReplacementAwaitingConfirm($profile, $booking);
+        $peerReplacementsAwaitingConfirm = ($ownsBooking && $openIncident)
+            ? $this->peerReplacementsAwaitingConfirm($openIncident, $profile)
+            : collect();
+        $customerChoicePool = ($ownsBooking && $openIncident && $openIncident->customer_choice_opened_at !== null)
+            ? $openIncident->selectableReplacements()->with('replacementProfile.user')->get()
+            : collect();
+
+        return [$openIncident, $incomingReplacement, $peerReplacementsAwaitingConfirm, $customerChoicePool];
+    }
+
     private function canAccessBookingAsMuthowif(MuthowifProfile $profile, MuthowifBooking $booking): bool
     {
         if ((string) $booking->muthowif_profile_id === (string) $profile->getKey()) {
@@ -533,7 +553,11 @@ class BookingController extends Controller
     private function pendingReplacementInvitesFor(MuthowifProfile $profile): Collection
     {
         return BookingReplacement::query()
-            ->with(['incident.muthowifBooking.customer', 'incident.muthowifProfile.user'])
+            ->with([
+                'incident.muthowifBooking.customer',
+                'incident.muthowifBooking.muthowifProfile.user',
+                'incident.muthowifBooking.muthowifProfile.services.addOns',
+            ])
             ->where('replacement_muthowif_profile_id', $profile->getKey())
             ->where('status', BookingReplacementStatus::AwaitingMuthowifConfirm)
             ->whereColumn('replacement_muthowif_profile_id', '!=', 'original_muthowif_profile_id')

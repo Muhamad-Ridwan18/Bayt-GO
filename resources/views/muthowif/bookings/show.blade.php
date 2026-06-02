@@ -17,6 +17,7 @@
                 'openIncident' => $openIncident ?? null,
                 'incomingReplacement' => $incomingReplacement ?? null,
                 'peerReplacementsAwaitingConfirm' => $peerReplacementsAwaitingConfirm ?? collect(),
+                'customerChoicePool' => $customerChoicePool ?? collect(),
             ])
         </div>
     </div>

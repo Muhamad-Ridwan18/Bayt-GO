@@ -16,16 +16,25 @@
     </div>
 
     @if ($pendingReplacementInvites->isNotEmpty())
-        <section class="space-y-3">
+        <section class="space-y-4">
             <div class="flex flex-wrap items-center justify-between gap-2">
-                <h2 class="text-sm font-bold text-violet-950">{{ __('incidents.muthowif.index_pending_invites_heading') }}</h2>
-                <a href="{{ route('muthowif.replacements.pending') }}" class="text-xs font-semibold text-brand-700 hover:text-brand-800">
+                <div>
+                    <h2 class="text-lg font-bold text-slate-900 sm:text-xl">{{ __('incidents.muthowif.index_pending_invites_heading') }}</h2>
+                    <p class="mt-1 text-sm text-slate-600">{{ __('muthowif.replacements.page_invites_subtitle') }}</p>
+                </div>
+                <a href="{{ route('muthowif.replacements.pending') }}" class="shrink-0 text-sm font-semibold text-brand-700 hover:text-brand-800">
                     {{ __('incidents.muthowif.pending_invites') }} →
                 </a>
             </div>
-            @foreach ($pendingReplacementInvites as $replacement)
-                @include('muthowif.bookings.partials.replacement-invite-card', ['replacement' => $replacement])
-            @endforeach
+            <ul class="space-y-4">
+                @foreach ($pendingReplacementInvites as $replacement)
+                    @include('muthowif.bookings.partials.replacement-invite-card', [
+                        'replacement' => $replacement,
+                        'addonsById' => $addonsById ?? collect(),
+                        'defaultOpen' => $loop->first,
+                    ])
+                @endforeach
+            </ul>
         </section>
     @endif
 

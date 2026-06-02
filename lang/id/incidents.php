@@ -7,6 +7,24 @@ return [
     'status_banner_open' => 'Insiden sedang ditangani oleh tim BaytGo.',
     'replacement_offer_title' => 'Penugasan menggantikan pendamping',
     'timeline_title' => 'Perkembangan insiden',
+
+    'events' => [
+        'incident_opened' => 'Insiden dibuka',
+        'incident_assigned' => 'Insiden ditugaskan ke admin',
+        'incident_investigating' => 'Investigasi dimulai',
+        'incident_resolved' => 'Insiden diselesaikan',
+        'incident_cancelled' => 'Insiden dibatalkan',
+        'replacement_recruitment_opened' => 'Rekrutmen muthowif pengganti dibuka',
+        'replacement_customer_choice_opened' => 'Jamaah dapat memilih pengganti',
+        'replacement_volunteered' => 'Muthowif melamar sebagai pengganti',
+        'replacement_opportunity_declined' => 'Muthowif menolak penawaran',
+        'replacement_invited' => 'Admin mengundang muthowif pengganti',
+        'replacement_muthowif_confirmed' => 'Muthowif mengonfirmasi ketersediaan',
+        'replacement_muthowif_declined' => 'Muthowif menolak penugasan',
+        'replacement_admin_approved' => 'Kandidat disetujui admin',
+        'replacement_admin_rejected' => 'Kandidat ditolak admin',
+        'replacement_selected' => 'Jamaah memilih pendamping pengganti',
+    ],
     'customer_choice_title' => 'Pilih pendamping pengganti (:count opsi)',
     'customer_choice_hint' => 'Keputusan akhir ada di Anda. Pilih satu muthowif yang sudah disetujui BaytGo.',
     'select_this_muthowif' => 'Pilih pendamping ini',
@@ -111,6 +129,7 @@ return [
         'no_approved_candidates' => 'Belum ada kandidat disetujui. Setujui minimal satu muthowif.',
         'customer_choice_not_open' => 'Pemilihan jamaah belum dibuka oleh admin.',
         'replacement_not_selectable' => 'Kandidat ini tidak tersedia untuk dipilih.',
+        'cannot_volunteer_own_booking' => 'Anda tidak dapat menggantikan diri sendiri pada pesanan yang Anda laporkan.',
     ],
 
     'flash' => [
@@ -198,5 +217,8 @@ return [
         'volunteer_note_placeholder' => 'Catatan singkat (opsional)',
         'pending_invites' => 'Undangan menunggu konfirmasi',
         'browse_opportunities' => 'Lihat peluang menggantikan di insiden lain',
+        'customer_picks_replacement' => 'Pemilihan pendamping pengganti adalah hak jamaah. Anda tidak perlu dan tidak dapat memilih pengganti untuk pesanan ini.',
+        'customer_choice_pool_heading' => 'Kandidat siap — menunggu pilihan jamaah',
+        'customer_choice_pool_hint' => 'Daftar di bawah hanya untuk pantauan. Jamaah memilih di halaman pesanan mereka.',
     ],
 ];

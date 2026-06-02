@@ -2,10 +2,14 @@
     use App\Enums\BookingIncidentOverlayStatus;
     use App\Enums\BookingStatus;
     use App\Enums\PaymentStatus;
+    use App\Support\IncidentEventLabel;
 
     $openIncident = $openIncident ?? null;
     $selectableReplacements = $selectableReplacements ?? collect();
     $b = $booking;
+    $isBookingCustomer = auth()->check()
+        && auth()->user()->isCustomer()
+        && (string) auth()->id() === (string) $b->customer_id;
 @endphp
 
 @if ($b->status === BookingStatus::Confirmed && $b->payment_status === PaymentStatus::Paid)
@@ -23,13 +27,13 @@
                     @foreach ($openIncident->events->take(8) as $event)
                         <li class="rounded-lg bg-white/60 px-3 py-2">
                             <span class="font-mono text-[10px] text-amber-800">{{ $event->created_at?->timezone(config('app.timezone'))->format('d/m H:i') }}</span>
-                            <span class="ml-2">{{ $event->event_type }}</span>
+                            <span class="ml-2">{{ IncidentEventLabel::for($event->event_type) }}</span>
                         </li>
                     @endforeach
                 </ul>
             @endif
 
-            @if ($selectableReplacements->isNotEmpty())
+            @if ($isBookingCustomer && $selectableReplacements->isNotEmpty())
                 <div class="mt-4 space-y-3">
                     <h3 class="text-sm font-bold text-slate-900">{{ __('incidents.customer_choice_title', ['count' => $selectableReplacements->count()]) }}</h3>
                     <p class="text-xs text-slate-600">{{ __('incidents.customer_choice_hint') }}</p>
