@@ -156,6 +156,7 @@ return [
         'cancel_yes' => 'Yes, cancel',
         'cancel_booking_confirm' => 'Cancel this booking?',
         'muthowif_jadwal_full_apology' => 'We are sorry — :name could not accept this booking because their schedule is fully booked for those dates.',
+        'referral_network_cancelled_intro' => 'This booking was cancelled. You can still choose another guide from :name\'s referral network for the same dates:',
         'muthowif_rejection_note_label' => 'Muthowif note:',
         'muthowif_rejection_auto_collision' => 'Automatically rejected because the muthowif approved another booking for the same dates.',
         'referral_network_empty' => 'No muthowifs in that referral network match yet. You can search for others in the directory.',

@@ -3,7 +3,6 @@
 namespace App\Services;
 
 use App\Enums\BookingStatus;
-use App\Enums\MuthowifBookingMuthowifRejectionKind;
 use App\Enums\MuthowifVerificationStatus;
 use App\Models\MuthowifBooking;
 use App\Models\MuthowifProfile;
@@ -17,18 +16,20 @@ use Illuminate\Support\Collection;
 class MuthowifNetworkReferralService
 {
     /**
-     * Profil disetujui, pernah mendaftar dengan kode referral milik muthowif yang menolak booking.
+     * Muthowif alternatif dari jaringan referral muthowif pada booking (setelah dibatalkan).
      *
      * @return Collection<int, MuthowifProfile>
      */
     public function alternativesForCustomerAfterJadwalRejection(MuthowifBooking $booking): Collection
     {
-        if ($booking->status !== BookingStatus::Cancelled
-            || $booking->muthowif_rejection_kind !== MuthowifBookingMuthowifRejectionKind::JadwalFull) {
+        if ($booking->status !== BookingStatus::Cancelled) {
             return collect();
         }
 
         $declinerId = (string) $booking->muthowif_profile_id;
+        if ($declinerId === '') {
+            return collect();
+        }
 
         $serviceType = $booking->service_type;
         if ($serviceType === null) {
@@ -71,11 +72,11 @@ class MuthowifNetworkReferralService
     }
 
     /**
-     * Untuk pengujian / tampilan admin: apakah booking memenuhi syarat panel rekomendasi.
+     * Panel rekomendasi jaringan referral untuk jamaah (semua pembatalan, bukan hanya jadwal penuh).
      */
     public function shouldShowCustomerReferralPanel(MuthowifBooking $booking): bool
     {
         return $booking->status === BookingStatus::Cancelled
-            && $booking->muthowif_rejection_kind === MuthowifBookingMuthowifRejectionKind::JadwalFull;
+            && filled($booking->muthowif_profile_id);
     }
 }

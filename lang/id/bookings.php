@@ -157,6 +157,7 @@ return [
         'cancel_yes' => 'Ya, batalkan',
         'cancel_booking_confirm' => 'Batalkan pesanan ini?',
         'muthowif_jadwal_full_apology' => 'Mohon maaf — :name tidak dapat menerima pesanan ini karena jadwal pendampingan pada tanggal tersebut sudah penuh.',
+        'referral_network_cancelled_intro' => 'Pesanan ini dibatalkan. Anda masih bisa memilih pendamping lain dari jaringan referral :name pada jadwal yang sama:',
         'muthowif_rejection_note_label' => 'Catatan muthowif:',
         'muthowif_rejection_auto_collision' => 'Otomatis ditolak sistem karena muthowif menyetujui pesanan lain pada jadwal yang sama.',
         'referral_network_empty' => 'Saat ini belum ada muthowif dalam jaringan referral tersebut yang memenuhi syarat. Anda bisa mencari muthowif lain di daftar layanan.',

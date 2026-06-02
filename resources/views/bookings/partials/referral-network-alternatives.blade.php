@@ -16,12 +16,16 @@
             <p class="text-sm leading-relaxed text-slate-800">
                 {{ __('bookings.show.muthowif_jadwal_full_apology', ['name' => $booking->muthowifProfile?->user?->name ?? '—']) }}
             </p>
-            @if (filled($booking->muthowif_rejection_note))
-                <p class="mt-3 rounded-xl border border-slate-100 bg-white/90 px-3 py-2 text-xs text-slate-600 ring-1 ring-slate-100/80">
-                    <span class="font-semibold text-slate-700">{{ __('bookings.show.muthowif_rejection_note_label') }}</span>
-                    {{ $booking->muthowif_rejection_note }}
-                </p>
-            @endif
+        @else
+            <p class="text-sm leading-relaxed text-slate-800">
+                {{ __('bookings.show.referral_network_cancelled_intro', ['name' => $booking->muthowifProfile?->user?->name ?? '—']) }}
+            </p>
+        @endif
+        @if (filled($booking->muthowif_rejection_note))
+            <p class="mt-3 rounded-xl border border-slate-100 bg-white/90 px-3 py-2 text-xs text-slate-600 ring-1 ring-slate-100/80">
+                <span class="font-semibold text-slate-700">{{ __('bookings.show.muthowif_rejection_note_label') }}</span>
+                {{ $booking->muthowif_rejection_note }}
+            </p>
         @endif
 
         @if ($referralNetworkAlternatives->isEmpty())
