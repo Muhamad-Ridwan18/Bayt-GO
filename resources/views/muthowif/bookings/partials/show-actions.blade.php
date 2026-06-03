@@ -10,18 +10,7 @@
     <section class="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm sm:p-6">
         <h2 class="text-sm font-bold text-slate-900">{{ __('muthowif.booking_show.actions_heading') }}</h2>
         <p class="mt-1 text-xs text-slate-600">{{ __('muthowif.booking_show.actions_pending_hint') }}</p>
-        <div class="mt-4 flex flex-col gap-4 lg:flex-row lg:items-end lg:gap-5">
-            <form method="POST" action="{{ route('muthowif.bookings.confirm', $b) }}" class="shrink-0">
-                @csrf
-                <button type="submit" class="inline-flex h-9 w-full min-w-[8.5rem] items-center justify-center gap-1.5 rounded-lg bg-brand-700 px-3.5 text-xs font-semibold text-white shadow-sm transition hover:bg-brand-800 sm:w-auto">
-                    <svg class="h-3.5 w-3.5 shrink-0" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true"><path fill-rule="evenodd" d="M16.704 4.153a.75.75 0 01.143 1.052l-8 10.5a.75.75 0 01-1.127.075l-4.5-4.5a.75.75 0 011.06-1.06l3.894 3.893 7.48-9.817a.75.75 0 011.05-.143z" clip-rule="evenodd" /></svg>
-                    {{ __('muthowif.bookings.approve') }}
-                </button>
-            </form>
-            <div class="min-w-0 flex-1">
-                @include('muthowif.bookings.partials.reject-booking-form', ['booking' => $b, 'compact' => false])
-            </div>
-        </div>
+        @include('muthowif.bookings.partials.pending-booking-actions', ['booking' => $b, 'variant' => 'inline'])
 
         @if (isset($peerRecommendTargets) && $peerRecommendTargets->isNotEmpty())
             <div class="mt-5 rounded-xl border border-violet-200 bg-violet-50/60 p-4">

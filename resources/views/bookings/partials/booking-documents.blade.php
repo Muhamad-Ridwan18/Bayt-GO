@@ -5,6 +5,7 @@
     'variant' => 'default',
     'maxVisible' => null,
     'collapseLimit' => null,
+    'actionStyle' => 'link',
 ])
 
 @php
@@ -90,7 +91,7 @@
                 @php($kind = $docKind($item['path']))
                 <li
                     @class([
-                        'flex items-center justify-between gap-2 rounded-lg border border-slate-100 bg-slate-50/60 px-3 py-2',
+                        'flex items-center justify-between gap-2 rounded-lg border border-slate-100 bg-white px-3 py-2.5 shadow-sm',
                     ])
                     @if ($useCollapse)
                         x-show="showAllDocs || {{ $index }} < {{ (int) $collapseLimit }}"
@@ -107,6 +108,7 @@
                         'kind' => $kind,
                         'previewUrl' => $previewUrl,
                         'downloadUrl' => $downloadUrl,
+                        'actionStyle' => $actionStyle,
                     ])
                 </li>
             @endforeach
