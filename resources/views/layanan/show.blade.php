@@ -1,8 +1,6 @@
 @php
     use App\Enums\MuthowifServiceType;
-    use App\Support\IndonesianNumber;
     use Carbon\Carbon;
-    use Illuminate\Support\Str;
 
     $group = $profile->services->firstWhere('type', MuthowifServiceType::Group);
     $private = $profile->services->firstWhere('type', MuthowifServiceType::PrivateJamaah);
@@ -27,19 +25,44 @@
         .htmlspecialchars($initial, ENT_XML1 | ENT_QUOTES, 'UTF-8')
         .'</text></svg>'
     );
-    $hasBackground = $profile->educationsForDisplay() !== [] || $profile->workExperiencesForDisplay() !== [];
+
+    $workExperiences = $profile->workExperiencesForDisplay();
+    $experienceStat = $workExperiences[0] ?? '—';
 
     $prices = collect([$group?->daily_price, $private?->daily_price])->filter();
     $minPrice = $prices->min();
+
+    $bookQueryParams = array_filter([
+        'start_date' => $startDate !== '' ? $startDate : null,
+        'end_date' => $endDate !== '' ? $endDate : null,
+        'service_type' => is_string(request()->query('service_type')) && in_array(request()->query('service_type'), ['group', 'private'], true)
+            ? request()->query('service_type')
+            : null,
+        'pilgrim_count' => is_numeric(request()->query('pilgrim_count')) && (int) request()->query('pilgrim_count') > 0
+            ? (string) (int) request()->query('pilgrim_count')
+            : null,
+    ], fn ($v) => filled($v));
+
+    $bookingPageUrl = route('layanan.book', array_merge(['publicProfile' => $profile], $bookQueryParams));
+    $intent = $bookingIntent;
+    $canBook = ($intent['can_submit'] ?? false) && ($group || $private);
+
+    $indexQuery = array_filter([
+        'start_date' => $startDate !== '' ? $startDate : null,
+        'end_date' => $endDate !== '' ? $endDate : null,
+        'q' => request()->query('q'),
+        'service_type' => request()->query('service_type'),
+        'pilgrim_count' => request()->query('pilgrim_count'),
+    ], fn ($v) => filled($v));
 
     $muthowifSchema = [
         '@context' => 'https://schema.org',
         '@type' => 'LocalBusiness',
         'name' => $profile->user->name,
         'image' => route('layanan.photo', $profile),
-        'description' => "Jasa Muthowif profesional & tour guide ibadah Umroh dan Haji oleh " . $profile->user->name . " di Bayt-GO. Bandingkan rating, ulasan, dan pesan langsung.",
+        'description' => 'Jasa Muthowif profesional & tour guide ibadah Umroh dan Haji oleh '.$profile->user->name.' di Bayt-GO. Bandingkan rating, ulasan, dan pesan langsung.',
         'url' => route('layanan.show', $profile),
-        'priceRange' => $minPrice ? "IDR " . number_format($minPrice, 0, ',', '.') : 'Hubungi Kontak',
+        'priceRange' => $minPrice ? 'IDR '.number_format($minPrice, 0, ',', '.') : 'Hubungi Kontak',
         'address' => [
             '@type' => 'PostalAddress',
             'addressCountry' => 'ID',
@@ -49,410 +72,119 @@
     if ($reviewsCount > 0 && $avgRating !== null) {
         $muthowifSchema['aggregateRating'] = [
             '@type' => 'AggregateRating',
-            'ratingValue' => number_format((float)$avgRating, 1),
+            'ratingValue' => number_format((float) $avgRating, 1),
             'reviewCount' => $reviewsCount,
             'bestRating' => '5',
             'worstRating' => '1',
         ];
     }
 
-    $seoTitle = "Muthowif " . $profile->user->name . " — Jasa Tour Guide Umroh & Haji Terpercaya";
-    $seoDesc = "Pesan jasa Muthowif " . $profile->user->name . " di Bayt-GO. Tour guide profesional terverifikasi untuk memandu ibadah Umroh & Haji Anda secara khusyuk dan aman.";
+    $seoTitle = 'Muthowif '.$profile->user->name.' — Jasa Tour Guide Umroh & Haji Terpercaya';
+    $seoDesc = 'Pesan jasa Muthowif '.$profile->user->name.' di Bayt-GO. Tour guide profesional terverifikasi untuk memandu ibadah Umroh & Haji Anda secara khusyuk dan aman.';
 @endphp
 
 <x-marketplace-layout :title="$seoTitle" :meta-description="$seoDesc" :schema="$muthowifSchema" wide>
-    {{-- overflow-hidden: blob dekoratif (-left/-right) jangan memperlebar scroll horizontal di mobile --}}
-    <div class="relative min-w-0 space-y-6 overflow-x-hidden">
+    <div class="relative min-w-0 space-y-8 overflow-x-hidden">
         <div class="pointer-events-none absolute -left-24 top-0 h-64 w-64 rounded-full bg-brand-200/15 blur-3xl" aria-hidden="true"></div>
         <div class="pointer-events-none absolute -right-16 top-24 h-56 w-56 rounded-full bg-amber-200/15 blur-3xl" aria-hidden="true"></div>
 
-        {{-- Satu bar atas: kembali + nama + tanggal (ringkas) --}}
-        <div class="relative flex flex-wrap items-center gap-x-3 gap-y-2 rounded-2xl border border-slate-200/80 bg-white/95 px-3 py-2.5 text-sm shadow-sm ring-1 ring-slate-100/80 sm:px-4">
-            <a href="{{ route('layanan.index', array_filter(request()->only(['start_date', 'end_date', 'q', 'service_type', 'pilgrim_count']))) }}" class="inline-flex items-center gap-1 font-semibold text-brand-700 hover:text-brand-800">
-                <svg class="h-4 w-4 shrink-0 opacity-80" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true">
-                    <path fill-rule="evenodd" d="M12.79 5.23a.75.75 0 01-.02 1.06L8.832 10l3.938 3.71a.75.75 0 11-1.04 1.08l-4.5-4.25a.75.75 0 010-1.08l4.5-4.25a.75.75 0 011.06.02z" clip-rule="evenodd" />
-                </svg>
-                {{ __('layanan.breadcrumb_find') }}
-            </a>
-            <span class="hidden text-slate-300 sm:inline" aria-hidden="true">·</span>
-            <span class="min-w-0 font-medium text-slate-800 truncate">{{ $profile->user->name }}</span>
+        {{-- Breadcrumb + tanggal pencarian --}}
+        <div class="relative flex flex-wrap items-center justify-between gap-3 rounded-2xl border border-slate-200/80 bg-white/95 px-4 py-3 text-sm shadow-sm ring-1 ring-slate-100/80">
+            <nav class="flex min-w-0 flex-wrap items-center gap-x-2 gap-y-1" aria-label="Breadcrumb">
+                <a href="{{ route('layanan.index', $indexQuery) }}" class="inline-flex items-center gap-1 font-semibold text-brand-700 hover:text-brand-800">
+                    {{ __('layanan.breadcrumb_find') }}
+                </a>
+                <span class="text-slate-300" aria-hidden="true">/</span>
+                <span class="min-w-0 truncate font-medium text-slate-800">{{ $profile->user->name }}</span>
+            </nav>
             @if ($searchRangeLabel)
-                <span class="hidden text-slate-300 sm:inline" aria-hidden="true">·</span>
-                <span class="inline-flex max-w-full items-center gap-1 rounded-lg bg-brand-50 px-2 py-0.5 text-xs font-semibold text-brand-900 ring-1 ring-brand-200/70">
-                    <svg class="h-3.5 w-3.5 shrink-0" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true"><path fill-rule="evenodd" d="M5.75 2a.75.75 0 01.75.75V4h7V2.75a.75.75 0 011.5 0V4h.25A2.75 2.75 0 0118 6.75v8.5A2.75 2.75 0 0115.25 18H4.75A2.75 2.75 0 012 15.25v-8.5A2.75 2.75 0 014.75 4H5V2.75A.75.75 0 015.75 2zm-1 5.5c-.69 0-1.25.56-1.25 1.25v6.5c0 .69.56 1.25 1.25 1.25h10.5c.69 0 1.25-.56 1.25-1.25v-6.5c0-.69-.56-1.25-1.25-1.25H4.75z" clip-rule="evenodd" /></svg>
-                    <span class="truncate">{{ $searchRangeLabel }}</span>
-                </span>
+                <a
+                    href="{{ route('layanan.index', $indexQuery) }}"
+                    class="inline-flex max-w-full items-center gap-2 rounded-xl border border-slate-200 bg-slate-50 px-3 py-2 text-xs font-semibold text-slate-800 transition hover:border-brand-300 hover:bg-brand-50"
+                    title="{{ __('marketplace.show.change_dates') }}"
+                >
+                    <svg class="h-4 w-4 shrink-0 text-brand-600" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true"><path fill-rule="evenodd" d="M5.75 2a.75.75 0 01.75.75V4h7V2.75a.75.75 0 011.5 0V4h.25A2.75 2.75 0 0118 6.75v8.5A2.75 2.75 0 0115.25 18H4.75A2.75 2.75 0 012 15.25v-8.5A2.75 2.75 0 014.75 4H5V2.75A.75.75 0 015.75 2zm-1 5.5c-.69 0-1.25.56-1.25 1.25v6.5c0 .69.56 1.25 1.25 1.25h10.5c.69 0 1.25-.56 1.25-1.25v-6.5c0-.69-.56-1.25-1.25-1.25H4.75z" clip-rule="evenodd" /></svg>
+                    <span class="truncate tabular-nums">{{ $searchRangeLabel }}</span>
+                </a>
             @endif
         </div>
 
-        <div class="min-w-0 space-y-6">
-            {{-- Profil ringkas --}}
-            <div class="min-w-0">
-                <div class="relative overflow-hidden rounded-2xl border border-slate-200/80 bg-white shadow-md ring-1 ring-slate-100/80">
-                    <span class="absolute inset-x-0 top-0 h-0.5 bg-gradient-to-r from-brand-400 via-brand-500 to-amber-400" aria-hidden="true"></span>
-                    <div class="relative flex flex-col gap-4 p-4 sm:flex-row sm:items-center sm:gap-5 sm:p-5">
-                        <div class="relative mx-auto shrink-0 sm:mx-0">
-                            <img
-                                src="{{ route('layanan.photo', $profile) }}"
-                                alt="{{ $profile->user->name }}"
-                                width="112"
-                                height="112"
-                                class="h-24 w-24 rounded-2xl object-cover shadow-md ring-2 ring-white sm:h-28 sm:w-28"
-                                loading="eager"
-                                onerror="this.onerror=null; this.src={!! json_encode($fallbackSvg) !!}"
-                            >
-                            <span class="absolute -bottom-1 -right-1 inline-flex items-center gap-0.5 rounded-full bg-emerald-500 px-1.5 py-0.5 text-[9px] font-bold uppercase tracking-wide text-white shadow-md ring-2 ring-white" title="{{ __('marketplace.card.verified_title') }}">
-                                <svg class="h-2.5 w-2.5" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true"><path fill-rule="evenodd" d="M16.704 4.153a.75.75 0 01.143 1.052l-8 10.5a.75.75 0 01-1.127.075l-4.5-4.5a.75.75 0 011.06-1.06l3.894 3.893 7.48-9.817a.75.75 0 011.05-.143z" clip-rule="evenodd" /></svg>
-                                {{ __('marketplace.show.verified_badge') }}
-                            </span>
-                        </div>
-                        <div class="min-w-0 flex-1 text-center sm:text-left">
-                            <p class="text-[11px] font-bold uppercase tracking-wider text-brand-700">{{ __('marketplace.show.kicker') }}</p>
-                            <h1 class="mt-1 text-xl font-bold tracking-tight text-slate-900 sm:text-2xl">{{ $profile->user->name }}</h1>
-                            <p class="mt-0.5 text-xs text-slate-600 sm:text-sm">{{ __('marketplace.show.tagline') }}</p>
-                            <div class="mt-3 flex flex-wrap items-center justify-center gap-2 sm:justify-start">
-                                @if ($reviewsCount > 0 && $avgRating !== null)
-                                    <span class="flex gap-0.5" aria-hidden="true">
-                                        @for ($s = 1; $s <= 5; $s++)
-                                            <svg class="h-3.5 w-3.5 {{ $s <= (int) round($avgRating) ? 'text-amber-400' : 'text-slate-200' }}" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor"><path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z" /></svg>
-                                        @endfor
-                                    </span>
-                                    <span class="text-xs font-semibold text-slate-800">{{ __('marketplace.card.reviews_line', ['rating' => $avgRating, 'count' => $reviewsCount]) }}</span>
-                                @endif
-                                @if ($confirmedBookings > 0)
-                                    <span class="text-xs text-slate-500">· {{ __('marketplace.card.bookings_confirmed', ['count' => $confirmedBookings]) }}</span>
-                                @elseif ($reviewsCount === 0)
-                                    <span class="rounded-full bg-amber-50 px-2 py-0.5 text-[11px] font-medium text-amber-900 ring-1 ring-amber-200/80">{{ __('marketplace.card.new_marketplace') }}</span>
-                                @endif
-                            </div>
-                            @if ($profile->languagesForDisplay() !== [])
-                                <p class="mt-2 flex flex-wrap justify-center gap-1.5 sm:justify-start">
-                                    @foreach (array_slice($profile->languagesForDisplay(), 0, 5) as $lang)
-                                        <span class="rounded-full bg-slate-100 px-2 py-0.5 text-[11px] font-medium text-slate-700 ring-1 ring-slate-200/70">{{ $lang }}</span>
-                                    @endforeach
-                                </p>
-                            @endif
-                        </div>
-                    </div>
-                </div>
-            </div>
+        @include('layanan.partials.profile-show-hero', [
+            'profile' => $profile,
+            'fallbackSvg' => $fallbackSvg,
+            'experienceStat' => $experienceStat,
+            'confirmedBookings' => $confirmedBookings,
+            'reviewsCount' => $reviewsCount,
+            'avgRating' => $avgRating,
+            'canBook' => $canBook,
+            'bookingPageUrl' => $bookingPageUrl,
+        ])
 
-            @include('layanan.partials.profile-booking-cta', [
-                'profile' => $profile,
-                'group' => $group,
-                'private' => $private,
-                'bookingIntent' => $bookingIntent,
-                'startDate' => $startDate,
-                'endDate' => $endDate,
-                'searchRangeLabel' => $searchRangeLabel,
-            ])
-
-            {{-- Detail panjang: ringkasan tetap terlihat, sisanya di <details> --}}
-            <div class="min-w-0 space-y-4">
-                <div class="flex items-center gap-2 px-0.5 pt-1">
-                    <span class="h-px min-w-[1.25rem] flex-1 bg-slate-200/90 sm:min-w-[2rem]" aria-hidden="true"></span>
-                    <h2 class="text-[11px] font-bold uppercase tracking-wider text-slate-500">{{ __('marketplace.show.more_about_heading') }}</h2>
-                    <span class="h-px flex-1 bg-slate-200/90" aria-hidden="true"></span>
-                </div>
-                @if ($group || $private)
-                    <div class="rounded-2xl border border-slate-200/80 bg-white p-4 shadow-sm ring-1 ring-slate-100/80 sm:p-5">
-                        <h2 class="text-base font-bold text-slate-900">{{ __('marketplace.show.packages_heading') }}</h2>
-                        <p class="mt-1 text-xs text-slate-600 sm:text-sm">{{ __('marketplace.show.packages_compact_hint') }}</p>
-                        <dl class="mt-4 grid gap-3 sm:grid-cols-2">
-                            @if ($group)
-                                <div class="rounded-xl border border-slate-100 bg-slate-50/80 px-3 py-2.5 ring-1 ring-slate-100/80">
-                                    <dt class="text-[11px] font-bold uppercase tracking-wide text-brand-800">{{ MuthowifServiceType::Group->label() }}</dt>
-                                    <dd class="mt-1 text-sm font-semibold text-slate-900">
-                                        @if ($group->daily_price !== null)
-                                            Rp {{ IndonesianNumber::formatThousands((string) (int) $group->daily_price) }}<span class="text-xs font-normal text-slate-500">{{ __('marketplace.show.per_day') }}</span>
-                                        @else
-                                            <span class="text-slate-500">{{ __('marketplace.card.price_contact') }}</span>
-                                        @endif
-                                    </dd>
-                                    @if ($group->min_pilgrims && $group->max_pilgrims)
-                                        <dd class="mt-0.5 text-xs text-slate-600">{{ __('marketplace.show.pilgrim_range', ['min' => $group->min_pilgrims, 'max' => $group->max_pilgrims]) }}</dd>
-                                    @endif
-                                </div>
-                            @endif
-                            @if ($private)
-                                <div class="rounded-xl border border-amber-100/90 bg-amber-50/40 px-3 py-2.5 ring-1 ring-amber-100/80">
-                                    <dt class="text-[11px] font-bold uppercase tracking-wide text-amber-950">{{ MuthowifServiceType::PrivateJamaah->label() }}</dt>
-                                    <dd class="mt-1 text-sm font-semibold text-slate-900">
-                                        @if ($private->daily_price !== null)
-                                            Rp {{ IndonesianNumber::formatThousands((string) (int) $private->daily_price) }}<span class="text-xs font-normal text-slate-500">{{ __('marketplace.show.per_day') }}</span>
-                                        @else
-                                            <span class="text-slate-500">{{ __('marketplace.card.price_contact') }}</span>
-                                        @endif
-                                    </dd>
-                                    @if ($private->min_pilgrims && $private->max_pilgrims)
-                                        <dd class="mt-0.5 text-xs text-slate-600">{{ __('marketplace.show.pilgrim_range', ['min' => $private->min_pilgrims, 'max' => $private->max_pilgrims]) }}</dd>
-                                    @endif
-                                </div>
-                            @endif
-                        </dl>
-
-                        <div class="mt-6 space-y-5 border-t border-slate-100 pt-5 text-sm">
-                            <h3 class="text-xs font-bold uppercase tracking-wider text-slate-500">{{ __('marketplace.show.summary_packages') }}</h3>
-                            @if ($group)
-                                <div>
-                                    <p class="text-xs font-bold uppercase tracking-wide text-brand-800">{{ __('marketplace.show.group_title') }}</p>
-                                    @if (filled($group->name))
-                                        <p class="mt-1 font-medium text-slate-800">{{ $group->name }}</p>
-                                    @endif
-                                    @if (filled($group->description))
-                                        <p class="mt-2 whitespace-pre-line text-slate-600">{{ $group->description }}</p>
-                                    @endif
-                                    <ul class="mt-2 flex flex-wrap gap-1.5 text-xs">
-                                        @if (($group->same_hotel_price_per_day ?? null) !== null && (float) $group->same_hotel_price_per_day > 0)
-                                            <li class="rounded-full bg-slate-100 px-2 py-0.5 text-slate-700">{{ __('marketplace.show.addon_same_hotel', ['price' => IndonesianNumber::formatThousands((string) (int) $group->same_hotel_price_per_day)]) }}</li>
-                                        @endif
-                                        @if (($group->transport_price_flat ?? null) !== null && (float) $group->transport_price_flat > 0)
-                                            <li class="rounded-full bg-slate-100 px-2 py-0.5 text-slate-700">{{ __('marketplace.show.addon_transport', ['price' => IndonesianNumber::formatThousands((string) (int) $group->transport_price_flat)]) }}</li>
-                                        @endif
-                                    </ul>
-                                </div>
-                            @endif
-                            @if ($private)
-                                <div>
-                                    <p class="text-xs font-bold uppercase tracking-wide text-amber-900">{{ __('marketplace.show.private_title') }}</p>
-                                    @if (filled($private->name))
-                                        <p class="mt-1 font-medium text-slate-800">{{ $private->name }}</p>
-                                    @endif
-                                    @if (filled($private->description))
-                                        <p class="mt-2 whitespace-pre-line text-slate-600">{{ $private->description }}</p>
-                                    @endif
-                                    <ul class="mt-2 flex flex-wrap gap-1.5 text-xs">
-                                        @if (($private->same_hotel_price_per_day ?? null) !== null && (float) $private->same_hotel_price_per_day > 0)
-                                            <li class="rounded-full bg-slate-100 px-2 py-0.5 text-slate-700">{{ __('marketplace.show.addon_same_hotel', ['price' => IndonesianNumber::formatThousands((string) (int) $private->same_hotel_price_per_day)]) }}</li>
-                                        @endif
-                                        @if (($private->transport_price_flat ?? null) !== null && (float) $private->transport_price_flat > 0)
-                                            <li class="rounded-full bg-slate-100 px-2 py-0.5 text-slate-700">{{ __('marketplace.show.addon_transport', ['price' => IndonesianNumber::formatThousands((string) (int) $private->transport_price_flat)]) }}</li>
-                                        @endif
-                                    </ul>
-                                    @if ($private->addOns->isNotEmpty())
-                                        <p class="mt-3 text-xs font-semibold uppercase tracking-wide text-slate-500">{{ __('marketplace.show.addon_heading') }}</p>
-                                        <ul class="mt-1.5 space-y-1.5">
-                                            @foreach ($private->addOns as $addon)
-                                                <li class="flex justify-between gap-2 rounded-lg bg-amber-50/80 px-2.5 py-1.5 text-xs ring-1 ring-amber-100/80">
-                                                    <span class="font-medium text-slate-800">{{ $addon->name }}</span>
-                                                    <span class="shrink-0 font-bold text-amber-900">Rp {{ IndonesianNumber::formatThousands((string) (int) $addon->price) }}</span>
-                                                </li>
-                                            @endforeach
-                                        </ul>
-                                    @endif
-                                </div>
-                            @endif
-                        </div>
-                    </div>
+        @if (! $canBook && ($intent['reason'] ?? '') !== '')
+            <div class="rounded-2xl border border-amber-200/90 bg-amber-50/90 px-4 py-4 text-sm text-amber-950 ring-1 ring-amber-100/80">
+                @if (($intent['reason'] ?? '') === 'guest')
+                    <p>{{ __('marketplace.panel.guest_intro') }}</p>
+                    <a href="{{ route('login.intended', ['next' => $bookingPageUrl]) }}" class="mt-3 inline-flex rounded-xl bg-brand-600 px-5 py-2.5 font-semibold text-white hover:bg-brand-700">{{ __('marketplace.panel.guest_login') }}</a>
+                @elseif (($intent['reason'] ?? '') === 'missing_dates')
+                    {!! __('marketplace.panel.missing_dates_html', ['link' => '<a href="'.e(route('layanan.index')).'" class="font-semibold text-brand-700 underline">'.e(__('layanan.booking_panel_link')).'</a>']) !!}
+                @elseif (($intent['reason'] ?? '') === 'jadwal_tidak_tersedia')
+                    {!! __('marketplace.panel.jadwal_tidak_tersedia_html', [
+                        'range' => $searchRangeLabel ?? '—',
+                        'link' => '<a href="'.e(route('layanan.index', array_filter(['start_date' => $startDate, 'end_date' => $endDate !== '' ? $endDate : null]))).'" class="font-semibold underline">'.e(__('layanan.booking_panel_link')).'</a>',
+                    ]) !!}
+                @elseif (($intent['reason'] ?? '') === 'not_customer')
+                    {!! __('marketplace.panel.not_customer') !!}
+                @elseif (in_array($intent['reason'] ?? '', ['invalid_dates', 'past_start', 'range_too_long'], true))
+                    <p>{{ __('marketplace.panel.'.$intent['reason']) }}</p>
                 @endif
-
-                <details class="group rounded-2xl border border-slate-200/80 bg-white shadow-sm ring-1 ring-slate-100/80 open:shadow-md" {{ $profile->portfolios->isNotEmpty() ? 'open' : '' }}>
-                    <summary class="flex cursor-pointer list-none items-center justify-between gap-2 px-4 py-3 text-sm font-semibold text-slate-900 [&::-webkit-details-marker]:hidden">
-                        <span>{{ __('marketplace.show.summary_portfolio') }}</span>
-                        <svg class="h-5 w-5 shrink-0 text-slate-400 transition group-open:rotate-180" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true"><path fill-rule="evenodd" d="M5.23 7.21a.75.75 0 011.06.02L10 11.168l3.71-3.938a.75.75 0 111.08 1.04l-4.25 4.5a.75.75 0 01-1.08 0l-4.25-4.5a.75.75 0 01.02-1.06z" clip-rule="evenodd" /></svg>
-                    </summary>
-                    <div
-                        class="border-t border-slate-100 px-4 py-4"
-                        x-data="{
-                            lightboxOpen: false,
-                            activeImages: [],
-                            activeIndex: 0,
-                            activeTitle: '',
-                            activeDesc: '',
-                            openAlbum(images, title, desc) {
-                                this.activeImages = images;
-                                this.activeIndex = 0;
-                                this.activeTitle = title;
-                                this.activeDesc = desc;
-                                this.lightboxOpen = true;
-                            },
-                            next() {
-                                if (this.activeImages.length > 0) this.activeIndex = (this.activeIndex + 1) % this.activeImages.length;
-                            },
-                            prev() {
-                                if (this.activeImages.length > 0) this.activeIndex = (this.activeIndex - 1 + this.activeImages.length) % this.activeImages.length;
-                            }
-                        }"
-                    >
-                        @if ($profile->portfolios->isEmpty())
-                            <p class="text-sm text-slate-600">Muthowif belum menambahkan foto portfolio.</p>
-                        @else
-                            <div class="grid grid-cols-2 gap-4 sm:grid-cols-3">
-                                @foreach ($profile->portfolios->take(6) as $portfolio)
-                                    @php
-                                        $portfolioImages = $portfolio->images;
-                                        $previewImage = $portfolio->images->first();
-                                        $previewUrl = $previewImage ? route('layanan.portfolio.image', $previewImage) : route('layanan.portfolio.photo', $portfolio);
-                                        $albumUrls = $portfolioImages->isNotEmpty()
-                                            ? $portfolioImages->map(fn ($image) => route('layanan.portfolio.image', $image))->values()
-                                            : collect([$previewUrl]);
-                                    @endphp
-                                    <div 
-                                        @click="openAlbum(@js($albumUrls), @js($portfolio->title), @js($portfolio->description ?? ''))"
-                                        class="group relative aspect-square overflow-hidden rounded-xl border border-slate-200 bg-slate-100 shadow-sm cursor-pointer hover:border-brand-300 hover:shadow-md transition duration-200"
-                                    >
-                                        <img src="{{ $previewUrl }}" alt="{{ $portfolio->title }}" class="h-full w-full object-cover transition duration-300 group-hover:scale-105" loading="lazy">
-                                        <div class="absolute inset-0 bg-gradient-to-t from-slate-950/80 via-slate-950/20 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300 flex flex-col justify-end p-3">
-                                            <p class="text-xs font-bold text-white line-clamp-1">{{ $portfolio->title }}</p>
-                                            <p class="text-[10px] text-slate-200">{{ $portfolio->images->count() }} foto</p>
-                                            @if ($portfolio->description)
-                                                <p class="text-[10px] text-slate-200 line-clamp-1 mt-0.5">{{ $portfolio->description }}</p>
-                                            @endif
-                                        </div>
-                                    </div>
-                                @endforeach
-                            </div>
-
-                            @if ($profile->portfolios->count() > 6)
-                                <div class="mt-5 text-center">
-                                    <a href="{{ route('layanan.portfolio.index', $profile) }}" class="inline-flex items-center gap-2 rounded-xl border border-slate-200 bg-white px-4 py-2 text-xs font-bold text-slate-700 shadow-sm hover:border-brand-300 hover:text-brand-700 transition">
-                                        <span>Lihat Semua Foto ({{ $profile->portfolios->count() }})</span>
-                                        <svg class="h-4 w-4" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M13.5 4.5L21 12m0 0l-7.5 7.5M21 12H3" /></svg>
-                                    </a>
-                                </div>
-                            @endif
-
-                            {{-- Lightbox Modal Container --}}
-                            <div 
-                                x-show="lightboxOpen" 
-                                x-cloak
-                                class="fixed inset-0 z-[100] flex items-center justify-center bg-slate-950/90 p-4 backdrop-blur-sm"
-                                @keydown.escape.window="lightboxOpen = false"
-                            >
-                                <div 
-                                    class="relative max-w-3xl w-full bg-white rounded-2xl overflow-hidden shadow-2xl flex flex-col"
-                                    @click.away="lightboxOpen = false"
-                                >
-                                    {{-- Image --}}
-                                    <div class="relative bg-slate-950 max-h-[70vh] flex items-center justify-center">
-                                        <img :src="activeImages[activeIndex]" :alt="activeTitle" class="max-h-[70vh] max-w-full object-contain">
-                                        <button
-                                            x-show="activeImages.length > 1"
-                                            type="button"
-                                            @click.stop="prev()"
-                                            class="absolute left-4 top-1/2 flex h-10 w-10 -translate-y-1/2 items-center justify-center rounded-full bg-white/90 text-slate-900 shadow transition hover:bg-white"
-                                        >
-                                            &lsaquo;
-                                        </button>
-                                        <button
-                                            x-show="activeImages.length > 1"
-                                            type="button"
-                                            @click.stop="next()"
-                                            class="absolute right-4 top-1/2 flex h-10 w-10 -translate-y-1/2 items-center justify-center rounded-full bg-white/90 text-slate-900 shadow transition hover:bg-white"
-                                        >
-                                            &rsaquo;
-                                        </button>
-                                        <button 
-                                            @click="lightboxOpen = false" 
-                                            class="absolute top-4 right-4 flex h-10 w-10 items-center justify-center rounded-full bg-slate-950/60 text-white hover:bg-slate-950/80 transition"
-                                        >
-                                            <svg class="h-6 w-6" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
-                                            </svg>
-                                        </button>
-                                    </div>
-                                    {{-- Info Panel --}}
-                                    <div class="p-5 border-t border-slate-100 bg-white">
-                                        <div class="flex flex-wrap items-start justify-between gap-3">
-                                            <div>
-                                                <h3 class="text-lg font-bold text-slate-950" x-text="activeTitle"></h3>
-                                                <p class="mt-2 text-sm text-slate-600 leading-relaxed" x-text="activeDesc || 'Tidak ada keterangan tambahan.'"></p>
-                                            </div>
-                                            <span class="rounded-full bg-brand-50 px-3 py-1 text-xs font-bold text-brand-700" x-text="(activeIndex + 1) + ' / ' + activeImages.length"></span>
-                                        </div>
-                                    </div>
-                                </div>
-                            </div>
-                        @endif
-                    </div>
-                </details>
-
-                @if ($hasBackground)
-                    <details class="group rounded-2xl border border-slate-200/80 bg-white shadow-sm ring-1 ring-slate-100/80 open:shadow-md">
-                        <summary class="flex cursor-pointer list-none items-center justify-between gap-2 px-4 py-3 text-sm font-semibold text-slate-900 [&::-webkit-details-marker]:hidden">
-                            <span>{{ __('marketplace.show.summary_background') }}</span>
-                            <svg class="h-5 w-5 shrink-0 text-slate-400 transition group-open:rotate-180" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true"><path fill-rule="evenodd" d="M5.23 7.21a.75.75 0 011.06.02L10 11.168l3.71-3.938a.75.75 0 111.08 1.04l-4.25 4.5a.75.75 0 01-1.08 0l-4.25-4.5a.75.75 0 01.02-1.06z" clip-rule="evenodd" /></svg>
-                        </summary>
-                        <div class="space-y-4 border-t border-slate-100 px-4 py-4">
-                            @if ($profile->educationsForDisplay() !== [])
-                                <x-line-list :label="__('marketplace.show.education')" :items="$profile->educationsForDisplay()" />
-                            @endif
-                            @if ($profile->workExperiencesForDisplay() !== [])
-                                <x-line-list :label="__('marketplace.show.experience')" :items="$profile->workExperiencesForDisplay()" />
-                            @endif
-                        </div>
-                    </details>
-                @endif
-
-                <details class="group rounded-2xl border border-slate-200/80 bg-white shadow-sm ring-1 ring-slate-100/80 open:shadow-md">
-                    <summary class="flex cursor-pointer list-none items-center justify-between gap-2 px-4 py-3 text-sm font-semibold text-slate-900 [&::-webkit-details-marker]:hidden">
-                        <span>
-                            @if ($reviewsCount > 0)
-                                {{ __('marketplace.show.summary_reviews', ['count' => $reviewsCount]) }}
-                                @if ($avgRating !== null)
-                                    <span class="ml-1 font-normal text-slate-500">({{ $avgRating }} ★)</span>
-                                @endif
-                            @else
-                                {{ __('marketplace.show.summary_reviews_none') }}
-                            @endif
-                        </span>
-                        <svg class="h-5 w-5 shrink-0 text-slate-400 transition group-open:rotate-180" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true"><path fill-rule="evenodd" d="M5.23 7.21a.75.75 0 011.06.02L10 11.168l3.71-3.938a.75.75 0 111.08 1.04l-4.25 4.5a.75.75 0 01-1.08 0l-4.25-4.5a.75.75 0 01.02-1.06z" clip-rule="evenodd" /></svg>
-                    </summary>
-                    <div class="border-t border-slate-100 px-4 py-4">
-                        @if ($profile->bookingReviews->isEmpty())
-                            <p class="text-sm text-slate-600">{{ __('marketplace.show.no_reviews') }}</p>
-                        @else
-                            @if ($avgRating !== null)
-                                <p class="mb-3 text-xs text-slate-600">{{ __('marketplace.show.reviews_avg', ['rating' => $avgRating, 'count' => $reviewsCount]) }}</p>
-                            @endif
-                            <ul class="space-y-2">
-                                @foreach ($profile->bookingReviews as $review)
-                                    <li class="rounded-xl border border-slate-100 bg-slate-50/60 px-3 py-2.5">
-                                        <div class="flex flex-wrap items-center justify-between gap-2">
-                                            <span class="text-xs font-semibold text-slate-900">{{ $review->customer?->name ?? __('marketplace.show.review_anonymous') }}</span>
-                                            <span class="text-[11px] font-bold text-amber-800">{{ $review->rating }} ★</span>
-                                        </div>
-                                        @if (filled($review->review))
-                                            <p class="mt-1.5 text-xs leading-relaxed text-slate-700">{{ Str::limit($review->review, 280) }}</p>
-                                        @endif
-                                        <p class="mt-1 text-[11px] text-slate-500">{{ $review->created_at?->format('d/m/Y') }}</p>
-                                    </li>
-                                @endforeach
-                            </ul>
-                        @endif
-                    </div>
-                </details>
-
-                <details class="group rounded-2xl border border-amber-200/70 bg-gradient-to-br from-amber-50/50 to-white shadow-sm ring-1 ring-amber-100/60 open:shadow-md">
-                    <summary class="flex cursor-pointer list-none items-center justify-between gap-2 px-4 py-3 text-sm font-semibold text-slate-900 [&::-webkit-details-marker]:hidden">
-                        <span>
-                            @if ($blockedCount > 0)
-                                {{ __('marketplace.show.summary_blocked', ['count' => $blockedCount]) }}
-                            @else
-                                {{ __('marketplace.show.summary_blocked_none') }}
-                            @endif
-                        </span>
-                        <svg class="h-5 w-5 shrink-0 text-amber-700/60 transition group-open:rotate-180" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true"><path fill-rule="evenodd" d="M5.23 7.21a.75.75 0 011.06.02L10 11.168l3.71-3.938a.75.75 0 111.08 1.04l-4.25 4.5a.75.75 0 01-1.08 0l-4.25-4.5a.75.75 0 01.02-1.06z" clip-rule="evenodd" /></svg>
-                    </summary>
-                    <div class="border-t border-amber-100/80 px-4 py-4">
-                        <p class="mb-3 text-xs text-slate-600">{{ __('marketplace.show.blocked_sub') }}</p>
-                        @if ($profile->blockedDates->isEmpty())
-                            <p class="text-sm text-slate-600">{{ __('marketplace.show.blocked_empty') }}</p>
-                        @else
-                            <ul class="grid grid-cols-1 gap-2 text-xs sm:grid-cols-2">
-                                @foreach ($profile->blockedDates as $bd)
-                                    <li class="rounded-lg border border-amber-100/90 bg-white/90 px-2.5 py-2">
-                                        <span class="font-semibold tabular-nums text-slate-900">{{ $bd->blocked_on->format('d/m/Y') }}</span>
-                                        @if (filled($bd->note))
-                                            <span class="mt-0.5 block text-slate-600">{{ $bd->note }}</span>
-                                        @endif
-                                    </li>
-                                @endforeach
-                            </ul>
-                        @endif
-                    </div>
-                </details>
             </div>
-        </div>
+        @endif
+
+        @include('layanan.partials.profile-show-packages', [
+            'profile' => $profile,
+            'group' => $group,
+            'private' => $private,
+            'bookQueryParams' => $bookQueryParams,
+        ])
+
+        @include('layanan.partials.profile-show-addons', [
+            'group' => $group,
+            'private' => $private,
+        ])
+
+        @include('layanan.partials.profile-show-reviews', [
+            'profile' => $profile,
+            'reviewsCount' => $reviewsCount,
+            'avgRating' => $avgRating,
+        ])
+
+        @include('layanan.partials.profile-show-bottom', [
+            'profile' => $profile,
+            'group' => $group,
+            'private' => $private,
+        ])
+
+        @include('layanan.partials.profile-show-trust-bar')
+
+        @if ($blockedCount > 0)
+            <details class="rounded-2xl border border-amber-200/70 bg-white shadow-sm ring-1 ring-amber-100/60">
+                <summary class="cursor-pointer px-5 py-4 text-sm font-semibold text-slate-900">
+                    {{ __('marketplace.show.summary_blocked', ['count' => $blockedCount]) }}
+                </summary>
+                <div class="border-t border-amber-100/80 px-5 py-4">
+                    <p class="mb-3 text-xs text-slate-600">{{ __('marketplace.show.blocked_sub') }}</p>
+                    <ul class="grid gap-2 text-xs sm:grid-cols-2">
+                        @foreach ($profile->blockedDates as $bd)
+                            <li class="rounded-lg border border-amber-100 bg-amber-50/50 px-3 py-2">
+                                <span class="font-semibold tabular-nums text-slate-900">{{ $bd->blocked_on->format('d/m/Y') }}</span>
+                                @if (filled($bd->note))
+                                    <span class="mt-0.5 block text-slate-600">{{ $bd->note }}</span>
+                                @endif
+                            </li>
+                        @endforeach
+                    </ul>
+                </div>
+            </details>
+        @endif
     </div>
 </x-marketplace-layout>
