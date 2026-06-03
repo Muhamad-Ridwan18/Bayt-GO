@@ -167,6 +167,36 @@ final class IntlPhone
     }
 
     /**
+     * Variasi string yang mungkin tersimpan di DB atau diketik pengguna (08…, +62…, 62…, dll.).
+     *
+     * @return list<string>
+     */
+    public static function storageLookupVariants(string $normalized, ?string $phoneInput = null): array
+    {
+        $variants = [$normalized];
+
+        if (str_starts_with($normalized, '62') && strlen($normalized) > 2) {
+            $national = substr($normalized, 2);
+            $variants[] = '0'.$national;
+            $variants[] = $national;
+            $variants[] = '+62'.$national;
+            $variants[] = '62'.$national;
+            $variants[] = '0062'.$national;
+        }
+
+        $variants[] = '+'.$normalized;
+
+        if ($phoneInput !== null && trim($phoneInput) !== '') {
+            $variants[] = trim($phoneInput);
+        }
+
+        return array_values(array_unique(array_filter(
+            $variants,
+            static fn (string $v): bool => $v !== ''
+        )));
+    }
+
+    /**
      * Format untuk API Fonnte: nomor jalur domestik digit + kode negara (bukan nama negara).
      *
      * @return array{target: string, country_calling_code: string}|null

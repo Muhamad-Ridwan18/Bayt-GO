@@ -101,12 +101,8 @@ class MuthowifProfile extends Model
      */
     public static function findByPhone(string $normalized, string $phoneInput): ?self
     {
-        $inputTrimmed = trim($phoneInput);
-        $local08 = str_starts_with($normalized, '62') ? '0'.substr($normalized, 2) : $normalized;
-        $local8 = str_starts_with($local08, '0') ? substr($local08, 1) : $local08;
-
         $direct = static::query()
-            ->whereIn('phone', array_values(array_unique([$normalized, $inputTrimmed, $local08, $local8])))
+            ->whereIn('phone', IntlPhone::storageLookupVariants($normalized, $phoneInput))
             ->first();
         if ($direct) {
             return $direct;

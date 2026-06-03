@@ -37,7 +37,7 @@ class PasswordResetLinkController extends Controller
         }
 
         $request->validate([
-            'phone' => ['required', 'string', 'min:8', 'max:24'],
+            'phone' => ['required', 'string', 'min:8', 'max:32'],
         ]);
 
         try {

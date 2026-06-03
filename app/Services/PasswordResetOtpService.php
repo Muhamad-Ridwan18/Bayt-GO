@@ -45,7 +45,7 @@ class PasswordResetOtpService
         $normalized = IntlPhone::normalize($phoneInput);
         if ($normalized === null || strlen($normalized) < 8 || strlen($normalized) > 15) {
             throw ValidationException::withMessages([
-                'phone' => ['Format nomor WhatsApp tidak valid. Gunakan +kode negara dan nomor lengkap, atau sesuai PHONE_DEFAULT_REGION.'],
+                'phone' => ['Format nomor WhatsApp tidak valid. Gunakan 08… (lokal Indonesia) atau +62… / +kode negara.'],
             ]);
         }
 
@@ -205,12 +205,8 @@ class PasswordResetOtpService
 
     private function findCustomerUserByPhone(string $normalized, string $phoneInput): ?User
     {
-        $inputTrimmed = trim($phoneInput);
-        $local08 = str_starts_with($normalized, '62') ? '0'.substr($normalized, 2) : $normalized;
-        $local8 = str_starts_with($local08, '0') ? substr($local08, 1) : $local08;
-
         $direct = User::query()
-            ->whereIn('phone', array_values(array_unique([$normalized, $inputTrimmed, $local08, $local8])))
+            ->whereIn('phone', IntlPhone::storageLookupVariants($normalized, $phoneInput))
             ->first();
         if ($direct) {
             return $direct;

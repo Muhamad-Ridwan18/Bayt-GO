@@ -3,7 +3,7 @@
 return [
     'forgot_intro' => 'Forgot password? Enter your WhatsApp number; we will send an OTP code to reset your password.',
     'whatsapp_label' => 'WhatsApp number',
-    'whatsapp_placeholder' => 'e.g. 081234567890 or +1 415 555 0199',
+    'whatsapp_placeholder' => 'e.g. 081234567890 or +6281234567890',
     'phone_country_label' => 'Country code',
     'phone_country_search_placeholder' => 'Search country name…',
     'phone_country_no_results' => 'No matching countries.',

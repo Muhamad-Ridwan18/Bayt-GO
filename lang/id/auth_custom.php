@@ -3,7 +3,7 @@
 return [
     'forgot_intro' => 'Lupa password? Masukkan nomor WhatsApp Anda, kami akan kirim kode OTP untuk reset password.',
     'whatsapp_label' => 'Nomor WhatsApp',
-    'whatsapp_placeholder' => 'Contoh: 081234567890 atau +65 9123 4567 (+kode negara disarankan di luar wilayah default)',
+    'whatsapp_placeholder' => 'Contoh: 081234567890 atau +6281234567890',
     'phone_country_label' => 'Kode negara',
     'phone_country_search_placeholder' => 'Cari nama negara…',
     'phone_country_no_results' => 'Tidak ada negara yang cocok.',
