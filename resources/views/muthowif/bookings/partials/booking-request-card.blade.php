@@ -332,14 +332,15 @@
                 @if ($st === BookingStatus::Pending)
                     <div class="border-t border-slate-100 bg-slate-50/80 px-4 py-4 sm:px-5">
                         <p class="text-xs font-semibold uppercase tracking-wide text-slate-500">{{ __('muthowif.bookings.pending_actions') }}</p>
-                        <div class="mt-3 flex flex-col gap-3 sm:flex-row sm:items-start">
-                            <form method="POST" action="{{ route('muthowif.bookings.confirm', $booking) }}" class="sm:flex-1">
+                        <div class="mt-3 flex flex-col gap-4 lg:flex-row lg:items-end lg:gap-5">
+                            <form method="POST" action="{{ route('muthowif.bookings.confirm', $booking) }}" class="shrink-0">
                                 @csrf
-                                <button type="submit" class="inline-flex w-full items-center justify-center gap-2 rounded-xl bg-brand-600 px-4 py-2.5 text-sm font-semibold text-white shadow-sm transition hover:bg-brand-700">
+                                <button type="submit" class="inline-flex h-9 w-full min-w-[8.5rem] items-center justify-center gap-1.5 rounded-lg bg-brand-600 px-3.5 text-xs font-semibold text-white shadow-sm transition hover:bg-brand-700 sm:w-auto">
+                                    <svg class="h-3.5 w-3.5 shrink-0" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true"><path fill-rule="evenodd" d="M16.704 4.153a.75.75 0 01.143 1.052l-8 10.5a.75.75 0 01-1.127.075l-4.5-4.5a.75.75 0 011.06-1.06l3.894 3.893 7.48-9.817a.75.75 0 011.05-.143z" clip-rule="evenodd" /></svg>
                                     {{ __('muthowif.bookings.approve') }}
                                 </button>
                             </form>
-                            <div class="sm:flex-1">
+                            <div class="min-w-0 flex-1">
                                 @include('muthowif.bookings.partials.reject-booking-form', ['booking' => $booking, 'compact' => true])
                             </div>
                         </div>
