@@ -13,15 +13,15 @@
             <x-page-container class="mb-6">
                 <div class="rounded-xl border border-emerald-200 bg-emerald-50 px-4 py-3 text-sm text-emerald-900 shadow-sm">
                     {{ $statusMessage }}
-                </x-page-container>
-            </div>
+                </div>
+            </x-page-container>
         @endif
         @if (session('error'))
             <x-page-container class="mb-6">
                 <div class="rounded-xl border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-900 shadow-sm">
                     {{ session('error') }}
-                </x-page-container>
-            </div>
+                </div>
+            </x-page-container>
         @endif
 
         @if ($muthowifProfile)
@@ -64,7 +64,7 @@
                                 </div>
                                 <div class="mt-2 h-2 overflow-hidden rounded-full bg-slate-100">
                                     <div class="h-full rounded-full bg-brand-600" style="width: {{ $profilePercent }}%"></div>
-                                </x-page-container>
+                                </div>
                             </div>
 
                             <div class="mt-5 space-y-2 text-left text-xs">
@@ -83,7 +83,7 @@
                                 <div class="flex items-center gap-2 text-slate-700">
                                     <span class="flex h-5 w-5 items-center justify-center rounded-full {{ filled($muthowifProfile->referral_code) || filled($muthowifProfile->referred_by_muthowif_profile_id) ? 'bg-emerald-50 text-emerald-700' : 'bg-slate-100 text-slate-400' }}">✓</span>
                                     Referensi
-                                </x-page-container>
+                                </div>
                             </div>
 
                             @if ($publicPreviewUrl)
@@ -133,7 +133,7 @@
                         </details>
                     </div>
                 </main>
-            </div>
+            </x-page-container>
         @else
             <x-page-container class="relative space-y-6">
                 <div class="overflow-hidden rounded-2xl border border-slate-200/90 bg-gradient-to-b from-white to-slate-50/80 shadow-sm ring-1 ring-slate-100/80">
@@ -162,7 +162,7 @@
                         </div>
                     </details>
                 </div>
-            </div>
+            </x-page-container>
         @endif
     </div>
 </x-app-layout>
