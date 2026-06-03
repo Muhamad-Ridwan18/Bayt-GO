@@ -97,6 +97,10 @@
                 <dd class="font-bold tabular-nums text-brand-700">Rp {{ $fmt($muthowifNetAfterReferral) }}</dd>
             </div>
         </dl>
+        @if (filled($replacementEarningsNote ?? null))
+            <p class="mt-2 text-[11px] leading-relaxed text-slate-600">{{ $replacementEarningsNote }}</p>
+            <p class="mt-1 text-[10px] leading-relaxed text-slate-500">{{ __('muthowif.replacements.earnings_prorated_note') }}</p>
+        @endif
         <p class="mt-3 text-[10px] leading-relaxed text-slate-500 italic">
             * {{ __('bookings.invoice.gateway_fee_note') }}
         </p>

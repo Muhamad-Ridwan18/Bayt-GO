@@ -1,9 +1,12 @@
 @php
     use App\Enums\BookingChangeRequestStatus;
+    use App\Enums\BookingReplacementStatus;
     use App\Enums\BookingStatus;
     use App\Enums\MuthowifServiceType;
     use App\Enums\PaymentStatus;
     use App\Models\BookingPayment;
+    use App\Models\BookingReplacement;
+    use App\Services\Incident\ReplacementCompensationPreview;
     use App\Support\IndonesianNumber;
     use App\Support\PlatformFee;
     use Carbon\Carbon;
@@ -56,6 +59,41 @@
         ? round((float) ($payForReferral->referral_reward_amount ?? 0), 2)
         : 0.0;
     $muthowifNetAfterReferral = round(max(0.0, $muthowifNet - $referralRewardFromPay), 2);
+    $replacementEarningsNote = null;
+    $viewerProfile = auth()->user()?->muthowifProfile;
+    if ($viewerProfile !== null) {
+        $isAcceptedReplacementGuide = BookingReplacement::query()
+            ->whereHas('incident', static fn ($q) => $q->where('muthowif_booking_id', $b->getKey()))
+            ->where('replacement_muthowif_profile_id', $viewerProfile->getKey())
+            ->where('status', BookingReplacementStatus::AcceptedByCustomer)
+            ->exists();
+        if ($isAcceptedReplacementGuide) {
+            $replacementPreview = app(ReplacementCompensationPreview::class)->forBookingLines(
+                $b,
+                $serviceSubtotal,
+                $addonsSum,
+                $sameHotelLine,
+                $transportLine,
+            );
+            $replacementShare = (float) $replacementPreview['share'];
+            $serviceSubtotal = (float) $replacementPreview['service_subtotal'];
+            $sameHotelLine = (float) $replacementPreview['same_hotel_line'];
+            $transportLine = (float) $replacementPreview['transport_line'];
+            $muthowifNet = (float) $replacementPreview['muthowif_net'];
+            $muthowifFee = (float) $replacementPreview['muthowif_fee'];
+            $muthowifNetAfterReferral = round(max(0.0, $muthowifNet - $referralRewardFromPay), 2);
+            $replacementEarningsNote = __('muthowif.replacements.earnings_remaining_days', [
+                'remaining' => (int) $replacementPreview['replacement_days'],
+                'total' => (int) $replacementPreview['total_days'],
+            ]);
+            $addonLines = $addonLines->map(static function ($ad) use ($replacementShare) {
+                $clone = clone $ad;
+                $clone->price = round((float) $ad->price * $replacementShare, 2);
+
+                return $clone;
+            });
+        }
+    }
     $fmt = fn (float $n) => IndonesianNumber::formatThousands((string) (int) round($n));
 @endphp
 
@@ -92,6 +130,7 @@
                     'muthowifFee' => $muthowifFee,
                     'referralRewardFromPay' => $referralRewardFromPay,
                     'muthowifNetAfterReferral' => $muthowifNetAfterReferral,
+                    'replacementEarningsNote' => $replacementEarningsNote,
                     'fmt' => $fmt,
                 ])
             </div>
@@ -120,6 +159,7 @@
                 'muthowifFee' => $muthowifFee,
                 'referralRewardFromPay' => $referralRewardFromPay,
                 'muthowifNetAfterReferral' => $muthowifNetAfterReferral,
+                'replacementEarningsNote' => $replacementEarningsNote,
                 'fmt' => $fmt,
             ])
         </div>

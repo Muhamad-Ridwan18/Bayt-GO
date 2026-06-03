@@ -4,12 +4,14 @@ namespace App\Models;
 
 use App\Enums\BookingStatus;
 use App\Enums\MuthowifVerificationStatus;
+use App\Support\IntlPhone;
 use Carbon\CarbonInterface;
 use Illuminate\Database\Eloquent\Concerns\HasUuids;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Support\Facades\Storage;
+use Illuminate\Support\Str;
 
 /**
  * Kolom JSON `languages`, `educations`, `work_experiences` disimpan sebagai array of string (satu item = satu baris input).
@@ -46,10 +48,10 @@ class MuthowifProfile extends Model
         static::creating(function (MuthowifProfile $profile): void {
             if ($profile->slug === null) {
                 $baseSlug = $profile->user?->name
-                    ? \Illuminate\Support\Str::slug($profile->user->name)
-                    : \Illuminate\Support\Str::slug((string) $profile->uuid);
+                    ? Str::slug($profile->user->name)
+                    : Str::slug((string) $profile->uuid);
             } else {
-                $baseSlug = \Illuminate\Support\Str::slug($profile->slug);
+                $baseSlug = Str::slug($profile->slug);
             }
 
             $profile->slug = static::generateUniqueSlug($baseSlug);
@@ -92,6 +94,41 @@ class MuthowifProfile extends Model
     public function user(): BelongsTo
     {
         return $this->belongsTo(User::class);
+    }
+
+    /**
+     * Cari profil muthowif berdasarkan nomor WhatsApp (beberapa format penyimpanan).
+     */
+    public static function findByPhone(string $normalized, string $phoneInput): ?self
+    {
+        $inputTrimmed = trim($phoneInput);
+        $local08 = str_starts_with($normalized, '62') ? '0'.substr($normalized, 2) : $normalized;
+        $local8 = str_starts_with($local08, '0') ? substr($local08, 1) : $local08;
+
+        $direct = static::query()
+            ->whereIn('phone', array_values(array_unique([$normalized, $inputTrimmed, $local08, $local8])))
+            ->first();
+        if ($direct) {
+            return $direct;
+        }
+
+        $suffix = substr($normalized, -9);
+        if ($suffix === false || $suffix === '') {
+            return null;
+        }
+
+        $candidates = static::query()
+            ->where('phone', 'like', '%'.$suffix)
+            ->limit(50)
+            ->get(['id', 'phone', 'user_id']);
+
+        foreach ($candidates as $candidate) {
+            if (IntlPhone::normalize($candidate->phone) === $normalized) {
+                return $candidate;
+            }
+        }
+
+        return null;
     }
 
     public function supportingDocuments(): HasMany
@@ -232,8 +269,8 @@ class MuthowifProfile extends Model
      * Generate a unique slug based on $base.
      * If $base already exists in the table, append -1, -2, … until it is unique.
      *
-     * @param  string       $base      The desired base slug (already slugified).
-     * @param  string|null  $excludeId UUID of the record to exclude (useful for updates).
+     * @param  string  $base  The desired base slug (already slugified).
+     * @param  string|null  $excludeId  UUID of the record to exclude (useful for updates).
      */
     public static function generateUniqueSlug(string $base, ?string $excludeId = null): string
     {
@@ -251,7 +288,7 @@ class MuthowifProfile extends Model
                 return $slug;
             }
 
-            $slug = $base . '-' . $index;
+            $slug = $base.'-'.$index;
             $index++;
         }
     }

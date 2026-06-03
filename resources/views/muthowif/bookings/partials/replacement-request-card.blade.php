@@ -2,8 +2,8 @@
     use App\Enums\BookingReplacementStatus;
     use App\Enums\MuthowifServiceType;
     use App\Enums\PaymentStatus;
+    use App\Services\Incident\ReplacementCompensationPreview;
     use App\Support\IndonesianNumber;
-    use App\Support\PlatformFee;
     use Carbon\Carbon;
 
     /** @var \App\Models\MuthowifBooking $booking */
@@ -41,9 +41,22 @@
     $transportLine = (float) ($booking->transport_price_snapshot ?? ($booking->with_transport && $service ? (float) $service->transport_price_flat : 0.0));
 
     $totalGross = (float) ($serviceSubtotal + $addonsSum + $sameHotelLine + $transportLine);
-    $priceSplit = PlatformFee::split($totalGross);
-    $muthowifNetIdr = (float) ($priceSplit['muthowif_net'] ?? 0.0);
-    $muthowifFeeIdr = (float) ($priceSplit['muthowif_fee'] ?? 0.0);
+    $replacementPreview = app(ReplacementCompensationPreview::class)->forBookingLines(
+        $booking,
+        $serviceSubtotal,
+        $addonsSum,
+        $sameHotelLine,
+        $transportLine,
+    );
+    $replacementShare = (float) $replacementPreview['share'];
+    $replacementDays = (int) $replacementPreview['replacement_days'];
+    $totalServiceDays = (int) $replacementPreview['total_days'];
+    $serviceSubtotal = (float) $replacementPreview['service_subtotal'];
+    $addonsSum = (float) $replacementPreview['addons_sum'];
+    $sameHotelLine = (float) $replacementPreview['same_hotel_line'];
+    $transportLine = (float) $replacementPreview['transport_line'];
+    $muthowifNetIdr = (float) $replacementPreview['muthowif_net'];
+    $muthowifFeeIdr = (float) $replacementPreview['muthowif_fee'];
 
     $totalBillIdr = (float) $booking->resolvedAmountDue();
     $paidIdr = $booking->payment_status === PaymentStatus::Paid ? $totalBillIdr : 0.0;
@@ -151,6 +164,9 @@
                 <div class="flex shrink-0 flex-col items-end gap-1 sm:min-w-[9rem] lg:items-center lg:text-center">
                     <p class="text-[11px] font-medium uppercase tracking-wide text-slate-500">{{ __('muthowif.bookings.net_earning_short') }}</p>
                     <p class="text-xl font-bold tabular-nums text-emerald-700 sm:text-2xl">Rp {{ IndonesianNumber::formatThousands((string) (int) round($muthowifNetIdr)) }}</p>
+                    <p class="max-w-[11rem] text-center text-[10px] leading-snug text-slate-500">
+                        {{ __('muthowif.replacements.earnings_remaining_days', ['remaining' => $replacementDays, 'total' => $totalServiceDays]) }}
+                    </p>
                 </div>
 
                 <div class="flex shrink-0 items-center gap-2 self-end lg:self-center">
@@ -179,6 +195,7 @@
                 <div class="grid gap-6 p-4 sm:p-5 lg:grid-cols-3 lg:gap-5">
                     <div class="flex flex-col rounded-xl border border-slate-100 bg-slate-50/50 p-4">
                         <h3 class="text-sm font-bold text-slate-900">{{ __('muthowif.bookings.service_breakdown_heading') }}</h3>
+                        <p class="mt-1 text-[11px] leading-relaxed text-slate-500">{{ __('muthowif.replacements.earnings_prorated_note') }}</p>
                         <div x-show="showBreakdown" class="mt-3 space-y-0 divide-y divide-slate-100 text-sm">
                             <div class="flex justify-between gap-2 py-2">
                                 <span class="text-slate-600">{{ __('muthowif.booking_show.subtotal_service') }}</span>
@@ -187,7 +204,7 @@
                             @foreach ($addonLines as $ad)
                                 <div class="flex justify-between gap-2 py-2">
                                     <span class="text-slate-600">{{ $ad->name }}</span>
-                                    <span class="font-medium tabular-nums text-slate-900">Rp {{ IndonesianNumber::formatThousands((string) (int) round((float) $ad->price)) }}</span>
+                                    <span class="font-medium tabular-nums text-slate-900">Rp {{ IndonesianNumber::formatThousands((string) (int) round((float) $ad->price * $replacementShare)) }}</span>
                                 </div>
                             @endforeach
                             @if ($sameHotelLine > 0)

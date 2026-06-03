@@ -84,6 +84,8 @@ return [
         'hint_selected' => 'Jamaah memilih Anda. Pesanan dapat muncul di daftar permintaan Anda.',
         'hint_not_selected' => 'Jamaah memilih muthowif lain.',
         'hint_closed' => 'Penugasan ini sudah tidak aktif.',
+        'earnings_remaining_days' => 'Estimasi untuk :remaining dari :total hari layanan sisa',
+        'earnings_prorated_note' => 'Pendapatan proporsional hari penggantian setelah insiden, bukan total booking penuh.',
     ],
     'booking_show' => [
         'page_title' => 'Detail pesanan',

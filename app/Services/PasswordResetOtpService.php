@@ -2,6 +2,7 @@
 
 namespace App\Services;
 
+use App\Models\MuthowifProfile;
 use App\Models\User;
 use App\Support\IntlPhone;
 use Illuminate\Support\Facades\Cache;
@@ -49,7 +50,7 @@ class PasswordResetOtpService
         }
 
         /** @var User|null $user */
-        $user = $this->findUserByPhone($normalized, $phoneInput);
+        $user = $this->resolveUserByPhone($normalized, $phoneInput);
         if (! $user) {
             throw ValidationException::withMessages([
                 'phone' => ['Nomor WhatsApp tidak terdaftar.'],
@@ -185,7 +186,24 @@ class PasswordResetOtpService
         return substr($normalized, 0, 4).'****'.substr($normalized, -4);
     }
 
-    private function findUserByPhone(string $normalized, string $phoneInput): ?User
+    /**
+     * User untuk reset password: customer lewat users.phone, muthowif lewat muthowif_profiles.phone.
+     */
+    public function resolveUserByPhone(string $normalized, string $phoneInput = ''): ?User
+    {
+        $input = $phoneInput !== '' ? $phoneInput : $normalized;
+
+        $user = $this->findCustomerUserByPhone($normalized, $input);
+        if ($user) {
+            return $user;
+        }
+
+        $profile = MuthowifProfile::findByPhone($normalized, $input);
+
+        return $profile?->user;
+    }
+
+    private function findCustomerUserByPhone(string $normalized, string $phoneInput): ?User
     {
         $inputTrimmed = trim($phoneInput);
         $local08 = str_starts_with($normalized, '62') ? '0'.substr($normalized, 2) : $normalized;
@@ -198,7 +216,6 @@ class PasswordResetOtpService
             return $direct;
         }
 
-        // Fallback: ambil kandidat berdasar suffix lalu cocokkan via normalisasi PHP.
         $suffix = substr($normalized, -9);
         if ($suffix === false || $suffix === '') {
             return null;

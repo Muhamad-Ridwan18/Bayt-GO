@@ -84,6 +84,8 @@ return [
         'hint_selected' => 'The pilgrim chose you. The booking may appear in your request list.',
         'hint_not_selected' => 'The pilgrim chose another guide.',
         'hint_closed' => 'This assignment is no longer active.',
+        'earnings_remaining_days' => 'Estimate for :remaining of :total remaining service days',
+        'earnings_prorated_note' => 'Earnings are prorated for replacement days after the incident, not the full booking.',
     ],
     'booking_show' => [
         'page_title' => 'Booking detail',

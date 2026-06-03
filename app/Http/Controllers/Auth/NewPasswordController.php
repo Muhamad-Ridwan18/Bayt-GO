@@ -3,9 +3,7 @@
 namespace App\Http\Controllers\Auth;
 
 use App\Http\Controllers\Controller;
-use App\Models\User;
 use App\Services\PasswordResetOtpService;
-use App\Support\IntlPhone;
 use Illuminate\Auth\Events\PasswordReset;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
@@ -53,24 +51,7 @@ class NewPasswordController extends Controller
                 ->withErrors($e->errors());
         }
 
-        $local08 = str_starts_with($normalizedPhone, '62') ? '0'.substr($normalizedPhone, 2) : $normalizedPhone;
-        $local8 = str_starts_with($local08, '0') ? substr($local08, 1) : $local08;
-        /** @var User|null $user */
-        $user = User::query()
-            ->whereIn('phone', array_values(array_unique([$normalizedPhone, $local08, $local8])))
-            ->first();
-        if (! $user) {
-            $suffix = substr($normalizedPhone, -9);
-            if ($suffix !== false && $suffix !== '') {
-                $candidates = User::query()->where('phone', 'like', '%'.$suffix)->limit(50)->get(['id', 'phone']);
-                foreach ($candidates as $candidate) {
-                    if (IntlPhone::normalize($candidate->phone) === $normalizedPhone) {
-                        $user = $candidate;
-                        break;
-                    }
-                }
-            }
-        }
+        $user = $this->passwordResetOtp->resolveUserByPhone($normalizedPhone);
         if (! $user) {
             return back()->withErrors(['token' => 'Akun untuk sesi reset ini tidak ditemukan.']);
         }

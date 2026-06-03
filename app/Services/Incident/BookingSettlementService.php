@@ -2,8 +2,12 @@
 
 namespace App\Services\Incident;
 
+use App\Enums\BookingIncidentResolution;
+use App\Enums\BookingIncidentStatus;
+use App\Enums\BookingReplacementStatus;
 use App\Enums\BookingSettlementStatus;
 use App\Enums\BookingSettlementType;
+use App\Enums\PayoutAllocationRole;
 use App\Enums\PayoutAllocationStatus;
 use App\Models\BookingPayment;
 use App\Models\BookingPayoutAllocation;
@@ -12,6 +16,7 @@ use App\Models\MuthowifBooking;
 use App\Models\MuthowifProfile;
 use App\Models\User;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Schema;
 
 final class BookingSettlementService
 {
@@ -46,6 +51,24 @@ final class BookingSettlementService
             return $this->creditFromReleasedSettlement($booking, $payment, $existing);
         }
 
+        $pendingSettlement = BookingSettlement::query()
+            ->where('muthowif_booking_id', $booking->getKey())
+            ->whereIn('status', [
+                BookingSettlementStatus::Draft,
+                BookingSettlementStatus::Approved,
+            ])
+            ->latest()
+            ->first();
+
+        if ($pendingSettlement !== null) {
+            return $this->approveAndRelease($pendingSettlement, null);
+        }
+
+        $fromIncident = $this->ensureIncidentSettlement($booking);
+        if ($fromIncident !== null) {
+            return $this->approveAndRelease($fromIncident, null);
+        }
+
         $settlement = BookingSettlement::query()->create([
             'muthowif_booking_id' => $booking->getKey(),
             'booking_payment_id' => $payment->getKey(),
@@ -58,7 +81,7 @@ final class BookingSettlementService
         BookingPayoutAllocation::query()->create([
             'booking_settlement_id' => $settlement->getKey(),
             'muthowif_profile_id' => $booking->muthowif_profile_id,
-            'role' => \App\Enums\PayoutAllocationRole::Primary,
+            'role' => PayoutAllocationRole::Primary,
             'service_days' => $booking->billingNightsInclusive(),
             'total_service_days' => $booking->billingNightsInclusive(),
             'amount' => $payment->muthowifWalletCreditAmount(),
@@ -66,6 +89,33 @@ final class BookingSettlementService
         ]);
 
         return $this->approveAndRelease($settlement, null);
+    }
+
+    private function ensureIncidentSettlement(MuthowifBooking $booking): ?BookingSettlement
+    {
+        $incident = $booking->incidents()
+            ->where('status', BookingIncidentStatus::Resolved)
+            ->where('resolution_type', BookingIncidentResolution::ReplacementCompleted)
+            ->latest()
+            ->first();
+
+        if ($incident === null) {
+            return null;
+        }
+
+        $hasAcceptedReplacement = $incident->replacements()
+            ->where('status', BookingReplacementStatus::AcceptedByCustomer)
+            ->exists();
+
+        if (! $hasAcceptedReplacement) {
+            return null;
+        }
+
+        try {
+            return app(IncidentCompensationService::class)->proposeSettlement($incident);
+        } catch (\RuntimeException) {
+            return null;
+        }
     }
 
     /**
@@ -121,7 +171,7 @@ final class BookingSettlementService
                 $this->creditReferralReward($payment);
 
                 $payment->wallet_credited_at = now();
-                if (\Illuminate\Support\Facades\Schema::hasColumn('booking_payments', 'settlement_state')) {
+                if (Schema::hasColumn('booking_payments', 'settlement_state')) {
                     $payment->settlement_state = 'fully_released';
                 }
                 $payment->save();
