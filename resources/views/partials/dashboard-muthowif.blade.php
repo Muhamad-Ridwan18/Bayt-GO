@@ -1,16 +1,19 @@
 @php
     use App\Enums\BookingStatus;
     use App\Enums\MuthowifServiceType;
+    use App\Models\MuthowifProfile;
     use Carbon\Carbon;
     use App\Support\IndonesianNumber;
-    use App\Support\MuthowifFinanceSummary;
     use App\Services\MuthowifDashboardCalendarDataBuilder;
 
-    $mp = Auth::user()->muthowifProfile;
-    $mp->loadCount([
-        'bookings as pending_bookings_count' => fn ($q) => $q->where('status', BookingStatus::Pending),
-        'bookings as confirmed_bookings_count' => fn ($q) => $q->where('status', BookingStatus::Confirmed),
-    ]);
+    $mp = MuthowifProfile::query()
+        ->whereKey(Auth::user()->muthowifProfile->getKey())
+        ->withMarketplaceStats()
+        ->withCount([
+            'bookings as pending_bookings_count' => fn ($q) => $q->where('status', BookingStatus::Pending),
+            'bookings as confirmed_bookings_count' => fn ($q) => $q->where('status', BookingStatus::Confirmed),
+        ])
+        ->firstOrFail();
     $validServicesCount = $mp->services()
         ->whereNotNull('name')
         ->where('name', '<>', '')
@@ -31,9 +34,23 @@
         ->whereIn('status', [BookingStatus::Pending, BookingStatus::Confirmed, BookingStatus::Completed])
         ->whereDate('ends_on', '>=', now()->toDateString())
         ->orderBy('starts_on')
-        ->limit(8)
-        ->get(['id', 'starts_on', 'ends_on', 'status', 'customer_id', 'service_type']);
+        ->limit(3)
+        ->get(['id', 'starts_on', 'ends_on', 'status', 'customer_id', 'service_type', 'pilgrim_count']);
     $upcomingBookings->load('customer:id,name');
+
+    $weekStart = now()->startOfWeek(Carbon::MONDAY);
+    $weekEnd = now()->endOfWeek(Carbon::SUNDAY);
+    $weeklySchedule = $mp->bookings()
+        ->whereIn('status', [BookingStatus::Pending, BookingStatus::Confirmed])
+        ->whereDate('starts_on', '<=', $weekEnd->toDateString())
+        ->whereDate('ends_on', '>=', $weekStart->toDateString())
+        ->orderBy('starts_on')
+        ->limit(12)
+        ->get(['id', 'starts_on', 'ends_on', 'status', 'customer_id', 'service_type', 'pilgrim_count']);
+    $weeklySchedule->load('customer:id,name');
+
+    $avgRating = $mp->average_rating !== null ? round((float) $mp->average_rating, 1) : null;
+    $reviewsCount = (int) ($mp->booking_reviews_count ?? 0);
 
     $welcomeHeroBg = null;
     foreach (['webp', 'png', 'jpg', 'jpeg'] as $ext) {
@@ -105,203 +122,79 @@
             </div>
         </div>
     </div>
-    {{-- Hero & Profile Share Section --}}
-    <section class="relative left-1/2 w-screen max-w-[100vw] -translate-x-1/2 overflow-hidden bg-welcomeCanvas pb-8 pt-10 sm:pb-10 sm:pt-12 lg:pb-12 lg:pt-14">
-        {{-- Background Image & Gradients --}}
+    {{-- Hero --}}
+    <section class="relative overflow-hidden rounded-3xl border border-slate-200/80 bg-white shadow-md shadow-slate-900/5 ring-1 ring-slate-100/80">
         <div class="pointer-events-none absolute inset-0 z-0" aria-hidden="true">
-            <img
-                src="{{ $welcomeHeroBg }}"
-                alt=""
-                class="h-full w-full min-h-[22rem] object-cover object-[70%_26%] sm:min-h-[25rem] sm:object-[74%_28%] lg:min-h-[28rem] lg:object-[76%_28%]"
-                loading="eager"
-                decoding="async"
-            />
+            <img src="{{ $welcomeHeroBg }}" alt="" class="h-full w-full min-h-[12rem] object-cover object-[72%_30%] sm:min-h-[14rem]" loading="eager" decoding="async" />
         </div>
-        {{-- Mobile: cream kuat dari atas (teks terbaca), seperti welcome --}}
-        <div class="pointer-events-none absolute inset-0 z-[1] bg-gradient-to-b from-welcomeCanvas via-welcomeCanvas/90 to-welcomeCanvas/35 sm:hidden" aria-hidden="true"></div>
-        {{-- sm+: kiri lebih polos, transisi lebih lambat ke foto di kanan --}}
-        <div class="pointer-events-none absolute inset-0 z-[1] hidden bg-gradient-to-r from-welcomeCanvas from-[38%] via-welcomeCanvas/92 via-[62%] to-welcomeCanvas/5 sm:block lg:from-[42%] lg:via-[66%] lg:to-transparent" aria-hidden="true"></div>
-        {{-- Samakan transisi bawah ke area konten --}}
-        <div class="pointer-events-none absolute inset-x-0 bottom-0 z-[1] h-32 bg-gradient-to-t from-welcomeCanvas via-welcomeCanvas/80 to-transparent sm:h-40" aria-hidden="true"></div>
-
-        {{-- Content Container --}}
-        <x-page-container class="relative z-10">
-            
-            {{-- 1. Hero Content --}}
-            <div class="flex flex-col gap-5 sm:max-w-xl sm:flex-row sm:items-start sm:gap-6 lg:max-w-2xl">
-                <div class="relative h-14 w-14 shrink-0 sm:h-16 sm:w-16">
-                    <img
-                        src="{{ route('layanan.photo', $mp) }}"
-                        alt="{{ __('dashboard_muthowif.photo_alt', ['name' => Auth::user()->name]) }}"
-                        class="h-full w-full rounded-full border-2 border-white/90 bg-slate-100 object-cover shadow-lg ring-2 ring-white"
-                        onerror="this.classList.add('hidden'); document.getElementById('muthowif-dashboard-avatar-fallback').classList.remove('hidden');"
-                    />
-                    <span id="muthowif-dashboard-avatar-fallback" class="hidden flex h-full w-full items-center justify-center rounded-full bg-baytgo text-xl font-bold text-white shadow-lg ring-2 ring-white sm:text-2xl" aria-hidden="true">{{ $userInitial }}</span>
-                </div>
-                <div class="min-w-0 flex-1">
-                    <p class="text-lg leading-snug text-slate-800 md:text-xl">
-                        {!! __('dashboard_muthowif.hero_hi_html', ['name' => e(Auth::user()->name)]) !!}
-                    </p>
-                    <p class="mt-3 max-w-xl text-sm leading-relaxed text-slate-700 md:text-base">
-                        {{ __('dashboard_muthowif.hero_sub') }}
-                    </p>
-                    <div class="mt-6 flex flex-wrap gap-3">
-                        <a
-                            href="{{ route('muthowif.bookings.index') }}"
-                            class="inline-flex items-center justify-center gap-2 rounded-xl bg-baytgo px-5 py-2.5 text-sm font-semibold text-white shadow-md shadow-baytgo/20 transition hover:bg-baytgo-800"
-                        >
-                            <svg class="h-5 w-5 opacity-95" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.75" stroke="currentColor" aria-hidden="true">
-                                <path stroke-linecap="round" stroke-linejoin="round" d="M6.75 3v2.25M17.25 3v2.25M3 18.75V7.5a2.25 2.25 0 012.25-2.25h13.5A2.25 2.25 0 0121 7.5v11.25m-18 0A2.25 2.25 0 005.25 21h13.5a2.25 2.25 0 002.25-2.25m-18 0v-7.5A2.25 2.25 0 015.25 9h13.5a2.25 2.25 0 012.25 2.25v7.5" />
-                            </svg>
-                            {{ __('dashboard_muthowif.hero_btn_bookings') }}
-                        </a>
-                        <a
-                            href="#muthowif-schedule"
-                            class="inline-flex items-center justify-center gap-2 rounded-xl border border-slate-200/90 bg-white/90 px-5 py-2.5 text-sm font-semibold text-slate-800 shadow-sm backdrop-blur-sm transition hover:border-baytgo/40 hover:bg-white"
-                        >
-                            <svg class="h-5 w-5 text-slate-600" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.75" stroke="currentColor" aria-hidden="true">
-                                <path stroke-linecap="round" stroke-linejoin="round" d="M6.75 3v2.25M17.25 3v2.25M3 18.75V7.5a2.25 2.25 0 012.25-2.25h13.5A2.25 2.25 0 0121 7.5v11.25m-18 0A2.25 2.25 0 005.25 21h13.5a2.25 2.25 0 002.25-2.25m-18 0v-7.5A2.25 2.25 0 015.25 9h13.5a2.25 2.25 0 012.25 2.25v7.5" />
-                            </svg>
-                            {{ __('dashboard_muthowif.hero_btn_calendar') }}
-                        </a>
-                    </div>
-                </div>
+        <div class="pointer-events-none absolute inset-0 z-[1] bg-gradient-to-r from-welcomeCanvas from-[42%] via-welcomeCanvas/95 via-[58%] to-welcomeCanvas/10" aria-hidden="true"></div>
+        <div class="relative z-10 px-6 py-8 sm:px-8 sm:py-10 lg:max-w-xl">
+            <p class="text-xl font-bold leading-snug text-slate-900 sm:text-2xl">
+                {!! __('dashboard_muthowif.hero_hi_html', ['name' => e(Auth::user()->name)]) !!}
+            </p>
+            <p class="mt-2 text-sm leading-relaxed text-slate-700">{{ __('dashboard_muthowif.hero_sub') }}</p>
+            <div class="mt-5 flex flex-wrap gap-3">
+                <a href="{{ route('muthowif.bookings.index') }}" class="inline-flex items-center gap-2 rounded-xl bg-baytgo px-5 py-2.5 text-sm font-semibold text-white shadow-md hover:bg-baytgo-800">
+                    <svg class="h-5 w-5" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.75" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M6.75 3v2.25M17.25 3v2.25M3 18.75V7.5a2.25 2.25 0 012.25-2.25h13.5A2.25 2.25 0 0121 7.5v11.25m-18 0A2.25 2.25 0 005.25 21h13.5a2.25 2.25 0 002.25-2.25m-18 0v-7.5A2.25 2.25 0 015.25 9h13.5a2.25 2.25 0 012.25 2.25v7.5" /></svg>
+                    {{ __('dashboard_muthowif.hero_btn_bookings') }}
+                </a>
+                <a href="#muthowif-schedule" class="inline-flex items-center gap-2 rounded-xl border border-slate-200 bg-white/95 px-5 py-2.5 text-sm font-semibold text-slate-800 shadow-sm hover:bg-white">
+                    <svg class="h-5 w-5 text-slate-600" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.75" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M6.75 3v2.25M17.25 3v2.25M3 18.75V7.5a2.25 2.25 0 012.25-2.25h13.5A2.25 2.25 0 0121 7.5v11.25m-18 0A2.25 2.25 0 005.25 21h13.5a2.25 2.25 0 002.25-2.25m-18 0v-7.5A2.25 2.25 0 015.25 9h13.5a2.25 2.25 0 012.25 2.25v7.5" /></svg>
+                    {{ __('dashboard_muthowif.hero_btn_calendar') }}
+                </a>
             </div>
-
-            {{-- 2. Share Profile Card --}}
-            <div class="mt-8 sm:mt-10 lg:mt-12">
-                <div
-                    x-data="{ copied: false }"
-                    class="overflow-hidden rounded-2xl border border-emerald-200/80 bg-emerald-50/80 shadow-sm ring-1 ring-emerald-100/80 backdrop-blur-sm"
-                >
-                    {{-- Header: foto profil + nama + URL --}}
-                    <div class="flex flex-col gap-4 px-5 py-5 sm:flex-row sm:items-center sm:gap-5">
-                        {{-- Avatar --}}
-                        <div class="relative h-14 w-14 shrink-0 sm:h-16 sm:w-16">
-                            <img
-                                src="{{ route('layanan.photo', $mp) }}"
-                                alt="{{ Auth::user()->name }}"
-                                class="h-full w-full rounded-full border-2 border-emerald-300/60 bg-white object-cover shadow ring-2 ring-white"
-                                onerror="this.classList.add('hidden'); this.nextElementSibling.classList.remove('hidden');"
-                            />
-                            <span class="hidden h-full w-full items-center justify-center rounded-full bg-emerald-600 text-xl font-bold text-white shadow ring-2 ring-white">{{ $userInitial }}</span>
-                        </div>
-
-                        {{-- Info + URL copy --}}
-                        <div class="min-w-0 flex-1">
-                            <p class="text-sm font-bold text-emerald-950">{{ __('dashboard_muthowif.share_profile_heading') }}</p>
-                            <div class="mt-1.5 flex items-center gap-2">
-                                <span class="min-w-0 flex-1 truncate rounded-lg bg-white/80 px-3 py-1.5 font-mono text-[11px] text-emerald-900 ring-1 ring-emerald-200">
-                                    {{ route('layanan.show', $mp) }}
-                                </span>
-                                <button
-                                    id="muthowif-copy-profile-url"
-                                    type="button"
-                                    @click="
-                                        navigator.clipboard.writeText('{{ route('layanan.show', $mp) }}');
-                                        copied = true;
-                                        setTimeout(() => copied = false, 2000);
-                                    "
-                                    class="inline-flex shrink-0 items-center gap-1.5 rounded-lg bg-emerald-600 px-3 py-1.5 text-xs font-semibold text-white shadow-sm transition hover:bg-emerald-700 active:scale-95"
-                                    :title="copied ? '{{ __('dashboard_muthowif.share_copied') }}' : '{{ __('dashboard_muthowif.share_copy') }}'"
-                                >
-                                    <svg x-show="!copied" xmlns="http://www.w3.org/2000/svg" class="h-3.5 w-3.5" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true">
-                                        <path d="M8 3a1 1 0 011-1h2a1 1 0 110 2H9a1 1 0 01-1-1z" />
-                                        <path d="M6 3a2 2 0 00-2 2v11a2 2 0 002 2h8a2 2 0 002-2V5a2 2 0 00-2-2 3 3 0 01-3 3H9a3 3 0 01-3-3z" />
-                                    </svg>
-                                    <svg x-show="copied" x-cloak xmlns="http://www.w3.org/2000/svg" class="h-3.5 w-3.5" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true">
-                                        <path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd" />
-                                    </svg>
-                                    <span x-text="copied ? '{{ __('dashboard_muthowif.share_copied') }}' : '{{ __('dashboard_muthowif.share_copy') }}'"></span>
-                                </button>
-                            </div>
-                        </div>
-                    </div>
-
-                    {{-- Divider --}}
-                    <div class="border-t border-emerald-200/60 px-5 py-3">
-                        <p class="mb-2.5 text-xs font-semibold text-emerald-800">{{ __('dashboard_muthowif.share_to_sosmed') }}</p>
-                        <div class="flex flex-wrap items-center gap-2">
-                            {{-- WhatsApp --}}
-                            <a
-                                href="https://wa.me/?text={{ urlencode(__('dashboard_muthowif.share_wa_text', ['name' => Auth::user()->name, 'url' => route('layanan.show', $mp)])) }}"
-                                target="_blank"
-                                rel="noopener noreferrer"
-                                id="muthowif-share-whatsapp"
-                                class="inline-flex items-center gap-2 rounded-xl bg-[#25D366] px-4 py-2 text-xs font-semibold text-white shadow-sm transition hover:bg-[#20bd5a] hover:shadow-md active:scale-95"
-                            >
-                                <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
-                                    <path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 00-3.48-8.413z"/>
-                                </svg>
-                                WhatsApp
-                            </a>
-
-                            {{-- Facebook --}}
-                            <a
-                                href="https://www.facebook.com/sharer/sharer.php?u={{ urlencode(route('layanan.show', $mp)) }}"
-                                target="_blank"
-                                rel="noopener noreferrer"
-                                id="muthowif-share-facebook"
-                                class="inline-flex items-center gap-2 rounded-xl bg-[#1877F2] px-4 py-2 text-xs font-semibold text-white shadow-sm transition hover:bg-[#0e6cd8] hover:shadow-md active:scale-95"
-                            >
-                                <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
-                                    <path d="M24 12.073c0-6.627-5.373-12-12-12s-12 5.373-12 12c0 5.99 4.388 10.954 10.125 11.854v-8.385H7.078v-3.47h3.047V9.43c0-3.007 1.792-4.669 4.533-4.669 1.312 0 2.686.235 2.686.235v2.953H15.83c-1.491 0-1.956.925-1.956 1.874v2.25h3.328l-.532 3.47h-2.796v8.385C19.612 23.027 24 18.062 24 12.073z"/>
-                                </svg>
-                                Facebook
-                            </a>
-
-                            {{-- Twitter / X --}}
-                            <a
-                                href="https://twitter.com/intent/tweet?url={{ urlencode(route('layanan.show', $mp)) }}&text={{ urlencode(__('dashboard_muthowif.share_tweet_text', ['name' => Auth::user()->name])) }}"
-                                target="_blank"
-                                rel="noopener noreferrer"
-                                id="muthowif-share-twitter"
-                                class="inline-flex items-center gap-2 rounded-xl bg-slate-900 px-4 py-2 text-xs font-semibold text-white shadow-sm transition hover:bg-slate-700 hover:shadow-md active:scale-95"
-                            >
-                                <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
-                                    <path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-4.714-6.231-5.401 6.231H2.744l7.73-8.835L1.254 2.25H8.08l4.259 5.63 5.905-5.63zm-1.161 17.52h1.833L7.084 4.126H5.117z"/>
-                                </svg>
-                                Twitter / X
-                            </a>
-                        </div>
-                    </div>
-
-                    @if (filled($mp->referral_code))
-                    {{-- Referral code section at bottom --}}
-                    <div class="border-t border-emerald-200/60 bg-white/50 px-5 py-4">
-                        <p class="text-xs font-semibold text-emerald-800">{{ __('dashboard_muthowif.referral_code_heading') }}</p>
-                        <p class="mt-1 font-mono text-base font-bold tracking-wide text-emerald-950 select-all">{{ $mp->referral_code }}</p>
-                        <p class="mt-1.5 text-[11px] leading-relaxed text-emerald-900/80">{{ __('dashboard_muthowif.referral_code_hint') }}</p>
-                    </div>
-                    @endif
-                </div>
-            </div>
-            
-        </x-page-container>
+        </div>
     </section>
 
-    <nav
-        class="sticky top-16 z-20 -mx-4 border-b border-slate-200/80 bg-white/95 px-4 py-2.5 shadow-sm backdrop-blur-sm sm:-mx-6 sm:px-6 lg:top-[4.25rem]"
-        aria-label="{{ __('dashboard_muthowif.sticky_nav_aria') }}"
-    >
-        <div class="mx-auto flex max-w-7xl gap-2 overflow-x-auto pb-0.5 [-ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
-            <a href="{{ route('muthowif.bookings.index') }}" class="shrink-0 rounded-full border border-slate-200 bg-white px-3.5 py-1.5 text-xs font-semibold text-slate-800 transition hover:border-baytgo/40 hover:text-baytgo">
-                {{ __('dashboard_muthowif.nav_bookings') }}
-            </a>
-            <a href="#muthowif-schedule" class="shrink-0 rounded-full border border-slate-200 bg-white px-3.5 py-1.5 text-xs font-semibold text-slate-800 transition hover:border-baytgo/40 hover:text-baytgo">
-                {{ __('dashboard_muthowif.nav_calendar') }}
-            </a>
-            <a href="{{ route('muthowif.pelayanan.edit') }}" class="shrink-0 rounded-full border border-slate-200 bg-white px-3.5 py-1.5 text-xs font-semibold text-slate-800 transition hover:border-baytgo/40 hover:text-baytgo">
-                {{ __('dashboard_muthowif.nav_services') }}
-            </a>
-            <a href="{{ route('muthowif.jadwal.index') }}" class="shrink-0 rounded-full border border-slate-200 bg-white px-3.5 py-1.5 text-xs font-semibold text-slate-800 transition hover:border-baytgo/40 hover:text-baytgo">
-                {{ __('dashboard_muthowif.nav_time_off') }}
-            </a>
-            <a href="{{ route('muthowif.withdrawals.index') }}" class="shrink-0 rounded-full border border-slate-200 bg-white px-3.5 py-1.5 text-xs font-semibold text-slate-800 transition hover:border-baytgo/40 hover:text-baytgo">
-                {{ __('dashboard_muthowif.nav_wallet') }}
-            </a>
+    {{-- Statistik --}}
+    <div class="grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-4">
+        <a href="{{ route('muthowif.withdrawals.index') }}" class="flex items-start gap-4 rounded-2xl border border-slate-200/80 bg-white p-5 shadow-sm transition hover:border-emerald-200 hover:shadow-md">
+            <span class="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-emerald-50 text-emerald-700 ring-1 ring-emerald-100">
+                <svg class="h-6 w-6" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor"><path d="M8.433 7.418c.155-.103.346-.196.567-.267v1.698a2.305 2.305 0 01-.567-.267C8.07 8.34 8 8.114 8 8c0-.114.07-.34.433-.582zM11 12.849v-1.698c.22.069.412.164.567.267.364.243.433.468.433.582 0 .114-.07.34-.433.582a2.305 2.305 0 01-.567.267z" /><path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm1-13a1 1 0 10-2 0v.092a4.535 4.535 0 00-1.676.662C6.602 6.234 6 7.009 6 8c0 .99.602 1.765 1.324 2.246.48.32 1.054.545 1.676.662v1.941c-.391-.127-.68-.317-.843-.504a1 1 0 10-1.51 1.31c.562.649 1.413 1.076 2.353 1.253V15a1 1 0 102 0v-.092a4.535 4.535 0 001.676-.662C13.398 13.766 14 12.991 14 12c0-.99-.602-1.765-1.324-2.246A4.535 4.535 0 0011 9.092V7.151c.391.127.68.317.843.504a1 1 0 101.511-1.31c-.563-.649-1.413-1.076-2.354-1.253V5z" clip-rule="evenodd" /></svg>
+            </span>
+            <div class="min-w-0">
+                <p class="text-xs font-semibold uppercase tracking-wide text-slate-500">{{ __('dashboard_muthowif.wallet_balance') }}</p>
+                <p class="mt-1 text-2xl font-bold tabular-nums text-slate-900">Rp {{ $balanceFormatted }}</p>
+                <p class="mt-1 text-xs font-semibold text-baytgo">{{ __('dashboard_muthowif.action_withdraw') }} →</p>
+            </div>
+        </a>
+        <a href="{{ route('muthowif.bookings.index') }}" class="flex items-start gap-4 rounded-2xl border border-slate-200/80 bg-white p-5 shadow-sm transition hover:border-sky-200 hover:shadow-md">
+            <span class="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-sky-50 text-sky-700 ring-1 ring-sky-100">
+                <svg class="h-6 w-6" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M6 2a1 1 0 00-1 1v1H4a2 2 0 00-2 2v10a2 2 0 002 2h12a2 2 0 002-2V6a2 2 0 00-2-2h-1V3a1 1 0 10-2 0v1H7V3a1 1 0 00-1-1zm0 5a1 1 0 000 2h8a1 1 0 100-2H6z" clip-rule="evenodd" /></svg>
+            </span>
+            <div>
+                <p class="text-xs font-semibold uppercase tracking-wide text-slate-500">{{ __('dashboard_muthowif.stat_active_label') }}</p>
+                <p class="mt-1 text-2xl font-bold tabular-nums text-slate-900">{{ $mp->confirmed_bookings_count }}</p>
+                <p class="mt-1 text-xs text-slate-500">{{ __('dashboard_muthowif.stat_active_caption') }}</p>
+            </div>
+        </a>
+        <a href="{{ route('muthowif.bookings.index') }}" class="flex items-start gap-4 rounded-2xl border border-slate-200/80 bg-white p-5 shadow-sm transition hover:border-amber-200 hover:shadow-md">
+            <span class="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-amber-50 text-amber-800 ring-1 ring-amber-100">
+                <svg class="h-6 w-6" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm1-12a1 1 0 10-2 0v4a1 1 0 00.293.707l2.828 2.829a1 1 0 101.415-1.415L11 9.586V6z" clip-rule="evenodd" /></svg>
+            </span>
+            <div>
+                <p class="text-xs font-semibold uppercase tracking-wide text-slate-500">{{ __('dashboard_muthowif.stat_pending_short') }}</p>
+                <p class="mt-1 text-2xl font-bold tabular-nums text-slate-900">{{ $mp->pending_bookings_count }}</p>
+                <p class="mt-1 text-xs text-slate-500">{{ __('dashboard_muthowif.stat_pending_caption') }}</p>
+            </div>
+        </a>
+        <div class="flex items-start gap-4 rounded-2xl border border-slate-200/80 bg-white p-5 shadow-sm">
+            <span class="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-amber-50 text-amber-600 ring-1 ring-amber-100">
+                <svg class="h-6 w-6" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M10.868 2.884c-.321-.772-1.415-.772-1.736 0l-1.83 4.401-4.753.381c-.833.067-1.171 1.107-.536 1.651l3.62 3.102-1.106 4.637c-.194.813.691 1.456 1.405 1.02L10 15.591l4.069 2.485c.713.436 1.598-.207 1.404-1.02l-1.106-4.637 3.62-3.102c.635-.544.297-1.584-.536-1.65l-4.752-.382-1.83-4.401z" clip-rule="evenodd" /></svg>
+            </span>
+            <div>
+                <p class="text-xs font-semibold uppercase tracking-wide text-slate-500">{{ __('dashboard_muthowif.stat_rating_label') }}</p>
+                <p class="mt-1 text-2xl font-bold tabular-nums text-slate-900">{{ $avgRating !== null ? number_format($avgRating, 1, ',', '') : '—' }}</p>
+                <p class="mt-1 text-xs text-slate-500">
+                    @if ($reviewsCount > 0)
+                        {{ __('dashboard_muthowif.stat_rating_reviews', ['count' => $reviewsCount]) }}
+                    @else
+                        {{ __('dashboard_muthowif.stat_rating_empty') }}
+                    @endif
+                </p>
+            </div>
         </div>
-    </nav>
+    </div>
 
     <div class="grid grid-cols-1 gap-8 lg:grid-cols-12 lg:items-start">
         {{-- Kolom kiri: booking + kalender --}}
@@ -331,7 +224,7 @@
                             </div>
                         </div>
                     @else
-                        <ul class="space-y-2 text-sm">
+                        <div class="space-y-3">
                             @foreach ($upcomingBookings as $row)
                                 @php
                                     $statusPill = match ($row->status) {
@@ -341,20 +234,66 @@
                                         BookingStatus::Cancelled => 'bg-rose-100 text-rose-950 ring-rose-200/90',
                                         default => 'bg-slate-100 text-slate-700 ring-slate-200/80',
                                     };
+                                    $nights = $row->billingNightsInclusive();
                                 @endphp
-                                <li>
-                                    <a href="{{ route('muthowif.bookings.show', $row) }}" class="flex flex-col gap-1 rounded-xl border border-slate-200/80 bg-slate-50/50 px-4 py-3 text-left shadow-sm transition hover:border-baytgo/30 hover:bg-white focus:outline-none focus-visible:ring-2 focus-visible:ring-baytgo focus-visible:ring-offset-2">
-                                        <div class="flex flex-wrap items-start justify-between gap-1.5">
-                                            <p class="min-w-0 text-sm font-semibold text-slate-900">{{ $row->customer?->name ?? __('dashboard_muthowif.guest') }}</p>
-                                            <span class="inline-flex shrink-0 rounded-full px-2 py-0.5 text-[10px] font-semibold ring-1 {{ $statusPill }}">{{ $row->status->label() }}</span>
+                                <article class="rounded-2xl border border-slate-200/80 bg-slate-50/40 p-4 sm:p-5">
+                                    <div class="flex flex-wrap items-start justify-between gap-2">
+                                        <div>
+                                            <p class="text-base font-bold text-slate-900">{{ $row->customer?->name ?? __('dashboard_muthowif.guest') }}</p>
+                                            <p class="mt-1 text-sm text-slate-600">
+                                                {{ $row->starts_on?->format('d M Y') }} – {{ $row->ends_on?->format('d M Y') }}
+                                                <span class="text-slate-400">·</span> {{ $nights }} {{ __('common.days') }}
+                                            </p>
+                                            <p class="mt-0.5 text-sm text-slate-600">
+                                                {{ $row->service_type?->label() }}
+                                                · {{ __('muthowif.bookings.pilgrim_count', ['count' => $row->pilgrim_count]) }}
+                                            </p>
                                         </div>
-                                        <p class="text-[11px] text-slate-600">
-                                            {{ Carbon::parse($row->starts_on)->format('d/m') }} – {{ Carbon::parse($row->ends_on)->format('d/m') }}
-                                            @if ($row->service_type)
-                                                <span class="text-slate-400"> · </span>{{ $row->service_type->label() }}
-                                            @endif
-                                        </p>
-                                    </a>
+                                        <span class="inline-flex rounded-full px-2.5 py-1 text-xs font-semibold ring-1 {{ $statusPill }}">{{ $row->status->label() }}</span>
+                                    </div>
+                                    <div class="mt-4 flex flex-wrap gap-2">
+                                        <a href="{{ route('muthowif.bookings.show', $row) }}" class="inline-flex flex-1 items-center justify-center rounded-xl border border-slate-200 bg-white px-4 py-2 text-sm font-semibold text-slate-800 hover:bg-slate-50 sm:flex-none sm:min-w-[8rem]">
+                                            {{ __('dashboard_muthowif.view_detail') }}
+                                        </a>
+                                        <button type="button" @click="$dispatch('open-booking-chat', { bookingId: @js($row->getKey()) })" class="inline-flex flex-1 items-center justify-center rounded-xl border border-slate-200 bg-white px-4 py-2 text-sm font-semibold text-slate-800 hover:bg-slate-50 sm:flex-none sm:min-w-[6rem]">
+                                            {{ __('dashboard_muthowif.chat') }}
+                                        </button>
+                                    </div>
+                                </article>
+                            @endforeach
+                        </div>
+                    @endif
+                </div>
+            </section>
+
+            <section class="space-y-3">
+                <div class="flex flex-wrap items-center justify-between gap-2">
+                    <h2 class="text-base font-bold text-slate-900 sm:text-lg">{{ __('dashboard_muthowif.weekly_schedule') }}</h2>
+                    <a href="#muthowif-schedule" class="text-sm font-semibold text-baytgo hover:text-baytgo-800">{{ __('dashboard_muthowif.view_all_schedule') }}</a>
+                </div>
+                <div class="rounded-2xl border border-slate-200/80 bg-white p-4 shadow-sm sm:p-5">
+                    @if ($weeklySchedule->isEmpty())
+                        <p class="text-sm text-slate-600">{{ __('dashboard_muthowif.weekly_schedule_empty') }}</p>
+                    @else
+                        <ul class="divide-y divide-slate-100">
+                            @foreach ($weeklySchedule as $row)
+                                @php
+                                    $statusPill = match ($row->status) {
+                                        BookingStatus::Pending => 'bg-amber-100 text-amber-950',
+                                        BookingStatus::Confirmed => 'bg-emerald-100 text-emerald-950',
+                                        default => 'bg-slate-100 text-slate-700',
+                                    };
+                                @endphp
+                                <li class="flex flex-wrap items-center gap-3 py-3 first:pt-0 last:pb-0">
+                                    <div class="w-14 shrink-0 text-center">
+                                        <p class="text-[10px] font-bold uppercase text-slate-500">{{ $row->starts_on?->translatedFormat('M') }}</p>
+                                        <p class="text-xl font-bold text-slate-900">{{ $row->starts_on?->format('d') }}</p>
+                                    </div>
+                                    <div class="min-w-0 flex-1">
+                                        <p class="font-semibold text-slate-900">{{ $row->customer?->name ?? __('dashboard_muthowif.guest') }}</p>
+                                        <p class="text-xs text-slate-600">{{ $row->service_type?->label() }} · {{ $row->starts_on?->format('d/m') }}–{{ $row->ends_on?->format('d/m') }}</p>
+                                    </div>
+                                    <span class="rounded-full px-2 py-0.5 text-[10px] font-semibold {{ $statusPill }}">{{ $row->status->label() }}</span>
                                 </li>
                             @endforeach
                         </ul>
@@ -363,7 +302,7 @@
             </section>
 
             <section id="muthowif-schedule" class="scroll-mt-24 space-y-3">
-                <h2 class="text-base font-bold text-slate-900 sm:text-lg">{{ __('dashboard_muthowif.section_schedule') }}</h2>
+                <h2 class="text-base font-bold text-slate-900 sm:text-lg">{{ __('dashboard_muthowif.calendar_title', ['month' => $calendarData['calendarMonth']->translatedFormat('F Y')]) }}</h2>
                 <div
                     class="space-y-4"
                     x-data="muthowifDashboardCalendar({
@@ -381,6 +320,8 @@
                     </div>
                 </div>
             </section>
+
+            @include('partials.dashboard-muthowif-share', ['mp' => $mp])
         </div>
 
         {{-- Kolom kanan: aksi cepat + ringkasan --}}
@@ -424,50 +365,37 @@
                             <svg class="h-5 w-5" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.75" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M2.25 15.75l5.159-5.159a2.25 2.25 0 013.182 0l5.159 5.159m-1.5-1.5l1.409-1.409a2.25 2.25 0 013.182 0l2.909 2.909m-18 3.75h16.5a1.5 1.5 0 001.5-1.5V6a1.5 1.5 0 00-1.5-1.5H3.75A1.5 1.5 0 002.25 6v12a1.5 1.5 0 001.5 1.5zm10.5-11.25h.008v.008h-.008V8.25zm.375 0a.375.375 0 11-.75 0 .375.375 0 01.75 0z" /></svg>
                         </span>
                         <div class="text-left">
-                            <span class="block text-sm font-semibold text-slate-900">Kelola Galeri Foto</span>
-                            <span class="block text-[11px] text-slate-500">Upload portfolio bersama jamaah</span>
+                            <span class="block text-sm font-semibold text-slate-900">{{ __('dashboard_muthowif.portfolio_title') }}</span>
+                            <span class="block text-[11px] text-slate-500">{{ __('dashboard_muthowif.portfolio_sub') }}</span>
                         </div>
                     </div>
                     <svg class="h-5 w-5 text-slate-400 transition-transform group-hover:translate-x-1" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M7.21 14.77a.75.75 0 01.02-1.06L11.168 10 7.23 6.29a.75.75 0 111.04-1.08l4.5 4.25a.75.75 0 010 1.08l-4.5 4.25a.75.75 0 01-1.06-.02z" clip-rule="evenodd" /></svg>
                 </a>
             </div>
 
-            <div class="space-y-3">
-                <a href="{{ route('muthowif.withdrawals.index') }}" class="flex items-center gap-4 rounded-2xl border border-slate-200/80 bg-white p-4 shadow-sm transition hover:border-emerald-200 hover:shadow-md">
-                    <span class="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-emerald-50 text-emerald-700 ring-1 ring-emerald-100" aria-hidden="true">
-                        <svg class="h-6 w-6" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor"><path d="M8.433 7.418c.155-.103.346-.196.567-.267v1.698a2.305 2.305 0 01-.567-.267C8.07 8.34 8 8.114 8 8c0-.114.07-.34.433-.582zM11 12.849v-1.698c.22.069.412.164.567.267.364.243.433.468.433.582 0 .114-.07.34-.433.582a2.305 2.305 0 01-.567.267z" /><path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm1-13a1 1 0 10-2 0v.092a4.535 4.535 0 00-1.676.662C6.602 6.234 6 7.009 6 8c0 .99.602 1.765 1.324 2.246.48.32 1.054.545 1.676.662v1.941c-.391-.127-.68-.317-.843-.504a1 1 0 10-1.51 1.31c.562.649 1.413 1.076 2.353 1.253V15a1 1 0 102 0v-.092a4.535 4.535 0 001.676-.662C13.398 13.766 14 12.991 14 12c0-.99-.602-1.765-1.324-2.246A4.535 4.535 0 0011 9.092V7.151c.391.127.68.317.843.504a1 1 0 101.511-1.31c-.563-.649-1.413-1.076-2.354-1.253V5z" clip-rule="evenodd" /></svg>
-                    </span>
-                    <div class="min-w-0 flex-1">
-                        <p class="text-xs font-semibold uppercase tracking-wide text-slate-500">{{ __('dashboard_muthowif.wallet_balance') }}</p>
-                        <p class="text-lg font-bold tabular-nums text-slate-900">Rp {{ $balanceFormatted }}</p>
-                        <p class="mt-1 text-xs font-semibold text-baytgo">{{ __('dashboard_muthowif.action_withdraw') }} →</p>
+            <div class="rounded-2xl border border-slate-200/80 bg-white p-5 shadow-sm">
+                <p class="text-xs font-semibold uppercase tracking-wide text-slate-500">{{ __('dashboard_muthowif.profile_account') }}</p>
+                <div class="mt-3 flex items-center gap-3">
+                    <div class="relative h-12 w-12 shrink-0">
+                        <img
+                            src="{{ route('layanan.photo', $mp) }}"
+                            alt=""
+                            class="h-full w-full rounded-full object-cover ring-2 ring-slate-100"
+                            onerror="this.classList.add('hidden'); this.nextElementSibling.classList.remove('hidden');"
+                        />
+                        <span class="hidden flex h-full w-full items-center justify-center rounded-full bg-baytgo text-lg font-bold text-white">{{ $userInitial }}</span>
                     </div>
-                </a>
-                <a href="{{ route('muthowif.bookings.index') }}" class="flex items-center gap-4 rounded-2xl border border-slate-200/80 bg-white p-4 shadow-sm transition hover:border-sky-200 hover:shadow-md">
-                    <span class="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-sky-50 text-sky-700 ring-1 ring-sky-100" aria-hidden="true">
-                        <svg class="h-6 w-6" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M6 2a1 1 0 00-1 1v1H4a2 2 0 00-2 2v10a2 2 0 002 2h12a2 2 0 002-2V6a2 2 0 00-2-2h-1V3a1 1 0 10-2 0v1H7V3a1 1 0 00-1-1zm0 5a1 1 0 000 2h8a1 1 0 100-2H6z" clip-rule="evenodd" /></svg>
-                    </span>
-                    <div>
-                        <p class="text-xs font-semibold uppercase tracking-wide text-slate-500">{{ __('dashboard_muthowif.stat_active_label') }}</p>
-                        <p class="text-2xl font-bold tabular-nums text-slate-900">{{ $mp->confirmed_bookings_count }}</p>
+                    <div class="min-w-0">
+                        <p class="truncate font-bold text-slate-900">{{ Auth::user()->name }}</p>
+                        <p class="truncate text-xs text-slate-500">{{ Auth::user()->email }}</p>
                     </div>
+                </div>
+                <a href="{{ route('profile.edit') }}" class="mt-4 inline-flex w-full items-center justify-center gap-2 rounded-xl border border-slate-200 bg-slate-50 px-4 py-2.5 text-sm font-semibold text-slate-800 transition hover:bg-white">
+                    <svg class="h-4 w-4" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.75" stroke="currentColor" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" d="M9.594 3.94c.09-.542.56-.94 1.11-.94h2.593c.55 0 1.02.398 1.11.94l.213 1.281c.063.374.313.686.645.87.074.04.147.083.22.127.325.196.72.257 1.075.124l1.217-.456a1.125 1.125 0 011.37.49l1.296 2.247a1.125 1.125 0 01-.26 1.431l-1.003.827c-.293.241-.438.613-.43.992a7.723 7.723 0 010 .255c-.008.378.137.75.43.991l1.003.827c.424.35.534.955.26 1.431l-1.296 2.247a1.125 1.125 0 01-1.37.491l-1.217-.456c-.355-.133-.75-.072-1.076.124a6.47 6.47 0 01-.22.128c-.331.183-.581.495-.644.869l-.213 1.281c-.09.543-.56.94-1.11.94h-2.594c-.55 0-1.019-.398-1.11-.94l-.213-1.281c-.062-.374-.312-.686-.644-.87a6.52 6.52 0 01-.22-.127c-.325-.196-.72-.257-1.076-.124l-1.217.456a1.125 1.125 0 01-1.37-.49l-1.296-2.247a1.125 1.125 0 01.26-1.431l1.004-.827c.292-.24.437-.613.43-.991a6.932 6.932 0 010-.255c.007-.38-.138-.751-.43-.992l-1.004-.827a1.125 1.125 0 01-.26-1.431l1.296-2.247a1.125 1.125 0 011.37-.491l1.217.456c.356.133.751.072 1.076-.124.072-.044.146-.086.22-.128.332-.183.582-.495.644-.869l.214-1.28z" /><path stroke-linecap="round" stroke-linejoin="round" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" /></svg>
+                    {{ __('dashboard_muthowif.profile_settings') }}
                 </a>
-                <a href="{{ route('muthowif.bookings.index') }}" class="flex items-center gap-4 rounded-2xl border border-slate-200/80 bg-white p-4 shadow-sm transition hover:border-amber-200 hover:shadow-md">
-                    <span class="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-amber-50 text-amber-800 ring-1 ring-amber-100" aria-hidden="true">
-                        <svg class="h-6 w-6" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm1-12a1 1 0 10-2 0v4a1 1 0 00.293.707l2.828 2.829a1 1 0 101.415-1.415L11 9.586V6z" clip-rule="evenodd" /></svg>
-                    </span>
-                    <div>
-                        <p class="text-xs font-semibold uppercase tracking-wide text-slate-500">{{ __('dashboard_muthowif.stat_pending_short') }}</p>
-                        <p class="text-2xl font-bold tabular-nums text-slate-900">{{ $mp->pending_bookings_count }}</p>
-                    </div>
-                </a>
-            </div>
-
-            <div class="rounded-2xl border border-dashed border-slate-200 bg-slate-50/60 p-4 text-xs text-slate-600">
-                <p class="font-semibold text-slate-800">{{ __('dashboard_muthowif.action_public') }}</p>
-                <a href="{{ route('layanan.show', $mp) }}" class="mt-2 inline-flex items-center gap-1 font-semibold text-baytgo hover:text-baytgo-800">
-                    {{ __('dashboard_muthowif.open_public_profile') }}
-                    <svg class="h-3.5 w-3.5" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M3 10a.75.75 0 01.75-.75h10.638L10.23 5.29a.75.75 0 111.04-1.08l5.5 5.25a.75.75 0 010 1.08l-5.5 5.25a.75.75 0 11-1.04-1.08l4.158-3.96H3.75A.75.75 0 013 10z" clip-rule="evenodd" /></svg>
+                <a href="{{ route('layanan.show', $mp) }}" class="mt-3 block text-center text-xs font-semibold text-baytgo hover:text-baytgo-800">
+                    {{ __('dashboard_muthowif.open_public_profile') }} →
                 </a>
             </div>
         </aside>
