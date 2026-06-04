@@ -3,10 +3,14 @@
     use App\Enums\BookingStatus;
 @endphp
 
-<div class="grid grid-cols-1 gap-6 lg:grid-cols-12 lg:items-start">
-    <div class="space-y-6 lg:col-span-8">
+{{--
+    Mobile: satu kolom dengan order — hero (1) → ringkasan saldo (2) → aksi cepat (3) → … → aktivitas (10).
+    Desktop (lg): dua kolom; order di-reset agar kiri = konten utama, kanan = sidebar.
+--}}
+<div class="flex flex-col gap-6 lg:grid lg:grid-cols-12 lg:items-start">
+    <div class="contents lg:col-span-8 lg:flex lg:flex-col lg:gap-6">
         {{-- Hero --}}
-        <section class="relative overflow-hidden rounded-3xl border border-slate-200/80 bg-white shadow-md ring-1 ring-slate-100/80">
+        <section class="relative order-1 overflow-hidden rounded-3xl border border-slate-200/80 bg-white shadow-md ring-1 ring-slate-100/80 lg:order-none">
             <div class="pointer-events-none absolute inset-0 z-0" aria-hidden="true">
                 <img src="{{ $welcomeHeroBg }}" alt="" class="h-full w-full min-h-[11rem] object-cover object-[80%_35%] sm:min-h-[13rem]" loading="eager" decoding="async" />
             </div>
@@ -57,9 +61,9 @@
         </section>
 
         {{-- Aksi cepat (ikon bulat) --}}
-        <section class="rounded-2xl border border-slate-200/80 bg-white p-4 shadow-sm sm:p-5">
+        <section class="order-3 rounded-2xl border border-slate-200/80 bg-white p-4 shadow-sm sm:p-5 lg:order-none">
             <h2 class="text-sm font-bold text-slate-900">{{ __('dashboard_muthowif.quick_actions') }}</h2>
-            <div class="mt-4 flex justify-between gap-2 overflow-x-auto pb-1">
+            <div class="mt-4 flex gap-3 overflow-x-auto pb-1 sm:gap-4">
                 <a href="{{ route('muthowif.bookings.index') }}" class="flex min-w-[4.25rem] flex-col items-center gap-2 text-center">
                     <span class="relative flex h-14 w-14 items-center justify-center rounded-full border border-slate-200 bg-slate-50 text-emerald-700 shadow-sm">
                         <svg class="h-6 w-6" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.75" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M6.75 3v2.25M17.25 3v2.25M3 18.75V7.5a2.25 2.25 0 012.25-2.25h13.5A2.25 2.25 0 0121 7.5v11.25m-18 0A2.25 2.25 0 005.25 21h13.5a2.25 2.25 0 002.25-2.25m-18 0v-7.5A2.25 2.25 0 015.25 9h13.5a2.25 2.25 0 012.25 2.25v7.5" /></svg>
@@ -74,6 +78,21 @@
                         <svg class="h-6 w-6" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.75" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M12 6v6h4.5m4.5 0a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
                     </span>
                     <span class="text-xs font-semibold text-slate-700">{{ __('dashboard_muthowif.qa_schedule_title') }}</span>
+                </a>
+                <a href="{{ route('muthowif.pelayanan.edit') }}" class="flex min-w-[4.25rem] flex-col items-center gap-2 text-center">
+                    <span class="flex h-14 w-14 items-center justify-center rounded-full border border-slate-200 bg-slate-50 text-rose-700 shadow-sm">
+                        <svg class="h-6 w-6" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.75" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M21 11.25v8.25a2.25 2.25 0 01-2.25 2.25H5.25a2.25 2.25 0 01-2.25-2.25v-8.25M12 4.875A2.25 2.25 0 1014.25 7.5H9.75A2.25 2.25 0 1012 4.875zM8.25 10.125V7.875a3.375 3.375 0 116.75 0v2.25" /></svg>
+                    </span>
+                    <span class="text-xs font-semibold text-slate-700">{{ __('nav.services') }}</span>
+                </a>
+                <a href="{{ route('muthowif.emergency-offers.index') }}" class="flex min-w-[4.25rem] flex-col items-center gap-2 text-center">
+                    <span class="relative flex h-14 w-14 items-center justify-center rounded-full border border-slate-200 bg-slate-50 text-orange-700 shadow-sm">
+                        <svg class="h-6 w-6" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.75" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M12 9v3.75m-9.303 3.376c-.866 1.5.217 3.374 1.948 3.374h14.71c1.73 0 2.813-1.874 1.948-3.374L13.949 3.378c-.866-1.5-3.032-1.5-3.898 0L2.697 16.126zM12 15.75h.007v.008H12v-.008z" /></svg>
+                        @if ($pendingEmergencyOffersCount > 0)
+                            <span class="absolute -right-0.5 -top-0.5 flex h-5 min-w-[1.25rem] items-center justify-center rounded-full bg-red-500 px-1 text-[10px] font-bold text-white">{{ $pendingEmergencyOffersCount > 9 ? '9+' : $pendingEmergencyOffersCount }}</span>
+                        @endif
+                    </span>
+                    <span class="text-xs font-semibold text-slate-700">{{ __('nav.emergency_offers') }}</span>
                 </a>
                 <button type="button" @click="$dispatch('open-global-chat-panel')" class="flex min-w-[4.25rem] flex-col items-center gap-2 text-center">
                     <span class="relative flex h-14 w-14 items-center justify-center rounded-full border border-slate-200 bg-slate-50 text-violet-700 shadow-sm">
@@ -100,7 +119,7 @@
         </section>
 
         {{-- Pesanan mendatang --}}
-        <section id="muthowif-upcoming" class="scroll-mt-24 space-y-3">
+        <section id="muthowif-upcoming" class="order-4 scroll-mt-24 space-y-3 lg:order-none">
             <div class="flex flex-wrap items-center justify-between gap-2">
                 <h2 class="text-base font-bold text-slate-900">{{ __('dashboard_muthowif.upcoming') }}</h2>
                 <a href="{{ route('muthowif.bookings.index') }}" class="text-sm font-semibold text-baytgo hover:text-baytgo-800">{{ __('dashboard_muthowif.view_all') }}</a>
@@ -141,7 +160,7 @@
         </section>
 
         {{-- Jadwal minggu ini --}}
-        <section class="space-y-3">
+        <section class="order-5 space-y-3 lg:order-none">
             <div class="flex flex-wrap items-center justify-between gap-2">
                 <h2 class="text-base font-bold text-slate-900">{{ __('dashboard_muthowif.weekly_schedule') }}</h2>
                 <a href="{{ route('muthowif.jadwal.index') }}" class="text-sm font-semibold text-baytgo hover:text-baytgo-800">{{ __('dashboard_muthowif.view_all_schedule') }}</a>
@@ -183,7 +202,7 @@
         </section>
 
         {{-- Kalender --}}
-        <section id="muthowif-schedule" class="scroll-mt-24 space-y-3">
+        <section id="muthowif-schedule" class="order-6 scroll-mt-24 space-y-3 lg:order-none">
             <div class="flex flex-wrap items-center justify-between gap-2">
                 <h2 class="text-base font-bold text-slate-900">{{ __('dashboard_muthowif.section_schedule') }}</h2>
                 <a href="{{ route('muthowif.jadwal.index') }}" class="text-sm font-semibold text-baytgo hover:text-baytgo-800">{{ __('dashboard_muthowif.calendar_view_monthly') }}</a>
@@ -208,8 +227,8 @@
     </div>
 
     {{-- Sidebar --}}
-    <aside class="space-y-5 lg:col-span-4">
-        <div class="rounded-2xl border border-slate-200/80 bg-white p-5 shadow-sm">
+    <aside class="contents lg:col-span-4 lg:flex lg:flex-col lg:gap-5">
+        <div class="order-2 rounded-2xl border border-slate-200/80 bg-white p-5 shadow-sm lg:order-none">
             <p class="text-xs font-semibold uppercase tracking-wide text-slate-500">{{ __('dashboard_muthowif.account_summary') }}</p>
             <a href="{{ route('muthowif.withdrawals.index') }}" class="mt-3 block rounded-2xl bg-gradient-to-br from-baytgo to-baytgo-800 p-5 text-white shadow-md">
                 <p class="text-xs font-medium text-white/80">{{ __('dashboard_muthowif.balance_available') }}</p>
@@ -231,7 +250,7 @@
             </div>
         </div>
 
-        <a href="{{ route('muthowif.portfolio.index') }}" class="group flex items-center justify-between gap-3 rounded-2xl border border-slate-200/90 bg-white p-4 shadow-sm transition hover:border-sky-300 hover:shadow-md">
+        <a href="{{ route('muthowif.portfolio.index') }}" class="order-7 group flex items-center justify-between gap-3 rounded-2xl border border-slate-200/90 bg-white p-4 shadow-sm transition hover:border-sky-300 hover:shadow-md lg:order-none">
             <div class="flex items-center gap-3">
                 <span class="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-sky-100 text-sky-700">
                     <svg class="h-5 w-5" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.75" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M2.25 15.75l5.159-5.159a2.25 2.25 0 013.182 0l5.159 5.159m-1.5-1.5l1.409-1.409a2.25 2.25 0 013.182 0l2.909 2.909m-18 3.75h16.5a1.5 1.5 0 001.5-1.5V6a1.5 1.5 0 00-1.5-1.5H3.75A1.5 1.5 0 002.25 6v12a1.5 1.5 0 001.5 1.5zm10.5-11.25h.008v.008h-.008V8.25zm.375 0a.375.375 0 11-.75 0 .375.375 0 01.75 0z" /></svg>
@@ -244,9 +263,11 @@
             <svg class="h-5 w-5 text-slate-400 transition group-hover:translate-x-0.5" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M7.21 14.77a.75.75 0 01.02-1.06L11.168 10 7.23 6.29a.75.75 0 111.04-1.08l4.5 4.25a.75.75 0 010 1.08l-4.5 4.25a.75.75 0 01-1.06-.02z" clip-rule="evenodd" /></svg>
         </a>
 
-        @include('partials.dashboard-muthowif-share', ['mp' => $mp])
+        <div class="order-8 lg:order-none">
+            @include('partials.dashboard-muthowif-share', ['mp' => $mp])
+        </div>
 
-        <div class="rounded-2xl border border-slate-200/80 bg-white p-5 shadow-sm">
+        <div class="order-9 rounded-2xl border border-slate-200/80 bg-white p-5 shadow-sm lg:order-none">
             <p class="text-xs font-semibold uppercase tracking-wide text-slate-500">{{ __('dashboard_muthowif.profile_account') }}</p>
             <div class="mt-3 flex items-center gap-3">
                 <div class="relative h-12 w-12 shrink-0">
@@ -261,7 +282,7 @@
             <a href="{{ route('profile.edit') }}" class="mt-4 inline-flex w-full items-center justify-center rounded-xl border border-slate-200 bg-slate-50 px-4 py-2.5 text-sm font-semibold text-slate-800 hover:bg-white">{{ __('dashboard_muthowif.edit_profile') }}</a>
         </div>
 
-        <div class="rounded-2xl border border-slate-200/80 bg-white p-5 shadow-sm">
+        <div class="order-10 rounded-2xl border border-slate-200/80 bg-white p-5 shadow-sm lg:order-none">
             <p class="text-sm font-bold text-slate-900">{{ __('dashboard_muthowif.recent_activity') }}</p>
             @if ($recentActivities->isEmpty())
                 <p class="mt-3 text-sm text-slate-500">{{ __('dashboard_muthowif.recent_activity_empty') }}</p>

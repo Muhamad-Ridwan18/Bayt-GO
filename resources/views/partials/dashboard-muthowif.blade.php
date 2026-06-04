@@ -4,6 +4,7 @@
     use App\Models\MuthowifProfile;
     use Carbon\Carbon;
     use App\Support\IndonesianNumber;
+    use App\Support\MuthowifEmergencyOfferCounts;
     use App\Services\MuthowifDashboardCalendarDataBuilder;
 
     $mp = MuthowifProfile::query()
@@ -77,6 +78,8 @@
 
     $nextBooking = $upcomingBookings->first();
     $activeBookingsCount = (int) $mp->confirmed_bookings_count + (int) $mp->pending_bookings_count;
+
+    $pendingEmergencyOffersCount = MuthowifEmergencyOfferCounts::pendingOfferedCountForUser(Auth::user());
 
     $unreadChatCount = (int) BookingChatMessage::query()
         ->whereHas('muthowifBooking', fn ($q) => $q->where('muthowif_profile_id', $mp->getKey()))
