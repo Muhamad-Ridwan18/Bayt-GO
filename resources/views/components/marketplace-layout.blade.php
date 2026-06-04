@@ -18,7 +18,7 @@
         <link href="https://fonts.bunny.net/css?family=plus-jakarta-sans:400,500,600,700&display=swap" rel="stylesheet" />
         @vite(['resources/css/app.css', 'resources/js/app.js'])
     </head>
-    <body class="min-h-screen overflow-x-hidden bg-gradient-to-b from-slate-50 via-white to-amber-50/40 font-sans antialiased text-slate-800 selection:bg-brand-200/60">
+    <body class="min-h-screen overflow-x-hidden bg-gradient-to-b from-welcomeCanvas via-white to-slate-50/80 font-sans antialiased text-slate-800 selection:bg-brand-200/60">
         <div class="flex min-h-screen min-w-0 flex-col">
             @auth
                 @include('layouts.navigation')
@@ -26,10 +26,10 @@
                 <x-marketing-public-header active="layanan" />
             @endauth
 
-            <main class="w-full min-w-0 flex-1 py-8 sm:py-12">
-                <x-page-container class="min-w-0">
+            <main class="w-full min-w-0 flex-1 py-0 sm:py-0">
+                <div class="min-w-0">
                     {{ $slot }}
-                </x-page-container>
+                </div>
             </main>
 
             <footer class="mt-auto w-full border-t border-slate-200/80 bg-gradient-to-b from-white to-slate-50/90">

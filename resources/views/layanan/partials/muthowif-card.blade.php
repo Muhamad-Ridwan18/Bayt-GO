@@ -3,6 +3,7 @@
     'group' => null,
     'private' => null,
     'listQueryString' => '',
+    'rangeLabel' => null,
     'as' => 'li',
 ])
 
@@ -11,7 +12,11 @@
     use App\Support\IndonesianNumber;
     use Illuminate\Support\Str;
 
-    $href = route('layanan.show', $profile).($listQueryString !== '' ? '?'.$listQueryString : '');
+    $profileHref = route('layanan.show', $profile).($listQueryString !== '' ? '?'.$listQueryString : '');
+    $bookHref = $listQueryString !== ''
+        ? route('layanan.book', $profile).'?'.$listQueryString
+        : $profileHref;
+
     $initial = mb_substr($profile->user->name, 0, 1);
     $fallbackSvg = 'data:image/svg+xml,'.rawurlencode(
         '<svg xmlns="http://www.w3.org/2000/svg" width="128" height="128"><rect fill="#e2e8f0" width="128" height="128"/><text x="50%" y="55%" dominant-baseline="middle" text-anchor="middle" font-size="48" fill="#475569">'
@@ -20,14 +25,17 @@
     );
 
     if ($group && filled($group->description)) {
-        $bio = Str::limit(trim(strip_tags($group->description)), 130);
+        $specialization = Str::limit(trim(strip_tags($group->description)), 72);
     } elseif ($private && filled($private->description)) {
-        $bio = Str::limit(trim(strip_tags($private->description)), 130);
+        $specialization = Str::limit(trim(strip_tags($private->description)), 72);
     } else {
-        $langs = $profile->languagesForDisplay();
-        $bio = count($langs) > 0
-            ? __('marketplace.card.bio_comm').implode(' · ', array_slice($langs, 0, 4)).(count($langs) > 4 ? '…' : '')
-            : __('marketplace.card.bio_fallback');
+        $specialization = null;
+    }
+
+    $workLines = array_values(array_filter($profile->work_experiences ?? [], fn ($l) => filled($l)));
+    $experienceLine = $workLines[0] ?? null;
+    if ($experienceLine !== null) {
+        $experienceLine = Str::limit(trim(strip_tags((string) $experienceLine)), 48);
     }
 
     $prices = [];
@@ -38,93 +46,99 @@
         $prices[] = (int) $private->daily_price;
     }
     $minPrice = count($prices) > 0 ? min($prices) : null;
-    $confirmed = (int) ($profile->confirmed_bookings_count ?? 0);
+
     $reviewsCount = (int) ($profile->booking_reviews_count ?? 0);
-    $avgRating = $profile->average_rating !== null ? round((float) $profile->average_rating, 1) : null;
+    $avgRating = $profile->average_rating !== null ? number_format((float) $profile->average_rating, 1, ',', '') : null;
+    $langs = array_slice($profile->languagesForDisplay(), 0, 4);
+    $langsLine = $langs !== [] ? implode(', ', $langs) : null;
 @endphp
 
-<{{ $as }} class="h-full">
-    <a
-        href="{{ $href }}"
-        class="group relative flex h-full flex-col overflow-hidden rounded-3xl border border-slate-200/90 bg-white shadow-md shadow-slate-900/5 ring-1 ring-slate-100/80 transition duration-300 hover:-translate-y-1 hover:border-brand-200/90 hover:shadow-xl hover:shadow-brand-900/10 hover:ring-brand-100/60 focus:outline-none focus-visible:ring-2 focus-visible:ring-brand-500 focus-visible:ring-offset-2"
-        aria-label="{{ __('marketplace.card.view_profile_aria', ['name' => $profile->user->name]) }}"
-    >
-        <span class="absolute inset-x-0 top-0 h-1 bg-gradient-to-r from-brand-400 via-brand-500 to-amber-400 opacity-0 transition group-hover:opacity-100" aria-hidden="true"></span>
-
-        <div class="relative flex gap-4 p-5 sm:p-6">
-            <div class="relative shrink-0">
+<{{ $as }} class="h-full list-none">
+    <article class="group/card relative flex h-full flex-col overflow-hidden rounded-2xl border border-slate-200/90 bg-white shadow-sm ring-1 ring-slate-100/80 transition duration-300 hover:border-baytgo/25 hover:shadow-lg hover:shadow-baytgo/5">
+        <div class="relative aspect-[4/3] overflow-hidden bg-slate-100 sm:aspect-[5/4]">
+            <a href="{{ $profileHref }}" class="block h-full focus:outline-none focus-visible:ring-2 focus-visible:ring-baytgo focus-visible:ring-inset" tabindex="-1" aria-hidden="true">
                 <img
                     src="{{ route('layanan.photo', $profile) }}"
                     alt=""
-                    width="96"
-                    height="96"
-                    class="h-24 w-24 rounded-2xl bg-slate-100 object-cover shadow-lg ring-2 ring-white sm:h-[5.5rem] sm:w-[5.5rem]"
+                    class="h-full w-full object-cover object-top transition duration-500 group-hover/card:scale-[1.02]"
                     loading="lazy"
-                    onerror='this.onerror=null; this.src={!! json_encode($fallbackSvg) !!}'
-                >
-                <span class="absolute -bottom-1 -right-1 flex items-center gap-0.5 rounded-full bg-emerald-500 px-1.5 py-0.5 text-[10px] font-bold uppercase tracking-wide text-white shadow-md ring-2 ring-white" title="{{ __('marketplace.card.verified_title') }}">
-                    <svg class="h-3 w-3" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true"><path fill-rule="evenodd" d="M16.704 4.153a.75.75 0 01.143 1.052l-8 10.5a.75.75 0 01-1.127.075l-4.5-4.5a.75.75 0 011.06-1.06l3.894 3.893 7.48-9.817a.75.75 0 011.05-.143z" clip-rule="evenodd" /></svg>
-                    {{ __('marketplace.card.verified_badge') }}
-                </span>
-            </div>
-            <div class="min-w-0 flex-1">
-                <div class="flex items-start justify-between gap-2">
-                    <h2 class="text-lg font-bold leading-snug text-slate-900 transition-colors group-hover:text-brand-800">{{ $profile->user->name }}</h2>
-                </div>
-                <p class="mt-1.5 line-clamp-3 text-sm leading-relaxed text-slate-600">{{ $bio }}</p>
-                @if ($profile->languagesForDisplay() !== [])
-                    <p class="mt-2 flex flex-wrap gap-1.5">
-                        @foreach (array_slice($profile->languagesForDisplay(), 0, 4) as $lang)
-                            <span class="inline-flex rounded-md bg-slate-100 px-2 py-0.5 text-[11px] font-medium text-slate-700">{{ $lang }}</span>
-                        @endforeach
-                    </p>
-                @endif
-            </div>
+                    decoding="async"
+                    onerror="this.onerror=null; this.src={!! json_encode($fallbackSvg) !!}"
+                />
+            </a>
+            <span class="absolute left-3 top-3 inline-flex items-center gap-1 rounded-md bg-emerald-600 px-2 py-0.5 text-[10px] font-bold uppercase tracking-wide text-white shadow-sm">
+                <svg class="h-3 w-3" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true"><path fill-rule="evenodd" d="M16.704 4.153a.75.75 0 01.143 1.052l-8 10.5a.75.75 0 01-1.127.075l-4.5-4.5a.75.75 0 011.06-1.06l3.894 3.893 7.48-9.817a.75.75 0 011.05-.143z" clip-rule="evenodd" /></svg>
+                {{ __('marketplace.card.badge_verified') }}
+            </span>
         </div>
 
-        <div class="mt-auto border-t border-slate-100 bg-gradient-to-br from-slate-50/90 to-white px-5 py-4 sm:px-6">
-            <div class="flex flex-wrap items-center gap-2">
+        <div class="flex flex-1 flex-col p-4 sm:p-5">
+            <div class="flex items-start justify-between gap-2">
+                <a href="{{ $profileHref }}" class="min-w-0 focus:outline-none focus-visible:ring-2 focus-visible:ring-baytgo rounded">
+                    <h2 class="line-clamp-1 text-base font-bold text-slate-900 transition group-hover/card:text-baytgo sm:text-lg">{{ $profile->user->name }}</h2>
+                </a>
+                @if ($avgRating !== null)
+                    <span class="inline-flex shrink-0 items-center gap-0.5 rounded-full bg-amber-50 px-2 py-0.5 text-xs font-bold text-amber-950 ring-1 ring-amber-200/80">
+                        <svg class="h-3.5 w-3.5 text-amber-500" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true"><path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z"/></svg>
+                        {{ $avgRating }}
+                        @if ($reviewsCount > 0)
+                            <span class="font-semibold text-amber-800/80">{{ __('marketplace.card.reviews_count', ['count' => $reviewsCount]) }}</span>
+                        @endif
+                    </span>
+                @endif
+            </div>
+
+            @if ($experienceLine)
+                <p class="mt-1.5 text-xs text-slate-600">{{ $experienceLine }}</p>
+            @elseif ((int) ($profile->confirmed_bookings_count ?? 0) > 0)
+                <p class="mt-1.5 text-xs text-slate-600">{{ __('marketplace.card.bookings_confirmed', ['count' => (int) $profile->confirmed_bookings_count]) }}</p>
+            @endif
+
+            @if ($langsLine)
+                <p class="mt-1 text-xs text-slate-500"><span class="font-medium text-slate-700">{{ __('marketplace.card.languages_prefix') }}</span> {{ $langsLine }}</p>
+            @endif
+
+            <div class="mt-2.5 flex flex-wrap gap-1.5">
                 @if ($group)
-                    <span class="inline-flex items-center rounded-lg bg-brand-100 px-2 py-0.5 text-[11px] font-bold uppercase tracking-wide text-brand-900">{{ MuthowifServiceType::Group->label() }}</span>
+                    <span class="inline-flex rounded-md bg-sky-100 px-2 py-0.5 text-[10px] font-bold uppercase tracking-wide text-sky-900">{{ __('marketplace.card.badge_group') }}</span>
                 @endif
                 @if ($private)
-                    <span class="inline-flex items-center rounded-lg bg-amber-100 px-2 py-0.5 text-[11px] font-bold uppercase tracking-wide text-amber-950">{{ MuthowifServiceType::PrivateJamaah->label() }}</span>
-                @endif
-                @if (! $group && ! $private)
-                    <span class="text-xs text-slate-500">{{ __('marketplace.card.package_unset') }}</span>
+                    <span class="inline-flex rounded-md bg-orange-100 px-2 py-0.5 text-[10px] font-bold uppercase tracking-wide text-orange-950">{{ __('marketplace.card.badge_private') }}</span>
                 @endif
             </div>
-            <div class="mt-3 flex flex-wrap items-end justify-between gap-3">
-                <div>
-                    @if ($minPrice !== null)
-                        <p class="text-xs font-medium text-slate-500">{{ __('marketplace.card.from') }}</p>
-                        <p class="text-lg font-bold text-brand-700">Rp {{ IndonesianNumber::formatThousands((string) $minPrice) }}<span class="text-sm font-semibold text-slate-500">{{ __('common.per_day') }}</span></p>
-                    @else
-                        <p class="text-sm text-slate-500">{{ __('marketplace.card.price_contact') }}</p>
-                    @endif
-                    @if ($confirmed > 0)
-                        <p class="mt-1 text-xs text-slate-500">{{ __('marketplace.card.bookings_confirmed', ['count' => $confirmed]) }}</p>
-                    @else
-                        <p class="mt-1 text-xs text-slate-500">{{ __('marketplace.card.new_marketplace') }}</p>
-                    @endif
-                    @if ($reviewsCount > 0 && $avgRating !== null)
-                        <div class="mt-2 flex flex-wrap items-center gap-2">
-                            <span class="flex gap-0.5" aria-hidden="true">
-                                @for ($s = 1; $s <= 5; $s++)
-                                    <svg class="h-3.5 w-3.5 {{ $s <= (int) round($avgRating) ? 'text-amber-400 drop-shadow-sm' : 'text-slate-200' }}" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor">
-                                        <path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z" />
-                                    </svg>
-                                @endfor
-                            </span>
-                            <span class="text-xs font-semibold text-slate-700">{{ __('marketplace.card.reviews_line', ['rating' => $avgRating, 'count' => $reviewsCount]) }}</span>
-                        </div>
-                    @endif
+
+            @if ($specialization)
+                <p class="mt-2 line-clamp-2 text-xs leading-relaxed text-slate-600">
+                    <span class="font-semibold text-slate-800">{{ __('marketplace.card.specialization_prefix') }}</span> {{ $specialization }}
+                </p>
+            @endif
+
+            <div class="mt-auto pt-4">
+                @if ($minPrice !== null)
+                    <p class="text-sm font-bold text-baytgo">
+                        {{ __('marketplace.card.from') }} Rp {{ IndonesianNumber::formatThousands((string) $minPrice) }}
+                        <span class="text-xs font-semibold text-slate-500">{{ __('common.per_day') }}</span>
+                    </p>
+                @else
+                    <p class="text-xs text-slate-500">{{ __('marketplace.card.price_contact') }}</p>
+                @endif
+
+                @if (filled($rangeLabel))
+                    <p class="mt-1.5 flex items-center gap-1.5 text-[11px] text-slate-500">
+                        <svg class="h-3.5 w-3.5 shrink-0 text-baytgo" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true"><path fill-rule="evenodd" d="M5.75 2a.75.75 0 01.75.75V4h7V2.75a.75.75 0 011.5 0V4h.25A2.75 2.75 0 0118 6.75v8.5A2.75 2.75 0 0115.25 18H4.75A2.75 2.75 0 012 15.25v-8.5A2.75 2.75 0 014.75 4H5V2.75A.75.75 0 015.75 2zm-1 5.5c-.69 0-1.25.56-1.25 1.25v6.5c0 .69.56 1.25 1.25 1.25h10.5c.69 0 1.25-.56 1.25-1.25v-6.5c0-.69-.56-1.25-1.25-1.25H4.75z" clip-rule="evenodd" /></svg>
+                        {{ $rangeLabel }}
+                    </p>
+                @endif
+
+                <div class="mt-4 grid grid-cols-2 gap-2">
+                    <a href="{{ $profileHref }}" class="inline-flex items-center justify-center rounded-xl border border-baytgo/30 bg-white px-3 py-2.5 text-center text-xs font-semibold text-baytgo transition hover:border-baytgo hover:bg-welcomeCanvas/60 sm:text-sm">
+                        {{ __('marketplace.card.view_profile') }}
+                    </a>
+                    <a href="{{ $bookHref }}" class="inline-flex items-center justify-center rounded-xl bg-baytgo px-3 py-2.5 text-center text-xs font-semibold text-white shadow-sm shadow-baytgo/20 transition hover:bg-baytgo-800 sm:text-sm">
+                        {{ __('marketplace.card.quick_book') }}
+                    </a>
                 </div>
-                <span class="inline-flex shrink-0 items-center gap-1 rounded-xl bg-gradient-to-r from-brand-600 to-brand-700 px-3 py-2 text-sm font-semibold text-white shadow-md shadow-brand-600/20 transition group-hover:from-brand-500 group-hover:to-brand-600">
-                    {{ __('marketplace.card.view_profile') }}
-                    <svg class="h-4 w-4 transition group-hover:translate-x-0.5" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true"><path fill-rule="evenodd" d="M3 10a.75.75 0 01.75-.75h10.638L10.23 5.29a.75.75 0 111.04-1.08l5.5 5.25a.75.75 0 010 1.08l-5.5 5.25a.75.75 0 11-1.04-1.08l4.158-3.96H3.75A.75.75 0 013 10z" clip-rule="evenodd" /></svg>
-                </span>
             </div>
         </div>
-    </a>
+    </article>
 </{{ $as }}>

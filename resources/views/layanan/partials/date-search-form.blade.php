@@ -6,12 +6,13 @@
     'welcomeAccent' => false,
     'welcomeInlineHeader' => false,
     'welcomeFlush' => false,
+    'marketplaceMode' => false,
 ])
 
 @php
-    if ($welcomeAccent) {
-        $dateClass = 'block w-full min-w-[11rem] h-11 rounded-2xl border border-slate-200/70 bg-white px-3 py-2.5 text-sm text-slate-900 transition focus:border-baytgo focus:outline-none focus:ring-2 focus:ring-baytgo/25';
-        $textClass = 'block w-full min-w-0 h-11 rounded-2xl border border-slate-200/70 bg-white px-3 py-2.5 text-sm text-slate-900 transition placeholder:text-slate-400 focus:border-baytgo focus:outline-none focus:ring-2 focus:ring-baytgo/25';
+    if ($welcomeAccent || $marketplaceMode) {
+        $dateClass = 'block w-full h-11 rounded-xl border border-slate-200 bg-white px-3 text-sm text-slate-900 shadow-sm transition focus:border-baytgo focus:outline-none focus:ring-2 focus:ring-baytgo/25';
+        $textClass = 'block w-full h-11 rounded-xl border border-slate-200 bg-white px-3 text-sm text-slate-900 shadow-sm transition placeholder:text-slate-400 focus:border-baytgo focus:outline-none focus:ring-2 focus:ring-baytgo/25';
     } else {
         $dateClass = 'block w-full min-w-[11rem] h-11 rounded-xl border border-slate-200/90 bg-white px-3 text-sm text-slate-900 shadow-sm transition focus:border-brand-500 focus:outline-none focus:ring-2 focus:ring-brand-500/30';
         $textClass = 'block w-full min-w-0 h-11 rounded-xl border border-slate-200/90 bg-white px-3 text-sm text-slate-900 shadow-sm transition placeholder:text-slate-400 focus:border-brand-500 focus:outline-none focus:ring-2 focus:ring-brand-500/30';
@@ -21,11 +22,16 @@
         : ($showHeaderBanner
             ? 'w-full min-w-0 overflow-hidden rounded-3xl border border-slate-200/90 bg-white shadow-market ring-1 ring-brand-100/50'
             : 'w-full min-w-0 overflow-hidden rounded-2xl border border-slate-200/80 bg-white shadow-xl shadow-slate-300/40 ring-1 ring-slate-100/90');
-    $submitClass = $welcomeAccent
-        ? 'inline-flex h-11 w-full min-h-[2.75rem] items-center justify-center gap-2 whitespace-nowrap rounded-2xl bg-baytgo px-6 text-sm font-semibold text-white shadow-md shadow-baytgo/20 transition hover:bg-baytgo-800 focus:outline-none focus-visible:ring-2 focus-visible:ring-gold focus-visible:ring-offset-2'
+    $submitClass = ($welcomeAccent || $marketplaceMode)
+        ? 'inline-flex h-11 w-full min-h-[2.75rem] items-center justify-center gap-2 whitespace-nowrap rounded-xl bg-baytgo px-5 text-sm font-semibold text-white shadow-md shadow-baytgo/20 transition hover:bg-baytgo-800 focus:outline-none focus-visible:ring-2 focus-visible:ring-baytgo/40 focus-visible:ring-offset-2'
         : 'inline-flex h-11 w-full min-h-[2.75rem] items-center justify-center gap-2 whitespace-nowrap rounded-xl bg-gradient-to-r from-brand-600 to-brand-700 px-5 text-sm font-semibold text-white shadow-lg shadow-brand-600/25 transition hover:from-brand-500 hover:to-brand-600 focus:outline-none focus-visible:ring-2 focus-visible:ring-brand-500 focus-visible:ring-offset-2';
     $dateClassInner = $dateClass;
-    $innerPad = $showHeaderBanner ? 'p-5 sm:p-6 md:p-7' : ($welcomeInlineHeader ? 'p-5 pb-6 sm:p-6 sm:pb-7 md:px-7 md:pb-8 md:pt-6' : 'p-5 sm:p-6');
+    $innerPad = $marketplaceMode
+        ? 'p-5 sm:p-6 lg:p-7'
+        : ($showHeaderBanner ? 'p-5 sm:p-6 md:p-7' : ($welcomeInlineHeader ? 'p-5 pb-6 sm:p-6 sm:pb-7 md:px-7 md:pb-8 md:pt-6' : 'p-5 sm:p-6'));
+    $gridClass = $marketplaceMode
+        ? 'grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-12 lg:items-end lg:gap-3'
+        : 'flex flex-col gap-4 lg:flex-row lg:flex-wrap lg:items-end lg:gap-x-3 lg:gap-y-4';
 @endphp
 
 <form method="GET" action="{{ route('layanan.index') }}" class="{{ $formOuterClass }}">
@@ -60,8 +66,20 @@
             </div>
         @endif
 
-        <div class="flex flex-col gap-4 lg:flex-row lg:flex-wrap lg:items-end lg:gap-x-3 lg:gap-y-4">
-            <div class="w-full sm:max-w-md lg:w-[13.5rem] lg:max-w-none lg:flex-shrink-0">
+        @if ($marketplaceMode)
+            <div class="mb-5 flex items-start gap-3 border-b border-slate-100 pb-5 sm:mb-6">
+                <span class="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-emerald-50 text-baytgo ring-1 ring-emerald-100">
+                    <svg class="h-5 w-5" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path fill-rule="evenodd" d="M6.75 2.25A.75.75 0 017.5 3v1.5h9V3A.75.75 0 0118 3v1.5h.75a3 3 0 013 3v11.25a3 3 0 01-3 3H5.25a3 3 0 01-3-3V7.5a3 3 0 013-3H6V3a.75.75 0 01.75-.75zm13.5 9a1.5 1.5 0 00-1.5-1.5H5.25a1.5 1.5 0 00-1.5 1.5v7.5a1.5 1.5 0 001.5 1.5h13.5a1.5 1.5 0 001.5-1.5v-7.5z" clip-rule="evenodd" /></svg>
+                </span>
+                <div class="min-w-0">
+                    <h2 class="text-lg font-bold text-baytgo sm:text-xl">{{ __('welcome.search_section_title') }}</h2>
+                    <p class="mt-1 text-sm text-slate-600">{{ __('layanan.search_form_sub') }}</p>
+                </div>
+            </div>
+        @endif
+
+        <div class="{{ $gridClass }}">
+            <div class="{{ $marketplaceMode ? 'sm:col-span-1 lg:col-span-3' : 'w-full sm:max-w-md lg:w-[13.5rem] lg:max-w-none lg:flex-shrink-0' }}">
                 <label for="start_date" class="block text-sm font-medium text-slate-700">{{ __('layanan.start_date') }}</label>
                 @if ($welcomeInlineHeader)
                     <div class="relative mt-2">
@@ -75,7 +93,7 @@
                            class="{{ $dateClass }} mt-2" />
                 @endif
             </div>
-            <div class="w-full sm:max-w-md lg:w-[13.5rem] lg:max-w-none lg:flex-shrink-0">
+            <div class="{{ $marketplaceMode ? 'sm:col-span-1 lg:col-span-3' : 'w-full sm:max-w-md lg:w-[13.5rem] lg:max-w-none lg:flex-shrink-0' }}">
                 <label for="end_date" class="block text-sm font-medium text-slate-700">{{ __('layanan.end_date') }}</label>
                 @if ($welcomeInlineHeader)
                     <div class="relative mt-2">
@@ -91,14 +109,14 @@
                            title="{{ __('layanan.end_date_title') }}" />
                 @endif
             </div>
-            <div class="w-full lg:min-w-[12rem] lg:flex-1">
+            <div class="{{ $marketplaceMode ? 'sm:col-span-2 lg:col-span-4' : 'w-full lg:min-w-[12rem] lg:flex-1' }}">
                 <label for="q" class="block text-sm font-medium text-slate-700">{{ __('layanan.name_label') }}</label>
                 <input type="search" name="q" id="q" value="{{ $searchQuery }}"
                        placeholder="{{ __('layanan.name_placeholder') }}"
                        autocomplete="off"
                        class="{{ $textClass }} mt-2 placeholder:text-slate-400" />
             </div>
-            <div class="w-full lg:w-auto lg:flex-shrink-0 lg:min-w-[11.5rem] lg:pt-[1.75rem]">
+            <div class="{{ $marketplaceMode ? 'sm:col-span-2 lg:col-span-2 lg:pt-[1.75rem]' : 'w-full lg:w-auto lg:flex-shrink-0 lg:min-w-[11.5rem] lg:pt-[1.75rem]' }}">
                 <x-submit-button class="{{ $submitClass }}">
                     <svg class="h-4 w-4 shrink-0 opacity-95" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true"><path fill-rule="evenodd" d="M9 3.5a5.5 5.5 0 100 11 5.5 5.5 0 000-11zM2 9a7 7 0 1112.452 4.391l3.328 3.329a.75.75 0 11-1.06 1.06l-3.329-3.328A7 7 0 012 9z" clip-rule="evenodd" /></svg>
                     {{ __('layanan.submit_search') }}
@@ -106,9 +124,9 @@
             </div>
         </div>
 
-        @if ($welcomeInlineHeader)
-            <p class="mt-5 rounded-xl border px-4 py-2.5 text-xs leading-relaxed {{ $welcomeAccent ? 'border-emerald-100/90 bg-emerald-50/80 text-emerald-950' : 'border-stone-100/90 bg-stone-50/80 text-slate-600' }}">
-                <span class="font-semibold {{ $welcomeAccent ? 'text-emerald-900' : 'text-slate-700' }}">{{ __('welcome.search_tip_label') }}</span> {{ __('welcome.search_tip_body') }}
+        @if ($welcomeInlineHeader || $marketplaceMode)
+            <p class="mt-5 rounded-xl border px-4 py-2.5 text-xs leading-relaxed {{ ($welcomeAccent || $marketplaceMode) ? 'border-emerald-100/90 bg-emerald-50/80 text-emerald-950' : 'border-stone-100/90 bg-stone-50/80 text-slate-600' }}">
+                <span class="font-semibold {{ ($welcomeAccent || $marketplaceMode) ? 'text-emerald-900' : 'text-slate-700' }}">{{ __('welcome.search_tip_label') }}</span> {{ __('welcome.search_tip_body') }}
             </p>
         @else
             <p class="mt-5 rounded-xl bg-slate-50/90 px-3 py-2.5 text-xs leading-relaxed text-slate-600 ring-1 ring-slate-100">
