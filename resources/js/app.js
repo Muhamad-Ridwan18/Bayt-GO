@@ -764,9 +764,6 @@ document.addEventListener('alpine:init', () => {
                 window.Echo.private(this.channelName)
                     .listen('.booking.updated', (e) => {
                         this.onBookingSocket(e);
-                    })
-                    .listen('.incident.replacement_pool.updated', (e) => {
-                        this.onIncidentPoolSocket(e);
                     });
             } else if (this.fragmentUrl) {
                 const interval = this.liveMode === 'customer_payment' ? 12000 : 25000;
@@ -812,15 +809,6 @@ document.addEventListener('alpine:init', () => {
                 if (this.showUrl && (e.payment_status === 'paid' || e.status === 'cancelled')) {
                     window.location.replace(this.showUrl);
                 }
-                return;
-            }
-            this.refreshFragment();
-        },
-
-        onIncidentPoolSocket(e) {
-            if (!e?.booking_id) return;
-            const isIndex = this.liveMode === 'customer_index' || this.liveMode === 'muthowif_index';
-            if (!isIndex && this.bookingId && String(e.booking_id) !== String(this.bookingId)) {
                 return;
             }
             this.refreshFragment();
@@ -884,9 +872,6 @@ document.addEventListener('alpine:init', () => {
             window.Echo.private(this.channelName).listen('.service_monitor.updated', () => {
                 this.refreshFragment();
             });
-            window.Echo.private('admin.incidents').listen('.incident.replacement_pool.updated', () => {
-                this.refreshFragment();
-            });
         },
 
         fragmentUrlWithFilter() {
@@ -926,47 +911,6 @@ document.addEventListener('alpine:init', () => {
             } finally {
                 this.refreshing = false;
             }
-        },
-
-        destroy() {
-            if (window.Echo) {
-                window.Echo.leave(this.channelName);
-                window.Echo.leave('admin.incidents');
-            }
-        },
-    }));
-
-    Alpine.data('adminIncidentLive', (config) => ({
-        incidentId: config.incidentId != null ? String(config.incidentId) : null,
-        channelName: 'admin.incidents',
-
-        init() {
-            if (!window.Echo) return;
-            window.Echo.private(this.channelName).listen('.incident.replacement_pool.updated', (e) => {
-                if (this.incidentId && e?.incident_id && String(e.incident_id) !== String(this.incidentId)) {
-                    return;
-                }
-                window.location.reload();
-            });
-        },
-
-        destroy() {
-            if (window.Echo) {
-                window.Echo.leave(this.channelName);
-            }
-        },
-    }));
-
-    Alpine.data('muthowifRecruitmentLive', () => ({
-        channelName: 'muthowif.recruitment',
-
-        init() {
-            if (!window.Echo) return;
-            window.Echo.private(this.channelName).listen('.incident.replacement_pool.updated', (e) => {
-                if (e?.recruitment_open) {
-                    window.location.reload();
-                }
-            });
         },
 
         destroy() {

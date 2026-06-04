@@ -3,11 +3,10 @@
     $monitor = app(AdminServiceMonitorService::class);
 @endphp
 <div class="space-y-5">
-    <div class="grid grid-cols-1 gap-3 sm:grid-cols-3">
+    <div class="grid grid-cols-1 gap-3 sm:grid-cols-2">
         @foreach ([
             AdminServiceMonitorService::FILTER_ACTIVE => __('admin.service_monitor.tab_active'),
             AdminServiceMonitorService::FILTER_IN_SERVICE => __('admin.service_monitor.tab_in_service'),
-            AdminServiceMonitorService::FILTER_INCIDENT => __('admin.service_monitor.tab_incident'),
         ] as $tab => $label)
             <a
                 href="{{ route('admin.service_monitor.index', ['filter' => $tab]) }}"
@@ -29,18 +28,16 @@
                         <th class="px-4 py-3">{{ __('admin.service_monitor.col_parties') }}</th>
                         <th class="px-4 py-3">{{ __('admin.service_monitor.col_period') }}</th>
                         <th class="px-4 py-3">{{ __('admin.service_monitor.col_phase') }}</th>
-                        <th class="px-4 py-3">{{ __('admin.service_monitor.col_signals') }}</th>
                         <th class="px-4 py-3">{{ __('admin.service_monitor.col_escrow') }}</th>
-                        <th class="px-4 py-3"></th>
                     </tr>
                 </thead>
                 <tbody class="divide-y divide-slate-100">
                     @forelse ($bookings as $booking)
                         @php
-                            $incident = $monitor->openIncidentFor($booking);
                             $escrow = $monitor->escrowLabel($booking);
+                            $phaseKey = $monitor->servicePhaseKey($booking);
                         @endphp
-                        <tr class="hover:bg-slate-50/80 {{ $incident ? 'bg-rose-50/40' : '' }}">
+                        <tr class="hover:bg-slate-50/80">
                             <td class="px-4 py-3 whitespace-nowrap">
                                 <p class="font-mono text-xs font-semibold text-slate-900">{{ $booking->booking_code }}</p>
                                 <p class="mt-0.5 text-[10px] text-slate-500">{{ $monitor->serviceDayLabel($booking) }}</p>
@@ -56,50 +53,20 @@
                             </td>
                             <td class="px-4 py-3">
                                 <span class="inline-flex rounded-full bg-slate-100 px-2.5 py-0.5 text-xs font-semibold text-slate-800">
-                                    {{ $booking->service_phase?->label() ?? '—' }}
+                                    {{ $phaseKey ? __('admin.service_monitor.phase_'.$phaseKey) : '—' }}
                                 </span>
-                            </td>
-                            <td class="px-4 py-3">
-                                <div class="flex flex-wrap gap-1">
-                                    @if ($incident)
-                                        <span class="inline-flex rounded-full bg-rose-100 px-2 py-0.5 text-[10px] font-bold text-rose-900">
-                                            {{ $incident->case_type->label() }}
-                                        </span>
-                                    @endif
-                                    @if ($booking->muthowif_checked_in_at)
-                                        <span class="inline-flex rounded-full bg-sky-100 px-2 py-0.5 text-[10px] font-semibold text-sky-900">
-                                            {{ __('admin.service_monitor.badge_checkin') }}
-                                        </span>
-                                    @endif
-                                    @if ($incident?->replacement_recruitment_open)
-                                        <span class="inline-flex rounded-full bg-violet-100 px-2 py-0.5 text-[10px] font-semibold text-violet-900">
-                                            {{ __('admin.service_monitor.badge_recruitment') }}
-                                        </span>
-                                    @endif
-                                </div>
                             </td>
                             <td class="px-4 py-3">
                                 @if ($escrow === 'released')
                                     <span class="text-xs font-semibold text-emerald-700">{{ __('admin.service_monitor.escrow_released') }}</span>
-                                @elseif ($escrow === 'frozen')
-                                    <span class="text-xs font-semibold text-rose-700">{{ __('admin.service_monitor.escrow_frozen') }}</span>
                                 @else
                                     <span class="text-xs font-semibold text-slate-600">{{ __('admin.service_monitor.escrow_held') }}</span>
-                                @endif
-                            </td>
-                            <td class="px-4 py-3 text-right whitespace-nowrap">
-                                @if ($incident)
-                                    <a href="{{ route('admin.incidents.show', $incident) }}" class="font-semibold text-brand-700 hover:text-brand-800">
-                                        {{ __('admin.service_monitor.link_incident') }}
-                                    </a>
-                                @else
-                                    <span class="text-xs text-slate-400">—</span>
                                 @endif
                             </td>
                         </tr>
                     @empty
                         <tr>
-                            <td colspan="7" class="px-4 py-12 text-center text-slate-500">
+                            <td colspan="5" class="px-4 py-12 text-center text-slate-500">
                                 {{ __('admin.service_monitor.empty') }}
                             </td>
                         </tr>

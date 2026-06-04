@@ -149,7 +149,7 @@ return [
         'refund_breakdown_html' => 'From base price Rp :base: admin deduction Rp :platform and chaperone deduction Rp :muthowif (booking cancelled). You paid Rp :paid (includes the platform fee charged at payment).',
         'refund_confirm' => 'The booking will be cancelled and admin will transfer the refund (net after deductions). Continue?',
         'note_optional' => 'Note (optional)',
-        'customer_note_placeholder' => 'Briefly describe the emergency (optional)',
+        'customer_note_placeholder' => 'Additional note (optional)',
         'refund_bank_name' => 'Bank name',
         'refund_bank_name_placeholder' => 'e.g. BCA, Mandiri',
         'refund_account_holder' => 'Account holder name',

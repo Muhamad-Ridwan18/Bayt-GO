@@ -3,7 +3,6 @@
 use App\Enums\MuthowifVerificationStatus;
 use App\Http\Controllers\Admin\AdminSettingsHubController;
 use App\Http\Controllers\Admin\ArticlesAdminController;
-use App\Http\Controllers\Admin\BookingIncidentController as AdminBookingIncidentController;
 use App\Http\Controllers\Admin\ServiceMonitorController;
 use App\Http\Controllers\Admin\BookingRefundController;
 use App\Http\Controllers\Admin\FinanceController;
@@ -15,12 +14,10 @@ use App\Http\Controllers\Admin\UserManagementController;
 use App\Http\Controllers\Admin\WithdrawalsController;
 use App\Http\Controllers\BookingChatController;
 use App\Http\Controllers\Customer\BookingController as CustomerBookingController;
-use App\Http\Controllers\Customer\BookingIncidentController as CustomerBookingIncidentController;
 use App\Http\Controllers\GlobalChatController;
 use App\Http\Controllers\LocaleController;
 use App\Http\Controllers\MootaWebhookController;
 use App\Http\Controllers\Muthowif\BookingController as MuthowifBookingController;
-use App\Http\Controllers\Muthowif\BookingIncidentController as MuthowifBookingIncidentController;
 use App\Http\Controllers\Muthowif\MuthowifDashboardCalendarController;
 use App\Http\Controllers\Muthowif\MuthowifPortfolioController;
 use App\Http\Controllers\Muthowif\MuthowifScheduleController;
@@ -225,8 +222,6 @@ Route::middleware('auth')->group(function () {
             ->name('documents.show');
         Route::get('{booking}', [CustomerBookingController::class, 'show'])->name('show');
         Route::post('{booking}/cancel', [CustomerBookingController::class, 'cancel'])->name('cancel');
-        Route::post('{booking}/emergency', [CustomerBookingIncidentController::class, 'emergency'])->name('emergency');
-        Route::post('{booking}/replacements/{replacement}/select', [CustomerBookingIncidentController::class, 'selectReplacement'])->name('replacements.select');
     });
 
     Route::middleware([EnsureUserRole::class.':muthowif', 'verified.muthowif'])
@@ -262,16 +257,6 @@ Route::middleware('auth')->group(function () {
             Route::get('bookings/{booking}', [MuthowifBookingController::class, 'show'])->name('bookings.show');
             Route::post('bookings/{booking}/confirm', [MuthowifBookingController::class, 'confirm'])->name('bookings.confirm');
             Route::post('bookings/{booking}/cancel', [MuthowifBookingController::class, 'cancel'])->name('bookings.cancel');
-            Route::post('bookings/{booking}/incident-report', [MuthowifBookingIncidentController::class, 'report'])->name('bookings.incident.report');
-            Route::post('bookings/{booking}/replacements/{replacement}/confirm', [MuthowifBookingIncidentController::class, 'confirmReplacement'])->name('bookings.replacements.confirm');
-            Route::post('bookings/{booking}/replacements/{replacement}/decline', [MuthowifBookingIncidentController::class, 'declineReplacement'])->name('bookings.replacements.decline');
-            Route::post('replacements/{replacement}/confirm', [MuthowifBookingIncidentController::class, 'confirmReplacementById'])->name('replacements.confirm');
-            Route::post('replacements/{replacement}/decline', [MuthowifBookingIncidentController::class, 'declineReplacementById'])->name('replacements.decline');
-            Route::get('replacements/pending-count', [MuthowifBookingIncidentController::class, 'pendingReplacementConfirmCount'])->name('replacements.pending-count');
-            Route::get('replacements/pending', [MuthowifBookingIncidentController::class, 'pendingReplacements'])->name('replacements.pending');
-            Route::get('replacements/opportunities', [MuthowifBookingIncidentController::class, 'recruitmentOpportunities'])->name('replacements.opportunities');
-            Route::post('replacements/incident/{incident}/volunteer', [MuthowifBookingIncidentController::class, 'volunteer'])->name('replacements.volunteer');
-            Route::post('replacements/incident/{incident}/decline', [MuthowifBookingIncidentController::class, 'declineOpportunity'])->name('replacements.decline');
             Route::post('bookings/{booking}/reschedule-requests/{rescheduleRequest}/approve', [MuthowifBookingController::class, 'approveReschedule'])->name('bookings.reschedule_requests.approve');
             Route::post('bookings/{booking}/reschedule-requests/{rescheduleRequest}/reject', [MuthowifBookingController::class, 'rejectReschedule'])->name('bookings.reschedule_requests.reject');
 
@@ -297,19 +282,6 @@ Route::middleware('auth')->group(function () {
         Route::post('perusahaan-menunggu/{user}/approve', [\App\Http\Controllers\Admin\CompanyApprovalController::class, 'approve'])->name('company_approval.approve');
         Route::get('pantau-layanan', [ServiceMonitorController::class, 'index'])->name('service_monitor.index');
         Route::get('pantau-layanan/fragment', [ServiceMonitorController::class, 'fragment'])->name('service_monitor.fragment');
-        Route::get('insiden', [AdminBookingIncidentController::class, 'index'])->name('incidents.index');
-        Route::get('insiden/{incident}', [AdminBookingIncidentController::class, 'show'])->name('incidents.show');
-        Route::post('insiden/{incident}/tugaskan', [AdminBookingIncidentController::class, 'assignSelf'])->name('incidents.assign');
-        Route::post('insiden/{incident}/investigasi', [AdminBookingIncidentController::class, 'investigate'])->name('incidents.investigate');
-        Route::post('insiden/{incident}/buka-rekrutmen', [AdminBookingIncidentController::class, 'openRecruitment'])->name('incidents.open_recruitment');
-        Route::post('insiden/{incident}/undang-pengganti', [AdminBookingIncidentController::class, 'inviteReplacement'])->name('incidents.invite_replacement');
-        Route::post('insiden/{incident}/pengganti/{replacement}/setujui', [AdminBookingIncidentController::class, 'approveReplacement'])->name('incidents.approve_replacement');
-        Route::post('insiden/{incident}/pengganti/{replacement}/tolak', [AdminBookingIncidentController::class, 'rejectReplacement'])->name('incidents.reject_replacement');
-        Route::post('insiden/{incident}/buka-pilihan-jamaah', [AdminBookingIncidentController::class, 'openCustomerChoice'])->name('incidents.open_customer_choice');
-        Route::post('insiden/{incident}/settlement', [AdminBookingIncidentController::class, 'proposeSettlement'])->name('incidents.propose_settlement');
-        Route::post('insiden/{incident}/settlement/{settlement}/release', [AdminBookingIncidentController::class, 'releaseSettlement'])->name('incidents.release_settlement');
-        Route::post('insiden/{incident}/selesai', [AdminBookingIncidentController::class, 'resolve'])->name('incidents.resolve');
-        Route::post('insiden/{incident}/false-alarm', [AdminBookingIncidentController::class, 'falseAlarm'])->name('incidents.false_alarm');
         Route::get('refund-menunggu', [BookingRefundController::class, 'index'])->name('refunds.index');
         Route::post('refund-menunggu/{refund}/selesai', [BookingRefundController::class, 'complete'])->name('refunds.complete');
         Route::get('keuangan', [FinanceController::class, 'index'])->name('finance.index');

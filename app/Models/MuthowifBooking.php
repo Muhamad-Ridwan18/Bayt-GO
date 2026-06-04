@@ -3,8 +3,6 @@
 namespace App\Models;
 
 use App\Enums\BookingChangeRequestStatus;
-use App\Enums\BookingIncidentOverlayStatus;
-use App\Enums\BookingServicePhase;
 use App\Enums\BookingStatus;
 use App\Enums\MuthowifBookingMuthowifRejectionKind;
 use App\Enums\MuthowifServiceType;
@@ -48,11 +46,6 @@ class MuthowifBooking extends Model
         'add_ons_snapshot',
         'muthowif_rejection_kind',
         'muthowif_rejection_note',
-        'incident_status',
-        'service_phase',
-        'h1_confirmed_at',
-        'emergency_reported_at',
-        'muthowif_checked_in_at',
     ];
 
     protected function casts(): array
@@ -73,60 +66,7 @@ class MuthowifBooking extends Model
             'same_hotel_price_snapshot' => 'decimal:2',
             'transport_price_snapshot' => 'decimal:2',
             'add_ons_snapshot' => 'array',
-            'incident_status' => BookingIncidentOverlayStatus::class,
-            'service_phase' => BookingServicePhase::class,
-            'h1_confirmed_at' => 'datetime',
-            'emergency_reported_at' => 'datetime',
-            'muthowif_checked_in_at' => 'datetime',
         ];
-    }
-
-    /**
-     * @return HasMany<BookingIncident, $this>
-     */
-    public function incidents(): HasMany
-    {
-        return $this->hasMany(BookingIncident::class)->orderByDesc('opened_at');
-    }
-
-    public function openIncident(): ?BookingIncident
-    {
-        return $this->incidents()
-            ->whereNotIn('status', [
-                \App\Enums\BookingIncidentStatus::Resolved->value,
-                \App\Enums\BookingIncidentStatus::Cancelled->value,
-            ])
-            ->first();
-    }
-
-    public function hasOpenIncident(): bool
-    {
-        return $this->openIncident() !== null;
-    }
-
-    public function syncServicePhase(): void
-    {
-        if ($this->status !== BookingStatus::Confirmed || ! $this->isPaid()) {
-            return;
-        }
-
-        $today = now()->startOfDay();
-        $start = $this->starts_on?->copy()->startOfDay();
-        $end = $this->ends_on?->copy()->startOfDay();
-
-        if ($start === null || $end === null) {
-            return;
-        }
-
-        $phase = match (true) {
-            $today->lt($start) => BookingServicePhase::PreService,
-            $today->gt($end) => BookingServicePhase::PostService,
-            default => BookingServicePhase::InService,
-        };
-
-        if ($this->service_phase !== $phase) {
-            $this->forceFill(['service_phase' => $phase])->save();
-        }
     }
 
     public function muthowifProfile(): BelongsTo

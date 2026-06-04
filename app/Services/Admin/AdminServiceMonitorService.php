@@ -2,14 +2,9 @@
 
 namespace App\Services\Admin;
 
-use App\Enums\BookingIncidentOverlayStatus;
-use App\Enums\BookingIncidentStatus;
-use App\Enums\BookingServicePhase;
 use App\Enums\BookingStatus;
 use App\Enums\PaymentStatus;
-use App\Models\BookingIncident;
 use App\Models\MuthowifBooking;
-use App\Services\Incident\EscrowFreezeGuard;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Http\Request;
 use Illuminate\Support\Collection;
@@ -20,11 +15,9 @@ final class AdminServiceMonitorService
 
     public const FILTER_IN_SERVICE = 'in_service';
 
-    public const FILTER_INCIDENT = 'incident';
-
     /**
      * @return array{
-     *   counts: array{active: int, in_service: int, incident: int},
+     *   counts: array{active: int, in_service: int},
      *   bookings: Collection<int, MuthowifBooking>,
      *   filter: string
      * }
@@ -37,10 +30,6 @@ final class AdminServiceMonitorService
             ->limit(80)
             ->get();
 
-        foreach ($bookings as $booking) {
-            $booking->syncServicePhase();
-        }
-
         return [
             'counts' => $this->counts(),
             'bookings' => $bookings,
@@ -49,14 +38,13 @@ final class AdminServiceMonitorService
     }
 
     /**
-     * @return array{active: int, in_service: int, incident: int}
+     * @return array{active: int, in_service: int}
      */
     public function counts(): array
     {
         return [
             'active' => $this->filteredQuery(self::FILTER_ACTIVE)->count(),
             'in_service' => $this->filteredQuery(self::FILTER_IN_SERVICE)->count(),
-            'incident' => $this->filteredQuery(self::FILTER_INCIDENT)->count(),
         ];
     }
 
@@ -65,7 +53,6 @@ final class AdminServiceMonitorService
         return in_array($filter, [
             self::FILTER_ACTIVE,
             self::FILTER_IN_SERVICE,
-            self::FILTER_INCIDENT,
         ], true) ? $filter : self::FILTER_ACTIVE;
     }
 
@@ -76,15 +63,15 @@ final class AdminServiceMonitorService
     {
         $query = $this->baseQuery();
 
-        return match ($filter) {
-            self::FILTER_IN_SERVICE => $query
-                ->where('service_phase', BookingServicePhase::InService->value),
-            self::FILTER_INCIDENT => $query->where(function (Builder $q): void {
-                $q->where('incident_status', BookingIncidentOverlayStatus::Open->value)
-                    ->orWhereHas('incidents', fn (Builder $iq) => $iq->whereIn('status', $this->openIncidentStatuses()));
-            }),
-            default => $query->where('status', '!=', BookingStatus::Completed->value),
-        };
+        if ($filter === self::FILTER_IN_SERVICE) {
+            $today = now()->toDateString();
+
+            return $query
+                ->whereDate('starts_on', '<=', $today)
+                ->whereDate('ends_on', '>=', $today);
+        }
+
+        return $query->where('status', '!=', BookingStatus::Completed->value);
     }
 
     /**
@@ -102,16 +89,9 @@ final class AdminServiceMonitorService
                     'booking_payments.settled_at',
                     'booking_payments.wallet_credited_at',
                 ),
-                'incidents' => fn ($q) => $q
-                    ->whereIn('status', $this->openIncidentStatuses())
-                    ->orderByDesc('opened_at')
-                    ->limit(1),
             ])
             ->where('status', BookingStatus::Confirmed)
             ->where('payment_status', PaymentStatus::Paid)
-            ->orderByRaw(
-                "CASE WHEN incident_status = 'open' THEN 0 WHEN service_phase = 'in_service' THEN 1 WHEN service_phase = 'pre_service' THEN 2 ELSE 3 END"
-            )
             ->orderBy('starts_on');
     }
 
@@ -122,16 +102,27 @@ final class AdminServiceMonitorService
             return 'released';
         }
 
-        return EscrowFreezeGuard::isFrozen($booking) ? 'frozen' : 'held';
+        return 'held';
     }
 
-    public function openIncidentFor(MuthowifBooking $booking): ?BookingIncident
+    public function servicePhaseKey(MuthowifBooking $booking): ?string
     {
-        if ($booking->relationLoaded('incidents') && $booking->incidents->isNotEmpty()) {
-            return $booking->incidents->first();
+        $start = $booking->starts_on?->copy()->startOfDay();
+        $end = $booking->ends_on?->copy()->startOfDay();
+        if ($start === null || $end === null) {
+            return null;
         }
 
-        return $booking->openIncident();
+        $today = now()->startOfDay();
+        if ($today->lt($start)) {
+            return 'pre_service';
+        }
+
+        if ($today->gt($end)) {
+            return 'post_service';
+        }
+
+        return 'in_service';
     }
 
     public function serviceDayLabel(MuthowifBooking $booking): ?string
@@ -157,19 +148,5 @@ final class AdminServiceMonitorService
         $total = (int) $start->diffInDays($end) + 1;
 
         return __('admin.service_monitor.service_day', ['current' => $current, 'total' => $total]);
-    }
-
-    /**
-     * @return list<string>
-     */
-    private function openIncidentStatuses(): array
-    {
-        return array_map(
-            fn (BookingIncidentStatus $s) => $s->value,
-            array_filter(
-                BookingIncidentStatus::cases(),
-                fn (BookingIncidentStatus $s) => $s->isOpen()
-            )
-        );
     }
 }

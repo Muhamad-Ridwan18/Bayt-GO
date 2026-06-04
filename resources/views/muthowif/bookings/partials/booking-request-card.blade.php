@@ -1,5 +1,4 @@
 @php
-    use App\Enums\BookingIncidentOverlayStatus;
     use App\Enums\BookingStatus;
     use App\Enums\MuthowifServiceType;
     use App\Enums\PaymentStatus;
@@ -82,7 +81,6 @@
     $customer = $booking->customer;
     $isCompany = $customer?->isCompanyCustomer() ?? false;
     $canCancelUnpaid = $st === BookingStatus::Confirmed && $booking->payment_status === PaymentStatus::Pending;
-    $activeIncident = $booking->incidents->first();
     $platformPct = rtrim(rtrim(number_format(PlatformFee::getRate() * 100, 1, ',', ''), '0'), ',');
     $rejectNoteOld = (string) old('muthowif_rejection_note', '');
 @endphp
@@ -140,17 +138,6 @@
                                 <span class="inline-flex shrink-0 items-center rounded-full px-2.5 py-0.5 text-xs font-semibold ring-1 {{ $badgeClass }}">
                                     {{ $st->label() }}
                                 </span>
-                                @if ($activeIncident)
-                                    <span class="inline-flex shrink-0 items-center rounded-full bg-amber-100 px-2.5 py-0.5 text-xs font-semibold text-amber-950 ring-1 ring-amber-200/90" title="{{ __('incidents.status_banner_open') }}">
-                                        {{ $activeIncident->case_type->label() }}
-                                        <span class="mx-0.5 text-amber-700">·</span>
-                                        {{ $activeIncident->status->label() }}
-                                    </span>
-                                @elseif ($booking->incident_status === BookingIncidentOverlayStatus::Open)
-                                    <span class="inline-flex shrink-0 items-center rounded-full bg-amber-100 px-2.5 py-0.5 text-xs font-semibold text-amber-950 ring-1 ring-amber-200/90">
-                                        {{ __('incidents.overlay.open') }}
-                                    </span>
-                                @endif
                             </div>
                             @if (filled($booking->booking_code))
                                 <p class="mt-0.5 font-mono text-xs text-slate-500">{{ $booking->booking_code }}</p>

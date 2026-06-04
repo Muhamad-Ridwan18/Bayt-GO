@@ -63,12 +63,6 @@
     </div>
 
     <div class="min-w-0 space-y-6 lg:col-start-1">
-        @include('bookings.partials.incident-panel', [
-            'booking' => $b,
-            'openIncident' => $openIncident ?? null,
-            'selectableReplacements' => $selectableReplacements ?? collect(),
-        ])
-
         @include('bookings.partials.booking-documents', [
             'booking' => $b,
             'routeName' => 'bookings.documents.show',
@@ -258,7 +252,7 @@
                 </div>
             @endif
 
-            @if ($st === BookingStatus::Confirmed && $b->payment_status === PaymentStatus::Paid && empty($openIncident))
+            @if ($st === BookingStatus::Confirmed && $b->payment_status === PaymentStatus::Paid)
                 <div class="overflow-hidden rounded-2xl border border-brand-200 bg-gradient-to-br from-brand-50/90 to-white p-6 shadow-sm ring-1 ring-brand-200/50 sm:p-8">
                     <h2 class="text-lg font-bold text-slate-900">{{ __('bookings.show.complete_service_heading') }}</h2>
                     <p class="mt-1 text-sm text-slate-600">

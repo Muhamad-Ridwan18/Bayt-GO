@@ -17,8 +17,6 @@ return [
     'services' => 'Services',
     'day_off' => 'Time off',
     'booking_requests' => 'Booking requests',
-    'replacement_confirm' => 'Confirm replacement',
-    'replacement_opportunities' => 'Replacement opportunities',
     'support_tickets' => 'Support tickets',
     'site_logo' => 'Site logo',
     'site_appearance' => 'Site appearance',

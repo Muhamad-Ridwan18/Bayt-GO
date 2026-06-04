@@ -2,21 +2,17 @@
 
 namespace App\Services;
 
-use App\Enums\BookingSettlementStatus;
 use App\Enums\BookingStatus;
 use App\Models\BookingPayment;
 use App\Models\BookingReview;
-use App\Models\BookingSettlement;
 use App\Models\MuthowifBooking;
-use App\Services\Incident\BookingSettlementService;
-use App\Services\Incident\EscrowFreezeGuard;
 use Carbon\CarbonInterface;
 use Illuminate\Support\Facades\DB;
 
 class BookingCompletionService
 {
     public function __construct(
-        private readonly BookingSettlementService $settlements,
+        private readonly BookingWalletCreditingService $walletCrediting,
     ) {}
 
     /**
@@ -58,12 +54,6 @@ class BookingCompletionService
                     return;
                 }
 
-                if (EscrowFreezeGuard::isFrozen($booking)) {
-                    $error = __('incidents.errors.escrow_frozen');
-
-                    return;
-                }
-
                 /** @var BookingPayment|null $payment */
                 $payment = BookingPayment::query()
                     ->where('muthowif_booking_id', $booking->getKey())
@@ -79,27 +69,10 @@ class BookingCompletionService
                 }
 
                 if ($payment->wallet_credited_at === null) {
-                    $draftSettlement = BookingSettlement::query()
-                        ->where('muthowif_booking_id', $booking->getKey())
-                        ->whereIn('status', [
-                            BookingSettlementStatus::Draft->value,
-                            BookingSettlementStatus::Approved->value,
-                        ])
-                        ->latest()
-                        ->first();
-
-                    if ($draftSettlement) {
-                        $result = $this->settlements->approveAndRelease($draftSettlement, null);
-                        $credited = $result['credited'];
-                        if ($result['error']) {
-                            $error = $result['error'];
-                        }
-                    } else {
-                        $result = $this->settlements->releaseOnCompletion($booking);
-                        $credited = $result['credited'];
-                        if ($result['error']) {
-                            $error = $result['error'];
-                        }
+                    $result = $this->walletCrediting->creditOnCompletion($booking);
+                    $credited = $result['credited'];
+                    if ($result['error']) {
+                        $error = $result['error'];
                     }
                 }
 
@@ -132,10 +105,6 @@ class BookingCompletionService
     public function shouldAutoCompleteNow(MuthowifBooking $booking): bool
     {
         if ($booking->status !== BookingStatus::Confirmed || ! $booking->isPaid()) {
-            return false;
-        }
-
-        if (EscrowFreezeGuard::isFrozen($booking)) {
             return false;
         }
 

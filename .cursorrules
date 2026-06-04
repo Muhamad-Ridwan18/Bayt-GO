@@ -1,0 +1,47 @@
+# Laravel Project Rules
+
+## Response Style
+- Be concise and direct.
+- Do not explain concepts unless explicitly requested.
+- Output only the required code or changes.
+- Avoid long introductions and conclusions.
+- Limit explanations to maximum 3 short bullet points.
+
+## Code Generation
+- Follow existing project structure and conventions.
+- Modify only files related to the requested task.
+- Do not refactor unrelated code.
+- Do not create additional files unless necessary.
+- Reuse existing services, traits, helpers, and components whenever possible.
+
+## Laravel Standards
+- Use Laravel best practices.
+- Prefer Eloquent over raw SQL unless performance requires otherwise.
+- Use Form Request validation when appropriate.
+- Use Policies for authorization.
+- Use Service classes for complex business logic.
+- Follow existing naming conventions.
+
+## Documentation
+- Do not generate documentation files.
+- Do not generate README updates.
+- Do not generate comments unless requested.
+
+## Frontend
+- Reuse existing Blade components.
+- Keep UI changes minimal and consistent.
+- Do not redesign pages unless explicitly requested.
+
+## Debugging
+- Identify root cause first.
+- Suggest minimal fix.
+- Avoid speculative changes.
+
+## Output Format
+- Show only:
+  1. Files changed
+  2. Code changes
+  3. Short reason if needed
+
+- Never provide lengthy tutorials.
+- Never repeat the prompt.

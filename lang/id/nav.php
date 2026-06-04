@@ -17,8 +17,6 @@ return [
     'services' => 'Pelayanan',
     'day_off' => 'Jadwal libur',
     'booking_requests' => 'Permintaan pesanan',
-    'replacement_confirm' => 'Konfirmasi pengganti',
-    'replacement_opportunities' => 'Peluang pengganti',
     'support_tickets' => 'Tiket bantuan',
     'site_logo' => 'Logo situs',
     'site_appearance' => 'Tampilan situs',

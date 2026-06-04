@@ -2,8 +2,6 @@
 
 namespace App\Policies;
 
-use App\Enums\BookingIncidentOverlayStatus;
-use App\Enums\BookingServicePhase;
 use App\Enums\BookingStatus;
 use App\Enums\PaymentStatus;
 use App\Models\MuthowifBooking;
@@ -119,24 +117,6 @@ class MuthowifBookingPolicy
     public function decidePostPayChange(User $user, MuthowifBooking $booking): bool
     {
         return $this->muthowifOwns($user, $booking);
-    }
-
-    public function reportEmergency(User $user, MuthowifBooking $booking): bool
-    {
-        return $user->isCustomer()
-            && (string) $booking->customer_id === (string) $user->id
-            && $booking->status === BookingStatus::Confirmed
-            && $booking->isPaid()
-            && in_array($booking->service_phase, [BookingServicePhase::PreService, BookingServicePhase::InService], true)
-            && $booking->incident_status !== BookingIncidentOverlayStatus::Open;
-    }
-
-    public function reportAsMuthowif(User $user, MuthowifBooking $booking): bool
-    {
-        return $this->muthowifOwns($user, $booking)
-            && $booking->status === BookingStatus::Confirmed
-            && $booking->isPaid()
-            && ! $booking->hasOpenIncident();
     }
 
     public function viewBookingChat(User $user, MuthowifBooking $booking): bool
