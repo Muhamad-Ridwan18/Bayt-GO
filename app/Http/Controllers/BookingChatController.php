@@ -6,6 +6,7 @@ use App\Events\BookingChatUpdated;
 use App\Http\Resources\BookingChatMessageResource;
 use App\Models\BookingChatMessage;
 use App\Models\MuthowifBooking;
+use App\Services\UploadedImageOptimizer;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Storage;
@@ -78,7 +79,12 @@ class BookingChatController extends Controller
 
         $imagePath = null;
         if ($upload !== null) {
-            $imagePath = $upload->store('booking-chat/'.$booking->getKey(), 'local');
+            $imagePath = app(UploadedImageOptimizer::class)->store(
+                $upload,
+                'booking-chat/'.$booking->getKey(),
+                'local',
+                'chat',
+            );
         }
 
         $message = $booking->chatMessages()->create([
@@ -113,5 +119,4 @@ class BookingChatController extends Controller
 
         return $disk->response($message->image_path, basename($message->image_path));
     }
-
 }

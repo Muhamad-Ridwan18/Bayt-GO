@@ -9,9 +9,9 @@ use App\Models\MuthowifSupportingDocument;
 use App\Services\FonnteService;
 use App\Services\MuthowifReferralCodeService;
 use App\Support\IntlPhone;
+use App\Support\MuthowifVerificationBroadcast;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\View\View;
@@ -118,7 +118,7 @@ class MuthowifVerificationController extends Controller
             $waFlash = ' FONNTE_TOKEN kosong — notifikasi WA dilewati.';
         }
 
-        broadcast(new \App\Events\MuthowifVerificationUpdated($profile->fresh()));
+        MuthowifVerificationBroadcast::afterResponse($profile->fresh());
 
         return redirect()
             ->route('admin.muthowif.show', $profile)
@@ -143,11 +143,31 @@ class MuthowifVerificationController extends Controller
             'rejection_reason' => $validated['rejection_reason'] ?? null,
         ]);
 
-        broadcast(new \App\Events\MuthowifVerificationUpdated($profile->fresh()));
+        MuthowifVerificationBroadcast::afterResponse($profile->fresh());
 
         return redirect()
             ->route('admin.muthowif.show', $profile)
             ->with('status', 'Pendaftaran ditolak.');
+    }
+
+    public function indexLiveFragment(Request $request): View
+    {
+        $status = $request->query('status', 'pending');
+        if (! in_array($status, ['pending', 'approved', 'rejected', 'all'], true)) {
+            $status = 'pending';
+        }
+
+        $query = MuthowifProfile::query()
+            ->with('user')
+            ->orderByDesc('created_at');
+
+        if ($status !== 'all') {
+            $query->where('verification_status', $status);
+        }
+
+        return view('admin.muthowif.partials.index-live', [
+            'profiles' => $query->paginate(8)->withQueryString(),
+        ]);
     }
 
     public function photo(MuthowifProfile $profile)

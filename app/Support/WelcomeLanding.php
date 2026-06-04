@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace App\Support;
 
 use App\Models\SiteSetting;
+use App\Services\UploadedImageOptimizer;
 use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Facades\Storage;
 
@@ -191,7 +192,7 @@ final class WelcomeLanding
         if ($old !== null && Storage::disk('public')->exists($old)) {
             Storage::disk('public')->delete($old);
         }
-        $stored = $file->store('site', 'public');
+        $stored = app(UploadedImageOptimizer::class)->store($file, 'site', 'public', 'banner');
         SiteSetting::putValue(self::SETTING_STORAGE_PATH, $stored);
     }
 

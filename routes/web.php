@@ -3,12 +3,14 @@
 use App\Enums\MuthowifVerificationStatus;
 use App\Http\Controllers\Admin\AdminSettingsHubController;
 use App\Http\Controllers\Admin\ArticlesAdminController;
-use App\Http\Controllers\Admin\ServiceMonitorController;
 use App\Http\Controllers\Admin\BookingEmergencyController;
 use App\Http\Controllers\Admin\BookingRefundController;
+use App\Http\Controllers\Admin\CampaignsAdminController;
+use App\Http\Controllers\Admin\CompanyApprovalController;
 use App\Http\Controllers\Admin\FinanceController;
 use App\Http\Controllers\Admin\MootaWebhookHistoriesLiveController;
 use App\Http\Controllers\Admin\MuthowifVerificationController;
+use App\Http\Controllers\Admin\ServiceMonitorController;
 use App\Http\Controllers\Admin\SiteAppearanceController;
 use App\Http\Controllers\Admin\SupportTicketsController;
 use App\Http\Controllers\Admin\UserManagementController;
@@ -29,12 +31,14 @@ use App\Http\Controllers\Muthowif\WithdrawController as MuthowifWithdrawControll
 use App\Http\Controllers\PaymentWebhookController;
 use App\Http\Controllers\ProfileController;
 use App\Http\Controllers\Public\ArticleController;
+use App\Http\Controllers\Public\CampaignController;
 use App\Http\Controllers\Public\MuthowifDirectoryController;
 use App\Http\Controllers\Public\SeoLandingController;
 use App\Http\Controllers\Public\WelcomeController;
 use App\Http\Controllers\SupportTicketController;
 use App\Http\Controllers\TermsController;
 use App\Http\Middleware\EnsureUserRole;
+use App\Models\Campaign;
 use App\Models\MuthowifBlockedDate;
 use App\Models\MuthowifProfile;
 use Illuminate\Foundation\Http\Middleware\ValidateCsrfToken;
@@ -112,7 +116,7 @@ Route::get('/layanan/{publicProfile}', [MuthowifDirectoryController::class, 'sho
 Route::get('/terms', TermsController::class)->name('terms');
 Route::get('/artikel', [ArticleController::class, 'index'])->name('articles.index');
 Route::get('/artikel/{slug}', [ArticleController::class, 'show'])->name('articles.show');
-Route::get('/campaign/{slug}', [\App\Http\Controllers\Public\CampaignController::class, 'show'])->name('campaigns.show');
+Route::get('/campaign/{slug}', [CampaignController::class, 'show'])->name('campaigns.show');
 
 Route::get('/locale/{locale}', [LocaleController::class, 'switch'])->name('locale.switch');
 
@@ -154,17 +158,19 @@ Route::get('/muthowif/daftar/menunggu', function () {
 
 Route::get('/perusahaan/daftar/menunggu', function () {
     $pendingId = session('pending_company_id');
-    if (!$pendingId) {
+    if (! $pendingId) {
         return redirect()->route('login');
     }
+
     return view('auth.company-registration-pending', ['pendingId' => $pendingId]);
 })->name('company.registration.pending');
 
 Route::get('/dashboard', function () {
-    $activeCampaigns = \App\Models\Campaign::active()
+    $activeCampaigns = Campaign::active()
         ->orderBy('sort_order')
         ->orderByDesc('start_date')
         ->get();
+
     return view('dashboard', compact('activeCampaigns'));
 })->middleware(['auth'])->name('dashboard');
 
@@ -195,9 +201,11 @@ Route::middleware('auth')->group(function () {
     Route::get('/chat/conversations', [GlobalChatController::class, 'index'])->name('chat.conversations');
 
     Route::middleware(['reporter'])->prefix('support')->name('support.')->group(function () {
+        Route::get('live-index-fragment', [SupportTicketController::class, 'indexLiveFragment'])->name('index.live-fragment');
         Route::get('/', [SupportTicketController::class, 'index'])->name('index');
         Route::get('/baru', [SupportTicketController::class, 'create'])->name('create');
         Route::post('/', [SupportTicketController::class, 'store'])->name('store');
+        Route::get('/{ticket}/fragment', [SupportTicketController::class, 'showLiveFragment'])->name('show.fragment');
         Route::get('/{ticket}', [SupportTicketController::class, 'show'])->name('show');
         Route::post('/{ticket}/balas', [SupportTicketController::class, 'reply'])->name('reply');
     });
@@ -206,6 +214,7 @@ Route::middleware('auth')->group(function () {
         Route::get('live-index-fragment', [CustomerBookingController::class, 'indexLiveFragment'])->name('index.live-fragment');
         Route::get('/', [CustomerBookingController::class, 'index'])->name('index');
         Route::post('/', [CustomerBookingController::class, 'store'])->name('store');
+        Route::get('{booking}/live-state', [CustomerBookingController::class, 'showLiveState'])->name('show.live-state');
         Route::get('{booking}/fragment', [CustomerBookingController::class, 'showLiveFragment'])->name('show.fragment');
         Route::get('{booking}/pembayaran', [CustomerBookingController::class, 'payment'])->name('payment');
         Route::get('{booking}/payment-status', [CustomerBookingController::class, 'paymentStatus'])->name('payment.status');
@@ -250,6 +259,7 @@ Route::middleware('auth')->group(function () {
             Route::get('bookings/live-index-fragment', [MuthowifBookingController::class, 'indexLiveFragment'])->name('bookings.index.live-fragment');
             Route::get('bookings/pending-incoming-count', [MuthowifBookingController::class, 'pendingIncomingCount'])->name('bookings.pending-incoming-count');
             Route::get('bookings', [MuthowifBookingController::class, 'index'])->name('bookings.index');
+            Route::get('bookings/{booking}/live-state', [MuthowifBookingController::class, 'showLiveState'])->name('bookings.show.live-state');
             Route::get('bookings/{booking}/fragment', [MuthowifBookingController::class, 'showLiveFragment'])->name('bookings.show.fragment');
             Route::get('bookings/{booking}/chat/messages', [BookingChatController::class, 'index'])->name('bookings.chat.messages');
             Route::get('bookings/{booking}/chat/unread-count', [BookingChatController::class, 'unreadCount'])->name('bookings.chat.unread-count');
@@ -265,10 +275,12 @@ Route::middleware('auth')->group(function () {
             Route::post('bookings/{booking}/reschedule-requests/{rescheduleRequest}/approve', [MuthowifBookingController::class, 'approveReschedule'])->name('bookings.reschedule_requests.approve');
             Route::post('bookings/{booking}/reschedule-requests/{rescheduleRequest}/reject', [MuthowifBookingController::class, 'rejectReschedule'])->name('bookings.reschedule_requests.reject');
 
+            Route::get('emergency-offers/live-index-fragment', [EmergencyOfferController::class, 'indexLiveFragment'])->name('emergency-offers.index.live-fragment');
             Route::get('emergency-offers', [EmergencyOfferController::class, 'index'])->name('emergency-offers.index');
             Route::post('emergency-offers/{offer}/accept', [EmergencyOfferController::class, 'accept'])->name('emergency-offers.accept');
             Route::post('emergency-offers/{offer}/decline', [EmergencyOfferController::class, 'decline'])->name('emergency-offers.decline');
 
+            Route::get('withdrawals/live-index-fragment', [MuthowifWithdrawController::class, 'indexLiveFragment'])->name('withdrawals.index.live-fragment');
             Route::get('withdrawals', [MuthowifWithdrawController::class, 'index'])->name('withdrawals.index');
             Route::post('withdrawals', [MuthowifWithdrawController::class, 'store'])->name('withdrawals.store');
         });
@@ -283,15 +295,17 @@ Route::middleware('auth')->group(function () {
             ->names('articles');
         Route::get('tampilan/logo', [SiteAppearanceController::class, 'edit'])->name('site-appearance.edit');
         Route::post('tampilan/logo', [SiteAppearanceController::class, 'update'])->name('site-appearance.update');
-        Route::resource('campaign', \App\Http\Controllers\Admin\CampaignsAdminController::class);
+        Route::resource('campaign', CampaignsAdminController::class);
         Route::get('pengguna', [UserManagementController::class, 'index'])->name('users.index');
         Route::get('pengguna/{user}/ubah', [UserManagementController::class, 'edit'])->name('users.edit');
         Route::patch('pengguna/{user}', [UserManagementController::class, 'update'])->name('users.update');
-        Route::get('perusahaan-menunggu', [\App\Http\Controllers\Admin\CompanyApprovalController::class, 'index'])->name('company_approval.index');
-        Route::post('perusahaan-menunggu/{user}/approve', [\App\Http\Controllers\Admin\CompanyApprovalController::class, 'approve'])->name('company_approval.approve');
+        Route::get('perusahaan-menunggu', [CompanyApprovalController::class, 'index'])->name('company_approval.index');
+        Route::post('perusahaan-menunggu/{user}/approve', [CompanyApprovalController::class, 'approve'])->name('company_approval.approve');
         Route::get('pantau-layanan', [ServiceMonitorController::class, 'index'])->name('service_monitor.index');
         Route::get('pantau-layanan/fragment', [ServiceMonitorController::class, 'fragment'])->name('service_monitor.fragment');
+        Route::get('insiden-darurat/live-index-fragment', [BookingEmergencyController::class, 'indexLiveFragment'])->name('emergency.index.live-fragment');
         Route::get('insiden-darurat', [BookingEmergencyController::class, 'index'])->name('emergency.index');
+        Route::get('insiden-darurat/{report}/fragment', [BookingEmergencyController::class, 'showLiveFragment'])->name('emergency.show.fragment');
         Route::get('insiden-darurat/{report}', [BookingEmergencyController::class, 'show'])->name('emergency.show');
         Route::post('insiden-darurat/{report}/tinjau', [BookingEmergencyController::class, 'markUnderReview'])->name('emergency.under_review');
         Route::post('insiden-darurat/{report}/verifikasi', [BookingEmergencyController::class, 'verify'])->name('emergency.verify');
@@ -310,6 +324,7 @@ Route::middleware('auth')->group(function () {
         Route::post('withdrawals/{withdrawal}/approve', [WithdrawalsController::class, 'approve'])->name('withdrawals.approve');
         Route::post('withdrawals/{withdrawal}/selesai-transfer', [WithdrawalsController::class, 'markTransferred'])->name('withdrawals.mark_transferred');
         Route::post('withdrawals/{withdrawal}/gagal-transfer', [WithdrawalsController::class, 'markTransferFailed'])->name('withdrawals.mark_transfer_failed');
+        Route::get('muthowif/live-index-fragment', [MuthowifVerificationController::class, 'indexLiveFragment'])->name('muthowif.index.live-fragment');
         Route::get('muthowif', [MuthowifVerificationController::class, 'index'])->name('muthowif.index');
         Route::get('muthowif/{profile}/photo', [MuthowifVerificationController::class, 'photo'])->name('muthowif.photo');
         Route::get('muthowif/{profile}/ktp', [MuthowifVerificationController::class, 'ktp'])->name('muthowif.ktp');
@@ -317,7 +332,9 @@ Route::middleware('auth')->group(function () {
         Route::post('muthowif/{profile}/approve', [MuthowifVerificationController::class, 'approve'])->name('muthowif.approve');
         Route::post('muthowif/{profile}/reject', [MuthowifVerificationController::class, 'reject'])->name('muthowif.reject');
         Route::get('muthowif/{profile}', [MuthowifVerificationController::class, 'show'])->name('muthowif.show');
+        Route::get('tiket/live-index-fragment', [SupportTicketsController::class, 'indexLiveFragment'])->name('support-tickets.index.live-fragment');
         Route::get('tiket', [SupportTicketsController::class, 'index'])->name('support-tickets.index');
+        Route::get('tiket/{ticket}/fragment', [SupportTicketsController::class, 'showLiveFragment'])->name('support-tickets.show.fragment');
         Route::get('tiket/{ticket}', [SupportTicketsController::class, 'show'])->name('support-tickets.show');
         Route::post('tiket/{ticket}/balas', [SupportTicketsController::class, 'reply'])->name('support-tickets.reply');
         Route::patch('tiket/{ticket}', [SupportTicketsController::class, 'update'])->name('support-tickets.update');

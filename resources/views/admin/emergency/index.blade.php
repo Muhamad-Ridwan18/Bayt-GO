@@ -10,6 +10,16 @@
             </div>
         </div>
 
+        <div
+            x-data="reverbFragmentLive({
+                fragmentUrl: @js(route('admin.emergency.index.live-fragment')),
+                appendQuery: true,
+                listeners: [
+                    { channel: 'admin.emergency-reports', event: '.emergency.report.updated' },
+                ],
+            })"
+        >
+        <div x-ref="liveRoot">
         @if ($reports->isEmpty())
             <p class="rounded-2xl border border-dashed border-slate-300 bg-slate-50 p-10 text-center text-sm text-slate-600">{{ __('emergency.admin.no_reports') }}</p>
         @else
@@ -41,5 +51,7 @@
             </div>
             <div class="mt-4">{{ $reports->links() }}</div>
         @endif
+        </div>
+        </div>
     </x-page-container>
 </x-app-layout>

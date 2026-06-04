@@ -48,7 +48,7 @@ final class SupportTicketAttachmentStore
         $out = [];
 
         foreach ($validFiles as $file) {
-            $path = $file->store($directory, 'public');
+            $path = app(UploadedImageOptimizer::class)->store($file, $directory, 'public', 'attachment');
             $out[] = [
                 'path' => $path,
                 'original_name' => $file->getClientOriginalName(),

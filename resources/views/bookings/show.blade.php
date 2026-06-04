@@ -9,7 +9,10 @@
             bookingId: @js($b->getKey()),
             liveMode: 'customer_show',
             fragmentUrl: @js(route('bookings.show.fragment', $b)),
+            liveStateUrl: @js(route('bookings.show.live-state', $b)),
             showUrl: @js(route('bookings.show', $b)),
+            initialStatus: @js($b->status->value),
+            initialPaymentStatus: @js($b->payment_status->value),
         })"
     >
         <x-page-container class="pb-16 pt-6 sm:pt-8">
@@ -20,7 +23,10 @@
                 {{ __('bookings.show.back_to_bookings') }}
             </a>
 
-            <div x-ref="liveRoot">
+            <div
+                x-ref="liveGrid"
+                class="grid grid-cols-1 gap-6 lg:grid-cols-[minmax(0,1fr)_minmax(280px,360px)] lg:items-start lg:gap-8"
+            >
                 @include('bookings.partials.show-body', [
                     'booking' => $booking,
                     'addonsById' => $addonsById,

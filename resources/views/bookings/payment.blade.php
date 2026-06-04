@@ -533,25 +533,8 @@
                         countdownEl.textContent = pad(h) + ':' + pad(m) + ':' + pad(s);
                     }
 
-                    async function pollStatus() {
-                        try {
-                            const response = await fetch(statusUrl, { headers: { 'Accept': 'application/json' } });
-                            if (!response.ok) return;
-                            const data = await response.json();
-                            if (data && data.is_paid === true) {
-                                window.location.replace(showUrl);
-                            }
-                        } catch (e) {}
-                    }
-
                     tickCountdown();
-                    pollStatus();
                     setInterval(tickCountdown, 1000);
-                    setInterval(pollStatus, 3000);
-                    window.addEventListener('focus', pollStatus);
-                    document.addEventListener('visibilitychange', function () {
-                        if (!document.hidden) pollStatus();
-                    });
                 })();
             </script>
         @endif

@@ -4,10 +4,12 @@ namespace App\Http\Controllers\Admin;
 
 use App\Enums\BookingChangeRequestStatus;
 use App\Enums\PaymentStatus;
+use App\Events\CustomerBookingUpdated;
 use App\Http\Controllers\Controller;
 use App\Jobs\NotifyCustomerOfRefundTransferProof;
 use App\Models\BookingRefundRequest;
 use App\Models\MuthowifProfile;
+use App\Services\UploadedImageOptimizer;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
@@ -64,7 +66,12 @@ class BookingRefundController extends Controller
                 ->with('error', 'Status pembayaran booking tidak menunggu refund.');
         }
 
-        $proofPath = $request->file('transfer_proof')->store('refunds/proofs', 'public');
+        $proofPath = app(UploadedImageOptimizer::class)->store(
+            $request->file('transfer_proof'),
+            'refunds/proofs',
+            'public',
+            'document',
+        );
 
         try {
             DB::transaction(function () use ($refund, $booking, $request, $validated, $proofPath): void {
@@ -115,7 +122,7 @@ class BookingRefundController extends Controller
 
         NotifyCustomerOfRefundTransferProof::dispatchAfterResponse((string) $refund->getKey());
 
-        broadcast(new \App\Events\CustomerBookingUpdated($booking->fresh()));
+        broadcast(new CustomerBookingUpdated($booking->fresh()));
 
         return redirect()
             ->route('admin.refunds.index')

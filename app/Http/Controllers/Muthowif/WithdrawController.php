@@ -63,6 +63,42 @@ class WithdrawController extends Controller
             'withdrawals' => $withdrawals,
             'walletLedger' => $walletLedger,
             'bankOptions' => self::BANK_OPTIONS,
+            'profile' => $profile,
+        ]);
+    }
+
+    public function indexLiveFragment(Request $request): View
+    {
+        $profile = $request->user()->muthowifProfile;
+        abort_unless($profile instanceof MuthowifProfile, 403);
+
+        $withdrawals = MuthowifWithdrawal::query()
+            ->where('muthowif_profile_id', $profile->id)
+            ->orderByDesc('requested_at')
+            ->paginate(15);
+
+        $ledgerAll = MuthowifWalletLedger::entriesForProfile($profile);
+        $ledgerPage = max(1, (int) $request->input('ledger_page', 1));
+        $ledgerPerPage = 20;
+        $ledgerTotal = $ledgerAll->count();
+        $ledgerSlice = $ledgerAll->slice(($ledgerPage - 1) * $ledgerPerPage, $ledgerPerPage)->values();
+
+        $walletLedger = new LengthAwarePaginator(
+            $ledgerSlice,
+            $ledgerTotal,
+            $ledgerPerPage,
+            $ledgerPage,
+            [
+                'path' => $request->url(),
+                'pageName' => 'ledger_page',
+            ]
+        );
+        $walletLedger->withQueryString();
+
+        return view('muthowif.withdrawals.partials.index-live', [
+            'withdrawals' => $withdrawals,
+            'walletLedger' => $walletLedger,
+            'profile' => $profile,
         ]);
     }
 
@@ -111,4 +147,3 @@ class WithdrawController extends Controller
             ->with('status', 'Permintaan withdraw berhasil dibuat. Tunggu persetujuan admin.');
     }
 }
-

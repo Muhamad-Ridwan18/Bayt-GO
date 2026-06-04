@@ -2,6 +2,7 @@
 
 namespace App\Events;
 
+use App\Enums\MuthowifVerificationStatus;
 use App\Events\Concerns\RescuesBroadcastFailures;
 use App\Models\MuthowifProfile;
 use Illuminate\Broadcasting\InteractsWithSockets;
@@ -10,7 +11,7 @@ use Illuminate\Contracts\Broadcasting\ShouldBroadcastNow;
 use Illuminate\Foundation\Events\Dispatchable;
 use Illuminate\Queue\SerializesModels;
 
-class MuthowifVerificationUpdated implements ShouldBroadcastNow, RescuesBroadcastFailures
+class MuthowifVerificationUpdated implements RescuesBroadcastFailures, ShouldBroadcastNow
 {
     use Dispatchable, InteractsWithSockets, SerializesModels;
 
@@ -28,6 +29,7 @@ class MuthowifVerificationUpdated implements ShouldBroadcastNow, RescuesBroadcas
     {
         return [
             new PrivateChannel("App.Models.User.{$this->profile->user_id}"),
+            new PrivateChannel('admin.muthowif-profiles'),
         ];
     }
 
@@ -38,8 +40,8 @@ class MuthowifVerificationUpdated implements ShouldBroadcastNow, RescuesBroadcas
     {
         return [
             'profile_id' => (string) $this->profile->getKey(),
-            'verification_status' => $this->profile->verification_status instanceof \App\Enums\MuthowifVerificationStatus 
-                ? $this->profile->verification_status->value 
+            'verification_status' => $this->profile->verification_status instanceof MuthowifVerificationStatus
+                ? $this->profile->verification_status->value
                 : (string) $this->profile->verification_status,
             'rejection_reason' => $this->profile->rejection_reason,
             'verified_at' => $this->profile->verified_at?->toDateTimeString(),

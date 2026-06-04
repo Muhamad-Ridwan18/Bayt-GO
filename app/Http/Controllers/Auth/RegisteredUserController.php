@@ -9,6 +9,7 @@ use App\Http\Controllers\Controller;
 use App\Models\MuthowifProfile;
 use App\Models\User;
 use App\Services\RegistrationOtpService;
+use App\Services\UploadedImageOptimizer;
 use App\Support\IntlPhone;
 use Illuminate\Auth\Events\Registered;
 use Illuminate\Http\RedirectResponse;
@@ -278,8 +279,8 @@ class RegisteredUserController extends Controller
             'work_experiences' => ['nullable', 'array'],
             'work_experiences.*' => ['nullable', 'string', 'max:2000'],
             'reference_text' => ['nullable', 'string', 'max:10000'],
-            'photo' => [Rule::requiredIf(fn() => $request->input('role') === 'muthowif' && !session()->has('registration_files.photo')), 'nullable', 'file', 'mimes:jpeg,jpg,png,webp', 'max:5120'],
-            'ktp_image' => [Rule::requiredIf(fn() => $request->input('role') === 'muthowif' && !session()->has('registration_files.ktp_image')), 'nullable', 'file', 'mimes:jpeg,jpg,png,webp', 'max:5120'],
+            'photo' => [Rule::requiredIf(fn () => $request->input('role') === 'muthowif' && ! session()->has('registration_files.photo')), 'nullable', 'file', 'mimes:jpeg,jpg,png,webp', 'max:5120'],
+            'ktp_image' => [Rule::requiredIf(fn () => $request->input('role') === 'muthowif' && ! session()->has('registration_files.ktp_image')), 'nullable', 'file', 'mimes:jpeg,jpg,png,webp', 'max:5120'],
             'supporting_documents' => ['nullable', 'array', 'max:20'],
             'supporting_documents.*' => ['file', 'mimes:pdf,jpeg,jpg,png,webp', 'max:10240'],
             'muthowif_referral_code' => ['nullable', 'string', 'max:16'],
@@ -353,25 +354,28 @@ class RegisteredUserController extends Controller
             if ($user->isMuthowif()) {
                 $storedDir = 'muthowif_documents/'.$user->id;
                 Storage::disk('local')->makeDirectory($storedDir);
+                $optimizer = app(UploadedImageOptimizer::class);
 
                 // Handle Photo (uploaded or cached)
                 $photoFile = $request->file('photo');
                 if ($photoFile && $photoFile->isValid()) {
-                    $photoPath = $photoFile->store($storedDir, 'local');
+                    $photoPath = $optimizer->store($photoFile, $storedDir, 'local', 'profile');
                 } else {
                     $cachedPhoto = session('registration_files.photo');
-                    $photoPath = $storedDir . '/' . basename($cachedPhoto['path']);
+                    $photoPath = $storedDir.'/'.basename($cachedPhoto['path']);
                     Storage::disk('local')->move($cachedPhoto['path'], $photoPath);
+                    $photoPath = $optimizer->optimizeStoredPath($photoPath, 'local', 'profile');
                 }
 
                 // Handle KTP Image (uploaded or cached)
                 $ktpFile = $request->file('ktp_image');
                 if ($ktpFile && $ktpFile->isValid()) {
-                    $ktpPath = $ktpFile->store($storedDir, 'local');
+                    $ktpPath = $optimizer->store($ktpFile, $storedDir, 'local', 'profile');
                 } else {
                     $cachedKtp = session('registration_files.ktp_image');
-                    $ktpPath = $storedDir . '/' . basename($cachedKtp['path']);
+                    $ktpPath = $storedDir.'/'.basename($cachedKtp['path']);
                     Storage::disk('local')->move($cachedKtp['path'], $ktpPath);
+                    $ktpPath = $optimizer->optimizeStoredPath($ktpPath, 'local', 'profile');
                 }
 
                 $languages = $this->requestStringList($request->input('languages'));
@@ -406,7 +410,7 @@ class RegisteredUserController extends Controller
                 }
                 foreach ($files as $index => $file) {
                     if ($file && $file->isValid()) {
-                        $path = $file->store($storedDir, 'local');
+                        $path = $optimizer->store($file, $storedDir, 'local', 'document');
                         $profile->supportingDocuments()->create([
                             'path' => $path,
                             'original_name' => $file->getClientOriginalName(),
@@ -419,7 +423,7 @@ class RegisteredUserController extends Controller
                 $cachedDocs = session('registration_files.supporting_documents', []);
                 foreach ($cachedDocs as $doc) {
                     if (Storage::disk('local')->exists($doc['path'])) {
-                        $dest = $storedDir . '/' . basename($doc['path']);
+                        $dest = $storedDir.'/'.basename($doc['path']);
                         Storage::disk('local')->move($doc['path'], $dest);
                         $profile->supportingDocuments()->create([
                             'path' => $dest,
@@ -458,6 +462,7 @@ class RegisteredUserController extends Controller
 
         if ($user->isCompanyCustomer() && ! $user->is_company_approved) {
             session(['pending_company_id' => $user->id]);
+
             return redirect()->route('company.registration.pending');
         }
 
@@ -575,6 +580,7 @@ class RegisteredUserController extends Controller
 
         if ($user->isCompanyCustomer() && ! $user->is_company_approved) {
             session(['pending_company_id' => $user->id]);
+
             return redirect()->route('company.registration.pending');
         }
 
@@ -611,25 +617,28 @@ class RegisteredUserController extends Controller
         $muthowifFiles = null;
         if ($request->string('role')->toString() === UserRole::Muthowif->value) {
             Storage::disk('local')->makeDirectory($base);
+            $optimizer = app(UploadedImageOptimizer::class);
 
             // Handle Photo (uploaded or cached)
             $photoFile = $request->file('photo');
             if ($photoFile && $photoFile->isValid()) {
-                $photoPath = $photoFile->store($base, 'local');
+                $photoPath = $optimizer->store($photoFile, $base, 'local', 'profile');
             } else {
                 $cachedPhoto = session('registration_files.photo');
-                $photoPath = $base . '/' . basename($cachedPhoto['path']);
+                $photoPath = $base.'/'.basename($cachedPhoto['path']);
                 Storage::disk('local')->move($cachedPhoto['path'], $photoPath);
+                $photoPath = $optimizer->optimizeStoredPath($photoPath, 'local', 'profile');
             }
 
             // Handle KTP Image (uploaded or cached)
             $ktpFile = $request->file('ktp_image');
             if ($ktpFile && $ktpFile->isValid()) {
-                $ktpPath = $ktpFile->store($base, 'local');
+                $ktpPath = $optimizer->store($ktpFile, $base, 'local', 'profile');
             } else {
                 $cachedKtp = session('registration_files.ktp_image');
-                $ktpPath = $base . '/' . basename($cachedKtp['path']);
+                $ktpPath = $base.'/'.basename($cachedKtp['path']);
                 Storage::disk('local')->move($cachedKtp['path'], $ktpPath);
+                $ktpPath = $optimizer->optimizeStoredPath($ktpPath, 'local', 'profile');
             }
 
             $supporting = [];
@@ -640,7 +649,7 @@ class RegisteredUserController extends Controller
             foreach ($files as $index => $file) {
                 if ($file && $file->isValid()) {
                     $supporting[] = [
-                        'path' => $file->store($base, 'local'),
+                        'path' => $optimizer->store($file, $base, 'local', 'document'),
                         'original_name' => $file->getClientOriginalName(),
                         'sort_order' => count($supporting),
                     ];
@@ -650,7 +659,7 @@ class RegisteredUserController extends Controller
             $cachedDocs = session('registration_files.supporting_documents', []);
             foreach ($cachedDocs as $doc) {
                 if (Storage::disk('local')->exists($doc['path'])) {
-                    $dest = $base . '/' . basename($doc['path']);
+                    $dest = $base.'/'.basename($doc['path']);
                     Storage::disk('local')->move($doc['path'], $dest);
                     $supporting[] = [
                         'path' => $dest,
@@ -739,6 +748,7 @@ class RegisteredUserController extends Controller
     {
         $sessionId = session()->getId();
         $baseDir = "tmp_registration/{$sessionId}";
+        $optimizer = app(UploadedImageOptimizer::class);
 
         // Cache photo
         if ($request->hasFile('photo') && $request->file('photo')->isValid()) {
@@ -746,12 +756,12 @@ class RegisteredUserController extends Controller
             if ($oldPhoto && Storage::disk('local')->exists($oldPhoto['path'])) {
                 Storage::disk('local')->delete($oldPhoto['path']);
             }
-            $path = $request->file('photo')->store($baseDir . '/photo', 'local');
+            $path = $optimizer->store($request->file('photo'), $baseDir.'/photo', 'local', 'profile');
             session([
                 'registration_files.photo' => [
                     'path' => $path,
                     'original_name' => $request->file('photo')->getClientOriginalName(),
-                ]
+                ],
             ]);
         }
 
@@ -761,12 +771,12 @@ class RegisteredUserController extends Controller
             if ($oldKtp && Storage::disk('local')->exists($oldKtp['path'])) {
                 Storage::disk('local')->delete($oldKtp['path']);
             }
-            $path = $request->file('ktp_image')->store($baseDir . '/ktp_image', 'local');
+            $path = $optimizer->store($request->file('ktp_image'), $baseDir.'/ktp_image', 'local', 'profile');
             session([
                 'registration_files.ktp_image' => [
                     'path' => $path,
                     'original_name' => $request->file('ktp_image')->getClientOriginalName(),
-                ]
+                ],
             ]);
         }
 
@@ -781,7 +791,7 @@ class RegisteredUserController extends Controller
 
             foreach ($files as $file) {
                 if ($file && $file->isValid()) {
-                    $path = $file->store($baseDir . '/supporting', 'local');
+                    $path = $optimizer->store($file, $baseDir.'/supporting', 'local', 'document');
                     $cachedDocs[] = [
                         'path' => $path,
                         'original_name' => $file->getClientOriginalName(),

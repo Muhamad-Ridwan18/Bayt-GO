@@ -70,7 +70,13 @@
                 </div>
             </div>
 
-            {{-- Cards --}}
+            <div
+                x-data="muthowifVerificationLive({
+                    listenAdmin: true,
+                    fragmentUrl: @js(route('admin.muthowif.index.live-fragment')),
+                })"
+            >
+            <div x-ref="liveRoot">
             @if ($profiles->count())
                 <div class="grid grid-cols-1 gap-5 md:grid-cols-2 xl:grid-cols-3 2xl:grid-cols-4">
                     @foreach ($profiles as $p)
@@ -245,6 +251,8 @@
                     </div>
                 </div>
             @endif
+            </div>
+            </div>
 
         </div>
     </div>

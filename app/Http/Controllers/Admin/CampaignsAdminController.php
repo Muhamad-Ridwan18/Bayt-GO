@@ -4,6 +4,7 @@ namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
 use App\Models\Campaign;
+use App\Services\UploadedImageOptimizer;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Str;
@@ -13,6 +14,7 @@ class CampaignsAdminController extends Controller
     public function index()
     {
         $campaigns = Campaign::orderBy('sort_order')->orderByDesc('start_date')->get();
+
         return view('admin.campaigns.index', compact('campaigns'));
     }
 
@@ -37,15 +39,25 @@ class CampaignsAdminController extends Controller
             'body' => 'nullable|string',
         ]);
 
-        $validated['slug'] = Str::slug($validated['title']) . '-' . uniqid();
+        $validated['slug'] = Str::slug($validated['title']).'-'.uniqid();
         $validated['is_active'] = $request->has('is_active');
 
         if ($request->hasFile('desktop_banner')) {
-            $validated['desktop_banner'] = $request->file('desktop_banner')->store('campaigns', 'public');
+            $validated['desktop_banner'] = app(UploadedImageOptimizer::class)->store(
+                $request->file('desktop_banner'),
+                'campaigns',
+                'public',
+                'banner',
+            );
         }
 
         if ($request->hasFile('mobile_banner')) {
-            $validated['mobile_banner'] = $request->file('mobile_banner')->store('campaigns', 'public');
+            $validated['mobile_banner'] = app(UploadedImageOptimizer::class)->store(
+                $request->file('mobile_banner'),
+                'campaigns',
+                'public',
+                'banner',
+            );
         }
 
         Campaign::create($validated);
@@ -80,14 +92,24 @@ class CampaignsAdminController extends Controller
             if ($campaign->desktop_banner) {
                 Storage::disk('public')->delete($campaign->desktop_banner);
             }
-            $validated['desktop_banner'] = $request->file('desktop_banner')->store('campaigns', 'public');
+            $validated['desktop_banner'] = app(UploadedImageOptimizer::class)->store(
+                $request->file('desktop_banner'),
+                'campaigns',
+                'public',
+                'banner',
+            );
         }
 
         if ($request->hasFile('mobile_banner')) {
             if ($campaign->mobile_banner) {
                 Storage::disk('public')->delete($campaign->mobile_banner);
             }
-            $validated['mobile_banner'] = $request->file('mobile_banner')->store('campaigns', 'public');
+            $validated['mobile_banner'] = app(UploadedImageOptimizer::class)->store(
+                $request->file('mobile_banner'),
+                'campaigns',
+                'public',
+                'banner',
+            );
         }
 
         $campaign->update($validated);

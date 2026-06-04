@@ -8,16 +8,17 @@ use App\Enums\EmergencyReportCaseType;
 use App\Enums\EmergencyReportStatus;
 use App\Enums\MuthowifAccountStatus;
 use App\Enums\ReplacementOfferStatus;
-use App\Events\CustomerBookingUpdated;
 use App\Models\BookingEmergencyReport;
 use App\Models\BookingReplacementLog;
 use App\Models\BookingReplacementOffer;
 use App\Models\MuthowifBooking;
 use App\Models\MuthowifProfile;
 use App\Models\User;
+use App\Services\UploadedImageOptimizer;
+use App\Support\CustomerBookingBroadcast;
+use App\Support\EmergencyReportBroadcast;
 use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Facades\DB;
-use Illuminate\Support\Facades\Storage;
 
 final class EmergencyReplacementService
 {
@@ -54,7 +55,9 @@ final class EmergencyReplacementService
 
             $booking->update(['emergency_overlay_status' => EmergencyOverlayStatus::Reported]);
 
-            broadcast(new CustomerBookingUpdated($booking->fresh()));
+            $report = $report->fresh();
+            CustomerBookingBroadcast::afterResponse($booking->fresh());
+            EmergencyReportBroadcast::afterResponse($report, 'submitted');
 
             return $report;
         });
@@ -67,8 +70,10 @@ final class EmergencyReplacementService
         }
 
         $report->update(['status' => EmergencyReportStatus::UnderReview]);
+        $report = $report->fresh();
+        EmergencyReportBroadcast::afterResponse($report, 'under_review');
 
-        return $report->fresh();
+        return $report;
     }
 
     public function verifyAndStartRecruitment(BookingEmergencyReport $report, User $admin, ?string $adminNote = null): BookingEmergencyReport
@@ -92,7 +97,8 @@ final class EmergencyReplacementService
             $report = $report->fresh();
             $this->broadcastNextBatch($report);
 
-            broadcast(new CustomerBookingUpdated($booking->fresh()));
+            CustomerBookingBroadcast::afterResponse($booking->fresh());
+            EmergencyReportBroadcast::afterResponse($report->fresh(), 'verified');
 
             return $report->fresh();
         });
@@ -117,7 +123,8 @@ final class EmergencyReplacementService
                 'emergency_overlay_status' => EmergencyOverlayStatus::None,
             ]);
 
-            broadcast(new CustomerBookingUpdated($report->muthowifBooking->fresh()));
+            CustomerBookingBroadcast::afterResponse($report->muthowifBooking->fresh());
+            EmergencyReportBroadcast::afterResponse($report->fresh(), 'rejected');
 
             return $report->fresh();
         });
@@ -167,6 +174,13 @@ final class EmergencyReplacementService
             $report->update(['replacement_batch_number' => $batchNumber]);
         });
 
+        $notifyUserIds = $candidates
+            ->pluck('user_id')
+            ->map(static fn ($id) => (string) $id)
+            ->all();
+
+        EmergencyReportBroadcast::afterResponse($report->fresh(), 'batch_offered', $notifyUserIds);
+
         return $candidates->count();
     }
 
@@ -203,10 +217,16 @@ final class EmergencyReplacementService
                 'decline_note' => null,
             ]);
 
+            EmergencyReportBroadcast::afterResponse(
+                $report->fresh(),
+                'admin_invite',
+                [(string) $target->user_id],
+            );
+
             return $existing->fresh();
         }
 
-        return BookingReplacementOffer::query()->create([
+        $offer = BookingReplacementOffer::query()->create([
             'booking_emergency_report_id' => $report->getKey(),
             'muthowif_profile_id' => $target->getKey(),
             'batch_number' => max(1, (int) $report->replacement_batch_number),
@@ -214,6 +234,14 @@ final class EmergencyReplacementService
             'status' => ReplacementOfferStatus::Offered,
             'offered_at' => now(),
         ]);
+
+        EmergencyReportBroadcast::afterResponse(
+            $report->fresh(),
+            'admin_invite',
+            [(string) $target->user_id],
+        );
+
+        return $offer;
     }
 
     public function muthowifAccept(BookingReplacementOffer $offer, User $muthowifUser): BookingReplacementOffer
@@ -243,7 +271,8 @@ final class EmergencyReplacementService
             return $offer->fresh();
         });
 
-        broadcast(new CustomerBookingUpdated($report->muthowifBooking->fresh()));
+        CustomerBookingBroadcast::afterResponse($report->muthowifBooking->fresh());
+        EmergencyReportBroadcast::afterResponse($report->fresh(), 'offer_accepted');
 
         return $offer;
     }
@@ -267,7 +296,9 @@ final class EmergencyReplacementService
             'decline_note' => filled($note) ? trim($note) : null,
         ]);
 
-        $this->maybeAutoNextBatch($offer->report->fresh());
+        $report = $offer->report->fresh();
+        $this->maybeAutoNextBatch($report);
+        EmergencyReportBroadcast::afterResponse($report, 'offer_declined');
 
         return $offer->fresh();
     }
@@ -344,7 +375,8 @@ final class EmergencyReplacementService
                 'recruitment_open' => false,
             ]);
 
-            broadcast(new CustomerBookingUpdated($booking->fresh()));
+            CustomerBookingBroadcast::afterResponse($booking->fresh());
+            EmergencyReportBroadcast::afterResponse($report->fresh(), 'replacement_selected');
 
             return $booking->fresh();
         });
@@ -388,7 +420,12 @@ final class EmergencyReplacementService
             if (! $file instanceof UploadedFile || ! $file->isValid()) {
                 continue;
             }
-            $paths[] = $file->store('emergency-evidence/'.$booking->getKey(), 'local');
+            $paths[] = app(UploadedImageOptimizer::class)->store(
+                $file,
+                'emergency-evidence/'.$booking->getKey(),
+                'local',
+                'document',
+            );
         }
 
         return $paths;

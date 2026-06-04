@@ -65,4 +65,25 @@ class EmergencyOfferController extends Controller
 
         return back()->with('status', __('emergency.flash.offer_declined'));
     }
+
+    public function indexLiveFragment(Request $request): View
+    {
+        $profile = $request->user()->muthowifProfile;
+        abort_unless($profile, 403);
+
+        $offers = BookingReplacementOffer::query()
+            ->with([
+                'report.muthowifBooking.customer',
+                'report.muthowifBooking.muthowifProfile.user',
+                'muthowifProfile.user',
+            ])
+            ->where('muthowif_profile_id', $profile->getKey())
+            ->whereIn('status', ['offered', 'accepted'])
+            ->orderByDesc('offered_at')
+            ->paginate(20);
+
+        return view('muthowif.emergency-offers.partials.index-live', [
+            'offers' => $offers,
+        ]);
+    }
 }

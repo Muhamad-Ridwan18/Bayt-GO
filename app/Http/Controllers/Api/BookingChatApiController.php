@@ -7,6 +7,7 @@ use App\Http\Controllers\Controller;
 use App\Http\Resources\BookingChatMessageResource;
 use App\Models\BookingChatMessage;
 use App\Models\MuthowifBooking;
+use App\Services\UploadedImageOptimizer;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Storage;
@@ -67,11 +68,11 @@ class BookingChatApiController extends Controller
         $this->authorize('sendBookingChat', $booking);
 
         $validated = $request->validate([
-            'body'  => ['nullable', 'string', 'max:4000'],
+            'body' => ['nullable', 'string', 'max:4000'],
             'image' => ['nullable', 'image', 'max:5120', 'mimes:jpeg,jpg,png,gif,webp'],
         ]);
 
-        $body   = trim((string) ($validated['body'] ?? ''));
+        $body = trim((string) ($validated['body'] ?? ''));
         $upload = $request->file('image');
 
         if ($body === '' && $upload === null) {
@@ -80,12 +81,17 @@ class BookingChatApiController extends Controller
 
         $imagePath = null;
         if ($upload !== null) {
-            $imagePath = $upload->store('booking-chat/' . $booking->getKey(), 'local');
+            $imagePath = app(UploadedImageOptimizer::class)->store(
+                $upload,
+                'booking-chat/'.$booking->getKey(),
+                'local',
+                'chat',
+            );
         }
 
         $message = $booking->chatMessages()->create([
-            'user_id'    => $request->user()->id,
-            'body'       => $body,
+            'user_id' => $request->user()->id,
+            'body' => $body,
             'image_path' => $imagePath,
         ]);
 
@@ -94,7 +100,7 @@ class BookingChatApiController extends Controller
         broadcast(new BookingChatUpdated($booking))->toOthers();
 
         return response()->json([
-            'message'   => new BookingChatMessageResource($message),
+            'message' => new BookingChatMessageResource($message),
             'chat_open' => $booking->fresh()->isBookingChatOpen(),
         ], 201);
     }
@@ -104,7 +110,7 @@ class BookingChatApiController extends Controller
         abort_unless((string) $message->muthowif_booking_id === (string) $booking->getKey(), 404);
         $this->authorize('viewBookingChat', $booking);
 
-        if (!$message->image_path) {
+        if (! $message->image_path) {
             abort(404);
         }
 

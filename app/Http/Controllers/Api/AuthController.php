@@ -8,6 +8,7 @@ use App\Enums\UserRole;
 use App\Http\Controllers\Controller;
 use App\Models\MuthowifProfile;
 use App\Models\User;
+use App\Services\UploadedImageOptimizer;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Hash;
@@ -129,8 +130,9 @@ class AuthController extends Controller
             if ($user->isMuthowif()) {
                 $storedDir = 'muthowif_documents/'.$user->id;
 
-                $photoPath = $request->file('photo')->store($storedDir, 'local');
-                $ktpPath = $request->file('ktp_image')->store($storedDir, 'local');
+                $optimizer = app(UploadedImageOptimizer::class);
+                $photoPath = $optimizer->store($request->file('photo'), $storedDir, 'local', 'profile');
+                $ktpPath = $optimizer->store($request->file('ktp_image'), $storedDir, 'local', 'profile');
 
                 $languages = $this->requestStringList($request->input('languages'));
                 $educations = $this->requestStringList($request->input('educations'));
@@ -160,7 +162,7 @@ class AuthController extends Controller
                     if (! $file || ! $file->isValid()) {
                         continue;
                     }
-                    $path = $file->store($storedDir, 'local');
+                    $path = $optimizer->store($file, $storedDir, 'local', 'document');
                     $profile->supportingDocuments()->create([
                         'path' => $path,
                         'original_name' => $file->getClientOriginalName(),
@@ -214,7 +216,6 @@ class AuthController extends Controller
             static fn (string $s): bool => $s !== ''
         ));
     }
-
 
     public function logout(Request $request)
     {

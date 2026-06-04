@@ -9,8 +9,19 @@
             <p class="mt-4 rounded-xl bg-rose-50 px-4 py-3 text-sm text-rose-900">{{ session('error') }}</p>
         @endif
 
+        <div
+            class="mt-6"
+            x-data="reverbFragmentLive({
+                fragmentUrl: @js(route('muthowif.emergency-offers.index.live-fragment')),
+                appendQuery: true,
+                listeners: [
+                    { channel: @js('App.Models.User.'.auth()->id()), event: '.emergency.report.updated' },
+                ],
+            })"
+        >
+        <div x-ref="liveRoot">
         @if ($offers->isEmpty())
-            <p class="mt-6 rounded-2xl border border-dashed border-slate-300 bg-slate-50 p-10 text-center text-sm text-slate-600">{{ __('emergency.muthowif.empty') }}</p>
+            <p class="rounded-2xl border border-dashed border-slate-300 bg-slate-50 p-10 text-center text-sm text-slate-600">{{ __('emergency.muthowif.empty') }}</p>
         @else
             <div class="mt-6 space-y-4">
                 @foreach ($offers as $offer)
@@ -43,5 +54,7 @@
             </div>
             <div class="mt-4">{{ $offers->links() }}</div>
         @endif
+        </div>
+        </div>
     </x-page-container>
 </x-app-layout>

@@ -7,29 +7,33 @@ use App\Enums\BookingStatus;
 use App\Enums\MuthowifBookingMuthowifRejectionKind;
 use App\Enums\PaymentStatus;
 use App\Http\Controllers\Controller;
-use App\Support\CustomerBookingBroadcast;
 use App\Jobs\NotifyCustomerOfApprovedBooking;
 use App\Jobs\NotifyCustomerOfBookingReferredToPeer;
 use App\Jobs\NotifyCustomerOfBookingRejectedJadwalFull;
 use App\Jobs\NotifyCustomerOfRescheduleApproved;
 use App\Jobs\NotifyCustomerOfRescheduleRejected;
 use App\Jobs\NotifyMuthowifOfNewBooking;
+use App\Models\BookingPayment;
 use App\Models\BookingRescheduleRequest;
 use App\Models\MuthowifBooking;
 use App\Models\MuthowifProfile;
 use App\Models\MuthowifServiceAddOn;
 use App\Services\BookingPeerReferralService;
 use App\Services\BookingPendingPaymentEnsurer;
+use App\Support\BookingWebLive;
+use App\Support\CustomerBookingBroadcast;
+use App\Support\PlatformFee;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Pagination\LengthAwarePaginator;
 use Illuminate\Support\Collection;
+use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Log;
 use Illuminate\Validation\Rule;
 use Illuminate\View\View;
 use RuntimeException;
-use Illuminate\Support\Facades\Log;
 use Throwable;
 
 class BookingController extends Controller
@@ -114,11 +118,28 @@ class BookingController extends Controller
             ? app(BookingPeerReferralService::class)->listCandidates($booking, $profile)
             : collect();
 
-        return view('muthowif.bookings.show', [
+        $earnings = $this->muthowifBookingEarningsViewData($booking, $addonsById, true);
+
+        return view('muthowif.bookings.show', array_merge([
             'booking' => $booking,
             'addonsById' => $addonsById,
             'peerRecommendTargets' => $peerRecommendTargets,
-        ]);
+        ], $earnings));
+    }
+
+    public function showLiveState(Request $request, MuthowifBooking $booking): JsonResponse
+    {
+        $profile = $request->user()->muthowifProfile;
+        abort_unless($profile, 403);
+        abort_unless((string) $booking->muthowif_profile_id === (string) $profile->getKey(), 403);
+
+        $booking->refresh();
+
+        return response()->json(BookingWebLive::muthowifShowState($booking, [
+            'status' => $request->query('status'),
+            'payment_status' => $request->query('payment_status'),
+            'emergency_event' => $request->boolean('emergency_event'),
+        ]));
     }
 
     public function showLiveFragment(Request $request, MuthowifBooking $booking): View
@@ -127,12 +148,7 @@ class BookingController extends Controller
         abort_unless($profile, 403);
         abort_unless((string) $booking->muthowif_profile_id === (string) $profile->getKey(), 403);
 
-        $booking->load([
-            'customer',
-            'muthowifProfile.services.addOns',
-            'refundRequests' => fn ($q) => $q->orderByDesc('created_at'),
-            'rescheduleRequests' => fn ($q) => $q->orderByDesc('created_at'),
-        ]);
+        $tier = (string) $request->query('tier', BookingWebLive::TIER_FULL);
 
         $addonsById = collect();
         $ids = collect($booking->selected_add_on_ids ?? [])->unique()->filter()->values();
@@ -140,15 +156,34 @@ class BookingController extends Controller
             $addonsById = MuthowifServiceAddOn::query()->whereIn('id', $ids)->get()->keyBy('id');
         }
 
+        if ($tier === BookingWebLive::TIER_DYNAMIC) {
+            $booking->load(['customer', 'muthowifProfile.services']);
+            $earnings = $this->muthowifBookingEarningsViewData($booking, $addonsById, false);
+
+            return view('muthowif.bookings.partials.show-live-dynamic', array_merge([
+                'booking' => $booking,
+                'peerRecommendTargets' => collect(),
+            ], $earnings));
+        }
+
+        $booking->load([
+            'customer',
+            'muthowifProfile.services.addOns',
+            'refundRequests' => fn ($q) => $q->orderByDesc('created_at'),
+            'rescheduleRequests' => fn ($q) => $q->orderByDesc('created_at'),
+        ]);
+
         $peerRecommendTargets = $booking->status === BookingStatus::Pending
             ? app(BookingPeerReferralService::class)->listCandidates($booking, $profile)
             : collect();
 
-        return view('muthowif.bookings.partials.show-live', [
+        $earnings = $this->muthowifBookingEarningsViewData($booking, $addonsById, true);
+
+        return view('muthowif.bookings.partials.show-grid', array_merge([
             'booking' => $booking,
             'addonsById' => $addonsById,
             'peerRecommendTargets' => $peerRecommendTargets,
-        ]);
+        ], $earnings));
     }
 
     public function confirm(Request $request, MuthowifBooking $booking): RedirectResponse
@@ -177,8 +212,9 @@ class BookingController extends Controller
         $total = $booking->computeTotalAmount();
         $bookingIdStr = (string) $booking->getKey();
         $broadcastIds = [$bookingIdStr];
+        $customerIdsToInvalidate = [(string) $booking->customer_id];
 
-        DB::transaction(function () use ($booking, $profile, $start, $end, $total, $bookingIdStr, &$broadcastIds): void {
+        DB::transaction(function () use ($booking, $profile, $start, $end, $total, $bookingIdStr, &$broadcastIds, &$customerIdsToInvalidate): void {
             $booking->update([
                 'status' => BookingStatus::Confirmed,
                 'payment_status' => PaymentStatus::Pending,
@@ -202,6 +238,7 @@ class BookingController extends Controller
                 ]);
                 NotifyCustomerOfBookingRejectedJadwalFull::dispatchAfterResponse((string) $other->getKey());
                 $broadcastIds[] = (string) $other->getKey();
+                $customerIdsToInvalidate[] = (string) $other->customer_id;
             }
         });
 
@@ -209,13 +246,14 @@ class BookingController extends Controller
 
         NotifyCustomerOfApprovedBooking::dispatchAfterResponse($bookingIdStr);
         CustomerBookingBroadcast::afterResponseMany($broadcastIds);
+        foreach (array_unique($customerIdsToInvalidate) as $customerId) {
+            Cache::forget('customer_booking_status_counts:'.$customerId);
+        }
 
         return redirect()
-            ->route('muthowif.bookings.index')
+            ->route('muthowif.bookings.show', $booking)
             ->with('status', 'Booking disetujui. Jamaah dapat melanjutkan pembayaran.');
     }
-
-    
 
     public function cancel(Request $request, MuthowifBooking $booking): RedirectResponse
     {
@@ -397,7 +435,7 @@ class BookingController extends Controller
                     $broadcastIds[] = (string) $other->getKey();
                 }
             });
-        } catch (\Throwable $e) {
+        } catch (Throwable $e) {
             return redirect()
                 ->route('muthowif.bookings.show', $booking)
                 ->with('error', $e->getMessage());
@@ -455,4 +493,83 @@ class BookingController extends Controller
         return MuthowifServiceAddOn::query()->whereIn('id', $ids)->get()->keyBy('id');
     }
 
+    /**
+     * @param  Collection<string, MuthowifServiceAddOn>  $addonsById
+     * @return array{
+     *   referralRewardFromPay: float,
+     *   daily: float,
+     *   nights: int,
+     *   serviceSubtotal: float,
+     *   addonLines: Collection,
+     *   sameHotelLine: float,
+     *   transportLine: float,
+     *   muthowifFee: float,
+     *   muthowifNetAfterReferral: float
+     * }
+     */
+    private function muthowifBookingEarningsViewData(
+        MuthowifBooking $booking,
+        Collection $addonsById,
+        bool $loadReferralFromPayments,
+    ): array {
+        $booking->loadMissing(['muthowifProfile.services']);
+        $service = $booking->muthowifProfile?->services->firstWhere('type', $booking->service_type);
+        $nights = $booking->billingNightsInclusive();
+        $daily = (float) ($booking->daily_price_snapshot ?? ($service ? $service->daily_price : 0.0));
+        $serviceSubtotal = (float) ($nights * $daily);
+
+        $addonLines = collect();
+        if (! empty($booking->add_ons_snapshot)) {
+            $addonLines = collect($booking->add_ons_snapshot)->map(fn ($a) => (object) $a);
+        } elseif (! empty($booking->selected_add_on_ids)) {
+            foreach ($booking->selected_add_on_ids as $aid) {
+                if (isset($addonsById[$aid])) {
+                    $addonLines->push($addonsById[$aid]);
+                }
+            }
+        }
+
+        $addonsSum = $addonLines->sum(fn ($a) => (float) $a->price);
+        $sameHotelPrice = (float) ($booking->same_hotel_price_snapshot ?? ($service ? $service->same_hotel_price_per_day : 0.0));
+        $sameHotelLine = $booking->with_same_hotel ? ($nights * $sameHotelPrice) : 0.0;
+        $transportLine = (float) ($booking->transport_price_snapshot ?? ($booking->with_transport && $service ? (float) $service->transport_price_flat : 0.0));
+        $totalGross = (float) ($serviceSubtotal + $addonsSum + $sameHotelLine + $transportLine);
+        $split = PlatformFee::split($totalGross);
+        $muthowifNet = (float) ($split['muthowif_net'] ?? 0.0);
+        $muthowifFee = (float) ($split['muthowif_fee'] ?? 0.0);
+
+        $referralRewardFromPay = 0.0;
+        if ($loadReferralFromPayments) {
+            $settledPaymentForReferral = BookingPayment::query()
+                ->where('muthowif_booking_id', $booking->getKey())
+                ->whereIn('status', ['settlement', 'capture'])
+                ->orderByDesc('settled_at')
+                ->first();
+            $pendingPaymentForReferral = $settledPaymentForReferral === null
+                ? BookingPayment::query()
+                    ->where('muthowif_booking_id', $booking->getKey())
+                    ->where('status', 'pending')
+                    ->orderByDesc('created_at')
+                    ->first()
+                : null;
+            $payForReferral = $settledPaymentForReferral ?? $pendingPaymentForReferral;
+            $referralRewardFromPay = $payForReferral !== null
+                ? round((float) ($payForReferral->referral_reward_amount ?? 0), 2)
+                : 0.0;
+        }
+
+        $muthowifNetAfterReferral = round(max(0.0, $muthowifNet - $referralRewardFromPay), 2);
+
+        return [
+            'referralRewardFromPay' => $referralRewardFromPay,
+            'daily' => $daily,
+            'nights' => $nights,
+            'serviceSubtotal' => $serviceSubtotal,
+            'addonLines' => $addonLines,
+            'sameHotelLine' => $sameHotelLine,
+            'transportLine' => $transportLine,
+            'muthowifFee' => $muthowifFee,
+            'muthowifNetAfterReferral' => $muthowifNetAfterReferral,
+        ];
+    }
 }

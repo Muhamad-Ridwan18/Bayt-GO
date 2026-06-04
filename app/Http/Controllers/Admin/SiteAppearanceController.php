@@ -4,6 +4,7 @@ namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
 use App\Models\SiteSetting;
+use App\Services\UploadedImageOptimizer;
 use App\Support\SiteBrand;
 use App\Support\WelcomeLanding;
 use Closure;
@@ -58,7 +59,12 @@ class SiteAppearanceController extends Controller
             SiteBrand::forgetLogoFile();
         } elseif ($request->hasFile('logo')) {
             SiteBrand::forgetLogoFile();
-            $path = $request->file('logo')->store('site', 'public');
+            $path = app(UploadedImageOptimizer::class)->store(
+                $request->file('logo'),
+                'site',
+                'public',
+                'banner',
+            );
             SiteSetting::putValue(SiteBrand::SETTING_LOGO_PATH, $path);
         }
 

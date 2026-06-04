@@ -13,6 +13,7 @@ use App\Services\BookingOrderCodeService;
 use App\Services\BookingPricingService;
 use App\Services\Doku\DokuDirectChargeService;
 use App\Services\Moota\MootaBookingChargeService;
+use App\Services\UploadedImageOptimizer;
 use App\Support\BookingSnapPaymentCatalog;
 use App\Support\MuthowifReferralReward;
 use App\Support\PaymentFlowLog;
@@ -175,11 +176,14 @@ class BookingApiController extends Controller
                 ]))));
 
                 $dir = 'booking-documents/'.$booking->getKey();
-                $ticketOutbound = $request->file('ticket_outbound')->store($dir, 'local');
-                $ticketReturn = $request->file('ticket_return')->store($dir, 'local');
-                $passport = $request->file('passport')->store($dir, 'local');
-                $itineraryPath = $request->file('itinerary')?->store($dir, 'local');
-                $visaPath = $request->file('visa')?->store($dir, 'local');
+                $optimizer = app(UploadedImageOptimizer::class);
+                $ticketOutbound = $optimizer->store($request->file('ticket_outbound'), $dir, 'local', 'document');
+                $ticketReturn = $optimizer->store($request->file('ticket_return'), $dir, 'local', 'document');
+                $passport = $optimizer->store($request->file('passport'), $dir, 'local', 'document');
+                $itineraryFile = $request->file('itinerary');
+                $visaFile = $request->file('visa');
+                $itineraryPath = $itineraryFile ? $optimizer->store($itineraryFile, $dir, 'local', 'document') : null;
+                $visaPath = $visaFile ? $optimizer->store($visaFile, $dir, 'local', 'document') : null;
 
                 $booking->update([
                     'ticket_outbound_path' => $ticketOutbound,

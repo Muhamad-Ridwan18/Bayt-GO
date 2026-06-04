@@ -35,6 +35,16 @@
                 @endif
             </form>
 
+            <div
+                x-data="reverbFragmentLive({
+                    fragmentUrl: @js(route('admin.support-tickets.index.live-fragment')),
+                    appendQuery: true,
+                    listeners: [
+                        { channel: 'admin.support-tickets', event: '.support.ticket.updated' },
+                    ],
+                })"
+            >
+            <div x-ref="liveRoot">
             @if ($tickets->isEmpty())
                 <div class="rounded-2xl border border-dashed border-slate-300 bg-slate-50/80 p-10 text-center text-sm text-slate-600">{{ __('support.empty_admin') }}</div>
             @else
@@ -78,6 +88,8 @@
                     <div class="border-t border-slate-100 px-4 py-3">{{ $tickets->withQueryString()->links() }}</div>
                 </div>
             @endif
+            </div>
+            </div>
         </x-page-container>
     </div>
 </x-app-layout>

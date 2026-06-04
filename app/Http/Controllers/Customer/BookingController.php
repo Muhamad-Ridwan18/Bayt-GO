@@ -6,7 +6,6 @@ use App\Enums\BookingChangeRequestStatus;
 use App\Enums\BookingStatus;
 use App\Enums\MuthowifServiceType;
 use App\Enums\MuthowifVerificationStatus;
-use App\Events\CustomerBookingUpdated;
 use App\Http\Controllers\Controller;
 use App\Jobs\NotifyCustomerOfRescheduleSubmitted;
 use App\Jobs\NotifyMuthowifOfNewBooking;
@@ -29,6 +28,9 @@ use App\Services\MuthowifNetworkReferralService;
 use App\Support\BookingPostPayRules;
 use App\Support\BookingRefundFee;
 use App\Support\BookingSnapPaymentCatalog;
+use App\Support\BookingWebLive;
+use App\Support\CustomerBookingBroadcast;
+use App\Support\EmergencyBookingViewData;
 use App\Support\MuthowifReferralReward;
 use App\Support\PaymentFlowLog;
 use App\Support\PlatformFee;
@@ -38,6 +40,7 @@ use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Pagination\LengthAwarePaginator;
 use Illuminate\Support\Collection;
+use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Facades\Validator;
@@ -64,16 +67,7 @@ class BookingController extends Controller
 
         $addonsById = $this->addOnsKeyById($bookings);
 
-        $statusAggregates = MuthowifBooking::query()
-            ->where('customer_id', $request->user()->getKey())
-            ->toBase()
-            ->selectRaw('status, COUNT(*) as aggregate')
-            ->groupBy('status')
-            ->pluck('aggregate', 'status');
-
-        $bookingStatusCounts = collect(BookingStatus::cases())->mapWithKeys(
-            fn (BookingStatus $status) => [$status->value => (int) ($statusAggregates[$status->value] ?? 0)]
-        );
+        $bookingStatusCounts = $this->customerBookingStatusCounts($request->user()->getKey());
 
         return view('bookings.index', [
             'bookings' => $bookings,
@@ -95,16 +89,7 @@ class BookingController extends Controller
 
         $addonsById = $this->addOnsKeyById($bookings);
 
-        $statusAggregates = MuthowifBooking::query()
-            ->where('customer_id', $request->user()->getKey())
-            ->toBase()
-            ->selectRaw('status, COUNT(*) as aggregate')
-            ->groupBy('status')
-            ->pluck('aggregate', 'status');
-
-        $bookingStatusCounts = collect(BookingStatus::cases())->mapWithKeys(
-            fn (BookingStatus $status) => [$status->value => (int) ($statusAggregates[$status->value] ?? 0)]
-        );
+        $bookingStatusCounts = $this->customerBookingStatusCounts($request->user()->getKey());
 
         return view('bookings.partials.index-body', [
             'bookings' => $bookings,
@@ -140,12 +125,45 @@ class BookingController extends Controller
             'refundPreview' => $this->refundPreviewForBooking($booking),
             'referralNetworkAlternatives' => $referralNetworkAlternatives,
             'showReferralNetworkPanel' => $showReferralNetworkPanel,
-        ], \App\Support\EmergencyBookingViewData::for($booking)));
+        ], EmergencyBookingViewData::for($booking)));
+    }
+
+    public function showLiveState(Request $request, MuthowifBooking $booking): JsonResponse
+    {
+        $this->authorize('view', $booking);
+
+        $booking->refresh();
+
+        return response()->json(BookingWebLive::customerShowState($booking, [
+            'status' => $request->query('status'),
+            'payment_status' => $request->query('payment_status'),
+            'emergency_event' => $request->boolean('emergency_event'),
+        ]));
     }
 
     public function showLiveFragment(Request $request, MuthowifBooking $booking): View
     {
         $this->authorize('view', $booking);
+
+        $tier = (string) $request->query('tier', BookingWebLive::TIER_FULL);
+
+        if ($tier === BookingWebLive::TIER_DYNAMIC) {
+            $booking->load(['muthowifProfile.user', 'review']);
+
+            $networkReferral = app(MuthowifNetworkReferralService::class);
+            $showReferralNetworkPanel = $networkReferral->shouldShowCustomerReferralPanel($booking);
+            $referralNetworkAlternatives = $showReferralNetworkPanel
+                ? $this->referralAlternativesWithStats(
+                    $networkReferral->alternativesForCustomerAfterJadwalRejection($booking),
+                )
+                : collect();
+
+            return view('bookings.partials.show-live-dynamic', array_merge([
+                'booking' => $booking,
+                'referralNetworkAlternatives' => $referralNetworkAlternatives,
+                'showReferralNetworkPanel' => $showReferralNetworkPanel,
+            ], EmergencyBookingViewData::for($booking)));
+        }
 
         $booking->load([
             'muthowifProfile.user',
@@ -157,10 +175,12 @@ class BookingController extends Controller
         $addonsById = $this->addOnsKeyByIdForBooking($booking);
 
         $networkReferral = app(MuthowifNetworkReferralService::class);
-        $referralNetworkAlternatives = $this->referralAlternativesWithStats(
-            $networkReferral->alternativesForCustomerAfterJadwalRejection($booking),
-        );
         $showReferralNetworkPanel = $networkReferral->shouldShowCustomerReferralPanel($booking);
+        $referralNetworkAlternatives = $showReferralNetworkPanel
+            ? $this->referralAlternativesWithStats(
+                $networkReferral->alternativesForCustomerAfterJadwalRejection($booking),
+            )
+            : collect();
 
         return view('bookings.partials.show-body', array_merge([
             'booking' => $booking,
@@ -170,7 +190,7 @@ class BookingController extends Controller
             'refundPreview' => $this->refundPreviewForBooking($booking),
             'referralNetworkAlternatives' => $referralNetworkAlternatives,
             'showReferralNetworkPanel' => $showReferralNetworkPanel,
-        ], \App\Support\EmergencyBookingViewData::for($booking)));
+        ], EmergencyBookingViewData::for($booking)));
     }
 
     public function requestRefund(Request $request, MuthowifBooking $booking): View
@@ -506,7 +526,7 @@ class BookingController extends Controller
                 ->with('error', $result['error'] ?? __('bookings.flash.complete_error'));
         }
 
-        broadcast(new CustomerBookingUpdated($booking->fresh()));
+        CustomerBookingBroadcast::afterResponse($booking->fresh());
 
         return redirect()
             ->route('bookings.show', $booking)
@@ -532,7 +552,7 @@ class BookingController extends Controller
             ]
         );
 
-        broadcast(new CustomerBookingUpdated($booking->fresh()));
+        CustomerBookingBroadcast::afterResponse($booking->fresh());
 
         return redirect()
             ->route('bookings.show', $booking)
@@ -710,7 +730,8 @@ class BookingController extends Controller
         });
 
         NotifyMuthowifOfNewBooking::dispatchAfterResponse((string) $booking->getKey());
-        broadcast(new CustomerBookingUpdated($booking->fresh()));
+        $this->forgetCustomerBookingStatusCounts((string) $request->user()->getKey());
+        CustomerBookingBroadcast::afterResponse($booking);
 
         return redirect()
             ->route('bookings.index')
@@ -802,7 +823,7 @@ class BookingController extends Controller
                 ->with('error', $e->getMessage());
         }
 
-        broadcast(new CustomerBookingUpdated($booking->fresh()));
+        CustomerBookingBroadcast::afterResponse($booking->fresh());
 
         return redirect()
             ->route('bookings.show', $booking)
@@ -877,7 +898,7 @@ class BookingController extends Controller
 
         NotifyMuthowifOfRescheduleRequest::dispatchAfterResponse((string) $booking->getKey(), (string) $rescheduleRequest->getKey());
         NotifyCustomerOfRescheduleSubmitted::dispatchAfterResponse((string) $booking->getKey(), (string) $rescheduleRequest->getKey());
-        broadcast(new CustomerBookingUpdated($booking->fresh()));
+        CustomerBookingBroadcast::afterResponse($booking->fresh());
 
         return redirect()
             ->route('bookings.show', $booking)
@@ -899,7 +920,8 @@ class BookingController extends Controller
             ]);
         });
 
-        broadcast(new CustomerBookingUpdated($booking->fresh()));
+        $this->forgetCustomerBookingStatusCounts((string) $request->user()->getKey());
+        CustomerBookingBroadcast::afterResponse($booking->fresh());
 
         return redirect()
             ->route('bookings.index')
@@ -1043,4 +1065,34 @@ class BookingController extends Controller
         return $profiles;
     }
 
+    /**
+     * @return array<string, int>
+     */
+    private function forgetCustomerBookingStatusCounts(string $customerId): void
+    {
+        Cache::forget('customer_booking_status_counts:'.$customerId);
+    }
+
+    /**
+     * @return array<string, int>
+     */
+    private function customerBookingStatusCounts(string $customerId): array
+    {
+        return Cache::remember(
+            'customer_booking_status_counts:'.$customerId,
+            now()->addSeconds(20),
+            function () use ($customerId) {
+                $statusAggregates = MuthowifBooking::query()
+                    ->where('customer_id', $customerId)
+                    ->toBase()
+                    ->selectRaw('status, COUNT(*) as aggregate')
+                    ->groupBy('status')
+                    ->pluck('aggregate', 'status');
+
+                return collect(BookingStatus::cases())->mapWithKeys(
+                    fn (BookingStatus $status) => [$status->value => (int) ($statusAggregates[$status->value] ?? 0)]
+                )->all();
+            },
+        );
+    }
 }

@@ -4,10 +4,10 @@ namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
 use App\Models\Article;
+use App\Services\UploadedImageOptimizer;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
-use Illuminate\Http\Response;
 use Illuminate\Support\Carbon;
 use Illuminate\Validation\Rule;
 use Illuminate\View\View;
@@ -103,21 +103,24 @@ class ArticlesAdminController extends Controller
                 if ($request->expectsJson()) {
                     return response()->json(['error' => __('admin.articles.upload_missing_file')], 422);
                 }
+
                 return $this->ckeditorUploadResponse($funcNum, '', __('admin.articles.upload_missing_file'));
             }
 
             $folder = 'articles/ckeditor/'.now()->format('Y/m');
-            $path = $file->store($folder, 'public');
+            $path = app(UploadedImageOptimizer::class)->store($file, $folder, 'public', 'content');
             $url = asset('storage/'.$path);
 
             if ($request->expectsJson()) {
                 return response()->json(['url' => $url]);
             }
+
             return $this->ckeditorUploadResponse($funcNum, $url, '');
         } catch (\Throwable $e) {
             if ($request->expectsJson()) {
                 return response()->json(['error' => __('admin.articles.upload_failed')], 500);
             }
+
             return $this->ckeditorUploadResponse($funcNum, '', __('admin.articles.upload_failed'));
         }
     }
@@ -131,7 +134,7 @@ class ArticlesAdminController extends Controller
         try {
             $file = $request->file('image');
             $folder = 'articles/images/'.now()->format('Y/m');
-            $path = $file->store($folder, 'public');
+            $path = app(UploadedImageOptimizer::class)->store($file, $folder, 'public', 'content');
             $url = asset('storage/'.$path);
 
             return response()->json([
@@ -177,23 +180,23 @@ class ArticlesAdminController extends Controller
             'sort_order' => ['required', 'integer', 'min:0', 'max:99999'],
             'published_at' => ['nullable', 'date'],
             'loc' => ['required', 'array'],
-            'loc.id.title'    => ['required', 'string', 'max:255'],
-            'loc.id.excerpt'  => ['nullable', 'string', 'max:65535'],
+            'loc.id.title' => ['required', 'string', 'max:255'],
+            'loc.id.excerpt' => ['nullable', 'string', 'max:65535'],
             'loc.id.category' => ['nullable', 'string', 'max:120'],
-            'loc.id.author'   => ['nullable', 'string', 'max:120'],
-            'loc.id.body'     => ['nullable', 'string'],
+            'loc.id.author' => ['nullable', 'string', 'max:120'],
+            'loc.id.body' => ['nullable', 'string'],
             'loc.id.body_json' => ['nullable', 'string'],
-            'loc.en.title'    => ['nullable', 'string', 'max:255'],
-            'loc.en.excerpt'  => ['nullable', 'string', 'max:65535'],
+            'loc.en.title' => ['nullable', 'string', 'max:255'],
+            'loc.en.excerpt' => ['nullable', 'string', 'max:65535'],
             'loc.en.category' => ['nullable', 'string', 'max:120'],
-            'loc.en.author'   => ['nullable', 'string', 'max:120'],
-            'loc.en.body'     => ['nullable', 'string'],
+            'loc.en.author' => ['nullable', 'string', 'max:120'],
+            'loc.en.body' => ['nullable', 'string'],
             'loc.en.body_json' => ['nullable', 'string'],
-            'loc.ar.title'    => ['nullable', 'string', 'max:255'],
-            'loc.ar.excerpt'  => ['nullable', 'string', 'max:65535'],
+            'loc.ar.title' => ['nullable', 'string', 'max:255'],
+            'loc.ar.excerpt' => ['nullable', 'string', 'max:65535'],
             'loc.ar.category' => ['nullable', 'string', 'max:120'],
-            'loc.ar.author'   => ['nullable', 'string', 'max:120'],
-            'loc.ar.body'     => ['nullable', 'string'],
+            'loc.ar.author' => ['nullable', 'string', 'max:120'],
+            'loc.ar.body' => ['nullable', 'string'],
             'loc.ar.body_json' => ['nullable', 'string'],
         ]);
     }
@@ -268,11 +271,11 @@ class ArticlesAdminController extends Controller
             app()->setLocale($locale);
             $row = $request->input('loc.'.$locale, []);
 
-            $newTitle    = trim((string) ($row['title']    ?? ''));
-            $newExcerpt  = trim((string) ($row['excerpt']  ?? ''));
+            $newTitle = trim((string) ($row['title'] ?? ''));
+            $newExcerpt = trim((string) ($row['excerpt'] ?? ''));
             $newCategory = trim((string) ($row['category'] ?? ''));
-            $newAuthor   = trim((string) ($row['author']   ?? ''));
-            $newBody     = (string) ($row['body']     ?? '');
+            $newAuthor = trim((string) ($row['author'] ?? ''));
+            $newBody = (string) ($row['body'] ?? '');
             $newBodyJson = (string) ($row['body_json'] ?? '');
 
             // If user left this locale completely empty, keep existing data (for edit).
@@ -280,17 +283,18 @@ class ArticlesAdminController extends Controller
 
             if ($isBlank && isset($existingTranslations[$locale])) {
                 $out[$locale] = $existingTranslations[$locale];
+
                 continue;
             }
 
             $out[$locale] = [
-                'title'    => $newTitle,
-                'excerpt'  => $newExcerpt,
+                'title' => $newTitle,
+                'excerpt' => $newExcerpt,
                 'category' => $newCategory,
-                'author'   => $newAuthor,
-                'body'     => Purify::config('article')->clean($newBody),
+                'author' => $newAuthor,
+                'body' => Purify::config('article')->clean($newBody),
                 'body_json' => $newBodyJson,
-                'body_md'  => (string) ($existingTranslations[$locale]['body_md'] ?? ''),
+                'body_md' => (string) ($existingTranslations[$locale]['body_md'] ?? ''),
             ];
         }
 

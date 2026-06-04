@@ -5,11 +5,14 @@ namespace App\Http\Controllers\Muthowif;
 use App\Http\Controllers\Controller;
 use App\Models\MuthowifPortfolio;
 use App\Models\MuthowifPortfolioImage;
+use App\Services\UploadedImageOptimizer;
+use Illuminate\Http\File;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\View\View;
+use Maestroerror\HeicToJpg;
 use Symfony\Component\HttpFoundation\Response;
 
 class MuthowifPortfolioController extends Controller
@@ -63,13 +66,13 @@ class MuthowifPortfolioController extends Controller
         ]);
 
         $files = $request->file('images', []);
-        if (!is_array($files)) {
+        if (! is_array($files)) {
             $files = array_filter([$files]);
         }
 
         $coverPath = null;
         foreach ($files as $index => $file) {
-            if (!$file || !$file->isValid()) {
+            if (! $file || ! $file->isValid()) {
                 continue;
             }
 
@@ -133,12 +136,12 @@ class MuthowifPortfolioController extends Controller
         }
 
         $newFiles = $request->file('images', []);
-        if (!is_array($newFiles)) {
+        if (! is_array($newFiles)) {
             $newFiles = array_filter([$newFiles]);
         }
         $nextSortOrder = (int) $portfolio->images()->max('sort_order') + 1;
         foreach ($newFiles as $file) {
-            if (!$file || !$file->isValid()) {
+            if (! $file || ! $file->isValid()) {
                 continue;
             }
             $path = $this->storePortfolioImage($file, $profile->id);
@@ -214,17 +217,17 @@ class MuthowifPortfolioController extends Controller
             $required ? 'required' : 'nullable',
             'max:10240',
             function ($attribute, $value, $fail) {
-                if (!$value) {
+                if (! $value) {
                     return;
                 }
 
-                if (!$value->isValid()) {
-                    return $fail('Berkas foto tidak valid: ' . $value->getErrorMessage());
+                if (! $value->isValid()) {
+                    return $fail('Berkas foto tidak valid: '.$value->getErrorMessage());
                 }
 
                 $extension = strtolower($value->getClientOriginalExtension());
                 $allowedExtensions = ['jpeg', 'jpg', 'png', 'webp', 'heic', 'heif'];
-                if (!in_array($extension, $allowedExtensions, true)) {
+                if (! in_array($extension, $allowedExtensions, true)) {
                     return $fail('Format gambar harus jpeg, jpg, png, webp, heic, atau heif.');
                 }
 
@@ -233,7 +236,7 @@ class MuthowifPortfolioController extends Controller
                     'image/jpeg', 'image/png', 'image/webp', 'image/heic', 'image/heif',
                     'image/heic-sequence', 'image/heif-sequence', 'application/octet-stream',
                 ];
-                if (!in_array($mime, $allowedMimes, true) && !str_starts_with($mime, 'image/')) {
+                if (! in_array($mime, $allowedMimes, true) && ! str_starts_with($mime, 'image/')) {
                     return $fail('Berkas yang diunggah harus berupa gambar.');
                 }
             },
@@ -248,27 +251,33 @@ class MuthowifPortfolioController extends Controller
 
         if ($hasConverter) {
             try {
-                $isHeicOrHeif = \Maestroerror\HeicToJpg::isHeic($tempPath)
+                $isHeicOrHeif = HeicToJpg::isHeic($tempPath)
                     || in_array(strtolower($file->getClientOriginalExtension()), ['heic', 'heif'], true);
             } catch (\Throwable $e) {
-                Log::warning('Error checking if portfolio file is HEIC/HEIF: ' . $e->getMessage());
+                Log::warning('Error checking if portfolio file is HEIC/HEIF: '.$e->getMessage());
             }
         }
 
-        if (!$isHeicOrHeif || !$hasConverter) {
-            return $file->store('portfolio/' . $profileId, 'local');
+        $optimizer = app(UploadedImageOptimizer::class);
+
+        if (! $isHeicOrHeif || ! $hasConverter) {
+            return $optimizer->store($file, 'portfolio/'.$profileId, 'local', 'portfolio');
         }
 
-        $tempJpg = tempnam(sys_get_temp_dir(), 'heic_heif_') . '.jpg';
+        $tempJpg = tempnam(sys_get_temp_dir(), 'heic_heif_').'.jpg';
 
         try {
-            \Maestroerror\HeicToJpg::convert($tempPath)->saveAs($tempJpg);
+            HeicToJpg::convert($tempPath)->saveAs($tempJpg);
 
-            return Storage::disk('local')->putFile('portfolio/' . $profileId, new \Illuminate\Http\File($tempJpg));
+            $path = Storage::disk('local')->putFile('portfolio/'.$profileId, new File($tempJpg));
+
+            return is_string($path)
+                ? $optimizer->optimizeStoredPath($path, 'local', 'portfolio')
+                : $optimizer->store($file, 'portfolio/'.$profileId, 'local', 'portfolio');
         } catch (\Throwable $e) {
-            Log::error('HEIC/HEIF portfolio conversion to JPEG failed: ' . $e->getMessage());
+            Log::error('HEIC/HEIF portfolio conversion to JPEG failed: '.$e->getMessage());
 
-            return $file->store('portfolio/' . $profileId, 'local');
+            return $optimizer->store($file, 'portfolio/'.$profileId, 'local', 'portfolio');
         } finally {
             if (file_exists($tempJpg)) {
                 unlink($tempJpg);

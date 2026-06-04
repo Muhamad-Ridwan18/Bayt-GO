@@ -2,7 +2,6 @@
 
 namespace App\Http\Controllers\Admin;
 
-use App\Enums\EmergencyReportStatus;
 use App\Http\Controllers\Controller;
 use App\Models\BookingEmergencyReport;
 use App\Models\MuthowifProfile;
@@ -145,5 +144,47 @@ class BookingEmergencyController extends Controller
         }
 
         return back()->with('status', __('emergency.flash.invited'));
+    }
+
+    public function indexLiveFragment(Request $request): View
+    {
+        $this->authorize('viewAny', BookingEmergencyReport::class);
+
+        $status = $request->query('status');
+
+        $reports = BookingEmergencyReport::query()
+            ->with(['muthowifBooking.customer', 'muthowifBooking.muthowifProfile.user', 'reportedBy'])
+            ->when(filled($status), fn ($q) => $q->where('status', $status))
+            ->orderByDesc('created_at')
+            ->paginate(25)
+            ->withQueryString();
+
+        return view('admin.emergency.partials.index-live', [
+            'reports' => $reports,
+        ]);
+    }
+
+    public function showLiveFragment(BookingEmergencyReport $report): View
+    {
+        $this->authorize('view', $report);
+
+        $report->load([
+            'muthowifBooking.customer',
+            'muthowifBooking.muthowifProfile.user',
+            'offers.muthowifProfile.user',
+        ]);
+
+        $booking = $report->muthowifBooking;
+        $manualCandidates = app(EmergencyReplacementCandidateService::class)
+            ->listEligible(
+                $booking,
+                excludeProfileIds: $report->offers->pluck('muthowif_profile_id')->all(),
+            )
+            ->take(30);
+
+        return view('admin.emergency.partials.show-live', [
+            'report' => $report,
+            'manualCandidates' => $manualCandidates,
+        ]);
     }
 }

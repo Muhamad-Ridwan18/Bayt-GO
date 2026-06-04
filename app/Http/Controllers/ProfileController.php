@@ -8,6 +8,7 @@ use App\Models\MuthowifProfile;
 use App\Models\MuthowifSupportingDocument;
 use App\Models\User;
 use App\Services\MuthowifReferralCodeService;
+use App\Services\UploadedImageOptimizer;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
@@ -103,12 +104,22 @@ class ProfileController extends Controller
 
         if ($request->hasFile('photo')) {
             $this->deleteStoredPath($profile->photo_path);
-            $profile->photo_path = $request->file('photo')->store($this->muthowifStorageDirectory($user), 'local');
+            $profile->photo_path = app(UploadedImageOptimizer::class)->store(
+                $request->file('photo'),
+                $this->muthowifStorageDirectory($user),
+                'local',
+                'profile',
+            );
         }
 
         if ($request->hasFile('ktp_image')) {
             $this->deleteStoredPath($profile->ktp_image_path);
-            $profile->ktp_image_path = $request->file('ktp_image')->store($this->muthowifStorageDirectory($user), 'local');
+            $profile->ktp_image_path = app(UploadedImageOptimizer::class)->store(
+                $request->file('ktp_image'),
+                $this->muthowifStorageDirectory($user),
+                'local',
+                'profile',
+            );
         }
 
         if ($profile->referred_by_muthowif_profile_id === null) {
@@ -157,7 +168,12 @@ class ProfileController extends Controller
         foreach ($files as $file) {
             if ($file && $file->isValid()) {
                 $profile->supportingDocuments()->create([
-                    'path' => $file->store($this->muthowifStorageDirectory($user), 'local'),
+                    'path' => app(UploadedImageOptimizer::class)->store(
+                        $file,
+                        $this->muthowifStorageDirectory($user),
+                        'local',
+                        'document',
+                    ),
                     'original_name' => $file->getClientOriginalName(),
                     'sort_order' => $nextSortOrder++,
                 ]);

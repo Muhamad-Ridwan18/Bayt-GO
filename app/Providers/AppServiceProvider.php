@@ -6,9 +6,16 @@ use App\Events\CustomerBookingUpdated;
 use App\Events\MootaWebhookRecorded;
 use App\Listeners\NotifyAdminServiceMonitorOnBookingChange;
 use App\Listeners\ProcessMootaWebhookForBookingPayments;
+use App\Models\BookingPayment;
+use App\Models\BookingRefundRequest;
+use App\Models\MuthowifWithdrawal;
 use App\Payments\Contracts\SnapPaymentProviderInterface;
 use App\Payments\Doku\DokuCheckoutPaymentProvider;
 use App\Payments\Moota\MootaSnapPaymentProvider;
+use App\Services\UploadedImageOptimizer;
+use App\Support\AdminFinanceSummary;
+use App\Support\MuthowifFinanceSummary;
+use Composer\Autoload\ClassLoader;
 use Illuminate\Pagination\Paginator;
 use Illuminate\Support\Facades\Event;
 use Illuminate\Support\Facades\Gate;
@@ -25,11 +32,13 @@ class AppServiceProvider extends ServiceProvider
         // Manual Autoloader Registration Fallback for maestroerror/php-heic-to-jpg
         if (file_exists(base_path('vendor/autoload.php'))) {
             $loader = require base_path('vendor/autoload.php');
-            if ($loader instanceof \Composer\Autoload\ClassLoader) {
+            if ($loader instanceof ClassLoader) {
                 $loader->setPsr4('Maestroerror\\', base_path('vendor/maestroerror/php-heic-to-jpg/src'));
                 $loader->setPsr4('Maestroerror\\HeifConverter\\', base_path('vendor/maestroerror/heif-converter/src'));
             }
         }
+
+        $this->app->singleton(UploadedImageOptimizer::class);
 
         $this->app->bind(SnapPaymentProviderInterface::class, function ($app): SnapPaymentProviderInterface {
             return match (config('services.booking.payment_driver', 'doku')) {
@@ -57,40 +66,40 @@ class AppServiceProvider extends ServiceProvider
         Paginator::useTailwind();
 
         // Automatic Cache Invalidation on Mutation for Finance Dashboards
-        \App\Models\BookingPayment::saved(function ($payment) {
-            \App\Support\AdminFinanceSummary::clearCache();
+        BookingPayment::saved(function ($payment) {
+            AdminFinanceSummary::clearCache();
             if ($payment->muthowifBooking?->muthowif_profile_id) {
-                \App\Support\MuthowifFinanceSummary::clearCache($payment->muthowifBooking->muthowif_profile_id);
+                MuthowifFinanceSummary::clearCache($payment->muthowifBooking->muthowif_profile_id);
             }
         });
-        \App\Models\BookingPayment::deleted(function ($payment) {
-            \App\Support\AdminFinanceSummary::clearCache();
+        BookingPayment::deleted(function ($payment) {
+            AdminFinanceSummary::clearCache();
             if ($payment->muthowifBooking?->muthowif_profile_id) {
-                \App\Support\MuthowifFinanceSummary::clearCache($payment->muthowifBooking->muthowif_profile_id);
+                MuthowifFinanceSummary::clearCache($payment->muthowifBooking->muthowif_profile_id);
             }
         });
-        \App\Models\BookingRefundRequest::saved(function ($refund) {
-            \App\Support\AdminFinanceSummary::clearCache();
+        BookingRefundRequest::saved(function ($refund) {
+            AdminFinanceSummary::clearCache();
             if ($refund->muthowifBooking?->muthowif_profile_id) {
-                \App\Support\MuthowifFinanceSummary::clearCache($refund->muthowifBooking->muthowif_profile_id);
+                MuthowifFinanceSummary::clearCache($refund->muthowifBooking->muthowif_profile_id);
             }
         });
-        \App\Models\BookingRefundRequest::deleted(function ($refund) {
-            \App\Support\AdminFinanceSummary::clearCache();
+        BookingRefundRequest::deleted(function ($refund) {
+            AdminFinanceSummary::clearCache();
             if ($refund->muthowifBooking?->muthowif_profile_id) {
-                \App\Support\MuthowifFinanceSummary::clearCache($refund->muthowifBooking->muthowif_profile_id);
+                MuthowifFinanceSummary::clearCache($refund->muthowifBooking->muthowif_profile_id);
             }
         });
-        \App\Models\MuthowifWithdrawal::saved(function ($withdrawal) {
-            \App\Support\AdminFinanceSummary::clearCache();
+        MuthowifWithdrawal::saved(function ($withdrawal) {
+            AdminFinanceSummary::clearCache();
             if ($withdrawal->muthowif_profile_id) {
-                \App\Support\MuthowifFinanceSummary::clearCache($withdrawal->muthowif_profile_id);
+                MuthowifFinanceSummary::clearCache($withdrawal->muthowif_profile_id);
             }
         });
-        \App\Models\MuthowifWithdrawal::deleted(function ($withdrawal) {
-            \App\Support\AdminFinanceSummary::clearCache();
+        MuthowifWithdrawal::deleted(function ($withdrawal) {
+            AdminFinanceSummary::clearCache();
             if ($withdrawal->muthowif_profile_id) {
-                \App\Support\MuthowifFinanceSummary::clearCache($withdrawal->muthowif_profile_id);
+                MuthowifFinanceSummary::clearCache($withdrawal->muthowif_profile_id);
             }
         });
 

@@ -1,8 +1,70 @@
 import './bootstrap';
 
 import Alpine from 'alpinejs';
+import {
+    csrfToken,
+    debounce,
+    fetchHtmlFragment,
+    fetchJson,
+    leavePrivateChannels,
+    payloadMatches,
+    requireEcho,
+    subscribePrivateListeners,
+    swapAlpineHtml,
+    swapLiveParts,
+} from './reverb-live';
 
 document.addEventListener('alpine:init', () => {
+    Alpine.data('reverbFragmentLive', (config) => ({
+        fragmentUrl: config.fragmentUrl ?? null,
+        listeners: config.listeners ?? [],
+        appendQuery: config.appendQuery ?? false,
+        subscribedChannels: [],
+        refreshing: false,
+        debouncedRefresh: null,
+
+        init() {
+            if (!requireEcho('reverbFragmentLive')) {
+                return;
+            }
+
+            this.debouncedRefresh = debounce(() => void this.refreshFragment(), 450);
+
+            this.subscribedChannels = subscribePrivateListeners(this.listeners, () => {
+                this.debouncedRefresh();
+            });
+        },
+
+        async refreshFragment() {
+            if (!this.fragmentUrl || this.refreshing) {
+                return;
+            }
+
+            this.refreshing = true;
+            try {
+                let url = this.fragmentUrl;
+                if (this.appendQuery) {
+                    url += window.location.search || '';
+                }
+
+                const html = await fetchHtmlFragment(url);
+                if (html === null) {
+                    return;
+                }
+
+                swapAlpineHtml(this.$refs.liveRoot, html);
+            } catch (err) {
+                console.error(err);
+            } finally {
+                this.refreshing = false;
+            }
+        },
+
+        destroy() {
+            leavePrivateChannels(this.subscribedChannels);
+        },
+    }));
+
     Alpine.data('indonesianDigitsInput', (initialDigits = '') => ({
         raw: String(initialDigits ?? '').replace(/\D/g, ''),
         formatDigits(d) {
@@ -105,21 +167,25 @@ document.addEventListener('alpine:init', () => {
         fragmentUrl: config.fragmentUrl ?? null,
         toastLabel: config.toastLabel ?? 'Ada permintaan withdraw baru!',
         refreshing: false,
-        pollTimer: null,
-        
-        csrf() {
-            return document.querySelector('meta[name="csrf-token"]')?.getAttribute('content') ?? '';
-        },
+        subscribedChannels: [],
 
         init() {
-            if (window.Echo) {
-                window.Echo.private('admin.withdrawals').listen('.withdrawal.requested', (e) => {
-                    this.showToast(e);
-                    this.refreshFragment();
-                });
-            } else if (this.fragmentUrl) {
-                this.pollTimer = window.setInterval(() => this.refreshFragment(), 60000);
+            if (!requireEcho('adminWithdrawalsLive')) {
+                return;
             }
+
+            const onEvent = (e) => {
+                if (e?.pending_count !== undefined) {
+                    this.showToast(e);
+                }
+                void this.refreshFragment();
+            };
+
+            window.Echo.private('admin.withdrawals')
+                .listen('.withdrawal.requested', onEvent)
+                .listen('.withdrawal.updated', onEvent);
+
+            this.subscribedChannels = ['admin.withdrawals'];
         },
 
         showToast(e) {
@@ -138,31 +204,16 @@ document.addEventListener('alpine:init', () => {
         },
 
         async refreshFragment() {
-            if (!this.fragmentUrl || this.refreshing) return;
+            if (!this.fragmentUrl || this.refreshing) {
+                return;
+            }
+
             this.refreshing = true;
             try {
-                let url = this.fragmentUrl;
-                url += window.location.search || '';
-                
-                const r = await fetch(url, {
-                    headers: {
-                        Accept: 'text/html',
-                        'X-Requested-With': 'XMLHttpRequest',
-                        'X-CSRF-TOKEN': this.csrf(),
-                    },
-                    credentials: 'same-origin',
-                });
-                
-                if (!r.ok) return;
-                const html = await r.text();
-                const root = this.$refs.liveRoot;
-                if (!root) return;
-                
-                if (typeof Alpine.destroyTree === 'function') {
-                    Alpine.destroyTree(root);
+                const html = await fetchHtmlFragment(this.fragmentUrl + (window.location.search || ''));
+                if (html !== null) {
+                    swapAlpineHtml(this.$refs.liveRoot, html);
                 }
-                root.innerHTML = html;
-                Alpine.initTree(root);
             } catch (err) {
                 console.error(err);
             } finally {
@@ -171,31 +222,43 @@ document.addEventListener('alpine:init', () => {
         },
 
         destroy() {
-            if (this.pollTimer) window.clearInterval(this.pollTimer);
-            if (window.Echo) {
-                window.Echo.leave('admin.withdrawals');
-            }
+            leavePrivateChannels(this.subscribedChannels);
         },
     }));
 
     Alpine.data('adminWithdrawalsBadgeLive', (initialCount) => ({
         count: Number(initialCount) || 0,
-        
+        subscribedChannels: [],
+
         get displayLabel() {
-            if (this.count > 99) return '99+';
+            if (this.count > 99) {
+                return '99+';
+            }
             return String(this.count);
         },
 
         init() {
-            if (window.Echo) {
-                window.Echo.private('admin.withdrawals').listen('.withdrawal.requested', (e) => {
-                    if (typeof e.pending_count === 'number') {
-                        this.count = e.pending_count;
-                    } else {
-                        this.count++;
-                    }
-                });
+            if (!requireEcho('adminWithdrawalsBadgeLive')) {
+                return;
             }
+
+            const apply = (e) => {
+                if (typeof e?.pending_count === 'number') {
+                    this.count = e.pending_count;
+                } else {
+                    this.count++;
+                }
+            };
+
+            window.Echo.private('admin.withdrawals')
+                .listen('.withdrawal.requested', apply)
+                .listen('.withdrawal.updated', apply);
+
+            this.subscribedChannels = ['admin.withdrawals'];
+        },
+
+        destroy() {
+            leavePrivateChannels(this.subscribedChannels);
         },
     }));
 
@@ -219,8 +282,7 @@ document.addEventListener('alpine:init', () => {
         userId: config.userId != null ? String(config.userId) : '',
         countUrl: config.countUrl ?? '',
         count: Number(config.initialCount ?? 0) || 0,
-        pollTimer: null,
-        channelName: null,
+        subscribedChannels: [],
 
         get displayLabel() {
             if (this.count > 99) {
@@ -230,14 +292,16 @@ document.addEventListener('alpine:init', () => {
         },
 
         init() {
-            if (this.userId && window.Echo) {
-                this.channelName = `App.Models.User.${this.userId}`;
-                window.Echo.private(this.channelName).listen('.booking.updated', () => {
-                    void this.refresh();
-                });
-            } else if (this.countUrl) {
-                this.pollTimer = window.setInterval(() => void this.refresh(), 45000);
+            if (!this.userId || !requireEcho('muthowifPendingBookingsBadge')) {
+                return;
             }
+
+            const channel = `App.Models.User.${this.userId}`;
+            window.Echo.private(channel)
+                .listen('.booking.updated', () => void this.refresh())
+                .listen('.emergency.report.updated', () => void this.refresh());
+
+            this.subscribedChannels = [channel];
         },
 
         async refresh() {
@@ -262,12 +326,7 @@ document.addEventListener('alpine:init', () => {
         },
 
         destroy() {
-            if (this.pollTimer) {
-                window.clearInterval(this.pollTimer);
-            }
-            if (window.Echo && this.channelName) {
-                window.Echo.leave(this.channelName);
-            }
+            leavePrivateChannels(this.subscribedChannels);
         },
     }));
 
@@ -293,7 +352,8 @@ document.addEventListener('alpine:init', () => {
         sending: false,
         error: '',
         
-        pollTimerList: null,
+        userChannel: null,
+        subscribedChannels: [],
 
         get unreadTotal() {
             return this.conversations.reduce((sum, c) => sum + (Number(c.unread_count) || 0), 0);
@@ -529,20 +589,23 @@ document.addEventListener('alpine:init', () => {
         },
         
         init() {
+            if (!requireEcho('globalChatPanel')) {
+                return;
+            }
+
             this.loadList();
-            if (!window.Echo) {
-                this.pollTimerList = window.setInterval(() => {
-                    if (!this.isPanelExpanded || this.view === 'list') {
-                        this.loadList();
-                    } else if (this.view === 'chat') {
-                        this.loadChatMessages(true);
-                    }
-                }, 30000); // Polling slower if Echo is missing
+
+            if (this.userId) {
+                this.userChannel = `App.Models.User.${this.userId}`;
+                window.Echo.private(this.userChannel).listen('.booking.updated', () => {
+                    void this.loadList();
+                });
+                this.subscribedChannels.push(this.userChannel);
             }
         },
-        
+
         destroy() {
-            if (this.pollTimerList) window.clearInterval(this.pollTimerList);
+            leavePrivateChannels(this.subscribedChannels);
             for (const id of [...this.bookingChannelIds]) {
                 this.leaveBookingChannel(id);
             }
@@ -570,14 +633,14 @@ document.addEventListener('alpine:init', () => {
         loading: false,
         sending: false,
         error: '',
-        pollTimer: null,
+        subscribedChannels: [],
 
         get unreadTotal() {
             return this.unreadForMe;
         },
 
         csrf() {
-            return document.querySelector('meta[name="csrf-token"]')?.getAttribute('content') ?? '';
+            return csrfToken();
         },
 
         formatTime(iso) {
@@ -722,28 +785,24 @@ document.addEventListener('alpine:init', () => {
         },
 
         init() {
-            this.refreshUnreadOnly();
-            if (window.Echo) {
-                window.Echo.private(`booking.chat.${this.bookingId}`).listen('BookingChatUpdated', () => {
-                    this.onChatSocket();
-                });
-            } else {
-                this.pollTimer = window.setInterval(() => {
-                    if (!this.isPanelExpanded) {
-                        this.refreshUnreadOnly();
-                    } else {
-                        this.loadMessages(true);
-                    }
-                }, 30000);
+            if (!requireEcho('bookingChatPanel')) {
+                return;
             }
+
+            this.refreshUnreadOnly();
+
+            const chatChannel = `booking.chat.${this.bookingId}`;
+            window.Echo.private(chatChannel).listen('BookingChatUpdated', () => {
+                this.onChatSocket();
+            });
+            this.subscribedChannels = [chatChannel];
         },
 
         destroy() {
-            if (this.pollTimer) window.clearInterval(this.pollTimer);
-            if (this.imagePreviewUrl) URL.revokeObjectURL(this.imagePreviewUrl);
-            if (window.Echo) {
-                window.Echo.leave(`booking.chat.${this.bookingId}`);
+            if (this.imagePreviewUrl) {
+                URL.revokeObjectURL(this.imagePreviewUrl);
             }
+            leavePrivateChannels(this.subscribedChannels);
         },
     }));
 
@@ -752,51 +811,51 @@ document.addEventListener('alpine:init', () => {
         bookingId: config.bookingId != null ? String(config.bookingId) : null,
         liveMode: config.liveMode ?? 'customer_show',
         fragmentUrl: config.fragmentUrl ?? null,
+        liveStateUrl: config.liveStateUrl ?? null,
         showUrl: config.showUrl ?? null,
         paymentStatusUrl: config.paymentStatusUrl ?? null,
-        channelName: null,
+        clientStatus: config.initialStatus ?? null,
+        clientPaymentStatus: config.initialPaymentStatus ?? null,
+        emergencyEventPending: false,
+        subscribedChannels: [],
         refreshing: false,
-        pollTimer: null,
+        debouncedRefresh: null,
 
         init() {
-            if (this.userId && window.Echo) {
-                this.channelName = `App.Models.User.${this.userId}`;
-                window.Echo.private(this.channelName)
-                    .listen('.booking.updated', (e) => {
-                        this.onBookingSocket(e);
-                    });
-            } else if (this.fragmentUrl) {
-                const interval = this.liveMode === 'customer_payment' ? 12000 : 25000;
-                this.pollTimer = window.setInterval(() => this.onPollTick(), interval);
-            }
-        },
-
-        onPollTick() {
-            if (this.liveMode === 'customer_payment') {
-                this.pollPaymentStatus();
+            if (!this.userId || !requireEcho('customerBookingLive')) {
                 return;
             }
-            this.refreshFragment();
+
+            this.debouncedRefresh = debounce(() => void this.refreshFragment(), 450);
+
+            const channel = `App.Models.User.${this.userId}`;
+            const bookingMatch = this.bookingId
+                ? { field: 'booking_id', value: this.bookingId }
+                : null;
+
+            window.Echo.private(channel)
+                .listen('.booking.updated', (e) => {
+                    if (bookingMatch && !payloadMatches({ match: bookingMatch }, e)) {
+                        return;
+                    }
+                    this.onBookingSocket(e);
+                })
+                .listen('.emergency.report.updated', (e) => {
+                    if (bookingMatch && !payloadMatches({ match: bookingMatch }, e)) {
+                        return;
+                    }
+                    this.onEmergencySocket(e);
+                });
+
+            this.subscribedChannels = [channel];
         },
 
-        async pollPaymentStatus() {
-            if (!this.paymentStatusUrl || this.refreshing) return;
-            this.refreshing = true;
-            try {
-                const r = await fetch(this.paymentStatusUrl, {
-                    headers: { Accept: 'application/json', 'X-Requested-With': 'XMLHttpRequest' },
-                    credentials: 'same-origin',
-                });
-                if (!r.ok) return;
-                const data = await r.json();
-                if (data.is_paid || data.booking_status === 'cancelled') {
-                    if (this.showUrl) window.location.replace(this.showUrl);
-                }
-            } catch {
-                /* ignore */
-            } finally {
-                this.refreshing = false;
+        onEmergencySocket() {
+            if (this.liveMode === 'customer_payment') {
+                return;
             }
+            this.emergencyEventPending = true;
+            this.debouncedRefresh();
         },
 
         onBookingSocket(e) {
@@ -811,38 +870,122 @@ document.addEventListener('alpine:init', () => {
                 }
                 return;
             }
-            this.refreshFragment();
+            this.debouncedRefresh();
         },
 
-        csrf() {
-            return document.querySelector('meta[name="csrf-token"]')?.getAttribute('content') ?? '';
+        usesTieredShowRefresh() {
+            return (
+                (this.liveMode === 'customer_show' || this.liveMode === 'muthowif_show')
+                && this.liveStateUrl
+                && this.$refs.liveGrid
+            );
+        },
+
+        liveStateQuery() {
+            const params = new URLSearchParams();
+            if (this.clientStatus) {
+                params.set('status', this.clientStatus);
+            }
+            if (this.clientPaymentStatus) {
+                params.set('payment_status', this.clientPaymentStatus);
+            }
+            if (this.emergencyEventPending) {
+                params.set('emergency_event', '1');
+            }
+
+            const qs = params.toString();
+
+            return qs ? `?${qs}` : '';
         },
 
         async refreshFragment() {
-            if (!this.fragmentUrl || this.refreshing) return;
+            if (!this.fragmentUrl || this.refreshing) {
+                return;
+            }
+
             this.refreshing = true;
             try {
+                if (this.usesTieredShowRefresh()) {
+                    await this.refreshTieredShowFragment();
+                    return;
+                }
+
                 let url = this.fragmentUrl;
                 if (this.liveMode === 'customer_index' || this.liveMode === 'muthowif_index') {
                     url += window.location.search || '';
                 }
-                const r = await fetch(url, {
-                    headers: {
-                        Accept: 'text/html',
-                        'X-Requested-With': 'XMLHttpRequest',
-                        'X-CSRF-TOKEN': this.csrf(),
-                    },
-                    credentials: 'same-origin',
-                });
-                if (!r.ok) return;
-                const html = await r.text();
-                const root = this.$refs.liveRoot;
-                if (!root) return;
-                if (typeof Alpine.destroyTree === 'function') {
-                    Alpine.destroyTree(root);
+
+                const root = this.$refs.liveRoot ?? this.$refs.liveGrid;
+                const html = await fetchHtmlFragment(url);
+                if (html !== null && root) {
+                    swapAlpineHtml(root, html);
                 }
-                root.innerHTML = html;
-                Alpine.initTree(root);
+            } catch (err) {
+                console.error(err);
+            } finally {
+                this.refreshing = false;
+            }
+        },
+
+        async refreshTieredShowFragment() {
+            const state = await fetchJson(`${this.liveStateUrl}${this.liveStateQuery()}`);
+            if (!state?.tier) {
+                return;
+            }
+
+            const tier = state.tier;
+            const fragmentUrl = `${this.fragmentUrl}${this.fragmentUrl.includes('?') ? '&' : '?'}tier=${encodeURIComponent(tier)}`;
+            const html = await fetchHtmlFragment(fragmentUrl);
+            if (html === null) {
+                return;
+            }
+
+            const grid = this.$refs.liveGrid;
+            if (tier === 'dynamic') {
+                swapLiveParts(grid, html);
+            } else {
+                swapAlpineHtml(grid, html);
+            }
+
+            this.clientStatus = state.status ?? this.clientStatus;
+            this.clientPaymentStatus = state.payment_status ?? this.clientPaymentStatus;
+            this.emergencyEventPending = false;
+        },
+
+        destroy() {
+            leavePrivateChannels(this.subscribedChannels);
+        },
+    }));
+
+    Alpine.data('muthowifWithdrawalsLive', (config) => ({
+        userId: config.userId != null ? String(config.userId) : '',
+        fragmentUrl: config.fragmentUrl ?? null,
+        subscribedChannels: [],
+        refreshing: false,
+
+        init() {
+            if (!this.userId || !this.fragmentUrl || !requireEcho('muthowifWithdrawalsLive')) {
+                return;
+            }
+
+            const channel = `App.Models.User.${this.userId}`;
+            window.Echo.private(channel).listen('.withdrawal.updated', () => {
+                void this.refreshFragment();
+            });
+            this.subscribedChannels = [channel];
+        },
+
+        async refreshFragment() {
+            if (!this.fragmentUrl || this.refreshing) {
+                return;
+            }
+
+            this.refreshing = true;
+            try {
+                const html = await fetchHtmlFragment(this.fragmentUrl + (window.location.search || ''));
+                if (html !== null) {
+                    swapAlpineHtml(this.$refs.liveRoot, html);
+                }
             } catch (err) {
                 console.error(err);
             } finally {
@@ -851,10 +994,70 @@ document.addEventListener('alpine:init', () => {
         },
 
         destroy() {
-            if (this.pollTimer) window.clearInterval(this.pollTimer);
-            if (window.Echo && this.channelName) {
-                window.Echo.leave(this.channelName);
+            leavePrivateChannels(this.subscribedChannels);
+        },
+    }));
+
+    Alpine.data('muthowifVerificationLive', (config) => ({
+        userId: config.userId != null ? String(config.userId) : '',
+        fragmentUrl: config.fragmentUrl ?? null,
+        reloadOnApproved: config.reloadOnApproved ?? false,
+        subscribedChannels: [],
+        refreshing: false,
+
+        init() {
+            if (!requireEcho('muthowifVerificationLive')) {
+                return;
             }
+
+            const channels = [];
+
+            if (this.userId) {
+                const userChannel = `App.Models.User.${this.userId}`;
+                window.Echo.private(userChannel).listen('.muthowif.verification.updated', (e) => {
+                    this.onVerificationEvent(e);
+                });
+                channels.push(userChannel);
+            }
+
+            if (config.listenAdmin) {
+                window.Echo.private('admin.muthowif-profiles').listen('.muthowif.verification.updated', () => {
+                    void this.refreshFragment();
+                });
+                channels.push('admin.muthowif-profiles');
+            }
+
+            this.subscribedChannels = channels;
+        },
+
+        onVerificationEvent(e) {
+            if (this.reloadOnApproved && e?.verification_status === 'approved') {
+                window.location.reload();
+                return;
+            }
+            void this.refreshFragment();
+        },
+
+        async refreshFragment() {
+            if (!this.fragmentUrl || this.refreshing) {
+                return;
+            }
+
+            this.refreshing = true;
+            try {
+                const html = await fetchHtmlFragment(this.fragmentUrl + (window.location.search || ''));
+                if (html !== null) {
+                    swapAlpineHtml(this.$refs.liveRoot, html);
+                }
+            } catch (err) {
+                console.error(err);
+            } finally {
+                this.refreshing = false;
+            }
+        },
+
+        destroy() {
+            leavePrivateChannels(this.subscribedChannels);
         },
     }));
 
@@ -866,7 +1069,7 @@ document.addEventListener('alpine:init', () => {
         refreshing: false,
 
         init() {
-            if (!this.realtimeEnabled || !window.Echo) {
+            if (!this.realtimeEnabled || !requireEcho('adminServiceMonitorLive')) {
                 return;
             }
             window.Echo.private(this.channelName).listen('.service_monitor.updated', () => {

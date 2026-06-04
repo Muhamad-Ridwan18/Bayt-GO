@@ -8,6 +8,7 @@ use App\Enums\SupportTicketStatus;
 use App\Models\SupportTicket;
 use App\Models\SupportTicketMessage;
 use App\Services\SupportTicketAttachmentStore;
+use App\Support\SupportTicketBroadcast;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
@@ -78,7 +79,7 @@ class SupportTicketController extends Controller
             return $ticket;
         });
 
-        broadcast(new \App\Events\SupportTicketUpdated($ticket, 'created'));
+        SupportTicketBroadcast::afterResponse($ticket, 'created');
 
         return redirect()
             ->route('support.show', $ticket)
@@ -129,10 +130,39 @@ class SupportTicketController extends Controller
             $ticket->save();
         });
 
-        broadcast(new \App\Events\SupportTicketUpdated($ticket, 'reply'));
+        SupportTicketBroadcast::afterResponse($ticket->fresh(), 'reply');
 
         return redirect()
             ->route('support.show', $ticket)
             ->with('status', __('support.flash.reply_sent'));
+    }
+
+    public function indexLiveFragment(Request $request): View
+    {
+        $user = $request->user();
+
+        $tickets = SupportTicket::query()
+            ->where('user_id', $user->getKey())
+            ->withCount('messages')
+            ->orderByDesc('last_activity_at')
+            ->paginate(15)
+            ->withQueryString();
+
+        return view('support.partials.index-live', [
+            'tickets' => $tickets,
+        ]);
+    }
+
+    public function showLiveFragment(Request $request, SupportTicket $ticket): View
+    {
+        $this->authorize('view', $ticket);
+
+        $ticket->load([
+            'messages.author:id,name,email,role',
+        ]);
+
+        return view('support.partials.thread-live', [
+            'ticket' => $ticket,
+        ]);
     }
 }

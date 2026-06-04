@@ -19,6 +19,16 @@
                 <div class="rounded-xl border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-900">{{ session('error') }}</div>
             @endif
 
+            <div
+                x-data="reverbFragmentLive({
+                    fragmentUrl: @js(route('support.index.live-fragment')),
+                    appendQuery: true,
+                    listeners: [
+                        { channel: @js('App.Models.User.'.auth()->id()), event: '.support.ticket.updated' },
+                    ],
+                })"
+            >
+            <div x-ref="liveRoot">
             @if ($tickets->isEmpty())
                 <div class="rounded-2xl border border-dashed border-slate-300 bg-slate-50/80 p-10 text-center text-sm text-slate-600">{{ __('support.empty_reporter') }}</div>
             @else
@@ -59,6 +69,8 @@
                     <div class="border-t border-slate-100 px-4 py-3">{{ $tickets->withQueryString()->links() }}</div>
                 </div>
             @endif
+            </div>
+            </div>
         </x-page-container>
     </div>
 </x-app-layout>

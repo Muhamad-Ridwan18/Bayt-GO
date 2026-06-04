@@ -109,7 +109,7 @@ final class BookingDocumentStore
                     continue;
                 }
 
-                $path = $file->store('temp-booking-documents', 'local');
+                $path = app(UploadedImageOptimizer::class)->store($file, 'temp-booking-documents', 'local', 'document');
                 session()->flash("temp_{$field}_path", $path);
                 session()->flash("temp_{$field}_name", $file->getClientOriginalName());
 
@@ -133,7 +133,7 @@ final class BookingDocumentStore
                 ]);
             }
 
-            $stored = $file->store($targetDir, 'local');
+            $stored = app(UploadedImageOptimizer::class)->store($file, $targetDir, 'local', 'document');
             if ($stored === false || $stored === '') {
                 throw ValidationException::withMessages([
                     $field => [__('bookings.validation.document_store_failed')],

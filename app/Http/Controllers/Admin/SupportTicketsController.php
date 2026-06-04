@@ -4,11 +4,13 @@ namespace App\Http\Controllers\Admin;
 
 use App\Enums\SupportTicketStatus;
 use App\Enums\UserRole;
+use App\Events\SupportTicketUpdated;
 use App\Http\Controllers\Controller;
 use App\Models\SupportTicket;
 use App\Models\SupportTicketMessage;
 use App\Models\User;
 use App\Services\SupportTicketAttachmentStore;
+use App\Support\SupportTicketBroadcast;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
@@ -101,7 +103,7 @@ class SupportTicketsController extends Controller
             $ticket->save();
         });
 
-        broadcast(new \App\Events\SupportTicketUpdated($ticket, 'reply'));
+        SupportTicketBroadcast::afterResponse($ticket->fresh(), 'reply');
 
         return redirect()
             ->route('admin.support-tickets.show', $ticket)
@@ -136,7 +138,7 @@ class SupportTicketsController extends Controller
         $ticket->last_activity_at = now();
         $ticket->save();
 
-        broadcast(new \App\Events\SupportTicketUpdated($ticket, 'status_updated'));
+        broadcast(new SupportTicketUpdated($ticket, 'status_updated'));
 
         return redirect()
             ->route('admin.support-tickets.show', $ticket)
@@ -154,10 +156,52 @@ class SupportTicketsController extends Controller
         $ticket->last_activity_at = now();
         $ticket->save();
 
-        broadcast(new \App\Events\SupportTicketUpdated($ticket, 'assigned'));
+        SupportTicketBroadcast::afterResponse($ticket->fresh(), 'assigned');
 
         return redirect()
             ->route('admin.support-tickets.show', $ticket)
             ->with('status', __('support.flash.assigned_self'));
+    }
+
+    public function indexLiveFragment(Request $request): View
+    {
+        $this->authorize('viewAny', SupportTicket::class);
+
+        $q = trim((string) $request->query('q', ''));
+        $statusFilter = $request->query('status');
+
+        $tickets = SupportTicket::query()
+            ->with(['reporter:id,name,email,role', 'assignedAdmin:id,name'])
+            ->withCount('messages')
+            ->when($q !== '', function ($query) use ($q): void {
+                $like = '%'.str_replace(['%', '_'], ['\\%', '\\_'], $q).'%';
+                $query->where(function ($nested) use ($like): void {
+                    $nested->where('code', 'like', $like)
+                        ->orWhere('subject', 'like', $like);
+                });
+            })
+            ->when(is_string($statusFilter) && $statusFilter !== '' && SupportTicketStatus::tryFrom($statusFilter), function ($query) use ($statusFilter): void {
+                $query->where('status', SupportTicketStatus::from($statusFilter));
+            })
+            ->orderByDesc('last_activity_at')
+            ->paginate(25)
+            ->withQueryString();
+
+        return view('admin.support-tickets.partials.index-live', [
+            'tickets' => $tickets,
+        ]);
+    }
+
+    public function showLiveFragment(Request $request, SupportTicket $ticket): View
+    {
+        $this->authorize('view', $ticket);
+
+        $ticket->load([
+            'messages.author:id,name,email,role',
+        ]);
+
+        return view('admin.support-tickets.partials.thread-live', [
+            'ticket' => $ticket,
+        ]);
     }
 }

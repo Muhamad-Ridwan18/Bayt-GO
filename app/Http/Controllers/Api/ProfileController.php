@@ -6,6 +6,7 @@ use App\Enums\MuthowifVerificationStatus;
 use App\Http\Controllers\Controller;
 use App\Models\MuthowifProfile;
 use App\Services\MuthowifReferralCodeService;
+use App\Services\UploadedImageOptimizer;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Validation\Rules\Password;
@@ -152,7 +153,12 @@ class ProfileController extends Controller
         ]);
 
         if ($request->hasFile('photo')) {
-            $path = $request->file('photo')->store('muthowif/photos', 'public');
+            $path = app(UploadedImageOptimizer::class)->store(
+                $request->file('photo'),
+                'muthowif/photos',
+                'public',
+                'profile',
+            );
             $muthowif->update(['photo_path' => $path]);
 
             return response()->json([
@@ -174,7 +180,12 @@ class ProfileController extends Controller
         ]);
 
         if ($request->hasFile('ktp')) {
-            $path = $request->file('ktp')->store('muthowif/ktp', 'public');
+            $path = app(UploadedImageOptimizer::class)->store(
+                $request->file('ktp'),
+                'muthowif/ktp',
+                'public',
+                'profile',
+            );
             $muthowif->update(['ktp_image_path' => $path]);
 
             return response()->json([
@@ -197,7 +208,12 @@ class ProfileController extends Controller
 
         if ($request->hasFile('document')) {
             $file = $request->file('document');
-            $path = $file->store('muthowif/documents', 'public');
+            $path = app(UploadedImageOptimizer::class)->store(
+                $file,
+                'muthowif/documents',
+                'public',
+                'document',
+            );
 
             $doc = $muthowif->supportingDocuments()->create([
                 'path' => $path,

@@ -6,6 +6,8 @@ use App\Http\Controllers\Controller;
 use App\Jobs\NotifyMuthowifOfWithdrawalTransferProof;
 use App\Models\MuthowifProfile;
 use App\Models\MuthowifWithdrawal;
+use App\Services\UploadedImageOptimizer;
+use App\Support\WithdrawalBroadcast;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Http\Response;
@@ -60,8 +62,8 @@ class WithdrawalsController extends Controller
 
         return response(
             view('admin.withdrawals._table', [
-                'withdrawals'   => $withdrawals,
-                'pendingCount'  => (int) ($pendingAgg->pending_count ?? 0),
+                'withdrawals' => $withdrawals,
+                'pendingCount' => (int) ($pendingAgg->pending_count ?? 0),
                 'pendingAmount' => (float) ($pendingAgg->pending_amount ?? 0),
             ])->render(),
             200,
@@ -100,14 +102,14 @@ class WithdrawalsController extends Controller
                     'failed_reason' => null,
                 ]);
             });
-            broadcast(new \App\Events\WithdrawalUpdated($withdrawal->fresh()));
+            WithdrawalBroadcast::afterResponse($withdrawal->fresh());
         } catch (Throwable $e) {
             $withdrawal->update([
                 'status' => 'failed',
                 'failed_at' => now(),
                 'failed_reason' => $e->getMessage(),
             ]);
-            broadcast(new \App\Events\WithdrawalUpdated($withdrawal->fresh()));
+            WithdrawalBroadcast::afterResponse($withdrawal->fresh());
 
             return redirect()
                 ->route('admin.withdrawals.index')
@@ -127,7 +129,12 @@ class WithdrawalsController extends Controller
             'transfer_proof' => ['required', 'file', 'mimes:jpg,jpeg,png,webp,pdf', 'max:4096'],
         ]);
 
-        $proofPath = $validated['transfer_proof']->store('withdrawals/proofs', 'public');
+        $proofPath = app(UploadedImageOptimizer::class)->store(
+            $validated['transfer_proof'],
+            'withdrawals/proofs',
+            'public',
+            'document',
+        );
 
         $withdrawal->update([
             'status' => 'succeeded',
@@ -136,7 +143,7 @@ class WithdrawalsController extends Controller
         ]);
 
         NotifyMuthowifOfWithdrawalTransferProof::dispatchAfterResponse((string) $withdrawal->getKey());
-        broadcast(new \App\Events\WithdrawalUpdated($withdrawal->fresh()));
+        WithdrawalBroadcast::afterResponse($withdrawal->fresh());
 
         return redirect()
             ->route('admin.withdrawals.index')
@@ -167,7 +174,7 @@ class WithdrawalsController extends Controller
                 'failed_reason' => 'Transfer gagal atau dibatalkan (saldo dikembalikan).',
             ]);
         });
-        broadcast(new \App\Events\WithdrawalUpdated($withdrawal->fresh()));
+        WithdrawalBroadcast::afterResponse($withdrawal->fresh());
 
         return redirect()
             ->route('admin.withdrawals.index')

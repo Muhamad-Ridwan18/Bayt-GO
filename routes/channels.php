@@ -27,3 +27,10 @@ Broadcast::channel('admin.service-monitor', function ($user) {
     return $user->isAdmin();
 });
 
+Broadcast::channel('admin.emergency-reports', function ($user) {
+    return $user->isAdmin();
+});
+
+Broadcast::channel('admin.muthowif-profiles', function ($user) {
+    return $user->isAdmin();
+});
