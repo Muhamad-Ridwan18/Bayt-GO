@@ -207,7 +207,7 @@ final class WelcomePageCache
     private static function orderedModels(array $orderedIds, EloquentCollection $models): EloquentCollection
     {
         if ($orderedIds === []) {
-            return $models->newCollection();
+            return new EloquentCollection;
         }
 
         $rank = array_flip($orderedIds);
