@@ -988,7 +988,7 @@ document.addEventListener('alpine:init', () => {
             const grid = this.$refs.liveGrid;
             if (this.liveMode === 'customer_show') {
                 swapAlpineHtml(grid, html);
-            } elseif (tier === 'dynamic') {
+            } else if (tier === 'dynamic') {
                 swapLiveParts(grid, html);
             } else {
                 swapAlpineHtml(grid, html);
