@@ -40,18 +40,6 @@ class BookingEmergencyReportPolicy
             && $booking->emergency_replacement_at === null;
     }
 
-    public function respondToOffer(User $user, BookingReplacementOffer $offer): bool
-    {
-        if (! $user->isVerifiedMuthowif() || ! $user->muthowifProfile) {
-            return false;
-        }
-
-        return (string) $offer->muthowif_profile_id === (string) $user->muthowifProfile->id
-            && $offer->status === ReplacementOfferStatus::Offered
-            && $offer->report?->recruitment_open === true
-            && $offer->report?->status === EmergencyReportStatus::Verified;
-    }
-
     public function update(User $user, BookingEmergencyReport $report): bool
     {
         return $user->isAdmin();
