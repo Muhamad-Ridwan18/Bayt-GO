@@ -4,7 +4,7 @@
         $adminDash = Auth::user()->isAdmin();
         $muthowifDash = Auth::user()->isVerifiedMuthowif();
     @endphp
-    <div class="relative min-h-[calc(100vh-4rem)] {{ $customerDashBg ? 'overflow-x-hidden bg-gradient-to-b from-welcomeCanvas via-white to-slate-50' : ($adminDash || $muthowifDash ? 'overflow-x-hidden bg-slate-50' : 'overflow-hidden bg-gradient-to-b from-slate-100 via-slate-50 to-white') }} @if ($muthowifDash) !pt-0 !pb-0 @endif">
+    <div class="relative min-h-[calc(100vh-4rem)] {{ $customerDashBg || $muthowifDash ? 'overflow-x-hidden bg-slate-50' : ($adminDash ? 'overflow-x-hidden bg-slate-50' : 'overflow-hidden bg-gradient-to-b from-slate-100 via-slate-50 to-white') }} @if ($muthowifDash) !pt-0 !pb-0 @endif">
         @unless ($customerDashBg || $adminDash || $muthowifDash)
             <div class="pointer-events-none absolute inset-0 bg-[radial-gradient(ellipse_80%_50%_at_50%_-20%,rgba(120,53,15,0.08),transparent)]"></div>
             <div class="pointer-events-none absolute right-0 top-24 h-72 w-72 rounded-full bg-brand-400/5 blur-3xl"></div>
@@ -75,7 +75,7 @@
             @endif
 
 
-            @unless (Auth::user()->isAdmin() || Auth::user()->isVerifiedMuthowif())
+            @unless (Auth::user()->isAdmin() || Auth::user()->isVerifiedMuthowif() || Auth::user()->isCustomer())
                 @include('partials.dashboard-next-profile-row')
             @endunless
         </x-page-container>
