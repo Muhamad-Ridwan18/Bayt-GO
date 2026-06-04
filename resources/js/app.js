@@ -816,17 +816,24 @@ document.addEventListener('alpine:init', () => {
         paymentStatusUrl: config.paymentStatusUrl ?? null,
         clientStatus: config.initialStatus ?? null,
         clientPaymentStatus: config.initialPaymentStatus ?? null,
+        paymentReturnPending: config.paymentReturnPending ?? false,
+        paymentPollTimer: null,
         emergencyEventPending: false,
         subscribedChannels: [],
         refreshing: false,
         debouncedRefresh: null,
 
         init() {
+            this.debouncedRefresh = debounce(() => void this.refreshFragment(), 450);
+
+            if (this.paymentReturnPending && this.liveMode === 'customer_show') {
+                void this.refreshFragment();
+                this.startPaymentReturnPolling();
+            }
+
             if (!this.userId || !requireEcho('customerBookingLive')) {
                 return;
             }
-
-            this.debouncedRefresh = debounce(() => void this.refreshFragment(), 450);
 
             const channel = `App.Models.User.${this.userId}`;
             const bookingMatch = this.bookingId
@@ -892,10 +899,41 @@ document.addEventListener('alpine:init', () => {
             if (this.emergencyEventPending) {
                 params.set('emergency_event', '1');
             }
+            if (this.paymentReturnPending) {
+                params.set('payment_return', '1');
+            }
 
             const qs = params.toString();
 
             return qs ? `?${qs}` : '';
+        },
+
+        startPaymentReturnPolling() {
+            if (!this.paymentStatusUrl || this.paymentPollTimer !== null) {
+                return;
+            }
+
+            const poll = async () => {
+                try {
+                    const data = await fetchJson(this.paymentStatusUrl);
+                    if (data?.is_paid) {
+                        this.paymentReturnPending = false;
+                        this.clientPaymentStatus = data.payment_status ?? 'paid';
+                        this.clientStatus = data.booking_status ?? this.clientStatus;
+                        if (this.showUrl) {
+                            window.history.replaceState({}, '', this.showUrl);
+                        }
+                        await this.refreshFragment();
+                        return;
+                    }
+                } catch (err) {
+                    console.error(err);
+                }
+
+                this.paymentPollTimer = window.setTimeout(poll, 2500);
+            };
+
+            void poll();
         },
 
         async refreshFragment() {
@@ -948,7 +986,9 @@ document.addEventListener('alpine:init', () => {
             }
 
             const grid = this.$refs.liveGrid;
-            if (tier === 'dynamic') {
+            if (this.liveMode === 'customer_show') {
+                swapAlpineHtml(grid, html);
+            } elseif (tier === 'dynamic') {
                 swapLiveParts(grid, html);
             } else {
                 swapAlpineHtml(grid, html);
@@ -960,6 +1000,10 @@ document.addEventListener('alpine:init', () => {
         },
 
         destroy() {
+            if (this.paymentPollTimer !== null) {
+                window.clearTimeout(this.paymentPollTimer);
+                this.paymentPollTimer = null;
+            }
             leavePrivateChannels(this.subscribedChannels);
         },
     }));

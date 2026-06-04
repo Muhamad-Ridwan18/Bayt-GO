@@ -52,6 +52,8 @@
         </a>
     </section>
 
+    @include('bookings.partials.show-sidebar-actions', ['booking' => $b])
+
     @if ($showPanel)
         <section id="booking-recommendations" class="scroll-mt-24 rounded-2xl border border-slate-200 bg-white p-5 shadow-sm sm:p-6">
             <h2 class="text-sm font-bold text-slate-900">{{ __('bookings.show.recommendations_title') }}</h2>

@@ -39,24 +39,8 @@ final class BookingWebLive
         $pendingChange = $booking->refundRequests()->where('status', 'pending')->exists()
             || $booking->rescheduleRequests()->where('status', 'pending')->exists();
 
-        $prevStatus = $client['status'] ?? null;
-        $prevPayment = $client['payment_status'] ?? null;
-        $emergencyEvent = (bool) ($client['emergency_event'] ?? false);
-
-        $tier = self::TIER_DYNAMIC;
-        if (
-            $emergencyEvent
-            || $hasEmergency
-            || $showReferralPanel
-            || $pendingChange
-            || self::statusTierChanged($prevStatus, $booking->status->value)
-            || self::paymentTierChanged($prevPayment, $booking->payment_status->value, $booking->status)
-        ) {
-            $tier = self::TIER_FULL;
-        }
-
         return [
-            'tier' => $tier,
+            'tier' => self::TIER_FULL,
             'booking_id' => (string) $booking->getKey(),
             'status' => $booking->status->value,
             'payment_status' => $booking->payment_status->value,

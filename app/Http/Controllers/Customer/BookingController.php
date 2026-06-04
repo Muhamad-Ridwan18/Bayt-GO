@@ -28,6 +28,7 @@ use App\Services\MuthowifNetworkReferralService;
 use App\Support\BookingPostPayRules;
 use App\Support\BookingRefundFee;
 use App\Support\BookingSnapPaymentCatalog;
+use App\Support\BookingPaymentReturn;
 use App\Support\BookingWebLive;
 use App\Support\CustomerBookingBroadcast;
 use App\Support\EmergencyBookingViewData;
@@ -88,9 +89,13 @@ class BookingController extends Controller
         ]);
     }
 
-    public function show(Request $request, MuthowifBooking $booking): View
+    public function show(Request $request, MuthowifBooking $booking): View|RedirectResponse
     {
         $this->authorize('view', $booking);
+
+        if ($redirect = BookingPaymentReturn::normalizeShowRedirect($request, $booking)) {
+            return $redirect;
+        }
 
         $booking->load([
             'muthowifProfile.user',
@@ -128,32 +133,13 @@ class BookingController extends Controller
             'status' => $request->query('status'),
             'payment_status' => $request->query('payment_status'),
             'emergency_event' => $request->boolean('emergency_event'),
+            'payment_return' => $request->boolean('payment_return'),
         ]));
     }
 
     public function showLiveFragment(Request $request, MuthowifBooking $booking): View
     {
         $this->authorize('view', $booking);
-
-        $tier = (string) $request->query('tier', BookingWebLive::TIER_FULL);
-
-        if ($tier === BookingWebLive::TIER_DYNAMIC) {
-            $booking->load(['muthowifProfile.user', 'review']);
-
-            $networkReferral = app(MuthowifNetworkReferralService::class);
-            $showReferralNetworkPanel = $networkReferral->shouldShowCustomerReferralPanel($booking);
-            $referralNetworkAlternatives = $showReferralNetworkPanel
-                ? $this->referralAlternativesWithStats(
-                    $networkReferral->alternativesForCustomerAfterJadwalRejection($booking),
-                )
-                : collect();
-
-            return view('bookings.partials.show-live-dynamic', array_merge([
-                'booking' => $booking,
-                'referralNetworkAlternatives' => $referralNetworkAlternatives,
-                'showReferralNetworkPanel' => $showReferralNetworkPanel,
-            ], EmergencyBookingViewData::for($booking)));
-        }
 
         $booking->load([
             'muthowifProfile.user',

@@ -3,7 +3,6 @@
     use App\Support\IndonesianNumber;
 
     $b = $booking;
-    $st = $b->status;
     $nights = $b->billingNightsInclusive();
     $b->loadMissing(['muthowifProfile.services']);
     $service = $b->muthowifProfile?->services->firstWhere('type', $b->service_type);
@@ -34,31 +33,24 @@
     $split = \App\Support\PlatformFee::split($baseTotal, $isCompany);
     $customerTotal = (float) ($split['customer_gross'] ?? $baseTotal);
     $customerPlatformFee = (float) ($split['customer_fee'] ?? 0.0);
-    $muthowifNet = (float) ($split['muthowif_net'] ?? 0.0);
     $review = $b->review;
     $fmt = fn (float $n) => IndonesianNumber::formatThousands((string) (int) round($n));
 @endphp
 
 @include('bookings.partials.show-live-dynamic', [
-        'booking' => $b,
-        'showReferralNetworkPanel' => $showReferralNetworkPanel ?? false,
-        'referralNetworkAlternatives' => $referralNetworkAlternatives ?? collect(),
-        'activeEmergencyReport' => $activeEmergencyReport ?? null,
-        'selectableEmergencyOffers' => $selectableEmergencyOffers ?? collect(),
-    ])
-
-    <div data-live-part="extended">
-        @include('bookings.partials.show-live-extended', [
-            'booking' => $b,
-            'daily' => $daily,
-            'nights' => $nights,
-            'baseSubtotal' => $baseSubtotal,
-            'addonLines' => $addonLines,
-            'sameHotelLine' => $sameHotelLine,
-            'transportLine' => $transportLine,
-            'customerTotal' => $customerTotal,
-            'customerPlatformFee' => $customerPlatformFee,
-            'fmt' => $fmt,
-            'review' => $review,
-        ])
-    </div>
+    'booking' => $b,
+    'showReferralNetworkPanel' => $showReferralNetworkPanel ?? false,
+    'referralNetworkAlternatives' => $referralNetworkAlternatives ?? collect(),
+    'activeEmergencyReport' => $activeEmergencyReport ?? null,
+    'selectableEmergencyOffers' => $selectableEmergencyOffers ?? collect(),
+    'daily' => $daily,
+    'nights' => $nights,
+    'baseSubtotal' => $baseSubtotal,
+    'addonLines' => $addonLines,
+    'sameHotelLine' => $sameHotelLine,
+    'transportLine' => $transportLine,
+    'customerTotal' => $customerTotal,
+    'customerPlatformFee' => $customerPlatformFee,
+    'fmt' => $fmt,
+    'review' => $review,
+])

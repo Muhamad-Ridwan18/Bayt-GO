@@ -11,8 +11,10 @@
             fragmentUrl: @js(route('bookings.show.fragment', $b)),
             liveStateUrl: @js(route('bookings.show.live-state', $b)),
             showUrl: @js(route('bookings.show', $b)),
+            paymentStatusUrl: @js(route('bookings.payment.status', $b)),
             initialStatus: @js($b->status->value),
             initialPaymentStatus: @js($b->payment_status->value),
+            paymentReturnPending: @js(\App\Support\BookingPaymentReturn::isAwaitingGatewayConfirmation(request()) && ! $b->isPaid()),
         })"
     >
         <x-page-container class="pb-16 pt-6 sm:pt-8">
