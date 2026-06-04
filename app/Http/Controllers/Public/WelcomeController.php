@@ -15,11 +15,10 @@ final class WelcomeController extends Controller
     {
         $featuredMuthowifs = MuthowifProfile::query()
             ->with(['user:id,name', 'services:id,muthowif_profile_id,daily_price'])
-            ->where('verification_status', MuthowifVerificationStatus::Approved)
-            ->withCount('bookingReviews')
-            ->withAvg('bookingReviews', 'rating')
-            ->orderBy('booking_reviews_count')
-            ->orderBy('verified_at')
+            ->approved()
+            ->hasPublishedServices()
+            ->withMarketplaceStats()
+            ->orderByMarketplaceRanking()
             ->limit(14)
             ->get();
 

@@ -329,7 +329,7 @@
                                         @php
                                             $minPrice = (int) round((float) ($profile->services->min('daily_price') ?? 0));
                                             $formatted = $minPrice > 0 ? 'Rp '.number_format($minPrice, 0, ',', '.') : '—';
-                                            $rating = $profile->booking_reviews_avg_rating;
+                                            $rating = $profile->average_rating;
                                             $ratingStr = $rating !== null ? number_format((float) $rating, 1) : '—';
                                             $reviewCount = (int) $profile->booking_reviews_count;
                                             $languages = array_slice($profile->languagesForDisplay(), 0, 5);
