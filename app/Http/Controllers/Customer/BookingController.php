@@ -132,7 +132,7 @@ class BookingController extends Controller
         );
         $showReferralNetworkPanel = $networkReferral->shouldShowCustomerReferralPanel($booking);
 
-        return view('bookings.show', [
+        return view('bookings.show', array_merge([
             'booking' => $booking,
             'addonsById' => $addonsById,
             'refundEligibilityError' => BookingPostPayRules::canRequestRefund($booking),
@@ -140,7 +140,7 @@ class BookingController extends Controller
             'refundPreview' => $this->refundPreviewForBooking($booking),
             'referralNetworkAlternatives' => $referralNetworkAlternatives,
             'showReferralNetworkPanel' => $showReferralNetworkPanel,
-        ]);
+        ], \App\Support\EmergencyBookingViewData::for($booking)));
     }
 
     public function showLiveFragment(Request $request, MuthowifBooking $booking): View
@@ -162,7 +162,7 @@ class BookingController extends Controller
         );
         $showReferralNetworkPanel = $networkReferral->shouldShowCustomerReferralPanel($booking);
 
-        return view('bookings.partials.show-body', [
+        return view('bookings.partials.show-body', array_merge([
             'booking' => $booking,
             'addonsById' => $addonsById,
             'refundEligibilityError' => BookingPostPayRules::canRequestRefund($booking),
@@ -170,7 +170,7 @@ class BookingController extends Controller
             'refundPreview' => $this->refundPreviewForBooking($booking),
             'referralNetworkAlternatives' => $referralNetworkAlternatives,
             'showReferralNetworkPanel' => $showReferralNetworkPanel,
-        ]);
+        ], \App\Support\EmergencyBookingViewData::for($booking)));
     }
 
     public function requestRefund(Request $request, MuthowifBooking $booking): View

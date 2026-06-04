@@ -4,6 +4,8 @@ namespace App\Models;
 
 use App\Enums\BookingChangeRequestStatus;
 use App\Enums\BookingStatus;
+use App\Enums\EmergencyOverlayStatus;
+use App\Enums\EmergencyReportStatus;
 use App\Enums\MuthowifBookingMuthowifRejectionKind;
 use App\Enums\MuthowifServiceType;
 use App\Enums\PaymentStatus;
@@ -23,6 +25,9 @@ class MuthowifBooking extends Model
     protected $fillable = [
         'booking_code',
         'muthowif_profile_id',
+        'original_muthowif_profile_id',
+        'emergency_overlay_status',
+        'emergency_replacement_at',
         'customer_id',
         'service_type',
         'pilgrim_count',
@@ -54,6 +59,8 @@ class MuthowifBooking extends Model
             'starts_on' => 'date',
             'ends_on' => 'date',
             'status' => BookingStatus::class,
+            'emergency_overlay_status' => EmergencyOverlayStatus::class,
+            'emergency_replacement_at' => 'datetime',
             'service_type' => MuthowifServiceType::class,
             'muthowif_rejection_kind' => MuthowifBookingMuthowifRejectionKind::class,
             'selected_add_on_ids' => 'array',
@@ -72,6 +79,37 @@ class MuthowifBooking extends Model
     public function muthowifProfile(): BelongsTo
     {
         return $this->belongsTo(MuthowifProfile::class);
+    }
+
+    public function originalMuthowifProfile(): BelongsTo
+    {
+        return $this->belongsTo(MuthowifProfile::class, 'original_muthowif_profile_id');
+    }
+
+    /**
+     * @return HasMany<BookingEmergencyReport, $this>
+     */
+    public function emergencyReports(): HasMany
+    {
+        return $this->hasMany(BookingEmergencyReport::class);
+    }
+
+    public function activeEmergencyReport(): ?BookingEmergencyReport
+    {
+        return $this->emergencyReports()
+            ->whereIn('status', [
+                EmergencyReportStatus::Submitted->value,
+                EmergencyReportStatus::UnderReview->value,
+                EmergencyReportStatus::Verified->value,
+            ])
+            ->latest()
+            ->first();
+    }
+
+    public function hadEmergencyReplacement(): bool
+    {
+        return $this->emergency_replacement_at !== null
+            || $this->original_muthowif_profile_id !== null;
     }
 
     public function customer(): BelongsTo

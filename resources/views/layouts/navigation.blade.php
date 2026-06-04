@@ -90,6 +90,9 @@
                         <x-nav-link :href="route('admin.refunds.index')" :active="request()->routeIs('admin.refunds.*')">
                             {{ __('nav.refund') }}
                         </x-nav-link>
+                        <x-nav-link :href="route('admin.emergency.index')" :active="request()->routeIs('admin.emergency.*')">
+                            {{ __('nav.emergency') }}
+                        </x-nav-link>
                         <x-nav-link :href="route('admin.withdrawals.index')" :active="request()->routeIs('admin.withdrawals.*')">
                             {{ __('nav.withdraw') }}
                         </x-nav-link>
@@ -116,6 +119,9 @@
                         </x-nav-link>
                         <x-nav-link :href="route('muthowif.portfolio.index')" :active="request()->routeIs('muthowif.portfolio.*')">
                             {{ __('nav.portfolio') }}
+                        </x-nav-link>
+                        <x-nav-link :href="route('muthowif.emergency-offers.index')" :active="request()->routeIs('muthowif.emergency-offers.*')">
+                            {{ __('nav.emergency_offers') }}
                         </x-nav-link>
                         <x-nav-link :href="route('muthowif.bookings.index')" :active="request()->routeIs('muthowif.bookings.*')">
                             <span class="inline-flex items-center gap-2">
@@ -227,6 +233,9 @@
                 <x-responsive-nav-link :href="route('admin.refunds.index')" :active="request()->routeIs('admin.refunds.*')">
                     {{ __('nav.refund') }}
                 </x-responsive-nav-link>
+                <x-responsive-nav-link :href="route('admin.emergency.index')" :active="request()->routeIs('admin.emergency.*')">
+                    {{ __('nav.emergency') }}
+                </x-responsive-nav-link>
                 <x-responsive-nav-link :href="route('admin.withdrawals.index')" :active="request()->routeIs('admin.withdrawals.*')">
                     {{ __('nav.withdraw') }}
                 </x-responsive-nav-link>
@@ -253,6 +262,9 @@
                 </x-responsive-nav-link>
                 <x-responsive-nav-link :href="route('muthowif.portfolio.index')" :active="request()->routeIs('muthowif.portfolio.*')">
                     {{ __('nav.portfolio') }}
+                </x-responsive-nav-link>
+                <x-responsive-nav-link :href="route('muthowif.emergency-offers.index')" :active="request()->routeIs('muthowif.emergency-offers.*')">
+                    {{ __('nav.emergency_offers') }}
                 </x-responsive-nav-link>
                 <x-responsive-nav-link :href="route('muthowif.bookings.index')" :active="request()->routeIs('muthowif.bookings.*')">
                     <span class="inline-flex items-center gap-2">

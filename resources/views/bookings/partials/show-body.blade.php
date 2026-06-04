@@ -52,6 +52,12 @@
             'showReferralNetworkPanel' => $showReferralNetworkPanel ?? false,
             'referralNetworkAlternatives' => $referralNetworkAlternatives ?? collect(),
         ])
+
+        @include('bookings.partials.emergency-panel', [
+            'booking' => $b,
+            'activeEmergencyReport' => $activeEmergencyReport ?? null,
+            'selectableEmergencyOffers' => $selectableEmergencyOffers ?? collect(),
+        ])
     </div>
 
     <div class="min-w-0 lg:col-start-2 lg:row-start-1 lg:row-span-2">

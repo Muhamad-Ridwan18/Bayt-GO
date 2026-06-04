@@ -9,6 +9,8 @@ return [
     'finance' => 'Finance',
     'service_monitor' => 'Service monitor',
     'refund' => 'Refund',
+    'emergency' => 'Emergency incidents',
+    'emergency_offers' => 'Replacement offers',
     'withdraw' => 'Withdraw',
     'moota_webhooks' => 'Moota',
     'moota_testing' => 'Moota sandbox',

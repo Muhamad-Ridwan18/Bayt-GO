@@ -3,6 +3,7 @@
 namespace App\Models;
 
 use App\Enums\BookingStatus;
+use App\Enums\MuthowifAccountStatus;
 use App\Enums\MuthowifVerificationStatus;
 use App\Support\IntlPhone;
 use Carbon\CarbonInterface;
@@ -35,6 +36,7 @@ class MuthowifProfile extends Model
         'photo_path',
         'ktp_image_path',
         'verification_status',
+        'account_status',
         'verified_at',
         'rejection_reason',
         'wallet_balance',
@@ -75,7 +77,12 @@ class MuthowifProfile extends Model
 
     public function scopeApproved($query)
     {
-        return $query->where('verification_status', MuthowifVerificationStatus::Approved);
+        return $query
+            ->where('verification_status', MuthowifVerificationStatus::Approved)
+            ->where(function ($q): void {
+                $q->whereNull('account_status')
+                    ->orWhere('account_status', MuthowifAccountStatus::Active->value);
+            });
     }
 
     protected function casts(): array
@@ -84,6 +91,7 @@ class MuthowifProfile extends Model
             'birth_date' => 'date',
             'verified_at' => 'datetime',
             'verification_status' => MuthowifVerificationStatus::class,
+            'account_status' => MuthowifAccountStatus::class,
             'languages' => 'array',
             'educations' => 'array',
             'work_experiences' => 'array',
@@ -214,6 +222,18 @@ class MuthowifProfile extends Model
     public function isApproved(): bool
     {
         return $this->verification_status === MuthowifVerificationStatus::Approved;
+    }
+
+    public function isActiveAccount(): bool
+    {
+        $status = $this->account_status ?? MuthowifAccountStatus::Active;
+
+        return $status === MuthowifAccountStatus::Active;
+    }
+
+    public function isEligibleForEmergencyReplacement(): bool
+    {
+        return $this->isApproved() && $this->isActiveAccount();
     }
 
     public function isRejected(): bool

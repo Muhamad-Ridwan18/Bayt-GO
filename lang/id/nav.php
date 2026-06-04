@@ -9,6 +9,8 @@ return [
     'finance' => 'Keuangan',
     'service_monitor' => 'Pantau layanan',
     'refund' => 'Refund',
+    'emergency' => 'Insiden darurat',
+    'emergency_offers' => 'Tawaran pengganti',
     'withdraw' => 'Withdraw',
     'moota_webhooks' => 'Moota',
     'moota_testing' => 'Moota sandbox',

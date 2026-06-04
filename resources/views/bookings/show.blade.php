@@ -29,6 +29,8 @@
                     'refundPreview' => $refundPreview,
                     'referralNetworkAlternatives' => $referralNetworkAlternatives,
                     'showReferralNetworkPanel' => $showReferralNetworkPanel,
+                    'activeEmergencyReport' => $activeEmergencyReport ?? null,
+                    'selectableEmergencyOffers' => $selectableEmergencyOffers ?? collect(),
                 ])
             </div>
         </x-page-container>

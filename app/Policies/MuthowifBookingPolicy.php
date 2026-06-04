@@ -104,13 +104,26 @@ class MuthowifBookingPolicy
         return in_array($booking->status, [BookingStatus::Pending, BookingStatus::Confirmed], true);
     }
 
+    public function reportEmergency(User $user, MuthowifBooking $booking): bool
+    {
+        return app(BookingEmergencyReportPolicy::class)->reportEmergency($user, $booking);
+    }
+
     public function requestPostPayRefund(User $user, MuthowifBooking $booking): bool
     {
+        if ($booking->activeEmergencyReport() !== null) {
+            return false;
+        }
+
         return $user->isCustomer() && $booking->customer_id === $user->id;
     }
 
     public function requestPostPayReschedule(User $user, MuthowifBooking $booking): bool
     {
+        if ($booking->activeEmergencyReport() !== null) {
+            return false;
+        }
+
         return $user->isCustomer() && $booking->customer_id === $user->id;
     }
 

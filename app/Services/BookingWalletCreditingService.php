@@ -5,6 +5,7 @@ namespace App\Services;
 use App\Models\BookingPayment;
 use App\Models\MuthowifBooking;
 use App\Models\MuthowifProfile;
+use App\Services\Emergency\EmergencySettlementCalculator;
 use Illuminate\Support\Facades\DB;
 
 final class BookingWalletCreditingService
@@ -47,13 +48,22 @@ final class BookingWalletCreditingService
                     return;
                 }
 
-                $amount = $payment->muthowifWalletCreditAmount();
+                if ($booking->hadEmergencyReplacement()) {
+                    $calc = app(EmergencySettlementCalculator::class);
+                    $split = $calc->replacementPayoutOnCompletion($booking, $payment);
+                    $amount = $split['replacement_amount'];
+                } else {
+                    $amount = $payment->muthowifWalletCreditAmount();
+                }
+
                 if ($amount > 0) {
                     $profile->wallet_balance = round((float) $profile->wallet_balance + $amount, 2);
                     $profile->save();
                 }
 
-                $this->creditReferralReward($payment);
+                if (! $booking->hadEmergencyReplacement()) {
+                    $this->creditReferralReward($payment);
+                }
 
                 $payment->wallet_credited_at = now();
                 $payment->save();

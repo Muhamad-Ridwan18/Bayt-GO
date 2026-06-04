@@ -4,6 +4,7 @@ use App\Enums\MuthowifVerificationStatus;
 use App\Http\Controllers\Admin\AdminSettingsHubController;
 use App\Http\Controllers\Admin\ArticlesAdminController;
 use App\Http\Controllers\Admin\ServiceMonitorController;
+use App\Http\Controllers\Admin\BookingEmergencyController;
 use App\Http\Controllers\Admin\BookingRefundController;
 use App\Http\Controllers\Admin\FinanceController;
 use App\Http\Controllers\Admin\MootaWebhookHistoriesLiveController;
@@ -14,10 +15,12 @@ use App\Http\Controllers\Admin\UserManagementController;
 use App\Http\Controllers\Admin\WithdrawalsController;
 use App\Http\Controllers\BookingChatController;
 use App\Http\Controllers\Customer\BookingController as CustomerBookingController;
+use App\Http\Controllers\Customer\BookingEmergencyController as CustomerBookingEmergencyController;
 use App\Http\Controllers\GlobalChatController;
 use App\Http\Controllers\LocaleController;
 use App\Http\Controllers\MootaWebhookController;
 use App\Http\Controllers\Muthowif\BookingController as MuthowifBookingController;
+use App\Http\Controllers\Muthowif\EmergencyOfferController;
 use App\Http\Controllers\Muthowif\MuthowifDashboardCalendarController;
 use App\Http\Controllers\Muthowif\MuthowifPortfolioController;
 use App\Http\Controllers\Muthowif\MuthowifScheduleController;
@@ -213,6 +216,8 @@ Route::middleware('auth')->group(function () {
         Route::get('{booking}/reschedule', [CustomerBookingController::class, 'requestReschedule'])->name('reschedule');
         Route::post('{booking}/refund-request', [CustomerBookingController::class, 'storeRefundRequest'])->name('refund_request.store');
         Route::post('{booking}/reschedule-request', [CustomerBookingController::class, 'storeRescheduleRequest'])->name('reschedule_request.store');
+        Route::post('{booking}/emergency-report', [CustomerBookingEmergencyController::class, 'store'])->name('emergency.store');
+        Route::post('{booking}/emergency-select/{offer}', [CustomerBookingEmergencyController::class, 'selectReplacement'])->name('emergency.select');
         Route::get('{booking}/chat/messages', [BookingChatController::class, 'index'])->name('chat.messages');
         Route::get('{booking}/chat/unread-count', [BookingChatController::class, 'unreadCount'])->name('chat.unread-count');
         Route::post('{booking}/chat/messages', [BookingChatController::class, 'store'])->name('chat.messages.store');
@@ -260,6 +265,10 @@ Route::middleware('auth')->group(function () {
             Route::post('bookings/{booking}/reschedule-requests/{rescheduleRequest}/approve', [MuthowifBookingController::class, 'approveReschedule'])->name('bookings.reschedule_requests.approve');
             Route::post('bookings/{booking}/reschedule-requests/{rescheduleRequest}/reject', [MuthowifBookingController::class, 'rejectReschedule'])->name('bookings.reschedule_requests.reject');
 
+            Route::get('emergency-offers', [EmergencyOfferController::class, 'index'])->name('emergency-offers.index');
+            Route::post('emergency-offers/{offer}/accept', [EmergencyOfferController::class, 'accept'])->name('emergency-offers.accept');
+            Route::post('emergency-offers/{offer}/decline', [EmergencyOfferController::class, 'decline'])->name('emergency-offers.decline');
+
             Route::get('withdrawals', [MuthowifWithdrawController::class, 'index'])->name('withdrawals.index');
             Route::post('withdrawals', [MuthowifWithdrawController::class, 'store'])->name('withdrawals.store');
         });
@@ -282,6 +291,13 @@ Route::middleware('auth')->group(function () {
         Route::post('perusahaan-menunggu/{user}/approve', [\App\Http\Controllers\Admin\CompanyApprovalController::class, 'approve'])->name('company_approval.approve');
         Route::get('pantau-layanan', [ServiceMonitorController::class, 'index'])->name('service_monitor.index');
         Route::get('pantau-layanan/fragment', [ServiceMonitorController::class, 'fragment'])->name('service_monitor.fragment');
+        Route::get('insiden-darurat', [BookingEmergencyController::class, 'index'])->name('emergency.index');
+        Route::get('insiden-darurat/{report}', [BookingEmergencyController::class, 'show'])->name('emergency.show');
+        Route::post('insiden-darurat/{report}/tinjau', [BookingEmergencyController::class, 'markUnderReview'])->name('emergency.under_review');
+        Route::post('insiden-darurat/{report}/verifikasi', [BookingEmergencyController::class, 'verify'])->name('emergency.verify');
+        Route::post('insiden-darurat/{report}/tolak', [BookingEmergencyController::class, 'reject'])->name('emergency.reject');
+        Route::post('insiden-darurat/{report}/broadcast', [BookingEmergencyController::class, 'broadcastBatch'])->name('emergency.broadcast');
+        Route::post('insiden-darurat/{report}/undang', [BookingEmergencyController::class, 'invite'])->name('emergency.invite');
         Route::get('refund-menunggu', [BookingRefundController::class, 'index'])->name('refunds.index');
         Route::post('refund-menunggu/{refund}/selesai', [BookingRefundController::class, 'complete'])->name('refunds.complete');
         Route::get('keuangan', [FinanceController::class, 'index'])->name('finance.index');
