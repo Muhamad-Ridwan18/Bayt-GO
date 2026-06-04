@@ -146,6 +146,8 @@
         </div>
     </section>
 
+    @include('partials.dashboard-muthowif-share', ['mp' => $mp])
+
     {{-- Statistik --}}
     <div class="grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-4">
         <a href="{{ route('muthowif.withdrawals.index') }}" class="flex items-start gap-4 rounded-2xl border border-slate-200/80 bg-white p-5 shadow-sm transition hover:border-emerald-200 hover:shadow-md">
@@ -320,8 +322,6 @@
                     </div>
                 </div>
             </section>
-
-            @include('partials.dashboard-muthowif-share', ['mp' => $mp])
         </div>
 
         {{-- Kolom kanan: aksi cepat + ringkasan --}}

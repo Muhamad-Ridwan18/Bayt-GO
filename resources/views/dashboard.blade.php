@@ -75,7 +75,7 @@
             @endif
 
 
-            @unless (Auth::user()->isAdmin())
+            @unless (Auth::user()->isAdmin() || Auth::user()->isVerifiedMuthowif())
                 @include('partials.dashboard-next-profile-row')
             @endunless
         </x-page-container>
