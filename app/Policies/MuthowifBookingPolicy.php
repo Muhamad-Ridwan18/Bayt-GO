@@ -4,6 +4,7 @@ namespace App\Policies;
 
 use App\Enums\BookingStatus;
 use App\Enums\PaymentStatus;
+use App\Models\BookingReplacementOffer;
 use App\Models\MuthowifBooking;
 use App\Models\User;
 
@@ -107,6 +108,11 @@ class MuthowifBookingPolicy
     public function reportEmergency(User $user, MuthowifBooking $booking): bool
     {
         return app(BookingEmergencyReportPolicy::class)->reportEmergency($user, $booking);
+    }
+
+    public function selectReplacement(User $user, MuthowifBooking $booking, BookingReplacementOffer $offer): bool
+    {
+        return app(BookingEmergencyReportPolicy::class)->selectReplacement($user, $booking, $offer);
     }
 
     public function requestPostPayRefund(User $user, MuthowifBooking $booking): bool

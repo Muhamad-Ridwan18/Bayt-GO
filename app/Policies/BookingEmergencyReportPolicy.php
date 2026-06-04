@@ -33,9 +33,14 @@ class BookingEmergencyReportPolicy
 
     public function selectReplacement(User $user, MuthowifBooking $booking, BookingReplacementOffer $offer): bool
     {
+        $report = $offer->report;
+
         return $user->isCustomer()
             && (string) $booking->customer_id === (string) $user->id
-            && (string) $offer->report->muthowif_booking_id === (string) $booking->getKey()
+            && $report !== null
+            && (string) $report->muthowif_booking_id === (string) $booking->getKey()
+            && $report->status === EmergencyReportStatus::Verified
+            && $report->recruitment_open
             && $offer->status === ReplacementOfferStatus::Accepted
             && $booking->emergency_replacement_at === null;
     }
