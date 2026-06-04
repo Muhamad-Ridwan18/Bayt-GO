@@ -194,9 +194,9 @@
                         @enderror
                     </div>
 
-                    <button type="submit" class="w-full rounded-xl bg-brand-600 px-6 py-3 text-sm font-semibold text-white hover:bg-brand-700">
+                    <x-submit-button class="w-full rounded-xl bg-brand-600 px-6 py-3 text-sm font-semibold text-white hover:bg-brand-700">
                         Kirim permintaan withdraw
-                    </button>
+                    </x-submit-button>
                 </form>
             </div>
         </x-page-container>

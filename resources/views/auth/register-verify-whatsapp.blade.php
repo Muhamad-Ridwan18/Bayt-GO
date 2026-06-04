@@ -28,12 +28,9 @@
                 select-id="pending_phone_country"
                 error-key="phone"
             />
-            <button
-                type="submit"
-                class="inline-flex justify-center items-center rounded-lg border border-slate-300 bg-white px-4 py-2 text-sm font-medium text-slate-800 shadow-sm hover:bg-slate-50"
-            >
+            <x-submit-button class="rounded-lg border border-slate-300 bg-white px-4 py-2 text-sm font-medium text-slate-800 shadow-sm hover:bg-slate-50">
                 {{ __('auth_otp.save_new_phone') }}
-            </button>
+            </x-submit-button>
         </form>
     </div>
 
@@ -67,9 +64,9 @@
                     @csrf
                     <input type="hidden" name="phone" value="{{ $pendingPhone }}" />
                     <input type="hidden" name="country" value="{{ $pendingCountry }}" />
-                    <button type="submit" class="text-xs font-semibold text-brand-700 hover:text-brand-800 transition focus:outline-none">
+                    <x-submit-button class="text-xs font-semibold text-brand-700 hover:text-brand-800 transition focus:outline-none">
                         {{ __('auth_otp.resend_btn') }}
-                    </button>
+                    </x-submit-button>
                 </form>
             </div>
         </div>

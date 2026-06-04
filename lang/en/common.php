@@ -1,6 +1,7 @@
 <?php
 
 return [
+    'processing' => 'Processing...',
     'pilgrims' => 'pilgrims',
     'pilgrims_short' => 'pilgrims',
     'jemaah' => 'pilgrims',

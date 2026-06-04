@@ -81,9 +81,9 @@
                             </select>
                         </div>
                         <div class="flex gap-2">
-                            <button type="submit" class="inline-flex flex-1 items-center justify-center rounded-xl bg-brand-600 px-4 py-2.5 text-sm font-semibold text-white shadow-sm transition hover:bg-brand-700 sm:flex-none">
+                            <x-submit-button class="flex-1 rounded-xl bg-brand-600 px-4 py-2.5 text-sm font-semibold text-white shadow-sm transition hover:bg-brand-700 sm:flex-none">
                                 {{ __('admin.users.apply') }}
-                            </button>
+                            </x-submit-button>
                             <a href="{{ route('admin.users.index') }}" class="inline-flex items-center justify-center rounded-xl border border-slate-200 bg-white px-4 py-2.5 text-sm font-semibold text-slate-700 shadow-sm transition hover:bg-slate-50">
                                 {{ __('admin.users.reset') }}
                             </a>

@@ -99,10 +99,10 @@
                        class="{{ $textClass }} mt-2 placeholder:text-slate-400" />
             </div>
             <div class="w-full lg:w-auto lg:flex-shrink-0 lg:min-w-[11.5rem] lg:pt-[1.75rem]">
-                <button type="submit" class="{{ $submitClass }}">
+                <x-submit-button class="{{ $submitClass }}">
                     <svg class="h-4 w-4 shrink-0 opacity-95" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true"><path fill-rule="evenodd" d="M9 3.5a5.5 5.5 0 100 11 5.5 5.5 0 000-11zM2 9a7 7 0 1112.452 4.391l3.328 3.329a.75.75 0 11-1.06 1.06l-3.329-3.328A7 7 0 012 9z" clip-rule="evenodd" /></svg>
                     {{ __('layanan.submit_search') }}
-                </button>
+                </x-submit-button>
             </div>
         </div>
 

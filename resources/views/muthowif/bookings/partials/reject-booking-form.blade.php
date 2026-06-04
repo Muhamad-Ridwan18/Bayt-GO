@@ -34,10 +34,10 @@
             <x-input-error :messages="$errors->get('muthowif_rejection_note')" class="mt-1" />
         </div>
         <div class="{{ $compact ? 'flex sm:justify-end' : 'flex sm:justify-start' }}">
-            <button type="submit" class="{{ $rejectBtnClass }}">
+            <x-submit-button class="{{ $rejectBtnClass }}">
                 <svg class="h-3.5 w-3.5 shrink-0 text-slate-600" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true"><path fill-rule="evenodd" d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z" clip-rule="evenodd" /></svg>
                 {{ __('muthowif.bookings.reject') }}
-            </button>
+            </x-submit-button>
         </div>
     </form>
 @endif

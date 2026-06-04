@@ -31,7 +31,7 @@
         </nav>
     </div>
 
-    <form id="profile-main-form" method="post" action="{{ route('profile.public.update') }}" enctype="multipart/form-data" @submit="submit" class="space-y-6 p-5 sm:p-6">
+    <form id="profile-main-form" method="post" action="{{ route('profile.public.update') }}" enctype="multipart/form-data" data-submit-lock="off" @submit="submit" class="space-y-6 p-5 sm:p-6">
         @csrf
         @method('patch')
 
@@ -70,9 +70,9 @@
                     @if ($user instanceof \Illuminate\Contracts\Auth\MustVerifyEmail && ! $user->hasVerifiedEmail())
                         <p class="mt-2 text-xs text-slate-700">
                             {{ __('profile.verification.unverified') }}
-                            <button form="send-verification" type="submit" class="font-medium text-brand-700 underline decoration-brand-700/30 underline-offset-2 hover:text-brand-800">
+                            <x-submit-button form="send-verification" class="font-medium text-brand-700 underline decoration-brand-700/30 underline-offset-2 hover:text-brand-800">
                                 {{ __('profile.verification.resend') }}
-                            </button>
+                            </x-submit-button>
                         </p>
                     @endif
                 </div>

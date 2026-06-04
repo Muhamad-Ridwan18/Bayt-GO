@@ -90,9 +90,9 @@
                                     <form action="{{ route('muthowif.jadwal.destroy', $bd) }}" method="post" class="shrink-0" onsubmit="return confirm(@json(__('muthowif.jadwal.delete_confirm')));">
                                         @csrf
                                         @method('DELETE')
-                                        <button type="submit" class="inline-flex items-center justify-center rounded-lg border border-red-200 bg-red-50 px-3 py-1.5 text-sm font-semibold text-red-800 transition hover:bg-red-100/80">
+                                        <x-submit-button class="rounded-lg border border-red-200 bg-red-50 px-3 py-1.5 text-sm font-semibold text-red-800 transition hover:bg-red-100/80">
                                             {{ __('muthowif.jadwal.delete') }}
-                                        </button>
+                                        </x-submit-button>
                                     </form>
                                 </div>
                             </li>

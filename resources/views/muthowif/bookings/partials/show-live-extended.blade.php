@@ -92,16 +92,16 @@
                                 <form method="POST" action="{{ route('muthowif.bookings.reschedule_requests.approve', [$b, $req]) }}" class="min-w-0 flex-1 space-y-2 sm:min-w-[14rem]">
                                     @csrf
                                     <input type="text" name="muthowif_note" placeholder="{{ __('muthowif.booking_show.note_optional') }}" class="w-full rounded-lg border-slate-300 text-sm">
-                                    <button type="submit" class="inline-flex w-full items-center justify-center rounded-lg bg-emerald-600 px-4 py-2 text-xs font-semibold text-white hover:bg-emerald-700" onclick="return confirm(@json(__('muthowif.booking_show.approve_reschedule_confirm')));">
+                                    <x-submit-button class="w-full rounded-lg bg-emerald-600 px-4 py-2 text-xs font-semibold text-white hover:bg-emerald-700" onclick="return confirm(@json(__('muthowif.booking_show.approve_reschedule_confirm')));">
                                         {{ __('muthowif.booking_show.approve_reschedule') }}
-                                    </button>
+                                    </x-submit-button>
                                 </form>
                                 <form method="POST" action="{{ route('muthowif.bookings.reschedule_requests.reject', [$b, $req]) }}" class="min-w-0 flex-1 space-y-2 sm:min-w-[14rem]">
                                     @csrf
                                     <input type="text" name="muthowif_note" placeholder="{{ __('muthowif.booking_show.reject_reason_optional') }}" class="w-full rounded-lg border-slate-300 text-sm">
-                                    <button type="submit" class="inline-flex w-full items-center justify-center rounded-lg border border-red-200 bg-white px-4 py-2 text-xs font-semibold text-red-800 hover:bg-red-50">
+                                    <x-submit-button class="w-full rounded-lg border border-red-200 bg-white px-4 py-2 text-xs font-semibold text-red-800 hover:bg-red-50">
                                         {{ __('muthowif.booking_show.reject_short') }}
-                                    </button>
+                                    </x-submit-button>
                                 </form>
                             </div>
                         @endif

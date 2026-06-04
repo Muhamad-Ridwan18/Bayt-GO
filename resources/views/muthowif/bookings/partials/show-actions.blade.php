@@ -31,9 +31,9 @@
                             @endforeach
                         </select>
                     </label>
-                    <button type="submit" class="inline-flex h-11 shrink-0 items-center justify-center gap-2 rounded-xl bg-violet-700 px-4 text-sm font-semibold text-white transition hover:bg-violet-800 sm:px-5">
+                    <x-submit-button class="h-11 shrink-0 rounded-xl bg-violet-700 px-4 text-sm font-semibold text-white transition hover:bg-violet-800 sm:px-5">
                         {{ __('muthowif.bookings.refer_submit') }}
-                    </button>
+                    </x-submit-button>
                 </form>
             </div>
         @elseif (isset($peerRecommendTargets))
@@ -46,9 +46,9 @@
         <p class="mt-1 text-xs text-amber-900/80">{{ __('muthowif.booking_show.awaiting_payment_hint') }}</p>
         <form method="POST" action="{{ route('muthowif.bookings.cancel', $b) }}" class="mt-4" onsubmit="return confirm(@json(__('muthowif.bookings.cancel_unpaid_confirm')));">
             @csrf
-            <button type="submit" class="inline-flex h-9 w-full items-center justify-center gap-1.5 rounded-lg border border-red-200 bg-white px-3.5 text-xs font-semibold text-red-800 transition hover:bg-red-50 sm:w-auto">
+            <x-submit-button class="h-9 w-full rounded-lg border border-red-200 bg-white px-3.5 text-xs font-semibold text-red-800 transition hover:bg-red-50 sm:w-auto">
                 {{ __('muthowif.bookings.cancel_unpaid') }}
-            </button>
+            </x-submit-button>
         </form>
     </section>
 @endif

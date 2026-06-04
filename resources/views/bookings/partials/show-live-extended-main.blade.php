@@ -131,9 +131,9 @@
         @csrf
         <p class="text-sm font-bold text-red-900">{{ __('bookings.show.cancel_section_title') }}</p>
         <p class="mt-1 text-xs text-red-800/90">{{ __('bookings.show.cancel_section_hint') }}</p>
-        <button type="submit" class="mt-4 rounded-xl border border-red-200 bg-white px-4 py-2.5 text-sm font-semibold text-red-700 shadow-sm transition hover:bg-red-50">
+        <x-submit-button class="mt-4 rounded-xl border border-red-200 bg-white px-4 py-2.5 text-sm font-semibold text-red-700 shadow-sm transition hover:bg-red-50">
             {{ __('bookings.show.cancel_yes') }}
-        </button>
+        </x-submit-button>
     </form>
 @endif
 
@@ -167,9 +167,9 @@
                 @enderror
             </div>
 
-            <button type="submit" class="inline-flex items-center justify-center rounded-xl bg-brand-600 px-5 py-2.5 text-sm font-semibold text-white shadow-md shadow-brand-600/20 transition hover:bg-brand-700">
+            <x-submit-button class="rounded-xl bg-brand-600 px-5 py-2.5 text-sm font-semibold text-white shadow-md shadow-brand-600/20 transition hover:bg-brand-700">
                 {{ $review ? __('bookings.show.update_review') : __('bookings.show.submit_review') }}
-            </button>
+            </x-submit-button>
         </form>
     </div>
 @endif

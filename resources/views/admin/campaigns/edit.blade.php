@@ -91,9 +91,9 @@
                         </div>
                     </div>
                     <div class="bg-slate-50 px-6 py-4 sm:flex sm:flex-row-reverse sm:px-8">
-                        <button type="submit" class="inline-flex w-full justify-center rounded-xl bg-baytgo px-5 py-2.5 text-sm font-semibold text-white shadow-md shadow-baytgo/20 transition hover:bg-baytgo-800 sm:ml-3 sm:w-auto">
+                        <x-submit-button class="w-full rounded-xl bg-baytgo px-5 py-2.5 text-sm font-semibold text-white shadow-md shadow-baytgo/20 transition hover:bg-baytgo-800 sm:ml-3 sm:w-auto">
                             Simpan Perubahan
-                        </button>
+                        </x-submit-button>
                     </div>
                 </div>
             </form>

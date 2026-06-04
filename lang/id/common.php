@@ -1,6 +1,7 @@
 <?php
 
 return [
+    'processing' => 'Memproses...',
     'pilgrims' => 'jemaah',
     'pilgrims_short' => 'jemaah',
     'jemaah' => 'jemaah',

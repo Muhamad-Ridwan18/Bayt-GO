@@ -66,9 +66,9 @@
                                         @if (!$company->is_company_approved)
                                             <form action="{{ route('admin.company_approval.approve', $company) }}" method="POST" class="inline">
                                                 @csrf
-                                                <button type="submit" class="inline-flex items-center gap-1 rounded-lg bg-emerald-600 px-3 py-1.5 text-xs font-semibold text-white shadow-sm transition hover:bg-emerald-700">
+                                                <x-submit-button class="rounded-lg bg-emerald-600 px-3 py-1.5 text-xs font-semibold text-white shadow-sm transition hover:bg-emerald-700">
                                                     Setujui
-                                                </button>
+                                                </x-submit-button>
                                             </form>
                                         @else
                                             <span class="inline-flex items-center gap-1 text-xs font-semibold text-emerald-600">

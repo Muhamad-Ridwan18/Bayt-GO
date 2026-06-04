@@ -200,10 +200,10 @@
                         @if ($canCancelUnpaid)
                             <form method="POST" action="{{ route('muthowif.bookings.cancel', $booking) }}" class="inline" onsubmit="return confirm(@json(__('muthowif.bookings.cancel_unpaid_confirm')));" @click.stop>
                                 @csrf
-                                <button type="submit" class="inline-flex items-center gap-1.5 rounded-lg border border-red-200 bg-white px-3 py-2 text-sm font-semibold text-red-700 transition hover:bg-red-50">
+                                <x-submit-button class="rounded-lg border border-red-200 bg-white px-3 py-2 text-sm font-semibold text-red-700 transition hover:bg-red-50">
                                     <svg class="h-4 w-4" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true"><path fill-rule="evenodd" d="M8.75 1A2.75 2.75 0 006 3.75v.443c-.795.077-1.584.176-2.365.298a.75.75 0 00-.53 1.28l1.5 1.5a.75.75 0 001.28-.53l-.03-.18c.716-.12 1.44-.22 2.17-.3V6A1.25 1.25 0 0110 7.25h.5A1.25 1.25 0 0111.75 6v-.75c.716.08 1.424.18 2.12.3l-.03.18a.75.75 0 001.28.53l1.5-1.5a.75.75 0 00-.53-1.28 14.85 14.85 0 00-2.365-.298V3.75A2.75 2.75 0 0011.25 1h-2.5zM4.5 8.25a.75.75 0 00-.75.75v7.5c0 .414.336.75.75.75h11a.75.75 0 00.75-.75v-7.5a.75.75 0 00-.75-.75h-11z" clip-rule="evenodd" /></svg>
                                     {{ __('muthowif.bookings.cancel') }}
-                                </button>
+                                </x-submit-button>
                             </form>
                         @endif
                     </div>

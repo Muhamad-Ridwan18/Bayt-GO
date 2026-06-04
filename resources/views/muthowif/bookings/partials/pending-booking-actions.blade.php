@@ -10,7 +10,7 @@
 @endphp
 
 @if ($booking->status === BookingStatus::Pending)
-    <div x-data="{ submitting: false }">
+    <div x-data="{ submitting: false }" data-submit-lock-scope="off">
     @if ($variant === 'card')
         <div class="border-t border-slate-100 px-4 py-5 sm:px-5">
             <div class="grid gap-5 lg:grid-cols-5 lg:gap-6">

@@ -76,9 +76,9 @@
                                 <textarea id="refund_note" name="customer_note" rows="3" maxlength="2000" class="w-full rounded-xl border-slate-300 bg-slate-50/30 text-sm shadow-sm focus:border-brand-500 focus:ring-brand-500" placeholder="{{ __('bookings.show.review_placeholder') }}">{{ old('customer_note') }}</textarea>
                             </div>
                             <div class="flex pt-2">
-                                <button type="submit" class="inline-flex w-full items-center justify-center rounded-2xl bg-slate-900 px-6 py-4 text-sm font-bold text-white shadow-lg shadow-slate-900/20 transition hover:bg-slate-800 focus:outline-none focus:ring-2 focus:ring-slate-900 focus:ring-offset-2 sm:w-auto">
+                                <x-submit-button class="w-full rounded-2xl bg-slate-900 px-6 py-4 text-sm font-bold text-white shadow-lg shadow-slate-900/20 transition hover:bg-slate-800 focus:outline-none focus:ring-2 focus:ring-slate-900 focus:ring-offset-2 sm:w-auto">
                                     {{ __('bookings.show.process_refund') }}
-                                </button>
+                                </x-submit-button>
                             </div>
                         </form>
                     @else

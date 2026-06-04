@@ -21,7 +21,7 @@
         @if ($report->status === EmergencyReportStatus::Submitted)
             <form method="POST" action="{{ route('admin.emergency.under_review', $report) }}" class="mt-4">
                 @csrf
-                <button type="submit" class="rounded-xl bg-slate-800 px-4 py-2 text-sm font-semibold text-white">{{ __('emergency.admin.mark_review') }}</button>
+                <x-submit-button class="rounded-xl bg-slate-800 px-4 py-2 text-sm font-semibold text-white">{{ __('emergency.admin.mark_review') }}</x-submit-button>
             </form>
         @endif
 
@@ -29,19 +29,19 @@
             <form method="POST" action="{{ route('admin.emergency.verify', $report) }}" class="mt-4 space-y-2">
                 @csrf
                 <textarea name="admin_note" rows="2" class="w-full rounded-xl border-slate-200 text-sm" placeholder="{{ __('emergency.admin.admin_note') }}"></textarea>
-                <button type="submit" class="rounded-xl bg-emerald-700 px-4 py-2 text-sm font-semibold text-white">{{ __('emergency.admin.verify') }}</button>
+                <x-submit-button class="rounded-xl bg-emerald-700 px-4 py-2 text-sm font-semibold text-white">{{ __('emergency.admin.verify') }}</x-submit-button>
             </form>
             <form method="POST" action="{{ route('admin.emergency.reject', $report) }}" class="mt-3 space-y-2">
                 @csrf
                 <textarea name="admin_note" rows="2" class="w-full rounded-xl border-slate-200 text-sm"></textarea>
-                <button type="submit" class="rounded-xl bg-rose-700 px-4 py-2 text-sm font-semibold text-white">{{ __('emergency.admin.reject') }}</button>
+                <x-submit-button class="rounded-xl bg-rose-700 px-4 py-2 text-sm font-semibold text-white">{{ __('emergency.admin.reject') }}</x-submit-button>
             </form>
         @endif
 
         @if ($report->status === EmergencyReportStatus::Verified && $report->recruitment_open)
             <form method="POST" action="{{ route('admin.emergency.broadcast', $report) }}" class="mt-4">
                 @csrf
-                <button type="submit" class="rounded-xl bg-brand-700 px-4 py-2 text-sm font-semibold text-white">{{ __('emergency.admin.broadcast') }}</button>
+                <x-submit-button class="rounded-xl bg-brand-700 px-4 py-2 text-sm font-semibold text-white">{{ __('emergency.admin.broadcast') }}</x-submit-button>
             </form>
         @endif
     </section>
@@ -71,7 +71,7 @@
                         <option value="{{ $candidate->id }}">{{ $candidate->user?->name }}</option>
                     @endforeach
                 </select>
-                <button type="submit" class="rounded-xl bg-amber-700 px-4 py-2 text-sm font-semibold text-white">{{ __('emergency.admin.invite') }}</button>
+                <x-submit-button class="rounded-xl bg-amber-700 px-4 py-2 text-sm font-semibold text-white">{{ __('emergency.admin.invite') }}</x-submit-button>
             </form>
         @endif
     </section>

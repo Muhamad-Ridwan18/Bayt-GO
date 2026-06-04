@@ -74,9 +74,9 @@
                             @if ($w->status === 'pending_approval')
                                 <form method="POST" action="{{ route('admin.withdrawals.approve', $w) }}" onsubmit="return confirm(@json(__('admin.withdrawals.approve_confirm')));">
                                     @csrf
-                                    <button type="submit" class="inline-flex items-center justify-center rounded-xl bg-brand-600 px-3 py-2 text-sm font-semibold text-white hover:bg-brand-700">
+                                    <x-submit-button class="rounded-xl bg-brand-600 px-3 py-2 text-sm font-semibold text-white hover:bg-brand-700">
                                         {{ __('admin.withdrawals.approve') }}
-                                    </button>
+                                    </x-submit-button>
                                 </form>
                             @elseif ($w->status === 'processing')
                                 <div class="flex flex-col items-end gap-2">
@@ -92,9 +92,9 @@
                                     </button>
                                     <form method="POST" action="{{ route('admin.withdrawals.mark_transfer_failed', $w) }}" onsubmit="return confirm(@json(__('admin.withdrawals.fail_confirm')));">
                                         @csrf
-                                        <button type="submit" class="text-xs font-semibold text-red-700 hover:text-red-900 underline">
+                                        <x-submit-button class="text-xs font-semibold text-red-700 hover:text-red-900 underline">
                                             {{ __('admin.withdrawals.mark_failed') }}
-                                        </button>
+                                        </x-submit-button>
                                     </form>
                                 </div>
                             @else

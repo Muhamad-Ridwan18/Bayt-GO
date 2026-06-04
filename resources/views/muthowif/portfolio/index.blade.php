@@ -335,13 +335,13 @@
                                             <form action="{{ route('muthowif.portfolio.destroy', $portfolio) }}" method="POST" class="flex justify-end" onsubmit="return confirm('Apakah Anda yakin ingin menghapus foto portofolio ini?');">
                                                 @csrf
                                                 @method('DELETE')
-                                                <button type="submit" class="inline-flex items-center gap-1.5 rounded-lg border border-red-200 bg-red-50/70 px-2.5 py-1.5 text-xs font-semibold text-red-700 transition hover:bg-red-100 hover:text-red-800">
+                                                <x-submit-button class="rounded-lg border border-red-200 bg-red-50/70 px-2.5 py-1.5 text-xs font-semibold text-red-700 transition hover:bg-red-100 hover:text-red-800">
                                                     <svg class="h-3.5 w-3.5" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true">
                                                         <path fill-rule="evenodd" d="M8.75 1A2.75 2.75 0 006 3.75V4H5a2 2 0 00-2 2v2c0 .414.336.75.75.75h12.5a.75.75 0 00.75-.75V6a2 2 0 00-2-2h-1V3.75A2.75 2.75 0 0011.25 1h-2.5zM6.25 4v-.25c0-.69.56-1.25 1.25-1.25h2.5c.69 0 1.25.56 1.25 1.25V4h-5z" clip-rule="evenodd" />
                                                         <path d="M4 9.75A.75.75 0 014.75 9h10.5a.75.75 0 01.75.75v6.75a2.25 2.25 0 01-2.25 2.25H6.75A2.25 2.25 0 014.5 16.5V9.75z" />
                                                     </svg>
                                                     Hapus Foto
-                                                </button>
+                                                </x-submit-button>
                                             </form>
                                         </div>
                                     </div>

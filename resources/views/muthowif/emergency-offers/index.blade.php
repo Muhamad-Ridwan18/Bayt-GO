@@ -38,12 +38,12 @@
                             <div class="mt-4 flex flex-wrap gap-2">
                                 <form method="POST" action="{{ route('muthowif.emergency-offers.accept', $offer) }}">
                                     @csrf
-                                    <button type="submit" class="rounded-xl bg-emerald-700 px-4 py-2 text-sm font-semibold text-white">{{ __('emergency.muthowif.accept') }}</button>
+                                    <x-submit-button class="rounded-xl bg-emerald-700 px-4 py-2 text-sm font-semibold text-white">{{ __('emergency.muthowif.accept') }}</x-submit-button>
                                 </form>
                                 <form method="POST" action="{{ route('muthowif.emergency-offers.decline', $offer) }}" class="flex flex-wrap items-end gap-2">
                                     @csrf
                                     <input type="text" name="decline_note" placeholder="Catatan (opsional)" class="rounded-lg border-slate-200 text-xs">
-                                    <button type="submit" class="rounded-xl border border-slate-300 px-4 py-2 text-sm font-semibold text-slate-700">{{ __('emergency.muthowif.decline') }}</button>
+                                    <x-submit-button class="rounded-xl border border-slate-300 px-4 py-2 text-sm font-semibold text-slate-700">{{ __('emergency.muthowif.decline') }}</x-submit-button>
                                 </form>
                             </div>
                         @elseif ($offer->status === \App\Enums\ReplacementOfferStatus::Accepted)

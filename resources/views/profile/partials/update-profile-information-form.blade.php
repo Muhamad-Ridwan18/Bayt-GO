@@ -13,7 +13,7 @@
         @csrf
     </form>
 
-    <form method="post" action="{{ route('profile.update') }}" @submit="submit" class="mt-6 space-y-6">
+    <form method="post" action="{{ route('profile.update') }}" data-submit-lock="off" @submit="submit" class="mt-6 space-y-6">
         @csrf
         @method('patch')
 
@@ -44,9 +44,9 @@
                     <p class="mt-2 text-sm text-slate-800">
                         {{ __('profile.verification.unverified') }}
 
-                        <button form="send-verification" type="submit" class="rounded-md text-sm font-medium text-brand-700 underline decoration-brand-700/30 underline-offset-2 hover:text-brand-800 focus:outline-none focus:ring-2 focus:ring-brand-500 focus:ring-offset-2">
+                        <x-submit-button form="send-verification" class="rounded-md text-sm font-medium text-brand-700 underline decoration-brand-700/30 underline-offset-2 hover:text-brand-800 focus:outline-none focus:ring-2 focus:ring-brand-500 focus:ring-offset-2">
                             {{ __('profile.verification.resend') }}
-                        </button>
+                        </x-submit-button>
                     </p>
                 </div>
             @endif

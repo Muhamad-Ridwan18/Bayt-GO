@@ -391,10 +391,10 @@
                                 @endforeach
                             </div>
 
-                            <button type="submit" class="group/btn mt-6 inline-flex w-full items-center justify-center gap-2 rounded-2xl bg-gradient-to-r from-brand-600 to-brand-700 px-4 py-4 text-base font-bold text-white shadow-lg shadow-brand-900/20 transition hover:from-brand-500 hover:to-brand-600 hover:shadow-xl focus:outline-none focus:ring-2 focus:ring-brand-500 focus:ring-offset-2 sm:text-sm sm:py-3.5">
+                            <x-submit-button class="group/btn mt-6 w-full rounded-2xl bg-gradient-to-r from-brand-600 to-brand-700 px-4 py-4 text-base font-bold text-white shadow-lg shadow-brand-900/20 transition hover:from-brand-500 hover:to-brand-600 hover:shadow-xl focus:outline-none focus:ring-2 focus:ring-brand-500 focus:ring-offset-2 sm:text-sm sm:py-3.5">
                                 <span>{{ __('bookings.payment.pay_now') }}</span>
                                 <svg class="h-5 w-5 transition group-hover/btn:translate-x-0.5" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true"><path fill-rule="evenodd" d="M3 10a.75.75 0 01.75-.75h10.638L10.23 5.29a.75.75 0 111.04-1.08l5.5 5.25a.75.75 0 010 1.08l-5.5 5.25a.75.75 0 11-1.04-1.08l4.158-3.96H3.75A.75.75 0 013 10z" clip-rule="evenodd" /></svg>
-                            </button>
+                            </x-submit-button>
                             <p class="mt-2 text-center text-[11px] text-slate-500 sm:text-left">{{ __('bookings.payment.instructions_after') }}</p>
                         </form>
                     </section>

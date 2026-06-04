@@ -29,7 +29,7 @@
                         @endforeach
                     </select>
                 </div>
-                <button type="submit" class="inline-flex rounded-xl bg-slate-900 px-4 py-2 text-sm font-semibold text-white transition hover:bg-slate-800">{{ __('support.apply_filters') }}</button>
+                <x-submit-button class="rounded-xl bg-slate-900 px-4 py-2 text-sm font-semibold text-white transition hover:bg-slate-800">{{ __('support.apply_filters') }}</x-submit-button>
                 @if ($q !== '' || $statusFilter !== '')
                     <a href="{{ route('admin.support-tickets.index') }}" class="text-sm font-semibold text-slate-600 hover:text-slate-900">{{ __('support.clear_filters') }}</a>
                 @endif

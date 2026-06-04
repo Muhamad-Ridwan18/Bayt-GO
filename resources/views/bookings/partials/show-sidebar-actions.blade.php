@@ -108,9 +108,9 @@
                 @enderror
             </div>
 
-            <button type="submit" class="inline-flex w-full items-center justify-center rounded-xl bg-emerald-600 px-5 py-2.5 text-sm font-semibold text-white shadow-md shadow-emerald-600/20 transition hover:bg-emerald-700">
+            <x-submit-button class="w-full rounded-xl bg-emerald-600 px-5 py-2.5 text-sm font-semibold text-white shadow-md shadow-emerald-600/20 transition hover:bg-emerald-700">
                 {{ __('bookings.show.complete_submit') }}
-            </button>
+            </x-submit-button>
         </form>
     </section>
 @endif

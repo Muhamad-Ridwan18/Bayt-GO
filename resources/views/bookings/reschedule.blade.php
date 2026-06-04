@@ -88,9 +88,9 @@
                             </div>
 
                             <div class="flex pt-2">
-                                <button type="submit" class="inline-flex w-full items-center justify-center rounded-2xl bg-brand-600 px-6 py-4 text-sm font-bold text-white shadow-lg shadow-brand-600/20 transition hover:bg-brand-700 focus:outline-none focus:ring-2 focus:ring-brand-500 focus:ring-offset-2 sm:w-auto">
+                                <x-submit-button class="w-full rounded-2xl bg-brand-600 px-6 py-4 text-sm font-bold text-white shadow-lg shadow-brand-600/20 transition hover:bg-brand-700 focus:outline-none focus:ring-2 focus:ring-brand-500 focus:ring-offset-2 sm:w-auto">
                                     {{ __('bookings.show.submit_reschedule') }}
-                                </button>
+                                </x-submit-button>
                             </div>
                         </form>
                     @else

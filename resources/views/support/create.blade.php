@@ -51,7 +51,7 @@
                 <p class="text-xs font-medium text-amber-900/90">{{ __('support.privacy_warning') }}</p>
 
                 <div class="flex flex-wrap items-center gap-3">
-                    <button type="submit" class="inline-flex items-center rounded-2xl bg-brand-600 px-5 py-2.5 text-sm font-semibold text-white shadow-sm transition hover:bg-brand-700">{{ __('support.submit_ticket') }}</button>
+                    <x-submit-button class="rounded-2xl bg-brand-600 px-5 py-2.5 text-sm font-semibold text-white shadow-sm transition hover:bg-brand-700">{{ __('support.submit_ticket') }}</x-submit-button>
                     <a href="{{ route('support.index') }}" class="text-sm font-semibold text-brand-700 hover:text-brand-800">{{ __('support.back_list') }}</a>
                 </div>
             </form>

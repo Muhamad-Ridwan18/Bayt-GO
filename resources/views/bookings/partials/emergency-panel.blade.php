@@ -36,9 +36,9 @@
                                 @endif
                                 <form method="POST" action="{{ route('bookings.emergency.select', [$b, $offer]) }}" class="mt-3" onsubmit="return confirm(@json(__('emergency.customer.select_confirm', ['name' => $offer->muthowifProfile?->user?->name ?? '—'])));">
                                     @csrf
-                                    <button type="submit" class="w-full rounded-xl bg-emerald-700 px-4 py-2 text-sm font-semibold text-white hover:bg-emerald-800">
+                                    <x-submit-button class="w-full rounded-xl bg-emerald-700 px-4 py-2 text-sm font-semibold text-white hover:bg-emerald-800">
                                         {{ __('emergency.customer.select_button') }}
-                                    </button>
+                                    </x-submit-button>
                                 </form>
                             </div>
                         @endforeach
@@ -72,9 +72,9 @@
                     <input type="file" name="evidence[]" multiple accept=".jpg,.jpeg,.png,.pdf,.webp" class="mt-1 w-full text-xs">
                     <p class="mt-1 text-[11px] text-slate-500">{{ __('emergency.customer.evidence_optional') }}</p>
                 </div>
-                <button type="submit" class="w-full rounded-xl bg-red-700 px-4 py-2.5 text-sm font-bold text-white hover:bg-red-800 sm:w-auto" onclick="return confirm(@json(__('emergency.customer.report_confirm')));">
+                <x-submit-button class="w-full rounded-xl bg-red-700 px-4 py-2.5 text-sm font-bold text-white hover:bg-red-800 sm:w-auto" onclick="return confirm(@json(__('emergency.customer.report_confirm')));">
                     {{ __('emergency.customer.report_button') }}
-                </button>
+                </x-submit-button>
             </form>
         </section>
     @endif

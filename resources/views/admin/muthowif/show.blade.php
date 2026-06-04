@@ -79,11 +79,10 @@
                     @if ($profile->isPending())
                         <form method="POST" action="{{ route('admin.muthowif.approve', $profile) }}" class="flex-shrink-0">
                             @csrf
-                            <button type="submit"
-                                class="inline-flex items-center gap-2 rounded-xl bg-emerald-600 px-5 py-2.5 text-sm font-medium text-white shadow-sm transition hover:bg-emerald-700 active:scale-95">
+                            <x-submit-button class="rounded-xl bg-emerald-600 px-5 py-2.5 text-sm font-medium text-white shadow-sm transition hover:bg-emerald-700 active:scale-95">
                                 <svg class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/></svg>
                                 {{ __('admin.muthowif.approve_registration') }}
-                            </button>
+                            </x-submit-button>
                         </form>
                     @endif
 
@@ -266,11 +265,10 @@
 
                         <x-input-error :messages="$errors->get('rejection_reason')" />
 
-                        <button type="submit"
-                            class="inline-flex items-center gap-2 rounded-xl bg-rose-600 px-5 py-2.5 text-sm font-medium text-white shadow-sm transition hover:bg-rose-700 active:scale-95">
+                        <x-submit-button class="rounded-xl bg-rose-600 px-5 py-2.5 text-sm font-medium text-white shadow-sm transition hover:bg-rose-700 active:scale-95">
                             <svg class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 19l9 2-9-18-9 18 9-2zm0 0v-8"/></svg>
                             {{ __('admin.muthowif.reject_submit') }}
-                        </button>
+                        </x-submit-button>
 
                     </form>
                 </div>

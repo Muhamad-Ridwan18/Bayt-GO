@@ -40,6 +40,7 @@
                 });
             },
         }'
+        data-submit-lock="off"
         @submit.prevent="handleRegisterSubmit"
     >
         @csrf

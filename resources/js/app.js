@@ -1,6 +1,9 @@
 import './bootstrap';
 
+import { initFormSubmitLock } from './form-submit-lock';
 import Alpine from 'alpinejs';
+
+initFormSubmitLock();
 import {
     csrfToken,
     debounce,

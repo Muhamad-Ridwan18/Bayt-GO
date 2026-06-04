@@ -267,9 +267,9 @@
                                         @if ($st === BookingStatus::Pending)
                                             <form method="POST" action="{{ route('bookings.cancel', $booking) }}" onsubmit="return confirm(@json(__('bookings.index.cancel_confirm')));" class="inline">
                                                 @csrf
-                                                <button type="submit" class="rounded-lg border border-red-100 bg-red-50 px-3.5 py-1.5 text-[11px] font-bold text-red-600 transition hover:bg-red-100 sm:text-xs">
+                                                <x-submit-button class="rounded-lg border border-red-100 bg-red-50 px-3.5 py-1.5 text-[11px] font-bold text-red-600 transition hover:bg-red-100 sm:text-xs">
                                                     {{ __('bookings.index.cancel') }}
-                                                </button>
+                                                </x-submit-button>
                                             </form>
                                         @endif
                                     </div>

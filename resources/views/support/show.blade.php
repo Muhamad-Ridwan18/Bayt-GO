@@ -48,7 +48,7 @@
                             <p class="mt-0.5 text-xs text-slate-500">{{ __('support.attachments_hint_short') }}</p>
                             <input id="reply-attachments" name="attachments[]" type="file" accept="image/jpeg,image/png,image/gif,image/webp,application/pdf" multiple class="mt-2 block w-full text-sm text-slate-600 file:mr-3 file:rounded-lg file:border-0 file:bg-slate-100 file:px-3 file:py-1.5 file:text-xs file:font-semibold file:text-slate-800 hover:file:bg-slate-200">
                         </div>
-                        <button type="submit" class="inline-flex rounded-2xl bg-brand-600 px-5 py-2.5 text-sm font-semibold text-white shadow-sm transition hover:bg-brand-700">{{ __('support.reply_heading') }}</button>
+                        <x-submit-button class="rounded-2xl bg-brand-600 px-5 py-2.5 text-sm font-semibold text-white shadow-sm transition hover:bg-brand-700">{{ __('support.reply_heading') }}</x-submit-button>
                     </form>
                 </section>
             @endif

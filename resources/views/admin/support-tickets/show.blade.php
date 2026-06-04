@@ -30,7 +30,7 @@
                     @if ($openAssignable)
                         <form method="POST" action="{{ route('admin.support-tickets.assign_self', $ticket) }}">
                             @csrf
-                            <button type="submit" class="inline-flex rounded-xl border border-brand-200 bg-brand-50 px-3 py-2 text-xs font-semibold text-brand-900 transition hover:bg-brand-100">{{ __('support.assign_self') }}</button>
+                            <x-submit-button class="rounded-xl border border-brand-200 bg-brand-50 px-3 py-2 text-xs font-semibold text-brand-900 transition hover:bg-brand-100">{{ __('support.assign_self') }}</x-submit-button>
                         </form>
                     @endif
                     <a href="{{ route('admin.support-tickets.index') }}" class="text-sm font-semibold text-brand-700 hover:text-brand-800">{{ __('support.back_admin') }}</a>
@@ -67,7 +67,7 @@
                         </select>
                     </div>
                     <div class="md:col-span-2 flex flex-wrap items-center gap-3">
-                        <button type="submit" class="inline-flex rounded-xl bg-slate-900 px-5 py-2.5 text-sm font-semibold text-white transition hover:bg-slate-800">{{ __('support.save_ticket') }}</button>
+                        <x-submit-button class="rounded-xl bg-slate-900 px-5 py-2.5 text-sm font-semibold text-white transition hover:bg-slate-800">{{ __('support.save_ticket') }}</x-submit-button>
                     </div>
                 </form>
             </section>
@@ -99,7 +99,7 @@
                             <label for="admin-reply-attachments" class="block text-xs font-medium text-slate-600">{{ __('support.attachments_label') }}</label>
                             <input id="admin-reply-attachments" name="attachments[]" type="file" accept="image/jpeg,image/png,image/gif,image/webp,application/pdf" multiple class="mt-2 block w-full text-sm text-slate-600 file:mr-3 file:rounded-lg file:border-0 file:bg-slate-100 file:px-3 file:py-1.5 file:text-xs file:font-semibold file:text-slate-800 hover:file:bg-slate-200">
                         </div>
-                        <button type="submit" class="inline-flex rounded-xl bg-brand-600 px-5 py-2.5 text-sm font-semibold text-white shadow-sm transition hover:bg-brand-700">{{ __('support.reply_heading') }}</button>
+                        <x-submit-button class="rounded-xl bg-brand-600 px-5 py-2.5 text-sm font-semibold text-white shadow-sm transition hover:bg-brand-700">{{ __('support.reply_heading') }}</x-submit-button>
                     </form>
                 </section>
             @endif

@@ -56,7 +56,7 @@
                                             <form action="{{ route('admin.campaign.destroy', $row) }}" method="post" class="inline" onsubmit="return confirm('Hapus campaign ini?');">
                                                 @csrf
                                                 @method('DELETE')
-                                                <button type="submit" class="rounded-lg px-2 py-1 text-xs font-semibold text-red-600 hover:bg-red-50">Hapus</button>
+                                                <x-submit-button class="rounded-lg px-2 py-1 text-xs font-semibold text-red-600 hover:bg-red-50">Hapus</x-submit-button>
                                             </form>
                                         </div>
                                     </td>
