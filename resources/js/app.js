@@ -827,7 +827,6 @@ document.addEventListener('alpine:init', () => {
             this.debouncedRefresh = debounce(() => void this.refreshFragment(), 450);
 
             if (this.paymentReturnPending && this.liveMode === 'customer_show') {
-                void this.refreshFragment();
                 this.startPaymentReturnPolling();
             }
 
@@ -918,12 +917,11 @@ document.addEventListener('alpine:init', () => {
                     const data = await fetchJson(this.paymentStatusUrl);
                     if (data?.is_paid) {
                         this.paymentReturnPending = false;
-                        this.clientPaymentStatus = data.payment_status ?? 'paid';
-                        this.clientStatus = data.booking_status ?? this.clientStatus;
                         if (this.showUrl) {
-                            window.history.replaceState({}, '', this.showUrl);
+                            window.location.assign(this.showUrl);
+                        } else {
+                            window.location.reload();
                         }
-                        await this.refreshFragment();
                         return;
                     }
                 } catch (err) {
@@ -973,6 +971,19 @@ document.addEventListener('alpine:init', () => {
         },
 
         async refreshTieredShowFragment() {
+            const grid = this.$refs.liveGrid;
+            if (!grid) {
+                return;
+            }
+
+            if (this.liveMode === 'customer_show') {
+                const html = await fetchHtmlFragment(this.fragmentUrl);
+                if (html !== null && html.includes('data-live-part')) {
+                    swapLiveParts(grid, html);
+                }
+                return;
+            }
+
             const state = await fetchJson(`${this.liveStateUrl}${this.liveStateQuery()}`);
             if (!state?.tier) {
                 return;
@@ -985,10 +996,7 @@ document.addEventListener('alpine:init', () => {
                 return;
             }
 
-            const grid = this.$refs.liveGrid;
-            if (this.liveMode === 'customer_show') {
-                swapAlpineHtml(grid, html);
-            } else if (tier === 'dynamic') {
+            if (tier === 'dynamic') {
                 swapLiveParts(grid, html);
             } else {
                 swapAlpineHtml(grid, html);
