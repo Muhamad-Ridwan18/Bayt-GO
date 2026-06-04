@@ -85,6 +85,43 @@ class MuthowifProfile extends Model
             });
     }
 
+    /** Hanya profil yang sudah mengisi minimal satu layanan (paket). */
+    public function scopeHasPublishedServices($query)
+    {
+        return $query->whereHas('services');
+    }
+
+    /**
+     * Statistik untuk kartu marketplace (rating & jumlah ulasan).
+     *
+     * @param  \Illuminate\Database\Eloquent\Builder<MuthowifProfile>  $query
+     * @return \Illuminate\Database\Eloquent\Builder<MuthowifProfile>
+     */
+    public function scopeWithMarketplaceStats($query)
+    {
+        return $query
+            ->withCount([
+                'bookings as confirmed_bookings_count' => static fn ($q) => $q->where('status', BookingStatus::Confirmed),
+                'bookingReviews',
+            ])
+            ->withAvg('bookingReviews as average_rating', 'rating');
+    }
+
+    /**
+     * Urutan: muthowif berulasan dulu (rating tertinggi), sisanya by verified_at.
+     * Wajib dipanggil setelah {@see scopeWithMarketplaceStats}.
+     *
+     * @param  \Illuminate\Database\Eloquent\Builder<MuthowifProfile>  $query
+     * @return \Illuminate\Database\Eloquent\Builder<MuthowifProfile>
+     */
+    public function scopeOrderByMarketplaceRanking($query)
+    {
+        return $query
+            ->orderByRaw('CASE WHEN COALESCE(booking_reviews_count, 0) > 0 THEN 1 ELSE 0 END DESC')
+            ->orderByDesc('average_rating')
+            ->orderByDesc('verified_at');
+    }
+
     protected function casts(): array
     {
         return [

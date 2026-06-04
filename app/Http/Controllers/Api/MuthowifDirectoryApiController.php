@@ -3,7 +3,6 @@
 namespace App\Http\Controllers\Api;
 
 use App\Enums\BookingStatus;
-use App\Enums\MuthowifVerificationStatus;
 use App\Http\Controllers\Controller;
 use App\Models\MuthowifProfile;
 use Carbon\Carbon;
@@ -25,12 +24,9 @@ class MuthowifDirectoryApiController extends Controller
 
         $query = MuthowifProfile::query()
             ->with(['user', 'services'])
-            ->withCount([
-                'bookings as confirmed_bookings_count' => static fn ($q) => $q->where('status', BookingStatus::Confirmed),
-                'bookingReviews',
-            ])
-            ->withAvg('bookingReviews as average_rating', 'rating')
-            ->where('verification_status', MuthowifVerificationStatus::Approved);
+            ->approved()
+            ->hasPublishedServices()
+            ->withMarketplaceStats();
 
         if ($hasDateSearch) {
             $endEffective = filled($endRaw) ? $endRaw : $startRaw;
@@ -83,7 +79,7 @@ class MuthowifDirectoryApiController extends Controller
             $query->whereHas('user', fn ($u) => $u->where('name', 'like', '%'.$q.'%'));
         }
 
-        $profiles = $query->orderByDesc('verified_at')->paginate(12)->withQueryString();
+        $profiles = $query->orderByMarketplaceRanking()->paginate(12)->withQueryString();
 
         // Format data to be easily consumed by mobile
         $formattedData = $profiles->getCollection()->map(function($profile) {

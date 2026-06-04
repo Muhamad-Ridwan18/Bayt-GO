@@ -3,7 +3,6 @@
 namespace App\Http\Controllers\Public;
 
 use App\Enums\BookingStatus;
-use App\Enums\MuthowifVerificationStatus;
 use App\Http\Controllers\Controller;
 use App\Models\MuthowifProfile;
 use Carbon\Carbon;
@@ -102,14 +101,7 @@ class MuthowifDirectoryController extends Controller
             BookingStatus::blocksAvailability()
         );
 
-        $profiles = MuthowifProfile::query()
-            ->with(['user', 'services'])
-            ->withCount([
-                'bookings as confirmed_bookings_count' => static fn ($q) => $q->where('status', BookingStatus::Confirmed),
-                'bookingReviews',
-            ])
-            ->withAvg('bookingReviews as average_rating', 'rating')
-            ->where('verification_status', MuthowifVerificationStatus::Approved)
+        $profiles = $this->marketplaceBaseQuery()
             ->whereDoesntHave('blockedDates', function ($q) use ($startStr, $endStr) {
                 $q->whereBetween('blocked_on', [$startStr, $endStr]);
             })
@@ -121,7 +113,7 @@ class MuthowifDirectoryController extends Controller
             ->when($q !== '', function ($query) use ($q) {
                 $query->whereHas('user', fn ($u) => $u->where('name', 'like', '%'.$q.'%'));
             })
-            ->orderByDesc('verified_at')
+            ->orderByMarketplaceRanking()
             ->paginate(12)
             ->withQueryString();
 
@@ -313,5 +305,17 @@ class MuthowifDirectoryController extends Controller
             'query' => $request->query(),
             'pageName' => 'page',
         ]);
+    }
+
+    /**
+     * @return \Illuminate\Database\Eloquent\Builder<MuthowifProfile>
+     */
+    private function marketplaceBaseQuery()
+    {
+        return MuthowifProfile::query()
+            ->with(['user', 'services'])
+            ->approved()
+            ->hasPublishedServices()
+            ->withMarketplaceStats();
     }
 }
