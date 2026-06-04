@@ -26,11 +26,21 @@ final class EmergencyBookingViewData
             ];
         }
 
-        $report->load(['offers.muthowifProfile.user']);
+        $report->load([
+            'muthowifBooking.muthowifProfile.user',
+            'offers' => static function ($query): void {
+                $query
+                    ->where('status', ReplacementOfferStatus::Accepted->value)
+                    ->orderByDesc('responded_at')
+                    ->with([
+                        'muthowifProfile' => static fn ($profileQuery) => $profileQuery
+                            ->withMarketplaceStats()
+                            ->with(['user', 'services']),
+                    ]);
+            },
+        ]);
 
-        $selectable = $report->offers
-            ->filter(fn ($o) => $o->status === ReplacementOfferStatus::Accepted)
-            ->values();
+        $selectable = $report->offers->values();
 
         return [
             'activeEmergencyReport' => $report,
