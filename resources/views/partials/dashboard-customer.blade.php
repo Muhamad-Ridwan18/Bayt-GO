@@ -1,11 +1,12 @@
 @php
     use App\Enums\BookingStatus;
     use App\Enums\MuthowifVerificationStatus;
+    use App\Enums\PaymentStatus;
+    use App\Enums\SupportTicketStatus;
     use App\Models\BookingReview;
     use App\Models\MuthowifBooking;
     use App\Models\MuthowifProfile;
     use App\Models\SupportTicket;
-    use App\Enums\SupportTicketStatus;
 
     $user = Auth::user();
     $userId = $user->getKey();
@@ -57,6 +58,14 @@
         ->where('customer_id', $userId)
         ->count();
 
+    $nextBooking = MuthowifBooking::query()
+        ->where('customer_id', $userId)
+        ->whereNotIn('status', [BookingStatus::Cancelled])
+        ->whereDate('ends_on', '>=', now()->toDateString())
+        ->orderBy('starts_on')
+        ->with(['muthowifProfile.user'])
+        ->first();
+
     $featuredMuthowifs = MuthowifProfile::query()
         ->with(['user:id,name', 'services:id,muthowif_profile_id,daily_price'])
         ->where('verification_status', MuthowifVerificationStatus::Approved)
@@ -67,8 +76,23 @@
         ->orderByDesc('verified_at')
         ->limit(8)
         ->get();
+
+    $contactWaRaw = (string) (config('app.contact_whatsapp') ?: config('app.contact_phone'));
+    $contactDigits = preg_replace('/\D+/', '', $contactWaRaw) ?? '';
+    $contactWaLink = $contactDigits !== '' ? 'https://wa.me/'.$contactDigits : null;
+    $contactPhoneDisplay = config('app.contact_phone') ?: config('app.contact_whatsapp');
+    $contactEmail = (string) (config('mail.from.address') ?? '');
+
+    $customerGuideCards = __('dashboard.customer_guide_cards');
+    if (! is_array($customerGuideCards)) {
+        $customerGuideCards = [];
+    }
+
+    $supportHref = Route::has('support.create')
+        ? route('support.create')
+        : (Route::has('support.index') ? route('support.index') : null);
 @endphp
 
-<div class="space-y-6 scroll-smooth">
+<div class="scroll-smooth">
     @include('partials.dashboard-customer-layout')
 </div>

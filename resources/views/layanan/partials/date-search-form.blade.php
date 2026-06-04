@@ -107,8 +107,8 @@
         </div>
 
         @if ($welcomeInlineHeader)
-            <p class="mt-5 rounded-xl border border-stone-100/90 bg-stone-50/80 px-4 py-2.5 text-xs leading-relaxed text-slate-600">
-                <span class="font-semibold text-slate-700">{{ __('welcome.search_tip_label') }}</span> {{ __('welcome.search_tip_body') }}
+            <p class="mt-5 rounded-xl border px-4 py-2.5 text-xs leading-relaxed {{ $welcomeAccent ? 'border-emerald-100/90 bg-emerald-50/80 text-emerald-950' : 'border-stone-100/90 bg-stone-50/80 text-slate-600' }}">
+                <span class="font-semibold {{ $welcomeAccent ? 'text-emerald-900' : 'text-slate-700' }}">{{ __('welcome.search_tip_label') }}</span> {{ __('welcome.search_tip_body') }}
             </p>
         @else
             <p class="mt-5 rounded-xl bg-slate-50/90 px-3 py-2.5 text-xs leading-relaxed text-slate-600 ring-1 ring-slate-100">
