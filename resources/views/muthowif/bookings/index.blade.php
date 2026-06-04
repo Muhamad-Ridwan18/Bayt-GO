@@ -13,7 +13,6 @@
             @include('muthowif.bookings.partials.index-live', [
                 'bookings' => $bookings,
                 'addonsById' => $addonsById,
-                'peerRecommendByBooking' => $peerRecommendByBooking,
             ])
         </div>
     </div>

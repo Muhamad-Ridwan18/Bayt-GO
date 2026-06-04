@@ -6,8 +6,8 @@ use App\Enums\BookingChangeRequestStatus;
 use App\Enums\BookingStatus;
 use App\Enums\MuthowifBookingMuthowifRejectionKind;
 use App\Enums\PaymentStatus;
-use App\Events\CustomerBookingUpdated;
 use App\Http\Controllers\Controller;
+use App\Support\CustomerBookingBroadcast;
 use App\Jobs\NotifyCustomerOfApprovedBooking;
 use App\Jobs\NotifyCustomerOfBookingReferredToPeer;
 use App\Jobs\NotifyCustomerOfBookingRejectedJadwalFull;
@@ -53,7 +53,6 @@ class BookingController extends Controller
         return view('muthowif.bookings.index', [
             'bookings' => $bookings,
             'addonsById' => $this->addOnsKeyById($bookings),
-            'peerRecommendByBooking' => $this->peerRecommendTargetsByBookingId($profile, $bookings),
         ]);
     }
 
@@ -89,7 +88,6 @@ class BookingController extends Controller
         return view('muthowif.bookings.partials.index-live', [
             'bookings' => $bookings,
             'addonsById' => $this->addOnsKeyById($bookings),
-            'peerRecommendByBooking' => $this->peerRecommendTargetsByBookingId($profile, $bookings),
         ]);
     }
 
@@ -112,7 +110,9 @@ class BookingController extends Controller
             $addonsById = MuthowifServiceAddOn::query()->whereIn('id', $ids)->get()->keyBy('id');
         }
 
-        $peerRecommendTargets = app(BookingPeerReferralService::class)->listCandidates($booking, $profile);
+        $peerRecommendTargets = $booking->status === BookingStatus::Pending
+            ? app(BookingPeerReferralService::class)->listCandidates($booking, $profile)
+            : collect();
 
         return view('muthowif.bookings.show', [
             'booking' => $booking,
@@ -140,7 +140,9 @@ class BookingController extends Controller
             $addonsById = MuthowifServiceAddOn::query()->whereIn('id', $ids)->get()->keyBy('id');
         }
 
-        $peerRecommendTargets = app(BookingPeerReferralService::class)->listCandidates($booking, $profile);
+        $peerRecommendTargets = $booking->status === BookingStatus::Pending
+            ? app(BookingPeerReferralService::class)->listCandidates($booking, $profile)
+            : collect();
 
         return view('muthowif.bookings.partials.show-live', [
             'booking' => $booking,
@@ -174,8 +176,9 @@ class BookingController extends Controller
 
         $total = $booking->computeTotalAmount();
         $bookingIdStr = (string) $booking->getKey();
+        $broadcastIds = [$bookingIdStr];
 
-        DB::transaction(function () use ($booking, $profile, $start, $end, $total, $bookingIdStr): void {
+        DB::transaction(function () use ($booking, $profile, $start, $end, $total, $bookingIdStr, &$broadcastIds): void {
             $booking->update([
                 'status' => BookingStatus::Confirmed,
                 'payment_status' => PaymentStatus::Pending,
@@ -198,14 +201,14 @@ class BookingController extends Controller
                     'muthowif_rejection_note' => __('bookings.show.muthowif_rejection_auto_collision'),
                 ]);
                 NotifyCustomerOfBookingRejectedJadwalFull::dispatchAfterResponse((string) $other->getKey());
-                broadcast(new CustomerBookingUpdated($other->fresh()));
+                $broadcastIds[] = (string) $other->getKey();
             }
         });
 
         app(BookingPendingPaymentEnsurer::class)->ensure($booking->fresh());
 
         NotifyCustomerOfApprovedBooking::dispatchAfterResponse($bookingIdStr);
-        broadcast(new CustomerBookingUpdated($booking->fresh()));
+        CustomerBookingBroadcast::afterResponseMany($broadcastIds);
 
         return redirect()
             ->route('muthowif.bookings.index')
@@ -259,7 +262,7 @@ class BookingController extends Controller
                 );
             }
 
-            broadcast(new CustomerBookingUpdated($booking->fresh()));
+            CustomerBookingBroadcast::afterResponse($booking->fresh());
 
             return redirect()
                 ->route('muthowif.bookings.index')
@@ -306,7 +309,7 @@ class BookingController extends Controller
 
         NotifyMuthowifOfNewBooking::dispatchAfterResponse($freshId);
         NotifyCustomerOfBookingReferredToPeer::dispatchAfterResponse($freshId, $previousName);
-        broadcast(new CustomerBookingUpdated($booking->fresh()));
+        CustomerBookingBroadcast::afterResponse($booking->fresh());
 
         return redirect()
             ->route('muthowif.bookings.index')
@@ -352,8 +355,10 @@ class BookingController extends Controller
                 ->with('error', 'Jumlah hari pada pengajuan tidak sama dengan booking.');
         }
 
+        $broadcastIds = [(string) $booking->getKey()];
+
         try {
-            DB::transaction(function () use ($booking, $rescheduleRequest, $request, $validated, $start, $end): void {
+            DB::transaction(function () use ($booking, $profile, $rescheduleRequest, $request, $validated, $start, $end, &$broadcastIds): void {
                 $rescheduleRequest->refresh()->lockForUpdate();
                 $booking->refresh()->lockForUpdate();
 
@@ -389,7 +394,7 @@ class BookingController extends Controller
                         'muthowif_rejection_note' => __('bookings.show.muthowif_rejection_auto_collision'),
                     ]);
                     NotifyCustomerOfBookingRejectedJadwalFull::dispatchAfterResponse((string) $other->getKey());
-                    broadcast(new CustomerBookingUpdated($other->fresh()));
+                    $broadcastIds[] = (string) $other->getKey();
                 }
             });
         } catch (\Throwable $e) {
@@ -399,7 +404,7 @@ class BookingController extends Controller
         }
 
         NotifyCustomerOfRescheduleApproved::dispatchAfterResponse((string) $booking->getKey(), (string) $rescheduleRequest->getKey());
-        broadcast(new CustomerBookingUpdated($booking->fresh()));
+        CustomerBookingBroadcast::afterResponseMany($broadcastIds);
 
         return redirect()
             ->route('muthowif.bookings.show', $booking)
@@ -429,29 +434,11 @@ class BookingController extends Controller
         ]);
 
         NotifyCustomerOfRescheduleRejected::dispatchAfterResponse((string) $booking->getKey(), (string) $rescheduleRequest->getKey());
-        broadcast(new CustomerBookingUpdated($booking->fresh()));
+        CustomerBookingBroadcast::afterResponse($booking->fresh());
 
         return redirect()
             ->route('muthowif.bookings.show', $booking)
             ->with('status', 'Pengajuan reschedule ditolak.');
-    }
-
-    /**
-     * @param  LengthAwarePaginator<int, MuthowifBooking>  $bookings
-     * @return array<string, Collection<int, MuthowifProfile>>
-     */
-    private function peerRecommendTargetsByBookingId(MuthowifProfile $profile, LengthAwarePaginator $bookings): array
-    {
-        $referral = app(BookingPeerReferralService::class);
-        $map = [];
-        foreach ($bookings as $booking) {
-            if ($booking->status !== BookingStatus::Pending) {
-                continue;
-            }
-            $map[(string) $booking->getKey()] = $referral->listCandidates($booking, $profile);
-        }
-
-        return $map;
     }
 
     /**

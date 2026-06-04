@@ -14,6 +14,7 @@ return [
         'completed_notice' => 'Pesanan selesai. Invoice sudah dapat dicetak customer.',
         'approve' => 'Setujui',
         'approve_order' => 'Setujui Pesanan',
+        'submitting' => 'Memproses…',
         'reject' => 'Tolak',
         'reject_order' => 'Tolak Pesanan',
         'reject_confirm' => 'Tolak permintaan ini? Jadwal akan kembali kosong.',

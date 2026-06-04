@@ -14,6 +14,7 @@ return [
         'completed_notice' => 'Booking completed. The customer can print the invoice.',
         'approve' => 'Approve',
         'approve_order' => 'Approve booking',
+        'submitting' => 'Processing…',
         'reject' => 'Decline',
         'reject_order' => 'Decline booking',
         'reject_confirm' => 'Decline this request? The slot will be free again.',

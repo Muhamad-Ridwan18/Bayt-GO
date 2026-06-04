@@ -10,6 +10,7 @@
 @endphp
 
 @if ($booking->status === BookingStatus::Pending)
+    <div x-data="{ submitting: false }">
     @if ($variant === 'card')
         <div class="border-t border-slate-100 px-4 py-5 sm:px-5">
             <div class="grid gap-5 lg:grid-cols-5 lg:gap-6">
@@ -29,7 +30,7 @@
                         method="POST"
                         action="{{ route('muthowif.bookings.cancel', $booking) }}"
                         class="mt-4 space-y-4"
-                        onsubmit="return confirm(@json(__('muthowif.bookings.reject_confirm_with_reason')));"
+                        @submit="if (!confirm(@json(__('muthowif.bookings.reject_confirm_with_reason')))) { $event.preventDefault(); return }; submitting = true"
                     >
                         @csrf
                         <div>
@@ -93,20 +94,23 @@
                     </div>
 
                     <div class="flex flex-col gap-2.5">
-                        <form method="POST" action="{{ route('muthowif.bookings.confirm', $booking) }}">
+                        <form method="POST" action="{{ route('muthowif.bookings.confirm', $booking) }}" @submit="submitting = true">
                             @csrf
-                            <button type="submit" class="inline-flex h-11 w-full items-center justify-center gap-2 rounded-lg bg-brand-700 px-4 text-sm font-bold text-white shadow-sm transition hover:bg-brand-800">
-                                <svg class="h-4 w-4 shrink-0" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true"><path fill-rule="evenodd" d="M16.704 4.153a.75.75 0 01.143 1.052l-8 10.5a.75.75 0 01-1.127.075l-4.5-4.5a.75.75 0 011.06-1.06l3.894 3.893 7.48-9.817a.75.75 0 011.05-.143z" clip-rule="evenodd" /></svg>
-                                {{ __('muthowif.bookings.approve_order') }}
+                            <button type="submit" :disabled="submitting" class="inline-flex h-11 w-full items-center justify-center gap-2 rounded-lg bg-brand-700 px-4 text-sm font-bold text-white shadow-sm transition hover:bg-brand-800 disabled:cursor-wait disabled:opacity-70">
+                                <svg x-show="submitting" x-cloak class="h-4 w-4 shrink-0 animate-spin" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" aria-hidden="true"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"></path></svg>
+                                <svg x-show="!submitting" class="h-4 w-4 shrink-0" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true"><path fill-rule="evenodd" d="M16.704 4.153a.75.75 0 01.143 1.052l-8 10.5a.75.75 0 01-1.127.075l-4.5-4.5a.75.75 0 011.06-1.06l3.894 3.893 7.48-9.817a.75.75 0 011.05-.143z" clip-rule="evenodd" /></svg>
+                                <span x-text="submitting ? @js(__('muthowif.bookings.submitting')) : @js(__('muthowif.bookings.approve_order'))"></span>
                             </button>
                         </form>
                         <button
                             type="submit"
                             form="{{ $rejectFormId }}"
-                            class="inline-flex h-11 w-full items-center justify-center gap-2 rounded-lg border-2 border-red-200 bg-white px-4 text-sm font-bold text-red-700 transition hover:border-red-300 hover:bg-red-50"
+                            :disabled="submitting"
+                            class="inline-flex h-11 w-full items-center justify-center gap-2 rounded-lg border-2 border-red-200 bg-white px-4 text-sm font-bold text-red-700 transition hover:border-red-300 hover:bg-red-50 disabled:cursor-wait disabled:opacity-70"
                         >
-                            <svg class="h-4 w-4 shrink-0" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true"><path fill-rule="evenodd" d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z" clip-rule="evenodd" /></svg>
-                            {{ __('muthowif.bookings.reject_order') }}
+                            <svg x-show="submitting" x-cloak class="h-4 w-4 shrink-0 animate-spin" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" aria-hidden="true"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"></path></svg>
+                            <svg x-show="!submitting" class="h-4 w-4 shrink-0" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true"><path fill-rule="evenodd" d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z" clip-rule="evenodd" /></svg>
+                            <span x-text="submitting ? @js(__('muthowif.bookings.submitting')) : @js(__('muthowif.bookings.reject_order'))"></span>
                         </button>
                         <p class="flex items-center justify-center gap-1.5 text-center text-[11px] text-slate-500">
                             <svg class="h-3.5 w-3.5 shrink-0 text-slate-400" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true">
@@ -125,7 +129,7 @@
                 method="POST"
                 action="{{ route('muthowif.bookings.cancel', $booking) }}"
                 class="space-y-4 p-4 sm:p-5"
-                onsubmit="return confirm(@json(__('muthowif.bookings.reject_confirm_with_reason')));"
+                @submit="if (!confirm(@json(__('muthowif.bookings.reject_confirm_with_reason')))) { $event.preventDefault(); return }; submitting = true"
             >
                 @csrf
                 <div class="grid gap-3 sm:grid-cols-2 sm:gap-4">
@@ -146,18 +150,21 @@
                 </div>
             </form>
             <div class="grid grid-cols-2 gap-2 border-t border-slate-100 bg-slate-50/60 px-4 py-3 sm:flex sm:justify-end sm:gap-3 sm:px-5">
-                <form method="POST" action="{{ route('muthowif.bookings.confirm', $booking) }}" class="min-w-0 sm:w-auto">
+                <form method="POST" action="{{ route('muthowif.bookings.confirm', $booking) }}" class="min-w-0 sm:w-auto" @submit="submitting = true">
                     @csrf
-                    <button type="submit" class="inline-flex h-10 w-full min-w-0 items-center justify-center gap-2 rounded-lg bg-brand-700 px-4 text-sm font-semibold text-white shadow-sm hover:bg-brand-800 sm:min-w-[9.5rem]">
-                        <svg class="h-4 w-4 shrink-0" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true"><path fill-rule="evenodd" d="M16.704 4.153a.75.75 0 01.143 1.052l-8 10.5a.75.75 0 01-1.127.075l-4.5-4.5a.75.75 0 011.06-1.06l3.894 3.893 7.48-9.817a.75.75 0 011.05-.143z" clip-rule="evenodd" /></svg>
-                        {{ __('muthowif.bookings.approve_order') }}
+                    <button type="submit" :disabled="submitting" class="inline-flex h-10 w-full min-w-0 items-center justify-center gap-2 rounded-lg bg-brand-700 px-4 text-sm font-semibold text-white shadow-sm hover:bg-brand-800 disabled:cursor-wait disabled:opacity-70 sm:min-w-[9.5rem]">
+                        <svg x-show="submitting" x-cloak class="h-4 w-4 shrink-0 animate-spin" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" aria-hidden="true"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"></path></svg>
+                        <svg x-show="!submitting" class="h-4 w-4 shrink-0" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true"><path fill-rule="evenodd" d="M16.704 4.153a.75.75 0 01.143 1.052l-8 10.5a.75.75 0 01-1.127.075l-4.5-4.5a.75.75 0 011.06-1.06l3.894 3.893 7.48-9.817a.75.75 0 011.05-.143z" clip-rule="evenodd" /></svg>
+                        <span x-text="submitting ? @js(__('muthowif.bookings.submitting')) : @js(__('muthowif.bookings.approve_order'))"></span>
                     </button>
                 </form>
-                <button type="submit" form="{{ $rejectFormId }}" class="inline-flex h-10 w-full items-center justify-center gap-2 rounded-lg border border-red-200 bg-white px-4 text-sm font-semibold text-red-700 hover:bg-red-50 sm:min-w-[9.5rem] sm:w-auto">
-                    <svg class="h-4 w-4 shrink-0" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true"><path fill-rule="evenodd" d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z" clip-rule="evenodd" /></svg>
-                    {{ __('muthowif.bookings.reject_order') }}
+                <button type="submit" form="{{ $rejectFormId }}" :disabled="submitting" class="inline-flex h-10 w-full items-center justify-center gap-2 rounded-lg border border-red-200 bg-white px-4 text-sm font-semibold text-red-700 hover:bg-red-50 disabled:cursor-wait disabled:opacity-70 sm:min-w-[9.5rem] sm:w-auto">
+                    <svg x-show="submitting" x-cloak class="h-4 w-4 shrink-0 animate-spin" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" aria-hidden="true"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"></path></svg>
+                    <svg x-show="!submitting" class="h-4 w-4 shrink-0" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true"><path fill-rule="evenodd" d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z" clip-rule="evenodd" /></svg>
+                    <span x-text="submitting ? @js(__('muthowif.bookings.submitting')) : @js(__('muthowif.bookings.reject_order'))"></span>
                 </button>
             </div>
         </div>
     @endif
+    </div>
 @endif
