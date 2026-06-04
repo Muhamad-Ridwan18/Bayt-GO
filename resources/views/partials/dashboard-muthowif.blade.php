@@ -325,10 +325,10 @@
         {{-- Kolom kanan: aksi cepat + ringkasan --}}
         <aside class="space-y-6 lg:col-span-4">
             <div>
-                <div class="mt-3">
+                <div class="">
                     @include('partials.dashboard-muthowif-share', ['mp' => $mp])
                 </div>
-                <h3 class="text-sm font-bold text-slate-900 sm:text-base">{{ __('dashboard_muthowif.quick_actions') }}</h3>
+                <h3 class="text-sm font-bold text-slate-900 sm:text-base mt-3">{{ __('dashboard_muthowif.quick_actions') }}</h3>
                 <p class="mt-1 text-xs text-slate-500">{{ __('dashboard_muthowif.quick_actions_sub') }}</p>
                 <div class="mt-4 grid grid-cols-2 gap-3">
                     <a href="{{ route('muthowif.bookings.index') }}" class="group flex flex-col rounded-2xl border border-slate-200/90 bg-white p-4 shadow-sm transition hover:border-emerald-200 hover:shadow-md focus:outline-none focus-visible:ring-2 focus-visible:ring-baytgo">
