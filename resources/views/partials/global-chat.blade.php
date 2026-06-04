@@ -14,6 +14,7 @@
         }
     })"
     @open-booking-chat.window="openBookingById($event.detail.bookingId)"
+    @open-global-chat-panel.window="if (!isPanelExpanded) { togglePanel(); } else { loadList(); }"
 >
     <!-- Modal Container -->
     <div 
@@ -175,6 +176,7 @@
     <!-- Floating Action Button -->
     <button
         type="button"
+        id="global-chat-fab"
         @click="togglePanel()"
         class="relative flex h-14 w-14 lg:h-16 lg:w-16 items-center justify-center rounded-full bg-brand-600 text-white shadow-xl shadow-brand-600/40 ring-4 ring-white transition-all hover:bg-brand-700 hover:scale-105 active:scale-95 z-50 group"
         aria-label="Toggle Chat"
