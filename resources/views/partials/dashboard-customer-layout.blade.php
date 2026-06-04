@@ -1,3 +1,7 @@
+@php
+    use App\Enums\PaymentStatus;
+@endphp
+
 {{--
     Mobile: hero+cari → ringkasan → perjalanan+bantuan → rekomendasi → panduan → pintasan.
     Desktop: hero full-bleed, lalu grid 8+4 (kiri direktori, kanan status).
