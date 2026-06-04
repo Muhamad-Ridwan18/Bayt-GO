@@ -4,7 +4,7 @@
 @endphp
 
 {{--
-    Mobile: satu kolom dengan order — hero (1) → ringkasan saldo (2) → aksi cepat (3) → … → aktivitas (10).
+    Mobile: satu kolom dengan order — hero (1) → ringkasan saldo (2) → bagikan profil (3) → aksi cepat (4) → … → aktivitas (10).
     Desktop (lg): dua kolom; order di-reset agar kiri = konten utama, kanan = sidebar.
 --}}
 <div class="flex flex-col gap-6 lg:grid lg:grid-cols-12 lg:items-start">
@@ -61,7 +61,7 @@
         </section>
 
         {{-- Aksi cepat (ikon bulat) --}}
-        <section class="order-3 rounded-2xl border border-slate-200/80 bg-white p-4 shadow-sm sm:p-5 lg:order-none">
+        <section class="order-4 rounded-2xl border border-slate-200/80 bg-white p-4 shadow-sm sm:p-5 lg:order-none">
             <h2 class="text-sm font-bold text-slate-900">{{ __('dashboard_muthowif.quick_actions') }}</h2>
             <div class="mt-4 flex gap-3 overflow-x-auto pb-1 sm:gap-4">
                 <a href="{{ route('muthowif.bookings.index') }}" class="flex min-w-[4.25rem] flex-col items-center gap-2 text-center">
@@ -263,7 +263,7 @@
             <svg class="h-5 w-5 text-slate-400 transition group-hover:translate-x-0.5" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M7.21 14.77a.75.75 0 01.02-1.06L11.168 10 7.23 6.29a.75.75 0 111.04-1.08l4.5 4.25a.75.75 0 010 1.08l-4.5 4.25a.75.75 0 01-1.06-.02z" clip-rule="evenodd" /></svg>
         </a>
 
-        <div class="order-8 lg:order-none">
+        <div class="order-3 lg:order-none">
             @include('partials.dashboard-muthowif-share', ['mp' => $mp])
         </div>
 
