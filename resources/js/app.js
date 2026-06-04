@@ -918,7 +918,14 @@ document.addEventListener('alpine:init', () => {
                 const root = this.$refs.liveRoot ?? this.$refs.liveGrid;
                 const html = await fetchHtmlFragment(url);
                 if (html !== null && root) {
-                    swapAlpineHtml(root, html);
+                    if (
+                        (this.liveMode === 'customer_index' || this.liveMode === 'muthowif_index')
+                        && html.includes('data-live-part')
+                    ) {
+                        swapLiveParts(root, html);
+                    } else {
+                        swapAlpineHtml(root, html);
+                    }
                 }
             } catch (err) {
                 console.error(err);

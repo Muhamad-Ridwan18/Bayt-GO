@@ -58,12 +58,7 @@ class BookingController extends Controller
     {
         $this->authorize('viewAny', MuthowifBooking::class);
 
-        $bookings = $request->user()
-            ->customerBookings()
-            ->with(['muthowifProfile.user', 'muthowifProfile.services', 'review'])
-            ->orderByDesc('starts_on')
-            ->orderByDesc('created_at')
-            ->paginate(15);
+        $bookings = $this->customerBookingsIndexQuery($request)->paginate(15);
 
         $addonsById = $this->addOnsKeyById($bookings);
 
@@ -80,12 +75,7 @@ class BookingController extends Controller
     {
         $this->authorize('viewAny', MuthowifBooking::class);
 
-        $bookings = $request->user()
-            ->customerBookings()
-            ->with(['muthowifProfile.user', 'muthowifProfile.services', 'review'])
-            ->orderByDesc('starts_on')
-            ->orderByDesc('created_at')
-            ->paginate(15);
+        $bookings = $this->customerBookingsIndexQuery($request)->paginate(15);
 
         $addonsById = $this->addOnsKeyById($bookings);
 
@@ -1068,6 +1058,15 @@ class BookingController extends Controller
     /**
      * @return array<string, int>
      */
+    private function customerBookingsIndexQuery(Request $request)
+    {
+        return $request->user()
+            ->customerBookings()
+            ->with(['muthowifProfile.user', 'review'])
+            ->orderByDesc('starts_on')
+            ->orderByDesc('created_at');
+    }
+
     private function forgetCustomerBookingStatusCounts(string $customerId): void
     {
         Cache::forget('customer_booking_status_counts:'.$customerId);

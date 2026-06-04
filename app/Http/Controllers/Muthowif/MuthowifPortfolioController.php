@@ -10,6 +10,7 @@ use Illuminate\Http\File;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Log;
+use App\Support\StoredImageResponse;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\View\View;
 use Maestroerror\HeicToJpg;
@@ -201,11 +202,7 @@ class MuthowifPortfolioController extends Controller
             abort(403);
         }
 
-        if (! Storage::disk('local')->exists($image->path)) {
-            abort(404);
-        }
-
-        return Storage::disk('local')->response($image->path);
+        return StoredImageResponse::fromDisk('local', $image->path, visibility: 'private');
     }
 
     /**

@@ -8,6 +8,7 @@ use App\Models\MuthowifProfile;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
 use Illuminate\Pagination\LengthAwarePaginator;
+use App\Support\StoredImageResponse;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Facades\Validator;
 use Illuminate\Support\MessageBag;
@@ -264,23 +265,21 @@ class MuthowifDirectoryController extends Controller
 
     public function photo(MuthowifProfile $publicProfile): Response
     {
-        $disk = Storage::disk('local');
-        if (! $disk->exists($publicProfile->photo_path)) {
+        if (! filled($publicProfile->photo_path)) {
             abort(404);
         }
 
-        return $disk->response($publicProfile->photo_path);
+        return StoredImageResponse::fromDisk('local', $publicProfile->photo_path, visibility: 'public');
     }
 
     public function portfolioPhoto(\App\Models\MuthowifPortfolio $portfolio): Response
     {
-        $disk = Storage::disk('local');
         $coverPath = $portfolio->coverImagePath();
-        if (! is_string($coverPath) || $coverPath === '' || ! $disk->exists($coverPath)) {
+        if (! is_string($coverPath) || $coverPath === '') {
             abort(404);
         }
 
-        return $disk->response($coverPath);
+        return StoredImageResponse::fromDisk('local', $coverPath, visibility: 'public');
     }
 
     public function portfolioImage(\App\Models\MuthowifPortfolioImage $image): Response
@@ -290,12 +289,7 @@ class MuthowifDirectoryController extends Controller
             abort(404);
         }
 
-        $disk = Storage::disk('local');
-        if (! $disk->exists($image->path)) {
-            abort(404);
-        }
-
-        return $disk->response($image->path);
+        return StoredImageResponse::fromDisk('local', $image->path, visibility: 'public');
     }
 
     private function emptyPaginator(Request $request): LengthAwarePaginator

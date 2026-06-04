@@ -10,6 +10,7 @@ use App\Models\MuthowifBooking;
 use App\Services\UploadedImageOptimizer;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
+use App\Support\StoredImageResponse;
 use Illuminate\Support\Facades\Storage;
 use Symfony\Component\HttpFoundation\Response;
 
@@ -114,9 +115,11 @@ class BookingChatApiController extends Controller
             abort(404);
         }
 
-        $disk = Storage::disk('local');
-        abort_unless($disk->exists($message->image_path), 404);
-
-        return $disk->response($message->image_path, basename($message->image_path));
+        return StoredImageResponse::fromDisk(
+            'local',
+            $message->image_path,
+            basename($message->image_path),
+            visibility: 'private',
+        );
     }
 }

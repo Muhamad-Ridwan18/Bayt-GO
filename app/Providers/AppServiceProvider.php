@@ -13,7 +13,12 @@ use App\Payments\Contracts\SnapPaymentProviderInterface;
 use App\Payments\Doku\DokuCheckoutPaymentProvider;
 use App\Payments\Moota\MootaSnapPaymentProvider;
 use App\Services\UploadedImageOptimizer;
+use App\Models\Article;
+use App\Models\Campaign;
+use App\Models\MuthowifPortfolioImage;
+use App\Models\MuthowifProfile;
 use App\Support\AdminFinanceSummary;
+use App\Support\WelcomePageCache;
 use App\Support\MuthowifFinanceSummary;
 use Composer\Autoload\ClassLoader;
 use Illuminate\Pagination\Paginator;
@@ -64,6 +69,11 @@ class AppServiceProvider extends ServiceProvider
         Event::listen(MootaWebhookRecorded::class, ProcessMootaWebhookForBookingPayments::class);
         Event::listen(CustomerBookingUpdated::class, NotifyAdminServiceMonitorOnBookingChange::class);
         Paginator::useTailwind();
+
+        foreach ([MuthowifProfile::class, Campaign::class, Article::class, MuthowifPortfolioImage::class] as $model) {
+            $model::saved(fn () => WelcomePageCache::forget());
+            $model::deleted(fn () => WelcomePageCache::forget());
+        }
 
         // Automatic Cache Invalidation on Mutation for Finance Dashboards
         BookingPayment::saved(function ($payment) {
