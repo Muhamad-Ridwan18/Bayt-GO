@@ -5,12 +5,23 @@ namespace App\Http\Controllers\Muthowif;
 use App\Http\Controllers\Controller;
 use App\Models\BookingReplacementOffer;
 use App\Services\Emergency\EmergencyReplacementService;
+use App\Support\MuthowifEmergencyOfferCounts;
+use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\View\View;
 
 class EmergencyOfferController extends Controller
 {
+    public function pendingOfferCount(Request $request): JsonResponse
+    {
+        abort_unless($request->user()?->muthowifProfile, 403);
+
+        return response()->json([
+            'pending_count' => MuthowifEmergencyOfferCounts::pendingOfferedCountForUser($request->user()),
+        ]);
+    }
+
     public function index(Request $request): View
     {
         $profile = $request->user()->muthowifProfile;

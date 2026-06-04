@@ -103,6 +103,7 @@ return [
     ],
     'muthowif' => [
         'index_title' => 'Emergency replacement offers',
+        'new_offer_toast' => 'New emergency replacement offer. Open Replacement offers.',
         'empty' => 'No active replacement offers.',
         'accept' => 'Accept offer',
         'decline' => 'Decline',

@@ -298,10 +298,72 @@ document.addEventListener('alpine:init', () => {
 
             const channel = `App.Models.User.${this.userId}`;
             window.Echo.private(channel)
-                .listen('.booking.updated', () => void this.refresh())
-                .listen('.emergency.report.updated', () => void this.refresh());
+                .listen('.booking.updated', () => void this.refresh());
 
             this.subscribedChannels = [channel];
+        },
+
+        async refresh() {
+            if (!this.countUrl) {
+                return;
+            }
+            try {
+                const r = await fetch(this.countUrl, {
+                    headers: { Accept: 'application/json', 'X-Requested-With': 'XMLHttpRequest' },
+                    credentials: 'same-origin',
+                });
+                if (!r.ok) {
+                    return;
+                }
+                const data = await r.json();
+                if (typeof data.pending_count === 'number') {
+                    this.count = data.pending_count;
+                }
+            } catch {
+                /* ignore */
+            }
+        },
+
+        destroy() {
+            leavePrivateChannels(this.subscribedChannels);
+        },
+    }));
+
+    Alpine.data('muthowifEmergencyOffersBadge', (config) => ({
+        userId: config.userId != null ? String(config.userId) : '',
+        countUrl: config.countUrl ?? '',
+        toastLabel: config.toastLabel ?? '',
+        count: Number(config.initialCount ?? 0) || 0,
+        subscribedChannels: [],
+
+        get displayLabel() {
+            if (this.count > 99) {
+                return '99+';
+            }
+            return String(this.count);
+        },
+
+        init() {
+            if (!this.userId || !requireEcho('muthowifEmergencyOffersBadge')) {
+                return;
+            }
+
+            const channel = `App.Models.User.${this.userId}`;
+            window.Echo.private(channel).listen('.emergency.report.updated', (e) => {
+                void this.refresh();
+                if (e?.action === 'batch_offered' || e?.action === 'admin_invite') {
+                    this.notifyNewOffer();
+                }
+            });
+
+            this.subscribedChannels = [channel];
+        },
+
+        notifyNewOffer() {
+            const msg = this.toastLabel || 'New emergency replacement offer';
+            if (typeof Alpine !== 'undefined' && Alpine.store('toasts')) {
+                Alpine.store('toasts').add('info', msg);
+            }
         },
 
         async refresh() {

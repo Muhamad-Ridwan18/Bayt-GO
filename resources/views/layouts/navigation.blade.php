@@ -3,12 +3,14 @@
     use App\Enums\MuthowifVerificationStatus;
     use App\Models\MuthowifBooking;
     use App\Models\MuthowifProfile;
+    use App\Support\MuthowifEmergencyOfferCounts;
 
     $contactRaw = (string) (config('app.contact_whatsapp') ?: config('app.contact_phone'));
     $contactDigits = preg_replace('/\D+/', '', $contactRaw ?? '') ?? '';
     $contactLink = $contactDigits !== '' ? 'https://wa.me/'.$contactDigits : null;
 
     $muthowifPendingIncomingCount = 0;
+    $muthowifPendingEmergencyOfferCount = 0;
     if (Auth::check() && Auth::user()->isVerifiedMuthowif()) {
         $mpNav = Auth::user()->muthowifProfile;
         if ($mpNav) {
@@ -17,6 +19,7 @@
                 ->where('status', BookingStatus::Pending)
                 ->count();
         }
+        $muthowifPendingEmergencyOfferCount = MuthowifEmergencyOfferCounts::pendingOfferedCountForUser(Auth::user());
     }
 
     $adminHubActive = false;
@@ -121,7 +124,22 @@
                             {{ __('nav.portfolio') }}
                         </x-nav-link>
                         <x-nav-link :href="route('muthowif.emergency-offers.index')" :active="request()->routeIs('muthowif.emergency-offers.*')">
-                            {{ __('nav.emergency_offers') }}
+                            <span class="inline-flex items-center gap-2">
+                                {{ __('nav.emergency_offers') }}
+                                <span
+                                    x-data="muthowifEmergencyOffersBadge({
+                                        userId: @js(auth()->id()),
+                                        countUrl: @js(route('muthowif.emergency-offers.pending-offer-count')),
+                                        toastLabel: @js(__('emergency.muthowif.new_offer_toast')),
+                                        initialCount: @js($muthowifPendingEmergencyOfferCount),
+                                    })"
+                                    x-show="count > 0"
+                                    x-cloak
+                                    class="inline-flex min-h-[1.125rem] min-w-[1.125rem] items-center justify-center rounded-full bg-amber-600 px-1 text-[10px] font-bold leading-none text-white shadow-sm"
+                                    x-bind:aria-label="count > 0 ? '{{ __('nav.emergency_offers') }}: ' + displayLabel : null"
+                                    x-text="displayLabel"
+                                ></span>
+                            </span>
                         </x-nav-link>
                         <x-nav-link :href="route('muthowif.bookings.index')" :active="request()->routeIs('muthowif.bookings.*')">
                             <span class="inline-flex items-center gap-2">
@@ -264,7 +282,21 @@
                     {{ __('nav.portfolio') }}
                 </x-responsive-nav-link>
                 <x-responsive-nav-link :href="route('muthowif.emergency-offers.index')" :active="request()->routeIs('muthowif.emergency-offers.*')">
-                    {{ __('nav.emergency_offers') }}
+                    <span class="inline-flex items-center gap-2">
+                        {{ __('nav.emergency_offers') }}
+                        <span
+                            x-data="muthowifEmergencyOffersBadge({
+                                userId: @js(auth()->id()),
+                                countUrl: @js(route('muthowif.emergency-offers.pending-offer-count')),
+                                toastLabel: @js(__('emergency.muthowif.new_offer_toast')),
+                                initialCount: @js($muthowifPendingEmergencyOfferCount),
+                            })"
+                            x-show="count > 0"
+                            x-cloak
+                            class="inline-flex min-h-[1.125rem] min-w-[1.125rem] items-center justify-center rounded-full bg-amber-600 px-1 text-[10px] font-bold leading-none text-white shadow-sm"
+                            x-text="displayLabel"
+                        ></span>
+                    </span>
                 </x-responsive-nav-link>
                 <x-responsive-nav-link :href="route('muthowif.bookings.index')" :active="request()->routeIs('muthowif.bookings.*')">
                     <span class="inline-flex items-center gap-2">

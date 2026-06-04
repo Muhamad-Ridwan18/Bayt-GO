@@ -103,6 +103,7 @@ return [
     ],
     'muthowif' => [
         'index_title' => 'Tawaran pengganti darurat',
+        'new_offer_toast' => 'Ada tawaran pengganti darurat baru. Buka menu Tawaran pengganti.',
         'empty' => 'Belum ada tawaran pengganti aktif.',
         'accept' => 'Terima tawaran',
         'decline' => 'Tolak',

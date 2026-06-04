@@ -276,6 +276,7 @@ Route::middleware('auth')->group(function () {
             Route::post('bookings/{booking}/reschedule-requests/{rescheduleRequest}/reject', [MuthowifBookingController::class, 'rejectReschedule'])->name('bookings.reschedule_requests.reject');
 
             Route::get('emergency-offers/live-index-fragment', [EmergencyOfferController::class, 'indexLiveFragment'])->name('emergency-offers.index.live-fragment');
+            Route::get('emergency-offers/pending-offer-count', [EmergencyOfferController::class, 'pendingOfferCount'])->name('emergency-offers.pending-offer-count');
             Route::get('emergency-offers', [EmergencyOfferController::class, 'index'])->name('emergency-offers.index');
             Route::post('emergency-offers/{offer}/accept', [EmergencyOfferController::class, 'accept'])->name('emergency-offers.accept');
             Route::post('emergency-offers/{offer}/decline', [EmergencyOfferController::class, 'decline'])->name('emergency-offers.decline');
