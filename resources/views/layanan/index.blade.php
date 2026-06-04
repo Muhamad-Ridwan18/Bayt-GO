@@ -40,7 +40,7 @@
     $hasActiveFilters = filled($startDate ?? '') || filled($searchQuery ?? '');
 @endphp
 
-<x-marketplace-layout :title="$seoTitle" :meta-description="$seoDesc">
+<x-marketplace-layout :title="$seoTitle" :meta-description="$seoDesc" :full-bleed="true">
     <div class="relative min-w-0 overflow-x-hidden">
         {{-- Hero full-bleed + form mengambang --}}
         <section class="relative left-1/2 mb-0 w-screen max-w-[100vw] -translate-x-1/2 overflow-hidden bg-welcomeCanvas pb-10 sm:pb-12">

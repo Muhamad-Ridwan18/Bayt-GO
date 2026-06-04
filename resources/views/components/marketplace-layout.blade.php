@@ -1,4 +1,4 @@
-@props(['title' => null, 'metaDescription' => null, 'schema' => null, 'wide' => true])
+@props(['title' => null, 'metaDescription' => null, 'schema' => null, 'wide' => true, 'fullBleed' => false])
 @php
     $contactRaw = (string) (config('app.contact_whatsapp') ?: config('app.contact_phone'));
     $contactDigits = preg_replace('/\D+/', '', $contactRaw ?? '') ?? '';
@@ -26,10 +26,20 @@
                 <x-marketing-public-header active="layanan" />
             @endauth
 
-            <main class="w-full min-w-0 flex-1 py-0 sm:py-0">
-                <div class="min-w-0">
-                    {{ $slot }}
-                </div>
+            <main @class([
+                'w-full min-w-0 flex-1',
+                'py-0' => $fullBleed,
+                'py-8 sm:py-12' => ! $fullBleed,
+            ])>
+                @if ($fullBleed)
+                    <div class="min-w-0">
+                        {{ $slot }}
+                    </div>
+                @else
+                    <x-page-container class="min-w-0">
+                        {{ $slot }}
+                    </x-page-container>
+                @endif
             </main>
 
             <footer class="mt-auto w-full border-t border-slate-200/80 bg-gradient-to-b from-white to-slate-50/90">
