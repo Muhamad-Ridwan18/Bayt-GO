@@ -4,6 +4,7 @@ namespace App\Services;
 
 use App\Models\MuthowifProfile;
 use App\Support\IntlPhone;
+use App\Support\WhatsAppMediaUrl;
 use Illuminate\Support\Facades\Log;
 use RuntimeException;
 
@@ -36,11 +37,29 @@ class WhatsAppBroadcastService
         string $message,
         array $muthowifProfileIds,
         string $freeNumbersText,
-        ?string $attachmentPublicUrl = null,
+        ?string $attachmentLocalPath = null,
         ?string $attachmentFilename = null,
+        ?string $attachmentPublicUrl = null,
     ): array {
         $resolved = $this->resolveRecipients($muthowifProfileIds, $freeNumbersText);
         $caption = trim($message);
+
+        $fileContents = null;
+        $fileName = $attachmentFilename;
+        if ($attachmentLocalPath !== null && $attachmentLocalPath !== '' && is_readable($attachmentLocalPath)) {
+            $raw = file_get_contents($attachmentLocalPath);
+            if ($raw === false || $raw === '') {
+                throw new RuntimeException('Gagal membaca berkas lampiran broadcast.');
+            }
+            $fileContents = $raw;
+            $fileName = $fileName !== null && $fileName !== ''
+                ? $fileName
+                : basename($attachmentLocalPath);
+        }
+
+        $usePublicFileUrl = $attachmentPublicUrl !== null
+            && $attachmentPublicUrl !== ''
+            && WhatsAppMediaUrl::isPubliclyReachable($attachmentPublicUrl);
 
         $sent = 0;
         $failed = 0;
@@ -52,13 +71,22 @@ class WhatsAppBroadcastService
             }
 
             try {
-                if ($attachmentPublicUrl !== null && $attachmentPublicUrl !== '') {
+                if ($usePublicFileUrl) {
                     $this->fonnte->sendMessageWithPublicFileUrl(
                         $recipient['dial']['target'],
                         $caption,
                         $attachmentPublicUrl,
-                        $attachmentFilename,
+                        $this->documentFilenameForAttachment($fileName),
                         $recipient['dial']['country_calling_code'],
+                    );
+                } elseif ($fileContents !== null && $fileName !== null) {
+                    $this->sendAttachmentWithUploadFallback(
+                        $recipient['dial']['target'],
+                        $caption,
+                        $fileContents,
+                        $fileName,
+                        $recipient['dial']['country_calling_code'],
+                        $attachmentPublicUrl,
                     );
                 } else {
                     $this->fonnte->sendText(
@@ -176,6 +204,57 @@ class WhatsAppBroadcastService
             'skipped' => $skipped,
             'invalid_numbers' => $invalidNumbers,
         ];
+    }
+
+    private function sendAttachmentWithUploadFallback(
+        string $target,
+        string $caption,
+        string $fileContents,
+        string $fileName,
+        string $countryCallingCode,
+        ?string $attachmentPublicUrl,
+    ): void {
+        try {
+            $this->fonnte->sendMessageWithFileUpload(
+                $target,
+                $caption,
+                $fileContents,
+                $fileName,
+                $countryCallingCode,
+            );
+        } catch (RuntimeException $uploadError) {
+            if (
+                $attachmentPublicUrl !== null
+                && $attachmentPublicUrl !== ''
+                && WhatsAppMediaUrl::isPubliclyReachable($attachmentPublicUrl)
+            ) {
+                $this->fonnte->sendMessageWithPublicFileUrl(
+                    $target,
+                    $caption,
+                    $attachmentPublicUrl,
+                    $this->documentFilenameForAttachment($fileName),
+                    $countryCallingCode,
+                );
+
+                return;
+            }
+
+            throw $uploadError;
+        }
+    }
+
+    /**
+     * filename hanya untuk dokumen (PDF); gambar dikirim tanpa filename agar WSM deteksi sebagai image.
+     */
+    private function documentFilenameForAttachment(?string $fileName): ?string
+    {
+        if ($fileName === null || $fileName === '') {
+            return null;
+        }
+
+        $lower = strtolower($fileName);
+
+        return str_ends_with($lower, '.pdf') ? $fileName : null;
     }
 
     /**

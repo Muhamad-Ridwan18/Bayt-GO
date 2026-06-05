@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers\Admin;
 
+use App\Enums\MuthowifAccountStatus;
 use App\Enums\MuthowifVerificationStatus;
 use App\Http\Controllers\Controller;
 use App\Models\MuthowifProfile;
@@ -13,6 +14,7 @@ use App\Support\MuthowifVerificationBroadcast;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Log;
+use Illuminate\Validation\Rule;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\View\View;
 use Throwable;
@@ -148,6 +150,29 @@ class MuthowifVerificationController extends Controller
         return redirect()
             ->route('admin.muthowif.show', $profile)
             ->with('status', 'Pendaftaran ditolak.');
+    }
+
+    public function updateAccountStatus(Request $request, MuthowifProfile $profile): RedirectResponse
+    {
+        if (! $profile->isApproved()) {
+            return redirect()
+                ->route('admin.muthowif.show', $profile)
+                ->with('error', __('admin.muthowif.account_status_only_approved'));
+        }
+
+        $validated = $request->validate([
+            'account_status' => ['required', Rule::enum(MuthowifAccountStatus::class)],
+        ]);
+
+        $status = $validated['account_status'] instanceof MuthowifAccountStatus
+            ? $validated['account_status']
+            : MuthowifAccountStatus::from((string) $validated['account_status']);
+
+        $profile->update(['account_status' => $status]);
+
+        return redirect()
+            ->route('admin.muthowif.show', $profile)
+            ->with('status', __('admin.muthowif.account_status_updated'));
     }
 
     public function indexLiveFragment(Request $request): View

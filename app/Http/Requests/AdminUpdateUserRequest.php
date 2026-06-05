@@ -3,6 +3,7 @@
 namespace App\Http\Requests;
 
 use App\Enums\CustomerType;
+use App\Enums\MuthowifAccountStatus;
 use App\Enums\UserRole;
 use App\Models\User;
 use Illuminate\Contracts\Validation\ValidationRule;
@@ -44,6 +45,7 @@ class AdminUpdateUserRequest extends FormRequest
             'ppui_number' => ['nullable', 'string', 'max:64'],
             'locale' => ['nullable', 'string', Rule::in(['en', 'id', 'ar'])],
             'password' => ['nullable', 'string', 'min:8', 'confirmed'],
+            'account_status' => ['nullable', Rule::enum(MuthowifAccountStatus::class)],
         ];
     }
 

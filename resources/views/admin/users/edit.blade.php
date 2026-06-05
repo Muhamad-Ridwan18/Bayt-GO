@@ -1,5 +1,6 @@
 @php
     use App\Enums\CustomerType;
+    use App\Enums\MuthowifAccountStatus;
     use App\Enums\UserRole;
 @endphp
 
@@ -67,6 +68,29 @@
                                 </select>
                                 <x-input-error class="mt-2" :messages="$errors->get('role')" />
                             </div>
+
+                            @if ($editUser->muthowifProfile?->isApproved())
+                                <div x-show="role === '{{ UserRole::Muthowif->value }}'" x-cloak class="space-y-4 rounded-xl border border-violet-100 bg-violet-50/50 p-4">
+                                    <p class="text-xs font-semibold uppercase tracking-wide text-violet-800">{{ __('admin.users.muthowif_section') }}</p>
+                                    <div>
+                                        <x-input-label for="account_status" :value="__('admin.users.field_account_status')" />
+                                        <select id="account_status" name="account_status" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-brand-500 focus:ring-brand-500">
+                                            @foreach (MuthowifAccountStatus::cases() as $status)
+                                                <option value="{{ $status->value }}" @selected(old('account_status', ($editUser->muthowifProfile->account_status ?? MuthowifAccountStatus::Active)->value) === $status->value)>
+                                                    {{ $status->label() }}
+                                                </option>
+                                            @endforeach
+                                        </select>
+                                        <p class="mt-2 text-xs text-violet-800/80">{{ __('admin.users.account_status_hint') }}</p>
+                                        <x-input-error class="mt-2" :messages="$errors->get('account_status')" />
+                                    </div>
+                                    @if ($editUser->muthowifProfile)
+                                        <a href="{{ route('admin.muthowif.show', $editUser->muthowifProfile) }}" class="inline-flex text-xs font-semibold text-violet-700 hover:text-violet-900">
+                                            {{ __('admin.users.open_muthowif_profile') }} →
+                                        </a>
+                                    @endif
+                                </div>
+                            @endif
 
                             <div x-show="role === '{{ UserRole::Customer->value }}'" x-cloak class="space-y-4 rounded-xl border border-sky-100 bg-sky-50/50 p-4">
                                 <p class="text-xs font-semibold uppercase tracking-wide text-sky-800">{{ __('admin.users.customer_section') }}</p>

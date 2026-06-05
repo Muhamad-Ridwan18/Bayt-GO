@@ -25,6 +25,13 @@
                 </div>
             @endif
 
+            @if ($profile->isApproved() && ! $profile->isActiveAccount())
+                <div class="flex items-center gap-3 rounded-2xl border border-rose-200 bg-rose-50 px-5 py-3.5 text-sm font-medium text-rose-800">
+                    <svg class="h-4 w-4 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"/></svg>
+                    {{ __('admin.muthowif.account_status_inactive_banner', ['status' => ($profile->account_status ?? \App\Enums\MuthowifAccountStatus::Active)->label()]) }}
+                </div>
+            @endif
+
             {{-- HEADER CARD --}}
             <div class="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm">
                 <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-5">
@@ -58,6 +65,17 @@
                                     @endswitch
                                     {{ $profile->verification_status->label() }}
                                 </span>
+                                @if ($profile->isApproved())
+                                    @php $accountStatus = $profile->account_status ?? \App\Enums\MuthowifAccountStatus::Active; @endphp
+                                    <span class="inline-flex items-center gap-1 rounded-full px-2.5 py-0.5 text-xs font-medium
+                                        @switch($accountStatus)
+                                            @case(\App\Enums\MuthowifAccountStatus::Active) bg-sky-100 text-sky-700 @break
+                                            @case(\App\Enums\MuthowifAccountStatus::Suspended) bg-orange-100 text-orange-700 @break
+                                            @default bg-rose-100 text-rose-700
+                                        @endswitch">
+                                        {{ $accountStatus->label() }}
+                                    </span>
+                                @endif
                             </div>
                             <p class="text-sm text-slate-500">{{ $profile->user->email }}</p>
                             <div class="mt-1.5 flex flex-wrap gap-2">
@@ -241,6 +259,40 @@
 
                 </div>
             </div>
+
+            {{-- STATUS AKUN (setelah disetujui) --}}
+            @if ($profile->isApproved())
+                <div class="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm">
+                    <div class="flex items-center gap-2.5 mb-1">
+                        <div class="flex h-8 w-8 items-center justify-center rounded-lg bg-slate-100">
+                            <svg class="h-4 w-4 text-slate-600" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z"/></svg>
+                        </div>
+                        <h2 class="text-base font-semibold text-slate-900">{{ __('admin.muthowif.account_status_heading') }}</h2>
+                    </div>
+                    <p class="mb-5 ml-10 text-sm text-slate-500">{{ __('admin.muthowif.account_status_hint') }}</p>
+
+                    <form method="POST" action="{{ route('admin.muthowif.account_status', $profile) }}" class="ml-10 flex flex-col gap-4 sm:flex-row sm:items-end">
+                        @csrf
+                        <div class="min-w-[12rem] flex-1 sm:max-w-xs">
+                            <label for="account_status" class="block text-sm font-medium text-slate-700">{{ __('admin.muthowif.account_status_field') }}</label>
+                            <select
+                                id="account_status"
+                                name="account_status"
+                                class="mt-1 block w-full rounded-xl border border-slate-200 bg-slate-50 px-4 py-2.5 text-sm text-slate-900 shadow-sm transition focus:border-violet-400 focus:bg-white focus:outline-none focus:ring-2 focus:ring-violet-100">
+                                @foreach (\App\Enums\MuthowifAccountStatus::cases() as $status)
+                                    <option value="{{ $status->value }}" @selected(old('account_status', ($profile->account_status ?? \App\Enums\MuthowifAccountStatus::Active)->value) === $status->value)>
+                                        {{ $status->label() }}
+                                    </option>
+                                @endforeach
+                            </select>
+                            <x-input-error :messages="$errors->get('account_status')" />
+                        </div>
+                        <x-submit-button class="rounded-xl bg-violet-600 px-5 py-2.5 text-sm font-medium text-white shadow-sm transition hover:bg-violet-700 active:scale-95">
+                            {{ __('admin.muthowif.account_status_save') }}
+                        </x-submit-button>
+                    </form>
+                </div>
+            @endif
 
             {{-- REJECT --}}
             @if ($profile->isPending())

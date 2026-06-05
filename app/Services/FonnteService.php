@@ -61,12 +61,6 @@ class FonnteService
             'countryCode' => $cc,
         ]);
 
-        $caption = trim($message);
-        if ($caption !== '') {
-            // WSM: beberapa versi membaca caption, Fonnte memakai message — kirim keduanya.
-            $payload['caption'] = $caption;
-        }
-
         if ($filename !== null && $filename !== '') {
             $payload['filename'] = $filename;
         }
@@ -76,6 +70,48 @@ class FonnteService
             $response = Http::timeout(45)
                 ->withHeaders($this->authHeaders($token))
                 ->asForm()
+                ->post($url, $payload);
+        } catch (ConnectionException $e) {
+            Log::warning('Fonnte connection failed', ['exception' => $e->getMessage()]);
+            throw new RuntimeException('Tidak dapat terhubung ke layanan WhatsApp. Coba lagi.');
+        }
+
+        $this->assertSuccessfulResponse($response);
+    }
+
+    /**
+     * Upload file langsung ke /send (multipart) — tidak perlu URL publik.
+     * WSM auto-detect: .jpg/.png → image, .pdf → document.
+     *
+     * @param  string|null  $countryCallingCode  Lihat {@see sendText()}.
+     */
+    public function sendMessageWithFileUpload(
+        string $target,
+        string $message,
+        string $fileContents,
+        string $filename,
+        ?string $countryCallingCode = null,
+    ): void {
+        if ($fileContents === '') {
+            throw new RuntimeException('Berkas lampiran kosong atau tidak dapat dibaca.');
+        }
+
+        $token = $this->requireToken();
+        $url = config('services.fonnte.url', 'https://api.fonnte.com/send');
+        $cc = $this->resolveCountryCode($countryCallingCode);
+
+        $payload = $this->buildPayload([
+            'target' => $target,
+            'countryCode' => $cc,
+            'message' => $message,
+            'filename' => $filename,
+        ]);
+
+        try {
+            /** @var Response $response */
+            $response = Http::timeout(60)
+                ->withHeaders($this->authHeaders($token))
+                ->attach('file', $fileContents, $filename)
                 ->post($url, $payload);
         } catch (ConnectionException $e) {
             Log::warning('Fonnte connection failed', ['exception' => $e->getMessage()]);

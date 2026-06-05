@@ -87,8 +87,8 @@
                     </div>
                 @endunless
                 @unless ($mediaUrlPublic)
-                    <div class="relative mt-6 rounded-2xl border border-amber-300/40 bg-amber-500/20 px-4 py-3 text-sm text-amber-50">
-                        {{ __('admin.whatsapp_broadcast.media_url_not_public', ['url' => $mediaBaseUrl]) }}
+                    <div class="relative mt-6 rounded-2xl border border-sky-300/40 bg-sky-500/20 px-4 py-3 text-sm text-sky-50">
+                        {{ __('admin.whatsapp_broadcast.media_url_local_hint', ['url' => $mediaBaseUrl]) }}
                     </div>
                 @endunless
             </div>

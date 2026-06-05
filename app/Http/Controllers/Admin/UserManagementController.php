@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers\Admin;
 
+use App\Enums\MuthowifAccountStatus;
 use App\Enums\UserRole;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\AdminUpdateUserRequest;
@@ -70,6 +71,8 @@ class UserManagementController extends Controller
 
     public function edit(User $user): View
     {
+        $user->load('muthowifProfile');
+
         return view('admin.users.edit', [
             'editUser' => $user,
         ]);
@@ -83,7 +86,8 @@ class UserManagementController extends Controller
             $user->password = $data['password'];
         }
 
-        unset($data['password'], $data['password_confirmation']);
+        $accountStatusRaw = $data['account_status'] ?? null;
+        unset($data['password'], $data['password_confirmation'], $data['account_status']);
 
         $roleRaw = $data['role'] ?? null;
         $role = $roleRaw instanceof UserRole ? $roleRaw : UserRole::from((string) $roleRaw);
@@ -95,6 +99,15 @@ class UserManagementController extends Controller
 
         $user->fill($data);
         $user->save();
+
+        if ($role === UserRole::Muthowif && $accountStatusRaw !== null && $accountStatusRaw !== '') {
+            $accountStatus = $accountStatusRaw instanceof MuthowifAccountStatus
+                ? $accountStatusRaw
+                : MuthowifAccountStatus::from((string) $accountStatusRaw);
+
+            $user->loadMissing('muthowifProfile');
+            $user->muthowifProfile?->update(['account_status' => $accountStatus]);
+        }
 
         return redirect()
             ->route('admin.users.index')
