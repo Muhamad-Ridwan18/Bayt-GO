@@ -2,16 +2,21 @@
 
 namespace App\View\Components;
 
+use App\Support\WelcomeLanding;
 use Illuminate\View\Component;
 use Illuminate\View\View;
 
 class GuestLayout extends Component
 {
-    /**
-     * Get the view / contents that represents the component.
-     */
+    public function __construct(
+        public string $variant = 'default',
+        public bool $wide = false,
+    ) {}
+
     public function render(): View
     {
-        return view('layouts.guest');
+        return view('layouts.guest', [
+            'heroImage' => WelcomeLanding::resolvedHeroImageUrl(),
+        ]);
     }
 }

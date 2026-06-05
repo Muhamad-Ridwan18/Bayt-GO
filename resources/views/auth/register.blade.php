@@ -1,10 +1,16 @@
-<x-guest-layout>
-    <div class="mb-6">
-        <h1 class="text-xl font-semibold text-slate-900">Buat akun</h1>
-        <p class="mt-1 text-sm text-slate-500">Pilih peran Anda. Muthowif wajib melengkapi biodata, passport, foto, dan dokumen.</p>
+<x-guest-layout variant="register" :wide="true">
+    <div class="mb-8">
+        <span class="mb-5 inline-flex h-11 w-11 items-center justify-center rounded-xl bg-emerald-50 text-baytgo ring-1 ring-emerald-100">
+            <svg class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke-width="1.75" stroke="currentColor" aria-hidden="true">
+                <path stroke-linecap="round" stroke-linejoin="round" d="M18 7.5v3m0 0v3m0-3h3m-3 0h-3m-2.25-4.125a3.375 3.375 0 1 1-6.75 0 3.375 3.375 0 0 1 6.75 0ZM3 19.235v-.11a6.375 6.375 0 0 1 12.75 0v.109A12.318 12.318 0 0 1 9.374 21c-2.331 0-4.512-.645-6.374-1.766Z" />
+            </svg>
+        </span>
+        <h1 class="text-[1.75rem] font-bold tracking-tight text-slate-900 sm:text-3xl">{{ __('guest.register.title') }}</h1>
+        <p class="mt-2 text-sm leading-relaxed text-slate-500">{{ __('guest.register.subtitle') }}</p>
         @if ($otpEnabled ?? false)
-            <p class="mt-2 text-sm text-brand-800 bg-brand-50/80 border border-brand-100 rounded-lg px-3 py-2">
-                Setelah Anda mengirim formulir, langkah berikutnya adalah verifikasi nomor WhatsApp dengan kode OTP sebelum akun dibuat.
+            <p class="mt-4 flex gap-3 rounded-2xl border border-sky-100 bg-sky-50 px-4 py-3 text-sm text-sky-900">
+                <svg class="mt-0.5 h-5 w-5 shrink-0 text-sky-600" fill="none" viewBox="0 0 24 24" stroke-width="1.75" stroke="currentColor" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" d="M8.625 9.75a.375.375 0 1 1-.75 0 .375.375 0 0 1 .75 0Zm0 0H8.25m4.125 0a.375.375 0 1 1-.75 0 .375.375 0 0 1 .75 0Zm0 0H12m4.125 0a.375.375 0 1 1-.75 0 .375.375 0 0 1 .75 0Zm0 0h-.375m-13.5 3.01c0 1.6 1.123 2.994 2.707 3.227 1.087.16 2.185.283 3.293.369V21l4.184-4.183a1.14 1.14 0 0 1 .778-.332 48.294 48.294 0 0 0 5.83-.498c1.585-.233 2.708-1.626 2.708-3.228V6.741c0-1.602-1.123-2.995-2.707-3.228A48.394 48.394 0 0 0 12 3c-2.392 0-4.744.175-7.043.513C3.373 3.746 2.25 5.14 2.25 6.741v6.018Z" /></svg>
+                <span>{{ __('guest.register.otp_notice') }}</span>
             </p>
         @endif
     </div>
@@ -45,21 +51,27 @@
     >
         @csrf
 
-        <div>
-            <span class="block text-sm font-medium text-slate-700 mb-2">Saya mendaftar sebagai</span>
-            <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                <label class="relative flex cursor-pointer rounded-xl border-2 p-4 transition has-[:checked]:border-brand-600 has-[:checked]:bg-brand-50/80 border-slate-200 hover:border-brand-300">
-                    <input type="radio" name="role" value="customer" class="mt-0.5 text-brand-600 focus:ring-brand-500" {{ old('role', 'customer') === 'customer' ? 'checked' : '' }} required x-on:change="selectedRole = 'customer'">
-                    <span class="ms-3">
-                        <span class="block text-sm font-semibold text-slate-900">Jamaah</span>
-                        <span class="block text-xs text-slate-500 mt-0.5">Buat permintaan pendampingan</span>
+        <div class="rounded-2xl border border-slate-100 bg-slate-50/60 p-4 sm:p-5">
+            <span class="mb-3 block text-sm font-semibold text-slate-800">{{ __('guest.register.role_heading') }}</span>
+            <div class="grid grid-cols-1 gap-3 sm:grid-cols-2">
+                <label class="group relative flex cursor-pointer items-start gap-3 rounded-2xl border-2 border-slate-200 bg-white p-4 shadow-sm transition hover:border-emerald-200 hover:shadow-md has-[:checked]:border-baytgo has-[:checked]:bg-emerald-50/50 has-[:checked]:shadow-md">
+                    <input type="radio" name="role" value="customer" class="sr-only" {{ old('role', 'customer') === 'customer' ? 'checked' : '' }} required x-on:change="selectedRole = 'customer'">
+                    <span class="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-sky-50 text-sky-700 ring-1 ring-sky-100 transition group-has-[:checked]:bg-baytgo group-has-[:checked]:text-white group-has-[:checked]:ring-baytgo/30">
+                        <svg class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke-width="1.75" stroke="currentColor" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" d="M15.75 6a3.75 3.75 0 1 1-7.5 0 3.75 3.75 0 0 1 7.5 0ZM4.501 20.118a7.5 7.5 0 0 1 14.998 0A17.933 17.933 0 0 1 12 21.75c-2.676 0-5.216-.584-7.499-1.632Z" /></svg>
+                    </span>
+                    <span class="min-w-0 pt-0.5">
+                        <span class="block text-sm font-bold text-slate-900">{{ __('guest.register.role_customer') }}</span>
+                        <span class="mt-0.5 block text-xs text-slate-500">{{ __('guest.register.role_customer_sub') }}</span>
                     </span>
                 </label>
-                <label class="relative flex cursor-pointer rounded-xl border-2 p-4 transition has-[:checked]:border-brand-600 has-[:checked]:bg-brand-50/80 border-slate-200 hover:border-brand-300">
-                    <input type="radio" name="role" value="muthowif" class="mt-0.5 text-brand-600 focus:ring-brand-500" {{ old('role') === 'muthowif' ? 'checked' : '' }} x-on:change="selectedRole = 'muthowif'">
-                    <span class="ms-3">
-                        <span class="block text-sm font-semibold text-slate-900">Muthowif</span>
-                        <span class="block text-xs text-slate-500 mt-0.5">Lengkapi dokumen &amp; riwayat</span>
+                <label class="group relative flex cursor-pointer items-start gap-3 rounded-2xl border-2 border-slate-200 bg-white p-4 shadow-sm transition hover:border-emerald-200 hover:shadow-md has-[:checked]:border-baytgo has-[:checked]:bg-emerald-50/50 has-[:checked]:shadow-md">
+                    <input type="radio" name="role" value="muthowif" class="sr-only" {{ old('role') === 'muthowif' ? 'checked' : '' }} x-on:change="selectedRole = 'muthowif'">
+                    <span class="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-amber-50 text-amber-700 ring-1 ring-amber-100 transition group-has-[:checked]:bg-baytgo group-has-[:checked]:text-white group-has-[:checked]:ring-baytgo/30">
+                        <svg class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke-width="1.75" stroke="currentColor" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" d="M9 6.75V15m6-6v8.25m.503 3.498 4.875-2.437c.381-.19.622-.58.622-1.006V4.82c0-.836-.88-1.38-1.628-1.006l-3.869 1.934c-.317.159-.69.159-1.006 0L9.503 3.252a1.125 1.125 0 0 0-1.006 0L3.622 5.689C3.24 5.88 3 6.27 3 6.695V19.18c0 .836.88 1.38 1.628 1.006l3.869-1.934c.317-.159.69-.159 1.006 0l4.994 2.497c.317.158.69.158 1.006 0Z" /></svg>
+                    </span>
+                    <span class="min-w-0 pt-0.5">
+                        <span class="block text-sm font-bold text-slate-900">{{ __('guest.register.role_muthowif') }}</span>
+                        <span class="mt-0.5 block text-xs text-slate-500">{{ __('guest.register.role_muthowif_sub') }}</span>
                     </span>
                 </label>
             </div>
@@ -70,35 +82,35 @@
             <legend class="sr-only">Tipe jamaah</legend>
             {{-- Jangan pakai x-cloak di sini: bisa selamanya tersembunyi jika Alpine lambat/error. SSR + x-show saja. --}}
             <div x-show="selectedRole === 'customer'" @if (old('role', 'customer') !== 'customer') style="display: none" @endif>
-                <span class="block text-sm font-medium text-slate-700 mb-2">Tipe jamaah</span>
-                <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                    <label class="relative flex cursor-pointer rounded-xl border-2 p-4 transition has-[:checked]:border-brand-600 has-[:checked]:bg-brand-50/80 border-slate-200 hover:border-brand-300">
+                <span class="mb-3 block text-sm font-semibold text-slate-800">Tipe jamaah</span>
+                <div class="grid grid-cols-1 gap-3 sm:grid-cols-2">
+                    <label class="relative flex cursor-pointer rounded-2xl border-2 border-slate-200 bg-white p-4 transition hover:border-emerald-200 has-[:checked]:border-baytgo has-[:checked]:bg-emerald-50/50">
                         <input
                             type="radio"
                             name="customer_type"
                             value="personal"
-                            class="mt-0.5 text-brand-600 focus:ring-brand-500"
+                            class="mt-1 text-baytgo focus:ring-baytgo/30"
                             x-model="customerType"
                             {{ old('customer_type', 'personal') === 'personal' ? 'checked' : '' }}
                             required
                         >
                         <span class="ms-3">
                             <span class="block text-sm font-semibold text-slate-900">Personal</span>
-                            <span class="block text-xs text-slate-500 mt-0.5">Individu</span>
+                            <span class="mt-0.5 block text-xs text-slate-500">Individu</span>
                         </span>
                     </label>
-                    <label class="relative flex cursor-pointer rounded-xl border-2 p-4 transition has-[:checked]:border-brand-600 has-[:checked]:bg-brand-50/80 border-slate-200 hover:border-brand-300">
+                    <label class="relative flex cursor-pointer rounded-2xl border-2 border-slate-200 bg-white p-4 transition hover:border-emerald-200 has-[:checked]:border-baytgo has-[:checked]:bg-emerald-50/50">
                         <input
                             type="radio"
                             name="customer_type"
                             value="company"
-                            class="mt-0.5 text-brand-600 focus:ring-brand-500"
+                            class="mt-1 text-baytgo focus:ring-baytgo/30"
                             x-model="customerType"
                             {{ old('customer_type') === 'company' ? 'checked' : '' }}
                         >
                         <span class="ms-3">
                             <span class="block text-sm font-semibold text-slate-900">Perusahaan</span>
-                            <span class="block text-xs text-slate-500 mt-0.5">Badan usaha</span>
+                            <span class="mt-0.5 block text-xs text-slate-500">Badan usaha</span>
                         </span>
                     </label>
                 </div>
@@ -290,13 +302,24 @@
             </div>
         </fieldset>
 
-        <div class="flex flex-col-reverse sm:flex-row sm:items-center sm:justify-between gap-3 pt-2">
-            <a class="text-sm text-slate-600 hover:text-brand-700 font-medium text-center sm:text-left" href="{{ route('login') }}">
-                Sudah punya akun? Masuk
-            </a>
-            <x-primary-button class="w-full sm:w-auto justify-center" type="submit">
-                Daftar
+        <div class="space-y-4 border-t border-slate-100 pt-6">
+            <x-primary-button class="w-full justify-center rounded-xl bg-baytgo py-3.5 text-base font-semibold shadow-md shadow-baytgo/15 hover:bg-baytgo-800" type="submit">
+                {{ __('guest.register.submit') }}
             </x-primary-button>
+
+            <div class="relative my-2">
+                <div class="absolute inset-0 flex items-center" aria-hidden="true">
+                    <div class="w-full border-t border-slate-200"></div>
+                </div>
+                <div class="relative flex justify-center text-sm">
+                    <span class="bg-white px-3 text-slate-400">{{ __('guest.or') }}</span>
+                </div>
+            </div>
+
+            <a href="{{ route('login') }}" class="flex w-full items-center justify-center rounded-xl bg-slate-100 px-4 py-3.5 text-sm font-medium text-slate-600 transition hover:bg-slate-200/80">
+                {{ __('guest.register.has_account') }}
+                <span class="ms-1 font-bold text-baytgo">{{ __('guest.register.login_link') }}</span>
+            </a>
         </div>
 
         <div
