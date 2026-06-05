@@ -15,47 +15,28 @@ class FonnteService
      */
     public function sendText(string $target, string $message, ?string $countryCallingCode = null): void
     {
-        $token = config('services.fonnte.token');
-        if ($token === null || $token === '') {
-            throw new RuntimeException('FONNTE_TOKEN belum diatur.');
-        }
-
+        $token = $this->requireToken();
         $url = config('services.fonnte.url', 'https://api.fonnte.com/send');
+        $cc = $this->resolveCountryCode($countryCallingCode);
 
-        $cc = $countryCallingCode !== null && $countryCallingCode !== ''
-            ? $countryCallingCode
-            : config('services.fonnte.country_code', '62');
+        $payload = $this->buildPayload([
+            'target' => $target,
+            'message' => $message,
+            'countryCode' => $cc,
+        ]);
 
         try {
             /** @var Response $response */
             $response = Http::timeout(30)
-                ->withHeaders([
-                    'Authorization' => $token,
-                ])
+                ->withHeaders($this->authHeaders($token))
                 ->asForm()
-                ->post($url, [
-                    'target' => $target,
-                    'message' => $message,
-                    'countryCode' => $cc,
-                ]);
+                ->post($url, $payload);
         } catch (ConnectionException $e) {
             Log::warning('Fonnte connection failed', ['exception' => $e->getMessage()]);
             throw new RuntimeException('Tidak dapat terhubung ke layanan WhatsApp. Coba lagi.');
         }
 
-        if (! $response->successful()) {
-            Log::warning('Fonnte HTTP error', ['status' => $response->status(), 'body' => $response->body()]);
-            throw new RuntimeException('Gagal menghubungi layanan WhatsApp.');
-        }
-
-        $data = $response->json();
-        $ok = $data['status'] ?? $data['Status'] ?? false;
-
-        if ($ok !== true) {
-            $reason = $data['reason'] ?? $data['Reason'] ?? 'Tidak diketahui';
-            Log::warning('Fonnte send failed', ['reason' => $reason, 'body' => $data]);
-            throw new RuntimeException('WhatsApp: '.$reason);
-        }
+        $this->assertSuccessfulResponse($response);
     }
 
     /**
@@ -63,29 +44,21 @@ class FonnteService
      * Untuk PDF/non-image, set $filename agar nama file terbaca di penerima.
      *
      * @see https://docs.fonnte.com/api-send-message/
-     */
-    /**
+     *
      * @param  string|null  $countryCallingCode  Lihat {@see sendText()}.
      */
     public function sendMessageWithPublicFileUrl(string $target, string $message, string $publicFileUrl, ?string $filename = null, ?string $countryCallingCode = null): void
     {
-        $token = config('services.fonnte.token');
-        if ($token === null || $token === '') {
-            throw new RuntimeException('FONNTE_TOKEN belum diatur.');
-        }
-
+        $token = $this->requireToken();
         $url = config('services.fonnte.url', 'https://api.fonnte.com/send');
+        $cc = $this->resolveCountryCode($countryCallingCode);
 
-        $cc = $countryCallingCode !== null && $countryCallingCode !== ''
-            ? $countryCallingCode
-            : config('services.fonnte.country_code', '62');
-
-        $payload = [
+        $payload = $this->buildPayload([
             'target' => $target,
             'message' => $message,
             'url' => $publicFileUrl,
             'countryCode' => $cc,
-        ];
+        ]);
 
         if ($filename !== null && $filename !== '') {
             $payload['filename'] = $filename;
@@ -94,9 +67,7 @@ class FonnteService
         try {
             /** @var Response $response */
             $response = Http::timeout(45)
-                ->withHeaders([
-                    'Authorization' => $token,
-                ])
+                ->withHeaders($this->authHeaders($token))
                 ->asForm()
                 ->post($url, $payload);
         } catch (ConnectionException $e) {
@@ -104,18 +75,102 @@ class FonnteService
             throw new RuntimeException('Tidak dapat terhubung ke layanan WhatsApp. Coba lagi.');
         }
 
+        $this->assertSuccessfulResponse($response);
+    }
+
+    private function requireToken(): string
+    {
+        $token = config('services.fonnte.token');
+        if ($token === null || $token === '') {
+            throw new RuntimeException('FONNTE_TOKEN belum diatur.');
+        }
+
+        return $token;
+    }
+
+    private function resolveCountryCode(?string $countryCallingCode): string
+    {
+        return $countryCallingCode !== null && $countryCallingCode !== ''
+            ? $countryCallingCode
+            : (string) config('services.fonnte.country_code', '62');
+    }
+
+    /**
+     * WSM /send (alias Fonnte): session otomatis dari API key — sessionId tidak wajib.
+     * FONNTE_SESSION_ID hanya override opsional (mis. endpoint native /api/message/send).
+     *
+     * @param  array<string, mixed>  $payload
+     * @return array<string, mixed>
+     */
+    private function buildPayload(array $payload): array
+    {
+        $sessionId = config('services.fonnte.session_id');
+        if (is_string($sessionId) && $sessionId !== '') {
+            $payload['sessionId'] = $sessionId;
+        }
+
+        return $payload;
+    }
+
+    /**
+     * Fonnte: Authorization: {token}
+     * WSM: Authorization: {apiKey} atau Bearer {apiKey} — keduanya didukung.
+     *
+     * @return array<string, string>
+     */
+    private function authHeaders(string $token): array
+    {
+        return ['Authorization' => $token];
+    }
+
+    private function assertSuccessfulResponse(Response $response): void
+    {
         if (! $response->successful()) {
-            Log::warning('Fonnte HTTP error', ['status' => $response->status(), 'body' => $response->body()]);
-            throw new RuntimeException('Gagal menghubungi layanan WhatsApp.');
+            $detail = $this->extractErrorMessage($response);
+            Log::warning('Fonnte HTTP error', [
+                'status' => $response->status(),
+                'body' => $response->body(),
+            ]);
+            throw new RuntimeException(
+                'Gagal menghubungi layanan WhatsApp.'.($detail !== '' ? ' '.$detail : '')
+            );
         }
 
         $data = $response->json();
-        $ok = $data['status'] ?? $data['Status'] ?? false;
-
-        if ($ok !== true) {
-            $reason = $data['reason'] ?? $data['Reason'] ?? 'Tidak diketahui';
-            Log::warning('Fonnte send with url failed', ['reason' => $reason, 'body' => $data]);
-            throw new RuntimeException('WhatsApp: '.$reason);
+        if (! is_array($data)) {
+            return;
         }
+
+        $ok = $data['status'] ?? $data['Status'] ?? $data['success'] ?? null;
+        if ($ok === true || $ok === 'true') {
+            return;
+        }
+
+        if ($ok === null && $response->status() === 202) {
+            return;
+        }
+
+        $reason = $data['reason'] ?? $data['Reason'] ?? $data['message'] ?? 'Tidak diketahui';
+        if (is_array($reason)) {
+            $reason = json_encode($reason, JSON_UNESCAPED_UNICODE) ?: 'Tidak diketahui';
+        }
+
+        Log::warning('Fonnte send failed', ['reason' => $reason, 'body' => $data]);
+        throw new RuntimeException('WhatsApp: '.(string) $reason);
+    }
+
+    private function extractErrorMessage(Response $response): string
+    {
+        $data = $response->json();
+        if (! is_array($data)) {
+            return '';
+        }
+
+        $message = $data['message'] ?? $data['reason'] ?? $data['Reason'] ?? '';
+        if (is_string($message) && $message !== '') {
+            return $message;
+        }
+
+        return '';
     }
 }

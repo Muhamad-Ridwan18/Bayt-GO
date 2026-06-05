@@ -294,6 +294,7 @@ return [
         'subtitle' => 'Send the same message to many recipients at once — pick muthowifs, enter numbers manually, or combine both.',
         'back_settings' => '← Settings',
         'token_missing' => 'FONNTE_TOKEN is not set. Configure your WhatsApp token in .env first.',
+        'session_missing' => 'FONNTE_SESSION_ID is not set. For WSM (whatsapp.baytgo.id), use a connected session ID such as wa-62881081871528.',
         'message_section' => 'Message',
         'message_hint' => 'The same message will be sent to every selected recipient.',
         'message_placeholder' => 'Write your broadcast message here…',

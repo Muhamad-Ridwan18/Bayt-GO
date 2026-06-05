@@ -294,6 +294,7 @@ return [
         'subtitle' => 'Kirim pesan yang sama ke banyak penerima sekaligus — pilih muthowif, ketik nomor bebas, atau gabungkan keduanya.',
         'back_settings' => '← Pengaturan',
         'token_missing' => 'FONNTE_TOKEN belum diatur. Isi token WhatsApp di .env terlebih dahulu.',
+        'session_missing' => 'FONNTE_SESSION_ID belum diatur. Untuk WSM (whatsapp.baytgo.id), isi ID session yang statusnya connected, mis. wa-62881081871528.',
         'message_section' => 'Isi pesan',
         'message_hint' => 'Pesan yang sama akan dikirim ke semua penerima yang dipilih.',
         'message_placeholder' => 'Tulis pesan broadcast di sini…',

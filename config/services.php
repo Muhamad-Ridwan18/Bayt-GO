@@ -44,12 +44,14 @@ return [
     ],
 
     /*
-    | WhatsApp gateway (API kompatibel Fonnte: form POST target/message/countryCode).
-    | WSM internal BaytGo: FONNTE_API_URL=https://whatsapp.baytgo.id/send
+    | WhatsApp gateway (format Fonnte: form POST target/message/countryCode).
+    | WSM BaytGo: FONNTE_API_URL=https://whatsapp.baytgo.id/send — session otomatis dari API key.
+    | FONNTE_SESSION_ID opsional (override untuk /api/message/send native).
     */
     'fonnte' => [
         'token' => env('FONNTE_TOKEN'),
         'url' => env('FONNTE_API_URL', 'https://whatsapp.baytgo.id/send'),
+        'session_id' => env('FONNTE_SESSION_ID'),
         'otp_enabled' => env('FONNTE_OTP_ENABLED', true),
         'country_code' => env('FONNTE_COUNTRY_CODE', '62'),
         /** Notifikasi WhatsApp ke muthowif saat ada booking masuk (perlu FONNTE_TOKEN). */
