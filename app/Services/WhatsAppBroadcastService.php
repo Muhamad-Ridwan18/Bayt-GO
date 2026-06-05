@@ -32,9 +32,15 @@ class WhatsAppBroadcastService
      *     invalid_numbers: list<string>
      * }
      */
-    public function send(string $message, array $muthowifProfileIds, string $freeNumbersText): array
-    {
+    public function send(
+        string $message,
+        array $muthowifProfileIds,
+        string $freeNumbersText,
+        ?string $attachmentPublicUrl = null,
+        ?string $attachmentFilename = null,
+    ): array {
         $resolved = $this->resolveRecipients($muthowifProfileIds, $freeNumbersText);
+        $caption = trim($message);
 
         $sent = 0;
         $failed = 0;
@@ -46,11 +52,21 @@ class WhatsAppBroadcastService
             }
 
             try {
-                $this->fonnte->sendText(
-                    $recipient['dial']['target'],
-                    $message,
-                    $recipient['dial']['country_calling_code'],
-                );
+                if ($attachmentPublicUrl !== null && $attachmentPublicUrl !== '') {
+                    $this->fonnte->sendMessageWithPublicFileUrl(
+                        $recipient['dial']['target'],
+                        $caption,
+                        $attachmentPublicUrl,
+                        $attachmentFilename,
+                        $recipient['dial']['country_calling_code'],
+                    );
+                } else {
+                    $this->fonnte->sendText(
+                        $recipient['dial']['target'],
+                        $caption,
+                        $recipient['dial']['country_calling_code'],
+                    );
+                }
                 $sent++;
             } catch (RuntimeException $e) {
                 $failed++;

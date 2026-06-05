@@ -8,6 +8,8 @@ use App\Models\MuthowifProfile;
 use App\Services\WhatsAppBroadcastService;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
+use Illuminate\Http\UploadedFile;
+use Illuminate\Support\Facades\Storage;
 use Illuminate\View\View;
 
 class WhatsAppBroadcastController extends Controller
@@ -88,13 +90,16 @@ class WhatsAppBroadcastController extends Controller
         }
 
         $validated = $request->validate([
-            'message' => ['required', 'string', 'min:1', 'max:4000'],
+            'message' => ['nullable', 'string', 'max:4000', 'required_without:attachment'],
+            'attachment' => ['nullable', 'file', 'mimes:jpeg,jpg,png,webp,pdf', 'max:10240'],
             'muthowif_profile_ids' => ['nullable', 'array', 'max:500'],
             'muthowif_profile_ids.*' => ['uuid', 'exists:muthowif_profiles,id'],
             'free_numbers' => ['nullable', 'string', 'max:10000'],
         ], [
-            'message.required' => __('admin.whatsapp_broadcast.message_required'),
+            'message.required_without' => __('admin.whatsapp_broadcast.message_or_attachment_required'),
             'message.max' => __('admin.whatsapp_broadcast.message_max'),
+            'attachment.mimes' => __('admin.whatsapp_broadcast.attachment_mimes'),
+            'attachment.max' => __('admin.whatsapp_broadcast.attachment_max'),
         ]);
 
         $profileIds = $validated['muthowif_profile_ids'] ?? [];
@@ -125,10 +130,26 @@ class WhatsAppBroadcastController extends Controller
                 ->withErrors(['recipients' => __('admin.whatsapp_broadcast.too_many_recipients')]);
         }
 
+        $attachmentPublicUrl = null;
+        $attachmentFilename = null;
+        /** @var UploadedFile|null $attachment */
+        $attachment = $request->file('attachment');
+        if ($attachment !== null) {
+            $path = $attachment->store('whatsapp-broadcast/'.now()->format('Y-m'), 'public');
+            $attachmentPublicUrl = url(Storage::disk('public')->url($path));
+
+            $mime = (string) $attachment->getMimeType();
+            if (! str_starts_with($mime, 'image/')) {
+                $attachmentFilename = $attachment->getClientOriginalName();
+            }
+        }
+
         $result = $this->broadcast->send(
-            $validated['message'],
+            trim((string) ($validated['message'] ?? '')),
             $profileIds,
             $freeNumbers,
+            $attachmentPublicUrl,
+            $attachmentFilename,
         );
 
         $statusParts = [

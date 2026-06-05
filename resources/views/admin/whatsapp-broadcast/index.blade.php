@@ -91,6 +91,7 @@
             <form
                 method="post"
                 action="{{ route('admin.whatsapp-broadcast.send') }}"
+                enctype="multipart/form-data"
                 class="space-y-6"
                 @submit="return confirmSend($event)"
             >
@@ -101,17 +102,40 @@
                         <h2 class="text-sm font-bold text-slate-900">{{ __('admin.whatsapp_broadcast.message_section') }}</h2>
                         <p class="mt-1 text-xs text-slate-500">{{ __('admin.whatsapp_broadcast.message_hint') }}</p>
                     </div>
-                    <div class="p-5">
-                        <textarea
-                            id="broadcast-message"
-                            name="message"
-                            rows="6"
-                            required
-                            maxlength="4000"
-                            placeholder="{{ __('admin.whatsapp_broadcast.message_placeholder') }}"
-                            class="w-full rounded-xl border-slate-200 text-sm shadow-sm focus:border-brand-500 focus:ring-brand-500"
-                        >{{ old('message') }}</textarea>
-                        <x-input-error :messages="$errors->get('message')" class="mt-2" />
+                    <div class="space-y-5 p-5">
+                        <div>
+                            <label for="broadcast-attachment" class="block text-xs font-semibold uppercase tracking-wide text-slate-500">{{ __('admin.whatsapp_broadcast.attachment_label') }}</label>
+                            <input
+                                id="broadcast-attachment"
+                                type="file"
+                                name="attachment"
+                                accept="image/jpeg,image/png,image/webp,application/pdf"
+                                class="mt-1.5 block w-full text-sm text-slate-600 file:mr-4 file:rounded-lg file:border-0 file:bg-brand-50 file:px-4 file:py-2 file:text-sm file:font-semibold file:text-brand-700 hover:file:bg-brand-100"
+                                @change="previewAttachment($event)"
+                            />
+                            <p class="mt-1.5 text-xs text-slate-500">{{ __('admin.whatsapp_broadcast.attachment_hint') }}</p>
+                            <x-input-error :messages="$errors->get('attachment')" class="mt-2" />
+                            <div x-show="attachmentPreviewUrl" x-cloak class="mt-4">
+                                <img :src="attachmentPreviewUrl" alt="" class="max-h-48 rounded-xl border border-slate-200 object-contain shadow-sm" />
+                            </div>
+                            <p x-show="attachmentFileName && !attachmentPreviewUrl" x-cloak class="mt-4 inline-flex items-center gap-2 rounded-xl border border-slate-200 bg-slate-50 px-4 py-3 text-sm text-slate-700">
+                                <svg class="h-5 w-5 shrink-0 text-rose-600" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M19.5 14.25v-2.625a3.375 3.375 0 0 0-3.375-3.375h-1.5A1.125 1.125 0 0 1 13.5 7.125v-1.5a3.375 3.375 0 0 0-3.375-3.375H8.25m0 12.75h7.5m-7.5 3H12M10.5 2.25H5.625c-.621 0-1.125.504-1.125 1.125v17.25c0 .621.504 1.125 1.125 1.125h12.75c.621 0 1.125-.504 1.125-1.125V11.25a9 9 0 0 0-9-9Z" /></svg>
+                                <span x-text="attachmentFileName"></span>
+                            </p>
+                        </div>
+                        <div>
+                            <label for="broadcast-message" class="block text-xs font-semibold uppercase tracking-wide text-slate-500">{{ __('admin.whatsapp_broadcast.caption_label') }}</label>
+                            <textarea
+                                id="broadcast-message"
+                                name="message"
+                                rows="6"
+                                maxlength="4000"
+                                placeholder="{{ __('admin.whatsapp_broadcast.message_placeholder') }}"
+                                class="mt-1.5 w-full rounded-xl border-slate-200 text-sm shadow-sm focus:border-brand-500 focus:ring-brand-500"
+                            >{{ old('message') }}</textarea>
+                            <p class="mt-1.5 text-xs text-slate-500">{{ __('admin.whatsapp_broadcast.caption_hint') }}</p>
+                            <x-input-error :messages="$errors->get('message')" class="mt-2" />
+                        </div>
                     </div>
                 </div>
 
@@ -225,9 +249,25 @@
                     muthowifs: config.muthowifs ?? [],
                     selectedIds: Array.isArray(config.initialSelected) ? [...config.initialSelected] : [],
                     freeNumbers: config.initialFreeNumbers ?? '',
+                    attachmentPreviewUrl: null,
+                    attachmentFileName: null,
                     search: @js($search),
                     init() {
                         this.$nextTick(() => this.syncCheckboxes());
+                    },
+                    previewAttachment(event) {
+                        const file = event.target.files?.[0];
+                        if (!file) {
+                            this.attachmentPreviewUrl = null;
+                            this.attachmentFileName = null;
+                            return;
+                        }
+                        this.attachmentFileName = file.name;
+                        if (file.type.startsWith('image/')) {
+                            this.attachmentPreviewUrl = URL.createObjectURL(file);
+                        } else {
+                            this.attachmentPreviewUrl = null;
+                        }
                     },
                     filteredMuthowifs() {
                         const q = (this.search ?? '').trim().toLowerCase();
@@ -289,6 +329,15 @@
                         if (total === 0) {
                             event.preventDefault();
                             alert(@js(__('admin.whatsapp_broadcast.recipients_required')));
+                            return false;
+                        }
+                        const messageEl = document.getElementById('broadcast-message');
+                        const attachmentEl = document.getElementById('broadcast-attachment');
+                        const hasMessage = messageEl && messageEl.value.trim() !== '';
+                        const hasAttachment = attachmentEl && attachmentEl.files && attachmentEl.files.length > 0;
+                        if (!hasMessage && !hasAttachment) {
+                            event.preventDefault();
+                            alert(@js(__('admin.whatsapp_broadcast.message_or_attachment_required')));
                             return false;
                         }
                         const msg = @js(__('admin.whatsapp_broadcast.confirm_send')).replace(':count', String(total));
