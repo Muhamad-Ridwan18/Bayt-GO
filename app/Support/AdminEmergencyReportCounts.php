@@ -12,11 +12,7 @@ final class AdminEmergencyReportCounts
     public static function openCount(): int
     {
         return BookingEmergencyReport::query()
-            ->whereIn('status', [
-                EmergencyReportStatus::Submitted->value,
-                EmergencyReportStatus::UnderReview->value,
-                EmergencyReportStatus::Verified->value,
-            ])
+            ->where('status', EmergencyReportStatus::Submitted->value)
             ->count();
     }
 }
