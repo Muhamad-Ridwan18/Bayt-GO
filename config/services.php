@@ -76,6 +76,8 @@ return [
         'emergency_selection_notify_enabled' => env('FONNTE_EMERGENCY_SELECTION_NOTIFY_ENABLED', true),
         /** WA ke muthowif: tawaran pengganti insiden (broadcast / undangan admin). */
         'emergency_offer_notify_enabled' => env('FONNTE_EMERGENCY_OFFER_NOTIFY_ENABLED', true),
+        /** WA ke nomor admin saat jamaah melaporkan insiden darurat. */
+        'emergency_admin_report_notify_enabled' => env('FONNTE_EMERGENCY_ADMIN_REPORT_NOTIFY_ENABLED', true),
     ],
 
     'midtrans' => [

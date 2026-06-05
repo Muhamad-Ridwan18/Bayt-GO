@@ -2,6 +2,7 @@
 
 namespace App\Services\Emergency;
 
+use App\Models\BookingEmergencyReport;
 use App\Models\BookingReplacementOffer;
 use App\Services\FonnteService;
 use App\Support\IntlPhone;
@@ -10,9 +11,74 @@ use RuntimeException;
 
 final class EmergencyWhatsAppNotifier
 {
+    private const SEND_DELAY_MICROSECONDS = 300_000;
+
     public function __construct(
         private readonly FonnteService $fonnte,
     ) {}
+
+    public function notifyAdminsOfSubmittedReport(BookingEmergencyReport $report): void
+    {
+        if (! config('services.fonnte.emergency_admin_report_notify_enabled', true)) {
+            return;
+        }
+
+        $numbers = config('emergency.admin_whatsapp_numbers', []);
+        if (! is_array($numbers) || $numbers === []) {
+            return;
+        }
+
+        $report->loadMissing([
+            'reportedBy',
+            'muthowifBooking.customer',
+            'muthowifBooking.muthowifProfile.user',
+        ]);
+
+        $booking = $report->muthowifBooking;
+        if ($booking === null) {
+            return;
+        }
+
+        $locale = config('app.locale');
+        $customerName = $booking->customer?->name ?? $report->reportedBy?->name ?? __('whatsapp.fallback_pilgrim', [], $locale);
+        $muthowifName = $booking->muthowifProfile?->user?->name ?? __('whatsapp.fallback_muthowif', [], $locale);
+
+        $message = $this->withLocale($locale, function () use ($report, $booking, $locale, $customerName, $muthowifName): string {
+            $start = $booking->starts_on->format('d/m/Y');
+            $end = $booking->ends_on->format('d/m/Y');
+            $appName = config('app.name', 'BaytGo');
+            $url = route('admin.emergency.show', $report);
+
+            $lines = [
+                __('whatsapp.admin.emergency_report_submitted.headline', ['app' => $appName], $locale),
+                '',
+                __('whatsapp.admin.emergency_report_submitted.body', ['customer' => $customerName], $locale),
+                '',
+            ];
+
+            if (filled($booking->booking_code)) {
+                $lines[] = __('whatsapp.admin.emergency_report_submitted.booking_code', ['code' => $booking->booking_code], $locale);
+            }
+
+            $lines[] = __('whatsapp.admin.emergency_report_submitted.case', ['case' => $report->case_type->label()], $locale);
+            $lines[] = __('whatsapp.admin.emergency_report_submitted.muthowif', ['muthowif' => $muthowifName], $locale);
+            $lines[] = __('whatsapp.admin.emergency_report_submitted.service_dates', ['start' => $start, 'end' => $end], $locale);
+
+            if (filled($report->description)) {
+                $lines[] = '';
+                $lines[] = __('whatsapp.admin.emergency_report_submitted.description_heading', [], $locale);
+                $lines[] = $report->description;
+            }
+
+            $lines[] = '';
+            $lines[] = __('whatsapp.admin.emergency_report_submitted.open', [], $locale);
+            $lines[] = $url;
+
+            return implode("\n", $lines);
+        });
+
+        $this->sendToPhoneNumbers($numbers, $message, (string) $report->getKey());
+    }
 
     public function notifyCustomerOfCandidate(BookingReplacementOffer $offer): void
     {
@@ -203,16 +269,50 @@ final class EmergencyWhatsAppNotifier
     }
 
     /**
-     * @param  callable():void  $callback
+     * @param  callable():void|callable():string  $callback
      */
-    private function withLocale(string $locale, callable $callback): void
+    private function withLocale(string $locale, callable $callback): mixed
     {
         $previous = app()->getLocale();
         try {
             app()->setLocale($locale);
-            $callback();
+
+            return $callback();
         } finally {
             app()->setLocale($previous);
+        }
+    }
+
+    /**
+     * @param  list<string>  $phones
+     */
+    private function sendToPhoneNumbers(array $phones, string $message, string $contextId): void
+    {
+        $token = config('services.fonnte.token');
+        if ($token === null || $token === '') {
+            Log::debug('WhatsApp emergency admin notify skipped: FONNTE_TOKEN kosong.');
+
+            return;
+        }
+
+        $sent = false;
+        foreach ($phones as $index => $phone) {
+            if ($index > 0 && $sent) {
+                usleep(self::SEND_DELAY_MICROSECONDS);
+            }
+
+            $dial = IntlPhone::fonnteDial((string) $phone);
+            if ($dial === null) {
+                Log::warning('WhatsApp emergency admin notify skipped: nomor tidak valid.', [
+                    'phone' => $phone,
+                    'context_id' => $contextId,
+                ]);
+
+                continue;
+            }
+
+            $this->sendToTarget($dial, $message, $contextId);
+            $sent = true;
         }
     }
 

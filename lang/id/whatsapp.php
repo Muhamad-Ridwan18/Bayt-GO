@@ -1,6 +1,18 @@
 <?php
 
 return [
+    'admin' => [
+        'emergency_report_submitted' => [
+            'headline' => '*:app* — insiden darurat baru',
+            'body' => 'Jamaah *:customer* melaporkan insiden darurat pada pesanan aktif.',
+            'booking_code' => '*Kode pesanan:* :code',
+            'case' => '*Jenis insiden:* :case',
+            'muthowif' => '*Muthowif saat ini:* :muthowif',
+            'service_dates' => '*Tanggal layanan:* :start - :end',
+            'description_heading' => '*Keterangan jamaah:*',
+            'open' => '*Tinjau di panel admin:*',
+        ],
+    ],
     'fallback_pilgrim' => 'Jamaah',
     'fallback_muthowif' => 'Muthowif',
     'fallback_service' => 'Layanan',

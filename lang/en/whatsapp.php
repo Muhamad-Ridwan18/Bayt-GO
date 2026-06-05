@@ -1,6 +1,18 @@
 <?php
 
 return [
+    'admin' => [
+        'emergency_report_submitted' => [
+            'headline' => '*:app* — new emergency incident',
+            'body' => 'Pilgrim *:customer* reported an emergency incident on an active booking.',
+            'booking_code' => '*Booking code:* :code',
+            'case' => '*Incident type:* :case',
+            'muthowif' => '*Current muthowif:* :muthowif',
+            'service_dates' => '*Service dates:* :start - :end',
+            'description_heading' => '*Pilgrim note:*',
+            'open' => '*Review in admin panel:*',
+        ],
+    ],
     'fallback_pilgrim' => 'Pilgrim',
     'fallback_muthowif' => 'Chaperone',
     'fallback_service' => 'Service',

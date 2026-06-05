@@ -14,6 +14,7 @@ use App\Models\BookingReplacementOffer;
 use App\Models\MuthowifBooking;
 use App\Models\MuthowifProfile;
 use App\Models\User;
+use App\Jobs\NotifyAdminsOfEmergencyReportSubmitted;
 use App\Jobs\NotifyCustomerOfEmergencyCandidate;
 use App\Jobs\NotifyMuthowifEmergencyNotSelected;
 use App\Jobs\NotifyMuthowifEmergencySelected;
@@ -47,7 +48,7 @@ final class EmergencyReplacementService
 
         $paths = $this->storeEvidence($booking, $evidenceFiles);
 
-        return DB::transaction(function () use ($booking, $customer, $caseType, $description, $paths) {
+        $report = DB::transaction(function () use ($booking, $customer, $caseType, $description, $paths) {
             $report = BookingEmergencyReport::query()->create([
                 'muthowif_booking_id' => $booking->getKey(),
                 'reported_by_user_id' => $customer->getKey(),
@@ -65,6 +66,10 @@ final class EmergencyReplacementService
 
             return $report;
         });
+
+        NotifyAdminsOfEmergencyReportSubmitted::dispatchAfterResponse((string) $report->getKey());
+
+        return $report;
     }
 
     public function markUnderReview(BookingEmergencyReport $report, User $admin): BookingEmergencyReport
