@@ -96,6 +96,7 @@ return [
         'report_confirm' => 'Submit emergency incident report?',
     ],
     'admin' => [
+        'new_report_toast' => 'New emergency incident report. Open Emergency incidents.',
         'index_title' => 'Emergency incidents',
         'show_title' => 'Incident detail',
         'booking_code' => 'Booking code',

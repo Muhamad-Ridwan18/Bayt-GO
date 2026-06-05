@@ -233,6 +233,68 @@ document.addEventListener('alpine:init', () => {
         },
     }));
 
+    Alpine.data('adminEmergencyReportsBadge', (config) => ({
+        countUrl: config.countUrl ?? '',
+        toastLabel: config.toastLabel ?? '',
+        count: Number(config.initialCount ?? 0) || 0,
+        subscribedChannels: [],
+
+        get displayLabel() {
+            if (this.count > 99) {
+                return '99+';
+            }
+            return String(this.count);
+        },
+
+        init() {
+            if (!requireEcho('adminEmergencyReportsBadge')) {
+                return;
+            }
+
+            window.Echo.private('admin.emergency-reports')
+                .listen('.emergency.report.updated', (e) => {
+                    void this.refresh();
+                    if (e?.action === 'submitted') {
+                        this.notifyNewReport();
+                    }
+                });
+
+            this.subscribedChannels = ['admin.emergency-reports'];
+        },
+
+        notifyNewReport() {
+            const msg = this.toastLabel || 'New emergency incident report';
+            if (typeof Alpine !== 'undefined' && Alpine.store('toasts')) {
+                Alpine.store('toasts').add('info', msg);
+            }
+        },
+
+        async refresh() {
+            if (!this.countUrl) {
+                return;
+            }
+            try {
+                const r = await fetch(this.countUrl, {
+                    headers: { Accept: 'application/json', 'X-Requested-With': 'XMLHttpRequest' },
+                    credentials: 'same-origin',
+                });
+                if (!r.ok) {
+                    return;
+                }
+                const data = await r.json();
+                if (typeof data.open_count === 'number') {
+                    this.count = data.open_count;
+                }
+            } catch {
+                /* ignore */
+            }
+        },
+
+        destroy() {
+            leavePrivateChannels(this.subscribedChannels);
+        },
+    }));
+
     Alpine.data('adminWithdrawalsBadgeLive', (initialCount) => ({
         count: Number(initialCount) || 0,
         subscribedChannels: [],

@@ -3,6 +3,7 @@
     use App\Enums\MuthowifVerificationStatus;
     use App\Models\MuthowifBooking;
     use App\Models\MuthowifProfile;
+    use App\Support\AdminEmergencyReportCounts;
     use App\Support\MuthowifEmergencyOfferCounts;
 
     $contactRaw = (string) (config('app.contact_whatsapp') ?: config('app.contact_phone'));
@@ -24,7 +25,9 @@
 
     $adminHubActive = false;
     $adminPendingMuthowifCount = 0;
+    $adminOpenEmergencyReportCount = 0;
     if (Auth::check() && Auth::user()->isAdmin()) {
+        $adminOpenEmergencyReportCount = AdminEmergencyReportCounts::openCount();
         $adminPendingMuthowifCount = MuthowifProfile::query()
             ->where('verification_status', MuthowifVerificationStatus::Pending)
             ->count();
@@ -95,7 +98,21 @@
                             {{ __('nav.refund') }}
                         </x-nav-link>
                         <x-nav-link :href="route('admin.emergency.index')" :active="request()->routeIs('admin.emergency.*')">
-                            {{ __('nav.emergency') }}
+                            <span class="inline-flex items-center gap-2">
+                                {{ __('nav.emergency') }}
+                                <span
+                                    x-data="adminEmergencyReportsBadge({
+                                        countUrl: @js(route('admin.emergency.open-report-count')),
+                                        toastLabel: @js(__('emergency.admin.new_report_toast')),
+                                        initialCount: @js($adminOpenEmergencyReportCount),
+                                    })"
+                                    x-show="count > 0"
+                                    x-cloak
+                                    class="inline-flex min-h-[1.125rem] min-w-[1.125rem] items-center justify-center rounded-full bg-amber-600 px-1 text-[10px] font-bold leading-none text-white shadow-sm"
+                                    x-bind:aria-label="count > 0 ? '{{ __('nav.emergency') }}: ' + displayLabel : null"
+                                    x-text="displayLabel"
+                                ></span>
+                            </span>
                         </x-nav-link>
                         <x-nav-link :href="route('admin.withdrawals.index')" :active="request()->routeIs('admin.withdrawals.*')">
                             {{ __('nav.withdraw') }}
@@ -253,7 +270,21 @@
                     {{ __('nav.refund') }}
                 </x-responsive-nav-link>
                 <x-responsive-nav-link :href="route('admin.emergency.index')" :active="request()->routeIs('admin.emergency.*')">
-                    {{ __('nav.emergency') }}
+                    <span class="inline-flex items-center gap-2">
+                        {{ __('nav.emergency') }}
+                        <span
+                            x-data="adminEmergencyReportsBadge({
+                                countUrl: @js(route('admin.emergency.open-report-count')),
+                                toastLabel: @js(__('emergency.admin.new_report_toast')),
+                                initialCount: @js($adminOpenEmergencyReportCount),
+                            })"
+                            x-show="count > 0"
+                            x-cloak
+                            class="inline-flex min-h-[1.125rem] min-w-[1.125rem] items-center justify-center rounded-full bg-amber-600 px-1 text-[10px] font-bold leading-none text-white shadow-sm"
+                            x-bind:aria-label="count > 0 ? '{{ __('nav.emergency') }}: ' + displayLabel : null"
+                            x-text="displayLabel"
+                        ></span>
+                    </span>
                 </x-responsive-nav-link>
                 <x-responsive-nav-link :href="route('admin.withdrawals.index')" :active="request()->routeIs('admin.withdrawals.*')">
                     {{ __('nav.withdraw') }}

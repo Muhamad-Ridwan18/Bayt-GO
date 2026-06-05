@@ -96,6 +96,7 @@ return [
         'report_confirm' => 'Kirim laporan insiden darurat?',
     ],
     'admin' => [
+        'new_report_toast' => 'Ada laporan insiden darurat baru. Buka menu Insiden darurat.',
         'index_title' => 'Insiden darurat',
         'show_title' => 'Detail insiden',
         'booking_code' => 'Kode pesanan',

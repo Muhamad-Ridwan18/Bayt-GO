@@ -308,6 +308,7 @@ Route::middleware('auth')->group(function () {
         Route::get('pantau-layanan', [ServiceMonitorController::class, 'index'])->name('service_monitor.index');
         Route::get('pantau-layanan/fragment', [ServiceMonitorController::class, 'fragment'])->name('service_monitor.fragment');
         Route::get('insiden-darurat/live-index-fragment', [BookingEmergencyController::class, 'indexLiveFragment'])->name('emergency.index.live-fragment');
+        Route::get('insiden-darurat/open-report-count', [BookingEmergencyController::class, 'openReportCount'])->name('emergency.open-report-count');
         Route::get('insiden-darurat', [BookingEmergencyController::class, 'index'])->name('emergency.index');
         Route::get('insiden-darurat/{report}/fragment', [BookingEmergencyController::class, 'showLiveFragment'])->name('emergency.show.fragment');
         Route::get('insiden-darurat/{report}', [BookingEmergencyController::class, 'show'])->name('emergency.show');

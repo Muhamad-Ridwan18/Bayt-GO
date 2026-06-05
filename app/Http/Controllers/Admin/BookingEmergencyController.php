@@ -7,12 +7,23 @@ use App\Models\BookingEmergencyReport;
 use App\Models\MuthowifProfile;
 use App\Services\Emergency\EmergencyReplacementCandidateService;
 use App\Services\Emergency\EmergencyReplacementService;
+use App\Support\AdminEmergencyReportCounts;
+use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\View\View;
 
 class BookingEmergencyController extends Controller
 {
+    public function openReportCount(Request $request): JsonResponse
+    {
+        $this->authorize('viewAny', BookingEmergencyReport::class);
+
+        return response()->json([
+            'open_count' => AdminEmergencyReportCounts::openCount(),
+        ]);
+    }
+
     public function index(Request $request): View
     {
         $this->authorize('viewAny', BookingEmergencyReport::class);
