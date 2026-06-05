@@ -67,6 +67,63 @@ final class EmergencyWhatsAppNotifier
         });
     }
 
+    public function notifyMuthowifOfReplacementOffer(BookingReplacementOffer $offer): void
+    {
+        if (! config('services.fonnte.emergency_offer_notify_enabled', true)) {
+            return;
+        }
+
+        $offer->loadMissing([
+            'muthowifProfile.user',
+            'report.muthowifBooking.customer',
+        ]);
+
+        $booking = $offer->report?->muthowifBooking;
+        $profile = $offer->muthowifProfile;
+        if ($booking === null || $profile === null) {
+            return;
+        }
+
+        $fonnteDial = $this->resolveMuthowifDial($profile->phone, (string) $profile->getKey(), (string) $booking->getKey());
+        if ($fonnteDial === null) {
+            return;
+        }
+
+        $locale = $this->localeForUser($profile->user?->locale);
+        $customerName = $booking->customer?->name ?? __('whatsapp.fallback_pilgrim', [], $locale);
+        $serviceLabel = $booking->service_type?->label() ?? __('whatsapp.fallback_service', [], $locale);
+
+        $this->withLocale($locale, function () use ($booking, $fonnteDial, $locale, $customerName, $serviceLabel): void {
+            $start = $booking->starts_on->format('d/m/Y');
+            $end = $booking->ends_on->format('d/m/Y');
+            $appName = config('app.name', 'BaytGo');
+            $url = route('muthowif.emergency-offers.index');
+
+            $lines = [
+                __('whatsapp.muthowif.emergency_replacement_offer.headline', ['app' => $appName], $locale),
+                '',
+                __('whatsapp.muthowif.emergency_replacement_offer.body', ['customer' => $customerName], $locale),
+                '',
+            ];
+
+            if (filled($booking->booking_code)) {
+                $lines[] = __('whatsapp.muthowif.emergency_replacement_offer.booking_code', ['code' => $booking->booking_code], $locale);
+                $lines[] = '';
+            }
+
+            $lines[] = __('whatsapp.muthowif.emergency_replacement_offer.service_dates', ['start' => $start, 'end' => $end], $locale);
+            $lines[] = __('whatsapp.muthowif.emergency_replacement_offer.service', ['service' => $serviceLabel], $locale);
+            $lines[] = __('whatsapp.muthowif.emergency_replacement_offer.pilgrim_count', ['count' => $booking->pilgrim_count], $locale);
+            $lines[] = '';
+            $lines[] = __('whatsapp.muthowif.emergency_replacement_offer.action', [], $locale);
+            $lines[] = '';
+            $lines[] = __('whatsapp.muthowif.emergency_replacement_offer.open', [], $locale);
+            $lines[] = $url;
+
+            $this->sendToTarget($fonnteDial, implode("\n", $lines), (string) $booking->getKey());
+        });
+    }
+
     public function notifyMuthowifSelected(BookingReplacementOffer $offer): void
     {
         if (! config('services.fonnte.emergency_selection_notify_enabled', true)) {

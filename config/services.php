@@ -74,6 +74,8 @@ return [
         'emergency_candidate_notify_enabled' => env('FONNTE_EMERGENCY_CANDIDATE_NOTIFY_ENABLED', true),
         /** WA ke muthowif: hasil pemilihan pengganti insiden (terpilih / belum terpilih). */
         'emergency_selection_notify_enabled' => env('FONNTE_EMERGENCY_SELECTION_NOTIFY_ENABLED', true),
+        /** WA ke muthowif: tawaran pengganti insiden (broadcast / undangan admin). */
+        'emergency_offer_notify_enabled' => env('FONNTE_EMERGENCY_OFFER_NOTIFY_ENABLED', true),
     ],
 
     'midtrans' => [

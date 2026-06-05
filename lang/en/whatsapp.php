@@ -41,6 +41,16 @@ return [
             'open_panel' => '*Withdrawals:*',
             'attachment_caption' => '_(Proof of transfer is attached above.)_',
         ],
+        'emergency_replacement_offer' => [
+            'headline' => '*:app* — replacement muthowif request',
+            'body' => 'There is an emergency replacement request from pilgrim *:customer* due to an incident during active service.',
+            'booking_code' => '*Booking code:* :code',
+            'service_dates' => '*Service dates:* :start - :end',
+            'service' => '*Service:* :service',
+            'pilgrim_count' => '*Party size:* :count',
+            'action' => 'Open replacement offers to review details and respond (accept/decline).',
+            'open' => '*Open replacement offers:*',
+        ],
         'emergency_selection' => [
             'selected' => [
                 'headline' => '*:app* — congratulations, you were selected!',

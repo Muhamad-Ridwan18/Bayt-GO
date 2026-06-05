@@ -17,6 +17,7 @@ use App\Models\User;
 use App\Jobs\NotifyCustomerOfEmergencyCandidate;
 use App\Jobs\NotifyMuthowifEmergencyNotSelected;
 use App\Jobs\NotifyMuthowifEmergencySelected;
+use App\Jobs\NotifyMuthowifOfEmergencyReplacementOffer;
 use App\Services\UploadedImageOptimizer;
 use App\Support\CustomerBookingBroadcast;
 use App\Support\EmergencyReportBroadcast;
@@ -184,6 +185,16 @@ final class EmergencyReplacementService
 
         EmergencyReportBroadcast::afterResponse($report->fresh(), 'batch_offered', $notifyUserIds);
 
+        $offerIds = BookingReplacementOffer::query()
+            ->where('booking_emergency_report_id', $report->getKey())
+            ->where('batch_number', $batchNumber)
+            ->where('status', ReplacementOfferStatus::Offered->value)
+            ->pluck('id')
+            ->map(static fn ($id) => (string) $id)
+            ->all();
+
+        $this->dispatchReplacementOfferWhatsAppNotifications($offerIds);
+
         return $candidates->count();
     }
 
@@ -226,6 +237,8 @@ final class EmergencyReplacementService
                 [(string) $target->user_id],
             );
 
+            $this->dispatchReplacementOfferWhatsAppNotifications([(string) $existing->getKey()]);
+
             return $existing->fresh();
         }
 
@@ -243,6 +256,8 @@ final class EmergencyReplacementService
             'admin_invite',
             [(string) $target->user_id],
         );
+
+        $this->dispatchReplacementOfferWhatsAppNotifications([(string) $offer->getKey()]);
 
         return $offer;
     }
@@ -427,6 +442,18 @@ final class EmergencyReplacementService
         }
 
         $this->broadcastNextBatch($report->fresh());
+    }
+
+    /**
+     * @param  list<string>  $offerIds
+     */
+    private function dispatchReplacementOfferWhatsAppNotifications(array $offerIds): void
+    {
+        foreach ($offerIds as $offerId) {
+            if ($offerId !== '') {
+                NotifyMuthowifOfEmergencyReplacementOffer::dispatchAfterResponse($offerId);
+            }
+        }
     }
 
     /**

@@ -41,6 +41,16 @@ return [
             'open_panel' => '*Withdraw:*',
             'attachment_caption' => '_(Bukti transfer terlampir di atas.)_',
         ],
+        'emergency_replacement_offer' => [
+            'headline' => '*:app* — permintaan muthowif pengganti',
+            'body' => 'Ada permintaan pengganti darurat dari jamaah *:customer* karena insiden pada layanan berjalan.',
+            'booking_code' => '*Kode pesanan:* :code',
+            'service_dates' => '*Tanggal layanan:* :start - :end',
+            'service' => '*Layanan:* :service',
+            'pilgrim_count' => '*Jumlah jemaah:* :count',
+            'action' => 'Silakan buka tawaran pengganti untuk melihat detail dan merespons (terima/tolak).',
+            'open' => '*Buka tawaran pengganti:*',
+        ],
         'emergency_selection' => [
             'selected' => [
                 'headline' => '*:app* — selamat, Anda terpilih!',
