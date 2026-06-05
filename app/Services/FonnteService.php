@@ -49,9 +49,10 @@ class FonnteService
      */
     public function sendMessageWithPublicFileUrl(string $target, string $message, string $publicFileUrl, ?string $filename = null, ?string $countryCallingCode = null): void
     {
+        $cc = $this->resolveCountryCode($countryCallingCode);
+
         $token = $this->requireToken();
         $url = config('services.fonnte.url', 'https://api.fonnte.com/send');
-        $cc = $this->resolveCountryCode($countryCallingCode);
 
         $payload = $this->buildPayload([
             'target' => $target,
@@ -59,6 +60,12 @@ class FonnteService
             'url' => $publicFileUrl,
             'countryCode' => $cc,
         ]);
+
+        $caption = trim($message);
+        if ($caption !== '') {
+            // WSM: beberapa versi membaca caption, Fonnte memakai message — kirim keduanya.
+            $payload['caption'] = $caption;
+        }
 
         if ($filename !== null && $filename !== '') {
             $payload['filename'] = $filename;

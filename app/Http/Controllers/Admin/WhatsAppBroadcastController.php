@@ -6,10 +6,10 @@ use App\Enums\MuthowifVerificationStatus;
 use App\Http\Controllers\Controller;
 use App\Models\MuthowifProfile;
 use App\Services\WhatsAppBroadcastService;
+use App\Support\WhatsAppMediaUrl;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Http\UploadedFile;
-use Illuminate\Support\Facades\Storage;
 use Illuminate\View\View;
 
 class WhatsAppBroadcastController extends Controller
@@ -20,6 +20,8 @@ class WhatsAppBroadcastController extends Controller
 
     public function index(Request $request): View
     {
+        WhatsAppMediaUrl::ensureBroadcastStorageReady();
+
         $status = $request->query('status', 'all');
         if (! in_array($status, ['all', 'approved', 'pending', 'rejected'], true)) {
             $status = 'all';
@@ -78,6 +80,8 @@ class WhatsAppBroadcastController extends Controller
             'search' => $search,
             'counts' => $counts,
             'whatsappConfigured' => $this->broadcast->whatsappConfigured(),
+            'mediaUrlPublic' => WhatsAppMediaUrl::isPubliclyReachable(),
+            'mediaBaseUrl' => WhatsAppMediaUrl::baseUrl(),
         ]);
     }
 
@@ -135,8 +139,18 @@ class WhatsAppBroadcastController extends Controller
         /** @var UploadedFile|null $attachment */
         $attachment = $request->file('attachment');
         if ($attachment !== null) {
-            $path = $attachment->store('whatsapp-broadcast/'.now()->format('Y-m'), 'public');
-            $attachmentPublicUrl = url(Storage::disk('public')->url($path));
+            if (! WhatsAppMediaUrl::isPubliclyReachable()) {
+                return back()
+                    ->withInput()
+                    ->withErrors([
+                        'attachment' => __('admin.whatsapp_broadcast.media_url_not_public', [
+                            'url' => WhatsAppMediaUrl::baseUrl(),
+                        ]),
+                    ]);
+            }
+
+            $path = $attachment->store(WhatsAppMediaUrl::ensureBroadcastStorageReady(), 'public');
+            $attachmentPublicUrl = WhatsAppMediaUrl::forPublicDiskPath($path);
 
             $mime = (string) $attachment->getMimeType();
             if (! str_starts_with($mime, 'image/')) {

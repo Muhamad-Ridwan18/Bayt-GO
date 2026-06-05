@@ -51,6 +51,8 @@ return [
     'fonnte' => [
         'token' => env('FONNTE_TOKEN'),
         'url' => env('FONNTE_API_URL', 'https://whatsapp.baytgo.id/send'),
+        /** URL publik untuk lampiran WA (WSM harus bisa unduh). Kosong = APP_URL. */
+        'media_public_url' => env('FONNTE_MEDIA_PUBLIC_URL'),
         'session_id' => env('FONNTE_SESSION_ID'),
         'otp_enabled' => env('FONNTE_OTP_ENABLED', true),
         'country_code' => env('FONNTE_COUNTRY_CODE', '62'),

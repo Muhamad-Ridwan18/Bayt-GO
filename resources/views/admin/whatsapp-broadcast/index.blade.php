@@ -86,6 +86,11 @@
                         {{ __('admin.whatsapp_broadcast.token_missing') }}
                     </div>
                 @endunless
+                @unless ($mediaUrlPublic)
+                    <div class="relative mt-6 rounded-2xl border border-amber-300/40 bg-amber-500/20 px-4 py-3 text-sm text-amber-50">
+                        {{ __('admin.whatsapp_broadcast.media_url_not_public', ['url' => $mediaBaseUrl]) }}
+                    </div>
+                @endunless
             </div>
 
             <form
