@@ -41,6 +41,22 @@ return [
             'open_panel' => '*Withdraw:*',
             'attachment_caption' => '_(Bukti transfer terlampir di atas.)_',
         ],
+        'emergency_selection' => [
+            'selected' => [
+                'headline' => '*:app* — selamat, Anda terpilih!',
+                'body' => 'Jamaah *:customer* memilih Anda sebagai muthowif pengganti untuk insiden darurat.',
+                'booking_code' => '*Kode pesanan:* :code',
+                'service_dates' => '*Tanggal layanan:* :start - :end',
+                'open' => '*Buka panel pesanan:*',
+            ],
+            'not_selected' => [
+                'headline' => '*:app* — hasil pemilihan pengganti',
+                'body' => 'Mohon maaf, jamaah *:customer* memilih muthowif lain untuk insiden darurat ini.',
+                'booking_code' => '*Kode pesanan:* :code',
+                'service_dates' => '*Tanggal layanan:* :start - :end',
+                'open' => '*Lihat tawaran pengganti:*',
+            ],
+        ],
     ],
     'customer' => [
         'approved' => [
@@ -98,6 +114,14 @@ return [
             'booking_code' => '*Kode pesanan:* :code',
             'view_detail' => '*Riwayat pesanan:*',
             'attachment_caption' => '_(Bukti transfer terlampir di atas.)_',
+        ],
+        'emergency_candidate' => [
+            'headline' => '*:app* — calon muthowif pengganti',
+            'body' => '*:muthowif* bersedia menggantikan muthowif Anda untuk insiden darurat.',
+            'booking_code' => '*Kode pesanan:* :code',
+            'service_dates' => '*Tanggal layanan:* :start - :end',
+            'action' => 'Silakan buka detail pesanan untuk membandingkan profil dan memilih pengganti.',
+            'view_detail' => '*Pilih pengganti di:*',
         ],
     ],
 ];

@@ -70,6 +70,10 @@ return [
         'refund_transfer_proof_notify_enabled' => env('FONNTE_REFUND_TRANSFER_PROOF_NOTIFY_ENABLED', true),
         /** WA ke muthowif: bukti transfer withdraw (setelah admin tandai selesai). */
         'withdrawal_transfer_proof_notify_enabled' => env('FONNTE_WITHDRAWAL_TRANSFER_PROOF_NOTIFY_ENABLED', true),
+        /** WA ke jamaah: ada calon muthowif pengganti yang menerima tawaran insiden. */
+        'emergency_candidate_notify_enabled' => env('FONNTE_EMERGENCY_CANDIDATE_NOTIFY_ENABLED', true),
+        /** WA ke muthowif: hasil pemilihan pengganti insiden (terpilih / belum terpilih). */
+        'emergency_selection_notify_enabled' => env('FONNTE_EMERGENCY_SELECTION_NOTIFY_ENABLED', true),
     ],
 
     'midtrans' => [

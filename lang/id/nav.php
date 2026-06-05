@@ -17,7 +17,7 @@ return [
     'verify_muthowif' => 'Verifikasi muthowif',
     'users' => 'Pengguna',
     'services' => 'Pelayanan',
-    'day_off' => 'Jadwal libur',
+    'day_off' => 'Jadwal Libur',
     'booking_requests' => 'Pesanan',
     'support_tickets' => 'Bantuan',
     'site_logo' => 'Logo situs',

@@ -41,6 +41,22 @@ return [
             'open_panel' => '*Withdrawals:*',
             'attachment_caption' => '_(Proof of transfer is attached above.)_',
         ],
+        'emergency_selection' => [
+            'selected' => [
+                'headline' => '*:app* — congratulations, you were selected!',
+                'body' => 'Pilgrim *:customer* chose you as the replacement muthowif for this emergency incident.',
+                'booking_code' => '*Booking code:* :code',
+                'service_dates' => '*Service dates:* :start - :end',
+                'open' => '*Open bookings:*',
+            ],
+            'not_selected' => [
+                'headline' => '*:app* — replacement selection result',
+                'body' => 'We’re sorry — pilgrim *:customer* chose another muthowif for this emergency incident.',
+                'booking_code' => '*Booking code:* :code',
+                'service_dates' => '*Service dates:* :start - :end',
+                'open' => '*View replacement offers:*',
+            ],
+        ],
     ],
     'customer' => [
         'approved' => [
@@ -98,6 +114,14 @@ return [
             'booking_code' => '*Booking code:* :code',
             'view_detail' => '*Booking record:*',
             'attachment_caption' => '_(Proof of transfer is attached above.)_',
+        ],
+        'emergency_candidate' => [
+            'headline' => '*:app* — replacement candidate available',
+            'body' => '*:muthowif* is willing to replace your muthowif for this emergency incident.',
+            'booking_code' => '*Booking code:* :code',
+            'service_dates' => '*Service dates:* :start - :end',
+            'action' => 'Open your booking to compare profiles and choose a replacement.',
+            'view_detail' => '*Choose a replacement at:*',
         ],
     ],
 ];

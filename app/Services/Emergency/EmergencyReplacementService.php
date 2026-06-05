@@ -14,6 +14,9 @@ use App\Models\BookingReplacementOffer;
 use App\Models\MuthowifBooking;
 use App\Models\MuthowifProfile;
 use App\Models\User;
+use App\Jobs\NotifyCustomerOfEmergencyCandidate;
+use App\Jobs\NotifyMuthowifEmergencyNotSelected;
+use App\Jobs\NotifyMuthowifEmergencySelected;
 use App\Services\UploadedImageOptimizer;
 use App\Support\CustomerBookingBroadcast;
 use App\Support\EmergencyReportBroadcast;
@@ -273,6 +276,7 @@ final class EmergencyReplacementService
 
         CustomerBookingBroadcast::afterResponse($report->muthowifBooking->fresh());
         EmergencyReportBroadcast::afterResponse($report->fresh(), 'offer_accepted');
+        NotifyCustomerOfEmergencyCandidate::dispatchAfterResponse((string) $offer->getKey());
 
         return $offer;
     }
@@ -320,7 +324,16 @@ final class EmergencyReplacementService
             throw new \RuntimeException(__('emergency.errors.replacement_already_done'));
         }
 
-        return DB::transaction(function () use ($offer, $customer, $report, $booking) {
+        $otherAcceptedOfferIds = $report->offers()
+            ->whereKeyNot($offer->getKey())
+            ->where('status', ReplacementOfferStatus::Accepted->value)
+            ->pluck('id')
+            ->map(static fn ($id) => (string) $id)
+            ->all();
+
+        $selectedOfferId = (string) $offer->getKey();
+
+        $booking = DB::transaction(function () use ($offer, $customer, $report, $booking) {
             $fromProfileId = (string) $booking->muthowif_profile_id;
             $target = MuthowifProfile::query()->findOrFail($offer->muthowif_profile_id);
 
@@ -380,6 +393,13 @@ final class EmergencyReplacementService
 
             return $booking->fresh();
         });
+
+        NotifyMuthowifEmergencySelected::dispatchAfterResponse($selectedOfferId);
+        foreach ($otherAcceptedOfferIds as $offerId) {
+            NotifyMuthowifEmergencyNotSelected::dispatchAfterResponse($offerId);
+        }
+
+        return $booking;
     }
 
     public function maybeAutoNextBatch(BookingEmergencyReport $report): void
