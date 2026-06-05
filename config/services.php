@@ -43,9 +43,13 @@ return [
         'default_region' => env('PHONE_DEFAULT_REGION', 'ID'),
     ],
 
+    /*
+    | WhatsApp gateway (API kompatibel Fonnte: form POST target/message/countryCode).
+    | WSM internal BaytGo: FONNTE_API_URL=https://whatsapp.baytgo.id/send
+    */
     'fonnte' => [
         'token' => env('FONNTE_TOKEN'),
-        'url' => env('FONNTE_API_URL', 'https://api.fonnte.com/send'),
+        'url' => env('FONNTE_API_URL', 'https://whatsapp.baytgo.id/send'),
         'otp_enabled' => env('FONNTE_OTP_ENABLED', true),
         'country_code' => env('FONNTE_COUNTRY_CODE', '62'),
         /** Notifikasi WhatsApp ke muthowif saat ada booking masuk (perlu FONNTE_TOKEN). */

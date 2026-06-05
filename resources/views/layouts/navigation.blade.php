@@ -38,6 +38,7 @@
             'admin.support-tickets.*',
             'admin.service_monitor.*',
             'admin.moota_webhooks.*',
+            'admin.whatsapp-broadcast.*',
             'log-viewer.*',
         ]);
     }
