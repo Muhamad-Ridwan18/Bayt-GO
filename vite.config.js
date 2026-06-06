@@ -8,4 +8,21 @@ export default defineConfig({
             refresh: true,
         }),
     ],
+    build: {
+        rollupOptions: {
+            output: {
+                manualChunks(id) {
+                    if (id.includes('node_modules/pusher-js') || id.includes('node_modules/laravel-echo')) {
+                        return 'echo-vendor';
+                    }
+                    if (id.includes('/resources/js/echo.js')) {
+                        return 'echo';
+                    }
+                    if (id.includes('/resources/js/booking-form.js')) {
+                        return 'booking';
+                    }
+                },
+            },
+        },
+    },
 });

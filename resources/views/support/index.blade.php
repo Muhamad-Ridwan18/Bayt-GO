@@ -1,6 +1,6 @@
 <x-app-layout>
-    <div class="py-8 sm:py-12">
-        <x-page-container class="space-y-6">
+    <div class="ui-page-y">
+        <x-page-container class="ui-stack-compact">
             <div class="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
                 <div>
                     <h1 class="text-lg font-semibold text-slate-900">{{ __('support.title') }}</h1>
@@ -11,13 +11,6 @@
                     {{ __('support.new_ticket') }}
                 </a>
             </div>
-
-            @if (session('status'))
-                <div class="rounded-xl border border-emerald-200 bg-emerald-50 px-4 py-3 text-sm text-emerald-900">{{ session('status') }}</div>
-            @endif
-            @if (session('error'))
-                <div class="rounded-xl border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-900">{{ session('error') }}</div>
-            @endif
 
             <div
                 x-data="reverbFragmentLive({

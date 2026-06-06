@@ -4,8 +4,8 @@
 @endphp
 
 <x-app-layout>
-    <div class="py-8 sm:py-12">
-        <x-page-container class="space-y-6">
+    <div class="ui-page-y">
+        <x-page-container class="ui-stack-compact">
             <div class="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
                 <div>
                     <h2 class="text-lg font-semibold text-slate-900">{{ __('admin.refunds.title') }}</h2>
@@ -13,13 +13,6 @@
                 </div>
                 <a href="{{ route('admin.finance.index') }}" class="text-sm font-semibold text-brand-700 hover:text-brand-800">{{ __('admin.refunds.back_finance') }}</a>
             </div>
-
-            @if (session('status'))
-                <div class="rounded-xl border border-emerald-200 bg-emerald-50 px-4 py-3 text-sm text-emerald-900">{{ session('status') }}</div>
-            @endif
-            @if (session('error'))
-                <div class="rounded-xl border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-900">{{ session('error') }}</div>
-            @endif
 
             @if ($pendingRefunds->isEmpty())
                 <div class="rounded-2xl border border-dashed border-slate-300 bg-slate-50/80 p-10 text-center text-slate-600 text-sm">
@@ -88,12 +81,12 @@
                                 @endforeach
                             </tbody>
                         </table>
-                    </x-page-container>
+                    </div>
                 </div>
                 <div class="mt-4">
                     {{ $pendingRefunds->links() }}
                 </div>
             @endif
-        </div>
+        </x-page-container>
     </div>
 </x-app-layout>

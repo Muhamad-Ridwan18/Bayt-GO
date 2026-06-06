@@ -49,16 +49,7 @@ use Illuminate\Support\Facades\Route;
 use Illuminate\Support\Str;
 
 Route::bind('publicProfile', function (string $value) {
-    $query = MuthowifProfile::query()
-        ->where('verification_status', MuthowifVerificationStatus::Approved);
-
-    if (Str::of($value)->isUuid()) {
-        $query->whereKey($value);
-    } else {
-        $query->where('slug', $value);
-    }
-
-    return $query->firstOrFail();
+    return \App\Support\MarketplaceProfileCache::resolvePublic($value);
 });
 
 Route::bind('blockedDate', function (string $value) {
@@ -167,12 +158,11 @@ Route::get('/perusahaan/daftar/menunggu', function () {
 })->name('company.registration.pending');
 
 Route::get('/dashboard', function () {
-    $activeCampaigns = Campaign::active()
-        ->orderBy('sort_order')
-        ->orderByDesc('start_date')
-        ->get();
+    $welcomeData = \App\Support\WelcomePageCache::data();
 
-    return view('dashboard', compact('activeCampaigns'));
+    return view('dashboard', [
+        'activeCampaigns' => $welcomeData['activeCampaigns'],
+    ]);
 })->middleware(['auth'])->name('dashboard');
 
 Route::get('/dashboard/muthowif-calendar', MuthowifDashboardCalendarController::class)

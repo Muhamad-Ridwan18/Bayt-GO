@@ -70,7 +70,7 @@
                             <h3 class="text-base font-bold text-slate-900">{{ __('emergency.customer.choice_title', ['count' => $candidates->count()]) }}</h3>
                             <p class="mt-1 text-sm text-slate-600">{{ __('emergency.customer.choice_hint') }}</p>
                         </div>
-                        <div class="space-y-4">
+                        <div class="ui-stack-tight">
                             @foreach ($candidates as $offer)
                                 @include('bookings.partials.emergency-candidate-card', ['offer' => $offer, 'booking' => $b])
                             @endforeach

@@ -4,6 +4,7 @@ namespace App\Http\Controllers\Public;
 
 use App\Http\Controllers\Controller;
 use App\Models\MuthowifProfile;
+use App\Support\MarketplaceProfileCache;
 use App\Support\MarketplaceSearchCache;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
@@ -113,35 +114,7 @@ class MuthowifDirectoryController extends Controller
 
     public function show(Request $request, MuthowifProfile $publicProfile): View
     {
-        $portfolioPreviewLimit = max(1, (int) config('marketplace.profile_portfolio_preview_limit', 3));
-        $portfolioImagesLimit = max(1, (int) config('marketplace.profile_portfolio_images_limit', 12));
-        $blockedDatesLimit = max(1, (int) config('marketplace.profile_blocked_dates_limit', 60));
-        $today = now()->toDateString();
-
-        $publicProfile->load([
-            'user',
-            'services.addOns',
-            'portfolios' => fn ($q) => $q
-                ->with(['images' => fn ($images) => $images->orderBy('sort_order')->limit($portfolioImagesLimit)])
-                ->orderBy('sort_order')
-                ->orderByDesc('created_at')
-                ->limit($portfolioPreviewLimit),
-            'bookingReviews' => fn ($q) => $q
-                ->with('customer:id,name')
-                ->latest()
-                ->limit(10),
-            'blockedDates' => fn ($q) => $q
-                ->where('blocked_on', '>=', $today)
-                ->orderBy('blocked_on')
-                ->limit($blockedDatesLimit),
-        ]);
-        $publicProfile->loadCount([
-            'bookings as confirmed_bookings_count' => static fn ($q) => $q->where('status', \App\Enums\BookingStatus::Confirmed),
-            'bookingReviews',
-            'portfolios',
-            'blockedDates' => static fn ($q) => $q->where('blocked_on', '>=', $today),
-        ]);
-        $publicProfile->loadAvg('bookingReviews', 'rating');
+        $publicProfile = MarketplaceProfileCache::forShow($publicProfile);
 
         $startDate = (string) $request->query('start_date', '');
         $endDate = (string) $request->query('end_date', '');
@@ -161,6 +134,8 @@ class MuthowifDirectoryController extends Controller
             'user',
             'services.addOns',
         ]);
+        $publicProfile->loadCount(['bookingReviews']);
+        $publicProfile->loadAvg('bookingReviews', 'rating');
 
         $startDate = (string) $request->query('start_date', '');
         $endDate = (string) $request->query('end_date', '');
@@ -257,6 +232,10 @@ class MuthowifDirectoryController extends Controller
     {
         if (! filled($publicProfile->photo_path)) {
             abort(404);
+        }
+
+        if (MuthowifProfile::photoPathIsExternalUrl($publicProfile->photo_path)) {
+            return redirect()->away($publicProfile->photo_path, 302);
         }
 
         return StoredImageResponse::fromDisk('local', $publicProfile->photo_path, visibility: 'public');

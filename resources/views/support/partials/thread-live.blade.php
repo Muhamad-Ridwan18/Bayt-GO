@@ -20,7 +20,7 @@
                 </span>
                 <time datetime="{{ $message->created_at?->toIso8601String() }}" class="tabular-nums text-slate-500">{{ $message->created_at?->timezone(config('app.timezone'))->format('d/m/Y H:i') }}</time>
             </div>
-            <div class="prose prose-sm mt-3 max-w-none whitespace-pre-wrap text-slate-800">{{ $message->body }}</div>
+            <div class="prose pred-sm mt-3 max-w-none whitespace-pre-wrap text-slate-800">{{ $message->body }}</div>
             @include('support.partials.message-attachments', ['message' => $message])
         </div>
     @endforeach

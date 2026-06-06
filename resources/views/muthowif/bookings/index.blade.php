@@ -1,6 +1,6 @@
 <x-app-layout>
     <div
-        class="min-h-[calc(100vh-4rem)] bg-slate-100 py-6 sm:py-8"
+        class="ui-page-y-compact min-h-[calc(100vh-4rem)] bg-slate-100"
         x-data="customerBookingLive({
             userId: @js(auth()->id()),
             bookingId: null,

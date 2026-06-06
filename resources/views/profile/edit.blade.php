@@ -1,29 +1,5 @@
 <x-app-layout>
-    <div id="profile-container" class="min-h-[calc(100vh-4rem)] bg-slate-50 py-6 sm:py-8">
-        @if (session('status'))
-            @php
-                $statusKey = session('status');
-                $statusMessage = match ($statusKey) {
-                    'profile-updated', 'password-updated' => __('profile.saved'),
-                    'public-profile-updated' => __('profile_public.saved'),
-                    'verification-link-sent' => __('profile.verification.sent'),
-                    default => $statusKey,
-                };
-            @endphp
-            <x-page-container class="mb-6">
-                <div class="rounded-xl border border-emerald-200 bg-emerald-50 px-4 py-3 text-sm text-emerald-900 shadow-sm">
-                    {{ $statusMessage }}
-                </div>
-            </x-page-container>
-        @endif
-        @if (session('error'))
-            <x-page-container class="mb-6">
-                <div class="rounded-xl border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-900 shadow-sm">
-                    {{ session('error') }}
-                </div>
-            </x-page-container>
-        @endif
-
+    <div id="profile-container" class="ui-page-y-compact min-h-[calc(100vh-4rem)] bg-slate-50">
         @if ($muthowifProfile)
             @php
                 $profileChecks = [
@@ -126,7 +102,7 @@
                                 <div class="rounded-2xl border border-slate-200 bg-slate-50/70 p-4">
                                     @include('profile.partials.update-password-form')
                                 </div>
-                                <div class="rounded-2xl border border-rose-100 bg-rose-50/50 p-4">
+                                <div class="rounded-2xl border border-red-100 bg-red-50/50 p-4">
                                     @include('profile.partials.delete-user-form')
                                 </div>
                             </div>
@@ -135,7 +111,7 @@
                 </main>
             </x-page-container>
         @else
-            <x-page-container class="relative space-y-6">
+            <x-page-container class="relative ui-stack-compact">
                 <div class="overflow-hidden rounded-2xl border border-slate-200/90 bg-gradient-to-b from-white to-slate-50/80 shadow-sm ring-1 ring-slate-100/80">
                     <div class="flex min-w-0">
                         <div class="w-1 shrink-0 bg-brand-500" aria-hidden="true"></div>
@@ -156,7 +132,7 @@
                             <div class="rounded-2xl border border-slate-200 bg-slate-50/70 p-4">
                                 @include('profile.partials.update-password-form')
                             </div>
-                            <div class="rounded-2xl border border-rose-100 bg-rose-50/50 p-4">
+                            <div class="rounded-2xl border border-red-100 bg-red-50/50 p-4">
                                 @include('profile.partials.delete-user-form')
                             </div>
                         </div>

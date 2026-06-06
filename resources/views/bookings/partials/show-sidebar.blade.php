@@ -8,7 +8,7 @@
     $isJadwalFull = ($b->muthowif_rejection_kind ?? null) === MuthowifBookingMuthowifRejectionKind::JadwalFull;
 
     $statusBadge = match ($st) {
-        BookingStatus::Cancelled => 'bg-rose-50 text-rose-800 ring-rose-200/90',
+        BookingStatus::Cancelled => 'bg-red-50 text-red-800 ring-red-200/90',
         BookingStatus::Confirmed => 'bg-emerald-50 text-emerald-900 ring-emerald-200/80',
         BookingStatus::Completed => 'bg-brand-50 text-brand-900 ring-brand-200/80',
         BookingStatus::Pending => 'bg-amber-50 text-amber-950 ring-amber-200/80',

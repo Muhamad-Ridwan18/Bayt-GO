@@ -28,9 +28,9 @@
         ],
     ];
 @endphp
-        <x-page-container class="relative z-10 pb-16 pt-10">
+        <x-page-container class="ui-page-y relative z-10 pb-16">
             {{-- Hero --}}
-            <div class="relative overflow-hidden rounded-3xl border border-white/60 bg-white/90 p-6 shadow-xl shadow-slate-900/5 backdrop-blur-sm sm:p-8">
+            <div class="ui-card-pad-lg relative overflow-hidden rounded-3xl border border-white/60 bg-white shadow-xl shadow-slate-900/5">
                 <div class="absolute -right-16 -top-16 h-48 w-48 rounded-full bg-gradient-to-br from-brand-200/50 to-transparent blur-2xl"></div>
                 <div class="relative flex flex-col gap-6 lg:flex-row lg:items-end lg:justify-between">
                     <div class="max-w-2xl space-y-3">
@@ -69,7 +69,7 @@
             </div>
 
             @if ($bookings->isEmpty())
-                <div class="mt-10 flex flex-col items-center justify-center rounded-3xl border-2 border-dashed border-slate-200/80 bg-white/70 px-6 py-16 text-center shadow-inner shadow-slate-900/5 backdrop-blur-sm sm:px-12">
+                <div class="mt-10 flex flex-col items-center justify-center rounded-3xl border-2 border-dashed border-slate-200/80 bg-white px-6 py-16 text-center shadow-inner shadow-slate-900/5 sm:px-12">
                     <div class="flex h-16 w-16 items-center justify-center rounded-2xl bg-gradient-to-br from-brand-100 to-brand-50 ring-1 ring-brand-200/60">
                         <svg class="h-8 w-8 text-brand-700" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" aria-hidden="true">
                             <path stroke-linecap="round" stroke-linejoin="round" d="M6.75 3v2.25M17.25 3v2.25M3 18.75V7.5a2.25 2.25 0 012.25-2.25h13.5A2.25 2.25 0 0121 7.5v11.25m-18 0A2.25 2.25 0 005.25 21h13.5a2.25 2.25 0 002.25-2.25m-18 0v-7.5A2.25 2.25 0 015.25 9h13.5a2.25 2.25 0 012.25 2.25v7.5" />
@@ -88,7 +88,7 @@
                     </a>
                 </div>
             @else
-                <ul class="mt-10 space-y-6">
+                <ul class="mt-10 ui-stack-compact">
                     @foreach ($bookings as $booking)
                         @php
                             $st = $booking->status;
@@ -280,7 +280,7 @@
                 </ul>
 
                 <div class="mt-10 flex justify-center">
-                    <div class="rounded-2xl border border-slate-200/80 bg-white/80 px-2 py-1 shadow-sm backdrop-blur-sm">
+                    <div class="rounded-2xl border border-slate-200/80 bg-white px-2 py-1 shadow-sm">
                         {{ $bookings->links() }}
                     </div>
                 </div>

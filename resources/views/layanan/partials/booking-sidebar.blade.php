@@ -16,10 +16,10 @@
         <h2 class="relative mt-1 text-lg font-bold leading-tight text-white sm:text-xl">{{ __('marketplace.sidebar.title') }}</h2>
     </div>
 
-    <div class="space-y-4 px-5 py-5 text-sm">
+    <div class="ui-stack-tight ui-card-pad text-sm">
         <div class="flex gap-3">
             <img
-                src="{{ route('layanan.photo', $profile) }}"
+                src="{{ $profile->photoUrl() }}"
                 alt=""
                 width="56"
                 height="56"
@@ -40,30 +40,30 @@
         @endif
 
         @if ($canAttempt)
-            <span class="inline-flex w-full justify-center rounded-full bg-emerald-50 px-3 py-1.5 text-center text-xs font-semibold text-emerald-900 ring-1 ring-emerald-200/80">
+            <x-ui.status-pill type="ready" class="w-full justify-center py-1.5">
                 {{ __('marketplace.sidebar.status_ready') }}
-            </span>
+            </x-ui.status-pill>
             <p class="text-xs leading-relaxed text-slate-600">{{ __('marketplace.sidebar.hint_ready') }}</p>
         @elseif (($intent['reason'] ?? '') === 'guest')
-            <span class="inline-flex w-full justify-center rounded-full bg-slate-100 px-3 py-1.5 text-center text-xs font-semibold text-slate-700 ring-1 ring-slate-200/90">
+            <x-ui.status-pill type="neutral" class="w-full justify-center py-1.5">
                 {{ __('marketplace.sidebar.status_guest') }}
-            </span>
+            </x-ui.status-pill>
             <p class="text-xs leading-relaxed text-slate-600">{{ __('marketplace.sidebar.hint_guest') }}</p>
         @elseif (($intent['reason'] ?? '') === 'not_customer')
-            <span class="inline-flex w-full justify-center rounded-full bg-amber-50 px-3 py-1.5 text-center text-xs font-semibold text-amber-950 ring-1 ring-amber-200/80">
+            <x-ui.status-pill type="guest" class="w-full justify-center py-1.5">
                 {{ __('marketplace.sidebar.status_not_customer') }}
-            </span>
+            </x-ui.status-pill>
             <p class="text-xs leading-relaxed text-slate-600">{{ __('marketplace.sidebar.hint_not_customer') }}</p>
         @elseif ($isBlocked)
-            <span class="inline-flex w-full justify-center rounded-full bg-amber-50 px-3 py-1.5 text-center text-xs font-semibold text-amber-950 ring-1 ring-amber-200/80">
+            <x-ui.status-pill type="guest" class="w-full justify-center py-1.5">
                 {{ __('marketplace.sidebar.status_adjust') }}
-            </span>
+            </x-ui.status-pill>
             <p class="text-xs leading-relaxed text-slate-600">{{ __('marketplace.sidebar.hint_adjust') }}</p>
         @else
             <p class="text-xs leading-relaxed text-slate-600">{{ __('marketplace.sidebar.hint_fallback') }}</p>
         @endif
 
-        <a href="#booking-box" class="inline-flex w-full items-center justify-center gap-2 rounded-xl bg-brand-600 px-4 py-3 text-sm font-bold text-white shadow-md shadow-brand-900/18 transition hover:bg-brand-700 focus:outline-none focus:ring-2 focus:ring-brand-500 focus:ring-offset-2">
+        <a href="#booking-box" class="ui-btn-primary w-full text-sm">
             <span>{{ __('marketplace.sidebar.cta_scroll') }}</span>
             <svg class="h-4 w-4 shrink-0 opacity-90 lg:hidden" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true"><path fill-rule="evenodd" d="M10 3a.75.75 0 01.75.75v9.546l2.955-3.084a.75.75 0 111.09 1.03l-4.25 4.442a.75.75 0 01-1.09 0L5.22 11.243a.75.75 0 011.09-1.03l2.955 3.084V3.75A.75.75 0 0110 3z" clip-rule="evenodd" /></svg>
         </a>

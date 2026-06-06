@@ -1,8 +1,8 @@
 <x-app-layout>
 
-    <div class="relative min-h-[calc(100vh-4rem)] overflow-hidden bg-gradient-to-b from-slate-100 via-slate-50 to-white py-6 sm:py-8">
+    <x-ui.app-page compact>
         <div class="pointer-events-none absolute inset-0 bg-[radial-gradient(ellipse_80%_40%_at_50%_-10%,rgba(14,165,233,0.06),transparent)]"></div>
-        <x-page-container class="relative space-y-6">
+        <x-page-container class="ui-stack-compact relative">
             
             {{-- Hero Section --}}
             <div class="relative overflow-hidden rounded-2xl bg-gradient-to-br from-slate-900 via-sky-950 to-blue-950 p-5 text-white shadow-lg shadow-sky-950/30 ring-1 ring-white/10 sm:rounded-3xl sm:p-6">
@@ -21,7 +21,7 @@
                             <p class="mt-2 max-w-xl text-sm leading-relaxed text-sky-50/90">
                                 Unggah foto-foto terbaik Anda saat membimbing ibadah Umroh atau Haji bersama jamaah. Ini akan ditampilkan secara elegan di halaman profil Anda sebagai bukti pelayanan premium dan tepercaya.
                             </p>
-                        </x-page-container>
+                        </div>
                     </div>
                     <a href="{{ route('dashboard') }}" class="inline-flex shrink-0 items-center gap-2 self-start rounded-xl border border-white/20 bg-white/10 px-4 py-2.5 text-sm font-semibold text-white backdrop-blur-sm transition hover:bg-white/20">
                         <svg class="h-4 w-4" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true"><path fill-rule="evenodd" d="M9.293 2.293a1 1 0 011.414 0l7 7A1 1 0 0117 11h-1v6a1 1 0 01-1 1h-2a1 1 0 01-1-1v-3a1 1 0 00-1-1H9a1 1 0 00-1 1v3a1 1 0 01-1 1H5a1 1 0 01-1-1v-6H3a1 1 0 01-.707-1.707l7-7z" clip-rule="evenodd" /></svg>
@@ -29,16 +29,6 @@
                     </a>
                 </div>
             </div>
-
-            {{-- Flash Alert --}}
-            @if (session('status'))
-                <div class="flex items-center gap-3 rounded-xl border border-emerald-200 bg-emerald-50 p-4 text-sm font-medium text-emerald-800 shadow-sm">
-                    <svg class="h-5 w-5 shrink-0 text-emerald-600" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true">
-                        <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.857-9.809a.75.75 0 00-1.214-.882l-3.483 4.79-1.88-1.88a.75.75 0 10-1.06 1.061l2.5 2.5a.75.75 0 001.137-.089l4-5.5z" clip-rule="evenodd"/>
-                    </svg>
-                    <span>{{ session('status') }}</span>
-                </div>
-            @endif
 
             <div class="grid grid-cols-1 gap-6 lg:grid-cols-3">
                 
@@ -120,7 +110,7 @@
                                                     <div class="relative overflow-hidden rounded-xl border border-slate-200 bg-white shadow-sm">
                                                         <button
                                                             type="button"
-                                                            class="absolute right-1.5 top-1.5 z-10 flex h-6 w-6 items-center justify-center rounded-full bg-slate-950/75 text-xs font-bold text-white shadow transition hover:bg-rose-600"
+                                                            class="absolute right-1.5 top-1.5 z-10 flex h-6 w-6 items-center justify-center rounded-full bg-slate-950/75 text-xs font-bold text-white shadow transition hover:bg-red-600"
                                                             title="Hapus foto dari pilihan"
                                                             @click="removeFile(previews.indexOf(preview), document.getElementById('images'))"
                                                         >
@@ -285,7 +275,7 @@
                                                                     <div class="relative overflow-hidden rounded-lg bg-white shadow-sm ring-1 ring-slate-200">
                                                                         <button
                                                                             type="button"
-                                                                            class="absolute right-1 top-1 z-10 flex h-5 w-5 items-center justify-center rounded-full bg-slate-950/75 text-[10px] font-bold text-white shadow transition hover:bg-rose-600"
+                                                                            class="absolute right-1 top-1 z-10 flex h-5 w-5 items-center justify-center rounded-full bg-slate-950/75 text-[10px] font-bold text-white shadow transition hover:bg-red-600"
                                                                             title="Hapus foto dari pilihan"
                                                                             @click="removeFile(previews.indexOf(preview), document.getElementById(inputId))"
                                                                         >
@@ -307,8 +297,8 @@
                                                             @foreach ($portfolio->images as $image)
                                                                 <label class="space-y-1 rounded-lg border border-slate-200 bg-slate-50 p-1.5">
                                                                     <img src="{{ route('muthowif.portfolio.image', $image) }}" alt="{{ $portfolio->title }}" class="h-16 w-full rounded object-cover">
-                                                                    <span class="inline-flex items-center gap-1 text-[10px] text-rose-700">
-                                                                        <input type="checkbox" name="delete_image_ids[]" value="{{ $image->id }}" class="rounded border-slate-300 text-rose-600 focus:ring-rose-500" />
+                                                                    <span class="inline-flex items-center gap-1 text-[10px] text-red-700">
+                                                                        <input type="checkbox" name="delete_image_ids[]" value="{{ $image->id }}" class="rounded border-slate-300 text-red-600 focus:ring-red-500" />
                                                                         Hapus
                                                                     </span>
                                                                 </label>
@@ -359,6 +349,6 @@
 
             </div>
 
-        </div>
-    </div>
+        </x-page-container>
+    </x-ui.app-page>
 </x-app-layout>

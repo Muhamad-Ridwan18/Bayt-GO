@@ -25,8 +25,8 @@
 
 <x-app-layout>
 
-    <div class="py-8 sm:py-12">
-        <x-page-container>
+    <x-ui.app-page>
+        <x-page-container class="ui-stack-compact">
             <div x-data="{ activeTab: 'group' }" class="space-y-5">
                 <div class="rounded-2xl border border-slate-200 bg-white p-3 shadow-sm">
                     <div class="grid grid-cols-2 gap-2">
@@ -302,5 +302,5 @@
                 </div>
             </div>
         </x-page-container>
-    </div>
+    </x-ui.app-page>
 </x-app-layout>

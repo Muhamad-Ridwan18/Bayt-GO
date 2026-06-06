@@ -65,6 +65,8 @@ return [
     'book_banner_sub' => 'Your package choices and documents are only used to submit a request. The muthowif will review and approve before payment.',
     'book_main_kicker' => 'Booking checkout',
     'book_back_profile' => 'Back to muthowif profile',
+    'book_sticky_cta' => 'Open form',
+    'book_sticky_cta_aria' => 'Continue to booking form',
     'profile_cta' => [
         'section_aria' => 'Continue to booking',
         'title' => 'Request a booking',

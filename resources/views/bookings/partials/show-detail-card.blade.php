@@ -11,7 +11,7 @@
     $fmtDate = fn ($d) => Carbon::parse($d)->locale($dateLocale)->translatedFormat('d M Y');
 
     $statusBadge = match ($st) {
-        BookingStatus::Cancelled => 'bg-rose-50 text-rose-800 ring-rose-200/90',
+        BookingStatus::Cancelled => 'bg-red-50 text-red-800 ring-red-200/90',
         BookingStatus::Confirmed => 'bg-emerald-50 text-emerald-900 ring-emerald-200/80',
         BookingStatus::Completed => 'bg-brand-50 text-brand-900 ring-brand-200/80',
         BookingStatus::Pending => 'bg-amber-50 text-amber-950 ring-amber-200/80',
@@ -19,7 +19,7 @@
     };
 @endphp
 
-<article class="overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm">
+<x-ui.card class="overflow-hidden p-0">
     <div class="border-b border-slate-100 px-5 py-4 sm:px-6">
         <h2 class="flex items-center gap-2 text-base font-bold text-slate-900">
             <span class="flex h-8 w-8 items-center justify-center rounded-lg bg-brand-50 text-brand-700">
@@ -31,12 +31,12 @@
         </h2>
     </div>
 
-    <div class="p-5 sm:p-6">
+    <div class="ui-card-pad">
         <div class="flex flex-col gap-5 lg:flex-row lg:items-start lg:gap-6">
             {{-- Kiri: profil + kode + status --}}
             <div class="flex min-w-0 flex-1 gap-4">
                 <img
-                    src="{{ route('layanan.photo', $b->muthowifProfile) }}"
+                    src="{{ $b->muthowifProfile->photoUrl() }}"
                     alt="{{ __('bookings.index.photo_alt', ['name' => $b->muthowifProfile->user->name]) }}"
                     class="h-16 w-16 shrink-0 rounded-full object-cover ring-2 ring-white shadow-md sm:h-[4.5rem] sm:w-[4.5rem]"
                     loading="lazy"
@@ -101,4 +101,4 @@
             </div>
         </div>
     </div>
-</article>
+</x-ui.card>

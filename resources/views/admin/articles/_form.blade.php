@@ -13,7 +13,7 @@
     };
 @endphp
 
-<div class="space-y-6">
+<div class="ui-stack-compact">
     {{-- Card 1: Informasi artikel --}}
     <section class="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm">
         <h2 class="text-base font-bold text-slate-900 mb-6">Informasi artikel</h2>
@@ -86,7 +86,7 @@
                     x-show="activeLocale === '{{ $locale }}'"
                     x-cloak
                     role="tabpanel"
-                    class="space-y-6"
+                    class="ui-stack-compact"
                 >
                     <div>
                         <div class="flex items-end justify-between gap-2">
@@ -136,7 +136,7 @@
                     <div>
                         <x-input-label :for="'editorjs_'.$locale" :value="'Isi artikel (' . $label . ')'" />
                         <div class="mt-2 overflow-hidden rounded-xl border border-slate-300 bg-white shadow-sm focus-within:border-emerald-500 focus-within:ring-1 focus-within:ring-emerald-500">
-                            <div id="editorjs_{{ $locale }}" class="editorjs-container prose prose-sm sm:prose max-w-none text-base"></div>
+                            <div id="editorjs_{{ $locale }}" class="editorjs-container prose pred-sm sm:prose max-w-none text-base"></div>
                         </div>
                         <input type="hidden" id="editorjs_input_html_{{ $locale }}" name="loc[{{ $locale }}][body]" value="{{ $field($locale, 'body') }}">
                         <input type="hidden" id="editorjs_input_json_{{ $locale }}" name="loc[{{ $locale }}][body_json]" value="{{ $field($locale, 'body_json') }}">

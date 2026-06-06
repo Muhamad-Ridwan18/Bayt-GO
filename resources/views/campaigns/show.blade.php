@@ -64,7 +64,7 @@
             </div>
 
             @if($campaign->body)
-                <div class="mt-8 bg-white rounded-3xl shadow-sm border border-slate-100 p-6 md:p-10 prose prose-slate max-w-none">
+                <div class="mt-8 bg-white rounded-3xl shadow-sm border border-slate-100 p-6 md:p-10 prose pred-slate max-w-none">
                     {!! nl2br(e($campaign->body)) !!}
                 </div>
             @endif

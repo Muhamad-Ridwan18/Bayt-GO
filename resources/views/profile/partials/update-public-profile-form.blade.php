@@ -31,7 +31,7 @@
         </nav>
     </div>
 
-    <form id="profile-main-form" method="post" action="{{ route('profile.public.update') }}" enctype="multipart/form-data" data-submit-lock="off" @submit="submit" class="space-y-6 p-5 sm:p-6">
+    <form id="profile-main-form" method="post" action="{{ route('profile.public.update') }}" enctype="multipart/form-data" data-submit-lock="off" @submit="submit" class="ui-stack-compact p-5 sm:p-6">
         @csrf
         @method('patch')
 
@@ -169,8 +169,8 @@
                             @endphp
                             <div class="flex items-center justify-between gap-2 rounded-lg border border-slate-200 bg-white px-3 py-2 text-xs">
                                 <a href="{{ $documentUrl }}" target="_blank" rel="noopener" class="min-w-0 flex-1 truncate font-medium text-slate-700 hover:text-brand-700">{{ $documentName }}</a>
-                                <label class="inline-flex shrink-0 items-center gap-1 text-rose-700">
-                                    <input type="checkbox" name="delete_supporting_documents[]" value="{{ $document->id }}" class="rounded border-slate-300 text-rose-600 focus:ring-rose-500" />
+                                <label class="inline-flex shrink-0 items-center gap-1 text-red-700">
+                                    <input type="checkbox" name="delete_supporting_documents[]" value="{{ $document->id }}" class="rounded border-slate-300 text-red-600 focus:ring-red-500" />
                                     Hapus
                                 </label>
                             </div>

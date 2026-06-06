@@ -1,17 +1,6 @@
 <x-app-layout>
-    <div class="py-8 sm:py-12">
-        <x-page-container class="space-y-6">
-            @if (session('status'))
-                <div class="rounded-xl border border-emerald-200 bg-emerald-50 px-4 py-3 text-sm text-emerald-900">
-                    {{ session('status') }}
-                </div>
-            @endif
-            @if (session('error'))
-                <div class="rounded-xl border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-900">
-                    {{ session('error') }}
-                </div>
-            @endif
-
+    <div class="ui-page-y">
+        <x-page-container class="ui-stack-compact">
             <div 
                 x-data="adminWithdrawalsLive({ 
                     fragmentUrl: '{{ route('admin.withdrawals.fragment') }}',
@@ -20,8 +9,8 @@
                 x-ref="liveRoot"
             >
                 @include('admin.withdrawals._table')
-            </x-page-container>
-        </div>
+            </div>
+        </x-page-container>
     </div>
 
     <div id="proof-modal" class="fixed inset-0 z-50 hidden items-center justify-center bg-slate-900/50 p-4">

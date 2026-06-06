@@ -5,9 +5,9 @@
 @endphp
 
 <x-app-layout>
-    <div class="relative min-h-[calc(100vh-4rem)] overflow-hidden bg-gradient-to-b from-slate-100 via-slate-50 to-white py-8 sm:py-12" x-data="{ role: '{{ old('role', $editUser->role->value) }}' }">
+    <x-ui.app-page x-data="{ role: '{{ old('role', $editUser->role->value) }}' }">
         <div class="pointer-events-none absolute inset-0 bg-[radial-gradient(ellipse_80%_40%_at_50%_-10%,rgba(120,53,15,0.06),transparent)]"></div>
-        <x-page-container class="relative space-y-6">
+        <x-page-container class="ui-stack-compact relative">
             <div class="relative overflow-hidden rounded-2xl bg-gradient-to-br from-slate-900 via-violet-950 to-brand-900 p-6 text-white shadow-lg shadow-violet-900/25 ring-1 ring-white/10 sm:rounded-3xl">
                 <div class="pointer-events-none absolute -right-10 top-0 h-40 w-40 rounded-full bg-violet-500/25 blur-3xl"></div>
                 <div class="relative flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
@@ -19,7 +19,7 @@
                             <p class="text-[11px] font-semibold uppercase tracking-wider text-violet-200/90">{{ __('admin.users.edit_badge') }}</p>
                             <h1 class="mt-1 text-xl font-bold tracking-tight sm:text-2xl">{{ $editUser->name }}</h1>
                             <p class="mt-1 text-sm text-violet-100/80">{{ __('admin.users.edit_subtitle') }}</p>
-                        </x-page-container>
+                        </div>
                     </div>
                     <a href="{{ route('admin.users.index') }}" class="inline-flex shrink-0 items-center gap-2 self-start rounded-xl border border-white/20 bg-white/10 px-4 py-2.5 text-sm font-semibold text-white backdrop-blur-sm transition hover:bg-white/20">
                         {{ __('admin.users.back_list') }}
@@ -31,7 +31,7 @@
                 <div class="flex min-w-0">
                     <div class="w-1 shrink-0 bg-brand-500" aria-hidden="true"></div>
                     <div class="min-w-0 flex-1 p-5 sm:p-7">
-                        <form method="post" action="{{ route('admin.users.update', $editUser) }}" class="space-y-6">
+                        <form method="post" action="{{ route('admin.users.update', $editUser) }}" class="ui-stack-compact">
                             @csrf
                             @method('patch')
 
@@ -55,13 +55,13 @@
 
                             <div>
                                 <x-input-label for="address" :value="__('admin.users.field_address')" />
-                                <textarea id="address" name="address" rows="3" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-brand-500 focus:ring-brand-500">{{ old('address', $editUser->address) }}</textarea>
+                                <textarea id="address" name="address" rows="3" class="mt-1 block w-full rounded-md border-slate-300 shadow-sm focus:border-brand-500 focus:ring-brand-500">{{ old('address', $editUser->address) }}</textarea>
                                 <x-input-error class="mt-2" :messages="$errors->get('address')" />
                             </div>
 
                             <div>
                                 <x-input-label for="role" :value="__('admin.users.field_role')" />
-                                <select id="role" name="role" x-model="role" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-brand-500 focus:ring-brand-500">
+                                <select id="role" name="role" x-model="role" class="mt-1 block w-full rounded-md border-slate-300 shadow-sm focus:border-brand-500 focus:ring-brand-500">
                                     @foreach (UserRole::cases() as $r)
                                         <option value="{{ $r->value }}" @selected(old('role', $editUser->role->value) === $r->value)>{{ $r->label() }}</option>
                                     @endforeach
@@ -74,7 +74,7 @@
                                     <p class="text-xs font-semibold uppercase tracking-wide text-violet-800">{{ __('admin.users.muthowif_section') }}</p>
                                     <div>
                                         <x-input-label for="account_status" :value="__('admin.users.field_account_status')" />
-                                        <select id="account_status" name="account_status" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-brand-500 focus:ring-brand-500">
+                                        <select id="account_status" name="account_status" class="mt-1 block w-full rounded-md border-slate-300 shadow-sm focus:border-brand-500 focus:ring-brand-500">
                                             @foreach (MuthowifAccountStatus::cases() as $status)
                                                 <option value="{{ $status->value }}" @selected(old('account_status', ($editUser->muthowifProfile->account_status ?? MuthowifAccountStatus::Active)->value) === $status->value)>
                                                     {{ $status->label() }}
@@ -96,7 +96,7 @@
                                 <p class="text-xs font-semibold uppercase tracking-wide text-sky-800">{{ __('admin.users.customer_section') }}</p>
                                 <div>
                                     <x-input-label for="customer_type" :value="__('admin.users.field_customer_type')" />
-                                    <select id="customer_type" name="customer_type" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-brand-500 focus:ring-brand-500">
+                                    <select id="customer_type" name="customer_type" class="mt-1 block w-full rounded-md border-slate-300 shadow-sm focus:border-brand-500 focus:ring-brand-500">
                                         <option value="">{{ __('admin.users.select_customer_type') }}</option>
                                         @foreach (CustomerType::cases() as $ct)
                                             <option value="{{ $ct->value }}" @selected(old('customer_type', $editUser->customer_type?->value) === $ct->value)>{{ $ct->label() }}</option>
@@ -113,7 +113,7 @@
 
                             <div>
                                 <x-input-label for="locale" :value="__('admin.users.field_locale')" />
-                                <select id="locale" name="locale" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-brand-500 focus:ring-brand-500">
+                                <select id="locale" name="locale" class="mt-1 block w-full rounded-md border-slate-300 shadow-sm focus:border-brand-500 focus:ring-brand-500">
                                     <option value="" @selected(old('locale', $editUser->locale) === null || old('locale', $editUser->locale) === '')>{{ __('admin.users.locale_default') }}</option>
                                     <option value="id" @selected(old('locale', $editUser->locale) === 'id')>Bahasa Indonesia</option>
                                     <option value="en" @selected(old('locale', $editUser->locale) === 'en')>English</option>
@@ -147,6 +147,6 @@
                     </div>
                 </div>
             </div>
-        </div>
-    </div>
+        </x-page-container>
+    </x-ui.app-page>
 </x-app-layout>

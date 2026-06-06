@@ -89,7 +89,7 @@
             </div>
         </section>
 
-        <div class="relative mx-auto max-w-6xl space-y-8 px-4 py-8 sm:px-6 sm:py-10">
+        <div class="relative mx-auto max-w-6xl ui-stack px-4 py-8 sm:px-6 sm:py-10">
             @if ($dateErrors?->isNotEmpty())
                 <div class="flex gap-3 rounded-2xl border border-red-200 bg-red-50/90 px-4 py-4 text-sm text-red-900 shadow-sm ring-1 ring-red-100/80" role="alert">
                     <ul class="list-inside list-disc space-y-1">

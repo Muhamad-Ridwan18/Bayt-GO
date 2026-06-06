@@ -43,7 +43,7 @@
                         };
                     @endphp
                     <div class="lg:flex lg:w-72 lg:shrink-0 lg:items-end">
-                        <div class="w-full rounded-2xl border border-slate-200/90 bg-white/95 p-4 shadow-lg backdrop-blur-sm ring-1 ring-white/80">
+                        <div class="w-full rounded-2xl border border-slate-200/90 bg-white p-4 shadow-lg ring-1 ring-white/80">
                             <p class="text-[10px] font-bold uppercase tracking-wider text-slate-500">{{ __('dashboard_muthowif.hero_next_up') }}</p>
                             <p class="mt-1 text-lg font-bold text-slate-900">{{ $nextBooking->customer?->name ?? __('dashboard_muthowif.guest') }}</p>
                             <p class="mt-0.5 text-sm text-slate-600">
@@ -80,7 +80,7 @@
                     <span class="text-xs font-semibold text-slate-700">{{ __('dashboard_muthowif.qa_schedule_title') }}</span>
                 </a>
                 <a href="{{ route('muthowif.pelayanan.edit') }}" class="flex min-w-[4.25rem] flex-col items-center gap-2 text-center">
-                    <span class="flex h-14 w-14 items-center justify-center rounded-full border border-slate-200 bg-slate-50 text-rose-700 shadow-sm">
+                    <span class="flex h-14 w-14 items-center justify-center rounded-full border border-slate-200 bg-slate-50 text-red-700 shadow-sm">
                         <svg class="h-6 w-6" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.75" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M21 11.25v8.25a2.25 2.25 0 01-2.25 2.25H5.25a2.25 2.25 0 01-2.25-2.25v-8.25M12 4.875A2.25 2.25 0 1014.25 7.5H9.75A2.25 2.25 0 1012 4.875zM8.25 10.125V7.875a3.375 3.375 0 116.75 0v2.25" /></svg>
                     </span>
                     <span class="text-xs font-semibold text-slate-700">{{ __('nav.services') }}</span>
@@ -208,7 +208,7 @@
                 <a href="{{ route('muthowif.jadwal.index') }}" class="text-sm font-semibold text-baytgo hover:text-baytgo-800">{{ __('dashboard_muthowif.calendar_view_monthly') }}</a>
             </div>
             <div
-                class="space-y-4"
+                class="ui-stack-tight"
                 x-data="muthowifDashboardCalendar({
                     url: @js(route('dashboard.muthowif-calendar')),
                     dashboardUrl: @js(route('dashboard')),
@@ -271,7 +271,7 @@
             <p class="text-xs font-semibold uppercase tracking-wide text-slate-500">{{ __('dashboard_muthowif.profile_account') }}</p>
             <div class="mt-3 flex items-center gap-3">
                 <div class="relative h-12 w-12 shrink-0">
-                    <img src="{{ route('layanan.photo', $mp) }}" alt="" class="h-full w-full rounded-full object-cover ring-2 ring-slate-100" onerror="this.classList.add('hidden'); this.nextElementSibling.classList.remove('hidden');" />
+                    <img src="{{ $mp->photoUrl() }}" alt="" class="h-full w-full rounded-full object-cover ring-2 ring-slate-100" onerror="this.classList.add('hidden'); this.nextElementSibling.classList.remove('hidden');" />
                     <span class="hidden flex h-full w-full items-center justify-center rounded-full bg-baytgo text-lg font-bold text-white">{{ $userInitial }}</span>
                 </div>
                 <div class="min-w-0">

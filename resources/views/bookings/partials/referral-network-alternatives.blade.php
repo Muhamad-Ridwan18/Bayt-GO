@@ -41,7 +41,7 @@
                     <li class="flex flex-col gap-3 rounded-2xl border border-slate-200/90 bg-white/95 p-4 shadow-sm ring-1 ring-slate-100/80 sm:flex-row sm:items-center sm:justify-between">
                         <div class="flex min-w-0 items-center gap-3">
                             <img
-                                src="{{ route('layanan.photo', $profile) }}"
+                                src="{{ $profile->photoUrl() }}"
                                 alt=""
                                 class="h-14 w-14 shrink-0 rounded-2xl object-cover shadow ring-1 ring-slate-100"
                                 loading="lazy"

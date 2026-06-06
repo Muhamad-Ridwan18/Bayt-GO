@@ -64,6 +64,8 @@ return [
     'book_banner_sub' => 'Paket dan dokumen Anda hanya digunakan untuk pengajuan permintaan. Muthowif akan meninjau dan menyetujui sebelum pembayaran.',
     'book_main_kicker' => 'Checkout pesanan',
     'book_back_profile' => 'Kembali ke profil muthowif',
+    'book_sticky_cta' => 'Isi formulir',
+    'book_sticky_cta_aria' => 'Lanjut ke formulir pemesanan',
     'profile_cta' => [
         'section_aria' => 'Lanjutan pemesanan',
         'title' => 'Ajukan pemesanan',

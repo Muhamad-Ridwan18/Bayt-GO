@@ -1,25 +1,14 @@
 <x-app-layout>
 
-    <div class="py-8 sm:py-12">
-        <x-page-container class="space-y-6">
-            @if (session('status'))
-                <div class="rounded-xl border border-emerald-200 bg-emerald-50 px-4 py-3 text-sm text-emerald-900">
-                    {{ session('status') }}
-                </div>
-            @endif
-            @if (session('error'))
-                <div class="rounded-xl border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-900">
-                    {{ session('error') }}
-                </div>
-            @endif
-
+    <div class="ui-page-y">
+        <x-page-container class="ui-stack-compact">
             <div
                 x-data="muthowifWithdrawalsLive({
                     userId: @js(auth()->id()),
                     fragmentUrl: @js(route('muthowif.withdrawals.index.live-fragment')),
                 })"
             >
-            <div x-ref="liveRoot" class="space-y-6">
+            <div x-ref="liveRoot" class="ui-stack-compact">
             @include('muthowif.withdrawals.partials.index-live', [
                 'profile' => $profile,
                 'withdrawals' => $withdrawals,
@@ -45,7 +34,7 @@
                                 @php
                                     $signed = (float) $entry['signed_amount'];
                                     $isNeutralAmount = abs($signed) < 0.005;
-                                    $amountClass = $isNeutralAmount ? 'text-slate-600' : ($signed >= 0 ? 'text-emerald-700' : 'text-rose-700');
+                                    $amountClass = $isNeutralAmount ? 'text-slate-600' : ($signed >= 0 ? 'text-emerald-700' : 'text-red-700');
                                     $prefix = $signed >= 0 ? '+' : '−';
                                     $abs = \App\Support\IndonesianNumber::formatThousands((string) (int) round(abs($signed)));
                                     $typeLabel = match ($entry['kind']) {
@@ -59,7 +48,7 @@
                                     $typePill = match ($entry['kind']) {
                                         'booking_credit' => 'bg-emerald-50 text-emerald-900 ring-emerald-200',
                                         'referral_reward' => 'bg-violet-50 text-violet-900 ring-violet-200',
-                                        'withdraw_debit' => 'bg-rose-50 text-rose-900 ring-rose-200',
+                                        'withdraw_debit' => 'bg-red-50 text-red-900 ring-red-200',
                                         'withdraw_refund' => 'bg-sky-50 text-sky-900 ring-sky-200',
                                         'refund_completed' => 'bg-emerald-50 text-emerald-900 ring-emerald-200',
                                         default => 'bg-slate-50 text-slate-900 ring-slate-200',

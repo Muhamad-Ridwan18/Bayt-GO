@@ -19,7 +19,7 @@
                             @switch($p->verification_status)
                                 @case(\App\Enums\MuthowifVerificationStatus::Pending) bg-amber-100 text-amber-800 @break
                                 @case(\App\Enums\MuthowifVerificationStatus::Approved) bg-emerald-100 text-emerald-800 @break
-                                @default bg-rose-100 text-rose-800
+                                @default bg-red-100 text-red-800
                             @endswitch">
                             {{ $p->verification_status->label() }}
                         </span>

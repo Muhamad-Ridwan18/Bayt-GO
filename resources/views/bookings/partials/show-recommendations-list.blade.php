@@ -21,7 +21,7 @@
         {{ __('bookings.show.browse_all_muthowifs') }}
     </a>
 @else
-    <ul class="space-y-4">
+    <ul class="ui-stack-tight">
         @foreach ($alternatives->take(5) as $profile)
             @php
                 $reviewsCount = (int) ($profile->booking_reviews_count ?? 0);
@@ -32,7 +32,7 @@
             <li class="rounded-xl border border-slate-100 bg-slate-50/50 p-3.5">
                 <div class="flex gap-3">
                     <img
-                        src="{{ route('layanan.photo', $profile) }}"
+                        src="{{ $profile->photoUrl() }}"
                         alt=""
                         class="h-12 w-12 shrink-0 rounded-xl object-cover ring-1 ring-white shadow-sm"
                         loading="lazy"

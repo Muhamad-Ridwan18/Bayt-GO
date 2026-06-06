@@ -10,7 +10,7 @@
     $inactive = 'text-slate-600 hover:text-baytgo';
     $activeClass = 'relative text-baytgo after:absolute after:inset-x-1.5 xl:after:inset-x-3 after:-bottom-0.5 after:h-0.5 after:rounded-full after:bg-gold';
 @endphp
-<header class="sticky top-0 z-[100] border-b border-slate-100 bg-white/95 backdrop-blur-sm shadow-sm" x-data="{ open: false }" @keydown.window.escape="open = false" @resize.window="if (window.innerWidth >= 1024) open = false">
+<header class="sticky top-0 z-[100] border-b border-slate-100 bg-white shadow-sm" x-data="{ open: false }" @keydown.window.escape="open = false" @resize.window="if (window.innerWidth >= 1024) open = false">
     <x-page-container class="relative flex min-h-[4.25rem] items-center justify-between gap-3 lg:gap-6">
         <a href="{{ route('welcome') }}" class="relative z-10 flex min-w-0 shrink-0 items-center gap-2.5 group">
             <x-site-logo variant="welcome" class="rounded-xl ring-1 ring-slate-200/70 shrink-0" />

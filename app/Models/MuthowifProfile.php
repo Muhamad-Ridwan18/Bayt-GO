@@ -6,6 +6,8 @@ use App\Enums\BookingStatus;
 use App\Enums\MuthowifAccountStatus;
 use App\Enums\MuthowifVerificationStatus;
 use App\Support\IntlPhone;
+use App\Support\MarketplaceProfileCache;
+use App\Support\PublicMarketplaceMedia;
 use Carbon\CarbonInterface;
 use Illuminate\Database\Eloquent\Concerns\HasUuids;
 use Illuminate\Database\Eloquent\Model;
@@ -60,6 +62,8 @@ class MuthowifProfile extends Model
         });
 
         static::deleting(function (MuthowifProfile $profile): void {
+            PublicMarketplaceMedia::removeProfilePhoto($profile);
+
             $disk = Storage::disk('local');
             foreach ($profile->supportingDocuments as $doc) {
                 if ($doc->path) {
@@ -68,6 +72,35 @@ class MuthowifProfile extends Model
             }
             $profile->supportingDocuments()->delete();
         });
+
+        static::saved(function (MuthowifProfile $profile): void {
+            MarketplaceProfileCache::forget($profile);
+
+            if ($profile->wasChanged('photo_path') || $profile->wasChanged('verification_status') || $profile->wasChanged('account_status')) {
+                PublicMarketplaceMedia::syncProfilePhoto($profile);
+            }
+        });
+    }
+
+    public function photoUrl(): string
+    {
+        if (! filled($this->photo_path)) {
+            return route('layanan.photo', $this);
+        }
+
+        if (self::photoPathIsExternalUrl($this->photo_path)) {
+            return $this->photo_path;
+        }
+
+        return PublicMarketplaceMedia::profilePhotoUrl($this)
+            ?? route('layanan.photo', $this);
+    }
+
+    public static function photoPathIsExternalUrl(?string $path): bool
+    {
+        return is_string($path)
+            && $path !== ''
+            && (str_starts_with($path, 'http://') || str_starts_with($path, 'https://'));
     }
 
     public function getRouteKeyName(): string

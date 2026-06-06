@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use App\Support\PublicMarketplaceMedia;
 use Illuminate\Database\Eloquent\Model;
 
 use Illuminate\Database\Eloquent\Concerns\HasUuids;
@@ -37,5 +38,11 @@ class MuthowifPortfolio extends Model
             : $this->images()->first();
 
         return $cover?->path ?? $this->image_path;
+    }
+
+    public function coverUrl(): string
+    {
+        return PublicMarketplaceMedia::portfolioCoverUrl($this)
+            ?? route('layanan.portfolio.photo', $this);
     }
 }

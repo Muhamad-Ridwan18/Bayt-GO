@@ -24,7 +24,7 @@
     $privateBookUrl = $private ? route('layanan.book', array_merge(['publicProfile' => $profile], $bookQueryParams, ['service_type' => 'private'])) : null;
 @endphp
 
-<section class="rounded-2xl border border-slate-200/90 bg-white p-6 shadow-sm ring-1 ring-slate-100/80 sm:p-8">
+<x-ui.card pad="lg" class="block">
 @if ($group || $private)
         <div class="flex items-start gap-3">
             <span class="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-brand-50 text-brand-700" aria-hidden="true">
@@ -36,7 +36,7 @@
             </div>
         </div>
 
-        <div class="mt-6 grid gap-5 lg:grid-cols-2">
+        <div class="ui-section-body grid gap-5 lg:grid-cols-2">
             @if ($group)
                 @php $groupFeatures = $packageFeatures($group); @endphp
                 <article class="flex flex-col overflow-hidden rounded-2xl border-2 border-brand-200 bg-gradient-to-b from-brand-50/80 to-white shadow-sm">
@@ -62,6 +62,13 @@
                                 </li>
                             @endforeach
                         </ul>
+                        @if ($groupBookUrl)
+                            <div class="mt-5 border-t border-brand-100/80 pt-5">
+                                <a href="{{ $groupBookUrl }}" class="ui-btn-primary w-full">
+                                    {{ __('marketplace.show.packages_pick_group') }}
+                                </a>
+                            </div>
+                        @endif
                     </div>
                 </article>
             @endif
@@ -91,6 +98,13 @@
                                 </li>
                             @endforeach
                         </ul>
+                        @if ($privateBookUrl)
+                            <div class="mt-5 border-t border-gold/20 pt-5">
+                                <a href="{{ $privateBookUrl }}" class="inline-flex min-h-12 w-full items-center justify-center gap-2 rounded-xl border border-gold/40 bg-gold px-5 py-2.5 text-sm font-semibold text-white shadow-sm transition hover:bg-gold/90 focus:outline-none focus:ring-2 focus:ring-gold focus:ring-offset-2">
+                                    {{ __('marketplace.show.packages_pick_private') }}
+                                </a>
+                            </div>
+                        @endif
                     </div>
                 </article>
             @endif
@@ -98,4 +112,4 @@
 @else
         <p class="mt-4 text-sm text-slate-600">{{ __('marketplace.card.package_unset') }}</p>
 @endif
-</section>
+</x-ui.card>

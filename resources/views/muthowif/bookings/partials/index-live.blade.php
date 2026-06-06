@@ -1,4 +1,4 @@
-<x-page-container class="space-y-6 py-2 sm:py-4">
+<x-page-container class="ui-stack-compact py-2 sm:py-4">
     <div class="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
         <div>
             <h1 class="text-2xl font-bold tracking-tight text-slate-900 sm:text-3xl">{{ __('muthowif.bookings.page_title') }}</h1>
@@ -19,7 +19,7 @@
             <p class="mx-auto mt-2 max-w-md text-sm text-slate-600">{{ __('muthowif.bookings.empty_hint') }}</p>
         </div>
     @else
-        <ul class="space-y-4">
+        <ul class="ui-stack-tight">
             @foreach ($bookings as $booking)
                 @include('muthowif.bookings.partials.booking-request-card', [
                     'booking' => $booking,

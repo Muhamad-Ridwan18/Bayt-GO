@@ -2,7 +2,7 @@
     use Illuminate\Support\Str;
 @endphp
 
-<section id="ulasan" class="rounded-2xl border border-slate-200/90 bg-white p-6 shadow-sm ring-1 ring-slate-100/80 sm:p-8">
+<x-ui.card id="ulasan" pad="lg" class="block">
     <div class="flex flex-wrap items-center justify-between gap-3">
         <div class="flex items-start gap-3">
             <span class="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-amber-50 text-amber-700" aria-hidden="true">
@@ -16,9 +16,9 @@
     </div>
 
     @if ($profile->bookingReviews->isEmpty())
-        <p class="mt-6 text-sm text-slate-600">{{ __('marketplace.show.no_reviews') }}</p>
+        <p class="ui-section-body text-sm text-slate-600">{{ __('marketplace.show.no_reviews') }}</p>
     @else
-        <div class="mt-6 flex flex-col gap-6 lg:flex-row lg:items-start">
+        <div class="ui-section-body flex flex-col gap-6 lg:flex-row lg:items-start">
             <div class="shrink-0 rounded-2xl bg-slate-50 px-8 py-6 text-center ring-1 ring-slate-100 lg:min-w-[140px]">
                 <p class="text-4xl font-bold text-slate-900">{{ $avgRating }}</p>
                 <div class="mt-2 flex justify-center gap-0.5" aria-hidden="true">
@@ -50,4 +50,4 @@
             </ul>
         </div>
     @endif
-</section>
+</x-ui.card>

@@ -20,7 +20,7 @@
 @endphp
 
 <section class="grid gap-6 lg:grid-cols-3">
-    <article class="rounded-2xl border border-slate-200/90 bg-white p-6 shadow-sm ring-1 ring-slate-100/80">
+    <x-ui.card pad="md" class="block">
         <h2 class="text-lg font-bold text-slate-900">{{ __('marketplace.show.about_heading') }}</h2>
         <p class="mt-4 text-sm leading-relaxed text-slate-600 whitespace-pre-line">{{ $bio }}</p>
         @if ($specializations->isNotEmpty())
@@ -31,14 +31,14 @@
                 @endforeach
             </ul>
         @endif
-    </article>
+    </x-ui.card>
 
-    <article class="rounded-2xl border border-slate-200/90 bg-white p-6 shadow-sm ring-1 ring-slate-100/80">
+    <x-ui.card pad="md" class="block">
         <h2 class="text-lg font-bold text-slate-900">{{ __('marketplace.show.timeline_heading') }}</h2>
         @if ($educations === [] && $experiences === [])
             <p class="mt-4 text-sm text-slate-500">{{ __('marketplace.show.not_filled') }}</p>
         @else
-            <ol class="relative mt-5 space-y-6 border-s border-brand-200/80 ps-5">
+            <ol class="relative mt-5 ui-stack-compact border-s border-brand-200/80 ps-5">
                 @if ($educations !== [])
                     <li class="relative">
                         <span class="absolute -start-[1.35rem] top-1 flex h-3 w-3 rounded-full bg-brand-600 ring-4 ring-white" aria-hidden="true"></span>
@@ -63,10 +63,11 @@
                 @endif
             </ol>
         @endif
-    </article>
+    </x-ui.card>
 
-    <article
-        class="rounded-2xl border border-slate-200/90 bg-white p-6 shadow-sm ring-1 ring-slate-100/80"
+    <x-ui.card
+        pad="md"
+        class="block"
         x-data="{
             lightboxOpen: false,
             activeImages: [],
@@ -91,9 +92,9 @@
                     @php
                         $portfolioImages = $portfolio->images;
                         $previewImage = $portfolio->images->first();
-                        $previewUrl = $previewImage ? route('layanan.portfolio.image', $previewImage) : route('layanan.portfolio.photo', $portfolio);
+                        $previewUrl = $previewImage ? $previewImage->publicUrl() : $portfolio->coverUrl();
                         $albumUrls = $portfolioImages->isNotEmpty()
-                            ? $portfolioImages->map(fn ($image) => route('layanan.portfolio.image', $image))->values()
+                            ? $portfolioImages->map(fn ($image) => $image->publicUrl())->values()
                             : collect([$previewUrl]);
                     @endphp
                     <button
@@ -123,5 +124,5 @@
                 </div>
             </div>
         @endif
-    </article>
+    </x-ui.card>
 </section>

@@ -1,12 +1,6 @@
 <x-app-layout>
-    <div class="relative min-h-[calc(100vh-4rem)] overflow-hidden bg-gradient-to-b from-slate-100 via-slate-50 to-white py-8 sm:py-12">
-        <x-page-container class="relative space-y-8">
-            @if (session('status'))
-                <div class="rounded-2xl border border-emerald-200 bg-emerald-50 px-4 py-3 text-sm font-medium text-emerald-900 shadow-sm">
-                    {{ session('status') }}
-                </div>
-            @endif
-
+    <x-ui.app-page>
+        <x-page-container class="ui-stack relative">
             <div class="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
                 <div>
                     <p class="text-[11px] font-semibold uppercase tracking-wider text-brand-700">Campaigns</p>
@@ -20,13 +14,14 @@
                     <a href="{{ route('admin.campaign.create') }}" class="inline-flex items-center rounded-xl bg-baytgo px-4 py-2.5 text-sm font-semibold text-white shadow-md shadow-baytgo/20 transition hover:bg-baytgo-800">
                         Campaign Baru
                     </a>
-                </x-page-container>
+                </div>
             </div>
 
             <div class="overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm">
                 @if ($campaigns->isEmpty())
                     <p class="p-10 text-center text-sm text-slate-600">Belum ada data campaign.</p>
                 @else
+                    <div class="overflow-x-auto">
                     <table class="min-w-full divide-y divide-slate-200 text-sm">
                         <thead class="bg-slate-50">
                             <tr>
@@ -64,8 +59,9 @@
                             @endforeach
                         </tbody>
                     </table>
+                    </div>
                 @endif
             </div>
-        </div>
-    </div>
+        </x-page-container>
+</x-ui.app-page>
 </x-app-layout>

@@ -39,7 +39,7 @@
                 ['icon' => 'users', 'bg' => 'bg-violet-50', 'text' => 'text-violet-700', 'title' => 'customer_feature_group_title', 'desc' => 'customer_feature_group_desc'],
                 ['icon' => 'phone', 'bg' => 'bg-amber-50', 'text' => 'text-amber-800', 'title' => 'customer_feature_support_title', 'desc' => 'customer_feature_support_desc'],
             ] as $feat)
-                <div class="rounded-2xl border border-white/80 bg-white/95 p-3.5 shadow-[0_8px_24px_-8px_rgba(15,42,37,0.12)] ring-1 ring-slate-100/90 backdrop-blur-sm sm:p-4">
+                <div class="rounded-2xl border border-white/80 bg-white p-3.5 shadow-[0_8px_24px_-8px_rgba(15,42,37,0.12)] ring-1 ring-slate-100/90 sm:p-4">
                     <span class="flex h-10 w-10 items-center justify-center rounded-xl {{ $feat['bg'] }} {{ $feat['text'] }}" aria-hidden="true">
                         @if ($feat['icon'] === 'shield')
                             <svg class="h-5 w-5" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor"><path fill-rule="evenodd" d="M12.516 2.17a.75.75 0 01.466.747l-.286 2.051a.75.75 0 01-.548.582 11.319 11.319 0 00-4.702 2.271.75.75 0 01-.826-.033l-1.64-1.117a.75.75 0 00-.987.052l-1.378 1.378a.75.75 0 00.052.987l1.117 1.64a.75.75 0 01.033.826 11.32 11.32 0 00-2.27 4.702.75.75 0 01-.582.548l-2.051.286a.75.75 0 00-.747.466V12a.75.75 0 00.747-.466l-2.051-.286a.75.75 0 01-.548-.582 11.32 11.32 0 00-2.27-4.702.75.75 0 01.033-.826l1.117-1.64a.75.75 0 00.052-.987L18.72 9.53a.75.75 0 00-.987-.052l-1.64 1.117a.75.75 0 01-.826.033 11.317 11.317 0 00-4.702-2.27.75.75 0 01-.582-.548l-.286-2.051A.75.75 0 0012.516 2.17z" clip-rule="evenodd" /></svg>
@@ -59,7 +59,7 @@
     </x-page-container>
 
     <x-page-container class="relative z-20 mt-8 sm:mt-10" id="customer-search">
-        <div class="rounded-3xl border border-gray-100/90 bg-white shadow-[0_24px_64px_-12px_rgba(15,42,37,0.14),0_8px_20px_-10px_rgba(0,0,0,0.06)] ring-1 ring-slate-100/80">
+        <div class="rounded-3xl border border-slate-100/90 bg-white shadow-[0_24px_64px_-12px_rgba(15,42,37,0.14),0_8px_20px_-10px_rgba(0,0,0,0.06)] ring-1 ring-slate-100/80">
             @include('layanan.partials.date-search-form', [
                 'startDate' => '',
                 'endDate' => '',
@@ -114,10 +114,10 @@
                                 $languages = array_slice($profile->languagesForDisplay(), 0, 5);
                                 $langsLine = $languages !== [] ? implode(', ', $languages) : null;
                             @endphp
-                            <article class="w-[10.5rem] shrink-0 snap-start overflow-hidden rounded-2xl border border-gray-100 bg-white shadow-sm transition hover:border-gold-muted/40 hover:shadow-md sm:w-[11.75rem] md:w-[12.25rem]">
+                            <article class="w-[10.5rem] shrink-0 snap-start overflow-hidden rounded-2xl border border-slate-100 bg-white shadow-sm transition hover:border-gold-muted/40 hover:shadow-md sm:w-[11.75rem] md:w-[12.25rem]">
                                 <a href="{{ route('layanan.show', $profile) }}" class="block h-full rounded-2xl focus:outline-none focus-visible:ring-2 focus-visible:ring-baytgo focus-visible:ring-offset-2">
                                     <div class="relative aspect-[4/5] overflow-hidden bg-slate-100">
-                                        <img src="{{ route('layanan.photo', $profile) }}" alt="" class="h-full w-full object-cover object-top" loading="lazy" decoding="async" />
+                                        <img src="{{ $profile->photoUrl() }}" alt="" class="h-full w-full object-cover object-top" loading="lazy" decoding="async" />
                                         <span class="absolute right-2 top-2 inline-flex items-center gap-0.5 rounded-full bg-white/95 px-2 py-0.5 text-[10px] font-bold shadow-sm ring-1 ring-amber-200/60">
                                             <svg class="h-3 w-3 text-amber-500" viewBox="0 0 20 20" fill="currentColor"><path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z"/></svg>
                                             {{ $ratingStr }}
@@ -154,7 +154,7 @@
                 <p class="mt-1 text-sm text-slate-600">{{ __('dashboard.customer_content_sub') }}</p>
                 <div class="mt-5 grid grid-cols-1 gap-4 sm:grid-cols-3">
                     @foreach ($customerGuideCards as $card)
-                        <a href="{{ route('welcome') }}#{{ $card['fragment'] ?? '' }}" class="group rounded-2xl border border-gray-100 bg-white p-5 shadow-sm ring-1 ring-slate-100/80 transition hover:border-gold-muted/35 hover:shadow-md">
+                        <a href="{{ route('welcome') }}#{{ $card['fragment'] ?? '' }}" class="group rounded-2xl border border-slate-100 bg-white p-5 shadow-sm ring-1 ring-slate-100/80 transition hover:border-gold-muted/35 hover:shadow-md">
                             <span class="inline-flex rounded-lg bg-gold-light/35 px-2 py-1 text-[10px] font-bold uppercase tracking-wider text-baytgo ring-1 ring-gold/25">{{ $card['read'] ?? '' }}</span>
                             <p class="mt-3 font-bold leading-snug text-baytgo group-hover:text-baytgo-800">{{ $card['title'] ?? '' }}</p>
                             <p class="mt-2 text-xs leading-relaxed text-slate-600">{{ $card['desc'] ?? '' }}</p>
@@ -224,9 +224,9 @@
             </a>
         </div>
 
-        <div class="order-3 space-y-6 lg:order-none">
+        <div class="order-3 ui-stack-compact lg:order-none">
             {{-- Perjalanan mendatang --}}
-            <section class="rounded-3xl border border-gray-100 bg-white p-5 shadow-sm ring-1 ring-slate-100/90 sm:p-6" aria-labelledby="customer-up-heading">
+            <section class="rounded-3xl border border-slate-100 bg-white p-5 shadow-sm ring-1 ring-slate-100/90 sm:p-6" aria-labelledby="customer-up-heading">
                 <div class="mb-4 flex flex-wrap items-center justify-between gap-2">
                     <h2 id="customer-up-heading" class="text-base font-bold text-baytgo">{{ __('dashboard.customer_upcoming_title') }}</h2>
                     <a href="{{ route('bookings.index') }}" class="text-xs font-semibold text-baytgo hover:text-baytgo-800">{{ __('dashboard.customer_upcoming_see_all') }}</a>
@@ -251,11 +251,11 @@
                         }
                         $paid = $nb->payment_status === PaymentStatus::Paid;
                     @endphp
-                    <div class="overflow-hidden rounded-2xl border border-gray-100 ring-1 ring-slate-100/90">
+                    <div class="overflow-hidden rounded-2xl border border-slate-100 ring-1 ring-slate-100/90">
                         <div class="grid grid-cols-[5.5rem_minmax(0,1fr)] gap-3 p-4 sm:grid-cols-[6.25rem_minmax(0,1fr)] sm:gap-4">
                             <div class="relative h-[5.5rem] overflow-hidden rounded-xl bg-slate-100 ring-1 ring-slate-200/80 sm:h-[6.5rem]">
                                 @if ($nb->muthowifProfile)
-                                    <img src="{{ route('layanan.photo', $nb->muthowifProfile) }}" alt="" class="h-full w-full object-cover object-top" loading="lazy" />
+                                    <img src="{{ $nb->muthowifProfile->photoUrl() }}" alt="" class="h-full w-full object-cover object-top" loading="lazy" />
                                 @else
                                     <img src="{{ $welcomeHeroBg }}" alt="" class="h-full w-full object-cover" loading="lazy" />
                                 @endif
@@ -278,7 +278,7 @@
                                 </div>
                             </div>
                         </div>
-                        <div class="border-t border-gray-100 bg-welcomeCanvas/50 p-4">
+                        <div class="border-t border-slate-100 bg-welcomeCanvas/50 p-4">
                             <a href="{{ route('bookings.show', $nb) }}" class="flex w-full items-center justify-center rounded-xl border border-baytgo/25 bg-white py-2.5 text-sm font-semibold text-baytgo transition hover:border-baytgo hover:bg-baytgo hover:text-white">
                                 {{ __('dashboard.customer_booking_detail_cta') }}
                             </a>
@@ -288,14 +288,14 @@
             </section>
 
             {{-- Bantuan --}}
-            <div class="rounded-3xl border border-gray-100 bg-white p-5 shadow-sm ring-1 ring-slate-100/90 sm:p-6">
+            <div class="rounded-3xl border border-slate-100 bg-white p-5 shadow-sm ring-1 ring-slate-100/90 sm:p-6">
                 <h3 class="font-bold text-baytgo">{{ __('dashboard.customer_help_ticket_title') }}</h3>
                 <p class="mt-2 text-xs leading-relaxed text-slate-600">{{ __('dashboard.customer_help_ticket_sub') }}</p>
                 @if ($supportHref)
                     <a href="{{ $supportHref }}" class="mt-4 inline-flex w-full items-center justify-center rounded-xl bg-baytgo py-3 text-sm font-semibold text-white shadow-md shadow-baytgo/20 transition hover:bg-baytgo-800">{{ __('dashboard.customer_help_ticket_cta') }}</a>
                 @endif
             </div>
-            <div class="rounded-3xl border border-gray-100 bg-white p-5 shadow-sm ring-1 ring-slate-100/90 sm:p-6">
+            <div class="rounded-3xl border border-slate-100 bg-white p-5 shadow-sm ring-1 ring-slate-100/90 sm:p-6">
                 <h3 class="font-bold text-baytgo">{{ __('dashboard.customer_help_contact_title') }}</h3>
                 <div class="mt-4 flex flex-wrap gap-3">
                     @if ($contactWaLink)
@@ -322,27 +322,27 @@
 
 {{-- Pintasan akses cepat --}}
 <div class="mt-8 grid grid-cols-2 gap-3 sm:grid-cols-4 lg:mt-10">
-    <a href="{{ route('layanan.index') }}" class="rounded-2xl border border-gray-100 bg-white p-4 text-center shadow-sm ring-1 ring-slate-100/80 transition hover:border-gold-muted/35 hover:shadow-md">
+    <a href="{{ route('layanan.index') }}" class="rounded-2xl border border-slate-100 bg-white p-4 text-center shadow-sm ring-1 ring-slate-100/80 transition hover:border-gold-muted/35 hover:shadow-md">
         <span class="mx-auto flex h-11 w-11 items-center justify-center rounded-full bg-emerald-50 text-baytgo ring-1 ring-emerald-100/80">
             <svg class="h-5 w-5" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.75" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M21 21l-5.197-5.197m0 0A7.5 7.5 0 105.196 5.196a7.5 7.5 0 0010.607 10.607z"/></svg>
         </span>
         <p class="mt-3 text-xs font-bold text-baytgo">{{ __('dashboard.shortcut_find_title') }}</p>
     </a>
-    <a href="{{ route('bookings.index') }}" class="rounded-2xl border border-gray-100 bg-white p-4 text-center shadow-sm ring-1 ring-slate-100/80 transition hover:border-gold-muted/35 hover:shadow-md">
+    <a href="{{ route('bookings.index') }}" class="rounded-2xl border border-slate-100 bg-white p-4 text-center shadow-sm ring-1 ring-slate-100/80 transition hover:border-gold-muted/35 hover:shadow-md">
         <span class="mx-auto flex h-11 w-11 items-center justify-center rounded-full bg-gold-light/35 text-baytgo ring-1 ring-gold/25">
             <svg class="h-5 w-5" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.75" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/></svg>
         </span>
         <p class="mt-3 text-xs font-bold text-baytgo">{{ __('dashboard.shortcut_bookings_title') }}</p>
     </a>
     @if (Route::has('support.index'))
-        <a href="{{ route('support.index') }}" class="rounded-2xl border border-gray-100 bg-white p-4 text-center shadow-sm ring-1 ring-slate-100/80 transition hover:border-gold-muted/35 hover:shadow-md">
+        <a href="{{ route('support.index') }}" class="rounded-2xl border border-slate-100 bg-white p-4 text-center shadow-sm ring-1 ring-slate-100/80 transition hover:border-gold-muted/35 hover:shadow-md">
             <span class="mx-auto flex h-11 w-11 items-center justify-center rounded-full bg-sky-50 text-baytgo ring-1 ring-sky-100">
                 <svg class="h-5 w-5" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.75" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M16.5 6v.75m3 3H3.75M3 18.75h16.5M3 12h16.5m-1.5-7.5H6.75m0 0v12m0-12v1.5M6.75 6h10.5v1.5M6.75 15h10.5v1.5"/></svg>
             </span>
             <p class="mt-3 text-xs font-bold text-baytgo">{{ __('dashboard.shortcut_support_title') }}</p>
         </a>
     @endif
-    <a href="{{ route('profile.edit') }}" class="rounded-2xl border border-gray-100 bg-white p-4 text-center shadow-sm ring-1 ring-slate-100/80 transition hover:border-gold-muted/35 hover:shadow-md">
+    <a href="{{ route('profile.edit') }}" class="rounded-2xl border border-slate-100 bg-white p-4 text-center shadow-sm ring-1 ring-slate-100/80 transition hover:border-gold-muted/35 hover:shadow-md">
         <span class="mx-auto flex h-11 w-11 items-center justify-center rounded-full bg-welcomeCanvas text-baytgo ring-1 ring-gold-muted/30">
             <svg class="h-5 w-5" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.75" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M15.75 6a3.75 3.75 0 11-7.5 0 3.75 3.75 0 017.5 0zM4.501 20.118a7.5 7.5 0 0114.998 0A17.933 17.933 0 0112 21.75c-2.676 0-5.216-.584-7.499-1.632z"/></svg>
         </span>

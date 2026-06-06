@@ -2,34 +2,19 @@
     <div class="min-h-screen bg-slate-50 py-8">
         <x-page-container class="space-y-5">
 
-            {{-- ALERT --}}
-            @if (session('status'))
-                <div class="flex items-center gap-3 rounded-2xl border border-emerald-200 bg-emerald-50 px-5 py-4 text-sm text-emerald-800">
-                    <svg class="h-4 w-4 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/></svg>
-                    {{ session('status') }}
-                </div>
-            @endif
-
-            @if (session('error'))
-                <div class="flex items-center gap-3 rounded-2xl border border-rose-200 bg-rose-50 px-5 py-4 text-sm text-rose-800">
-                    <svg class="h-4 w-4 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg>
-                    {{ session('error') }}
-                </div>
-            @endif
-
             {{-- STATUS BANNER --}}
             @if ($profile->isPending())
-                <div class="flex items-center gap-3 rounded-2xl border border-amber-200 bg-amber-50 px-5 py-3.5 text-sm font-medium text-amber-800">
-                    <svg class="h-4 w-4 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+                <x-ui.alert type="warning" class="flex items-center gap-3">
+                    <svg class="h-4 w-4 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
                     Pendaftaran muthowif ini sedang menunggu persetujuan admin
-                </div>
+                </x-ui.alert>
             @endif
 
             @if ($profile->isApproved() && ! $profile->isActiveAccount())
-                <div class="flex items-center gap-3 rounded-2xl border border-rose-200 bg-rose-50 px-5 py-3.5 text-sm font-medium text-rose-800">
-                    <svg class="h-4 w-4 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"/></svg>
+                <x-ui.alert type="error" class="flex items-center gap-3">
+                    <svg class="h-4 w-4 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"/></svg>
                     {{ __('admin.muthowif.account_status_inactive_banner', ['status' => ($profile->account_status ?? \App\Enums\MuthowifAccountStatus::Active)->label()]) }}
-                </div>
+                </x-ui.alert>
             @endif
 
             {{-- HEADER CARD --}}
@@ -51,7 +36,7 @@
                                     @switch($profile->verification_status)
                                         @case(\App\Enums\MuthowifVerificationStatus::Pending) bg-amber-100 text-amber-700 @break
                                         @case(\App\Enums\MuthowifVerificationStatus::Approved) bg-emerald-100 text-emerald-700 @break
-                                        @default bg-rose-100 text-rose-700
+                                        @default bg-red-100 text-red-700
                                     @endswitch">
                                     @switch($profile->verification_status)
                                         @case(\App\Enums\MuthowifVerificationStatus::Pending)
@@ -71,7 +56,7 @@
                                         @switch($accountStatus)
                                             @case(\App\Enums\MuthowifAccountStatus::Active) bg-sky-100 text-sky-700 @break
                                             @case(\App\Enums\MuthowifAccountStatus::Suspended) bg-orange-100 text-orange-700 @break
-                                            @default bg-rose-100 text-rose-700
+                                            @default bg-red-100 text-red-700
                                         @endswitch">
                                         {{ $accountStatus->label() }}
                                     </span>
@@ -89,7 +74,7 @@
                                         {{ $profile->phone }}
                                     </span>
                                 @endif
-                            </x-page-container>
+                            </div>
                         </div>
                     </div>
 
@@ -296,16 +281,16 @@
 
             {{-- REJECT --}}
             @if ($profile->isPending())
-                <div class="rounded-2xl border border-rose-100 bg-white p-6 shadow-sm">
+                <div class="rounded-2xl border border-red-100 bg-white p-6 shadow-sm">
                     <div class="flex items-center gap-2.5 mb-1">
-                        <div class="flex h-8 w-8 items-center justify-center rounded-lg bg-rose-50">
-                            <svg class="h-4 w-4 text-rose-600" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg>
+                        <div class="flex h-8 w-8 items-center justify-center rounded-lg bg-red-50">
+                            <svg class="h-4 w-4 text-red-600" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg>
                         </div>
-                        <h2 class="text-base font-semibold text-rose-700">Tolak Pendaftaran</h2>
+                        <h2 class="text-base font-semibold text-red-700">Tolak Pendaftaran</h2>
                     </div>
                     <p class="mb-5 ml-10 text-sm text-slate-500">{{ __('admin.muthowif.reject_placeholder_hint', ['default' => 'Berikan alasan penolakan agar muthowif dapat memperbaiki pendaftarannya']) }}</p>
 
-                    <form method="POST" action="{{ route('admin.muthowif.reject', $profile) }}" class="space-y-4">
+                    <form method="POST" action="{{ route('admin.muthowif.reject', $profile) }}" class="ui-stack-tight">
                         @csrf
 
                         <textarea
@@ -313,11 +298,11 @@
                             name="rejection_reason"
                             rows="4"
                             placeholder="{{ __('admin.muthowif.reject_placeholder') }}"
-                            class="block w-full rounded-xl border border-slate-200 bg-slate-50 px-4 py-3 text-sm text-slate-900 placeholder-slate-400 shadow-sm transition focus:border-rose-400 focus:bg-white focus:outline-none focus:ring-2 focus:ring-rose-100">{{ old('rejection_reason') }}</textarea>
+                            class="block w-full rounded-xl border border-slate-200 bg-slate-50 px-4 py-3 text-sm text-slate-900 placeholder-slate-400 shadow-sm transition focus:border-red-400 focus:bg-white focus:outline-none focus:ring-2 focus:ring-red-100">{{ old('rejection_reason') }}</textarea>
 
                         <x-input-error :messages="$errors->get('rejection_reason')" />
 
-                        <x-submit-button class="rounded-xl bg-rose-600 px-5 py-2.5 text-sm font-medium text-white shadow-sm transition hover:bg-rose-700 active:scale-95">
+                        <x-submit-button class="rounded-xl bg-red-600 px-5 py-2.5 text-sm font-medium text-white shadow-sm transition hover:bg-red-700 active:scale-95">
                             <svg class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 19l9 2-9-18-9 18 9-2zm0 0v-8"/></svg>
                             {{ __('admin.muthowif.reject_submit') }}
                         </x-submit-button>
@@ -326,6 +311,6 @@
                 </div>
             @endif
 
-        </div>
+        </x-page-container>
     </div>
 </x-app-layout>

@@ -34,7 +34,7 @@
             <form method="POST" action="{{ route('admin.emergency.reject', $report) }}" class="mt-3 space-y-2">
                 @csrf
                 <textarea name="admin_note" rows="2" class="w-full rounded-xl border-slate-200 text-sm"></textarea>
-                <x-submit-button class="rounded-xl bg-rose-700 px-4 py-2 text-sm font-semibold text-white">{{ __('emergency.admin.reject') }}</x-submit-button>
+                <x-submit-button class="rounded-xl bg-red-700 px-4 py-2 text-sm font-semibold text-white">{{ __('emergency.admin.reject') }}</x-submit-button>
             </form>
         @endif
 

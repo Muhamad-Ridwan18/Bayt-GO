@@ -1,5 +1,5 @@
 <div
-    class="fixed bottom-6 right-6 z-50 flex flex-col items-end gap-3"
+    class="ui-chat-fab-wrap"
     x-data="globalChatPanel({
         listUrl: @js(route('chat.conversations')),
         userId: @js(auth()->id()),
@@ -19,14 +19,8 @@
     <!-- Modal Container -->
     <div 
         x-show="isPanelExpanded"
-        x-transition:enter="transition ease-out duration-200"
-        x-transition:enter-start="opacity-0 translate-y-4 scale-95"
-        x-transition:enter-end="opacity-100 translate-y-0 scale-100"
-        x-transition:leave="transition ease-in duration-150"
-        x-transition:leave-start="opacity-100 translate-y-0 scale-100"
-        x-transition:leave-end="opacity-0 translate-y-4 scale-95"
         x-cloak
-        class="mb-2 w-80 sm:w-96 overflow-hidden rounded-3xl border border-slate-200/80 bg-gradient-to-b from-white to-slate-50/90 shadow-2xl shadow-slate-900/20 ring-1 ring-slate-100/80 flex flex-col h-[500px]"
+        class="mb-2 flex h-[min(500px,70dvh)] w-80 flex-col overflow-hidden rounded-3xl border border-slate-200/80 bg-white shadow-lg ring-1 ring-slate-100/80 sm:w-96"
     >
         <!-- Header -->
         <div class="flex items-center justify-between border-b border-slate-100 bg-slate-50/80 px-4 py-3 shrink-0">
@@ -178,7 +172,7 @@
         type="button"
         id="global-chat-fab"
         @click="togglePanel()"
-        class="relative flex h-14 w-14 lg:h-16 lg:w-16 items-center justify-center rounded-full bg-brand-600 text-white shadow-xl shadow-brand-600/40 ring-4 ring-white transition-all hover:bg-brand-700 hover:scale-105 active:scale-95 z-50 group"
+        class="relative z-50 flex h-14 w-14 items-center justify-center rounded-full bg-brand-600 text-white shadow-lg ring-4 ring-white transition-colors hover:bg-brand-700 lg:h-16 lg:w-16"
         aria-label="Toggle Chat"
     >
         <span

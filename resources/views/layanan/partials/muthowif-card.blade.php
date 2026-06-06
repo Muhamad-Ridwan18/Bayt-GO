@@ -58,7 +58,7 @@
         <div class="relative aspect-[4/3] overflow-hidden bg-slate-100 sm:aspect-[5/4]">
             <a href="{{ $profileHref }}" class="block h-full focus:outline-none focus-visible:ring-2 focus-visible:ring-baytgo focus-visible:ring-inset" tabindex="-1" aria-hidden="true">
                 <img
-                    src="{{ route('layanan.photo', $profile) }}"
+                    src="{{ $profile->photoUrl() }}"
                     alt=""
                     class="h-full w-full object-cover object-top transition duration-500 group-hover/card:scale-[1.02]"
                     loading="lazy"
@@ -72,7 +72,7 @@
             </span>
         </div>
 
-        <div class="flex flex-1 flex-col p-4 sm:p-5">
+        <div class="ui-card-pad-compact flex flex-1 flex-col">
             <div class="flex items-start justify-between gap-2">
                 <a href="{{ $profileHref }}" class="min-w-0 focus:outline-none focus-visible:ring-2 focus-visible:ring-baytgo rounded">
                     <h2 class="line-clamp-1 text-base font-bold text-slate-900 transition group-hover/card:text-baytgo sm:text-lg">{{ $profile->user->name }}</h2>

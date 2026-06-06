@@ -59,7 +59,7 @@
         '@context' => 'https://schema.org',
         '@type' => 'LocalBusiness',
         'name' => $profile->user->name,
-        'image' => route('layanan.photo', $profile),
+        'image' => $profile->photoUrl(),
         'description' => 'Jasa Muthowif profesional & tour guide ibadah Umroh dan Haji oleh '.$profile->user->name.' di Bayt-GO. Bandingkan rating, ulasan, dan pesan langsung.',
         'url' => route('layanan.show', $profile),
         'priceRange' => $minPrice ? 'IDR '.number_format($minPrice, 0, ',', '.') : 'Hubungi Kontak',
@@ -84,12 +84,10 @@
 @endphp
 
 <x-marketplace-layout :title="$seoTitle" :meta-description="$seoDesc" :schema="$muthowifSchema" wide>
-    <div class="relative min-w-0 space-y-8 overflow-x-hidden">
-        <div class="pointer-events-none absolute -left-24 top-0 h-64 w-64 rounded-full bg-brand-200/15 blur-3xl" aria-hidden="true"></div>
-        <div class="pointer-events-none absolute -right-16 top-24 h-56 w-56 rounded-full bg-amber-200/15 blur-3xl" aria-hidden="true"></div>
+    <div class="ui-marketplace-page-sticky">
 
         {{-- Breadcrumb + tanggal pencarian --}}
-        <div class="relative flex flex-wrap items-center justify-between gap-3 rounded-2xl border border-slate-200/80 bg-white/95 px-4 py-3 text-sm shadow-sm ring-1 ring-slate-100/80">
+        <div class="ui-toolbar relative flex flex-wrap items-center justify-between gap-3">
             <nav class="flex min-w-0 flex-wrap items-center gap-x-2 gap-y-1" aria-label="Breadcrumb">
                 <a href="{{ route('layanan.index', $indexQuery) }}" class="inline-flex items-center gap-1 font-semibold text-brand-700 hover:text-brand-800">
                     {{ __('layanan.breadcrumb_find') }}
@@ -120,25 +118,15 @@
             'bookingPageUrl' => $bookingPageUrl,
         ])
 
-        @if (! $canBook && ($intent['reason'] ?? '') !== '')
-            <div class="rounded-2xl border border-amber-200/90 bg-amber-50/90 px-4 py-4 text-sm text-amber-950 ring-1 ring-amber-100/80">
-                @if (($intent['reason'] ?? '') === 'guest')
-                    <p>{{ __('marketplace.panel.guest_intro') }}</p>
-                    <a href="{{ route('login.intended', ['next' => $bookingPageUrl]) }}" class="mt-3 inline-flex rounded-xl bg-brand-600 px-5 py-2.5 font-semibold text-white hover:bg-brand-700">{{ __('marketplace.panel.guest_login') }}</a>
-                @elseif (($intent['reason'] ?? '') === 'missing_dates')
-                    {!! __('marketplace.panel.missing_dates_html', ['link' => '<a href="'.e(route('layanan.index')).'" class="font-semibold text-brand-700 underline">'.e(__('layanan.booking_panel_link')).'</a>']) !!}
-                @elseif (($intent['reason'] ?? '') === 'jadwal_tidak_tersedia')
-                    {!! __('marketplace.panel.jadwal_tidak_tersedia_html', [
-                        'range' => $searchRangeLabel ?? '—',
-                        'link' => '<a href="'.e(route('layanan.index', array_filter(['start_date' => $startDate, 'end_date' => $endDate !== '' ? $endDate : null]))).'" class="font-semibold underline">'.e(__('layanan.booking_panel_link')).'</a>',
-                    ]) !!}
-                @elseif (($intent['reason'] ?? '') === 'not_customer')
-                    {!! __('marketplace.panel.not_customer') !!}
-                @elseif (in_array($intent['reason'] ?? '', ['invalid_dates', 'past_start', 'range_too_long'], true))
-                    <p>{{ __('marketplace.panel.'.$intent['reason']) }}</p>
-                @endif
-            </div>
-        @endif
+        @include('layanan.partials.profile-booking-cta', [
+            'profile' => $profile,
+            'group' => $group,
+            'private' => $private,
+            'bookingIntent' => $bookingIntent,
+            'startDate' => $startDate,
+            'endDate' => $endDate,
+            'searchRangeLabel' => $searchRangeLabel,
+        ])
 
         @include('layanan.partials.profile-show-packages', [
             'profile' => $profile,
@@ -147,24 +135,34 @@
             'bookQueryParams' => $bookQueryParams,
         ])
 
-        @include('layanan.partials.profile-show-addons', [
-            'group' => $group,
-            'private' => $private,
-        ])
-
         @include('layanan.partials.profile-show-reviews', [
             'profile' => $profile,
             'reviewsCount' => $reviewsCount,
             'avgRating' => $avgRating,
         ])
 
-        @include('layanan.partials.profile-show-bottom', [
-            'profile' => $profile,
-            'group' => $group,
-            'private' => $private,
-        ])
+        <details class="group rounded-2xl border border-slate-200/90 bg-white shadow-sm ring-1 ring-slate-100/80 open:ring-brand-200/60">
+            <summary class="cursor-pointer list-none px-5 py-4 text-sm font-semibold text-slate-900 marker:content-none [&::-webkit-details-marker]:hidden">
+                <span class="flex items-center justify-between gap-3">
+                    <span>{{ __('marketplace.show.more_about_heading') }}</span>
+                    <svg class="h-5 w-5 shrink-0 text-slate-400 transition group-open:rotate-180" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true"><path fill-rule="evenodd" d="M5.23 7.21a.75.75 0 011.06.02L10 11.168l3.71-3.94a.75.75 0 111.08 1.04l-4.25 4.5a.75.75 0 01-1.08 0l-4.25-4.5a.75.75 0 01.02-1.06z" clip-rule="evenodd" /></svg>
+                </span>
+            </summary>
+            <div class="ui-stack-compact border-t border-slate-100 px-5 py-5">
+                @include('layanan.partials.profile-show-addons', [
+                    'group' => $group,
+                    'private' => $private,
+                ])
 
-        @include('layanan.partials.profile-show-trust-bar')
+                @include('layanan.partials.profile-show-bottom', [
+                    'profile' => $profile,
+                    'group' => $group,
+                    'private' => $private,
+                ])
+
+                @include('layanan.partials.profile-show-trust-bar')
+            </div>
+        </details>
 
         @if ($blockedCount > 0)
             <details class="rounded-2xl border border-amber-200/70 bg-white shadow-sm ring-1 ring-amber-100/60">
@@ -186,5 +184,12 @@
                 </div>
             </details>
         @endif
+
+        @include('layanan.partials.profile-show-sticky-cta', [
+            'profile' => $profile,
+            'canBook' => $canBook,
+            'bookingPageUrl' => $bookingPageUrl,
+            'searchRangeLabel' => $searchRangeLabel,
+        ])
     </div>
 </x-marketplace-layout>

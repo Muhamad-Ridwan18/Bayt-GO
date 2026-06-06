@@ -26,7 +26,7 @@ class GlobalChatController extends Controller
             if ($isCustomerView) {
                 $otherName = $booking->muthowifProfile?->user?->name ?? 'Muthowif';
                 $photoUrl = $booking->muthowifProfile
-                    ? route('layanan.photo', $booking->muthowifProfile)
+                    ? $booking->muthowifProfile->photoUrl()
                     : null;
                 $chatMessagesUrl = route('bookings.chat.messages', $booking);
                 $chatStoreUrl = route('bookings.chat.messages.store', $booking);

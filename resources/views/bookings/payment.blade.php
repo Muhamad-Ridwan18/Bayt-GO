@@ -184,7 +184,7 @@
             <div class="absolute bottom-0 left-1/2 h-48 w-[120%] -translate-x-1/2 bg-gradient-to-t from-white to-transparent"></div>
         </div>
 
-        <x-page-container class="relative z-10 pb-16 pt-8">
+        <x-page-container class="ui-page-y relative z-10 pb-16">
             <a href="{{ route('bookings.show', $booking) }}" class="mb-6 inline-flex items-center gap-2 rounded-xl px-3 py-2 text-sm font-semibold text-brand-800 ring-1 ring-brand-200/50 transition hover:bg-white/80 hover:ring-brand-300/80">
                 <svg class="h-4 w-4 shrink-0" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true">
                     <path fill-rule="evenodd" d="M17 10a.75.75 0 01-.75.75H5.612l4.158 3.96a.75.75 0 11-1.04 1.08l-5.5-5.25a.75.75 0 010-1.08l5.5-5.25a.75.75 0 111.04 1.08L5.612 9.25H16.25A.75.75 0 0117 10z" clip-rule="evenodd" />
@@ -213,9 +213,9 @@
                 </div>
             </header>
 
-            <div class="grid grid-cols-1 gap-6 lg:grid-cols-12 lg:items-start lg:gap-8">
+            <div class="grid grid-cols-1 gap-6 md:grid-cols-12 md:items-start md:gap-8">
                 {{-- Ringkasan: di atas di HP, kanan di desktop --}}
-                <aside class="order-1 space-y-5 lg:sticky lg:order-2 lg:col-span-4 lg:top-24">
+                <aside class="order-1 space-y-5 md:sticky md:order-2 md:col-span-4 md:top-24">
                     <div class="relative overflow-hidden rounded-2xl border border-slate-200/90 bg-white shadow-lg shadow-slate-900/5 ring-1 ring-slate-100/80">
                         <span class="absolute inset-x-0 top-0 z-10 h-1 bg-gradient-to-r from-brand-500 via-emerald-500 to-amber-400" aria-hidden="true"></span>
                         <div class="pointer-events-none absolute inset-0 opacity-[0.2]" style="background-image: radial-gradient(circle at 1px 1px, rgb(148 163 184 / 0.4) 1px, transparent 0); background-size: 18px 18px;" aria-hidden="true"></div>
@@ -278,7 +278,7 @@
                 </aside>
 
                 {{-- Metode & instruksi --}}
-                <div class="order-2 min-w-0 space-y-6 lg:order-1 lg:col-span-8">
+                <div class="order-2 min-w-0 ui-stack-compact md:order-1 md:col-span-8">
                     <section class="relative overflow-hidden rounded-2xl border border-slate-200/90 bg-white shadow-lg shadow-slate-900/5 ring-1 ring-slate-100/80">
                         <div class="relative bg-gradient-to-r from-slate-900 via-brand-900 to-amber-950 px-5 py-5 sm:px-6 sm:py-6">
                             <div class="flex flex-wrap items-start justify-between gap-4">

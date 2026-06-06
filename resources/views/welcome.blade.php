@@ -110,7 +110,7 @@
 
                     <div class="relative z-20 mx-auto mt-12 max-w-7xl w-full px-4 pb-8 sm:mt-14 sm:px-6 lg:mt-16 lg:px-8">
 
-                        <div class="rounded-3xl border border-gray-100/90 bg-white shadow-[0_24px_64px_-12px_rgba(15,42,37,0.12),0_12px_24px_-14px_rgba(0,0,0,0.06)]">
+                        <div class="rounded-3xl border border-slate-100/90 bg-white shadow-[0_24px_64px_-12px_rgba(15,42,37,0.12),0_12px_24px_-14px_rgba(0,0,0,0.06)]">
                             @include('layanan.partials.date-search-form', [
                                 'startDate' => '',
                                 'endDate' => '',
@@ -128,7 +128,7 @@
                     </div>
 
                     @if(isset($landingPages) && $landingPages->isNotEmpty())
-                        <section class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-10">
+                        <x-page-container tag="section" class="py-10">
                             <div class="rounded-3xl border border-slate-200 bg-white p-6 shadow-sm">
                                 <div class="flex flex-col gap-6 md:flex-row md:items-end md:justify-between">
                                     <div>
@@ -153,12 +153,12 @@
                                     @endforeach
                                 </div>
                             </div>
-                        </section>
+                        </x-page-container>
                     @endif
                 </section>
 
                 {{-- CTA --}}
-                <section class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-14">
+                <x-page-container tag="section" class="py-14">
                     <div class="rounded-2xl bg-gradient-to-br from-baytgo via-baytgo-800 to-baytgo-950 p-8 sm:p-10 text-white shadow-xl relative overflow-hidden">
                         <div class="absolute top-0 right-0 w-64 h-64 bg-gold/10 rounded-full blur-3xl -translate-y-1/2 translate-x-1/2 pointer-events-none" aria-hidden="true"></div>
                         <div class="relative flex flex-col lg:flex-row lg:items-center lg:justify-between gap-8">
@@ -176,7 +176,7 @@
                             </div>
                         </div>
                     </div>
-                </section>
+                </x-page-container>
 
                 {{-- <div class="h-14 bg-white sm:h-16" aria-hidden="true"></div> --}}
 
@@ -305,7 +305,7 @@
 
                 {{-- Popular muthowif carousel --}}
                 <section id="muthowif-populer" class="py-16 sm:py-20 bg-white">
-                    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+                    <x-page-container>
                         <div class="flex flex-wrap items-end justify-between gap-4 mb-8">
                             <h2 class="text-2xl sm:text-3xl font-bold text-baytgo">{{ __('welcome.popular_title') }}</h2>
                             <a href="{{ route('layanan.index') }}" class="text-sm font-semibold text-gold-muted hover:text-baytgo transition inline-flex items-center gap-1">
@@ -335,10 +335,10 @@
                                             $languages = array_slice($profile->languagesForDisplay(), 0, 5);
                                             $langsLine = $languages !== [] ? implode(', ', $languages) : null;
                                         @endphp
-                                        <article class="min-w-[16.5rem] sm:min-w-[18rem] max-w-[18rem] flex-shrink-0 snap-start overflow-hidden rounded-2xl border border-gray-100 bg-white shadow-sm transition-all hover:border-gold-light/40 hover:shadow-md">
+                                        <article class="min-w-[16.5rem] sm:min-w-[18rem] max-w-[18rem] flex-shrink-0 snap-start overflow-hidden rounded-2xl border border-slate-100 bg-white shadow-sm transition-all hover:border-gold-light/40 hover:shadow-md">
                                             <a href="{{ route('layanan.show', $profile) }}" class="block rounded-2xl focus:outline-none focus-visible:ring-2 focus-visible:ring-gold focus-visible:ring-offset-2">
                                                 <div class="relative aspect-[4/5] overflow-hidden bg-slate-100">
-                                                    <img src="{{ route('layanan.photo', $profile) }}" alt="" class="h-full w-full object-cover object-top" loading="lazy" decoding="async" />
+                                                    <img src="{{ $profile->photoUrl() }}" alt="" class="h-full w-full object-cover object-top" loading="lazy" decoding="async" />
                                                 </div>
                                                 <div class="p-4">
                                                     <h3 class="flex items-center gap-1.5 font-bold text-slate-900">
@@ -365,7 +365,7 @@
                                 </div>
                             </div>
                         @endif
-                    </div>
+                    </x-page-container>
                 </section>
 
                 {{-- Running Photo Gallery --}}
@@ -397,7 +397,7 @@
                             @foreach ($row1 as $img)
                                 <div class="mx-1.5 shrink-0 overflow-hidden rounded-xl w-48 h-32 sm:w-56 sm:h-36 lg:w-64 lg:h-40 ring-1 ring-white/10 shadow-lg">
                                     <img
-                                        src="{{ route('layanan.portfolio.image', $img->id) }}"
+                                        src="{{ $img->publicUrl() }}"
                                         alt=""
                                         class="h-full w-full object-cover transition duration-500 hover:scale-105"
                                         loading="lazy"
@@ -409,7 +409,7 @@
                             @foreach ($row1 as $img)
                                 <div class="mx-1.5 shrink-0 overflow-hidden rounded-xl w-48 h-32 sm:w-56 sm:h-36 lg:w-64 lg:h-40 ring-1 ring-white/10 shadow-lg" aria-hidden="true">
                                     <img
-                                        src="{{ route('layanan.portfolio.image', $img->id) }}"
+                                        src="{{ $img->publicUrl() }}"
                                         alt=""
                                         class="h-full w-full object-cover transition duration-500 hover:scale-105"
                                         loading="lazy"
@@ -428,7 +428,7 @@
                             @foreach ($row2 as $img)
                                 <div class="mx-1.5 shrink-0 overflow-hidden rounded-xl w-48 h-32 sm:w-56 sm:h-36 lg:w-64 lg:h-40 ring-1 ring-white/10 shadow-lg">
                                     <img
-                                        src="{{ route('layanan.portfolio.image', $img->id) }}"
+                                        src="{{ $img->publicUrl() }}"
                                         alt=""
                                         class="h-full w-full object-cover transition duration-500 hover:scale-105"
                                         loading="lazy"
@@ -440,7 +440,7 @@
                             @foreach ($row2 as $img)
                                 <div class="mx-1.5 shrink-0 overflow-hidden rounded-xl w-48 h-32 sm:w-56 sm:h-36 lg:w-64 lg:h-40 ring-1 ring-white/10 shadow-lg" aria-hidden="true">
                                     <img
-                                        src="{{ route('layanan.portfolio.image', $img->id) }}"
+                                        src="{{ $img->publicUrl() }}"
                                         alt=""
                                         class="h-full w-full object-cover transition duration-500 hover:scale-105"
                                         loading="lazy"
@@ -465,7 +465,7 @@
                 {{-- Latest Articles --}}
                 @if ($latestArticles->isNotEmpty())
                     <section id="artikel-terbaru" class="py-16 sm:py-20 border-t border-slate-100 bg-welcomeCanvas">
-                        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+                        <x-page-container>
                             <div class="flex flex-wrap items-end justify-between gap-4 mb-10">
                                 <div>
                                     <h2 class="text-2xl sm:text-3xl font-bold text-baytgo">{{ __('nav.articles') }}</h2>
@@ -514,13 +514,13 @@
                                     </article>
                                 @endforeach
                             </div>
-                        </div>
-                    </section>
+                    </x-page-container>
+                </section>
                 @endif
 
                 {{-- Stats --}}
                 <section class="bg-white py-10 sm:py-12">
-                    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+                    <x-page-container>
                         <div class="rounded-2xl bg-baytgo px-6 py-10 text-white shadow-lg shadow-slate-900/15 sm:px-10 sm:py-12 lg:px-14">
                             <div class="relative overflow-hidden rounded-xl sm:rounded-2xl">
                                 <div class="pointer-events-none absolute inset-0 opacity-[0.08] bg-[radial-gradient(circle_at_20%_0%,#C5A059,transparent_55%)]" aria-hidden="true"></div>
@@ -534,19 +534,19 @@
                                 </div>
                             </div>
                         </div>
-                    </div>
+                    </x-page-container>
                 </section>
 
                 {{-- Testimonials --}}
                 <section class="border-t border-slate-100/80 bg-welcomeCanvas py-16 sm:py-20">
-                    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+                    <x-page-container>
                         <div class="text-center">
                             <h2 class="text-2xl font-bold text-baytgo sm:text-3xl">{{ __('welcome.testimonials_title') }}</h2>
                             <span class="mx-auto mt-4 block h-1 w-14 rounded-full bg-gold" aria-hidden="true"></span>
                         </div>
                         <div class="mt-12 grid grid-cols-1 gap-8 md:grid-cols-3">
                             @foreach (__('welcome.testimonials') as $t)
-                                <blockquote class="rounded-2xl border border-gray-100 bg-white p-6 shadow-sm">
+                                <blockquote class="rounded-2xl border border-slate-100 bg-white p-6 shadow-sm">
                                     <div class="text-baytgo" aria-hidden="true">
                                         <svg class="h-8 w-8 opacity-90" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor">
                                             <path d="M4.583 17.321C3.553 16.227 3 15 3 13.011c0-3.5 2.457-6.637 6.03-8.188l.893 1.378c-3.335 1.804-3.987 4.145-4.247 5.621.537-.278 1.24-.375 1.929-.311 1.804.167 3.226 1.648 3.226 3.489a3.5 3.5 0 01-3.5 3.5c-1.073 0-2.099-.49-2.748-1.179zm10 0C13.553 16.227 13 15 13 13.011c0-3.5 2.457-6.637 6.03-8.188l.893 1.378c-3.335 1.804-3.987 4.145-4.247 5.621.537-.278 1.24-.375 1.929-.311 1.804.167 3.226 1.648 3.226 3.489a3.5 3.5 0 01-3.5 3.5c-1.073 0-2.099-.49-2.748-1.179z" />
@@ -568,7 +568,7 @@
                                 </blockquote>
                             @endforeach
                         </div>
-                    </div>
+                    </x-page-container>
                 </section>
 
                 {{-- Pricing / Directory --}}
@@ -612,7 +612,7 @@
                 <section id="faq" class="py-16 bg-slate-50 border-t border-slate-100">
                     <x-page-container>
                         <h2 class="text-2xl font-bold text-baytgo text-center mb-10">{{ __('welcome.faq_title') }}</h2>
-                        <dl class="space-y-4">
+                        <dl class="ui-stack-tight">
                             @foreach (__('welcome.faq_items') as $item)
                                 <div class="rounded-2xl bg-white border border-slate-200/90 p-5 shadow-sm">
                                     <dt class="font-semibold text-slate-900">{{ $item['q'] }}</dt>

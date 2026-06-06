@@ -1,5 +1,5 @@
 <x-app-layout>
-    <div class="py-6 sm:py-8">
+    <div class="ui-page-y-compact">
         <x-page-container>
 
             {{-- Header --}}
@@ -29,18 +29,10 @@
                             <p class="text-lg font-semibold text-amber-600">
                                 {{ $counts['pending'] ?? 0 }}
                             </p>
-                        </x-page-container>
+                        </div>
                     </div>
                 </div>
             </div>
-
-            {{-- Alert --}}
-            @if (session('status'))
-                <div
-                    class="mb-6 rounded-2xl border border-emerald-200 bg-emerald-50 px-4 py-3 text-sm text-emerald-700">
-                    {{ session('status') }}
-                </div>
-            @endif
 
             {{-- Tabs --}}
             <div class="mb-6 overflow-x-auto">
@@ -116,7 +108,7 @@
                                     @break
 
                                 @default
-                                    bg-rose-100 text-rose-800
+                                    bg-red-100 text-red-800
                             @endswitch
                         ">
                                             {{ $p->verification_status->label() }}
@@ -254,6 +246,6 @@
             </div>
             </div>
 
-        </div>
+        </x-page-container>
     </div>
 </x-app-layout>

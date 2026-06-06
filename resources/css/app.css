@@ -4,6 +4,193 @@
 @tailwind components;
 @tailwind utilities;
 
+@layer components {
+    .ui-card {
+        @apply rounded-2xl border border-slate-200/90 bg-white shadow-sm ring-1 ring-slate-100/80;
+    }
+
+    .ui-card-market {
+        @apply ui-card shadow-market;
+    }
+
+    .ui-alert {
+        @apply rounded-2xl border px-4 py-3 text-sm font-medium shadow-sm;
+    }
+
+    .ui-alert-success {
+        @apply ui-alert border-emerald-200 bg-emerald-50 text-emerald-900;
+    }
+
+    .ui-alert-error {
+        @apply ui-alert border-red-200 bg-red-50 text-red-900;
+    }
+
+    .ui-alert-warning {
+        @apply ui-alert border-amber-200 bg-amber-50 text-amber-950;
+    }
+
+    .ui-alert-info {
+        @apply ui-alert border-sky-200 bg-sky-50 text-sky-900;
+    }
+
+    .ui-btn-primary {
+        @apply inline-flex min-h-12 items-center justify-center gap-2 rounded-xl border border-transparent bg-brand-600 px-5 py-2.5 text-sm font-semibold text-white shadow-sm transition duration-150 ease-in-out hover:bg-brand-700 focus:outline-none focus:ring-2 focus:ring-brand-500 focus:ring-offset-2 disabled:cursor-wait disabled:opacity-70;
+    }
+
+    .ui-btn-secondary {
+        @apply inline-flex items-center justify-center gap-2 rounded-xl border border-slate-200 bg-white px-4 py-2.5 text-sm font-semibold text-slate-700 shadow-sm transition duration-150 ease-in-out hover:border-slate-300 hover:bg-slate-50 focus:outline-none focus:ring-2 focus:ring-brand-500 focus:ring-offset-2 disabled:opacity-50;
+    }
+
+    .ui-btn-danger {
+        @apply inline-flex items-center justify-center gap-2 rounded-xl border border-transparent bg-red-600 px-4 py-2.5 text-sm font-semibold text-white shadow-sm transition duration-150 ease-in-out hover:bg-red-500 focus:outline-none focus:ring-2 focus:ring-red-500 focus:ring-offset-2 disabled:cursor-wait disabled:opacity-70;
+    }
+
+    .ui-kicker {
+        @apply text-[11px] font-bold uppercase tracking-wide text-slate-500;
+    }
+
+    .ui-kicker-brand {
+        @apply ui-kicker text-brand-700;
+    }
+
+    .ui-app-page {
+        @apply relative min-h-[calc(100vh-4rem)] overflow-hidden bg-gradient-to-b from-slate-100 via-slate-50 to-white;
+    }
+
+    .ui-page-y {
+        @apply py-8 sm:py-12;
+    }
+
+    .ui-page-y-compact {
+        @apply py-6 sm:py-8;
+    }
+
+    .ui-stack {
+        @apply space-y-8;
+    }
+
+    .ui-stack-compact {
+        @apply space-y-6;
+    }
+
+    .ui-card-pad {
+        @apply p-5 sm:p-6;
+    }
+
+    .ui-card-pad-lg {
+        @apply p-6 sm:p-8;
+    }
+
+    .ui-card-pad-compact {
+        @apply p-4 sm:p-5;
+    }
+
+    .ui-section-body {
+        @apply mt-6;
+    }
+
+    .ui-toolbar {
+        @apply rounded-2xl border border-slate-200/80 bg-white/95 px-4 py-3 text-sm shadow-sm ring-1 ring-slate-100/80;
+    }
+
+    .ui-marketplace-page {
+        @apply relative min-w-0 space-y-8 overflow-x-hidden;
+    }
+
+    .ui-marketplace-page-sticky {
+        @apply ui-marketplace-page pb-24 lg:pb-0;
+    }
+
+    .ui-flash-wrap {
+        @apply pt-4;
+    }
+
+    .ui-stack-tight {
+        @apply space-y-4;
+    }
+
+    .ui-panel-body {
+        @apply px-5 py-6 sm:px-8 sm:py-8;
+    }
+
+    .ui-checkout-shell {
+        @apply relative overflow-hidden rounded-3xl border border-slate-200/90 bg-white shadow-lg shadow-slate-900/5 ring-1 ring-slate-100/80;
+    }
+
+    .ui-booking-page {
+        @apply relative min-w-0 space-y-4 overflow-x-hidden pb-24 lg:space-y-5 lg:pb-8;
+    }
+
+    .ui-booking-aside {
+        @apply sticky top-24 [contain:layout];
+    }
+
+    .ui-booking-summary-head {
+        @apply relative overflow-hidden bg-brand-800;
+        background-image:
+            radial-gradient(circle at 100% 0%, rgba(255, 255, 255, 0.12), transparent 42%),
+            radial-gradient(circle at 0% 100%, rgba(16, 185, 129, 0.2), transparent 38%),
+            linear-gradient(135deg, rgb(22 78 56), rgb(20 83 58));
+    }
+
+    .ui-booking-section-card {
+        @apply rounded-2xl border border-slate-200/90 bg-white px-4 py-4 shadow-sm ring-1 ring-slate-100/80 sm:px-5 sm:py-4;
+    }
+
+    .ui-booking-review-chip {
+        @apply rounded-xl border border-slate-200/90 bg-slate-50/70 px-3 py-3 ring-1 ring-slate-100/70;
+    }
+
+    .ui-booking-select {
+        @apply block w-full rounded-xl border-slate-300 bg-white px-3.5 py-2.5 text-sm font-semibold text-slate-900 shadow-sm focus:border-brand-500 focus:ring-brand-500;
+    }
+
+    .ui-booking-qty {
+        @apply inline-flex items-stretch overflow-hidden rounded-xl border border-slate-300 bg-white shadow-sm;
+    }
+
+    .ui-booking-qty-btn {
+        @apply flex h-11 w-11 items-center justify-center bg-slate-50 text-lg font-bold text-slate-700 transition hover:bg-slate-100 focus:outline-none focus:ring-2 focus:ring-inset focus:ring-brand-500;
+    }
+
+    .ui-booking-qty-input {
+        @apply w-14 border-x border-slate-200 bg-white py-2 text-center text-base font-bold text-slate-900 focus:border-brand-500 focus:ring-brand-500 [appearance:textfield] [&::-webkit-inner-spin-button]:appearance-none [&::-webkit-outer-spin-button]:appearance-none;
+    }
+
+    .ui-booking-step-panel[x-cloak],
+    .ui-booking-step-panel[style*='display: none'] {
+        content-visibility: hidden;
+    }
+
+    .ui-booking-package-card {
+        @apply relative flex min-h-[5.25rem] cursor-pointer items-start rounded-2xl border-2 border-slate-200 bg-white p-4 shadow-sm transition-colors hover:shadow-md sm:p-5;
+    }
+
+    .ui-booking-package-card--group {
+        @apply hover:border-brand-300 has-[:checked]:border-brand-500 has-[:checked]:bg-gradient-to-br has-[:checked]:from-brand-50 has-[:checked]:to-white has-[:checked]:shadow-md;
+    }
+
+    .ui-booking-package-card--private {
+        @apply hover:border-amber-300 has-[:checked]:border-amber-500 has-[:checked]:bg-gradient-to-br has-[:checked]:from-amber-50 has-[:checked]:to-white has-[:checked]:shadow-md;
+    }
+
+    .ui-booking-package-check {
+        @apply absolute right-3 top-3 flex h-5 w-5 items-center justify-center rounded-full border-2 border-slate-300 opacity-0 transition peer-checked:border-brand-600 peer-checked:bg-brand-600 peer-checked:opacity-100 sm:right-4 sm:top-4;
+    }
+
+    .ui-panel-body-compact {
+        @apply px-4 py-4 sm:px-6 sm:py-5;
+    }
+
+    .ui-booking-stepper {
+        @apply border-b border-slate-100 bg-white px-5 py-5 sm:px-8;
+    }
+
+    .ui-chat-fab-wrap {
+        @apply fixed right-4 z-50 flex flex-col items-end gap-3 bottom-20 sm:bottom-6;
+    }
+}
+
 .article-prose {
     @apply text-slate-700 text-lg leading-relaxed;
 }

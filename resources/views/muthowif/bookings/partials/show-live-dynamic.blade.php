@@ -2,7 +2,7 @@
     $b = $booking;
 @endphp
 
-<div data-live-part="main" class="min-w-0 space-y-6">
+<div data-live-part="main" class="min-w-0 ui-stack-compact">
     @include('muthowif.bookings.partials.show-detail-card', ['booking' => $b])
 
     <div class="lg:hidden">

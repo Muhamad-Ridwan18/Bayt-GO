@@ -2,6 +2,7 @@
     <p class="rounded-2xl border border-dashed border-slate-300 bg-slate-50 p-10 text-center text-sm text-slate-600">{{ __('emergency.admin.no_reports') }}</p>
 @else
     <div class="overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm">
+        <div class="overflow-x-auto">
         <table class="min-w-full divide-y divide-slate-200 text-sm">
             <thead class="bg-slate-50 text-left text-xs font-semibold uppercase tracking-wide text-slate-500">
                 <tr>
@@ -26,6 +27,7 @@
                 @endforeach
             </tbody>
         </table>
+        </div>
         <div class="border-t border-slate-100 px-4 py-3">{{ $reports->withQueryString()->links() }}</div>
     </div>
 @endif

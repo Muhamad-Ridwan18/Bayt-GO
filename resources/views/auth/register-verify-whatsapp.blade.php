@@ -7,9 +7,7 @@
     </div>
 
     @if (session('status'))
-        <div class="mb-4 rounded-lg border border-emerald-200 bg-emerald-50 px-3 py-2 text-sm text-emerald-900">
-            {{ session('status') }}
-        </div>
+        <x-ui.alert type="success" class="mb-4">{{ session('status') }}</x-ui.alert>
     @endif
 
     <div class="mb-5 rounded-xl border border-slate-200 bg-slate-50/80 p-4">
@@ -41,13 +39,13 @@
             ->all();
     @endphp
     @if (count($bannerErrorMessages) > 0)
-        <div class="mb-4 rounded-lg border border-red-200 bg-red-50 px-3 py-2 text-sm text-red-800">
-            <ul class="list-disc list-inside space-y-0.5">
+        <x-ui.alert type="error" class="mb-4">
+            <ul class="list-inside list-disc space-y-0.5">
                 @foreach ($bannerErrorMessages as $err)
                     <li>{{ $err }}</li>
                 @endforeach
             </ul>
-        </div>
+        </x-ui.alert>
     @endif
 
     <div class="space-y-5 rounded-xl border border-slate-200 bg-white p-5 shadow-sm">

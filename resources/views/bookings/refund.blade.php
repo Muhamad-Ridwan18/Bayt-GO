@@ -13,7 +13,7 @@
             <div class="absolute -left-20 top-32 h-80 w-80 rounded-full bg-slate-400/10 blur-3xl"></div>
         </div>
 
-        <x-page-container class="relative z-10 pb-16 pt-8">
+        <x-page-container class="ui-page-y relative z-10 pb-16">
             <a href="{{ route('bookings.show', $b) }}" class="mb-6 inline-flex items-center gap-2 text-sm font-semibold text-slate-600 transition hover:text-slate-800">
                 <svg class="h-4 w-4" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true">
                     <path fill-rule="evenodd" d="M17 10a.75.75 0 01-.75.75H5.612l4.158 3.96a.75.75 0 11-1.04 1.08l-5.5-5.25a.75.75 0 010-1.08l5.5-5.25a.75.75 0 111.04 1.08L5.612 9.25H16.25A.75.75 0 0117 10z" clip-rule="evenodd" />
@@ -46,7 +46,7 @@
                             </div>
                         </div>
 
-                        <form method="POST" action="{{ route('bookings.refund_request.store', $b) }}" class="space-y-6" onsubmit="return confirm(@js(__('bookings.show.refund_confirm')));">
+                        <form method="POST" action="{{ route('bookings.refund_request.store', $b) }}" class="ui-stack-compact" onsubmit="return confirm(@js(__('bookings.show.refund_confirm')));">
                             @csrf
                             <div class="grid grid-cols-1 gap-5 sm:grid-cols-2">
                                 <div class="sm:col-span-2">

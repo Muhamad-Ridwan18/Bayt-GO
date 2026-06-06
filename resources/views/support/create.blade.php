@@ -1,6 +1,6 @@
 <x-app-layout>
-    <div class="py-8 sm:py-12">
-        <x-page-container class="space-y-6">
+    <div class="ui-page-y">
+        <x-page-container class="ui-stack-compact">
             <div>
                 <h1 class="text-lg font-semibold text-slate-900">{{ __('support.create_title') }}</h1>
                 <p class="mt-1 text-sm text-slate-600">{{ __('support.create_subtitle') }}</p>

@@ -37,29 +37,7 @@
 
             <!-- Page Content -->
             <main>
-                @if (session('status'))
-                    @php
-                        $statusKey = session('status');
-                        $statusMessage = match ($statusKey) {
-                            'profile-updated', 'password-updated' => __('profile.saved'),
-                            'public-profile-updated' => __('profile_public.saved'),
-                            'verification-link-sent' => __('profile.verification.sent'),
-                            default => $statusKey,
-                        };
-                    @endphp
-                    <x-page-container class="pt-4">
-                        <div class="rounded-xl border border-emerald-200 bg-emerald-50 px-4 py-3 text-sm text-emerald-900">
-                            {{ $statusMessage }}
-                        </div>
-                    </x-page-container>
-                @endif
-                @if (session('error'))
-                    <x-page-container class="pt-4">
-                        <div class="rounded-xl border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-900">
-                            {{ session('error') }}
-                        </div>
-                    </x-page-container>
-                @endif
+                <x-ui.flash-banner />
                 {{ $slot }}
             </main>
         </div>

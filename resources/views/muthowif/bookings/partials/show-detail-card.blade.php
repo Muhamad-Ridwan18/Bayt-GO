@@ -12,7 +12,7 @@
     $initial = mb_strtoupper(mb_substr((string) ($b->customer?->name ?? '?'), 0, 1));
 
     $statusBadge = match ($st) {
-        BookingStatus::Cancelled => 'bg-rose-50 text-rose-800 ring-rose-200/90',
+        BookingStatus::Cancelled => 'bg-red-50 text-red-800 ring-red-200/90',
         BookingStatus::Confirmed => 'bg-emerald-50 text-emerald-900 ring-emerald-200/80',
         BookingStatus::Completed => 'bg-brand-50 text-brand-900 ring-brand-200/80',
         BookingStatus::Pending => 'bg-amber-50 text-amber-950 ring-amber-200/80',
@@ -20,7 +20,7 @@
     };
 @endphp
 
-<article class="overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm">
+<x-ui.card class="overflow-hidden p-0">
     <div class="border-b border-slate-100 px-5 py-4 sm:px-6">
         <h2 class="flex items-center gap-2 text-base font-bold text-slate-900">
             <span class="flex h-8 w-8 items-center justify-center rounded-lg bg-brand-50 text-brand-700">
@@ -32,7 +32,7 @@
         </h2>
     </div>
 
-    <div class="p-5 sm:p-6">
+    <div class="ui-card-pad">
         <div class="flex flex-col gap-5 lg:flex-row lg:items-start lg:gap-6">
             <div class="flex min-w-0 flex-1 gap-4">
                 <span class="flex h-16 w-16 shrink-0 items-center justify-center rounded-full bg-brand-700 text-xl font-bold text-white shadow-md ring-2 ring-white sm:h-[4.5rem] sm:w-[4.5rem]">
@@ -70,7 +70,7 @@
                         @if (in_array($st, [BookingStatus::Confirmed, BookingStatus::Completed], true))
                             <span class="inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-semibold ring-1 {{ match ($b->payment_status) {
                                 PaymentStatus::Paid => 'bg-emerald-50 text-emerald-900 ring-emerald-200/80',
-                                PaymentStatus::Refunded => 'bg-rose-50 text-rose-800 ring-rose-200/80',
+                                PaymentStatus::Refunded => 'bg-red-50 text-red-800 ring-red-200/80',
                                 default => 'bg-orange-50 text-orange-950 ring-orange-200/80',
                             } }}">
                                 {{ __('muthowif.bookings.payment_prefix') }} {{ $b->payment_status->label() }}
@@ -100,4 +100,4 @@
             </div>
         </div>
     </div>
-</article>
+</x-ui.card>

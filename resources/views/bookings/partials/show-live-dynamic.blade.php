@@ -2,7 +2,7 @@
     $b = $booking;
 @endphp
 
-<div data-live-part="main" class="min-w-0 space-y-6 lg:col-start-1 lg:row-start-1">
+<div data-live-part="main" class="min-w-0 ui-stack-compact lg:col-start-1 lg:row-start-1">
     @include('bookings.partials.show-detail-card', ['booking' => $b])
 
     @include('bookings.partials.show-cancellation-alert', [

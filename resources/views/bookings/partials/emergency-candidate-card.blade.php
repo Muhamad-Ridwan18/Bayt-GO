@@ -35,7 +35,7 @@
         <div class="relative shrink-0">
             @if ($profile)
                 <img
-                    src="{{ route('layanan.photo', $profile) }}"
+                    src="{{ $profile->photoUrl() }}"
                     alt=""
                     width="80"
                     height="80"

@@ -7,13 +7,13 @@
         Galeri Foto & Portfolio {{ $profile->user->name }} | BaytGo
     </x-slot:title>
 
-    <div class="relative min-h-screen overflow-hidden bg-gradient-to-b from-slate-100 via-slate-50 to-white py-8 sm:py-12">
+    <div class="ui-stack relative min-h-screen overflow-hidden bg-gradient-to-b from-slate-100 via-slate-50 to-white">
         {{-- Background decorative gradients --}}
         <div class="pointer-events-none absolute inset-0 bg-[radial-gradient(ellipse_80%_40%_at_50%_-10%,rgba(120,53,15,0.06),transparent)]"></div>
         <div class="pointer-events-none absolute -left-20 top-40 h-72 w-72 rounded-full bg-brand-400/5 blur-3xl"></div>
         <div class="pointer-events-none absolute -right-20 bottom-20 h-80 w-80 rounded-full bg-violet-400/5 blur-3xl"></div>
 
-        <x-page-container class="relative space-y-8">
+        <x-page-container class="relative ui-stack">
             {{-- Navigation back & breadcrumb --}}
             <div class="flex items-center justify-between">
                 <a href="{{ route('layanan.show', $profile) }}" class="inline-flex items-center gap-2 rounded-xl border border-slate-200/90 bg-white px-4 py-2.5 text-xs font-bold text-slate-700 shadow-sm transition hover:border-brand-300 hover:text-brand-700 hover:shadow">
@@ -27,7 +27,7 @@
                 <div class="flex flex-col items-center gap-5 sm:flex-row sm:items-start text-center sm:text-left">
                     <div class="relative shrink-0">
                         <img 
-                            src="{{ route('layanan.photo', $profile) }}" 
+                            src="{{ $profile->photoUrl() }}" 
                             alt="{{ $profile->user->name }}" 
                             class="h-20 w-20 rounded-2xl object-cover shadow ring-2 ring-white"
                             onerror="this.onerror=null; this.src={!! json_encode($fallbackSvg) !!}"
@@ -43,7 +43,7 @@
 
             {{-- Grid of Portfolios --}}
             <div
-                class="space-y-6"
+                class="ui-stack-compact"
                 x-data="{
                     lightboxOpen: false,
                     activeImages: [],
@@ -79,9 +79,9 @@
                             @php
                                 $portfolioImages = $portfolio->images;
                                 $previewImage = $portfolioImages->first();
-                                $previewUrl = $previewImage ? route('layanan.portfolio.image', $previewImage) : route('layanan.portfolio.photo', $portfolio);
+                                $previewUrl = $previewImage ? $previewImage->publicUrl() : $portfolio->coverUrl();
                                 $albumUrls = $portfolioImages->isNotEmpty()
-                                    ? $portfolioImages->map(fn ($image) => route('layanan.portfolio.image', $image))->values()
+                                    ? $portfolioImages->map(fn ($image) => $image->publicUrl())->values()
                                     : collect([$previewUrl]);
                             @endphp
                             <div 
@@ -105,7 +105,7 @@
                                     <div class="grid grid-cols-4 gap-1.5 bg-slate-50 p-2">
                                         @foreach ($portfolioImages->skip(1)->take(4) as $image)
                                             <div class="relative aspect-square overflow-hidden rounded-lg bg-slate-200">
-                                                <img src="{{ route('layanan.portfolio.image', $image) }}" alt="{{ $portfolio->title }}" class="h-full w-full object-cover">
+                                                <img src="{{ $image->publicUrl() }}" alt="{{ $portfolio->title }}" class="h-full w-full object-cover">
                                                 @if ($loop->last && $portfolioImages->count() > 5)
                                                     <span class="absolute inset-0 flex items-center justify-center bg-slate-950/55 text-xs font-bold text-white">+{{ $portfolioImages->count() - 5 }}</span>
                                                 @endif

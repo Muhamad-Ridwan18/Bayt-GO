@@ -32,36 +32,23 @@
 @endphp
 
 <x-app-layout>
-    <div
-        class="relative min-h-[calc(100vh-4rem)] overflow-hidden bg-gradient-to-b from-slate-100 via-slate-50 to-white py-8 sm:py-12"
+    <x-ui.app-page
         x-data="whatsappBroadcastAdmin({
             muthowifs: @js($muthowifPayload),
             initialSelected: @js($oldProfileIds),
             initialFreeNumbers: @js(old('free_numbers', '')),
         })"
     >
-        <x-page-container class="relative space-y-8">
-            @if (session('status'))
-                <div class="rounded-2xl border border-emerald-200 bg-emerald-50 px-4 py-3 text-sm font-medium text-emerald-900 shadow-sm">
-                    {{ session('status') }}
-                </div>
-            @endif
-
-            @if (session('error'))
-                <div class="rounded-2xl border border-rose-200 bg-rose-50 px-4 py-3 text-sm font-medium text-rose-900 shadow-sm">
-                    {{ session('error') }}
-                </div>
-            @endif
-
+        <x-page-container class="ui-stack relative">
             @if (session('broadcast_failures'))
-                <div class="rounded-2xl border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-950 shadow-sm">
+                <x-ui.alert type="warning">
                     <p class="font-semibold">{{ __('admin.whatsapp_broadcast.failures_title') }}</p>
-                    <ul class="mt-2 list-inside list-disc space-y-1 text-xs">
+                    <ul class="mt-2 list-inside list-disc space-y-1 text-xs font-normal">
                         @foreach (session('broadcast_failures') as $failure)
                             <li><span class="font-medium">{{ $failure['label'] }}</span> — {{ $failure['reason'] }}</li>
                         @endforeach
                     </ul>
-                </div>
+                </x-ui.alert>
             @endif
 
             <div class="relative overflow-hidden rounded-[1.75rem] bg-gradient-to-br from-emerald-900 via-brand-900 to-slate-950 p-6 text-white shadow-xl ring-1 ring-white/10 sm:rounded-3xl sm:p-8">
@@ -97,7 +84,7 @@
                 method="post"
                 action="{{ route('admin.whatsapp-broadcast.send') }}"
                 enctype="multipart/form-data"
-                class="space-y-6"
+                class="ui-stack-compact"
                 @submit="return confirmSend($event)"
             >
                 @csrf
@@ -124,7 +111,7 @@
                                 <img :src="attachmentPreviewUrl" alt="" class="max-h-48 rounded-xl border border-slate-200 object-contain shadow-sm" />
                             </div>
                             <p x-show="attachmentFileName && !attachmentPreviewUrl" x-cloak class="mt-4 inline-flex items-center gap-2 rounded-xl border border-slate-200 bg-slate-50 px-4 py-3 text-sm text-slate-700">
-                                <svg class="h-5 w-5 shrink-0 text-rose-600" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M19.5 14.25v-2.625a3.375 3.375 0 0 0-3.375-3.375h-1.5A1.125 1.125 0 0 1 13.5 7.125v-1.5a3.375 3.375 0 0 0-3.375-3.375H8.25m0 12.75h7.5m-7.5 3H12M10.5 2.25H5.625c-.621 0-1.125.504-1.125 1.125v17.25c0 .621.504 1.125 1.125 1.125h12.75c.621 0 1.125-.504 1.125-1.125V11.25a9 9 0 0 0-9-9Z" /></svg>
+                                <svg class="h-5 w-5 shrink-0 text-red-600" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M19.5 14.25v-2.625a3.375 3.375 0 0 0-3.375-3.375h-1.5A1.125 1.125 0 0 1 13.5 7.125v-1.5a3.375 3.375 0 0 0-3.375-3.375H8.25m0 12.75h7.5m-7.5 3H12M10.5 2.25H5.625c-.621 0-1.125.504-1.125 1.125v17.25c0 .621.504 1.125 1.125 1.125h12.75c.621 0 1.125-.504 1.125-1.125V11.25a9 9 0 0 0-9-9Z" /></svg>
                                 <span x-text="attachmentFileName"></span>
                             </p>
                         </div>
@@ -166,7 +153,7 @@
                                 <a href="{{ route('admin.whatsapp-broadcast.index', $filterParams('all')) }}" class="rounded-xl px-3 py-2 text-xs font-semibold {{ $status === 'all' ? 'bg-brand-600 text-white' : 'bg-slate-100 text-slate-700 hover:bg-slate-200' }}">{{ __('admin.whatsapp_broadcast.filter_all') }} ({{ $counts['all'] }})</a>
                                 <a href="{{ route('admin.whatsapp-broadcast.index', $filterParams('approved')) }}" class="rounded-xl px-3 py-2 text-xs font-semibold {{ $status === 'approved' ? 'bg-emerald-600 text-white' : 'bg-slate-100 text-slate-700 hover:bg-slate-200' }}">{{ __('admin.whatsapp_broadcast.filter_approved') }} ({{ $counts['approved'] }})</a>
                                 <a href="{{ route('admin.whatsapp-broadcast.index', $filterParams('pending')) }}" class="rounded-xl px-3 py-2 text-xs font-semibold {{ $status === 'pending' ? 'bg-amber-600 text-white' : 'bg-slate-100 text-slate-700 hover:bg-slate-200' }}">{{ __('admin.whatsapp_broadcast.filter_pending') }} ({{ $counts['pending'] }})</a>
-                                <a href="{{ route('admin.whatsapp-broadcast.index', $filterParams('rejected')) }}" class="rounded-xl px-3 py-2 text-xs font-semibold {{ $status === 'rejected' ? 'bg-rose-600 text-white' : 'bg-slate-100 text-slate-700 hover:bg-slate-200' }}">{{ __('admin.whatsapp_broadcast.filter_rejected') }} ({{ $counts['rejected'] }})</a>
+                                <a href="{{ route('admin.whatsapp-broadcast.index', $filterParams('rejected')) }}" class="rounded-xl px-3 py-2 text-xs font-semibold {{ $status === 'rejected' ? 'bg-red-600 text-white' : 'bg-slate-100 text-slate-700 hover:bg-slate-200' }}">{{ __('admin.whatsapp_broadcast.filter_rejected') }} ({{ $counts['rejected'] }})</a>
                             </div>
                         </div>
 
@@ -251,7 +238,7 @@
                 </div>
             </form>
         </x-page-container>
-    </div>
+    </x-ui.app-page>
 
     @push('scripts')
         <script>

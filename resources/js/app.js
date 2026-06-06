@@ -12,12 +12,13 @@ import {
     chatMessagesUrl,
     csrfToken,
     debounce,
+    deferRealtimeInit,
+    ensureEcho,
     fetchHtmlFragment,
     fetchJson,
     leavePrivateChannels,
     markChatRead,
     payloadMatches,
-    requireEcho,
     subscribePrivateListeners,
     swapAlpineHtml,
     swapLiveParts,
@@ -33,14 +34,12 @@ document.addEventListener('alpine:init', () => {
         debouncedRefresh: null,
 
         init() {
-            if (!requireEcho('reverbFragmentLive')) {
-                return;
-            }
-
             this.debouncedRefresh = debounce(() => void this.refreshFragment(), 450);
 
-            this.subscribedChannels = subscribePrivateListeners(this.listeners, () => {
-                this.debouncedRefresh();
+            deferRealtimeInit('reverbFragmentLive', () => {
+                this.subscribedChannels = subscribePrivateListeners(this.listeners, () => {
+                    this.debouncedRefresh();
+                });
             });
         },
 
@@ -179,22 +178,20 @@ document.addEventListener('alpine:init', () => {
         subscribedChannels: [],
 
         init() {
-            if (!requireEcho('adminWithdrawalsLive')) {
-                return;
-            }
+            deferRealtimeInit('adminWithdrawalsLive', () => {
+                const onEvent = (e) => {
+                    if (e?.pending_count !== undefined) {
+                        this.showToast(e);
+                    }
+                    void this.refreshFragment();
+                };
 
-            const onEvent = (e) => {
-                if (e?.pending_count !== undefined) {
-                    this.showToast(e);
-                }
-                void this.refreshFragment();
-            };
+                window.Echo.private('admin.withdrawals')
+                    .listen('.withdrawal.requested', onEvent)
+                    .listen('.withdrawal.updated', onEvent);
 
-            window.Echo.private('admin.withdrawals')
-                .listen('.withdrawal.requested', onEvent)
-                .listen('.withdrawal.updated', onEvent);
-
-            this.subscribedChannels = ['admin.withdrawals'];
+                this.subscribedChannels = ['admin.withdrawals'];
+            });
         },
 
         showToast(e) {
@@ -249,19 +246,17 @@ document.addEventListener('alpine:init', () => {
         },
 
         init() {
-            if (!requireEcho('adminEmergencyReportsBadge')) {
-                return;
-            }
+            deferRealtimeInit('adminEmergencyReportsBadge', () => {
+                window.Echo.private('admin.emergency-reports')
+                    .listen('.emergency.report.updated', (e) => {
+                        void this.refresh();
+                        if (e?.action === 'submitted') {
+                            this.notifyNewReport();
+                        }
+                    });
 
-            window.Echo.private('admin.emergency-reports')
-                .listen('.emergency.report.updated', (e) => {
-                    void this.refresh();
-                    if (e?.action === 'submitted') {
-                        this.notifyNewReport();
-                    }
-                });
-
-            this.subscribedChannels = ['admin.emergency-reports'];
+                this.subscribedChannels = ['admin.emergency-reports'];
+            });
         },
 
         notifyNewReport() {
@@ -309,23 +304,21 @@ document.addEventListener('alpine:init', () => {
         },
 
         init() {
-            if (!requireEcho('adminWithdrawalsBadgeLive')) {
-                return;
-            }
+            deferRealtimeInit('adminWithdrawalsBadgeLive', () => {
+                const apply = (e) => {
+                    if (typeof e?.pending_count === 'number') {
+                        this.count = e.pending_count;
+                    } else {
+                        this.count++;
+                    }
+                };
 
-            const apply = (e) => {
-                if (typeof e?.pending_count === 'number') {
-                    this.count = e.pending_count;
-                } else {
-                    this.count++;
-                }
-            };
+                window.Echo.private('admin.withdrawals')
+                    .listen('.withdrawal.requested', apply)
+                    .listen('.withdrawal.updated', apply);
 
-            window.Echo.private('admin.withdrawals')
-                .listen('.withdrawal.requested', apply)
-                .listen('.withdrawal.updated', apply);
-
-            this.subscribedChannels = ['admin.withdrawals'];
+                this.subscribedChannels = ['admin.withdrawals'];
+            });
         },
 
         destroy() {
@@ -363,15 +356,17 @@ document.addEventListener('alpine:init', () => {
         },
 
         init() {
-            if (!this.userId || !requireEcho('muthowifPendingBookingsBadge')) {
+            if (!this.userId) {
                 return;
             }
 
-            const channel = `App.Models.User.${this.userId}`;
-            window.Echo.private(channel)
-                .listen('.booking.updated', () => void this.refresh());
+            deferRealtimeInit('muthowifPendingBookingsBadge', () => {
+                const channel = `App.Models.User.${this.userId}`;
+                window.Echo.private(channel)
+                    .listen('.booking.updated', () => void this.refresh());
 
-            this.subscribedChannels = [channel];
+                this.subscribedChannels = [channel];
+            });
         },
 
         async refresh() {
@@ -415,19 +410,21 @@ document.addEventListener('alpine:init', () => {
         },
 
         init() {
-            if (!this.userId || !requireEcho('muthowifEmergencyOffersBadge')) {
+            if (!this.userId) {
                 return;
             }
 
-            const channel = `App.Models.User.${this.userId}`;
-            window.Echo.private(channel).listen('.emergency.report.updated', (e) => {
-                void this.refresh();
-                if (e?.action === 'batch_offered' || e?.action === 'admin_invite') {
-                    this.notifyNewOffer();
-                }
-            });
+            deferRealtimeInit('muthowifEmergencyOffersBadge', () => {
+                const channel = `App.Models.User.${this.userId}`;
+                window.Echo.private(channel).listen('.emergency.report.updated', (e) => {
+                    void this.refresh();
+                    if (e?.action === 'batch_offered' || e?.action === 'admin_invite') {
+                        this.notifyNewOffer();
+                    }
+                });
 
-            this.subscribedChannels = [channel];
+                this.subscribedChannels = [channel];
+            });
         },
 
         notifyNewOffer() {
@@ -488,6 +485,7 @@ document.addEventListener('alpine:init', () => {
         userChannel: null,
         subscribedChannels: [],
         debouncedListRefresh: null,
+        realtimeConnected: false,
 
         get unreadTotal() {
             return this.conversations.reduce((sum, c) => sum + (Number(c.unread_count) || 0), 0);
@@ -507,15 +505,50 @@ document.addEventListener('alpine:init', () => {
             return '';
         },
 
+        connectRealtime() {
+            if (this.realtimeConnected) {
+                return;
+            }
+
+            this.realtimeConnected = true;
+            void this.loadList();
+
+            if (this.userId) {
+                this.userChannel = `App.Models.User.${this.userId}`;
+                window.Echo.private(this.userChannel).listen('.booking.updated', () => {
+                    void this.loadList();
+                });
+                this.subscribedChannels.push(this.userChannel);
+            }
+        },
+
         togglePanel() {
             this.isPanelExpanded = !this.isPanelExpanded;
-            if (this.isPanelExpanded) {
+            if (!this.isPanelExpanded) {
+                return;
+            }
+
+            if (this.realtimeConnected) {
                 if (this.view === 'chat') {
                     this.scrollToLatest({ force: true });
                 } else {
                     this.loadList();
                 }
+
+                return;
             }
+
+            void ensureEcho().then((ok) => {
+                if (ok) {
+                    this.connectRealtime();
+                } else {
+                    void this.loadList();
+                }
+
+                if (this.view === 'chat') {
+                    this.scrollToLatest({ force: true });
+                }
+            });
         },
         
         openChat(conv) {
@@ -856,20 +889,7 @@ document.addEventListener('alpine:init', () => {
         },
         
         init() {
-            if (!requireEcho('globalChatPanel')) {
-                return;
-            }
-
             this.debouncedListRefresh = debounce(() => void this.loadList(), 1200);
-            this.loadList();
-
-            if (this.userId) {
-                this.userChannel = `App.Models.User.${this.userId}`;
-                window.Echo.private(this.userChannel).listen('.booking.updated', () => {
-                    void this.loadList();
-                });
-                this.subscribedChannels.push(this.userChannel);
-            }
         },
 
         destroy() {
@@ -1106,17 +1126,15 @@ document.addEventListener('alpine:init', () => {
         },
 
         init() {
-            if (!requireEcho('bookingChatPanel')) {
-                return;
-            }
+            deferRealtimeInit('bookingChatPanel', () => {
+                this.refreshUnreadOnly();
 
-            this.refreshUnreadOnly();
-
-            const chatChannel = `booking.chat.${this.bookingId}`;
-            window.Echo.private(chatChannel).listen('.chat.updated', (payload) => {
-                this.onChatSocket(payload);
-            });
-            this.subscribedChannels = [chatChannel];
+                const chatChannel = `booking.chat.${this.bookingId}`;
+                window.Echo.private(chatChannel).listen('.chat.updated', (payload) => {
+                    this.onChatSocket(payload);
+                });
+                this.subscribedChannels = [chatChannel];
+            }, { timeout: 1500 });
         },
 
         destroy() {
@@ -1147,36 +1165,43 @@ document.addEventListener('alpine:init', () => {
         init() {
             this.debouncedRefresh = debounce(() => void this.refreshFragment(), 450);
 
-            const echoReady = this.userId && requireEcho('customerBookingLive');
+            const subscribe = () => {
+                if (!this.userId) {
+                    return;
+                }
+
+                const channel = `App.Models.User.${this.userId}`;
+                const bookingMatch = this.bookingId
+                    ? { field: 'booking_id', value: this.bookingId }
+                    : null;
+
+                window.Echo.private(channel)
+                    .listen('.booking.updated', (e) => {
+                        if (bookingMatch && !payloadMatches({ match: bookingMatch }, e)) {
+                            return;
+                        }
+                        this.onBookingSocket(e);
+                    })
+                    .listen('.emergency.report.updated', (e) => {
+                        if (bookingMatch && !payloadMatches({ match: bookingMatch }, e)) {
+                            return;
+                        }
+                        this.onEmergencySocket(e);
+                    });
+
+                this.subscribedChannels = [channel];
+            };
 
             if (this.paymentReturnPending && this.liveMode === 'customer_show') {
-                this.startPaymentReturnPolling(echoReady);
-            }
-
-            if (!echoReady) {
-                return;
-            }
-
-            const channel = `App.Models.User.${this.userId}`;
-            const bookingMatch = this.bookingId
-                ? { field: 'booking_id', value: this.bookingId }
-                : null;
-
-            window.Echo.private(channel)
-                .listen('.booking.updated', (e) => {
-                    if (bookingMatch && !payloadMatches({ match: bookingMatch }, e)) {
-                        return;
+                void ensureEcho().then((ok) => {
+                    this.startPaymentReturnPolling(ok);
+                    if (ok) {
+                        subscribe();
                     }
-                    this.onBookingSocket(e);
-                })
-                .listen('.emergency.report.updated', (e) => {
-                    if (bookingMatch && !payloadMatches({ match: bookingMatch }, e)) {
-                        return;
-                    }
-                    this.onEmergencySocket(e);
                 });
-
-            this.subscribedChannels = [channel];
+            } else {
+                deferRealtimeInit('customerBookingLive', subscribe, { timeout: 2000 });
+            }
         },
 
         onEmergencySocket() {
@@ -1353,15 +1378,17 @@ document.addEventListener('alpine:init', () => {
         refreshing: false,
 
         init() {
-            if (!this.userId || !this.fragmentUrl || !requireEcho('muthowifWithdrawalsLive')) {
+            if (!this.userId || !this.fragmentUrl) {
                 return;
             }
 
-            const channel = `App.Models.User.${this.userId}`;
-            window.Echo.private(channel).listen('.withdrawal.updated', () => {
-                void this.refreshFragment();
+            deferRealtimeInit('muthowifWithdrawalsLive', () => {
+                const channel = `App.Models.User.${this.userId}`;
+                window.Echo.private(channel).listen('.withdrawal.updated', () => {
+                    void this.refreshFragment();
+                });
+                this.subscribedChannels = [channel];
             });
-            this.subscribedChannels = [channel];
         },
 
         async refreshFragment() {
@@ -1395,28 +1422,26 @@ document.addEventListener('alpine:init', () => {
         refreshing: false,
 
         init() {
-            if (!requireEcho('muthowifVerificationLive')) {
-                return;
-            }
+            deferRealtimeInit('muthowifVerificationLive', () => {
+                const channels = [];
 
-            const channels = [];
+                if (this.userId) {
+                    const userChannel = `App.Models.User.${this.userId}`;
+                    window.Echo.private(userChannel).listen('.muthowif.verification.updated', (e) => {
+                        this.onVerificationEvent(e);
+                    });
+                    channels.push(userChannel);
+                }
 
-            if (this.userId) {
-                const userChannel = `App.Models.User.${this.userId}`;
-                window.Echo.private(userChannel).listen('.muthowif.verification.updated', (e) => {
-                    this.onVerificationEvent(e);
-                });
-                channels.push(userChannel);
-            }
+                if (config.listenAdmin) {
+                    window.Echo.private('admin.muthowif-profiles').listen('.muthowif.verification.updated', () => {
+                        void this.refreshFragment();
+                    });
+                    channels.push('admin.muthowif-profiles');
+                }
 
-            if (config.listenAdmin) {
-                window.Echo.private('admin.muthowif-profiles').listen('.muthowif.verification.updated', () => {
-                    void this.refreshFragment();
-                });
-                channels.push('admin.muthowif-profiles');
-            }
-
-            this.subscribedChannels = channels;
+                this.subscribedChannels = channels;
+            });
         },
 
         onVerificationEvent(e) {
@@ -1458,11 +1483,14 @@ document.addEventListener('alpine:init', () => {
         refreshing: false,
 
         init() {
-            if (!this.realtimeEnabled || !requireEcho('adminServiceMonitorLive')) {
+            if (!this.realtimeEnabled) {
                 return;
             }
-            window.Echo.private(this.channelName).listen('.service_monitor.updated', () => {
-                this.refreshFragment();
+
+            deferRealtimeInit('adminServiceMonitorLive', () => {
+                window.Echo.private(this.channelName).listen('.service_monitor.updated', () => {
+                    this.refreshFragment();
+                });
             });
         },
 
@@ -1695,30 +1723,42 @@ document.addEventListener('alpine:init', () => {
             return this.payloadSourceLabels[key] || key;
         },
         init() {
-            try {
-                if (!this.realtimeEnabled || typeof window.Echo === 'undefined') {
-                    return;
-                }
-                window.Echo.private('admin.moota-webhooks').listen('.moota.webhook.recorded', (payload) => {
-                    const webhook = payload?.webhook;
-                    if (!webhook?.id) {
-                        return;
-                    }
-                    if (this.rows.some((row) => String(row.id) === String(webhook.id))) {
-                        return;
-                    }
-                    this.rows.unshift(webhook);
-                    if (this.rows.length > 100) {
-                        this.rows.pop();
-                    }
-                });
-            } catch (e) {
-                console.warn('[Moota webhooks] Echo subscribe failed (feed tetap dari server):', e);
+            if (!this.realtimeEnabled) {
+                return;
             }
+
+            deferRealtimeInit('mootaWebhookLiveDashboard', () => {
+                try {
+                    window.Echo.private('admin.moota-webhooks').listen('.moota.webhook.recorded', (payload) => {
+                        const webhook = payload?.webhook;
+                        if (!webhook?.id) {
+                            return;
+                        }
+                        if (this.rows.some((row) => String(row.id) === String(webhook.id))) {
+                            return;
+                        }
+                        this.rows.unshift(webhook);
+                        if (this.rows.length > 100) {
+                            this.rows.pop();
+                        }
+                    });
+                } catch (e) {
+                    console.warn('[Moota webhooks] Echo subscribe failed (feed tetap dari server):', e);
+                }
+            });
         },
     }));
 });
 
 window.Alpine = Alpine;
 
-Alpine.start();
+async function startApp() {
+    if (document.getElementById('booking-panel')) {
+        const { registerBookingForm } = await import('./booking-form');
+        registerBookingForm(Alpine);
+    }
+
+    Alpine.start();
+}
+
+void startApp();

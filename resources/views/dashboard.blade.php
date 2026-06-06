@@ -11,7 +11,7 @@
             <div class="pointer-events-none absolute -left-20 bottom-0 h-64 w-64 rounded-full bg-violet-400/5 blur-3xl"></div>
         @endunless
 
-        <x-page-container class="relative space-y-4">
+        <x-page-container class="ui-stack-tight relative">
 
             @unless($adminDash)
                 <x-campaign-carousel :campaigns="$activeCampaigns ?? collect()" />

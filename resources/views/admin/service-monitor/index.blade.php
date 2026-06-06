@@ -2,10 +2,10 @@
     <x-slot name="header">
         <div class="flex flex-col gap-2 sm:flex-row sm:items-end sm:justify-between">
             <div>
-                <h2 class="font-semibold text-xl text-gray-900 leading-tight">
+                <h2 class="font-semibold text-xl text-slate-900 leading-tight">
                     {{ __('admin.service_monitor.title') }}
                 </h2>
-                <p class="text-sm text-gray-600 mt-0.5">{{ __('admin.service_monitor.subtitle') }}</p>
+                <p class="text-sm text-slate-600 mt-0.5">{{ __('admin.service_monitor.subtitle') }}</p>
             </div>
             <div class="flex items-center gap-2 text-xs">
                 @if ($realtimeEnabled)
@@ -37,7 +37,7 @@
                     'bookings' => $bookings,
                     'filter' => $filter,
                 ])
-            </x-page-container>
-        </div>
+            </div>
+        </x-page-container>
     </div>
 </x-app-layout>

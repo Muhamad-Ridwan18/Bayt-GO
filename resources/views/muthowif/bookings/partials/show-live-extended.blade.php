@@ -7,7 +7,7 @@
     $st = $b->status;
 @endphp
 
-<div class="min-w-0 space-y-6 lg:col-start-1">
+<div class="min-w-0 ui-stack-compact lg:col-start-1">
     @include('bookings.partials.booking-documents', [
         'booking' => $b,
         'routeName' => 'muthowif.bookings.documents.show',
@@ -25,7 +25,7 @@
                             <span class="inline-flex rounded-full px-2 py-0.5 text-xs font-semibold ring-1 {{ match ($req->status) {
                                 BookingChangeRequestStatus::Pending => 'bg-amber-50 text-amber-900 ring-amber-200',
                                 BookingChangeRequestStatus::Approved => 'bg-emerald-50 text-emerald-900 ring-emerald-200',
-                                BookingChangeRequestStatus::Rejected => 'bg-rose-50 text-rose-900 ring-rose-200',
+                                BookingChangeRequestStatus::Rejected => 'bg-red-50 text-red-900 ring-red-200',
                             } }}">{{ $req->status->label() }}</span>
                             <span class="text-xs text-slate-500">{{ $req->created_at?->timezone(config('app.timezone'))->format('d/m/Y H:i') }}</span>
                         </div>
@@ -66,7 +66,7 @@
                             <span class="inline-flex rounded-full px-2 py-0.5 text-xs font-semibold ring-1 {{ match ($req->status) {
                                 BookingChangeRequestStatus::Pending => 'bg-amber-50 text-amber-900 ring-amber-200',
                                 BookingChangeRequestStatus::Approved => 'bg-emerald-50 text-emerald-900 ring-emerald-200',
-                                BookingChangeRequestStatus::Rejected => 'bg-rose-50 text-rose-900 ring-rose-200',
+                                BookingChangeRequestStatus::Rejected => 'bg-red-50 text-red-900 ring-red-200',
                             } }}">{{ $req->status->label() }}</span>
                             <span class="text-xs text-slate-500">{{ $req->created_at?->timezone(config('app.timezone'))->format('d/m/Y H:i') }}</span>
                         </div>

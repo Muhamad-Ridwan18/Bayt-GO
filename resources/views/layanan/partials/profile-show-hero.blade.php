@@ -17,7 +17,7 @@
     <div class="grid lg:grid-cols-[minmax(0,340px)_1fr]">
         <div class="relative aspect-[4/5] min-h-[280px] bg-slate-100 sm:min-h-[320px] lg:aspect-auto lg:min-h-[420px]">
             <img
-                src="{{ route('layanan.photo', $profile) }}"
+                src="{{ $profile->photoUrl() }}"
                 alt="{{ $profile->user->name }}"
                 class="absolute inset-0 h-full w-full object-cover"
                 loading="eager"
@@ -29,7 +29,7 @@
             </span>
         </div>
 
-        <div class="flex flex-col justify-center p-6 sm:p-8 lg:p-10">
+        <div class="ui-card-pad-lg flex flex-col justify-center lg:p-10">
             <p class="text-xs font-bold uppercase tracking-widest text-brand-700">{{ __('marketplace.show.kicker') }}</p>
             <h1 class="mt-2 text-2xl font-bold tracking-tight text-slate-900 sm:text-3xl lg:text-4xl">{{ $profile->user->name }}</h1>
             <p class="mt-2 text-sm text-slate-600 sm:text-base">{{ __('marketplace.show.tagline') }}</p>
@@ -44,7 +44,9 @@
                 <div class="mt-4 flex flex-wrap items-center gap-3">
                     @foreach (array_slice($langList, 0, 4) as $lang)
                         <span class="inline-flex items-center gap-1.5 text-sm font-medium text-slate-700">
-                            <span class="flex h-6 w-6 items-center justify-center rounded-full bg-slate-100 text-xs" aria-hidden="true">🌐</span>
+                            <span class="flex h-6 w-6 items-center justify-center rounded-full bg-slate-100 text-slate-600" aria-hidden="true">
+                                <svg class="h-3.5 w-3.5" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M12 21a9.004 9.004 0 008.716-6.747M12 21a9.004 9.004 0 01-8.716-6.747M12 21c2.485 0 4.5-4.03 4.5-9S14.485 3 12 3m0 18c-2.485 0-4.5-4.03-4.5-9S9.515 3 12 3m0 0a8.997 8.997 0 017.843 4.582M12 3a8.997 8.997 0 00-7.843 4.582m15.686 0A11.953 11.953 0 0112 10.5c-2.998 0-5.74-1.1-7.843-2.918m15.686 0A8.959 8.959 0 0121 12c0 .778-.099 1.533-.284 2.253m0 0A17.919 17.919 0 0112 16.5c-3.162 0-6.133-.815-8.716-2.247m0 0A9.015 9.015 0 013 12c0-1.605.42-3.113 1.157-4.418" /></svg>
+                            </span>
                             {{ $lang }}
                         </span>
                     @endforeach
@@ -82,11 +84,11 @@
 
             <div class="mt-5 flex flex-col gap-3 sm:flex-row sm:flex-wrap">
                 @if ($canBook)
-                    <a href="{{ $bookingPageUrl }}" class="inline-flex min-h-[3rem] flex-1 items-center justify-center gap-2 rounded-xl bg-brand-700 px-6 py-3 text-base font-bold text-white shadow-md transition hover:bg-brand-600 focus:outline-none focus:ring-2 focus:ring-brand-500 focus:ring-offset-2 sm:flex-none sm:min-w-[200px]">
+                    <a href="{{ $bookingPageUrl }}" class="ui-btn-primary flex-1 px-6 text-base sm:flex-none sm:min-w-[200px]">
                         {{ __('marketplace.show.book_now') }}
                     </a>
                 @else
-                    <a href="{{ $bookingPageUrl }}" class="inline-flex min-h-[3rem] flex-1 items-center justify-center gap-2 rounded-xl bg-brand-700 px-6 py-3 text-base font-bold text-white shadow-md transition hover:bg-brand-600 sm:flex-none sm:min-w-[200px]">
+                    <a href="{{ $bookingPageUrl }}" class="ui-btn-secondary flex-1 px-6 text-base sm:flex-none sm:min-w-[200px]">
                         {{ __('layanan.profile_cta.open_booking_page') }}
                     </a>
                 @endif

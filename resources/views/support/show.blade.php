@@ -1,6 +1,6 @@
 <x-app-layout>
-    <div class="py-8 sm:py-12">
-        <x-page-container class="space-y-6">
+    <div class="ui-page-y">
+        <x-page-container class="ui-stack-compact">
             <div class="flex flex-col gap-2 sm:flex-row sm:items-start sm:justify-between">
                 <div>
                     <div class="flex flex-wrap items-center gap-2">
@@ -13,13 +13,6 @@
                 </div>
                 <a href="{{ route('support.index') }}" class="shrink-0 text-sm font-semibold text-brand-700 hover:text-brand-800">{{ __('support.back_list') }}</a>
             </div>
-
-            @if (session('status'))
-                <div class="rounded-xl border border-emerald-200 bg-emerald-50 px-4 py-3 text-sm text-emerald-900">{{ session('status') }}</div>
-            @endif
-            @if (session('error'))
-                <div class="rounded-xl border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-900">{{ session('error') }}</div>
-            @endif
 
             <section
                 aria-labelledby="support-thread-title"

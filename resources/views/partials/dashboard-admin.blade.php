@@ -201,7 +201,7 @@
         </x-page-container>
     @endif
 
-    <x-page-container class="space-y-8">
+    <x-page-container class="ui-stack">
         <div class="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-5">
             @foreach ([
                 [
@@ -249,7 +249,7 @@
                     </div>
                     <p class="mt-3 text-2xl font-bold tabular-nums text-slate-900">{{ $card['value'] }}</p>
                     @if ($card['pct'] !== null)
-                        <p class="mt-2 text-xs font-semibold {{ $card['pct'] >= 0 ? 'text-emerald-600' : 'text-rose-600' }}">
+                        <p class="mt-2 text-xs font-semibold {{ $card['pct'] >= 0 ? 'text-emerald-600' : 'text-red-600' }}">
                             {{ $card['pct'] >= 0 ? '+' : '' }}{{ $card['pct'] }}% {{ __('dashboard.stat_vs_last_month') }}
                         </p>
                     @else
@@ -260,7 +260,7 @@
         </div>
 
         <div class="grid grid-cols-1 items-start gap-8 lg:grid-cols-12">
-            <div class="min-w-0 space-y-6 lg:col-span-8">
+            <div class="min-w-0 ui-stack-compact lg:col-span-8">
                 <div class="overflow-hidden rounded-3xl border border-slate-200/90 bg-white shadow-md shadow-slate-900/5 ring-1 ring-slate-100/90">
                     <div class="flex flex-col gap-4 border-b border-slate-100 bg-slate-50/90 px-5 py-4 sm:flex-row sm:items-center sm:justify-between">
                         <div>
@@ -370,8 +370,8 @@
                             </span>
                             <span class="text-xs font-semibold text-slate-900">{{ __('dashboard.finance') }}</span>
                         </a>
-                        <a href="{{ route('admin.service_monitor.index') }}" class="group flex flex-col items-center gap-2 rounded-2xl border border-rose-200/90 bg-rose-50/80 px-3 py-4 text-center shadow-sm transition hover:border-rose-300 hover:shadow-md">
-                            <span class="flex h-11 w-11 items-center justify-center rounded-xl bg-rose-100 text-rose-900 ring-1 ring-rose-200/80" aria-hidden="true">
+                        <a href="{{ route('admin.service_monitor.index') }}" class="group flex flex-col items-center gap-2 rounded-2xl border border-red-200/90 bg-red-50/80 px-3 py-4 text-center shadow-sm transition hover:border-red-300 hover:shadow-md">
+                            <span class="flex h-11 w-11 items-center justify-center rounded-xl bg-red-100 text-red-900 ring-1 ring-red-200/80" aria-hidden="true">
                                 <svg class="h-5 w-5" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M2.036 12.322a1.012 1.012 0 010-.639C3.423 7.51 7.36 4.5 12 4.5c4.638 0 8.573 3.007 9.963 7.178.07.207.07.431 0 .639C20.577 16.49 16.64 19.5 12 19.5c-4.638 0-8.573-3.007-9.963-7.178z" /><path stroke-linecap="round" stroke-linejoin="round" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" /></svg>
                             </span>
                             <span class="text-xs font-semibold text-slate-900">{{ __('nav.service_monitor') }}</span>

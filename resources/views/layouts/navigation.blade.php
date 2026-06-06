@@ -47,7 +47,7 @@
     }
 @endphp
 
-<nav x-data="{ open: false }" class="relative z-[90] bg-white/90 backdrop-blur border-b border-slate-200/80 shadow-sm" @resize.window="if (window.innerWidth >= 1024) open = false">
+<nav x-data="{ open: false }" class="relative z-[90] border-b border-slate-200/80 bg-white shadow-sm" @resize.window="if (window.innerWidth >= 1024) open = false">
     <!-- Primary Navigation Menu -->
     <x-page-container>
         <div class="flex min-h-16 min-w-0 items-center justify-between gap-2">
@@ -121,7 +121,7 @@
                             <span class="inline-flex items-center gap-2">
                                 {{ __('nav.verify_muthowif') }}
                                 @if ($adminPendingMuthowifCount > 0)
-                                    <span class="inline-flex min-h-[1.125rem] min-w-[1.125rem] items-center justify-center rounded-full bg-rose-600 px-2 text-[10px] font-semibold leading-none text-white">
+                                    <span class="inline-flex min-h-[1.125rem] min-w-[1.125rem] items-center justify-center rounded-full bg-red-600 px-2 text-[10px] font-semibold leading-none text-white">
                                         {{ $adminPendingMuthowifCount }}
                                     </span>
                                 @endif
@@ -170,7 +170,7 @@
                                     })"
                                     x-show="count > 0"
                                     x-cloak
-                                    class="inline-flex min-h-[1.125rem] min-w-[1.125rem] items-center justify-center rounded-full bg-rose-600 px-1 text-[10px] font-bold leading-none text-white shadow-sm"
+                                    class="inline-flex min-h-[1.125rem] min-w-[1.125rem] items-center justify-center rounded-full bg-red-600 px-1 text-[10px] font-bold leading-none text-white shadow-sm"
                                     x-bind:aria-label="count > 0 ? '{{ __('nav.booking_requests') }}: ' + displayLabel : null"
                                     x-text="displayLabel"
                                 ></span>
@@ -185,7 +185,7 @@
                 <div class="relative hidden lg:block">
                     <x-dropdown align="right" width="48">
                         <x-slot name="trigger">
-                            <button type="button" class="inline-flex items-center px-3 py-2 border border-transparent text-sm leading-4 font-medium rounded-md text-gray-500 bg-white hover:text-gray-700 focus:outline-none transition ease-in-out duration-150">
+                            <button type="button" class="inline-flex items-center px-3 py-2 border border-transparent text-sm leading-4 font-medium rounded-md text-slate-500 bg-white hover:text-slate-700 focus:outline-none transition ease-in-out duration-150">
                                 <div>{{ Auth::user()->name }}</div>
 
                                 <div class="ms-1">
@@ -215,7 +215,7 @@
                 </div>
                 <button
                     type="button"
-                    class="inline-flex shrink-0 items-center justify-center rounded-md p-2 text-gray-500 hover:bg-gray-100 hover:text-gray-700 focus:bg-gray-100 focus:text-gray-700 focus:outline-none lg:hidden"
+                    class="inline-flex shrink-0 items-center justify-center rounded-md p-2 text-slate-500 hover:bg-slate-100 hover:text-slate-700 focus:bg-slate-100 focus:text-slate-700 focus:outline-none lg:hidden"
                     @click="open = ! open"
                     :aria-expanded="open"
                     aria-controls="responsive-main-nav"
@@ -293,7 +293,7 @@
                     <span class="inline-flex items-center gap-2">
                         {{ __('nav.verify_muthowif') }}
                         @if ($adminPendingMuthowifCount > 0)
-                            <span class="inline-flex min-h-[1.125rem] min-w-[1.125rem] items-center justify-center rounded-full bg-rose-600 px-2 text-[10px] font-semibold leading-none text-white">
+                            <span class="inline-flex min-h-[1.125rem] min-w-[1.125rem] items-center justify-center rounded-full bg-red-600 px-2 text-[10px] font-semibold leading-none text-white">
                                 {{ $adminPendingMuthowifCount }}
                             </span>
                         @endif
@@ -341,7 +341,7 @@
                             })"
                             x-show="count > 0"
                             x-cloak
-                            class="inline-flex min-h-[1.125rem] min-w-[1.125rem] items-center justify-center rounded-full bg-rose-600 px-1 text-[10px] font-bold leading-none text-white shadow-sm"
+                            class="inline-flex min-h-[1.125rem] min-w-[1.125rem] items-center justify-center rounded-full bg-red-600 px-1 text-[10px] font-bold leading-none text-white shadow-sm"
                             x-bind:aria-label="count > 0 ? '{{ __('nav.booking_requests') }}: ' + displayLabel : null"
                             x-text="displayLabel"
                         ></span>
@@ -351,10 +351,10 @@
         </div>
 
         <!-- Responsive Settings Options -->
-        <div class="pt-4 pb-1 border-t border-gray-200">
+        <div class="pt-4 pb-1 border-t border-slate-200">
             <div class="px-4">
-                <div class="font-medium text-base text-gray-800">{{ Auth::user()->name }}</div>
-                <div class="font-medium text-sm text-gray-500">{{ Auth::user()->email }}</div>
+                <div class="font-medium text-base text-slate-800">{{ Auth::user()->name }}</div>
+                <div class="font-medium text-sm text-slate-500">{{ Auth::user()->email }}</div>
             </div>
 
             <div class="mt-3 space-y-1">

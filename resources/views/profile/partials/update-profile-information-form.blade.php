@@ -13,12 +13,12 @@
         @csrf
     </form>
 
-    <form method="post" action="{{ route('profile.update') }}" data-submit-lock="off" @submit="submit" class="mt-6 space-y-6">
+    <form method="post" action="{{ route('profile.update') }}" data-submit-lock="off" @submit="submit" class="mt-6 ui-stack-compact">
         @csrf
         @method('patch')
 
         <!-- Error alert banner -->
-        <div x-show="errorMessage" class="rounded-xl border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-900 shadow-sm" x-cloak>
+        <div x-show="errorMessage" class="ui-alert-error" x-cloak>
             <p class="font-semibold" x-text="errorMessage"></p>
             <ul class="mt-1.5 list-disc list-inside space-y-0.5 text-xs text-red-850">
                 <template x-for="(messages, key) in errors" :key="key">

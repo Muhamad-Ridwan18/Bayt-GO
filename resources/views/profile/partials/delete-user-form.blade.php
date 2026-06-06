@@ -1,4 +1,4 @@
-<section class="space-y-6">
+<section class="ui-stack-compact">
     <header>
         <h2 class="text-lg font-semibold text-slate-900">
             {{ __('profile.delete.title') }}

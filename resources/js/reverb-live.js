@@ -6,17 +6,62 @@ export function csrfToken() {
     return document.querySelector('meta[name="csrf-token"]')?.getAttribute('content') ?? '';
 }
 
-export function requireEcho(componentName) {
-    if (!window.Echo) {
-        console.error(
-            `[Reverb] Echo tidak tersedia (${componentName}). ` +
-                'Set BROADCAST_CONNECTION=reverb, jalankan `php artisan reverb:start`, dan build assets (VITE_REVERB_*).',
-        );
+let echoLoadPromise = null;
 
+/** Muat Echo/Reverb hanya saat dibutuhkan (code-split chunk terpisah). */
+export async function ensureEcho() {
+    if (window.Echo) {
+        return true;
+    }
+
+    if (!import.meta.env.VITE_REVERB_APP_KEY) {
         return false;
     }
 
-    return true;
+    if (!echoLoadPromise) {
+        echoLoadPromise = import('./echo.js')
+            .then(() => !!window.Echo)
+            .catch((err) => {
+                console.warn('[Reverb] Gagal memuat Echo:', err);
+
+                return false;
+            });
+    }
+
+    return echoLoadPromise;
+}
+
+/**
+ * Tunda subscribe WebSocket sampai browser idle — tidak memblokir paint/interaksi awal.
+ */
+export function deferRealtimeInit(componentName, fn, options = {}) {
+    const { idle = true, timeout = 2500, delay = 0 } = options;
+
+    const run = async () => {
+        if (!(await ensureEcho())) {
+            console.warn(
+                `[Reverb] Echo tidak tersedia (${componentName}). ` +
+                    'Set BROADCAST_CONNECTION=reverb dan VITE_REVERB_* lalu build ulang.',
+            );
+
+            return;
+        }
+
+        fn();
+    };
+
+    const schedule = () => setTimeout(() => void run(), delay);
+
+    if (idle && typeof requestIdleCallback === 'function') {
+        requestIdleCallback(schedule, { timeout });
+    } else {
+        schedule();
+    }
+}
+
+/** Cek sinkron — Echo mungkin belum dimuat (lazy). */
+export function requireEcho() {
+    return !!window.Echo;
 }
 
 /**
