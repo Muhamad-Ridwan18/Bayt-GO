@@ -343,6 +343,7 @@ return [
         'recipients_required' => 'Pilih minimal satu muthowif atau isi nomor bebas.',
         'no_valid_recipients' => 'Tidak ada nomor valid yang bisa dikirimi.',
         'too_many_recipients' => 'Maksimal 500 penerima per broadcast.',
+        'queued' => 'Broadcast ke :count penerima sedang diproses di background. Pantau log jika ada kegagalan.',
         'result_sent' => ':count pesan berhasil dikirim.',
         'result_failed' => ':count gagal.',
         'result_invalid' => ':count nomor tidak valid (:sample).',

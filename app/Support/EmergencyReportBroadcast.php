@@ -6,36 +6,39 @@ use App\Events\EmergencyReportUpdated;
 use App\Models\BookingEmergencyReport;
 use App\Models\BookingReplacementOffer;
 use App\Models\MuthowifProfile;
-use Illuminate\Support\Facades\DB;
 
 final class EmergencyReportBroadcast
 {
     /**
      * @param  list<string>  $notifyUserIds
      */
-    public static function afterResponse(
+    public static function notify(
         BookingEmergencyReport|string $report,
         ?string $action = null,
         array $notifyUserIds = [],
     ): void {
-        $reportId = (string) ($report instanceof BookingEmergencyReport ? $report->getKey() : $report);
+        $model = $report instanceof BookingEmergencyReport
+            ? $report
+            : BookingEmergencyReport::query()->find((string) $report);
+
+        if ($model === null) {
+            return;
+        }
+
         $ids = array_values(array_unique(array_filter(
             array_map(static fn ($id) => trim((string) $id), $notifyUserIds),
             static fn (string $id): bool => $id !== '',
         )));
 
-        if ($reportId === '') {
-            return;
-        }
+        ReverbBroadcast::send(new EmergencyReportUpdated($model, $action, $ids), 'emergency');
+    }
 
-        DB::afterCommit(static function () use ($reportId, $action, $ids): void {
-            dispatch(static function () use ($reportId, $action, $ids): void {
-                $report = BookingEmergencyReport::query()->find($reportId);
-                if ($report !== null) {
-                    broadcast(new EmergencyReportUpdated($report, $action, $ids));
-                }
-            })->afterResponse();
-        });
+    public static function afterResponse(
+        BookingEmergencyReport|string $report,
+        ?string $action = null,
+        array $notifyUserIds = [],
+    ): void {
+        self::notify($report, $action, $notifyUserIds);
     }
 
     /**

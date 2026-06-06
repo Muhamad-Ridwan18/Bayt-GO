@@ -343,6 +343,7 @@ return [
         'recipients_required' => 'Select at least one muthowif or enter free-form numbers.',
         'no_valid_recipients' => 'No valid phone numbers to send to.',
         'too_many_recipients' => 'Maximum 500 recipients per broadcast.',
+        'queued' => 'Broadcast to :count recipients is processing in the background. Check logs if any fail.',
         'result_sent' => ':count messages sent successfully.',
         'result_failed' => ':count failed.',
         'result_invalid' => ':count invalid numbers (:sample).',

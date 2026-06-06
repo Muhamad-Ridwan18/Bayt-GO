@@ -4,6 +4,7 @@ namespace App\Http\Controllers\Admin;
 
 use App\Enums\MuthowifVerificationStatus;
 use App\Http\Controllers\Controller;
+use App\Jobs\ProcessWhatsAppBroadcastJob;
 use App\Models\MuthowifProfile;
 use App\Services\WhatsAppBroadcastService;
 use App\Support\WhatsAppMediaUrl;
@@ -147,7 +148,7 @@ class WhatsAppBroadcastController extends Controller
             $attachmentFilename = $attachment->getClientOriginalName();
         }
 
-        $result = $this->broadcast->send(
+        ProcessWhatsAppBroadcastJob::dispatch(
             trim((string) ($validated['message'] ?? '')),
             $profileIds,
             $freeNumbers,
@@ -156,28 +157,9 @@ class WhatsAppBroadcastController extends Controller
             $attachmentPublicUrl,
         );
 
-        $statusParts = [
-            __('admin.whatsapp_broadcast.result_sent', ['count' => $result['sent']]),
-        ];
-
-        if ($result['failed'] > 0) {
-            $statusParts[] = __('admin.whatsapp_broadcast.result_failed', ['count' => $result['failed']]);
-        }
-
-        if ($result['invalid_numbers'] !== []) {
-            $invalidSample = implode(', ', array_slice($result['invalid_numbers'], 0, 5));
-            $statusParts[] = __('admin.whatsapp_broadcast.result_invalid', [
-                'count' => count($result['invalid_numbers']),
-                'sample' => $invalidSample,
-            ]);
-        }
-
-        $redirect = back()->with('status', implode(' ', $statusParts));
-
-        if ($result['failures'] !== []) {
-            $redirect->with('broadcast_failures', array_slice($result['failures'], 0, 20));
-        }
-
-        return $redirect;
+        return back()->with(
+            'status',
+            __('admin.whatsapp_broadcast.queued', ['count' => count($preview['recipients'])]),
+        );
     }
 }

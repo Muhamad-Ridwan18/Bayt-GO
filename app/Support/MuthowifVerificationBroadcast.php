@@ -4,24 +4,22 @@ namespace App\Support;
 
 use App\Events\MuthowifVerificationUpdated;
 use App\Models\MuthowifProfile;
-use Illuminate\Support\Facades\DB;
 
 final class MuthowifVerificationBroadcast
 {
+    public static function notify(MuthowifProfile|string $profile): void
+    {
+        $model = $profile instanceof MuthowifProfile
+            ? $profile
+            : MuthowifProfile::query()->find((string) $profile);
+
+        if ($model !== null) {
+            ReverbBroadcast::send(new MuthowifVerificationUpdated($model), 'muthowif_verification');
+        }
+    }
+
     public static function afterResponse(MuthowifProfile|string $profile): void
     {
-        $id = (string) ($profile instanceof MuthowifProfile ? $profile->getKey() : $profile);
-        if ($id === '') {
-            return;
-        }
-
-        DB::afterCommit(static function () use ($id): void {
-            dispatch(static function () use ($id): void {
-                $row = MuthowifProfile::query()->find($id);
-                if ($row !== null) {
-                    broadcast(new MuthowifVerificationUpdated($row));
-                }
-            })->afterResponse();
-        });
+        self::notify($profile);
     }
 }

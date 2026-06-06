@@ -4,24 +4,22 @@ namespace App\Support;
 
 use App\Events\SupportTicketUpdated;
 use App\Models\SupportTicket;
-use Illuminate\Support\Facades\DB;
 
 final class SupportTicketBroadcast
 {
+    public static function notify(SupportTicket|string $ticket, ?string $action = null): void
+    {
+        $model = $ticket instanceof SupportTicket
+            ? $ticket
+            : SupportTicket::query()->find((string) $ticket);
+
+        if ($model !== null) {
+            ReverbBroadcast::send(new SupportTicketUpdated($model, $action), 'support_ticket');
+        }
+    }
+
     public static function afterResponse(SupportTicket $ticket, ?string $action = null): void
     {
-        $ticketId = (string) $ticket->getKey();
-        if ($ticketId === '') {
-            return;
-        }
-
-        DB::afterCommit(static function () use ($ticketId, $action): void {
-            dispatch(static function () use ($ticketId, $action): void {
-                $ticket = SupportTicket::query()->find($ticketId);
-                if ($ticket !== null) {
-                    broadcast(new SupportTicketUpdated($ticket, $action));
-                }
-            })->afterResponse();
-        });
+        self::notify($ticket, $action);
     }
 }

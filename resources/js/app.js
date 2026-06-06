@@ -1114,11 +1114,13 @@ document.addEventListener('alpine:init', () => {
         init() {
             this.debouncedRefresh = debounce(() => void this.refreshFragment(), 450);
 
+            const echoReady = this.userId && requireEcho('customerBookingLive');
+
             if (this.paymentReturnPending && this.liveMode === 'customer_show') {
-                this.startPaymentReturnPolling();
+                this.startPaymentReturnPolling(echoReady);
             }
 
-            if (!this.userId || !requireEcho('customerBookingLive')) {
+            if (!echoReady) {
                 return;
             }
 
@@ -1158,8 +1160,13 @@ document.addEventListener('alpine:init', () => {
             if (!isIndex && this.bookingId && String(e.booking_id) !== String(this.bookingId)) {
                 return;
             }
-            if (this.liveMode === 'customer_payment') {
+            if (this.liveMode === 'customer_payment' || (this.paymentReturnPending && e.payment_status === 'paid')) {
                 if (this.showUrl && (e.payment_status === 'paid' || e.status === 'cancelled')) {
+                    this.paymentReturnPending = false;
+                    if (this.paymentPollTimer !== null) {
+                        window.clearTimeout(this.paymentPollTimer);
+                        this.paymentPollTimer = null;
+                    }
                     window.location.replace(this.showUrl);
                 }
                 return;
@@ -1195,10 +1202,12 @@ document.addEventListener('alpine:init', () => {
             return qs ? `?${qs}` : '';
         },
 
-        startPaymentReturnPolling() {
+        startPaymentReturnPolling(echoReady = false) {
             if (!this.paymentStatusUrl || this.paymentPollTimer !== null) {
                 return;
             }
+
+            const intervalMs = echoReady ? 8000 : 3000;
 
             const poll = async () => {
                 try {
@@ -1216,7 +1225,7 @@ document.addEventListener('alpine:init', () => {
                     console.error(err);
                 }
 
-                this.paymentPollTimer = window.setTimeout(poll, 2500);
+                this.paymentPollTimer = window.setTimeout(poll, intervalMs);
             };
 
             void poll();
