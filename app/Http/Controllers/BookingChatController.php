@@ -3,9 +3,9 @@
 namespace App\Http\Controllers;
 
 use App\Http\Resources\BookingChatMessageResource;
+use App\Jobs\OptimizeBookingChatImageJob;
 use App\Models\BookingChatMessage;
 use App\Models\MuthowifBooking;
-use App\Services\UploadedImageOptimizer;
 use App\Support\BookingChatBroadcast;
 use App\Support\StoredImageResponse;
 use Illuminate\Http\JsonResponse;
@@ -75,12 +75,8 @@ class BookingChatController extends Controller
 
         $imagePath = null;
         if ($upload !== null) {
-            $imagePath = app(UploadedImageOptimizer::class)->store(
-                $upload,
-                'booking-chat/'.$booking->getKey(),
-                'local',
-                'chat',
-            );
+            $stored = $upload->store('booking-chat/'.$booking->getKey(), 'local');
+            $imagePath = $stored !== false ? $stored : null;
         }
 
         $message = $booking->chatMessages()->create([
@@ -89,9 +85,13 @@ class BookingChatController extends Controller
             'image_path' => $imagePath,
         ]);
 
+        if ($imagePath !== null) {
+            OptimizeBookingChatImageJob::dispatch((string) $message->getKey());
+        }
+
         $message->load('sender:id,name');
 
-        BookingChatBroadcast::afterResponse(
+        BookingChatBroadcast::notify(
             $booking,
             'message',
             (string) $message->getKey(),

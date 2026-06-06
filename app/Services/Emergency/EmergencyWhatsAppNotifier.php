@@ -2,6 +2,7 @@
 
 namespace App\Services\Emergency;
 
+use App\Jobs\SendWhatsAppTextJob;
 use App\Models\BookingEmergencyReport;
 use App\Models\BookingReplacementOffer;
 use App\Services\FonnteService;
@@ -11,8 +12,6 @@ use RuntimeException;
 
 final class EmergencyWhatsAppNotifier
 {
-    private const SEND_DELAY_MICROSECONDS = 300_000;
-
     public function __construct(
         private readonly FonnteService $fonnte,
     ) {}
@@ -295,12 +294,7 @@ final class EmergencyWhatsAppNotifier
             return;
         }
 
-        $sent = false;
         foreach ($phones as $index => $phone) {
-            if ($index > 0 && $sent) {
-                usleep(self::SEND_DELAY_MICROSECONDS);
-            }
-
             $dial = IntlPhone::fonnteDial((string) $phone);
             if ($dial === null) {
                 Log::warning('WhatsApp emergency admin notify skipped: nomor tidak valid.', [
@@ -311,8 +305,15 @@ final class EmergencyWhatsAppNotifier
                 continue;
             }
 
-            $this->sendToTarget($dial, $message, $contextId);
-            $sent = true;
+            $job = SendWhatsAppTextJob::dispatch(
+                $dial['target'],
+                $message,
+                $dial['country_calling_code'],
+            );
+
+            if ($index > 0) {
+                $job->delay(now()->addMilliseconds($index * 300));
+            }
         }
     }
 

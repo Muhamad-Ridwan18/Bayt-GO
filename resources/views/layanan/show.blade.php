@@ -7,7 +7,7 @@
     $reviewsCount = (int) ($profile->booking_reviews_count ?? 0);
     $avgRating = $profile->booking_reviews_avg_rating !== null ? round((float) $profile->booking_reviews_avg_rating, 1) : null;
     $confirmedBookings = (int) ($profile->confirmed_bookings_count ?? 0);
-    $blockedCount = $profile->blockedDates->count();
+    $blockedCount = (int) ($profile->blocked_dates_count ?? $profile->blockedDates->count());
 
     $searchRangeLabel = null;
     if ($startDate !== '') {

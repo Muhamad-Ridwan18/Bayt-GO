@@ -2,9 +2,9 @@
 
 namespace App\Http\Controllers\Public;
 
-use App\Enums\BookingStatus;
 use App\Http\Controllers\Controller;
 use App\Models\MuthowifProfile;
+use App\Support\MarketplaceSearchCache;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
 use Illuminate\Pagination\LengthAwarePaginator;
@@ -97,25 +97,7 @@ class MuthowifDirectoryController extends Controller
         $startStr = $start->toDateString();
         $endStr = $end->toDateString();
 
-        $blockingStatuses = array_map(
-            static fn (BookingStatus $s) => $s->value,
-            BookingStatus::blocksAvailability()
-        );
-
-        $profiles = $this->marketplaceBaseQuery()
-            ->whereDoesntHave('blockedDates', function ($q) use ($startStr, $endStr) {
-                $q->whereBetween('blocked_on', [$startStr, $endStr]);
-            })
-            ->whereDoesntHave('bookings', function ($q) use ($startStr, $endStr, $blockingStatuses) {
-                $q->whereIn('status', $blockingStatuses)
-                    ->where('starts_on', '<=', $endStr)
-                    ->where('ends_on', '>=', $startStr);
-            })
-            ->when($q !== '', function ($query) use ($q) {
-                $query->whereHas('user', fn ($u) => $u->where('name', 'like', '%'.$q.'%'));
-            })
-            ->orderByMarketplaceRanking()
-            ->paginate(12)
+        $profiles = MarketplaceSearchCache::paginate($request, $startStr, $endStr, $q)
             ->withQueryString();
 
         return view('layanan.index', [
@@ -131,25 +113,33 @@ class MuthowifDirectoryController extends Controller
 
     public function show(Request $request, MuthowifProfile $publicProfile): View
     {
+        $portfolioPreviewLimit = max(1, (int) config('marketplace.profile_portfolio_preview_limit', 3));
+        $portfolioImagesLimit = max(1, (int) config('marketplace.profile_portfolio_images_limit', 12));
+        $blockedDatesLimit = max(1, (int) config('marketplace.profile_blocked_dates_limit', 60));
+        $today = now()->toDateString();
+
         $publicProfile->load([
             'user',
             'services.addOns',
             'portfolios' => fn ($q) => $q
-                ->with('images')
+                ->with(['images' => fn ($images) => $images->orderBy('sort_order')->limit($portfolioImagesLimit)])
                 ->orderBy('sort_order')
-                ->orderByDesc('created_at'),
+                ->orderByDesc('created_at')
+                ->limit($portfolioPreviewLimit),
             'bookingReviews' => fn ($q) => $q
-                ->with('customer')
+                ->with('customer:id,name')
                 ->latest()
                 ->limit(10),
             'blockedDates' => fn ($q) => $q
-                ->where('blocked_on', '>=', now()->toDateString())
+                ->where('blocked_on', '>=', $today)
                 ->orderBy('blocked_on')
-                ->limit(120),
+                ->limit($blockedDatesLimit),
         ]);
         $publicProfile->loadCount([
-            'bookings as confirmed_bookings_count' => static fn ($q) => $q->where('status', BookingStatus::Confirmed),
+            'bookings as confirmed_bookings_count' => static fn ($q) => $q->where('status', \App\Enums\BookingStatus::Confirmed),
             'bookingReviews',
+            'portfolios',
+            'blockedDates' => static fn ($q) => $q->where('blocked_on', '>=', $today),
         ]);
         $publicProfile->loadAvg('bookingReviews', 'rating');
 
@@ -301,15 +291,4 @@ class MuthowifDirectoryController extends Controller
         ]);
     }
 
-    /**
-     * @return \Illuminate\Database\Eloquent\Builder<MuthowifProfile>
-     */
-    private function marketplaceBaseQuery()
-    {
-        return MuthowifProfile::query()
-            ->with(['user', 'services'])
-            ->approved()
-            ->hasPublishedServices()
-            ->withMarketplaceStats();
-    }
 }

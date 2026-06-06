@@ -105,9 +105,9 @@
                     </button>
                 @endforeach
             </div>
-            @if ($profile->portfolios->count() > 3)
+            @if ((int) ($profile->portfolios_count ?? $profile->portfolios->count()) > 3)
                 <a href="{{ route('layanan.portfolio.index', $profile) }}" class="mt-4 inline-block text-sm font-semibold text-brand-700 hover:text-brand-800">
-                    {{ __('marketplace.show.gallery_see_all') }} ({{ $profile->portfolios->count() }})
+                    {{ __('marketplace.show.gallery_see_all') }} ({{ (int) ($profile->portfolios_count ?? $profile->portfolios->count()) }})
                 </a>
             @endif
 
