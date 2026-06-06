@@ -3,15 +3,14 @@
 namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
-use App\Support\BookingChatBroadcast;
 use App\Http\Resources\BookingChatMessageResource;
 use App\Models\BookingChatMessage;
 use App\Models\MuthowifBooking;
 use App\Services\UploadedImageOptimizer;
+use App\Support\BookingChatBroadcast;
+use App\Support\StoredImageResponse;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
-use App\Support\StoredImageResponse;
-use Illuminate\Support\Facades\Storage;
 use Symfony\Component\HttpFoundation\Response;
 
 class BookingChatApiController extends Controller
@@ -22,33 +21,32 @@ class BookingChatApiController extends Controller
 
         $readerId = $request->user()->id;
 
-        // Mark messages from others as read
-        $toMark = $booking->chatMessages()
-            ->where('user_id', '!=', $readerId)
-            ->whereNull('read_at');
-
-        if ($toMark->exists()) {
-            $toMark->update(['read_at' => now()]);
-        }
-
-        // Support pagination via `after_id` for polling
-        $query = $booking->chatMessages()
-            ->with('sender:id,name')
-            ->orderBy('created_at', 'asc');
-
         if ($request->filled('after_id')) {
-            $pivotMessage = BookingChatMessage::find($request->input('after_id'));
-            if ($pivotMessage) {
-                $query->where('created_at', '>', $pivotMessage->created_at);
-            }
-        } else {
-            // Initial load: return last 50 messages
+            $pivotMessage = BookingChatMessage::query()
+                ->where('muthowif_booking_id', $booking->getKey())
+                ->find($request->input('after_id'));
+
             $query = $booking->chatMessages()
                 ->with('sender:id,name')
-                ->orderBy('created_at', 'desc')
-                ->limit(50);
+                ->orderBy('created_at');
 
-            $messages = $query->get()->reverse()->values();
+            if ($pivotMessage !== null) {
+                $query->where('created_at', '>', $pivotMessage->created_at);
+            }
+
+            $messages = $query->get();
+
+            if ($messages->isNotEmpty()) {
+                $marked = $booking->chatMessages()
+                    ->where('user_id', '!=', $readerId)
+                    ->whereNull('read_at')
+                    ->whereIn('id', $messages->pluck('id'))
+                    ->update(['read_at' => now()]);
+
+                if ($marked > 0) {
+                    BookingChatBroadcast::afterResponse($booking, 'read', null, (string) $readerId);
+                }
+            }
 
             return response()->json([
                 'messages' => BookingChatMessageResource::collection($messages),
@@ -56,7 +54,22 @@ class BookingChatApiController extends Controller
             ]);
         }
 
-        $messages = $query->get();
+        $marked = $booking->chatMessages()
+            ->where('user_id', '!=', $readerId)
+            ->whereNull('read_at')
+            ->update(['read_at' => now()]);
+
+        if ($marked > 0) {
+            BookingChatBroadcast::afterResponse($booking, 'read', null, (string) $readerId);
+        }
+
+        $messages = $booking->chatMessages()
+            ->with('sender:id,name')
+            ->orderByDesc('created_at')
+            ->limit(50)
+            ->get()
+            ->reverse()
+            ->values();
 
         return response()->json([
             'messages' => BookingChatMessageResource::collection($messages),
@@ -98,11 +111,16 @@ class BookingChatApiController extends Controller
 
         $message->load('sender:id,name');
 
-        BookingChatBroadcast::afterResponse($booking);
+        BookingChatBroadcast::afterResponse(
+            $booking,
+            'message',
+            (string) $message->getKey(),
+            (string) $request->user()->id,
+        );
 
         return response()->json([
             'message' => new BookingChatMessageResource($message),
-            'chat_open' => $booking->fresh()->isBookingChatOpen(),
+            'chat_open' => $booking->isBookingChatOpen(),
         ], 201);
     }
 

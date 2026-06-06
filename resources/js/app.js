@@ -8,6 +8,8 @@ registerDateRangePicker(Alpine);
 
 initFormSubmitLock();
 import {
+    appendChatMessages,
+    chatMessagesUrl,
     csrfToken,
     debounce,
     fetchHtmlFragment,
@@ -484,6 +486,7 @@ document.addEventListener('alpine:init', () => {
         
         userChannel: null,
         subscribedChannels: [],
+        debouncedListRefresh: null,
 
         get unreadTotal() {
             return this.conversations.reduce((sum, c) => sum + (Number(c.unread_count) || 0), 0);
@@ -580,8 +583,8 @@ document.addEventListener('alpine:init', () => {
 
         ensureBookingChannel(bookingId) {
             if (!window.Echo || this.bookingChannelIds.has(bookingId)) return;
-            window.Echo.private(`booking.chat.${bookingId}`).listen('BookingChatUpdated', () => {
-                this.onBookingChatEvent(bookingId);
+            window.Echo.private(`booking.chat.${bookingId}`).listen('.chat.updated', (payload) => {
+                this.onBookingChatEvent(bookingId, payload);
             });
             this.bookingChannelIds.add(bookingId);
         },
@@ -592,11 +595,107 @@ document.addEventListener('alpine:init', () => {
             this.bookingChannelIds.delete(bookingId);
         },
 
-        onBookingChatEvent(bookingId) {
-            if (this.activeConversation && String(this.activeConversation.id) === bookingId && this.view === 'chat') {
-                this.loadChatMessages(true);
+        onBookingChatEvent(bookingId, payload = {}) {
+            const id = String(bookingId);
+            const action = payload?.action ?? 'message';
+
+            if (action === 'read') {
+                if (this.activeConversation && String(this.activeConversation.id) === id && this.view === 'chat') {
+                    this.messages.forEach((m) => {
+                        if (m.is_me) {
+                            m.is_read = true;
+                        }
+                    });
+                }
+
+                return;
             }
-            this.loadList();
+
+            if (payload?.message_id && this.messages.some((m) => m.id === payload.message_id)) {
+                return;
+            }
+
+            if (payload?.sender_id && String(payload.sender_id) === String(this.userId)) {
+                return;
+            }
+
+            const conv = this.conversations.find((c) => String(c.id) === id);
+            const viewing = this.activeConversation && String(this.activeConversation.id) === id && this.view === 'chat';
+
+            if (conv) {
+                if (viewing) {
+                    conv.unread_count = 0;
+                    void this.fetchNewMessages();
+                } else {
+                    conv.unread_count = (Number(conv.unread_count) || 0) + 1;
+                    conv.last_message = 'Pesan baru';
+                }
+            } else if (viewing) {
+                void this.fetchNewMessages();
+            }
+
+            if (!viewing && this.isPanelExpanded && this.view === 'list') {
+                this.debouncedListRefresh?.();
+            }
+        },
+
+        appendMessage(message) {
+            if (!message?.id) {
+                return;
+            }
+
+            this.messages = appendChatMessages(this.messages, [message]);
+
+            const conv = this.conversations.find((c) => String(c.id) === String(this.activeConversation?.id));
+            if (conv) {
+                conv.last_message = message.body?.trim() || '📷 Gambar';
+                conv.last_message_time = message.created_at || new Date().toISOString();
+                conv.unread_count = 0;
+            }
+        },
+
+        async fetchNewMessages() {
+            if (!this.activeConversation) {
+                return;
+            }
+
+            const lastId = this.messages.length ? this.messages[this.messages.length - 1].id : null;
+            const url = chatMessagesUrl(this.activeConversation.fetchUrl, lastId);
+
+            try {
+                const r = await fetch(url, {
+                    headers: { Accept: 'application/json', 'X-Requested-With': 'XMLHttpRequest' },
+                    credentials: 'same-origin',
+                });
+                if (!r.ok) {
+                    return;
+                }
+
+                const data = await r.json();
+                const incoming = data.messages ?? [];
+                if (!incoming.length) {
+                    return;
+                }
+
+                this.messages = appendChatMessages(this.messages, incoming);
+                if (data.chat_open !== undefined) {
+                    this.activeConversation.is_open = !!data.chat_open;
+                }
+
+                const conv = this.conversations.find((c) => String(c.id) === String(this.activeConversation.id));
+                if (conv) {
+                    conv.unread_count = Number(data.unread_for_me) || 0;
+                    const last = incoming[incoming.length - 1];
+                    conv.last_message = last.body?.trim() || '📷 Gambar';
+                    conv.last_message_time = last.created_at || conv.last_message_time;
+                }
+
+                if (this.isPanelExpanded && this.view === 'chat') {
+                    this.scrollToLatest({ force: true });
+                }
+            } catch (e) {
+                console.error(e);
+            }
         },
 
         pickImage(event) {
@@ -709,8 +808,13 @@ document.addEventListener('alpine:init', () => {
                 
                 this.body = '';
                 this.clearImage();
-                if (data.chat_open !== undefined) this.activeConversation.is_open = !!data.chat_open;
-                await this.loadChatMessages(true);
+                if (data.chat_open !== undefined) {
+                    this.activeConversation.is_open = !!data.chat_open;
+                }
+                if (data.message) {
+                    this.appendMessage(data.message);
+                    this.scrollToLatest({ force: true });
+                }
             } catch (e) {
                 this.error = e instanceof Error ? e.message : this.labels.sendError;
             } finally {
@@ -723,6 +827,7 @@ document.addEventListener('alpine:init', () => {
                 return;
             }
 
+            this.debouncedListRefresh = debounce(() => void this.loadList(), 1200);
             this.loadList();
 
             if (this.userId) {
@@ -897,8 +1002,13 @@ document.addEventListener('alpine:init', () => {
                 }
                 this.body = '';
                 this.clearImage();
-                if (data.chat_open !== undefined) this.chatOpen = !!data.chat_open;
-                await this.loadMessages(true);
+                if (data.chat_open !== undefined) {
+                    this.chatOpen = !!data.chat_open;
+                }
+                if (data.message) {
+                    this.messages = appendChatMessages(this.messages, [data.message]);
+                    this.scrollToLatest({ force: true });
+                }
             } catch (e) {
                 this.error = e instanceof Error ? e.message : this.labels.sendError;
             } finally {
@@ -906,9 +1016,57 @@ document.addEventListener('alpine:init', () => {
             }
         },
 
-        onChatSocket() {
+        async fetchNewMessages() {
+            const lastId = this.messages.length ? this.messages[this.messages.length - 1].id : null;
+            const url = chatMessagesUrl(this.fetchUrl, lastId);
+
+            try {
+                const r = await fetch(url, {
+                    headers: { Accept: 'application/json', 'X-Requested-With': 'XMLHttpRequest' },
+                    credentials: 'same-origin',
+                });
+                if (!r.ok) {
+                    return;
+                }
+
+                const data = await r.json();
+                const incoming = data.messages ?? [];
+                if (!incoming.length) {
+                    return;
+                }
+
+                this.messages = appendChatMessages(this.messages, incoming);
+                if (data.chat_open !== undefined) {
+                    this.chatOpen = !!data.chat_open;
+                }
+                this.unreadForMe = Number(data.unread_for_me) || 0;
+                if (this.isPanelExpanded) {
+                    this.scrollToLatest({ force: true });
+                }
+            } catch (e) {
+                console.error(e);
+            }
+        },
+
+        onChatSocket(payload = {}) {
+            const action = payload?.action ?? 'message';
+
+            if (action === 'read') {
+                this.messages.forEach((m) => {
+                    if (m.is_me) {
+                        m.is_read = true;
+                    }
+                });
+
+                return;
+            }
+
+            if (payload?.message_id && this.messages.some((m) => m.id === payload.message_id)) {
+                return;
+            }
+
             if (this.isPanelExpanded) {
-                this.loadMessages(true);
+                void this.fetchNewMessages();
             } else {
                 this.refreshUnreadOnly();
             }
@@ -922,8 +1080,8 @@ document.addEventListener('alpine:init', () => {
             this.refreshUnreadOnly();
 
             const chatChannel = `booking.chat.${this.bookingId}`;
-            window.Echo.private(chatChannel).listen('BookingChatUpdated', () => {
-                this.onChatSocket();
+            window.Echo.private(chatChannel).listen('.chat.updated', (payload) => {
+                this.onChatSocket(payload);
             });
             this.subscribedChannels = [chatChannel];
         },

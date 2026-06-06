@@ -139,11 +139,12 @@ export function connectPusher(token, { onConnected, onDisconnected, onError } = 
  */
 export function subscribeToBookingChat(token, bookingId, onUpdate) {
   const channelName = `private-booking.chat.${bookingId}`;
-  const eventName   = 'App\\Events\\BookingChatUpdated';
+  const eventNames = new Set(['chat.updated', 'App\\Events\\BookingChatUpdated', 'BookingChatUpdated']);
 
   const callback = (msg) => {
-    if (msg.event === eventName || msg.event === 'BookingChatUpdated') {
-      onUpdate(msg.data);
+    if (eventNames.has(msg.event)) {
+      const data = typeof msg.data === 'string' ? JSON.parse(msg.data) : msg.data;
+      onUpdate(data);
     }
   };
 

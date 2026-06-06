@@ -35,12 +35,15 @@ export default function ChatScreen({ user, route, navigation }) {
   const [imageUri, setImageUri] = useState(null);
 
   const flatListRef = useRef(null);
+  const messagesRef = useRef([]);
 
   // ─── Load initial messages ────────────────────────────────────────────────
   const loadMessages = useCallback(async () => {
     try {
       const data = await apiClient.getChatMessages(user.token, bookingId);
-      setMessages(data.messages ?? []);
+      const next = data.messages ?? [];
+      messagesRef.current = next;
+      setMessages(next);
       setChatOpen(data.chat_open ?? false);
     } catch {
       Alert.alert('Error', 'Gagal memuat pesan chat.');
@@ -60,12 +63,50 @@ export default function ChatScreen({ user, route, navigation }) {
     pusher.connection.bind('disconnected', () => setConnected(false));
     pusher.connection.bind('error',        () => setConnected(false));
 
-    const subscription = subscribeToBookingChat(user.token, bookingId, () => {
-      // Reload semua pesan ketika ada event baru dari Reverb
-      apiClient.getChatMessages(user.token, bookingId).then((data) => {
-        setMessages(data.messages ?? []);
+    const subscription = subscribeToBookingChat(user.token, bookingId, async (payload) => {
+      const action = payload?.action ?? 'message';
+
+      if (action === 'read') {
+        setMessages((prev) => {
+          const next = prev.map((m) => (m.is_me ? { ...m, is_read: true } : m));
+          messagesRef.current = next;
+          return next;
+        });
+        return;
+      }
+
+      if (payload?.sender_id && String(payload.sender_id) === String(user.id)) {
+        return;
+      }
+
+      const prev = messagesRef.current;
+      if (payload?.message_id && prev.some((m) => m.id === payload.message_id)) {
+        return;
+      }
+
+      const lastId = prev.length ? prev[prev.length - 1].id : null;
+
+      try {
+        const data = await apiClient.getChatMessages(user.token, bookingId, lastId);
+        const incoming = data.messages ?? [];
+        if (!incoming.length) {
+          return;
+        }
+
+        const known = new Set(prev.map((m) => m.id));
+        const merged = [...prev];
+        for (const msg of incoming) {
+          if (!known.has(msg.id)) {
+            merged.push(msg);
+          }
+        }
+
+        messagesRef.current = merged;
+        setMessages(merged);
         setChatOpen(data.chat_open ?? false);
-      }).catch(() => {});
+      } catch {
+        /* ignore */
+      }
     });
 
     return () => {
@@ -92,7 +133,11 @@ export default function ChatScreen({ user, route, navigation }) {
 
     try {
       const data = await apiClient.sendChatMessage(user.token, bookingId, sentBody, sentImage);
-      setMessages((prev) => [...prev, data.message]);
+      setMessages((prev) => {
+        const next = [...prev, data.message];
+        messagesRef.current = next;
+        return next;
+      });
       setChatOpen(data.chat_open ?? true);
     } catch (err) {
       Alert.alert('Gagal', err.message);

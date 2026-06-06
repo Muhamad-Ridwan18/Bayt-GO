@@ -3,13 +3,13 @@
 namespace App\Http\Controllers;
 
 use App\Http\Resources\BookingChatMessageResource;
-use App\Support\BookingChatBroadcast;
 use App\Models\BookingChatMessage;
 use App\Models\MuthowifBooking;
 use App\Services\UploadedImageOptimizer;
+use App\Support\BookingChatBroadcast;
+use App\Support\StoredImageResponse;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
-use App\Support\StoredImageResponse;
 use Illuminate\Support\Facades\Storage;
 use Symfony\Component\HttpFoundation\Response;
 
@@ -19,12 +19,9 @@ class BookingChatController extends Controller
     {
         $this->authorize('viewBookingChat', $booking);
 
-        $n = $booking->chatMessages()
-            ->where('user_id', '!=', $request->user()->id)
-            ->whereNull('read_at')
-            ->count();
-
-        return response()->json(['unread_for_me' => $n]);
+        return response()->json([
+            'unread_for_me' => $this->unreadCountFor($booking, $request->user()->id),
+        ]);
     }
 
     public function index(Request $request, MuthowifBooking $booking): JsonResponse
@@ -33,33 +30,11 @@ class BookingChatController extends Controller
 
         $readerId = $request->user()->id;
 
-        // Mark as read secara efisien
-        $toMark = $booking->chatMessages()
-            ->where('user_id', '!=', $readerId)
-            ->whereNull('read_at');
-
-        if ($toMark->exists()) {
-            $toMark->update(['read_at' => now()]);
-            BookingChatBroadcast::afterResponse($booking);
+        if ($request->filled('after_id')) {
+            return $this->incrementalMessages($request, $booking, $readerId);
         }
 
-        // Gunakan Cursor Pagination untuk performa chat yang lebih baik
-        $messages = $booking->chatMessages()
-            ->with('sender:id,name')
-            ->orderBy('created_at', 'desc')
-            ->cursorPaginate(30);
-
-        $unreadForMe = $booking->chatMessages()
-            ->where('user_id', '!=', $readerId)
-            ->whereNull('read_at')
-            ->count();
-
-        return response()->json([
-            'messages' => BookingChatMessageResource::collection($messages->getCollection()->reverse()),
-            'next_cursor' => $messages->nextCursor()?->encode(),
-            'chat_open' => $booking->isBookingChatOpen(),
-            'unread_for_me' => $unreadForMe,
-        ]);
+        return $this->initialMessages($booking, $readerId);
     }
 
     public function store(Request $request, MuthowifBooking $booking): JsonResponse
@@ -96,11 +71,16 @@ class BookingChatController extends Controller
 
         $message->load('sender:id,name');
 
-        BookingChatBroadcast::afterResponse($booking);
+        BookingChatBroadcast::afterResponse(
+            $booking,
+            'message',
+            (string) $message->getKey(),
+            (string) $request->user()->id,
+        );
 
         return response()->json([
             'message' => new BookingChatMessageResource($message),
-            'chat_open' => $booking->fresh()->isBookingChatOpen(),
+            'chat_open' => $booking->isBookingChatOpen(),
         ], 201);
     }
 
@@ -119,5 +99,75 @@ class BookingChatController extends Controller
             basename($message->image_path),
             visibility: 'private',
         );
+    }
+
+    private function initialMessages(MuthowifBooking $booking, mixed $readerId): JsonResponse
+    {
+        $marked = $booking->chatMessages()
+            ->where('user_id', '!=', $readerId)
+            ->whereNull('read_at')
+            ->update(['read_at' => now()]);
+
+        if ($marked > 0) {
+            BookingChatBroadcast::afterResponse($booking, 'read', null, (string) $readerId);
+        }
+
+        $messages = $booking->chatMessages()
+            ->with('sender:id,name')
+            ->orderByDesc('created_at')
+            ->limit(50)
+            ->get()
+            ->reverse()
+            ->values();
+
+        return response()->json([
+            'messages' => BookingChatMessageResource::collection($messages),
+            'chat_open' => $booking->isBookingChatOpen(),
+            'unread_for_me' => 0,
+        ]);
+    }
+
+    private function incrementalMessages(Request $request, MuthowifBooking $booking, mixed $readerId): JsonResponse
+    {
+        $pivotMessage = BookingChatMessage::query()
+            ->where('muthowif_booking_id', $booking->getKey())
+            ->find($request->input('after_id'));
+
+        $query = $booking->chatMessages()
+            ->with('sender:id,name')
+            ->orderBy('created_at');
+
+        if ($pivotMessage !== null) {
+            $query->where('created_at', '>', $pivotMessage->created_at);
+        }
+
+        $messages = $query->get();
+
+        if ($messages->isNotEmpty()) {
+            $incomingIds = $messages->pluck('id');
+            $marked = $booking->chatMessages()
+                ->where('user_id', '!=', $readerId)
+                ->whereNull('read_at')
+                ->whereIn('id', $incomingIds)
+                ->update(['read_at' => now()]);
+
+            if ($marked > 0) {
+                BookingChatBroadcast::afterResponse($booking, 'read', null, (string) $readerId);
+            }
+        }
+
+        return response()->json([
+            'messages' => BookingChatMessageResource::collection($messages),
+            'chat_open' => $booking->isBookingChatOpen(),
+            'unread_for_me' => $this->unreadCountFor($booking, $readerId),
+        ]);
+    }
+
+    private function unreadCountFor(MuthowifBooking $booking, mixed $readerId): int
+    {
+        return (int) $booking->chatMessages()
+            ->where('user_id', '!=', $readerId)
+            ->whereNull('read_at')
+            ->count();
     }
 }

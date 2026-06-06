@@ -196,3 +196,39 @@ export function leavePrivateChannels(channels) {
         }
     }
 }
+
+/**
+ * @param {string} baseUrl
+ * @param {string|null|undefined} afterId
+ */
+export function chatMessagesUrl(baseUrl, afterId) {
+    if (!afterId) {
+        return baseUrl;
+    }
+
+    const sep = baseUrl.includes('?') ? '&' : '?';
+
+    return `${baseUrl}${sep}after_id=${encodeURIComponent(afterId)}`;
+}
+
+/**
+ * @param {Array<{ id: string }>} existing
+ * @param {Array<{ id: string }>} incoming
+ */
+export function appendChatMessages(existing, incoming) {
+    if (!incoming?.length) {
+        return existing;
+    }
+
+    const known = new Set(existing.map((m) => m.id));
+    const merged = [...existing];
+
+    for (const message of incoming) {
+        if (!known.has(message.id)) {
+            merged.push(message);
+            known.add(message.id);
+        }
+    }
+
+    return merged;
+}
