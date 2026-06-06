@@ -3,13 +3,13 @@
 namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
+use App\Jobs\SendWhatsAppTextJob;
 use App\Models\User;
-use App\Services\FonnteService;
+use App\Support\CompanyApprovedBroadcast;
+use App\Support\IntlPhone;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\Log;
 use Illuminate\View\View;
-use Throwable;
 
 class CompanyApprovalController extends Controller
 {
@@ -57,20 +57,18 @@ class CompanyApprovalController extends Controller
         $user->save();
 
         if ($user->phone) {
-            try {
-                $fonnteDial = \App\Support\IntlPhone::fonnteDial($user->phone);
-                if ($fonnteDial !== null) {
-                    $whatsapp = app(FonnteService::class);
-                    $message = "Halo *{$user->name}*,\n\nAkun perusahaan Anda telah *disetujui* oleh Administrator. Anda sekarang sudah bisa masuk (login) ke website " . config('app.name', 'BaytGo') . " dan mulai menggunakan layanan kami.\n\nTerima kasih!";
-                    $whatsapp->sendText($user->phone, $message, $fonnteDial['country_calling_code']);
-                }
-            } catch (Throwable $e) {
-                Log::warning('Gagal kirim WA notif approval perusahaan: ' . $e->getMessage());
+            $fonnteDial = IntlPhone::fonnteDial($user->phone);
+            if ($fonnteDial !== null) {
+                $message = "Halo *{$user->name}*,\n\nAkun perusahaan Anda telah *disetujui* oleh Administrator. Anda sekarang sudah bisa masuk (login) ke website ".config('app.name', 'BaytGo')." dan mulai menggunakan layanan kami.\n\nTerima kasih!";
+                SendWhatsAppTextJob::dispatchAfterResponse(
+                    $fonnteDial['target'],
+                    $message,
+                    $fonnteDial['country_calling_code'],
+                );
             }
         }
 
-        // Broadcast to specific user channel if we want realtime
-        broadcast(new \App\Events\CompanyApproved($user))->toOthers();
+        CompanyApprovedBroadcast::afterResponse($user);
 
         return redirect()->route('admin.company_approval.index')->with('status', 'Akun perusahaan berhasil disetujui.');
     }

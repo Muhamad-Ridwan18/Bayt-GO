@@ -4,8 +4,8 @@ namespace App\Listeners;
 
 use App\Enums\BookingStatus;
 use App\Enums\PaymentStatus;
-use App\Events\CustomerBookingUpdated;
 use App\Events\MootaWebhookRecorded;
+use App\Support\CustomerBookingBroadcast;
 use App\Jobs\NotifyMuthowifOfPaidBooking;
 use App\Models\BookingPayment;
 use App\Models\MuthowifBooking;
@@ -487,10 +487,7 @@ final class ProcessMootaWebhookForBookingPayments
             $payment = BookingPayment::query()->where('order_id', $notifiedOrderId)->first();
             if ($payment !== null) {
                 NotifyMuthowifOfPaidBooking::dispatchAfterResponse((string) $payment->muthowif_booking_id);
-                $booking = MuthowifBooking::query()->find($payment->muthowif_booking_id);
-                if ($booking !== null) {
-                    broadcast(new CustomerBookingUpdated($booking->fresh()));
-                }
+                CustomerBookingBroadcast::afterResponse((string) $payment->muthowif_booking_id);
             }
         }
     }

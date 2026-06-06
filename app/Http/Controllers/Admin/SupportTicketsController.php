@@ -4,7 +4,6 @@ namespace App\Http\Controllers\Admin;
 
 use App\Enums\SupportTicketStatus;
 use App\Enums\UserRole;
-use App\Events\SupportTicketUpdated;
 use App\Http\Controllers\Controller;
 use App\Models\SupportTicket;
 use App\Models\SupportTicketMessage;
@@ -138,7 +137,7 @@ class SupportTicketsController extends Controller
         $ticket->last_activity_at = now();
         $ticket->save();
 
-        broadcast(new SupportTicketUpdated($ticket, 'status_updated'));
+        SupportTicketBroadcast::afterResponse($ticket->fresh(), 'status_updated');
 
         return redirect()
             ->route('admin.support-tickets.show', $ticket)

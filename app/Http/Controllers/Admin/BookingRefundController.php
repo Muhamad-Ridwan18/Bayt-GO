@@ -4,8 +4,8 @@ namespace App\Http\Controllers\Admin;
 
 use App\Enums\BookingChangeRequestStatus;
 use App\Enums\PaymentStatus;
-use App\Events\CustomerBookingUpdated;
 use App\Http\Controllers\Controller;
+use App\Support\CustomerBookingBroadcast;
 use App\Jobs\NotifyCustomerOfRefundTransferProof;
 use App\Models\BookingRefundRequest;
 use App\Models\MuthowifProfile;
@@ -122,7 +122,7 @@ class BookingRefundController extends Controller
 
         NotifyCustomerOfRefundTransferProof::dispatchAfterResponse((string) $refund->getKey());
 
-        broadcast(new CustomerBookingUpdated($booking->fresh()));
+        CustomerBookingBroadcast::afterResponse($booking);
 
         return redirect()
             ->route('admin.refunds.index')

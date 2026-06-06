@@ -2,11 +2,11 @@
 
 namespace App\Services;
 
+use App\Jobs\SendWhatsAppTextJob;
 use App\Support\IntlPhone;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\RateLimiter;
 use Illuminate\Validation\ValidationException;
-use RuntimeException;
 
 class RegistrationOtpService
 {
@@ -15,10 +15,6 @@ class RegistrationOtpService
     private const SEND_COOLDOWN_SECONDS = 60;
 
     private const MAX_VERIFY_ATTEMPTS = 5;
-
-    public function __construct(
-        private readonly FonnteService $fonnte
-    ) {}
 
     public function otpEnabled(): bool
     {
@@ -79,20 +75,14 @@ class RegistrationOtpService
         if (! is_string($otpMessage) || trim($otpMessage) === '' || $otpMessage === 'auth_otp.otp_message') {
             $otpMessage = "Kode verifikasi {$appName} Anda: {$otp}\n\nJangan bagikan kode ini kepada siapa pun. Berlaku 10 menit.";
         }
-        $message = $greeting . $otpMessage;
+        $message = $greeting.$otpMessage;
 
-        try {
-            $this->fonnte->sendText(
-                $fonnteDial['target'],
-                $message,
-                $fonnteDial['country_calling_code'],
-            );
-        } catch (RuntimeException $e) {
-            Cache::forget($this->cacheCodeKey($normalized));
-            throw ValidationException::withMessages([
-                'phone' => [$e->getMessage()],
-            ]);
-        }
+        SendWhatsAppTextJob::dispatchAfterResponse(
+            $fonnteDial['target'],
+            $message,
+            $fonnteDial['country_calling_code'],
+            [$this->cacheCodeKey($normalized)],
+        );
 
         Cache::put('reg_otp_cooldown:'.$normalized, true, now()->addSeconds(self::SEND_COOLDOWN_SECONDS));
         RateLimiter::hit('reg-otp-hour:'.$normalized, 3600);

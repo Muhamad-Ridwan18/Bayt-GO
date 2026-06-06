@@ -2,8 +2,8 @@
 
 namespace App\Http\Controllers;
 
-use App\Events\BookingChatUpdated;
 use App\Http\Resources\BookingChatMessageResource;
+use App\Support\BookingChatBroadcast;
 use App\Models\BookingChatMessage;
 use App\Models\MuthowifBooking;
 use App\Services\UploadedImageOptimizer;
@@ -40,7 +40,7 @@ class BookingChatController extends Controller
 
         if ($toMark->exists()) {
             $toMark->update(['read_at' => now()]);
-            broadcast(new BookingChatUpdated($booking))->toOthers();
+            BookingChatBroadcast::afterResponse($booking);
         }
 
         // Gunakan Cursor Pagination untuk performa chat yang lebih baik
@@ -96,7 +96,7 @@ class BookingChatController extends Controller
 
         $message->load('sender:id,name');
 
-        broadcast(new BookingChatUpdated($booking))->toOthers();
+        BookingChatBroadcast::afterResponse($booking);
 
         return response()->json([
             'message' => new BookingChatMessageResource($message),

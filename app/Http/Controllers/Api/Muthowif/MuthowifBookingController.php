@@ -5,8 +5,8 @@ namespace App\Http\Controllers\Api\Muthowif;
 use App\Enums\BookingStatus;
 use App\Enums\MuthowifBookingMuthowifRejectionKind;
 use App\Enums\PaymentStatus;
-use App\Events\CustomerBookingUpdated;
 use App\Http\Controllers\Controller;
+use App\Support\CustomerBookingBroadcast;
 use App\Jobs\NotifyCustomerOfBookingRejectedJadwalFull;
 use App\Models\MuthowifBooking;
 use App\Services\BookingPendingPaymentEnsurer;
@@ -159,7 +159,7 @@ class MuthowifBookingController extends Controller
             NotifyCustomerOfBookingRejectedJadwalFull::dispatchAfterResponse((string) $booking->getKey());
         }
 
-        broadcast(new CustomerBookingUpdated($booking->fresh()));
+        CustomerBookingBroadcast::afterResponse($booking);
 
         return response()->json([
             'message' => 'Pesanan berhasil dibatalkan',

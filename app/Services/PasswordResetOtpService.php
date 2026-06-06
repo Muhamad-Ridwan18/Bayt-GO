@@ -2,13 +2,13 @@
 
 namespace App\Services;
 
+use App\Jobs\SendWhatsAppTextJob;
 use App\Models\MuthowifProfile;
 use App\Models\User;
 use App\Support\IntlPhone;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\RateLimiter;
 use Illuminate\Validation\ValidationException;
-use RuntimeException;
 
 class PasswordResetOtpService
 {
@@ -19,10 +19,6 @@ class PasswordResetOtpService
     private const SEND_COOLDOWN_SECONDS = 60;
 
     private const MAX_VERIFY_ATTEMPTS = 5;
-
-    public function __construct(
-        private readonly FonnteService $fonnte
-    ) {}
 
     public function otpEnabled(): bool
     {
@@ -90,19 +86,12 @@ class PasswordResetOtpService
             'app' => $appName,
         ], app()->getLocale());
 
-        try {
-            $this->fonnte->sendText(
-                $fonnteDial['target'],
-                $message,
-                $fonnteDial['country_calling_code'],
-            );
-        } catch (RuntimeException $e) {
-            Cache::forget($this->cacheCodeKey($normalized));
-            Cache::forget($this->cacheResetPhoneKey($resetToken));
-            throw ValidationException::withMessages([
-                'phone' => [$e->getMessage()],
-            ]);
-        }
+        SendWhatsAppTextJob::dispatchAfterResponse(
+            $fonnteDial['target'],
+            $message,
+            $fonnteDial['country_calling_code'],
+            [$this->cacheCodeKey($normalized), $this->cacheResetPhoneKey($resetToken)],
+        );
 
         Cache::put('pwd_otp_cooldown:'.$normalized, true, now()->addSeconds(self::SEND_COOLDOWN_SECONDS));
         RateLimiter::hit('pwd-otp-hour:'.$normalized, 3600);

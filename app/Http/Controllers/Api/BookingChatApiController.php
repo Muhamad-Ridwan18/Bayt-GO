@@ -2,8 +2,8 @@
 
 namespace App\Http\Controllers\Api;
 
-use App\Events\BookingChatUpdated;
 use App\Http\Controllers\Controller;
+use App\Support\BookingChatBroadcast;
 use App\Http\Resources\BookingChatMessageResource;
 use App\Models\BookingChatMessage;
 use App\Models\MuthowifBooking;
@@ -98,7 +98,7 @@ class BookingChatApiController extends Controller
 
         $message->load('sender:id,name');
 
-        broadcast(new BookingChatUpdated($booking))->toOthers();
+        BookingChatBroadcast::afterResponse($booking);
 
         return response()->json([
             'message' => new BookingChatMessageResource($message),

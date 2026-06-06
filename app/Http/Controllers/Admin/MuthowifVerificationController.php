@@ -7,24 +7,18 @@ use App\Enums\MuthowifVerificationStatus;
 use App\Http\Controllers\Controller;
 use App\Models\MuthowifProfile;
 use App\Models\MuthowifSupportingDocument;
-use App\Services\FonnteService;
+use App\Jobs\SendWhatsAppTextJob;
 use App\Services\MuthowifReferralCodeService;
 use App\Support\IntlPhone;
 use App\Support\MuthowifVerificationBroadcast;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\Log;
 use Illuminate\Validation\Rule;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\View\View;
-use Throwable;
 
 class MuthowifVerificationController extends Controller
 {
-    public function __construct(
-        private readonly FonnteService $fonnte
-    ) {}
-
     public function index(Request $request): View
     {
         $status = $request->query('status', 'pending');
@@ -100,20 +94,12 @@ class MuthowifVerificationController extends Controller
             $name = $profile->user->name;
             $message = "Halo *{$name}*,\n\nPendaftaran muthowif Anda di *{$appName}* telah *disetujui*.\n\nAnda sekarang dapat masuk ke akun menggunakan email terdaftar.\nDan menentukan rate card harian mu😉\nhttps://baytgo.id/login\n\nTerima kasih.";
 
-            try {
-                $this->fonnte->sendText(
-                    $fonnteDial['target'],
-                    $message,
-                    $fonnteDial['country_calling_code'],
-                );
-                $waFlash = ' Notifikasi WhatsApp terkirim.';
-            } catch (Throwable $e) {
-                Log::warning('WhatsApp verifikasi muthowif gagal', [
-                    'profile_id' => $profile->id,
-                    'exception' => $e->getMessage(),
-                ]);
-                $waFlash = ' Notifikasi WhatsApp gagal dikirim; cek log atau Fonnte.';
-            }
+            SendWhatsAppTextJob::dispatchAfterResponse(
+                $fonnteDial['target'],
+                $message,
+                $fonnteDial['country_calling_code'],
+            );
+            $waFlash = ' Notifikasi WhatsApp sedang dikirim.';
         } elseif ($fonnteDial === null) {
             $waFlash = ' Nomor WhatsApp tidak valid — notifikasi WA dilewati.';
         } elseif (! filled($token)) {

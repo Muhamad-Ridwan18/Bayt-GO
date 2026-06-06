@@ -123,6 +123,20 @@ final class BookingDocumentStore
         }
     }
 
+    /**
+     * @return array<string, ?string>
+     */
+    public function moveAllToBookingDirectory(Request $request, string $targetDir): array
+    {
+        return [
+            'ticket_outbound_path' => $this->moveToBookingDirectory($request, 'ticket_outbound', $targetDir),
+            'ticket_return_path' => $this->moveToBookingDirectory($request, 'ticket_return', $targetDir),
+            'passport_path' => $this->moveToBookingDirectory($request, 'passport', $targetDir),
+            'itinerary_path' => $this->moveToBookingDirectory($request, 'itinerary', $targetDir),
+            'visa_path' => $this->moveToBookingDirectory($request, 'visa', $targetDir),
+        ];
+    }
+
     public function moveToBookingDirectory(Request $request, string $field, string $targetDir): ?string
     {
         if ($request->hasFile($field)) {

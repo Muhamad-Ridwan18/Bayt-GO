@@ -610,7 +610,7 @@ class BookingController extends Controller
 
         $serviceType = MuthowifServiceType::from($validated['service_type']);
 
-        $booking = DB::transaction(function () use ($request, $profileId, $start, $end, $validated, $serviceType, $documentStore): MuthowifBooking {
+        $booking = DB::transaction(function () use ($request, $profileId, $start, $end, $validated, $serviceType): MuthowifBooking {
             /** @var MuthowifProfile $profile */
             $profile = MuthowifProfile::query()
                 ->with(['services.addOns'])
@@ -672,7 +672,7 @@ class BookingController extends Controller
 
             $pricingService = app(BookingPricingService::class);
 
-            $booking = MuthowifBooking::query()->create(array_merge([
+            return MuthowifBooking::query()->create(array_merge([
                 'booking_code' => $bookingCode,
                 'muthowif_profile_id' => $profile->id,
                 'customer_id' => $request->user()->id,
@@ -689,21 +689,17 @@ class BookingController extends Controller
                 'service_type' => $serviceType,
                 'selected_add_on_ids' => $selectedAddOnIds,
             ]))));
-
-            $dir = 'booking-documents/'.$booking->getKey();
-            $booking->update([
-                'ticket_outbound_path' => $documentStore->moveToBookingDirectory($request, 'ticket_outbound', $dir),
-                'ticket_return_path' => $documentStore->moveToBookingDirectory($request, 'ticket_return', $dir),
-                'passport_path' => $documentStore->moveToBookingDirectory($request, 'passport', $dir),
-                'itinerary_path' => $documentStore->moveToBookingDirectory($request, 'itinerary', $dir),
-                'visa_path' => $documentStore->moveToBookingDirectory($request, 'visa', $dir),
-            ]);
-
-            $booking = $booking->fresh();
-            $documentStore->assertRequiredDocumentsStored($booking, $serviceType);
-
-            return $booking;
         });
+
+        try {
+            $dir = 'booking-documents/'.$booking->getKey();
+            $booking->update($documentStore->moveAllToBookingDirectory($request, $dir));
+            $documentStore->assertRequiredDocumentsStored($booking->fresh(), $serviceType);
+        } catch (ValidationException $e) {
+            $booking->delete();
+
+            throw $e;
+        }
 
         NotifyMuthowifOfNewBooking::dispatchAfterResponse((string) $booking->getKey());
         $this->forgetCustomerBookingStatusCounts((string) $request->user()->getKey());

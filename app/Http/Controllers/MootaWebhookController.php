@@ -2,8 +2,8 @@
 
 namespace App\Http\Controllers;
 
-use App\Events\MootaWebhookRealtimeBroadcast;
 use App\Events\MootaWebhookRecorded;
+use App\Support\MootaWebhookBroadcast;
 use App\Http\Middleware\AllowMootaWebhookIp;
 use App\Models\MootaWebhookHistory;
 use Illuminate\Http\JsonResponse;
@@ -67,7 +67,7 @@ final class MootaWebhookController extends Controller
 
         MootaWebhookRecorded::dispatch($history);
 
-        broadcast(new MootaWebhookRealtimeBroadcast($history));
+        MootaWebhookBroadcast::afterResponse($history);
 
         Log::info('moota.webhook.stored', [
             'ip' => $sourceIp ?: null,
