@@ -67,7 +67,7 @@ final class MootaWebhookController extends Controller
 
         MootaWebhookRecorded::dispatch($history);
 
-        MootaWebhookBroadcast::afterResponse($history);
+        MootaWebhookBroadcast::notify($history);
 
         Log::info('moota.webhook.stored', [
             'ip' => $sourceIp ?: null,

@@ -107,6 +107,19 @@
                 </p>
             @else
                 {{-- Jangan pakai @json di dalam x-data="..." — tanda kutip JSON memutus atribut HTML dan merusak Alpine. --}}
+                @php
+                    $docFieldState = static function (string $field) {
+                        $path = old("temp_{$field}_path", session("temp_{$field}_path"));
+                        $name = old("temp_{$field}_name", session("temp_{$field}_name"));
+
+                        return [
+                            'path' => is_string($path) && $path !== '' ? $path : '',
+                            'name' => is_string($name) && $name !== '' ? $name : '',
+                            'uploading' => false,
+                            'error' => '',
+                        ];
+                    };
+                @endphp
                 <div
                     class="space-y-6"
                     x-data="{
@@ -115,10 +128,65 @@
                             group: { min: {{ (int) $gBounds['min'] }}, max: {{ (int) $gBounds['max'] }} },
                             private: { min: {{ (int) $pBounds['min'] }}, max: {{ (int) $pBounds['max'] }} },
                         },
+                        tempUploadUrl: @js(route('bookings.documents.temp')),
+                        docs: {
+                            ticket_outbound: @js($docFieldState('ticket_outbound')),
+                            ticket_return: @js($docFieldState('ticket_return')),
+                            passport: @js($docFieldState('passport')),
+                            itinerary: @js($docFieldState('itinerary')),
+                            visa: @js($docFieldState('visa')),
+                        },
                         tcOpen: false,
                         tcAgree: false,
+                        csrf() {
+                            return document.querySelector('meta[name=csrf-token]')?.getAttribute('content') ?? '';
+                        },
                         currentBounds() {
                             return this.serviceType === 'group' ? this.bounds.group : this.bounds.private;
+                        },
+                        async uploadBookingDoc(field, event) {
+                            const input = event.target;
+                            const file = input.files && input.files[0] ? input.files[0] : null;
+                            if (!file) {
+                                return;
+                            }
+
+                            this.docs[field].uploading = true;
+                            this.docs[field].error = '';
+
+                            const fd = new FormData();
+                            fd.append('field', field);
+                            fd.append('file', file);
+                            if (this.docs[field].path) {
+                                fd.append('previous_path', this.docs[field].path);
+                            }
+
+                            try {
+                                const r = await fetch(this.tempUploadUrl, {
+                                    method: 'POST',
+                                    headers: {
+                                        Accept: 'application/json',
+                                        'X-CSRF-TOKEN': this.csrf(),
+                                        'X-Requested-With': 'XMLHttpRequest',
+                                    },
+                                    credentials: 'same-origin',
+                                    body: fd,
+                                });
+                                const data = await r.json().catch(() => ({}));
+                                if (!r.ok) {
+                                    throw new Error(data.message || 'Upload gagal');
+                                }
+
+                                this.docs[field].path = data.path ?? '';
+                                this.docs[field].name = data.name ?? file.name;
+                                input.value = '';
+                                input.removeAttribute('required');
+                            } catch (e) {
+                                this.docs[field].error = e instanceof Error ? e.message : 'Upload gagal';
+                                input.value = '';
+                            } finally {
+                                this.docs[field].uploading = false;
+                            }
                         },
                         openBookingTc() {
                             if (! this.$refs.bookingForm.checkValidity()) {
@@ -343,18 +411,22 @@
                                     <label for="ticket_outbound_{{ $profile->id }}" class="block text-sm font-semibold text-slate-800">{{ __('marketplace.panel.doc_ticket_outbound') }} <span class="text-red-600">*</span></label>
                                     <p class="mt-1 text-xs leading-snug text-slate-500 sm:text-sm">{{ __('marketplace.panel.doc_ticket_outbound_help') }}</p>
 
-                                    @php $tempOutPath = old('temp_ticket_outbound_path', session('temp_ticket_outbound_path')); @endphp
-                                    @if($tempOutPath)
+                                    <template x-if="docs.ticket_outbound.path">
                                         <div class="mt-2 flex items-center gap-2 rounded-xl border border-brand-200 bg-brand-50/50 px-3 py-2 text-xs font-medium text-brand-800 ring-1 ring-brand-100">
                                             <svg class="size-4 shrink-0 text-brand-600" fill="none" viewBox="0 0 24 24" stroke-width="2.5" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M4.5 12.75l6 6 9-13.5" /></svg>
-                                            <span class="truncate">Berkas terunggah: {{ old('temp_ticket_outbound_name', session('temp_ticket_outbound_name')) }}</span>
-                                            <input type="hidden" name="temp_ticket_outbound_path" value="{{ $tempOutPath }}">
-                                            <input type="hidden" name="temp_ticket_outbound_name" value="{{ old('temp_ticket_outbound_name', session('temp_ticket_outbound_name')) }}">
+                                            <span class="truncate" x-text="'Berkas terunggah: ' + docs.ticket_outbound.name"></span>
+                                            <input type="hidden" name="temp_ticket_outbound_path" :value="docs.ticket_outbound.path">
+                                            <input type="hidden" name="temp_ticket_outbound_name" :value="docs.ticket_outbound.name">
                                         </div>
-                                    @endif
+                                    </template>
 
-                                    <input id="ticket_outbound_{{ $profile->id }}" type="file" name="ticket_outbound" @if(!$tempOutPath) required @endif accept=".pdf,.jpg,.jpeg,.png,application/pdf,image/jpeg,image/png"
+                                    <input id="ticket_outbound_{{ $profile->id }}" type="file" name="ticket_outbound"
+                                           x-bind:required="!docs.ticket_outbound.path"
+                                           @change="uploadBookingDoc('ticket_outbound', $event)"
+                                           accept=".pdf,.jpg,.jpeg,.png,application/pdf,image/jpeg,image/png"
                                            class="mt-2 block w-full text-sm text-slate-600 file:mr-3 file:rounded-xl file:border-0 file:bg-brand-50 file:px-4 file:py-2.5 file:text-sm file:font-semibold file:text-brand-800 hover:file:bg-brand-100" />
+                                    <p x-show="docs.ticket_outbound.uploading" x-cloak class="mt-1 text-xs text-brand-700">Mengunggah…</p>
+                                    <p x-show="docs.ticket_outbound.error" x-text="docs.ticket_outbound.error" x-cloak class="mt-1 text-xs text-red-600"></p>
                                     @error('ticket_outbound')
                                         <p class="mt-1 text-xs text-red-600">{{ $message }}</p>
                                     @enderror
@@ -363,18 +435,22 @@
                                     <label for="ticket_return_{{ $profile->id }}" class="block text-sm font-semibold text-slate-800">{{ __('marketplace.panel.doc_ticket_return') }} <span class="text-red-600">*</span></label>
                                     <p class="mt-1 text-xs leading-snug text-slate-500 sm:text-sm">{{ __('marketplace.panel.doc_ticket_return_help') }}</p>
 
-                                    @php $tempRetPath = old('temp_ticket_return_path', session('temp_ticket_return_path')); @endphp
-                                    @if($tempRetPath)
+                                    <template x-if="docs.ticket_return.path">
                                         <div class="mt-2 flex items-center gap-2 rounded-xl border border-brand-200 bg-brand-50/50 px-3 py-2 text-xs font-medium text-brand-800 ring-1 ring-brand-100">
                                             <svg class="size-4 shrink-0 text-brand-600" fill="none" viewBox="0 0 24 24" stroke-width="2.5" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M4.5 12.75l6 6 9-13.5" /></svg>
-                                            <span class="truncate">Berkas terunggah: {{ old('temp_ticket_return_name', session('temp_ticket_return_name')) }}</span>
-                                            <input type="hidden" name="temp_ticket_return_path" value="{{ $tempRetPath }}">
-                                            <input type="hidden" name="temp_ticket_return_name" value="{{ old('temp_ticket_return_name', session('temp_ticket_return_name')) }}">
+                                            <span class="truncate" x-text="'Berkas terunggah: ' + docs.ticket_return.name"></span>
+                                            <input type="hidden" name="temp_ticket_return_path" :value="docs.ticket_return.path">
+                                            <input type="hidden" name="temp_ticket_return_name" :value="docs.ticket_return.name">
                                         </div>
-                                    @endif
+                                    </template>
 
-                                    <input id="ticket_return_{{ $profile->id }}" type="file" name="ticket_return" @if(!$tempRetPath) required @endif accept=".pdf,.jpg,.jpeg,.png,application/pdf,image/jpeg,image/png"
+                                    <input id="ticket_return_{{ $profile->id }}" type="file" name="ticket_return"
+                                           x-bind:required="!docs.ticket_return.path"
+                                           @change="uploadBookingDoc('ticket_return', $event)"
+                                           accept=".pdf,.jpg,.jpeg,.png,application/pdf,image/jpeg,image/png"
                                            class="mt-2 block w-full text-sm text-slate-600 file:mr-3 file:rounded-xl file:border-0 file:bg-brand-50 file:px-4 file:py-2.5 file:text-sm file:font-semibold file:text-brand-800 hover:file:bg-brand-100" />
+                                    <p x-show="docs.ticket_return.uploading" x-cloak class="mt-1 text-xs text-brand-700">Mengunggah…</p>
+                                    <p x-show="docs.ticket_return.error" x-text="docs.ticket_return.error" x-cloak class="mt-1 text-xs text-red-600"></p>
                                     @error('ticket_return')
                                         <p class="mt-1 text-xs text-red-600">{{ $message }}</p>
                                     @enderror
@@ -383,18 +459,22 @@
                                     <label for="passport_{{ $profile->id }}" class="block text-sm font-semibold text-slate-800">{{ __('marketplace.panel.doc_passport') }} <span class="text-red-600">*</span></label>
                                     <p class="mt-1 text-xs leading-snug text-slate-500 sm:text-sm">{{ __('marketplace.panel.doc_passport_help') }}</p>
 
-                                    @php $tempPasPath = old('temp_passport_path', session('temp_passport_path')); @endphp
-                                    @if($tempPasPath)
+                                    <template x-if="docs.passport.path">
                                         <div class="mt-2 flex items-center gap-2 rounded-xl border border-brand-200 bg-brand-50/50 px-3 py-2 text-xs font-medium text-brand-800 ring-1 ring-brand-100">
                                             <svg class="size-4 shrink-0 text-brand-600" fill="none" viewBox="0 0 24 24" stroke-width="2.5" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M4.5 12.75l6 6 9-13.5" /></svg>
-                                            <span class="truncate">Berkas terunggah: {{ old('temp_passport_name', session('temp_passport_name')) }}</span>
-                                            <input type="hidden" name="temp_passport_path" value="{{ $tempPasPath }}">
-                                            <input type="hidden" name="temp_passport_name" value="{{ old('temp_passport_name', session('temp_passport_name')) }}">
+                                            <span class="truncate" x-text="'Berkas terunggah: ' + docs.passport.name"></span>
+                                            <input type="hidden" name="temp_passport_path" :value="docs.passport.path">
+                                            <input type="hidden" name="temp_passport_name" :value="docs.passport.name">
                                         </div>
-                                    @endif
+                                    </template>
 
-                                    <input id="passport_{{ $profile->id }}" type="file" name="passport" @if(!$tempPasPath) required @endif accept=".pdf,.jpg,.jpeg,.png,application/pdf,image/jpeg,image/png"
+                                    <input id="passport_{{ $profile->id }}" type="file" name="passport"
+                                           x-bind:required="!docs.passport.path"
+                                           @change="uploadBookingDoc('passport', $event)"
+                                           accept=".pdf,.jpg,.jpeg,.png,application/pdf,image/jpeg,image/png"
                                            class="mt-2 block w-full text-sm text-slate-600 file:mr-3 file:rounded-xl file:border-0 file:bg-brand-50 file:px-4 file:py-2.5 file:text-sm file:font-semibold file:text-brand-800 hover:file:bg-brand-100" />
+                                    <p x-show="docs.passport.uploading" x-cloak class="mt-1 text-xs text-brand-700">Mengunggah…</p>
+                                    <p x-show="docs.passport.error" x-text="docs.passport.error" x-cloak class="mt-1 text-xs text-red-600"></p>
                                     @error('passport')
                                         <p class="mt-1 text-xs text-red-600">{{ $message }}</p>
                                     @enderror
@@ -407,19 +487,21 @@
                                     </label>
                                     <p class="mt-1 text-xs leading-snug text-slate-500 sm:text-sm">{{ __('marketplace.panel.doc_itinerary_help') }}</p>
 
-                                    @php $tempItiPath = old('temp_itinerary_path', session('temp_itinerary_path')); @endphp
-                                    @if($tempItiPath)
+                                    <template x-if="docs.itinerary.path">
                                         <div class="mt-2 flex items-center gap-2 rounded-xl border border-brand-200 bg-brand-50/50 px-3 py-2 text-xs font-medium text-brand-800 ring-1 ring-brand-100">
                                             <svg class="size-4 shrink-0 text-brand-600" fill="none" viewBox="0 0 24 24" stroke-width="2.5" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M4.5 12.75l6 6 9-13.5" /></svg>
-                                            <span class="truncate">Berkas terunggah: {{ old('temp_itinerary_name', session('temp_itinerary_name')) }}</span>
-                                            <input type="hidden" name="temp_itinerary_path" value="{{ $tempItiPath }}">
-                                            <input type="hidden" name="temp_itinerary_name" value="{{ old('temp_itinerary_name', session('temp_itinerary_name')) }}">
+                                            <span class="truncate" x-text="'Berkas terunggah: ' + docs.itinerary.name"></span>
+                                            <input type="hidden" name="temp_itinerary_path" :value="docs.itinerary.path">
+                                            <input type="hidden" name="temp_itinerary_name" :value="docs.itinerary.name">
                                         </div>
-                                    @endif
+                                    </template>
 
                                     <input id="itinerary_{{ $profile->id }}" type="file" name="itinerary" accept=".pdf,.jpg,.jpeg,.png,application/pdf,image/jpeg,image/png"
-                                           x-bind:required="serviceType === 'group' && !'{{ $tempItiPath }}'"
+                                           x-bind:required="serviceType === 'group' && !docs.itinerary.path"
+                                           @change="uploadBookingDoc('itinerary', $event)"
                                            class="mt-2 block w-full text-sm text-slate-600 file:mr-3 file:rounded-xl file:border-0 file:bg-slate-100 file:px-4 file:py-2.5 file:text-sm file:font-semibold file:text-slate-700 hover:file:bg-slate-200" />
+                                    <p x-show="docs.itinerary.uploading" x-cloak class="mt-1 text-xs text-brand-700">Mengunggah…</p>
+                                    <p x-show="docs.itinerary.error" x-text="docs.itinerary.error" x-cloak class="mt-1 text-xs text-red-600"></p>
                                     @error('itinerary')
                                         <p class="mt-1 text-xs text-red-600">{{ $message }}</p>
                                     @enderror
@@ -427,18 +509,20 @@
                                 <div class="sm:col-span-2">
                                     <label for="visa_{{ $profile->id }}" class="block text-sm font-semibold text-slate-800">{{ __('marketplace.panel.doc_visa') }} <span class="text-slate-400">({{ __('marketplace.panel.doc_optional') }})</span></label>
                                     
-                                    @php $tempVisaPath = old('temp_visa_path', session('temp_visa_path')); @endphp
-                                    @if($tempVisaPath)
+                                    <template x-if="docs.visa.path">
                                         <div class="mt-2 flex items-center gap-2 rounded-xl border border-brand-200 bg-brand-50/50 px-3 py-2 text-xs font-medium text-brand-800 ring-1 ring-brand-100 max-w-lg">
                                             <svg class="size-4 shrink-0 text-brand-600" fill="none" viewBox="0 0 24 24" stroke-width="2.5" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M4.5 12.75l6 6 9-13.5" /></svg>
-                                            <span class="truncate">Berkas terunggah: {{ old('temp_visa_name', session('temp_visa_name')) }}</span>
-                                            <input type="hidden" name="temp_visa_path" value="{{ $tempVisaPath }}">
-                                            <input type="hidden" name="temp_visa_name" value="{{ old('temp_visa_name', session('temp_visa_name')) }}">
+                                            <span class="truncate" x-text="'Berkas terunggah: ' + docs.visa.name"></span>
+                                            <input type="hidden" name="temp_visa_path" :value="docs.visa.path">
+                                            <input type="hidden" name="temp_visa_name" :value="docs.visa.name">
                                         </div>
-                                    @endif
+                                    </template>
 
                                     <input id="visa_{{ $profile->id }}" type="file" name="visa" accept=".pdf,.jpg,.jpeg,.png,application/pdf,image/jpeg,image/png"
+                                           @change="uploadBookingDoc('visa', $event)"
                                            class="mt-2 block w-full max-w-full text-sm text-slate-600 file:mr-3 file:rounded-xl file:border-0 file:bg-slate-100 file:px-4 file:py-2.5 file:text-sm file:font-semibold file:text-slate-700 hover:file:bg-slate-200 sm:max-w-lg" />
+                                    <p x-show="docs.visa.uploading" x-cloak class="mt-1 text-xs text-brand-700">Mengunggah…</p>
+                                    <p x-show="docs.visa.error" x-text="docs.visa.error" x-cloak class="mt-1 text-xs text-red-600"></p>
                                     @error('visa')
                                         <p class="mt-1 text-xs text-red-600">{{ $message }}</p>
                                     @enderror

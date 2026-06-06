@@ -208,6 +208,12 @@
                             </template>
                         </ul>
                     </div>
+
+                    @if ($muthowifs->hasPages())
+                        <div class="border-t border-slate-100 px-5 py-4">
+                            {{ $muthowifs->links() }}
+                        </div>
+                    @endif
                 </div>
 
                 <div class="overflow-hidden rounded-2xl border border-slate-200/90 bg-white shadow-sm ring-1 ring-slate-100/80">

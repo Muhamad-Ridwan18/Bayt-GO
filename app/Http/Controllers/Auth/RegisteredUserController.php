@@ -326,13 +326,14 @@ class RegisteredUserController extends Controller
      */
     private function commitRegistrationDirectly(Request $request, RegistrationOtpService $registrationOtp): RedirectResponse
     {
-        $storedDir = null;
+        $role = UserRole::from($request->input('role'));
+        $stagedMuthowifFiles = $role === UserRole::Muthowif
+            ? $this->stageMuthowifFilesFromRequest($request)
+            : null;
         $user = null;
 
         try {
             DB::beginTransaction();
-
-            $role = UserRole::from($request->input('role'));
 
             $user = User::create([
                 'name' => $request->string('name')->toString(),
@@ -352,32 +353,11 @@ class RegisteredUserController extends Controller
             ]);
 
             if ($user->isMuthowif()) {
-                $storedDir = 'muthowif_documents/'.$user->id;
-                Storage::disk('local')->makeDirectory($storedDir);
-                $optimizer = app(UploadedImageOptimizer::class);
-
-                // Handle Photo (uploaded or cached)
-                $photoFile = $request->file('photo');
-                if ($photoFile && $photoFile->isValid()) {
-                    $photoPath = $optimizer->store($photoFile, $storedDir, 'local', 'profile');
-                } else {
-                    $cachedPhoto = session('registration_files.photo');
-                    $photoPath = $storedDir.'/'.basename($cachedPhoto['path']);
-                    Storage::disk('local')->move($cachedPhoto['path'], $photoPath);
-                    $photoPath = $optimizer->optimizeStoredPath($photoPath, 'local', 'profile');
+                if ($stagedMuthowifFiles === null) {
+                    throw new \RuntimeException('Berkas muthowif hilang.');
                 }
 
-                // Handle KTP Image (uploaded or cached)
-                $ktpFile = $request->file('ktp_image');
-                if ($ktpFile && $ktpFile->isValid()) {
-                    $ktpPath = $optimizer->store($ktpFile, $storedDir, 'local', 'profile');
-                } else {
-                    $cachedKtp = session('registration_files.ktp_image');
-                    $ktpPath = $storedDir.'/'.basename($cachedKtp['path']);
-                    Storage::disk('local')->move($cachedKtp['path'], $ktpPath);
-                    $ktpPath = $optimizer->optimizeStoredPath($ktpPath, 'local', 'profile');
-                }
-
+                $finalDir = 'muthowif_documents/'.$user->id;
                 $languages = $this->requestStringList($request->input('languages'));
                 $educations = $this->requestStringList($request->input('educations'));
                 $workExperiences = $this->requestStringList($request->input('work_experiences'));
@@ -397,45 +377,26 @@ class RegisteredUserController extends Controller
                     'educations' => $educations,
                     'work_experiences' => $workExperiences,
                     'reference_text' => $request->input('reference_text'),
-                    'photo_path' => $photoPath,
-                    'ktp_image_path' => $ktpPath,
+                    'photo_path' => $finalDir.'/'.basename($stagedMuthowifFiles['photo_path']),
+                    'ktp_image_path' => $finalDir.'/'.basename($stagedMuthowifFiles['ktp_path']),
                     'verification_status' => MuthowifVerificationStatus::Pending,
                     'referred_by_muthowif_profile_id' => $referredById,
                 ]);
 
-                $supportingPaths = [];
-                $files = $request->file('supporting_documents', []);
-                if (! is_array($files)) {
-                    $files = array_filter([$files]);
-                }
-                foreach ($files as $index => $file) {
-                    if ($file && $file->isValid()) {
-                        $path = $optimizer->store($file, $storedDir, 'local', 'document');
-                        $profile->supportingDocuments()->create([
-                            'path' => $path,
-                            'original_name' => $file->getClientOriginalName(),
-                            'sort_order' => count($supportingPaths),
-                        ]);
-                        $supportingPaths[] = $path;
-                    }
-                }
-
-                $cachedDocs = session('registration_files.supporting_documents', []);
-                foreach ($cachedDocs as $doc) {
-                    if (Storage::disk('local')->exists($doc['path'])) {
-                        $dest = $storedDir.'/'.basename($doc['path']);
-                        Storage::disk('local')->move($doc['path'], $dest);
-                        $profile->supportingDocuments()->create([
-                            'path' => $dest,
-                            'original_name' => $doc['original_name'],
-                            'sort_order' => count($supportingPaths),
-                        ]);
-                        $supportingPaths[] = $dest;
-                    }
+                foreach ($stagedMuthowifFiles['supporting'] as $row) {
+                    $profile->supportingDocuments()->create([
+                        'path' => $finalDir.'/'.basename($row['path']),
+                        'original_name' => $row['original_name'],
+                        'sort_order' => $row['sort_order'],
+                    ]);
                 }
             }
 
             DB::commit();
+
+            if ($user->isMuthowif() && $stagedMuthowifFiles !== null) {
+                $this->finalizeStagedMuthowifFiles((string) $user->id, $stagedMuthowifFiles);
+            }
 
             session()->forget('registration_files');
             $sessionId = session()->getId();
@@ -447,8 +408,8 @@ class RegisteredUserController extends Controller
         } catch (Throwable $e) {
             DB::rollBack();
 
-            if ($storedDir !== null) {
-                Storage::disk('local')->deleteDirectory($storedDir);
+            if ($stagedMuthowifFiles !== null) {
+                Storage::disk('local')->deleteDirectory($stagedMuthowifFiles['staging_dir']);
             }
 
             throw $e;
@@ -480,7 +441,6 @@ class RegisteredUserController extends Controller
      */
     private function commitRegistrationFromInput(array $input, ?array $muthowifFiles, RegistrationOtpService $registrationOtp, ?array $pending): RedirectResponse
     {
-        $storedDir = null;
         $user = null;
 
         try {
@@ -510,14 +470,7 @@ class RegisteredUserController extends Controller
                     throw new \RuntimeException('Berkas muthowif hilang.');
                 }
 
-                $storedDir = 'muthowif_documents/'.$user->id;
-                Storage::disk('local')->makeDirectory($storedDir);
-
-                $photoDest = $storedDir.'/'.basename($muthowifFiles['photo_path']);
-                $ktpDest = $storedDir.'/'.basename($muthowifFiles['ktp_path']);
-                Storage::disk('local')->move($muthowifFiles['photo_path'], $photoDest);
-                Storage::disk('local')->move($muthowifFiles['ktp_path'], $ktpDest);
-
+                $finalDir = 'muthowif_documents/'.$user->id;
                 $languages = $this->requestStringList($input['languages'] ?? null);
                 $educations = $this->requestStringList($input['educations'] ?? null);
                 $workExperiences = $this->requestStringList($input['work_experiences'] ?? null);
@@ -537,17 +490,15 @@ class RegisteredUserController extends Controller
                     'educations' => $educations,
                     'work_experiences' => $workExperiences,
                     'reference_text' => $input['reference_text'] ?? null,
-                    'photo_path' => $photoDest,
-                    'ktp_image_path' => $ktpDest,
+                    'photo_path' => $finalDir.'/'.basename($muthowifFiles['photo_path']),
+                    'ktp_image_path' => $finalDir.'/'.basename($muthowifFiles['ktp_path']),
                     'verification_status' => MuthowifVerificationStatus::Pending,
                     'referred_by_muthowif_profile_id' => $referredById,
                 ]);
 
                 foreach ($muthowifFiles['supporting'] as $row) {
-                    $dest = $storedDir.'/'.basename($row['path']);
-                    Storage::disk('local')->move($row['path'], $dest);
                     $profile->supportingDocuments()->create([
-                        'path' => $dest,
+                        'path' => $finalDir.'/'.basename($row['path']),
                         'original_name' => $row['original_name'],
                         'sort_order' => $row['sort_order'],
                     ]);
@@ -555,6 +506,10 @@ class RegisteredUserController extends Controller
             }
 
             DB::commit();
+
+            if ($user->isMuthowif() && $muthowifFiles !== null) {
+                $this->finalizePendingMuthowifFiles((string) $user->id, $muthowifFiles);
+            }
 
             if ($registrationOtp->otpEnabled()) {
                 $registrationOtp->clearVerificationSession();
@@ -564,10 +519,6 @@ class RegisteredUserController extends Controller
             }
         } catch (Throwable $e) {
             DB::rollBack();
-
-            if ($storedDir !== null) {
-                Storage::disk('local')->deleteDirectory($storedDir);
-            }
 
             throw $e;
         }
@@ -742,6 +693,114 @@ class RegisteredUserController extends Controller
             array_map(static fn ($s): string => is_string($s) ? trim($s) : '', $input),
             static fn (string $s): bool => $s !== ''
         ));
+    }
+
+    /**
+     * Optimasi & simpan berkas muthowif di luar transaksi DB.
+     *
+     * @return array{staging_dir: string, photo_path: string, ktp_path: string, supporting: list<array{path: string, original_name: string, sort_order: int}>}
+     */
+    private function stageMuthowifFilesFromRequest(Request $request): array
+    {
+        $stagingDir = 'tmp_muthowif_reg/'.Str::uuid();
+        Storage::disk('local')->makeDirectory($stagingDir);
+        $optimizer = app(UploadedImageOptimizer::class);
+
+        $photoFile = $request->file('photo');
+        if ($photoFile && $photoFile->isValid()) {
+            $photoPath = $optimizer->store($photoFile, $stagingDir, 'local', 'profile');
+        } else {
+            $cachedPhoto = session('registration_files.photo');
+            $photoPath = $stagingDir.'/'.basename($cachedPhoto['path']);
+            Storage::disk('local')->move($cachedPhoto['path'], $photoPath);
+            $photoPath = $optimizer->optimizeStoredPath($photoPath, 'local', 'profile');
+        }
+
+        $ktpFile = $request->file('ktp_image');
+        if ($ktpFile && $ktpFile->isValid()) {
+            $ktpPath = $optimizer->store($ktpFile, $stagingDir, 'local', 'profile');
+        } else {
+            $cachedKtp = session('registration_files.ktp_image');
+            $ktpPath = $stagingDir.'/'.basename($cachedKtp['path']);
+            Storage::disk('local')->move($cachedKtp['path'], $ktpPath);
+            $ktpPath = $optimizer->optimizeStoredPath($ktpPath, 'local', 'profile');
+        }
+
+        $supporting = [];
+        $files = $request->file('supporting_documents', []);
+        if (! is_array($files)) {
+            $files = array_filter([$files]);
+        }
+        foreach ($files as $file) {
+            if ($file && $file->isValid()) {
+                $supporting[] = [
+                    'path' => $optimizer->store($file, $stagingDir, 'local', 'document'),
+                    'original_name' => $file->getClientOriginalName(),
+                    'sort_order' => count($supporting),
+                ];
+            }
+        }
+
+        $cachedDocs = session('registration_files.supporting_documents', []);
+        foreach ($cachedDocs as $doc) {
+            if (Storage::disk('local')->exists($doc['path'])) {
+                $dest = $stagingDir.'/'.basename($doc['path']);
+                Storage::disk('local')->move($doc['path'], $dest);
+                $supporting[] = [
+                    'path' => $dest,
+                    'original_name' => $doc['original_name'],
+                    'sort_order' => count($supporting),
+                ];
+            }
+        }
+
+        return [
+            'staging_dir' => $stagingDir,
+            'photo_path' => $photoPath,
+            'ktp_path' => $ktpPath,
+            'supporting' => $supporting,
+        ];
+    }
+
+    /**
+     * @param  array{staging_dir: string, photo_path: string, ktp_path: string, supporting: list<array{path: string, original_name: string, sort_order: int}>}  $staged
+     */
+    private function finalizeStagedMuthowifFiles(string $userId, array $staged): void
+    {
+        $finalDir = 'muthowif_documents/'.$userId;
+        Storage::disk('local')->makeDirectory($finalDir);
+
+        $this->moveRegistrationFile($staged['photo_path'], $finalDir.'/'.basename($staged['photo_path']));
+        $this->moveRegistrationFile($staged['ktp_path'], $finalDir.'/'.basename($staged['ktp_path']));
+
+        foreach ($staged['supporting'] as $row) {
+            $this->moveRegistrationFile($row['path'], $finalDir.'/'.basename($row['path']));
+        }
+
+        Storage::disk('local')->deleteDirectory($staged['staging_dir']);
+    }
+
+    /**
+     * @param  array{photo_path: string, ktp_path: string, supporting: list<array{path: string, original_name: string, sort_order: int}>}  $pendingFiles
+     */
+    private function finalizePendingMuthowifFiles(string $userId, array $pendingFiles): void
+    {
+        $finalDir = 'muthowif_documents/'.$userId;
+        Storage::disk('local')->makeDirectory($finalDir);
+
+        $this->moveRegistrationFile($pendingFiles['photo_path'], $finalDir.'/'.basename($pendingFiles['photo_path']));
+        $this->moveRegistrationFile($pendingFiles['ktp_path'], $finalDir.'/'.basename($pendingFiles['ktp_path']));
+
+        foreach ($pendingFiles['supporting'] as $row) {
+            $this->moveRegistrationFile($row['path'], $finalDir.'/'.basename($row['path']));
+        }
+    }
+
+    private function moveRegistrationFile(string $from, string $to): void
+    {
+        if (Storage::disk('local')->exists($from)) {
+            Storage::disk('local')->move($from, $to);
+        }
     }
 
     private function cacheUploadedFiles(Request $request): void

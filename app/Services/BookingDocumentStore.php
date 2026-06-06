@@ -100,6 +100,28 @@ final class BookingDocumentStore
         return Storage::disk('local')->exists($normalized);
     }
 
+    /**
+     * @return array{path: string, name: string}
+     */
+    public function storeTempUpload(UploadedFile $file, mixed $previousPath = null): array
+    {
+        if ($this->isValidTempPath($previousPath)) {
+            Storage::disk('local')->delete(str_replace('\\', '/', (string) $previousPath));
+        }
+
+        $path = app(UploadedImageOptimizer::class)->store($file, 'temp-booking-documents', 'local', 'document');
+        if ($path === false || $path === '') {
+            throw ValidationException::withMessages([
+                'file' => [__('bookings.validation.document_store_failed')],
+            ]);
+        }
+
+        return [
+            'path' => str_replace('\\', '/', $path),
+            'name' => $file->getClientOriginalName(),
+        ];
+    }
+
     public function persistTempUploadsOnValidationFailure(Request $request): void
     {
         foreach (self::FIELDS as $field) {

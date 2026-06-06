@@ -15,6 +15,7 @@ import {
     fetchHtmlFragment,
     fetchJson,
     leavePrivateChannels,
+    markChatRead,
     payloadMatches,
     requireEcho,
     subscribePrivateListeners,
@@ -524,6 +525,7 @@ document.addEventListener('alpine:init', () => {
             this.error = '';
             this.body = '';
             this.clearImage();
+            this.syncBookingChannels();
             this.loadChatMessages();
         },
 
@@ -551,6 +553,7 @@ document.addEventListener('alpine:init', () => {
         closeChat() {
             this.activeConversation = null;
             this.view = 'list';
+            this.syncBookingChannels();
             this.loadList();
         },
 
@@ -570,15 +573,38 @@ document.addEventListener('alpine:init', () => {
             }
         },
 
+        bookingChannelSubscribeLimit: 10,
+
+        bookingIdsToSubscribe() {
+            const ids = new Set();
+            const activeId = this.activeConversation && this.view === 'chat'
+                ? String(this.activeConversation.id)
+                : null;
+            if (activeId) {
+                ids.add(activeId);
+            }
+
+            this.conversations
+                .filter((c) => (Number(c.unread_count) || 0) > 0)
+                .slice(0, 8)
+                .forEach((c) => ids.add(String(c.id)));
+
+            this.conversations
+                .slice(0, 5)
+                .forEach((c) => ids.add(String(c.id)));
+
+            return [...ids].slice(0, this.bookingChannelSubscribeLimit);
+        },
+
         syncBookingChannels() {
             if (!window.Echo) return;
-            const nextIds = new Set(this.conversations.map((c) => String(c.id)));
+            const nextIds = new Set(this.bookingIdsToSubscribe());
             for (const id of [...this.bookingChannelIds]) {
                 if (!nextIds.has(id)) {
                     this.leaveBookingChannel(id);
                 }
             }
-            this.conversations.forEach((c) => this.ensureBookingChannel(String(c.id)));
+            nextIds.forEach((id) => this.ensureBookingChannel(id));
         },
 
         ensureBookingChannel(bookingId) {
@@ -765,6 +791,13 @@ document.addEventListener('alpine:init', () => {
 
                 if (this.isPanelExpanded && this.view === 'chat') {
                     this.scrollToLatest({ force: hasNewMessage });
+                }
+
+                if ((Number(data.unread_for_me) || 0) > 0) {
+                    await markChatRead(this.activeConversation?.readUrl);
+                    if (conv) {
+                        conv.unread_count = 0;
+                    }
                 }
             } catch (e) {
                 this.error = e instanceof Error ? e.message : this.labels.loadError;

@@ -46,6 +46,7 @@ use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Facades\Validator;
 use Illuminate\Validation\Rule;
+use Illuminate\Validation\Rules\File;
 use Illuminate\Validation\ValidationException;
 use Illuminate\View\View;
 use RuntimeException;
@@ -533,6 +534,36 @@ class BookingController extends Controller
         return redirect()
             ->route('bookings.show', $booking)
             ->with('status', __('bookings.flash.review_saved'));
+    }
+
+    public function uploadTempDocument(Request $request): JsonResponse
+    {
+        $this->authorize('create', MuthowifBooking::class);
+
+        $documentStore = app(BookingDocumentStore::class);
+
+        $validated = $request->validate([
+            'field' => ['required', 'string', Rule::in(BookingDocumentStore::FIELDS)],
+            'file' => ['required', 'file', File::types(['pdf', 'jpg', 'jpeg', 'png'])->max(10 * 1024)],
+            'previous_path' => ['nullable', 'string', 'max:500'],
+        ]);
+
+        $upload = $request->file('file');
+        if (! $upload instanceof \Illuminate\Http\UploadedFile || ! $upload->isValid()) {
+            return response()->json([
+                'message' => __('bookings.validation.document_upload_failed'),
+            ], 422);
+        }
+
+        try {
+            $stored = $documentStore->storeTempUpload($upload, $validated['previous_path'] ?? null);
+        } catch (ValidationException $e) {
+            return response()->json([
+                'message' => collect($e->errors())->flatten()->first() ?? __('bookings.validation.document_store_failed'),
+            ], 422);
+        }
+
+        return response()->json($stored);
     }
 
     public function store(Request $request): RedirectResponse

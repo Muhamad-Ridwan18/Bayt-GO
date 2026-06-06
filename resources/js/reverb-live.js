@@ -215,6 +215,29 @@ export function chatMessagesUrl(baseUrl, afterId) {
  * @param {Array<{ id: string }>} existing
  * @param {Array<{ id: string }>} incoming
  */
+/**
+ * @param {string|null|undefined} readUrl
+ */
+export async function markChatRead(readUrl) {
+    if (!readUrl) {
+        return;
+    }
+
+    try {
+        await fetch(readUrl, {
+            method: 'POST',
+            headers: {
+                Accept: 'application/json',
+                'X-CSRF-TOKEN': csrfToken(),
+                'X-Requested-With': 'XMLHttpRequest',
+            },
+            credentials: 'same-origin',
+        });
+    } catch (error) {
+        console.error(error);
+    }
+}
+
 export function appendChatMessages(existing, incoming) {
     if (!incoming?.length) {
         return existing;

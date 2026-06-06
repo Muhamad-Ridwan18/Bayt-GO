@@ -4,8 +4,8 @@ namespace App\Providers;
 
 use App\Events\CustomerBookingUpdated;
 use App\Events\MootaWebhookRecorded;
+use App\Jobs\ProcessMootaWebhookSettlementJob;
 use App\Listeners\NotifyAdminServiceMonitorOnBookingChange;
-use App\Listeners\ProcessMootaWebhookForBookingPayments;
 use App\Models\BookingPayment;
 use App\Models\BookingRefundRequest;
 use App\Models\MuthowifWithdrawal;
@@ -66,7 +66,9 @@ class AppServiceProvider extends ServiceProvider
             ]);
         });
 
-        Event::listen(MootaWebhookRecorded::class, ProcessMootaWebhookForBookingPayments::class);
+        Event::listen(MootaWebhookRecorded::class, function (MootaWebhookRecorded $event): void {
+            ProcessMootaWebhookSettlementJob::dispatch($event->history);
+        });
         Event::listen(CustomerBookingUpdated::class, NotifyAdminServiceMonitorOnBookingChange::class);
         Paginator::useTailwind();
 

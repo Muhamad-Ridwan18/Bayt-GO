@@ -214,6 +214,7 @@ Route::middleware('auth')->group(function () {
     Route::middleware([EnsureUserRole::class.':customer'])->prefix('bookings')->name('bookings.')->group(function () {
         Route::get('live-index-fragment', [CustomerBookingController::class, 'indexLiveFragment'])->name('index.live-fragment');
         Route::get('/', [CustomerBookingController::class, 'index'])->name('index');
+        Route::post('documents/temp', [CustomerBookingController::class, 'uploadTempDocument'])->name('documents.temp');
         Route::post('/', [CustomerBookingController::class, 'store'])->name('store');
         Route::get('{booking}/live-state', [CustomerBookingController::class, 'showLiveState'])->name('show.live-state');
         Route::get('{booking}/fragment', [CustomerBookingController::class, 'showLiveFragment'])->name('show.fragment');
@@ -230,6 +231,7 @@ Route::middleware('auth')->group(function () {
         Route::post('{booking}/emergency-select/{offer}', [CustomerBookingEmergencyController::class, 'selectReplacement'])->name('emergency.select');
         Route::get('{booking}/chat/messages', [BookingChatController::class, 'index'])->name('chat.messages');
         Route::get('{booking}/chat/unread-count', [BookingChatController::class, 'unreadCount'])->name('chat.unread-count');
+        Route::post('{booking}/chat/read', [BookingChatController::class, 'markRead'])->name('chat.read');
         Route::post('{booking}/chat/messages', [BookingChatController::class, 'store'])->name('chat.messages.store');
         Route::get('{booking}/chat/messages/{message}/image', [BookingChatController::class, 'image'])->name('chat.messages.image');
         Route::get('{booking}/documents/{type}', [CustomerBookingController::class, 'downloadDocument'])
@@ -264,6 +266,7 @@ Route::middleware('auth')->group(function () {
             Route::get('bookings/{booking}/fragment', [MuthowifBookingController::class, 'showLiveFragment'])->name('bookings.show.fragment');
             Route::get('bookings/{booking}/chat/messages', [BookingChatController::class, 'index'])->name('bookings.chat.messages');
             Route::get('bookings/{booking}/chat/unread-count', [BookingChatController::class, 'unreadCount'])->name('bookings.chat.unread-count');
+            Route::post('bookings/{booking}/chat/read', [BookingChatController::class, 'markRead'])->name('bookings.chat.read');
             Route::post('bookings/{booking}/chat/messages', [BookingChatController::class, 'store'])->name('bookings.chat.messages.store');
             Route::get('bookings/{booking}/chat/messages/{message}/image', [BookingChatController::class, 'image'])->name('bookings.chat.messages.image');
             Route::get('bookings/{booking}/documents/{type}', [CustomerBookingController::class, 'downloadDocument'])

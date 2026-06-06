@@ -24,6 +24,26 @@ class BookingChatController extends Controller
         ]);
     }
 
+    public function markRead(Request $request, MuthowifBooking $booking): JsonResponse
+    {
+        $this->authorize('viewBookingChat', $booking);
+
+        $readerId = $request->user()->id;
+        $marked = $booking->chatMessages()
+            ->where('user_id', '!=', $readerId)
+            ->whereNull('read_at')
+            ->update(['read_at' => now()]);
+
+        if ($marked > 0) {
+            BookingChatBroadcast::notify($booking, 'read', null, (string) $readerId);
+        }
+
+        return response()->json([
+            'unread_for_me' => 0,
+            'marked' => $marked,
+        ]);
+    }
+
     public function index(Request $request, MuthowifBooking $booking): JsonResponse
     {
         $this->authorize('viewBookingChat', $booking);
@@ -103,15 +123,6 @@ class BookingChatController extends Controller
 
     private function initialMessages(MuthowifBooking $booking, mixed $readerId): JsonResponse
     {
-        $marked = $booking->chatMessages()
-            ->where('user_id', '!=', $readerId)
-            ->whereNull('read_at')
-            ->update(['read_at' => now()]);
-
-        if ($marked > 0) {
-            BookingChatBroadcast::afterResponse($booking, 'read', null, (string) $readerId);
-        }
-
         $messages = $booking->chatMessages()
             ->with('sender:id,name')
             ->orderByDesc('created_at')
@@ -123,7 +134,7 @@ class BookingChatController extends Controller
         return response()->json([
             'messages' => BookingChatMessageResource::collection($messages),
             'chat_open' => $booking->isBookingChatOpen(),
-            'unread_for_me' => 0,
+            'unread_for_me' => $this->unreadCountFor($booking, $readerId),
         ]);
     }
 
@@ -152,7 +163,7 @@ class BookingChatController extends Controller
                 ->update(['read_at' => now()]);
 
             if ($marked > 0) {
-                BookingChatBroadcast::afterResponse($booking, 'read', null, (string) $readerId);
+                BookingChatBroadcast::notify($booking, 'read', null, (string) $readerId);
             }
         }
 

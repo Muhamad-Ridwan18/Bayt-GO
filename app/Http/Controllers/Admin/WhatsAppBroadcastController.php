@@ -49,7 +49,7 @@ class WhatsAppBroadcastController extends Controller
             });
         }
 
-        $muthowifs = $query->get();
+        $muthowifs = $query->paginate(50)->withQueryString();
 
         $countRows = MuthowifProfile::query()
             ->whereNotNull('phone')

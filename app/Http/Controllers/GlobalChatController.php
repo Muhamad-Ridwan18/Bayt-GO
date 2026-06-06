@@ -30,11 +30,13 @@ class GlobalChatController extends Controller
                     : null;
                 $chatMessagesUrl = route('bookings.chat.messages', $booking);
                 $chatStoreUrl = route('bookings.chat.messages.store', $booking);
+                $chatReadUrl = route('bookings.chat.read', $booking);
             } else {
                 $otherName = $booking->customer?->name ?? 'Customer';
                 $photoUrl = null;
                 $chatMessagesUrl = route('muthowif.bookings.chat.messages', $booking);
                 $chatStoreUrl = route('muthowif.bookings.chat.messages.store', $booking);
+                $chatReadUrl = route('muthowif.bookings.chat.read', $booking);
             }
 
             $latestMessage = $latestByBooking[(string) $booking->getKey()] ?? null;
@@ -55,6 +57,7 @@ class GlobalChatController extends Controller
                 'unread_count' => (int) ($booking->unread_count ?? 0),
                 'fetchUrl' => $chatMessagesUrl,
                 'storeUrl' => $chatStoreUrl,
+                'readUrl' => $chatReadUrl,
             ];
         })->values();
 
