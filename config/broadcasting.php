@@ -1,5 +1,22 @@
 <?php
 
+/**
+ * Laravel → Reverb (HTTP API internal) berbeda dari browser → Reverb (WSS publik).
+ *
+ * - REVERB_SERVER_HOST=0.0.0.0 = bind listen saja, BUKAN tujuan HTTP broadcast.
+ * - REVERB_SCHEME=https = untuk klien (browser), BUKAN untuk API internal Reverb.
+ */
+$reverbBroadcastHost = env('REVERB_BROADCAST_HOST');
+if ($reverbBroadcastHost === null || $reverbBroadcastHost === '') {
+    $serverHost = (string) env('REVERB_SERVER_HOST', '127.0.0.1');
+    $reverbBroadcastHost = in_array($serverHost, ['0.0.0.0', '::', '::0'], true)
+        ? '127.0.0.1'
+        : $serverHost;
+}
+
+$reverbBroadcastPort = (int) env('REVERB_BROADCAST_PORT', env('REVERB_SERVER_PORT', 8080));
+$reverbBroadcastScheme = (string) env('REVERB_BROADCAST_SCHEME', 'http');
+
 return [
 
     /*
@@ -36,11 +53,10 @@ return [
             'secret' => env('REVERB_APP_SECRET'),
             'app_id' => env('REVERB_APP_ID'),
             'options' => [
-                // HTTP trigger dari Laravel → proses `reverb:start` (bukan URL publik APP_URL).
-                'host' => env('REVERB_BROADCAST_HOST', env('REVERB_SERVER_HOST', env('REVERB_HOST', '127.0.0.1'))),
-                'port' => (int) env('REVERB_BROADCAST_PORT', env('REVERB_SERVER_PORT', env('REVERB_PORT', 8080))),
-                'scheme' => env('REVERB_BROADCAST_SCHEME', env('REVERB_SCHEME', 'http')),
-                'useTLS' => (env('REVERB_BROADCAST_SCHEME', env('REVERB_SCHEME', 'http')) === 'https'),
+                'host' => $reverbBroadcastHost,
+                'port' => $reverbBroadcastPort,
+                'scheme' => $reverbBroadcastScheme,
+                'useTLS' => $reverbBroadcastScheme === 'https',
             ],
             'client_options' => [
                 // Guzzle client options: https://docs.guzzlephp.org/en/stable/request-options.html
