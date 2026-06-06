@@ -25,6 +25,51 @@ import {
 } from './reverb-live';
 
 document.addEventListener('alpine:init', () => {
+    Alpine.store('toasts', {
+        items: [],
+        nextId: 1,
+
+        add(type, message, duration = 5500) {
+            const text = String(message ?? '').trim();
+            if (text === '') {
+                return null;
+            }
+
+            const id = this.nextId++;
+            this.items.push({
+                id,
+                type: type ?? 'info',
+                message: text,
+                visible: true,
+            });
+
+            if (duration > 0) {
+                window.setTimeout(() => this.dismiss(id), duration);
+            }
+
+            return id;
+        },
+
+        dismiss(id) {
+            const item = this.items.find((t) => t.id === id);
+            if (!item) {
+                return;
+            }
+
+            item.visible = false;
+            window.setTimeout(() => {
+                this.items = this.items.filter((t) => t.id !== id);
+            }, 220);
+        },
+    });
+
+    window.showAppToast = (type, message, duration = 5500) => Alpine.store('toasts').add(type, message, duration);
+
+    window.addEventListener('app:toast', (event) => {
+        const detail = event?.detail ?? {};
+        Alpine.store('toasts').add(detail.type ?? 'info', detail.message ?? '', detail.duration ?? 5500);
+    });
+
     Alpine.data('reverbFragmentLive', (config) => ({
         fragmentUrl: config.fragmentUrl ?? null,
         listeners: config.listeners ?? [],

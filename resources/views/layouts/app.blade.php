@@ -36,11 +36,11 @@
             @endif
 
             <!-- Page Content -->
-            <main>
-                <x-ui.flash-banner />
+            <main class="ui-app-main">
                 {{ $slot }}
             </main>
         </div>
+        <x-ui.toast-stack />
         @auth
             @include('partials.global-chat')
         @endauth

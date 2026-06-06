@@ -27,7 +27,7 @@
             @endauth
 
             <main @class([
-                'w-full min-w-0 flex-1',
+                'ui-app-main w-full min-w-0 flex-1',
                 'py-0' => $fullBleed,
                 'ui-page-y-compact' => ! $fullBleed && $compact,
                 'ui-page-y' => ! $fullBleed && ! $compact,
@@ -54,6 +54,7 @@
                 </x-page-container>
             </footer>
         </div>
+        <x-ui.toast-stack />
         @auth
             @include('partials.global-chat')
         @endauth

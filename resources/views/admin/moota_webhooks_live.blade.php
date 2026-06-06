@@ -15,7 +15,7 @@
         </div>
     </x-slot>
 
-    <div class="py-8 sm:py-10">
+    <div class="ui-page-y">
         <x-page-container class="space-y-5">
             @if (! $realtimeEnabled)
                 <div class="rounded-xl border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-950">

@@ -16,7 +16,7 @@
     <div class="pointer-events-none absolute inset-0 z-[1] hidden bg-gradient-to-r from-welcomeCanvas from-[32%] via-welcomeCanvas/95 via-[58%] to-welcomeCanvas/5 sm:block lg:from-[36%] lg:via-[62%] lg:to-transparent" aria-hidden="true"></div>
     <div class="pointer-events-none absolute inset-x-0 bottom-0 z-[1] h-20 bg-gradient-to-t from-welcomeCanvas to-transparent sm:h-28" aria-hidden="true"></div>
 
-    <x-page-container class="relative z-10 pt-8 sm:pt-10 lg:pt-12">
+    <x-page-container class="ui-hero-inset relative z-10">
         <div class="max-w-2xl">
             <p class="mb-4 inline-flex items-center gap-2 rounded-full border border-emerald-200/70 bg-emerald-50 px-3.5 py-1.5 text-[10px] font-bold uppercase tracking-[0.12em] text-emerald-900 shadow-sm">
                 <span class="flex h-5 w-5 items-center justify-center rounded-full bg-white text-emerald-600" aria-hidden="true">

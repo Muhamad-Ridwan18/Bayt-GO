@@ -23,7 +23,7 @@
     </x-slot>
 
     <div
-        class="py-8 sm:py-10"
+        class="ui-page-y"
         x-data="adminServiceMonitorLive({
             fragmentUrl: @js(route('admin.service_monitor.fragment')),
             filter: @js($filter),
