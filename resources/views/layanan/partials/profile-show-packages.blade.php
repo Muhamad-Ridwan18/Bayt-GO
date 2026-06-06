@@ -62,11 +62,6 @@
                                 </li>
                             @endforeach
                         </ul>
-                        @if ($groupBookUrl)
-                            <a href="{{ $groupBookUrl }}" class="mt-6 inline-flex w-full items-center justify-center rounded-xl bg-brand-700 px-4 py-3 text-sm font-bold text-white shadow-md transition hover:bg-brand-600">
-                                {{ __('marketplace.show.packages_pick_group') }}
-                            </a>
-                        @endif
                     </div>
                 </article>
             @endif
@@ -96,11 +91,6 @@
                                 </li>
                             @endforeach
                         </ul>
-                        @if ($privateBookUrl)
-                            <a href="{{ $privateBookUrl }}" class="mt-6 inline-flex w-full items-center justify-center rounded-xl bg-gold px-4 py-3 text-sm font-bold text-white shadow-md transition hover:opacity-95">
-                                {{ __('marketplace.show.packages_pick_private') }}
-                            </a>
-                        @endif
                     </div>
                 </article>
             @endif
