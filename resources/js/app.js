@@ -1,5 +1,4 @@
 import './bootstrap';
-import 'flatpickr/dist/flatpickr.min.css';
 
 import { initFormSubmitLock } from './form-submit-lock';
 import { registerDateRangePicker } from './date-range-picker';

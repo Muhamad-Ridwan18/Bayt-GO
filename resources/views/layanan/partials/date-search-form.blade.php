@@ -79,41 +79,14 @@
         @endif
 
         <div class="{{ $gridClass }}">
-            <div
+            <x-date-range-picker
+                :start-date="$startDate"
+                :end-date="$endDate"
+                :min-date="now()->toDateString()"
+                :label="__('layanan.date_range')"
+                :input-class="($welcomeInlineHeader ? $dateClassInner : $dateClass) . ' cursor-pointer'"
                 class="{{ $marketplaceMode ? 'sm:col-span-2 lg:col-span-6' : 'w-full sm:max-w-lg lg:w-[20rem] lg:max-w-none lg:flex-shrink-0' }}"
-                x-data="dateRangeSearch({
-                    start: @js($startDate),
-                    end: @js($endDate),
-                    min: @js(now()->toDateString()),
-                    locale: @js(app()->getLocale()),
-                    displayFormat: @js(app()->getLocale() === 'id' ? 'j M Y' : 'M j, Y'),
-                    title: @js(__('layanan.date_picker_title')),
-                    todayLabel: @js(__('layanan.date_picker_today')),
-                    footerHint: @js(__('layanan.date_picker_footer')),
-                    closeLabel: @js(__('layanan.date_picker_close')),
-                })"
-            >
-                <label for="travel_date_range" class="block text-sm font-medium text-slate-700">{{ __('layanan.date_range') }}</label>
-                <div class="relative mt-2">
-                    <input
-                        type="text"
-                        id="travel_date_range"
-                        x-ref="display"
-                        placeholder="{{ __('layanan.date_range_placeholder') }}"
-                        autocomplete="off"
-                        readonly
-                        class="{{ $welcomeInlineHeader ? $dateClassInner : $dateClass }} cursor-pointer pr-10"
-                        title="{{ __('layanan.end_date_title') }}"
-                    />
-                    <span class="pointer-events-none absolute inset-y-0 end-0 flex items-center pe-3 text-slate-400" aria-hidden="true">
-                        <svg class="h-5 w-5" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor">
-                            <path fill-rule="evenodd" d="M6.75 2.25A.75.75 0 017.5 3v1.5h9V3A.75.75 0 0118 3v1.5h.75a3 3 0 013 3v11.25a3 3 0 01-3 3H5.25a3 3 0 01-3-3V7.5a3 3 0 013-3H6V3a.75.75 0 01.75-.75zm13.5 9a1.5 1.5 0 00-1.5-1.5H5.25a1.5 1.5 0 00-1.5 1.5v7.5a1.5 1.5 0 001.5 1.5h13.5a1.5 1.5 0 001.5-1.5v-7.5z" clip-rule="evenodd" />
-                        </svg>
-                    </span>
-                    <input type="hidden" name="start_date" x-ref="startInput" value="{{ $startDate }}" required />
-                    <input type="hidden" name="end_date" x-ref="endInput" value="{{ $endDate }}" />
-                </div>
-            </div>
+            />
             <div class="{{ $marketplaceMode ? 'sm:col-span-2 lg:col-span-4' : 'w-full lg:min-w-[12rem] lg:flex-1' }}">
                 <label for="q" class="block text-sm font-medium text-slate-700">{{ __('layanan.name_label') }}</label>
                 <input type="search" name="q" id="q" value="{{ $searchQuery }}"
