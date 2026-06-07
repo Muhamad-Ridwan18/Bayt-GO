@@ -9,7 +9,6 @@
     @include('muthowif.bookings.partials.show-grid', [
         'booking' => $booking,
         'addonsById' => $addonsById,
-        'peerRecommendTargets' => $peerRecommendTargets ?? collect(),
         'referralRewardFromPay' => $referralRewardFromPay ?? 0,
     ])
 </x-page-container>

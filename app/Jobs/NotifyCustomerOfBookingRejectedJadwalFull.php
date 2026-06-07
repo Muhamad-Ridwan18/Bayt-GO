@@ -22,7 +22,7 @@ class NotifyCustomerOfBookingRejectedJadwalFull implements ShouldQueue
     {
         $booking = MuthowifBooking::query()->find($this->bookingId);
         if ($booking) {
-            $notifier->notifyCustomerBookingRejectedJadwalFull($booking);
+            $notifier->notifyCustomerBookingRejectedByMuthowif($booking);
         }
     }
 }

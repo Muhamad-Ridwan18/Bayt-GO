@@ -9,6 +9,7 @@
         'booking' => $b,
         'showReferralNetworkPanel' => $showReferralNetworkPanel ?? false,
         'referralNetworkAlternatives' => $referralNetworkAlternatives ?? collect(),
+        'customerRecommendationSource' => $customerRecommendationSource ?? null,
     ])
 
     @include('bookings.partials.emergency-panel', [
@@ -37,5 +38,6 @@
         'booking' => $b,
         'showReferralNetworkPanel' => $showReferralNetworkPanel ?? false,
         'referralNetworkAlternatives' => $referralNetworkAlternatives ?? collect(),
+        'customerRecommendationSource' => $customerRecommendationSource ?? null,
     ])
 </div>

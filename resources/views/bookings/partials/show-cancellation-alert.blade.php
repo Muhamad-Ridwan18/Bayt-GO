@@ -1,8 +1,10 @@
 @php
     use App\Enums\BookingStatus;
     use App\Enums\MuthowifBookingMuthowifRejectionKind;
+    use App\Services\MuthowifNetworkReferralService;
 
     $b = $booking;
+    $isTopRated = ($customerRecommendationSource ?? null) === MuthowifNetworkReferralService::SOURCE_TOP_RATED;
     $showPanel = ! empty($showReferralNetworkPanel) && $showReferralNetworkPanel;
     $isJadwalFull = ($b->muthowif_rejection_kind ?? null) === MuthowifBookingMuthowifRejectionKind::JadwalFull;
 @endphp
@@ -22,6 +24,8 @@
                 <p class="mt-2 text-sm font-normal leading-relaxed text-red-900/90">
                     @if ($isJadwalFull)
                         {{ __('bookings.show.muthowif_jadwal_full_apology', ['name' => $b->muthowifProfile?->user?->name ?? '—']) }}
+                    @elseif ($isTopRated)
+                        {{ __('bookings.show.top_rated_cancelled_intro') }}
                     @else
                         {{ __('bookings.show.referral_network_cancelled_intro', ['name' => $b->muthowifProfile?->user?->name ?? '—']) }}
                     @endif

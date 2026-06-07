@@ -2,6 +2,7 @@
 
 namespace App\Services;
 
+use App\Enums\MuthowifBookingMuthowifRejectionKind;
 use App\Models\BookingRefundRequest;
 use App\Models\BookingRescheduleRequest;
 use App\Models\MuthowifBooking;
@@ -198,6 +199,20 @@ class MuthowifBookingWhatsAppNotifier
     }
 
     /**
+     * Muthowif menolak atau membatalkan booking — arahkan ke template sesuai alasan.
+     */
+    public function notifyCustomerBookingRejectedByMuthowif(MuthowifBooking $booking): void
+    {
+        if ($booking->muthowif_rejection_kind === MuthowifBookingMuthowifRejectionKind::JadwalFull) {
+            $this->notifyCustomerBookingRejectedJadwalFull($booking);
+
+            return;
+        }
+
+        $this->notifyCustomerBookingRejectedGeneric($booking);
+    }
+
+    /**
      * Muthowif menolak booking (alasan jadwal penuh) — permintaan maaf dan arahkan cek rekomendasi di aplikasi.
      */
     public function notifyCustomerBookingRejectedJadwalFull(MuthowifBooking $booking): void
@@ -262,17 +277,13 @@ class MuthowifBookingWhatsAppNotifier
     }
 
     /**
-     * Booking pending dialihkan ke muthowif lain — beri tahu jamaah.
+     * Muthowif menolak atau membatalkan booking (selain jadwal penuh).
      */
-    public function notifyCustomerReferredToPeer(MuthowifBooking $booking, string $previousMuthowifName): void
+    public function notifyCustomerBookingRejectedGeneric(MuthowifBooking $booking): void
     {
-        if (! config('services.fonnte.customer_booking_referred_notify_enabled', true)) {
-            return;
-        }
-
         $token = config('services.fonnte.token');
         if ($token === null || $token === '') {
-            Log::debug('WhatsApp notify customer referred skipped: FONNTE_TOKEN kosong.');
+            Log::debug('WhatsApp notify customer rejection skipped: FONNTE_TOKEN kosong.');
 
             return;
         }
@@ -285,7 +296,7 @@ class MuthowifBookingWhatsAppNotifier
 
         $fonnteDial = IntlPhone::fonnteDial($customer->phone);
         if ($fonnteDial === null) {
-            Log::warning('WhatsApp notify customer referred skipped: nomor customer kosong atau tidak valid.', [
+            Log::warning('WhatsApp notify customer rejection skipped: nomor customer kosong atau tidak valid.', [
                 'customer_id' => $customer->id,
                 'booking_id' => $booking->id,
             ]);
@@ -295,32 +306,46 @@ class MuthowifBookingWhatsAppNotifier
 
         $locale = $this->localeForUser($customer->locale);
 
-        $this->withLocale($locale, function () use ($booking, $fonnteDial, $locale, $previousMuthowifName): void {
-            $newMuthowifName = $booking->muthowifProfile?->user?->name ?? __('whatsapp.fallback_muthowif', [], $locale);
+        $this->withLocale($locale, function () use ($booking, $fonnteDial, $locale): void {
+            $muthowifName = $booking->muthowifProfile?->user?->name ?? __('whatsapp.fallback_muthowif', [], $locale);
             $start = $booking->starts_on->format('d/m/Y');
             $end = $booking->ends_on->format('d/m/Y');
             $appName = config('app.name', 'BaytGo');
             $url = route('bookings.show', $booking);
+            $kind = $booking->muthowif_rejection_kind;
 
             $lines = [
-                __('whatsapp.customer.referred.headline', ['app' => $appName], $locale),
+                __('whatsapp.customer.rejected.headline', ['app' => $appName], $locale),
                 '',
-                __('whatsapp.customer.referred.body', [
-                    'previous' => $previousMuthowifName !== '' ? $previousMuthowifName : __('whatsapp.fallback_muthowif', [], $locale),
-                    'new' => $newMuthowifName,
-                ], $locale),
+                $kind === null
+                    ? __('whatsapp.customer.rejected.body_confirmed_cancelled', ['muthowif' => $muthowifName], $locale)
+                    : __('whatsapp.customer.rejected.body', ['muthowif' => $muthowifName], $locale),
                 '',
             ];
 
-            if (filled($booking->booking_code)) {
-                $lines[] = __('whatsapp.customer.referred.booking_code', ['code' => $booking->booking_code], $locale);
+            if ($kind !== null) {
+                $lines[] = __('whatsapp.customer.rejected.reason', ['reason' => $kind->label()], $locale);
                 $lines[] = '';
             }
 
-            $lines[] = __('whatsapp.customer.referred.service_dates', ['start' => $start, 'end' => $end], $locale);
-            $lines[] = __('whatsapp.customer.referred.status', [], $locale);
+            if (filled($booking->booking_code)) {
+                $lines[] = __('whatsapp.customer.rejected.booking_code', ['code' => $booking->booking_code], $locale);
+                $lines[] = '';
+            }
+
+            $lines[] = __('whatsapp.customer.rejected.service_dates', ['start' => $start, 'end' => $end], $locale);
             $lines[] = '';
-            $lines[] = __('whatsapp.customer.referred.view_detail', [], $locale);
+            $lines[] = __('whatsapp.customer.rejected.hint', [], $locale);
+
+            $note = $booking->muthowif_rejection_note;
+            if (filled($note)) {
+                $lines[] = '';
+                $lines[] = __('whatsapp.customer.rejected.note_heading', [], $locale);
+                $lines[] = $note;
+            }
+
+            $lines[] = '';
+            $lines[] = __('whatsapp.customer.rejected.view_detail', [], $locale);
             $lines[] = $url;
 
             $this->sendToTarget($fonnteDial, implode("\n", $lines), $booking->id);

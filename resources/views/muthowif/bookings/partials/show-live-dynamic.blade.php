@@ -23,7 +23,6 @@
 
     @include('muthowif.bookings.partials.show-actions', [
         'booking' => $b,
-        'peerRecommendTargets' => $peerRecommendTargets ?? collect(),
     ])
 </div>
 

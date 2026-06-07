@@ -36,6 +36,7 @@
                     'rescheduleEligibilityError' => $rescheduleEligibilityError,
                     'refundPreview' => $refundPreview,
                     'referralNetworkAlternatives' => $referralNetworkAlternatives,
+                    'customerRecommendationSource' => $customerRecommendationSource ?? null,
                     'showReferralNetworkPanel' => $showReferralNetworkPanel,
                     'activeEmergencyReport' => $activeEmergencyReport ?? null,
                     'selectableEmergencyOffers' => $selectableEmergencyOffers ?? collect(),

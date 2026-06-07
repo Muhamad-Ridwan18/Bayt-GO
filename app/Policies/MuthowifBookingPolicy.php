@@ -85,13 +85,6 @@ class MuthowifBookingPolicy
             && $booking->status === BookingStatus::Pending;
     }
 
-    public function recommendToPeer(User $user, MuthowifBooking $booking): bool
-    {
-        return $this->muthowifOwns($user, $booking)
-            && $booking->status === BookingStatus::Pending
-            && $booking->payment_status === PaymentStatus::Pending;
-    }
-
     public function cancelAsMuthowif(User $user, MuthowifBooking $booking): bool
     {
         if (! $this->muthowifOwns($user, $booking)) {

@@ -16,6 +16,7 @@ use App\Models\MuthowifProfile;
 use App\Models\User;
 use App\Jobs\NotifyAdminsOfEmergencyReportSubmitted;
 use App\Jobs\NotifyCustomerOfEmergencyCandidate;
+use App\Jobs\NotifyCustomerOfEmergencyReportStatus;
 use App\Jobs\NotifyMuthowifEmergencyNotSelected;
 use App\Jobs\NotifyMuthowifEmergencySelected;
 use App\Jobs\NotifyMuthowifOfEmergencyReplacementOffer;
@@ -81,6 +82,7 @@ final class EmergencyReplacementService
         $report->update(['status' => EmergencyReportStatus::UnderReview]);
         $report = $report->fresh();
         EmergencyReportBroadcast::afterResponse($report, 'under_review');
+        NotifyCustomerOfEmergencyReportStatus::dispatchAfterResponse((string) $report->getKey(), 'under_review');
 
         return $report;
     }
@@ -108,6 +110,7 @@ final class EmergencyReplacementService
 
             CustomerBookingBroadcast::afterResponse($booking->fresh());
             EmergencyReportBroadcast::afterResponse($report->fresh(), 'verified');
+            NotifyCustomerOfEmergencyReportStatus::dispatchAfterResponse((string) $report->getKey(), 'verified');
 
             return $report->fresh();
         });
@@ -132,10 +135,12 @@ final class EmergencyReplacementService
                 'emergency_overlay_status' => EmergencyOverlayStatus::None,
             ]);
 
+            $report = $report->fresh();
             CustomerBookingBroadcast::afterResponse($report->muthowifBooking->fresh());
-            EmergencyReportBroadcast::afterResponse($report->fresh(), 'rejected');
+            EmergencyReportBroadcast::afterResponse($report, 'rejected');
+            NotifyCustomerOfEmergencyReportStatus::dispatchAfterResponse((string) $report->getKey(), 'rejected');
 
-            return $report->fresh();
+            return $report;
         });
     }
 

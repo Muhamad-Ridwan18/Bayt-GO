@@ -62,8 +62,6 @@ return [
         'payment_notify_enabled' => env('FONNTE_PAYMENT_NOTIFY_ENABLED', true),
         /** WhatsApp ke customer setelah booking disetujui muthowif. */
         'customer_booking_approved_notify_enabled' => env('FONNTE_CUSTOMER_BOOKING_APPROVED_NOTIFY_ENABLED', true),
-        /** WA ke jamaah: booking dialihkan ke muthowif lain (rekomendasi rekan). */
-        'customer_booking_referred_notify_enabled' => env('FONNTE_CUSTOMER_BOOKING_REFERRED_NOTIFY_ENABLED', true),
         /** WA ke jamaah: muthowif menolak karena jadwal penuh — maaf + cek rekomendasi jaringan. */
         'customer_booking_rejected_jadwal_full_notify_enabled' => env('FONNTE_CUSTOMER_BOOKING_REJECTED_JADWAL_FULL_NOTIFY_ENABLED', true),
         /** WA ke jamaah: bukti transfer refund (setelah admin upload + tandai selesai). */
@@ -78,6 +76,8 @@ return [
         'emergency_offer_notify_enabled' => env('FONNTE_EMERGENCY_OFFER_NOTIFY_ENABLED', true),
         /** WA ke nomor admin saat jamaah melaporkan insiden darurat. */
         'emergency_admin_report_notify_enabled' => env('FONNTE_EMERGENCY_ADMIN_REPORT_NOTIFY_ENABLED', true),
+        /** WA ke jamaah: update status laporan insiden (ditinjau / diverifikasi / ditolak). */
+        'emergency_customer_report_notify_enabled' => env('FONNTE_EMERGENCY_CUSTOMER_REPORT_NOTIFY_ENABLED', true),
     ],
 
     'midtrans' => [

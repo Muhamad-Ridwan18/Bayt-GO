@@ -8,7 +8,6 @@ use App\Enums\MuthowifBookingMuthowifRejectionKind;
 use App\Enums\PaymentStatus;
 use App\Http\Controllers\Controller;
 use App\Jobs\NotifyCustomerOfApprovedBooking;
-use App\Jobs\NotifyCustomerOfBookingReferredToPeer;
 use App\Jobs\NotifyCustomerOfBookingRejectedJadwalFull;
 use App\Jobs\NotifyCustomerOfRescheduleApproved;
 use App\Jobs\NotifyCustomerOfRescheduleRejected;
@@ -16,9 +15,7 @@ use App\Jobs\NotifyMuthowifOfNewBooking;
 use App\Models\BookingPayment;
 use App\Models\BookingRescheduleRequest;
 use App\Models\MuthowifBooking;
-use App\Models\MuthowifProfile;
 use App\Models\MuthowifServiceAddOn;
-use App\Services\BookingPeerReferralService;
 use App\Services\BookingPendingPaymentEnsurer;
 use App\Support\BookingWebLive;
 use App\Support\CustomerBookingBroadcast;
@@ -114,16 +111,11 @@ class BookingController extends Controller
             $addonsById = MuthowifServiceAddOn::query()->whereIn('id', $ids)->get()->keyBy('id');
         }
 
-        $peerRecommendTargets = $booking->status === BookingStatus::Pending
-            ? app(BookingPeerReferralService::class)->listCandidates($booking, $profile)
-            : collect();
-
         $earnings = $this->muthowifBookingEarningsViewData($booking, $addonsById, true);
 
         return view('muthowif.bookings.show', array_merge([
             'booking' => $booking,
             'addonsById' => $addonsById,
-            'peerRecommendTargets' => $peerRecommendTargets,
         ], $earnings));
     }
 
@@ -162,7 +154,6 @@ class BookingController extends Controller
 
             return view('muthowif.bookings.partials.show-live-dynamic', array_merge([
                 'booking' => $booking,
-                'peerRecommendTargets' => collect(),
             ], $earnings));
         }
 
@@ -173,16 +164,11 @@ class BookingController extends Controller
             'rescheduleRequests' => fn ($q) => $q->orderByDesc('created_at'),
         ]);
 
-        $peerRecommendTargets = $booking->status === BookingStatus::Pending
-            ? app(BookingPeerReferralService::class)->listCandidates($booking, $profile)
-            : collect();
-
         $earnings = $this->muthowifBookingEarningsViewData($booking, $addonsById, true);
 
         return view('muthowif.bookings.partials.show-grid', array_merge([
             'booking' => $booking,
             'addonsById' => $addonsById,
-            'peerRecommendTargets' => $peerRecommendTargets,
         ], $earnings));
     }
 
@@ -294,11 +280,9 @@ class BookingController extends Controller
                 'muthowif_rejection_note' => $note,
             ]);
 
-            if ($kind === MuthowifBookingMuthowifRejectionKind::JadwalFull) {
-                NotifyCustomerOfBookingRejectedJadwalFull::dispatchAfterResponse(
-                    (string) $booking->getKey()
-                );
-            }
+            NotifyCustomerOfBookingRejectedJadwalFull::dispatchAfterResponse(
+                (string) $booking->getKey()
+            );
 
             CustomerBookingBroadcast::afterResponse($booking->fresh());
 
@@ -316,42 +300,6 @@ class BookingController extends Controller
                 'error' => 'Terjadi kesalahan saat membatalkan booking. Silakan coba lagi.',
             ]);
         }
-    }
-
-    public function recommendToPeer(Request $request, MuthowifBooking $booking): RedirectResponse
-    {
-        $profile = $request->user()->muthowifProfile;
-        abort_unless($profile && (string) $booking->muthowif_profile_id === (string) $profile->id, 403);
-
-        $this->authorize('recommendToPeer', $booking);
-
-        $validated = $request->validate([
-            'target_muthowif_profile_id' => ['required', 'uuid', 'exists:muthowif_profiles,id'],
-        ]);
-
-        /** @var MuthowifProfile $target */
-        $target = MuthowifProfile::query()->findOrFail($validated['target_muthowif_profile_id']);
-
-        $booking->loadMissing('muthowifProfile.user');
-        $previousName = (string) ($booking->muthowifProfile?->user?->name ?? '');
-
-        try {
-            app(BookingPeerReferralService::class)->transfer($booking, $target, $profile);
-        } catch (RuntimeException $e) {
-            return redirect()
-                ->route('muthowif.bookings.show', $booking)
-                ->with('error', $e->getMessage());
-        }
-
-        $freshId = (string) $booking->fresh()->getKey();
-
-        NotifyMuthowifOfNewBooking::dispatchAfterResponse($freshId);
-        NotifyCustomerOfBookingReferredToPeer::dispatchAfterResponse($freshId, $previousName);
-        CustomerBookingBroadcast::afterResponse($booking->fresh());
-
-        return redirect()
-            ->route('muthowif.bookings.index')
-            ->with('status', __('muthowif.bookings.refer_flash_success'));
     }
 
     public function approveReschedule(Request $request, MuthowifBooking $booking, BookingRescheduleRequest $rescheduleRequest): RedirectResponse

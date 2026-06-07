@@ -49,7 +49,6 @@
     'referralRewardFromPay' => $referralRewardFromPay,
     'muthowifNetAfterReferral' => $muthowifNetAfterReferral,
     'fmt' => $fmt,
-    'peerRecommendTargets' => $peerRecommendTargets ?? collect(),
 ])
 
 <div data-live-part="extended">

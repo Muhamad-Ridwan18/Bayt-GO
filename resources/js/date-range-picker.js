@@ -62,8 +62,15 @@ function isBetweenDay(date, start, end) {
     return ! isBeforeDay(date, start) && ! isAfterDay(date, end);
 }
 
-function daysBetween(start, end) {
-    return Math.round((end.getTime() - start.getTime()) / MS_PER_DAY);
+/** Jumlah hari inklusif — tanggal mulai & selesai ikut dihitung (sama seperti MuthowifBooking::inclusiveSpanDays). */
+function inclusiveDaysBetween(start, end) {
+    if (! start || ! end) {
+        return 0;
+    }
+
+    const [from, to] = isBeforeDay(start, end) ? [start, end] : [end, start];
+
+    return Math.round((to.getTime() - from.getTime()) / MS_PER_DAY) + 1;
 }
 
 function formatDisplayDate(date, locale) {
@@ -198,8 +205,7 @@ function travelDateRangePickerFactory(config) {
                 return '—';
             }
 
-            const days = daysBetween(this.draftStart, this.draftEnd);
-            const count = days === 0 ? 1 : days;
+            const count = inclusiveDaysBetween(this.draftStart, this.draftEnd);
 
             return this.labels.durationDays?.replace(':count', String(count)) ?? `${count}`;
         },

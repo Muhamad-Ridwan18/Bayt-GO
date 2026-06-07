@@ -1,8 +1,10 @@
 @php
     use App\Enums\BookingStatus;
     use App\Enums\MuthowifBookingMuthowifRejectionKind;
+    use App\Services\MuthowifNetworkReferralService;
 
     $b = $booking;
+    $isTopRated = ($customerRecommendationSource ?? null) === MuthowifNetworkReferralService::SOURCE_TOP_RATED;
     $st = $b->status;
     $showPanel = ! empty($showReferralNetworkPanel) && $showReferralNetworkPanel;
     $isJadwalFull = ($b->muthowif_rejection_kind ?? null) === MuthowifBookingMuthowifRejectionKind::JadwalFull;
@@ -57,7 +59,13 @@
     @if ($showPanel)
         <section id="booking-recommendations" class="scroll-mt-24 rounded-2xl border border-slate-200 bg-white p-5 shadow-sm sm:p-6">
             <h2 class="text-sm font-bold text-slate-900">{{ __('bookings.show.recommendations_title') }}</h2>
-            <p class="mt-1 text-xs leading-relaxed text-slate-600">{{ __('bookings.show.recommendations_subtitle') }}</p>
+            <p class="mt-1 text-xs leading-relaxed text-slate-600">
+                @if ($isTopRated)
+                    {{ __('bookings.show.top_rated_subtitle') }}
+                @else
+                    {{ __('bookings.show.recommendations_subtitle') }}
+                @endif
+            </p>
             <div class="mt-4">
                 @include('bookings.partials.show-recommendations-list', [
                     'booking' => $b,

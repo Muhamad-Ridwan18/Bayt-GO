@@ -107,11 +107,7 @@ class BookingController extends Controller
         ]);
         $addonsById = $this->addOnsKeyByIdForBooking($booking);
 
-        $networkReferral = app(MuthowifNetworkReferralService::class);
-        $referralNetworkAlternatives = $this->referralAlternativesWithStats(
-            $networkReferral->alternativesForCustomerAfterJadwalRejection($booking),
-        );
-        $showReferralNetworkPanel = $networkReferral->shouldShowCustomerReferralPanel($booking);
+        $alternatives = $this->customerCancellationAlternatives($booking);
 
         return view('bookings.show', array_merge([
             'booking' => $booking,
@@ -119,8 +115,9 @@ class BookingController extends Controller
             'refundEligibilityError' => BookingPostPayRules::canRequestRefund($booking),
             'rescheduleEligibilityError' => BookingPostPayRules::canRequestReschedule($booking),
             'refundPreview' => $this->refundPreviewForBooking($booking),
-            'referralNetworkAlternatives' => $referralNetworkAlternatives,
-            'showReferralNetworkPanel' => $showReferralNetworkPanel,
+            'referralNetworkAlternatives' => $alternatives['profiles'],
+            'customerRecommendationSource' => $alternatives['source'],
+            'showReferralNetworkPanel' => $alternatives['show_panel'],
         ], EmergencyBookingViewData::for($booking)));
     }
 
@@ -151,13 +148,7 @@ class BookingController extends Controller
         ]);
         $addonsById = $this->addOnsKeyByIdForBooking($booking);
 
-        $networkReferral = app(MuthowifNetworkReferralService::class);
-        $showReferralNetworkPanel = $networkReferral->shouldShowCustomerReferralPanel($booking);
-        $referralNetworkAlternatives = $showReferralNetworkPanel
-            ? $this->referralAlternativesWithStats(
-                $networkReferral->alternativesForCustomerAfterJadwalRejection($booking),
-            )
-            : collect();
+        $alternatives = $this->customerCancellationAlternatives($booking);
 
         return view('bookings.partials.show-body', array_merge([
             'booking' => $booking,
@@ -165,8 +156,9 @@ class BookingController extends Controller
             'refundEligibilityError' => BookingPostPayRules::canRequestRefund($booking),
             'rescheduleEligibilityError' => BookingPostPayRules::canRequestReschedule($booking),
             'refundPreview' => $this->refundPreviewForBooking($booking),
-            'referralNetworkAlternatives' => $referralNetworkAlternatives,
-            'showReferralNetworkPanel' => $showReferralNetworkPanel,
+            'referralNetworkAlternatives' => $alternatives['profiles'],
+            'customerRecommendationSource' => $alternatives['source'],
+            'showReferralNetworkPanel' => $alternatives['show_panel'],
         ], EmergencyBookingViewData::for($booking)));
     }
 
@@ -1050,6 +1042,35 @@ class BookingController extends Controller
         }
 
         return app(MootaApiClient::class)->bankAccountIds();
+    }
+
+    /**
+     * @return array{
+     *   profiles: Collection<int, MuthowifProfile>,
+     *   source: string|null,
+     *   show_panel: bool
+     * }
+     */
+    private function customerCancellationAlternatives(MuthowifBooking $booking): array
+    {
+        $networkReferral = app(MuthowifNetworkReferralService::class);
+        $showPanel = $networkReferral->shouldShowCustomerReferralPanel($booking);
+
+        if (! $showPanel) {
+            return [
+                'profiles' => collect(),
+                'source' => null,
+                'show_panel' => false,
+            ];
+        }
+
+        $resolved = $networkReferral->resolveCustomerAlternatives($booking);
+
+        return [
+            'profiles' => $this->referralAlternativesWithStats($resolved['profiles']),
+            'source' => $resolved['source'],
+            'show_panel' => true,
+        ];
     }
 
     /**

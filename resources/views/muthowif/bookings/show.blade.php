@@ -27,7 +27,6 @@
                 @include('muthowif.bookings.partials.show-grid', [
                     'booking' => $booking,
                     'addonsById' => $addonsById,
-                    'peerRecommendTargets' => $peerRecommendTargets,
                     'referralRewardFromPay' => $referralRewardFromPay,
                 ])
             </div>

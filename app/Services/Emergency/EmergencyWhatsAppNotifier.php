@@ -79,6 +79,77 @@ final class EmergencyWhatsAppNotifier
         $this->sendToPhoneNumbers($numbers, $message, (string) $report->getKey());
     }
 
+    /**
+     * @param  'under_review'|'verified'|'rejected'  $statusKey
+     */
+    public function notifyCustomerOfReportStatus(BookingEmergencyReport $report, string $statusKey): void
+    {
+        if (! config('services.fonnte.emergency_customer_report_notify_enabled', true)) {
+            return;
+        }
+
+        if (! in_array($statusKey, ['under_review', 'verified', 'rejected'], true)) {
+            return;
+        }
+
+        $report->loadMissing([
+            'muthowifBooking.customer',
+            'muthowifBooking.muthowifProfile.user',
+        ]);
+
+        $booking = $report->muthowifBooking;
+        $customer = $booking?->customer;
+        if ($booking === null || $customer === null) {
+            return;
+        }
+
+        $fonnteDial = $this->resolveCustomerDial($customer->phone, (string) $customer->getKey(), (string) $booking->getKey());
+        if ($fonnteDial === null) {
+            return;
+        }
+
+        $locale = $this->localeForUser($customer->locale);
+        $langKey = "whatsapp.customer.emergency_{$statusKey}";
+
+        $this->withLocale($locale, function () use ($report, $booking, $fonnteDial, $locale, $langKey, $statusKey): void {
+            $start = $booking->starts_on->format('d/m/Y');
+            $end = $booking->ends_on->format('d/m/Y');
+            $appName = config('app.name', 'BaytGo');
+            $url = route('bookings.show', $booking);
+
+            $lines = [
+                __($langKey.'.headline', ['app' => $appName], $locale),
+                '',
+                __($langKey.'.body', [], $locale),
+                '',
+            ];
+
+            if (filled($booking->booking_code)) {
+                $lines[] = __($langKey.'.booking_code', ['code' => $booking->booking_code], $locale);
+                $lines[] = '';
+            }
+
+            $lines[] = __($langKey.'.service_dates', ['start' => $start, 'end' => $end], $locale);
+
+            if ($statusKey === 'verified') {
+                $lines[] = '';
+                $lines[] = __($langKey.'.hint', [], $locale);
+            }
+
+            if ($statusKey === 'rejected' && filled($report->admin_note)) {
+                $lines[] = '';
+                $lines[] = __($langKey.'.note_heading', [], $locale);
+                $lines[] = $report->admin_note;
+            }
+
+            $lines[] = '';
+            $lines[] = __($langKey.'.view_detail', [], $locale);
+            $lines[] = $url;
+
+            $this->sendToTarget($fonnteDial, implode("\n", $lines), (string) $booking->getKey());
+        });
+    }
+
     public function notifyCustomerOfCandidate(BookingReplacementOffer $offer): void
     {
         if (! config('services.fonnte.emergency_candidate_notify_enabled', true)) {

@@ -41,6 +41,7 @@
     'booking' => $b,
     'showReferralNetworkPanel' => $showReferralNetworkPanel ?? false,
     'referralNetworkAlternatives' => $referralNetworkAlternatives ?? collect(),
+    'customerRecommendationSource' => $customerRecommendationSource ?? null,
     'activeEmergencyReport' => $activeEmergencyReport ?? null,
     'selectableEmergencyOffers' => $selectableEmergencyOffers ?? collect(),
     'daily' => $daily,

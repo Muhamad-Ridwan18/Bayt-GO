@@ -1,7 +1,10 @@
 @php
     use App\Enums\MuthowifBookingMuthowifRejectionKind;
+    use App\Services\MuthowifNetworkReferralService;
+
     /** @var \Illuminate\Support\Collection<int,\App\Models\MuthowifProfile> $referralNetworkAlternatives */
     $referralNetworkAlternatives = $referralNetworkAlternatives ?? collect();
+    $isTopRated = ($customerRecommendationSource ?? null) === MuthowifNetworkReferralService::SOURCE_TOP_RATED;
 
     $referralLayananQuery = array_filter([
         'start_date' => $booking->starts_on?->toDateString(),
@@ -15,6 +18,10 @@
         @if (($booking->muthowif_rejection_kind ?? null) === MuthowifBookingMuthowifRejectionKind::JadwalFull)
             <p class="text-sm leading-relaxed text-slate-800">
                 {{ __('bookings.show.muthowif_jadwal_full_apology', ['name' => $booking->muthowifProfile?->user?->name ?? '—']) }}
+            </p>
+        @elseif ($isTopRated)
+            <p class="text-sm leading-relaxed text-slate-800">
+                {{ __('bookings.show.top_rated_cancelled_intro') }}
             </p>
         @else
             <p class="text-sm leading-relaxed text-slate-800">
@@ -34,7 +41,11 @@
             </p>
         @else
             <p class="mt-5 text-sm leading-relaxed text-slate-700">
-                {{ __('bookings.show.referral_network_subtitle', ['name' => $booking->muthowifProfile?->user?->name ?? '—']) }}
+                @if ($isTopRated)
+                    {{ __('bookings.show.top_rated_subtitle') }}
+                @else
+                    {{ __('bookings.show.referral_network_subtitle', ['name' => $booking->muthowifProfile?->user?->name ?? '—']) }}
+                @endif
             </p>
             <ul class="mt-5 space-y-3">
                 @foreach ($referralNetworkAlternatives as $profile)

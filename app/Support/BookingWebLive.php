@@ -59,8 +59,7 @@ final class BookingWebLive
      *   status: string,
      *   payment_status: string,
      *   is_paid: bool,
-     *   has_pending_reschedule: bool,
-     *   show_peer_recommend: bool
+     *   has_pending_reschedule: bool
      * }
      */
     public static function muthowifShowState(MuthowifBooking $booking, ?array $client = null): array
@@ -69,7 +68,7 @@ final class BookingWebLive
 
         $hasPendingReschedule = $booking->rescheduleRequests()->where('status', 'pending')->exists();
         $hasPendingRefund = $booking->refundRequests()->where('status', 'pending')->exists();
-        $showPeer = $booking->status === BookingStatus::Pending;
+        $isPending = $booking->status === BookingStatus::Pending;
 
         $prevStatus = $client['status'] ?? null;
         $prevPayment = $client['payment_status'] ?? null;
@@ -80,7 +79,7 @@ final class BookingWebLive
             $emergencyEvent
             || $hasPendingReschedule
             || $hasPendingRefund
-            || $showPeer
+            || $isPending
             || self::statusTierChanged($prevStatus, $booking->status->value)
             || self::paymentTierChanged($prevPayment, $booking->payment_status->value, $booking->status)
         ) {
@@ -94,7 +93,6 @@ final class BookingWebLive
             'payment_status' => $booking->payment_status->value,
             'is_paid' => $booking->isPaid(),
             'has_pending_reschedule' => $hasPendingReschedule,
-            'show_peer_recommend' => $showPeer,
         ];
     }
 
