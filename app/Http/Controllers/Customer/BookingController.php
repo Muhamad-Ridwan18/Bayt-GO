@@ -70,6 +70,7 @@ class BookingController extends Controller
             'bookings' => $bookings,
             'addonsById' => $addonsById,
             'bookingStatusCounts' => $bookingStatusCounts,
+            'statusFilter' => $this->resolveBookingStatusFilter($request),
         ]);
     }
 
@@ -87,6 +88,7 @@ class BookingController extends Controller
             'bookings' => $bookings,
             'addonsById' => $addonsById,
             'bookingStatusCounts' => $bookingStatusCounts,
+            'statusFilter' => $this->resolveBookingStatusFilter($request),
         ]);
     }
 
@@ -1094,11 +1096,31 @@ class BookingController extends Controller
      */
     private function customerBookingsIndexQuery(Request $request)
     {
-        return $request->user()
+        $query = $request->user()
             ->customerBookings()
             ->with(['muthowifProfile.user', 'review'])
             ->orderByDesc('starts_on')
             ->orderByDesc('created_at');
+
+        $statusFilter = $this->resolveBookingStatusFilter($request);
+        if ($statusFilter !== null) {
+            $query->where('status', $statusFilter);
+        }
+
+        return $query;
+    }
+
+    private function resolveBookingStatusFilter(Request $request): ?string
+    {
+        $status = $request->query('status');
+        if (! is_string($status) || $status === '') {
+            return null;
+        }
+
+        return in_array($status, array_map(
+            static fn (BookingStatus $case) => $case->value,
+            BookingStatus::cases(),
+        ), true) ? $status : null;
     }
 
     private function forgetCustomerBookingStatusCounts(string $customerId): void

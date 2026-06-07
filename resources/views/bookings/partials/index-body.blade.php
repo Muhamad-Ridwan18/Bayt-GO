@@ -47,10 +47,11 @@
                             {!! __('layanan.customer_bookings_intro') !!}
                         </p>
 
-                        @include('bookings.partials.index-stats', [
-                            'bookings' => $bookings,
-                            'bookingStatusCounts' => $bookingStatusCounts,
-                        ])
+                        @if ($bookings->total() > 0)
+                            <p class="pt-1 text-xs font-medium text-slate-500">
+                                {{ __('bookings.index_page.bookings_total', ['count' => $bookings->total()]) }}
+                            </p>
+                        @endif
                     </div>
 
                     <div class="flex shrink-0 flex-col gap-3 sm:flex-row sm:items-center lg:flex-col lg:items-stretch">
@@ -68,27 +69,49 @@
                 </div>
             </div>
 
+            <div class="mt-8">
+                @include('bookings.partials.index-status-tabs', [
+                    'statusFilter' => $statusFilter ?? null,
+                    'bookingStatusCounts' => $bookingStatusCounts,
+                    'indexRoute' => 'bookings.index',
+                ])
+            </div>
+
+            <div data-live-part="list">
             @if ($bookings->isEmpty())
-                <div class="mt-10 flex flex-col items-center justify-center rounded-3xl border-2 border-dashed border-slate-200/80 bg-white px-6 py-16 text-center shadow-inner shadow-slate-900/5 sm:px-12">
+                @php
+                    $filteredStatus = filled($statusFilter ?? null)
+                        ? BookingStatus::tryFrom((string) $statusFilter)
+                        : null;
+                @endphp
+                <div class="mt-6 flex flex-col items-center justify-center rounded-3xl border-2 border-dashed border-slate-200/80 bg-white px-6 py-16 text-center shadow-inner shadow-slate-900/5 sm:px-12">
                     <div class="flex h-16 w-16 items-center justify-center rounded-2xl bg-gradient-to-br from-brand-100 to-brand-50 ring-1 ring-brand-200/60">
                         <svg class="h-8 w-8 text-brand-700" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" aria-hidden="true">
                             <path stroke-linecap="round" stroke-linejoin="round" d="M6.75 3v2.25M17.25 3v2.25M3 18.75V7.5a2.25 2.25 0 012.25-2.25h13.5A2.25 2.25 0 0121 7.5v11.25m-18 0A2.25 2.25 0 005.25 21h13.5a2.25 2.25 0 002.25-2.25m-18 0v-7.5A2.25 2.25 0 015.25 9h13.5a2.25 2.25 0 012.25 2.25v7.5" />
                         </svg>
                     </div>
-                    <h2 class="mt-6 text-lg font-semibold text-slate-900">{{ __('bookings.index_page.empty_title') }}</h2>
-                    <p class="mt-2 max-w-md text-sm text-slate-600">{{ __('bookings.index_page.empty_lead') }}</p>
-                    <a
-                        href="{{ route('layanan.index') }}"
-                        class="mt-8 inline-flex items-center gap-2 rounded-2xl bg-slate-900 px-5 py-2.5 text-sm font-semibold text-white shadow-lg shadow-slate-900/20 transition hover:bg-slate-800"
-                    >
-                        {{ __('bookings.index_page.empty_cta') }}
-                        <svg class="h-4 w-4" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true">
-                            <path fill-rule="evenodd" d="M3 10a.75.75 0 01.75-.75h10.638L10.23 5.29a.75.75 0 111.04-1.08l5.5 5.25a.75.75 0 010 1.08l-5.5 5.25a.75.75 0 11-1.04-1.08l4.158-3.96H3.75A.75.75 0 013 10z" clip-rule="evenodd" />
-                        </svg>
-                    </a>
+                    @if ($filteredStatus)
+                        <h2 class="mt-6 text-lg font-semibold text-slate-900">{{ __('bookings.index_page.empty_filtered_title', ['status' => $filteredStatus->label()]) }}</h2>
+                        <p class="mt-2 max-w-md text-sm text-slate-600">{{ __('bookings.index_page.empty_filtered_lead') }}</p>
+                        <a href="{{ route('bookings.index') }}" class="mt-8 inline-flex items-center gap-2 rounded-2xl border border-slate-200 bg-white px-5 py-2.5 text-sm font-semibold text-slate-800 shadow-sm transition hover:bg-slate-50">
+                            {{ __('bookings.index_page.filter_all') }}
+                        </a>
+                    @else
+                        <h2 class="mt-6 text-lg font-semibold text-slate-900">{{ __('bookings.index_page.empty_title') }}</h2>
+                        <p class="mt-2 max-w-md text-sm text-slate-600">{{ __('bookings.index_page.empty_lead') }}</p>
+                        <a
+                            href="{{ route('layanan.index') }}"
+                            class="mt-8 inline-flex items-center gap-2 rounded-2xl bg-slate-900 px-5 py-2.5 text-sm font-semibold text-white shadow-lg shadow-slate-900/20 transition hover:bg-slate-800"
+                        >
+                            {{ __('bookings.index_page.empty_cta') }}
+                            <svg class="h-4 w-4" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true">
+                                <path fill-rule="evenodd" d="M3 10a.75.75 0 01.75-.75h10.638L10.23 5.29a.75.75 0 111.04-1.08l5.5 5.25a.75.75 0 010 1.08l-5.5 5.25a.75.75 0 11-1.04-1.08l4.158-3.96H3.75A.75.75 0 013 10z" clip-rule="evenodd" />
+                            </svg>
+                        </a>
+                    @endif
                 </div>
             @else
-                <ul class="mt-10 ui-stack-compact">
+                <ul class="mt-6 ui-stack-compact">
                     @foreach ($bookings as $booking)
                         @php
                             $st = $booking->status;
@@ -281,8 +304,9 @@
 
                 <div class="mt-10 flex justify-center">
                     <div class="rounded-2xl border border-slate-200/80 bg-white px-2 py-1 shadow-sm">
-                        {{ $bookings->links() }}
+                        {{ $bookings->withQueryString()->links() }}
                     </div>
                 </div>
             @endif
+            </div>
         </x-page-container>

@@ -7,7 +7,6 @@ use App\Enums\BookingStatus;
 use App\Enums\MuthowifBookingMuthowifRejectionKind;
 use App\Enums\PaymentStatus;
 use App\Http\Controllers\Controller;
-use App\Jobs\NotifyCustomerOfApprovedBooking;
 use App\Jobs\NotifyCustomerOfBookingRejectedJadwalFull;
 use App\Jobs\NotifyCustomerOfRescheduleApproved;
 use App\Jobs\NotifyCustomerOfRescheduleRejected;
@@ -15,8 +14,10 @@ use App\Jobs\NotifyMuthowifOfNewBooking;
 use App\Models\BookingPayment;
 use App\Models\BookingRescheduleRequest;
 use App\Models\MuthowifBooking;
+use App\Models\MuthowifProfile;
 use App\Models\MuthowifServiceAddOn;
 use App\Services\BookingPendingPaymentEnsurer;
+use App\Services\MuthowifBookingWhatsAppNotifier;
 use App\Support\BookingWebLive;
 use App\Support\CustomerBookingBroadcast;
 use App\Support\PlatformFee;
@@ -40,20 +41,15 @@ class BookingController extends Controller
         $profile = $request->user()->muthowifProfile;
         abort_unless($profile, 403);
 
-        $bookings = MuthowifBooking::query()
-            ->where('muthowif_profile_id', $profile->id)
-            ->with(['customer'])
-            ->withCount([
-                'rescheduleRequests as pending_reschedule_requests_count' => fn ($q) => $q->where('status', BookingChangeRequestStatus::Pending),
-            ])
-            ->orderByRaw("CASE status WHEN 'pending' THEN 0 WHEN 'confirmed' THEN 1 ELSE 2 END")
-            ->orderByDesc('starts_on')
-            ->orderByDesc('created_at')
-            ->paginate(20);
+        $statusFilter = $this->resolveBookingStatusFilter($request);
+        $bookings = $this->muthowifBookingsIndexQuery($profile, $statusFilter)->paginate(20);
+        $bookingStatusCounts = $this->muthowifBookingStatusCounts((string) $profile->getKey());
 
         return view('muthowif.bookings.index', [
             'bookings' => $bookings,
             'addonsById' => $this->addOnsKeyById($bookings),
+            'bookingStatusCounts' => $bookingStatusCounts,
+            'statusFilter' => $statusFilter,
         ]);
     }
 
@@ -75,20 +71,15 @@ class BookingController extends Controller
         $profile = $request->user()->muthowifProfile;
         abort_unless($profile, 403);
 
-        $bookings = MuthowifBooking::query()
-            ->where('muthowif_profile_id', $profile->id)
-            ->with(['customer'])
-            ->withCount([
-                'rescheduleRequests as pending_reschedule_requests_count' => fn ($q) => $q->where('status', BookingChangeRequestStatus::Pending),
-            ])
-            ->orderByRaw("CASE status WHEN 'pending' THEN 0 WHEN 'confirmed' THEN 1 ELSE 2 END")
-            ->orderByDesc('starts_on')
-            ->orderByDesc('created_at')
-            ->paginate(20);
+        $statusFilter = $this->resolveBookingStatusFilter($request);
+        $bookings = $this->muthowifBookingsIndexQuery($profile, $statusFilter)->paginate(20);
+        $bookingStatusCounts = $this->muthowifBookingStatusCounts((string) $profile->getKey());
 
         return view('muthowif.bookings.partials.index-live', [
             'bookings' => $bookings,
             'addonsById' => $this->addOnsKeyById($bookings),
+            'bookingStatusCounts' => $bookingStatusCounts,
+            'statusFilter' => $statusFilter,
         ]);
     }
 
@@ -199,8 +190,9 @@ class BookingController extends Controller
         $bookingIdStr = (string) $booking->getKey();
         $broadcastIds = [$bookingIdStr];
         $customerIdsToInvalidate = [(string) $booking->customer_id];
+        $rejectedBookingIds = [];
 
-        DB::transaction(function () use ($booking, $profile, $start, $end, $total, $bookingIdStr, &$broadcastIds, &$customerIdsToInvalidate): void {
+        DB::transaction(function () use ($booking, $profile, $start, $end, $total, $bookingIdStr, &$broadcastIds, &$customerIdsToInvalidate, &$rejectedBookingIds): void {
             $booking->update([
                 'status' => BookingStatus::Confirmed,
                 'payment_status' => PaymentStatus::Pending,
@@ -222,7 +214,7 @@ class BookingController extends Controller
                     'muthowif_rejection_kind' => MuthowifBookingMuthowifRejectionKind::JadwalFull,
                     'muthowif_rejection_note' => __('bookings.show.muthowif_rejection_auto_collision'),
                 ]);
-                NotifyCustomerOfBookingRejectedJadwalFull::dispatchAfterResponse((string) $other->getKey());
+                $rejectedBookingIds[] = (string) $other->getKey();
                 $broadcastIds[] = (string) $other->getKey();
                 $customerIdsToInvalidate[] = (string) $other->customer_id;
             }
@@ -230,7 +222,14 @@ class BookingController extends Controller
 
         app(BookingPendingPaymentEnsurer::class)->ensure($booking->fresh());
 
-        NotifyCustomerOfApprovedBooking::dispatchAfterResponse($bookingIdStr);
+        $notifier = app(MuthowifBookingWhatsAppNotifier::class);
+        $notifier->notifyCustomerApproved($booking->fresh());
+        foreach ($rejectedBookingIds as $otherId) {
+            $other = MuthowifBooking::query()->find($otherId);
+            if ($other) {
+                $notifier->notifyCustomerBookingRejectedByMuthowif($other);
+            }
+        }
         CustomerBookingBroadcast::afterResponseMany($broadcastIds);
         foreach (array_unique($customerIdsToInvalidate) as $customerId) {
             Cache::forget('customer_booking_status_counts:'.$customerId);
@@ -519,5 +518,57 @@ class BookingController extends Controller
             'muthowifFee' => $muthowifFee,
             'muthowifNetAfterReferral' => $muthowifNetAfterReferral,
         ];
+    }
+
+    private function resolveBookingStatusFilter(Request $request): ?string
+    {
+        $status = $request->query('status');
+        if (! is_string($status) || $status === '') {
+            return null;
+        }
+
+        return in_array($status, array_map(
+            static fn (BookingStatus $case) => $case->value,
+            BookingStatus::cases(),
+        ), true) ? $status : null;
+    }
+
+    /**
+     * @return \Illuminate\Database\Eloquent\Builder<MuthowifBooking>
+     */
+    private function muthowifBookingsIndexQuery(MuthowifProfile $profile, ?string $statusFilter)
+    {
+        $query = MuthowifBooking::query()
+            ->where('muthowif_profile_id', $profile->id)
+            ->with(['customer'])
+            ->withCount([
+                'rescheduleRequests as pending_reschedule_requests_count' => fn ($q) => $q->where('status', BookingChangeRequestStatus::Pending),
+            ])
+            ->orderByRaw("CASE status WHEN 'pending' THEN 0 WHEN 'confirmed' THEN 1 ELSE 2 END")
+            ->orderByDesc('starts_on')
+            ->orderByDesc('created_at');
+
+        if ($statusFilter !== null) {
+            $query->where('status', $statusFilter);
+        }
+
+        return $query;
+    }
+
+    /**
+     * @return array<string, int>
+     */
+    private function muthowifBookingStatusCounts(string $profileId): array
+    {
+        $statusAggregates = MuthowifBooking::query()
+            ->where('muthowif_profile_id', $profileId)
+            ->toBase()
+            ->selectRaw('status, COUNT(*) as aggregate')
+            ->groupBy('status')
+            ->pluck('aggregate', 'status');
+
+        return collect(BookingStatus::cases())->mapWithKeys(
+            fn (BookingStatus $status) => [$status->value => (int) ($statusAggregates[$status->value] ?? 0)]
+        )->all();
     }
 }
