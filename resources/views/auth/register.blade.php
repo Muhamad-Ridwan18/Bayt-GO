@@ -46,6 +46,32 @@
                     this.$refs.registerForm.submit();
                 });
             },
+
+            removeCachedFile(payload) {
+                const form = document.createElement("form");
+                form.method = "POST";
+                form.action = @json(route('register.remove-file'));
+
+                const append = (name, value) => {
+                    if (value === null || value === undefined || value === "") {
+                        return;
+                    }
+                    const input = document.createElement("input");
+                    input.type = "hidden";
+                    input.name = name;
+                    input.value = String(value);
+                    form.appendChild(input);
+                };
+
+                const csrf = document.querySelector("#register-form input[name=_token]");
+                append("_token", csrf ? csrf.value : "");
+                append("type", payload.type);
+                append("file_id", payload.file_id);
+                append("path", payload.path);
+
+                document.body.appendChild(form);
+                form.submit();
+            },
         }'
         data-submit-lock="off"
         @submit.prevent="handleRegisterSubmit"
@@ -206,8 +232,8 @@
                     <div class="mb-2 flex items-center gap-2 rounded-lg border border-emerald-200 bg-emerald-50 p-2 text-xs text-emerald-800">
                         <span class="min-w-0 flex-1 font-medium">✓ {{ __('guest.register.uploaded_file', ['name' => session('registration_files.photo.original_name')]) }}</span>
                         <button
-                            type="submit"
-                            form="register-remove-photo"
+                            type="button"
+                            @click="removeCachedFile({ type: 'photo' })"
                             class="inline-flex h-7 w-7 shrink-0 items-center justify-center rounded-lg border border-transparent text-slate-500 transition hover:border-red-200 hover:bg-red-50 hover:text-red-600"
                             title="{{ __('guest.register.remove_file') }}"
                             aria-label="{{ __('guest.register.remove_file') }}"
@@ -225,8 +251,8 @@
                     <div class="mb-2 flex items-center gap-2 rounded-lg border border-emerald-200 bg-emerald-50 p-2 text-xs text-emerald-800">
                         <span class="min-w-0 flex-1 font-medium">✓ {{ __('guest.register.uploaded_file', ['name' => session('registration_files.ktp_image.original_name')]) }}</span>
                         <button
-                            type="submit"
-                            form="register-remove-ktp"
+                            type="button"
+                            @click="removeCachedFile({ type: 'ktp_image' })"
                             class="inline-flex h-7 w-7 shrink-0 items-center justify-center rounded-lg border border-transparent text-slate-500 transition hover:border-red-200 hover:bg-red-50 hover:text-red-600"
                             title="{{ __('guest.register.remove_file') }}"
                             aria-label="{{ __('guest.register.remove_file') }}"
@@ -286,13 +312,13 @@
                         @foreach (session('registration_files.supporting_documents') as $doc)
                             @php
                                 $docPath = $doc['path'] ?? '';
-                                $docFormId = 'register-remove-supporting-'.md5($docPath);
+                                $docId = $doc['id'] ?? '';
                             @endphp
                             <div class="flex items-center gap-2 rounded-lg border border-emerald-200 bg-emerald-50 p-2 text-xs font-medium text-emerald-800">
                                 <span class="min-w-0 flex-1">✓ {{ $doc['original_name'] }}</span>
                                 <button
-                                    type="submit"
-                                    form="{{ $docFormId }}"
+                                    type="button"
+                                    @click="removeCachedFile({ type: 'supporting_document', file_id: @json($docId), path: @json($docPath) })"
                                     class="inline-flex h-7 w-7 shrink-0 items-center justify-center rounded-lg border border-transparent text-slate-500 transition hover:border-red-200 hover:bg-red-50 hover:text-red-600"
                                     title="{{ __('guest.register.remove_file') }}"
                                     aria-label="{{ __('guest.register.remove_file') }}"
@@ -382,34 +408,4 @@
             </div>
         </div>
     </form>
-
-    @if (session()->has('registration_files.photo'))
-        <form id="register-remove-photo" method="POST" action="{{ route('register.remove-file') }}" class="hidden">
-            @csrf
-            <input type="hidden" name="type" value="photo" />
-        </form>
-    @endif
-
-    @if (session()->has('registration_files.ktp_image'))
-        <form id="register-remove-ktp" method="POST" action="{{ route('register.remove-file') }}" class="hidden">
-            @csrf
-            <input type="hidden" name="type" value="ktp_image" />
-        </form>
-    @endif
-
-    @if (session()->has('registration_files.supporting_documents'))
-        @foreach (session('registration_files.supporting_documents') as $doc)
-            @php
-                $docPath = $doc['path'] ?? '';
-                $docFormId = 'register-remove-supporting-'.md5($docPath);
-            @endphp
-            @if ($docPath !== '')
-                <form id="{{ $docFormId }}" method="POST" action="{{ route('register.remove-file') }}" class="hidden">
-                    @csrf
-                    <input type="hidden" name="type" value="supporting_document" />
-                    <input type="hidden" name="path" value="{{ $docPath }}" />
-                </form>
-            @endif
-        @endforeach
-    @endif
 </x-guest-layout>

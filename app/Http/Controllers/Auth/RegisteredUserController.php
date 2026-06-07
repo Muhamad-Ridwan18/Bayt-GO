@@ -195,7 +195,8 @@ class RegisteredUserController extends Controller
     {
         $request->validate([
             'type' => ['required', 'string', Rule::in(['photo', 'ktp_image', 'supporting_document'])],
-            'path' => ['required_if:type,supporting_document', 'nullable', 'string', 'max:500'],
+            'file_id' => ['nullable', 'string', 'uuid'],
+            'path' => ['nullable', 'string', 'max:500'],
         ]);
 
         $type = $request->string('type')->toString();
@@ -205,20 +206,33 @@ class RegisteredUserController extends Controller
         } elseif ($type === 'ktp_image') {
             $this->deleteCachedRegistrationFile('registration_files.ktp_image');
         } else {
+            $targetId = $request->string('file_id')->toString();
             $targetPath = $request->string('path')->toString();
+            if ($targetId === '' && $targetPath === '') {
+                return redirect()->route('register');
+            }
+
             $docs = session('registration_files.supporting_documents', []);
-            if (! is_array($docs) || $targetPath === '') {
+            if (! is_array($docs)) {
                 return redirect()->route('register');
             }
 
             $removed = false;
             foreach ($docs as $i => $doc) {
-                if (! is_array($doc) || ($doc['path'] ?? '') !== $targetPath) {
+                if (! is_array($doc)) {
                     continue;
                 }
 
-                if (Storage::disk('local')->exists($targetPath)) {
-                    Storage::disk('local')->delete($targetPath);
+                $matches = ($targetId !== '' && ($doc['id'] ?? '') === $targetId)
+                    || ($targetId === '' && $targetPath !== '' && ($doc['path'] ?? '') === $targetPath);
+
+                if (! $matches) {
+                    continue;
+                }
+
+                $storedPath = (string) ($doc['path'] ?? '');
+                if ($storedPath !== '' && Storage::disk('local')->exists($storedPath)) {
+                    Storage::disk('local')->delete($storedPath);
                 }
 
                 unset($docs[$i]);
@@ -918,7 +932,7 @@ class RegisteredUserController extends Controller
         }
 
         // Cache supporting documents
-        if ($request->has('supporting_documents')) {
+        if ($request->hasFile('supporting_documents')) {
             $files = $request->file('supporting_documents');
             if (! is_array($files)) {
                 $files = array_filter([$files]);
@@ -930,6 +944,7 @@ class RegisteredUserController extends Controller
                 if ($file && $file->isValid()) {
                     $path = $optimizer->store($file, $baseDir.'/supporting', 'local', 'document');
                     $cachedDocs[] = [
+                        'id' => (string) Str::uuid(),
                         'path' => $path,
                         'original_name' => $file->getClientOriginalName(),
                     ];

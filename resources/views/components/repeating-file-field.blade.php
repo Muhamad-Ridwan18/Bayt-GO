@@ -9,13 +9,24 @@
 
 <div
     class="space-y-3"
-    x-data="{ fileSlots: [{}] }"
+    x-data="{
+        nextSlotKey: 1,
+        fileSlots: [{ key: 0 }],
+        addSlot() {
+            this.fileSlots.push({ key: this.nextSlotKey++ });
+        },
+        removeSlot(index) {
+            if (this.fileSlots.length > 1) {
+                this.fileSlots.splice(index, 1);
+            }
+        },
+    }"
 >
     @if ($label)
         <p class="text-sm font-semibold text-slate-900">{{ $label }}</p>
     @endif
 
-    <template x-for="(slot, index) in fileSlots" :key="index">
+    <template x-for="(slot, index) in fileSlots" :key="slot.key">
         <div class="space-y-1">
             <label class="block text-sm font-medium text-slate-700">
                 <span x-text="'{{ $itemLabel }} ' + (index + 1) + ' :'"></span>
@@ -32,7 +43,7 @@
                     class="shrink-0 mt-1 p-2 text-slate-400 hover:text-red-600 rounded-lg border border-transparent hover:border-red-200 hover:bg-red-50 text-sm"
                     title="Hapus"
                     x-show="fileSlots.length > 1"
-                    x-on:click="fileSlots.splice(index, 1)"
+                    x-on:click="removeSlot(index)"
                 >
                     ✕
                 </button>
@@ -44,7 +55,7 @@
         <button
             type="button"
             class="inline-flex items-center gap-1.5 rounded-lg border border-slate-200 bg-slate-50 px-3 py-2 text-sm font-medium text-slate-700 hover:bg-slate-100 transition"
-            x-on:click="fileSlots.push({})"
+            x-on:click="addSlot()"
         >
             <span class="text-base leading-none">+</span>
             {{ $addLabel }}
