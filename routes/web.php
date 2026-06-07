@@ -9,6 +9,7 @@ use App\Http\Controllers\Admin\CampaignsAdminController;
 use App\Http\Controllers\Admin\CompanyApprovalController;
 use App\Http\Controllers\Admin\FinanceController;
 use App\Http\Controllers\Admin\MootaWebhookHistoriesLiveController;
+use App\Http\Controllers\Admin\MuthowifReferralMonitorController;
 use App\Http\Controllers\Admin\MuthowifVerificationController;
 use App\Http\Controllers\Admin\ServiceMonitorController;
 use App\Http\Controllers\Admin\SiteAppearanceController;
@@ -321,6 +322,8 @@ Route::middleware('auth')->group(function () {
         Route::post('withdrawals/{withdrawal}/approve', [WithdrawalsController::class, 'approve'])->name('withdrawals.approve');
         Route::post('withdrawals/{withdrawal}/selesai-transfer', [WithdrawalsController::class, 'markTransferred'])->name('withdrawals.mark_transferred');
         Route::post('withdrawals/{withdrawal}/gagal-transfer', [WithdrawalsController::class, 'markTransferFailed'])->name('withdrawals.mark_transfer_failed');
+        Route::get('referral', [MuthowifReferralMonitorController::class, 'index'])->name('referrals.index');
+        Route::get('referral/{profile}', [MuthowifReferralMonitorController::class, 'show'])->name('referrals.show');
         Route::get('muthowif/live-index-fragment', [MuthowifVerificationController::class, 'indexLiveFragment'])->name('muthowif.index.live-fragment');
         Route::get('muthowif', [MuthowifVerificationController::class, 'index'])->name('muthowif.index');
         Route::get('muthowif/{profile}/photo', [MuthowifVerificationController::class, 'photo'])->name('muthowif.photo');

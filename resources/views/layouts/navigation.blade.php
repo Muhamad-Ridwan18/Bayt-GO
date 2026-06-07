@@ -38,6 +38,7 @@
             'admin.articles.*',
             'admin.users.*',
             'admin.muthowif.*',
+            'admin.referrals.*',
             'admin.support-tickets.*',
             'admin.service_monitor.*',
             'admin.moota_webhooks.*',

@@ -15,6 +15,7 @@ return [
     'moota_webhooks' => 'Moota',
     'moota_testing' => 'Moota sandbox',
     'verify_muthowif' => 'Verifikasi muthowif',
+    'referral_monitor' => 'Referral',
     'users' => 'Pengguna',
     'services' => 'Pelayanan',
     'day_off' => 'Jadwal Libur',

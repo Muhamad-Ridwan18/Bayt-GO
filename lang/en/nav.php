@@ -15,6 +15,7 @@ return [
     'moota_webhooks' => 'Moota',
     'moota_testing' => 'Moota sandbox',
     'verify_muthowif' => 'Verify muthowif',
+    'referral_monitor' => 'Referrals',
     'users' => 'Users',
     'services' => 'Services',
     'day_off' => 'Time off',
