@@ -3,9 +3,7 @@
 namespace App\Services;
 
 use App\Enums\BookingChangeRequestStatus;
-use App\Enums\PayoutAllocationStatus;
 use App\Models\BookingPayment;
-use App\Models\BookingPayoutAllocation;
 use App\Models\BookingRefundRequest;
 use App\Models\MuthowifBooking;
 use App\Models\MuthowifProfile;
@@ -30,48 +28,6 @@ final class MuthowifWalletLedger
     {
         $out = Collection::make();
 
-        $allocations = BookingPayoutAllocation::query()
-            ->where('muthowif_profile_id', $profile->getKey())
-            ->where('status', PayoutAllocationStatus::Released)
-            ->whereNotNull('released_at')
-            ->with([
-                'settlement' => static function ($q): void {
-                    $q->select(['id', 'muthowif_booking_id', 'booking_payment_id']);
-                },
-                'settlement.muthowifBooking:id,booking_code,muthowif_profile_id',
-            ])
-            ->get();
-
-        $paymentIdsWithAllocations = [];
-
-        foreach ($allocations as $allocation) {
-            $at = $allocation->released_at;
-            if ($at === null) {
-                continue;
-            }
-
-            $amount = round((float) $allocation->amount, 2);
-            if ($amount <= 0) {
-                continue;
-            }
-
-            $booking = $allocation->settlement?->muthowifBooking;
-            $paymentId = $allocation->settlement?->booking_payment_id;
-            if ($paymentId !== null) {
-                $paymentIdsWithAllocations[(string) $paymentId] = true;
-            }
-
-            $out->push([
-                'kind' => 'booking_credit',
-                'signed_amount' => $amount,
-                'at' => $at,
-                'tie' => 'a:'.$allocation->getKey(),
-                'booking' => $booking,
-                'withdrawal' => null,
-                'refund' => null,
-            ]);
-        }
-
         $payments = BookingPayment::query()
             ->whereNotNull('wallet_credited_at')
             ->whereHas('muthowifBooking', static function ($q) use ($profile): void {
@@ -81,21 +37,6 @@ final class MuthowifWalletLedger
             ->get();
 
         foreach ($payments as $payment) {
-            if (isset($paymentIdsWithAllocations[(string) $payment->getKey()])) {
-                continue;
-            }
-
-            $hasSplitAllocations = BookingPayoutAllocation::query()
-                ->where('status', PayoutAllocationStatus::Released)
-                ->whereHas('settlement', static function ($q) use ($payment): void {
-                    $q->where('booking_payment_id', $payment->getKey());
-                })
-                ->exists();
-
-            if ($hasSplitAllocations) {
-                continue;
-            }
-
             $at = $payment->wallet_credited_at;
             if ($at === null) {
                 continue;
