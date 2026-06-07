@@ -322,44 +322,32 @@
                             </div>
                             <div class="space-y-3">
                                     @if ($group)
-                                        <div class="space-y-3" @if ($private) x-show="serviceIsGroup" x-cloak @endif>
+                                        <fieldset
+                                            class="space-y-3 border-0 p-0 m-0 min-w-0"
+                                            @if ($private) x-show="serviceIsGroup" x-cloak :disabled="!serviceIsGroup" @endif
+                                        >
                                             @php
                                                 $groupHotelAvailable = ($group->same_hotel_price_per_day ?? null) !== null && (float) $group->same_hotel_price_per_day > 0;
                                                 $groupTransportAvailable = ($group->transport_price_flat ?? null) !== null && (float) $group->transport_price_flat > 0;
                                             @endphp
 
-                                            <label class="flex items-start gap-3 {{ $groupHotelAvailable ? 'cursor-pointer' : 'cursor-not-allowed opacity-60' }}">
-                                                <input type="checkbox" name="with_same_hotel" value="1"
-                                                    class="mt-1 size-4 rounded border-slate-300 text-brand-600 shadow-sm focus:ring-brand-500"
-                                                    @disabled(! $groupHotelAvailable)
-                                                    @checked($groupHotelAvailable && $oldWithSameHotel)>
-                                                <span class="text-sm leading-relaxed text-slate-700">
-                                                    @if ($groupHotelAvailable)
-                                                        {{ __('marketplace.panel.same_hotel_yes', ['amount' => IndonesianNumber::formatThousands((string) (int) $group->same_hotel_price_per_day)]) }}
-                                                    @else
-                                                        {{ __('marketplace.panel.same_hotel_no') }}
-                                                    @endif
-                                                </span>
-                                            </label>
-
-                                            <label class="flex items-start gap-3 {{ $groupTransportAvailable ? 'cursor-pointer' : 'cursor-not-allowed opacity-60' }}">
-                                                <input type="checkbox" name="with_transport" value="1"
-                                                    class="mt-1 size-4 rounded border-slate-300 text-brand-600 shadow-sm focus:ring-brand-500"
-                                                    @disabled(! $groupTransportAvailable)
-                                                    @checked($groupTransportAvailable && $oldWithTransport)>
-                                                <span class="text-sm leading-relaxed text-slate-700">
-                                                    @if ($groupTransportAvailable)
-                                                        {{ __('marketplace.panel.transport_yes', ['amount' => IndonesianNumber::formatThousands((string) (int) $group->transport_price_flat)]) }}
-                                                    @else
-                                                        {{ __('marketplace.panel.transport_no') }}
-                                                    @endif
-                                                </span>
-                                            </label>
-                                        </div>
+                                            @include('layanan.partials.booking-addon-choices', [
+                                                'hotelAvailable' => $groupHotelAvailable,
+                                                'transportAvailable' => $groupTransportAvailable,
+                                                'hotelPricePerDay' => (int) ($group->same_hotel_price_per_day ?? 0),
+                                                'transportPriceFlat' => (int) ($group->transport_price_flat ?? 0),
+                                                'oldWithSameHotel' => $oldWithSameHotel,
+                                                'oldWithTransport' => $oldWithTransport,
+                                                'accent' => 'brand',
+                                            ])
+                                        </fieldset>
                                     @endif
 
                                     @if ($private)
-                                        <div class="space-y-3" @if ($group) x-show="!serviceIsGroup" x-cloak @endif>
+                                        <fieldset
+                                            class="space-y-3 border-0 p-0 m-0 min-w-0"
+                                            @if ($group) x-show="!serviceIsGroup" x-cloak :disabled="serviceIsGroup" @endif
+                                        >
                                             @php
                                                 $privateHotelAvailable = ($private->same_hotel_price_per_day ?? null) !== null && (float) $private->same_hotel_price_per_day > 0;
                                                 $privateTransportAvailable = ($private->transport_price_flat ?? null) !== null && (float) $private->transport_price_flat > 0;
@@ -381,34 +369,16 @@
                                                 <p class="text-xs text-slate-600">{{ __('marketplace.panel.no_private_addons') }}</p>
                                             @endif
 
-                                            <label class="flex items-start gap-3 {{ $privateHotelAvailable ? 'cursor-pointer' : 'cursor-not-allowed opacity-60' }}">
-                                                <input type="checkbox" name="with_same_hotel" value="1"
-                                                    class="mt-1 size-4 rounded border-slate-300 text-amber-600 shadow-sm focus:ring-amber-500"
-                                                    @disabled(! $privateHotelAvailable)
-                                                    @checked($privateHotelAvailable && $oldWithSameHotel)>
-                                                <span class="text-sm leading-relaxed text-slate-700">
-                                                    @if ($privateHotelAvailable)
-                                                        {{ __('marketplace.panel.same_hotel_yes', ['amount' => IndonesianNumber::formatThousands((string) (int) $private->same_hotel_price_per_day)]) }}
-                                                    @else
-                                                        {{ __('marketplace.panel.same_hotel_no') }}
-                                                    @endif
-                                                </span>
-                                            </label>
-
-                                            <label class="flex items-start gap-3 {{ $privateTransportAvailable ? 'cursor-pointer' : 'cursor-not-allowed opacity-60' }}">
-                                                <input type="checkbox" name="with_transport" value="1"
-                                                    class="mt-1 size-4 rounded border-slate-300 text-amber-600 shadow-sm focus:ring-amber-500"
-                                                    @disabled(! $privateTransportAvailable)
-                                                    @checked($privateTransportAvailable && $oldWithTransport)>
-                                                <span class="text-sm leading-relaxed text-slate-700">
-                                                    @if ($privateTransportAvailable)
-                                                        {{ __('marketplace.panel.transport_yes', ['amount' => IndonesianNumber::formatThousands((string) (int) $private->transport_price_flat)]) }}
-                                                    @else
-                                                        {{ __('marketplace.panel.transport_no') }}
-                                                    @endif
-                                                </span>
-                                            </label>
-                                        </div>
+                                            @include('layanan.partials.booking-addon-choices', [
+                                                'hotelAvailable' => $privateHotelAvailable,
+                                                'transportAvailable' => $privateTransportAvailable,
+                                                'hotelPricePerDay' => (int) ($private->same_hotel_price_per_day ?? 0),
+                                                'transportPriceFlat' => (int) ($private->transport_price_flat ?? 0),
+                                                'oldWithSameHotel' => $oldWithSameHotel,
+                                                'oldWithTransport' => $oldWithTransport,
+                                                'accent' => 'amber',
+                                            ])
+                                        </fieldset>
                                     @endif
                             </div>
                         </section>
