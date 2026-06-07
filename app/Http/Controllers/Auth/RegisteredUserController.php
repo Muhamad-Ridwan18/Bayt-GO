@@ -36,7 +36,7 @@ class RegisteredUserController extends Controller
         $registrationOtp = app(RegistrationOtpService::class);
         $otpEnabled = $registrationOtp->otpEnabled();
 
-        if (! session()->has('errors')) {
+        if (! session()->has('errors') && ! session()->has('registration_draft')) {
             $sessionId = session()->getId();
             Storage::disk('local')->deleteDirectory("tmp_registration/{$sessionId}");
             session()->forget('registration_files');
@@ -85,6 +85,15 @@ class RegisteredUserController extends Controller
     public function store(Request $request): RedirectResponse
     {
         $this->cacheUploadedFiles($request);
+
+        session([
+            'registration_draft' => $request->except([
+                'photo',
+                'ktp_image',
+                'supporting_documents',
+                '_token',
+            ]),
+        ]);
 
         $this->validateRegistrationRequest($request);
 
@@ -180,6 +189,43 @@ class RegisteredUserController extends Controller
         $muthowifFiles = $pending['muthowif_files'] ?? null;
 
         return $this->commitRegistrationFromInput($input, $muthowifFiles, $registrationOtp, $pending);
+    }
+
+    public function removeCachedRegistrationFile(Request $request): RedirectResponse
+    {
+        $request->validate([
+            'type' => ['required', 'string', Rule::in(['photo', 'ktp_image', 'supporting_document'])],
+            'index' => ['required_if:type,supporting_document', 'nullable', 'integer', 'min:0'],
+        ]);
+
+        $type = $request->string('type')->toString();
+
+        if ($type === 'photo') {
+            $this->deleteCachedRegistrationFile('registration_files.photo');
+        } elseif ($type === 'ktp_image') {
+            $this->deleteCachedRegistrationFile('registration_files.ktp_image');
+        } else {
+            $index = (int) $request->input('index');
+            $docs = session('registration_files.supporting_documents', []);
+            if (! is_array($docs) || ! array_key_exists($index, $docs)) {
+                return redirect()->route('register');
+            }
+
+            $doc = $docs[$index];
+            if (is_array($doc) && ! empty($doc['path']) && Storage::disk('local')->exists($doc['path'])) {
+                Storage::disk('local')->delete($doc['path']);
+            }
+
+            unset($docs[$index]);
+            session(['registration_files.supporting_documents' => array_values($docs)]);
+        }
+
+        $draft = session('registration_draft', []);
+
+        return redirect()
+            ->route('register')
+            ->withInput(is_array($draft) ? $draft : [])
+            ->with('status', __('guest.register.file_removed'));
     }
 
     public function updatePendingPhone(Request $request): RedirectResponse
@@ -401,7 +447,7 @@ class RegisteredUserController extends Controller
                 $this->finalizeStagedMuthowifFiles((string) $user->id, $stagedMuthowifFiles);
             }
 
-            session()->forget('registration_files');
+            session()->forget(['registration_files', 'registration_draft']);
             $sessionId = session()->getId();
             Storage::disk('local')->deleteDirectory("tmp_registration/{$sessionId}");
 
@@ -645,7 +691,7 @@ class RegisteredUserController extends Controller
             ],
         ]);
 
-        session()->forget('registration_files');
+        session()->forget(['registration_files', 'registration_draft']);
         $sessionId = session()->getId();
         Storage::disk('local')->deleteDirectory("tmp_registration/{$sessionId}");
     }
@@ -810,6 +856,16 @@ class RegisteredUserController extends Controller
         if (Storage::disk('local')->exists($from)) {
             Storage::disk('local')->move($from, $to);
         }
+    }
+
+    private function deleteCachedRegistrationFile(string $sessionKey): void
+    {
+        $file = session($sessionKey);
+        if (is_array($file) && ! empty($file['path']) && Storage::disk('local')->exists($file['path'])) {
+            Storage::disk('local')->delete($file['path']);
+        }
+
+        session()->forget($sessionKey);
     }
 
     private function cacheUploadedFiles(Request $request): void

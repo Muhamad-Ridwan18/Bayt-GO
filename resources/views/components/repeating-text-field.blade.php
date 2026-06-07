@@ -5,6 +5,7 @@
     'placeholder' => '',
     'addLabel' => 'Tambah',
     'items' => [''],
+    'required' => false,
 ])
 
 @php
@@ -24,7 +25,7 @@
     }'
 >
     @if ($label)
-        <p class="text-sm font-semibold text-slate-900">{{ $label }}</p>
+        <p class="text-sm font-semibold text-slate-900">{{ $label }}@if ($required)<span class="text-red-600" aria-hidden="true"> *</span>@endif</p>
     @endif
 
     <template x-for="(val, index) in rows" :key="index">

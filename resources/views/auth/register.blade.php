@@ -7,6 +7,7 @@
         </span>
         <h1 class="text-[1.75rem] font-bold tracking-tight text-slate-900 sm:text-3xl">{{ __('guest.register.title') }}</h1>
         <p class="mt-2 text-sm leading-relaxed text-slate-500">{{ __('guest.register.subtitle') }}</p>
+        <p class="mt-2 text-xs text-slate-500">{{ __('guest.register.required_hint') }}</p>
         @if ($otpEnabled ?? false)
             <p class="mt-4 flex gap-3 rounded-2xl border border-sky-100 bg-sky-50 px-4 py-3 text-sm text-sky-900">
                 <svg class="mt-0.5 h-5 w-5 shrink-0 text-sky-600" fill="none" viewBox="0 0 24 24" stroke-width="1.75" stroke="currentColor" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" d="M8.625 9.75a.375.375 0 1 1-.75 0 .375.375 0 0 1 .75 0Zm0 0H8.25m4.125 0a.375.375 0 1 1-.75 0 .375.375 0 0 1 .75 0Zm0 0H12m4.125 0a.375.375 0 1 1-.75 0 .375.375 0 0 1 .75 0Zm0 0h-.375m-13.5 3.01c0 1.6 1.123 2.994 2.707 3.227 1.087.16 2.185.283 3.293.369V21l4.184-4.183a1.14 1.14 0 0 1 .778-.332 48.294 48.294 0 0 0 5.83-.498c1.585-.233 2.708-1.626 2.708-3.228V6.741c0-1.602-1.123-2.995-2.707-3.228A48.394 48.394 0 0 0 12 3c-2.392 0-4.744.175-7.043.513C3.373 3.746 2.25 5.14 2.25 6.741v6.018Z" /></svg>
@@ -52,7 +53,7 @@
         @csrf
 
         <div class="rounded-2xl border border-slate-100 bg-slate-50/60 p-4 sm:p-5">
-            <span class="mb-3 block text-sm font-semibold text-slate-800">{{ __('guest.register.role_heading') }}</span>
+            <span class="mb-3 block text-sm font-semibold text-slate-800">{{ __('guest.register.role_heading') }}<span class="text-red-600" aria-hidden="true"> *</span></span>
             <div class="grid grid-cols-1 gap-3 sm:grid-cols-2">
                 <label class="group relative flex cursor-pointer items-start gap-3 rounded-2xl border-2 border-slate-200 bg-white p-4 shadow-sm transition hover:border-emerald-200 hover:shadow-md has-[:checked]:border-baytgo has-[:checked]:bg-emerald-50/50 has-[:checked]:shadow-md">
                     <input type="radio" name="role" value="customer" class="sr-only" {{ old('role', 'customer') === 'customer' ? 'checked' : '' }} required x-on:change="selectedRole = 'customer'">
@@ -82,7 +83,7 @@
             <legend class="sr-only">Tipe jamaah</legend>
             {{-- Jangan pakai x-cloak di sini: bisa selamanya tersembunyi jika Alpine lambat/error. SSR + x-show saja. --}}
             <div x-show="selectedRole === 'customer'" @if (old('role', 'customer') !== 'customer') style="display: none" @endif>
-                <span class="mb-3 block text-sm font-semibold text-slate-800">Tipe jamaah</span>
+                <span class="mb-3 block text-sm font-semibold text-slate-800">Tipe jamaah<span class="text-red-600" aria-hidden="true"> *</span></span>
                 <div class="grid grid-cols-1 gap-3 sm:grid-cols-2">
                     <label class="relative flex cursor-pointer rounded-2xl border-2 border-slate-200 bg-white p-4 transition hover:border-emerald-200 has-[:checked]:border-baytgo has-[:checked]:bg-emerald-50/50">
                         <input
@@ -133,7 +134,7 @@
         </div>
 
         <div>
-            <x-input-label for="name">
+            <x-input-label for="name" required>
                 <span x-text="(selectedRole === 'customer' && customerType === 'company') ? 'Nama perusahaan' : 'Nama lengkap'"></span>
             </x-input-label>
             <x-text-input id="name" class="block mt-1 w-full border-slate-300" type="text" name="name" :value="old('name')" required autofocus autocomplete="name" />
@@ -142,7 +143,7 @@
         </div>
 
         <div>
-            <x-input-label for="email" :value="__('Email')" />
+            <x-input-label for="email" :value="__('Email')" required />
             <x-text-input id="email" class="block mt-1 w-full border-slate-300" type="email" name="email" :value="old('email')" required autocomplete="username" />
             <x-input-error :messages="$errors->get('email')" class="mt-2" />
         </div>
@@ -151,13 +152,13 @@
             <legend class="sr-only">Alamat jamaah</legend>
             <div x-show="selectedRole === 'customer'" class="space-y-5" @if (old('role', 'customer') !== 'customer') style="display: none" @endif>
                 <div>
-                    <x-input-label for="address_customer" value="Alamat" />
+                    <x-input-label for="address_customer" value="Alamat" required />
                     <textarea id="address_customer" name="address" rows="3" class="block mt-1 w-full rounded-lg border-slate-300 shadow-sm focus:border-brand-500 focus:ring-brand-500 text-sm" placeholder="Alamat lengkap">{{ old('address') }}</textarea>
                     <x-input-error :messages="$errors->get('address')" class="mt-2" />
                 </div>
 
                 <div x-show="customerType === 'company'" @if (old('customer_type') !== 'company') style="display: none" @endif>
-                    <x-input-label for="ppui_number" value="Nomor PPUI" />
+                    <x-input-label for="ppui_number" value="Nomor PPUI" required />
                     <x-text-input id="ppui_number" class="block mt-1 w-full border-slate-300" type="text" name="ppui_number" :value="old('ppui_number')" autocomplete="off" x-bind:disabled="customerType !== 'company'" />
                     <p class="mt-1 text-xs text-slate-500">Wajib untuk jamaah tipe perusahaan.</p>
                     <x-input-error :messages="$errors->get('ppui_number')" class="mt-2" />
@@ -166,13 +167,13 @@
         </fieldset>
 
         <div>
-            <x-input-label for="password" :value="__('Password')" />
+            <x-input-label for="password" :value="__('Password')" required />
             <x-password-input id="password" class="block mt-1 w-full border-slate-300" name="password" required autocomplete="new-password" />
             <x-input-error :messages="$errors->get('password')" class="mt-2" />
         </div>
 
         <div>
-            <x-input-label for="password_confirmation" :value="__('Konfirmasi password')" />
+            <x-input-label for="password_confirmation" :value="__('Konfirmasi password')" required />
             <x-password-input id="password_confirmation" class="block mt-1 w-full border-slate-300" name="password_confirmation" required autocomplete="new-password" />
             <x-input-error :messages="$errors->get('password_confirmation')" class="mt-2" />
         </div>
@@ -188,23 +189,32 @@
             <p class="text-xs text-slate-500 -mt-3">Gunakan tombol <strong>+ Tambah</strong> untuk menambah baris bahasa, studi, pengalaman, atau dokumen.</p>
 
             <div>
-                <x-input-label for="birth_date" value="Tanggal lahir" />
+                <x-input-label for="birth_date" value="Tanggal lahir" required />
                 <x-text-input id="birth_date" class="block mt-1 w-full border-slate-300" type="date" name="birth_date" :value="old('birth_date')" />
                 <x-input-error :messages="$errors->get('birth_date')" class="mt-2" />
             </div>
 
             <div>
-                <x-input-label for="passport_number" value="No. passport" />
+                <x-input-label for="passport_number" value="No. passport" required />
                 <x-text-input id="passport_number" class="block mt-1 w-full border-slate-300" type="text" name="passport_number" :value="old('passport_number')" autocomplete="off" />
                 <x-input-error :messages="$errors->get('passport_number')" class="mt-2" />
             </div>
 
             <div>
-                <x-input-label for="photo" value="Upload foto profil" />
+                <x-input-label for="photo" value="Upload foto profil" required />
                 @if (session()->has('registration_files.photo'))
-                    <div class="mb-2 p-2 bg-emerald-50 border border-emerald-200 rounded-lg flex items-center justify-between text-xs text-emerald-800">
-                        <span class="font-medium">✓ File terunggah: {{ session('registration_files.photo.original_name') }}</span>
-                        <span class="text-slate-400 font-normal italic">(Unggah file baru untuk mengganti)</span>
+                    <div class="mb-2 flex items-center gap-2 rounded-lg border border-emerald-200 bg-emerald-50 p-2 text-xs text-emerald-800">
+                        <span class="min-w-0 flex-1 font-medium">✓ {{ __('guest.register.uploaded_file', ['name' => session('registration_files.photo.original_name')]) }}</span>
+                        <form method="POST" action="{{ route('register.remove-file') }}" class="shrink-0">
+                            @csrf
+                            <input type="hidden" name="type" value="photo" />
+                            <button
+                                type="submit"
+                                class="inline-flex h-7 w-7 items-center justify-center rounded-lg border border-transparent text-slate-500 transition hover:border-red-200 hover:bg-red-50 hover:text-red-600"
+                                title="{{ __('guest.register.remove_file') }}"
+                                aria-label="{{ __('guest.register.remove_file') }}"
+                            >✕</button>
+                        </form>
                     </div>
                 @endif
                 <x-input-file id="photo" name="photo" accept="image/jpeg,image/png,image/webp" />
@@ -213,11 +223,20 @@
             </div>
 
             <div>
-                <x-input-label for="ktp_image" value="Foto / scan KTP" />
+                <x-input-label for="ktp_image" value="Foto / scan KTP" required />
                 @if (session()->has('registration_files.ktp_image'))
-                    <div class="mb-2 p-2 bg-emerald-50 border border-emerald-200 rounded-lg flex items-center justify-between text-xs text-emerald-800">
-                        <span class="font-medium">✓ File terunggah: {{ session('registration_files.ktp_image.original_name') }}</span>
-                        <span class="text-slate-400 font-normal italic">(Unggah file baru untuk mengganti)</span>
+                    <div class="mb-2 flex items-center gap-2 rounded-lg border border-emerald-200 bg-emerald-50 p-2 text-xs text-emerald-800">
+                        <span class="min-w-0 flex-1 font-medium">✓ {{ __('guest.register.uploaded_file', ['name' => session('registration_files.ktp_image.original_name')]) }}</span>
+                        <form method="POST" action="{{ route('register.remove-file') }}" class="shrink-0">
+                            @csrf
+                            <input type="hidden" name="type" value="ktp_image" />
+                            <button
+                                type="submit"
+                                class="inline-flex h-7 w-7 items-center justify-center rounded-lg border border-transparent text-slate-500 transition hover:border-red-200 hover:bg-red-50 hover:text-red-600"
+                                title="{{ __('guest.register.remove_file') }}"
+                                aria-label="{{ __('guest.register.remove_file') }}"
+                            >✕</button>
+                        </form>
                     </div>
                 @endif
                 <x-input-file id="ktp_image" name="ktp_image" accept="image/jpeg,image/png,image/webp" />
@@ -228,6 +247,7 @@
             <x-repeating-text-field
                 name="languages"
                 label="Penguasaan bahasa :"
+                :required="true"
                 item-label="Bahasa"
                 placeholder="Contoh: Arab (fasih), Inggris"
                 add-label="Tambah Bahasa"
@@ -269,13 +289,24 @@
                 <div class="space-y-2">
                     <span class="block text-sm font-medium text-slate-700">Dokumen pendukung yang sudah terunggah:</span>
                     <div class="grid grid-cols-1 gap-2">
-                        @foreach (session('registration_files.supporting_documents') as $doc)
-                            <div class="p-2 bg-emerald-50 border border-emerald-200 rounded-lg flex items-center justify-between text-xs text-emerald-800 font-medium">
-                                <span>✓ {{ $doc['original_name'] }}</span>
+                        @foreach (session('registration_files.supporting_documents') as $index => $doc)
+                            <div class="flex items-center gap-2 rounded-lg border border-emerald-200 bg-emerald-50 p-2 text-xs font-medium text-emerald-800">
+                                <span class="min-w-0 flex-1">✓ {{ $doc['original_name'] }}</span>
+                                <form method="POST" action="{{ route('register.remove-file') }}" class="shrink-0">
+                                    @csrf
+                                    <input type="hidden" name="type" value="supporting_document" />
+                                    <input type="hidden" name="index" value="{{ $index }}" />
+                                    <button
+                                        type="submit"
+                                        class="inline-flex h-7 w-7 items-center justify-center rounded-lg border border-transparent text-slate-500 transition hover:border-red-200 hover:bg-red-50 hover:text-red-600"
+                                        title="{{ __('guest.register.remove_file') }}"
+                                        aria-label="{{ __('guest.register.remove_file') }}"
+                                    >✕</button>
+                                </form>
                             </div>
                         @endforeach
                     </div>
-                    <p class="text-xs text-slate-500 italic mt-1">Anda bisa menambahkan dokumen baru di bawah ini jika diperlukan:</p>
+                    <p class="mt-1 text-xs italic text-slate-500">Anda bisa menambahkan dokumen baru di bawah ini jika diperlukan:</p>
                 </div>
             @endif
 
@@ -290,13 +321,13 @@
             <p class="text-sm font-medium text-slate-800 pt-2 border-t border-slate-100">Alamat &amp; identitas</p>
 
             <div>
-                <x-input-label for="address_muthowif" value="Alamat lengkap" />
+                <x-input-label for="address_muthowif" value="Alamat lengkap" required />
                 <textarea id="address_muthowif" name="address" rows="3" class="block mt-1 w-full rounded-lg border-slate-300 shadow-sm focus:border-brand-500 focus:ring-brand-500 text-sm" placeholder="Alamat domisili sesuai KTP">{{ old('address') }}</textarea>
                 <x-input-error :messages="$errors->get('address')" class="mt-2" />
             </div>
 
             <div>
-                <x-input-label for="nik" value="NIK (16 digit)" />
+                <x-input-label for="nik" value="NIK (16 digit)" required />
                 <x-text-input id="nik" class="block mt-1 w-full border-slate-300" type="text" name="nik" inputmode="numeric" maxlength="16" :value="old('nik')" placeholder="3201xxxxxxxxxxxx" />
                 <x-input-error :messages="$errors->get('nik')" class="mt-2" />
             </div>

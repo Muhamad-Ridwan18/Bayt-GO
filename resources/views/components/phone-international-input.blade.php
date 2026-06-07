@@ -115,7 +115,7 @@
     @keydown.escape.window="countryOpen = false"
 >
     @if ($label)
-        <x-input-label for="{{ $inputId }}" :value="$label" />
+        <x-input-label for="{{ $inputId }}" :value="$label" :required="$required" />
     @endif
 
     <div

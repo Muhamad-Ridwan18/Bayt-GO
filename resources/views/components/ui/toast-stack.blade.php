@@ -19,6 +19,14 @@
     if (filled($errorMessage)) {
         $initialToasts[] = ['type' => 'error', 'message' => $errorMessage];
     }
+
+    $validationMessages = $errors->all();
+    if (count($validationMessages) > 0) {
+        $validationToast = count($validationMessages) === 1
+            ? $validationMessages[0]
+            : __('guest.register.validation_toast', ['count' => count($validationMessages)]);
+        $initialToasts[] = ['type' => 'error', 'message' => $validationToast];
+    }
 @endphp
 
 <div

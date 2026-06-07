@@ -38,5 +38,10 @@ return [
         'has_account' => 'Sudah punya akun?',
         'login_link' => 'Masuk di sini',
         'submit' => 'Lanjutkan pendaftaran',
+        'validation_toast' => 'Periksa kembali formulir — ada :count kesalahan.',
+        'required_hint' => 'Bidang bertanda * wajib diisi.',
+        'uploaded_file' => 'File terunggah: :name',
+        'remove_file' => 'Hapus file',
+        'file_removed' => 'File dihapus. Unggah file baru jika perlu.',
     ],
 ];

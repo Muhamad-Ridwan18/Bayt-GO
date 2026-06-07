@@ -18,6 +18,9 @@ Route::middleware('guest')->group(function () {
 
     Route::post('register', [RegisteredUserController::class, 'store']);
 
+    Route::post('register/remove-file', [RegisteredUserController::class, 'removeCachedRegistrationFile'])
+        ->name('register.remove-file');
+
     Route::get('register/verify-whatsapp', [RegisteredUserController::class, 'showVerifyWhatsApp'])
         ->name('register.verify-whatsapp');
     Route::post('register/complete', [RegisteredUserController::class, 'complete'])

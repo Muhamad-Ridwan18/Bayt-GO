@@ -38,5 +38,10 @@ return [
         'has_account' => 'Already have an account?',
         'login_link' => 'Sign in here',
         'submit' => 'Continue registration',
+        'validation_toast' => 'Please check the form — there are :count errors.',
+        'required_hint' => 'Fields marked with * are required.',
+        'uploaded_file' => 'Uploaded file: :name',
+        'remove_file' => 'Remove file',
+        'file_removed' => 'File removed. Upload a new one if needed.',
     ],
 ];

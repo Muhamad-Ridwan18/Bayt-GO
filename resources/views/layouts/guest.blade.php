@@ -24,6 +24,7 @@
         $formMaxClass = $isWide ? 'max-w-3xl' : 'max-w-lg';
     @endphp
     <body class="min-h-screen bg-[#f4f6f5] font-sans text-slate-800 antialiased">
+        <x-ui.toast-stack />
         <div class="min-h-screen lg:grid lg:grid-cols-2">
             @include('partials.auth-hero-panel', ['variant' => $authVariant, 'heroImage' => $heroImage])
 
