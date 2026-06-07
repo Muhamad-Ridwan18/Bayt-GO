@@ -93,7 +93,7 @@ final class EmergencyReplacementService
             throw new \RuntimeException(__('emergency.errors.invalid_report_status'));
         }
 
-        return DB::transaction(function () use ($report, $admin, $adminNote) {
+        $report = DB::transaction(function () use ($report, $admin, $adminNote) {
             $report->update([
                 'status' => EmergencyReportStatus::Verified,
                 'verified_by_admin_id' => $admin->getKey(),
@@ -102,18 +102,20 @@ final class EmergencyReplacementService
                 'recruitment_open' => true,
             ]);
 
-            $booking = $report->muthowifBooking;
-            $booking->update(['emergency_overlay_status' => EmergencyOverlayStatus::ReplacementActive]);
-
-            $report = $report->fresh();
-            $this->broadcastNextBatch($report);
-
-            CustomerBookingBroadcast::afterResponse($booking->fresh());
-            EmergencyReportBroadcast::afterResponse($report->fresh(), 'verified');
-            NotifyCustomerOfEmergencyReportStatus::dispatchAfterResponse((string) $report->getKey(), 'verified');
+            $report->muthowifBooking->update(['emergency_overlay_status' => EmergencyOverlayStatus::ReplacementActive]);
 
             return $report->fresh();
         });
+
+        // Broadcast + WA harus setelah commit — di dalam transaksi job offer bisa jalan
+        // sebelum baris offer terbaca / ter-commit (batch otomatis pertama saat verifikasi).
+        $this->broadcastNextBatch($report);
+
+        CustomerBookingBroadcast::afterResponse($report->muthowifBooking->fresh());
+        EmergencyReportBroadcast::afterResponse($report->fresh(), 'verified');
+        NotifyCustomerOfEmergencyReportStatus::dispatchAfterResponse((string) $report->getKey(), 'verified');
+
+        return $report->fresh();
     }
 
     public function rejectReport(BookingEmergencyReport $report, User $admin, ?string $adminNote = null): BookingEmergencyReport
