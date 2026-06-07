@@ -318,7 +318,6 @@
                         <section class="ui-booking-section-card ui-stack-compact">
                             <div>
                                 <h2 class="text-sm font-bold text-slate-900">{{ __('marketplace.panel.addons_toggle') }}</h2>
-                                <p class="mt-0.5 text-xs text-slate-500">{{ __('marketplace.panel.addons_toggle_hint') }}</p>
                             </div>
                             <div class="space-y-3">
                                     @if ($group)
@@ -339,6 +338,7 @@
                                                 'oldWithSameHotel' => $oldWithSameHotel,
                                                 'oldWithTransport' => $oldWithTransport,
                                                 'accent' => 'brand',
+                                                'idSuffix' => 'group',
                                             ])
                                         </fieldset>
                                     @endif
@@ -377,6 +377,7 @@
                                                 'oldWithSameHotel' => $oldWithSameHotel,
                                                 'oldWithTransport' => $oldWithTransport,
                                                 'accent' => 'amber',
+                                                'idSuffix' => 'private',
                                             ])
                                         </fieldset>
                                     @endif
