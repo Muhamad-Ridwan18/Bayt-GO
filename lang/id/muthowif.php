@@ -57,6 +57,7 @@ return [
         'remaining_balance' => 'Sisa Pembayaran',
         'no_documents' => 'Belum ada dokumen diunggah.',
         'waiting_payment' => 'Menunggu pembayaran',
+        'pilgrim_count' => ':count jemaah',
         'pilgrims_meta' => ':count jamaah',
         'pending_actions' => 'Tindakan permintaan',
     ],

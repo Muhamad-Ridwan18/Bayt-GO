@@ -57,6 +57,7 @@ return [
         'remaining_balance' => 'Balance due',
         'no_documents' => 'No documents uploaded yet.',
         'waiting_payment' => 'Awaiting payment',
+        'pilgrim_count' => ':count pilgrims',
         'pilgrims_meta' => ':count pilgrims',
         'pending_actions' => 'Request actions',
     ],
