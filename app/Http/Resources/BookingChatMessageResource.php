@@ -18,13 +18,13 @@ class BookingChatMessageResource extends JsonResource
         $user = $request->user();
         $isMe = (string) $this->user_id === (string) $user?->id;
 
-        // API request: use the dedicated API image route
-        if ($request->expectsJson() || $request->is('api/*')) {
+        // Mobile API only — web chat also sends Accept: application/json but must use
+        // session-authenticated web routes so <img> can load with the browser cookie.
+        if ($request->is('api/*')) {
             $imageUrl = $this->image_path
                 ? route('api.chat.image', ['booking' => $this->muthowif_booking_id, 'message' => $this->id])
                 : null;
         } else {
-            // Web: route berdasarkan role
             $routeName = $user?->isCustomer()
                 ? 'bookings.chat.messages.image'
                 : 'muthowif.bookings.chat.messages.image';
