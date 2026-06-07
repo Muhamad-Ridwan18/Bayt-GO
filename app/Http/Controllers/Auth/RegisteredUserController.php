@@ -195,7 +195,7 @@ class RegisteredUserController extends Controller
     {
         $request->validate([
             'type' => ['required', 'string', Rule::in(['photo', 'ktp_image', 'supporting_document'])],
-            'index' => ['required_if:type,supporting_document', 'nullable', 'integer', 'min:0'],
+            'path' => ['required_if:type,supporting_document', 'nullable', 'string', 'max:500'],
         ]);
 
         $type = $request->string('type')->toString();
@@ -205,18 +205,31 @@ class RegisteredUserController extends Controller
         } elseif ($type === 'ktp_image') {
             $this->deleteCachedRegistrationFile('registration_files.ktp_image');
         } else {
-            $index = (int) $request->input('index');
+            $targetPath = $request->string('path')->toString();
             $docs = session('registration_files.supporting_documents', []);
-            if (! is_array($docs) || ! array_key_exists($index, $docs)) {
+            if (! is_array($docs) || $targetPath === '') {
                 return redirect()->route('register');
             }
 
-            $doc = $docs[$index];
-            if (is_array($doc) && ! empty($doc['path']) && Storage::disk('local')->exists($doc['path'])) {
-                Storage::disk('local')->delete($doc['path']);
+            $removed = false;
+            foreach ($docs as $i => $doc) {
+                if (! is_array($doc) || ($doc['path'] ?? '') !== $targetPath) {
+                    continue;
+                }
+
+                if (Storage::disk('local')->exists($targetPath)) {
+                    Storage::disk('local')->delete($targetPath);
+                }
+
+                unset($docs[$i]);
+                $removed = true;
+                break;
             }
 
-            unset($docs[$index]);
+            if (! $removed) {
+                return redirect()->route('register');
+            }
+
             session(['registration_files.supporting_documents' => array_values($docs)]);
         }
 

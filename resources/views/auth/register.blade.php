@@ -205,16 +205,13 @@
                 @if (session()->has('registration_files.photo'))
                     <div class="mb-2 flex items-center gap-2 rounded-lg border border-emerald-200 bg-emerald-50 p-2 text-xs text-emerald-800">
                         <span class="min-w-0 flex-1 font-medium">✓ {{ __('guest.register.uploaded_file', ['name' => session('registration_files.photo.original_name')]) }}</span>
-                        <form method="POST" action="{{ route('register.remove-file') }}" class="shrink-0">
-                            @csrf
-                            <input type="hidden" name="type" value="photo" />
-                            <button
-                                type="submit"
-                                class="inline-flex h-7 w-7 items-center justify-center rounded-lg border border-transparent text-slate-500 transition hover:border-red-200 hover:bg-red-50 hover:text-red-600"
-                                title="{{ __('guest.register.remove_file') }}"
-                                aria-label="{{ __('guest.register.remove_file') }}"
-                            >✕</button>
-                        </form>
+                        <button
+                            type="submit"
+                            form="register-remove-photo"
+                            class="inline-flex h-7 w-7 shrink-0 items-center justify-center rounded-lg border border-transparent text-slate-500 transition hover:border-red-200 hover:bg-red-50 hover:text-red-600"
+                            title="{{ __('guest.register.remove_file') }}"
+                            aria-label="{{ __('guest.register.remove_file') }}"
+                        >✕</button>
                     </div>
                 @endif
                 <x-input-file id="photo" name="photo" accept="image/jpeg,image/png,image/webp" />
@@ -227,16 +224,13 @@
                 @if (session()->has('registration_files.ktp_image'))
                     <div class="mb-2 flex items-center gap-2 rounded-lg border border-emerald-200 bg-emerald-50 p-2 text-xs text-emerald-800">
                         <span class="min-w-0 flex-1 font-medium">✓ {{ __('guest.register.uploaded_file', ['name' => session('registration_files.ktp_image.original_name')]) }}</span>
-                        <form method="POST" action="{{ route('register.remove-file') }}" class="shrink-0">
-                            @csrf
-                            <input type="hidden" name="type" value="ktp_image" />
-                            <button
-                                type="submit"
-                                class="inline-flex h-7 w-7 items-center justify-center rounded-lg border border-transparent text-slate-500 transition hover:border-red-200 hover:bg-red-50 hover:text-red-600"
-                                title="{{ __('guest.register.remove_file') }}"
-                                aria-label="{{ __('guest.register.remove_file') }}"
-                            >✕</button>
-                        </form>
+                        <button
+                            type="submit"
+                            form="register-remove-ktp"
+                            class="inline-flex h-7 w-7 shrink-0 items-center justify-center rounded-lg border border-transparent text-slate-500 transition hover:border-red-200 hover:bg-red-50 hover:text-red-600"
+                            title="{{ __('guest.register.remove_file') }}"
+                            aria-label="{{ __('guest.register.remove_file') }}"
+                        >✕</button>
                     </div>
                 @endif
                 <x-input-file id="ktp_image" name="ktp_image" accept="image/jpeg,image/png,image/webp" />
@@ -289,20 +283,20 @@
                 <div class="space-y-2">
                     <span class="block text-sm font-medium text-slate-700">Dokumen pendukung yang sudah terunggah:</span>
                     <div class="grid grid-cols-1 gap-2">
-                        @foreach (session('registration_files.supporting_documents') as $index => $doc)
+                        @foreach (session('registration_files.supporting_documents') as $doc)
+                            @php
+                                $docPath = $doc['path'] ?? '';
+                                $docFormId = 'register-remove-supporting-'.md5($docPath);
+                            @endphp
                             <div class="flex items-center gap-2 rounded-lg border border-emerald-200 bg-emerald-50 p-2 text-xs font-medium text-emerald-800">
                                 <span class="min-w-0 flex-1">✓ {{ $doc['original_name'] }}</span>
-                                <form method="POST" action="{{ route('register.remove-file') }}" class="shrink-0">
-                                    @csrf
-                                    <input type="hidden" name="type" value="supporting_document" />
-                                    <input type="hidden" name="index" value="{{ $index }}" />
-                                    <button
-                                        type="submit"
-                                        class="inline-flex h-7 w-7 items-center justify-center rounded-lg border border-transparent text-slate-500 transition hover:border-red-200 hover:bg-red-50 hover:text-red-600"
-                                        title="{{ __('guest.register.remove_file') }}"
-                                        aria-label="{{ __('guest.register.remove_file') }}"
-                                    >✕</button>
-                                </form>
+                                <button
+                                    type="submit"
+                                    form="{{ $docFormId }}"
+                                    class="inline-flex h-7 w-7 shrink-0 items-center justify-center rounded-lg border border-transparent text-slate-500 transition hover:border-red-200 hover:bg-red-50 hover:text-red-600"
+                                    title="{{ __('guest.register.remove_file') }}"
+                                    aria-label="{{ __('guest.register.remove_file') }}"
+                                >✕</button>
                             </div>
                         @endforeach
                     </div>
@@ -389,5 +383,33 @@
         </div>
     </form>
 
-    
+    @if (session()->has('registration_files.photo'))
+        <form id="register-remove-photo" method="POST" action="{{ route('register.remove-file') }}" class="hidden">
+            @csrf
+            <input type="hidden" name="type" value="photo" />
+        </form>
+    @endif
+
+    @if (session()->has('registration_files.ktp_image'))
+        <form id="register-remove-ktp" method="POST" action="{{ route('register.remove-file') }}" class="hidden">
+            @csrf
+            <input type="hidden" name="type" value="ktp_image" />
+        </form>
+    @endif
+
+    @if (session()->has('registration_files.supporting_documents'))
+        @foreach (session('registration_files.supporting_documents') as $doc)
+            @php
+                $docPath = $doc['path'] ?? '';
+                $docFormId = 'register-remove-supporting-'.md5($docPath);
+            @endphp
+            @if ($docPath !== '')
+                <form id="{{ $docFormId }}" method="POST" action="{{ route('register.remove-file') }}" class="hidden">
+                    @csrf
+                    <input type="hidden" name="type" value="supporting_document" />
+                    <input type="hidden" name="path" value="{{ $docPath }}" />
+                </form>
+            @endif
+        @endforeach
+    @endif
 </x-guest-layout>
