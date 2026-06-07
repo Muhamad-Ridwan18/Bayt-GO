@@ -78,6 +78,8 @@ return [
         'emergency_admin_report_notify_enabled' => env('FONNTE_EMERGENCY_ADMIN_REPORT_NOTIFY_ENABLED', true),
         /** WA ke nomor admin saat ada pendaftaran muthowif baru. */
         'muthowif_registration_admin_notify_enabled' => env('FONNTE_MUTHOWIF_REGISTRATION_ADMIN_NOTIFY_ENABLED', true),
+        /** WA ke nomor admin saat jamaah mengajukan refund. */
+        'refund_admin_notify_enabled' => env('FONNTE_REFUND_ADMIN_NOTIFY_ENABLED', true),
         /** WA ke jamaah: update status laporan insiden (ditinjau / diverifikasi / ditolak). */
         'emergency_customer_report_notify_enabled' => env('FONNTE_EMERGENCY_CUSTOMER_REPORT_NOTIFY_ENABLED', true),
     ],

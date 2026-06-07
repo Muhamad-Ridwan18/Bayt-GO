@@ -7,6 +7,7 @@ use App\Enums\BookingStatus;
 use App\Enums\MuthowifServiceType;
 use App\Enums\MuthowifVerificationStatus;
 use App\Http\Controllers\Controller;
+use App\Jobs\NotifyAdminsOfRefundRequestSubmitted;
 use App\Jobs\NotifyCustomerOfRescheduleSubmitted;
 use App\Jobs\NotifyMuthowifOfNewBooking;
 use App\Jobs\NotifyMuthowifOfRescheduleRequest;
@@ -806,7 +807,7 @@ class BookingController extends Controller
         }
 
         try {
-            app(BookingRefundExecutor::class)->execute(
+            $refund = app(BookingRefundExecutor::class)->execute(
                 $booking,
                 $request->user(),
                 $note,
@@ -820,6 +821,7 @@ class BookingController extends Controller
                 ->with('error', $e->getMessage());
         }
 
+        NotifyAdminsOfRefundRequestSubmitted::afterRefundSubmitted((string) $refund->getKey());
         CustomerBookingBroadcast::afterResponse($booking->fresh());
 
         return redirect()

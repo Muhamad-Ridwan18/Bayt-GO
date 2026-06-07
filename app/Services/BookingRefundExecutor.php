@@ -26,7 +26,7 @@ final class BookingRefundExecutor
         string $refundBankName,
         string $refundAccountHolder,
         string $refundAccountNumber,
-    ): void {
+    ): BookingRefundRequest {
         $payment = $booking->settledBookingPayment();
         if ($payment === null) {
             throw new RuntimeException('Data pembayaran tidak ditemukan.');
@@ -34,7 +34,7 @@ final class BookingRefundExecutor
 
         $snapshot = BookingRefundFee::snapshot($booking, $payment);
 
-        DB::transaction(function () use (
+        return DB::transaction(function () use (
             $booking,
             $customer,
             $customerNote,
@@ -42,7 +42,7 @@ final class BookingRefundExecutor
             $refundAccountHolder,
             $refundAccountNumber,
             $snapshot,
-        ) {
+        ): BookingRefundRequest {
             $booking->refresh()->lockForUpdate();
 
             if (! $booking->isPaid() || $booking->status !== BookingStatus::Confirmed) {
@@ -54,7 +54,7 @@ final class BookingRefundExecutor
                 throw new RuntimeException('Saldo muthowif untuk pembayaran ini sudah dicairkan. Hubungi admin.');
             }
 
-            BookingRefundRequest::query()->create([
+            $refund = BookingRefundRequest::query()->create([
                 'muthowif_booking_id' => $booking->getKey(),
                 'customer_id' => $customer->id,
                 'status' => BookingChangeRequestStatus::Pending,
@@ -73,6 +73,8 @@ final class BookingRefundExecutor
                 'status' => BookingStatus::Cancelled,
                 'payment_status' => PaymentStatus::RefundPending,
             ]);
+
+            return $refund;
         });
     }
 }
