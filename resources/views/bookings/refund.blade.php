@@ -24,12 +24,12 @@
             <div class="overflow-hidden rounded-3xl border border-slate-200/80 bg-white shadow-xl shadow-slate-900/5">
                 <div class="border-b border-slate-100 bg-slate-50/50 px-6 py-8 sm:px-8">
                     <h1 class="text-2xl font-bold tracking-tight text-slate-900">{{ __('bookings.show.refund_reschedule_heading') }}</h1>
-                    <p class="mt-2 text-sm leading-relaxed text-slate-600">
+                    <div class="mt-2 text-sm leading-relaxed text-slate-600">
                         {!! __('bookings.show.refund_reschedule_intro_html', [
                             'refund_days' => BookingPostPayRules::refundMinDaysBeforeService(),
                             'reschedule_days' => BookingPostPayRules::rescheduleMinDaysBeforeService(),
                         ]) !!}
-                    </p>
+                    </div>
                 </div>
 
                 <div class="p-6 sm:p-8">

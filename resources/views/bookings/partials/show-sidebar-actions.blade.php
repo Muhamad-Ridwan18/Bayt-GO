@@ -10,12 +10,12 @@
 @if ($st === BookingStatus::Confirmed)
     <section class="rounded-2xl border border-slate-200/90 bg-white p-5 shadow-sm ring-1 ring-slate-100/80 sm:p-6">
         <h2 class="text-base font-bold text-slate-900">{{ __('bookings.show.refund_reschedule_heading') }}</h2>
-        <p class="mt-2 text-xs leading-relaxed text-slate-600">
+        <div class="mt-2 text-xs leading-relaxed text-slate-600">
             {!! __('bookings.show.refund_reschedule_intro_html', [
                 'refund_days' => BookingPostPayRules::refundMinDaysBeforeService(),
                 'reschedule_days' => BookingPostPayRules::rescheduleMinDaysBeforeService(),
             ]) !!}
-        </p>
+        </div>
 
         <div class="mt-4 grid grid-cols-1 gap-3">
             @if ($b->isPaid())
