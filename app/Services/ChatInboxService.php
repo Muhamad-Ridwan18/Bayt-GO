@@ -32,7 +32,7 @@ final class ChatInboxService
         return MuthowifBooking::query()
             ->select('muthowif_bookings.*')
             ->with([
-                'muthowifProfile:id,user_id',
+                'muthowifProfile:id,user_id,slug,photo_path,verification_status',
                 'muthowifProfile.user:id,name',
                 'customer:id,name',
             ])
@@ -50,8 +50,8 @@ final class ChatInboxService
             ->where(static function (Builder $q): void {
                 $q->whereHas('chatMessages')
                     ->orWhere(static function (Builder $inner): void {
-                        $inner->where('status', BookingStatus::Completed)
-                            ->where('payment_status', PaymentStatus::Paid);
+                        $inner->where('payment_status', PaymentStatus::Paid)
+                            ->whereIn('status', [BookingStatus::Confirmed, BookingStatus::Completed]);
                     });
             })
             ->addSelect(['last_message_at' => $latestMessageSub])
