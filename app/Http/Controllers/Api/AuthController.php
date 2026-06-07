@@ -6,6 +6,7 @@ use App\Enums\CustomerType;
 use App\Enums\MuthowifVerificationStatus;
 use App\Enums\UserRole;
 use App\Http\Controllers\Controller;
+use App\Jobs\NotifyAdminsOfMuthowifRegistration;
 use App\Models\MuthowifProfile;
 use App\Models\User;
 use App\Services\UploadedImageOptimizer;
@@ -104,6 +105,7 @@ class AuthController extends Controller
 
         $storedDir = null;
         $user = null;
+        $muthowifProfileId = null;
 
         try {
             DB::beginTransaction();
@@ -153,6 +155,7 @@ class AuthController extends Controller
                     'ktp_image_path' => $ktpPath,
                     'verification_status' => MuthowifVerificationStatus::Pending,
                 ]);
+                $muthowifProfileId = (string) $profile->getKey();
 
                 $files = $request->file('supporting_documents', []);
                 if (! is_array($files)) {
@@ -181,6 +184,8 @@ class AuthController extends Controller
 
             throw $e;
         }
+
+        NotifyAdminsOfMuthowifRegistration::afterMuthowifRegistered($muthowifProfileId);
 
         if ($user->isCompanyCustomer() && ! $user->is_company_approved) {
             return response()->json([

@@ -62,13 +62,6 @@
                                 </li>
                             @endforeach
                         </ul>
-                        @if ($groupBookUrl)
-                            <div class="mt-5 border-t border-brand-100/80 pt-5">
-                                <a href="{{ $groupBookUrl }}" class="ui-btn-primary w-full">
-                                    {{ __('marketplace.show.packages_pick_group') }}
-                                </a>
-                            </div>
-                        @endif
                     </div>
                 </article>
             @endif
@@ -98,13 +91,6 @@
                                 </li>
                             @endforeach
                         </ul>
-                        @if ($privateBookUrl)
-                            <div class="mt-5 border-t border-gold/20 pt-5">
-                                <a href="{{ $privateBookUrl }}" class="inline-flex min-h-12 w-full items-center justify-center gap-2 rounded-xl border border-gold/40 bg-gold px-5 py-2.5 text-sm font-semibold text-white shadow-sm transition hover:bg-gold/90 focus:outline-none focus:ring-2 focus:ring-gold focus:ring-offset-2">
-                                    {{ __('marketplace.show.packages_pick_private') }}
-                                </a>
-                            </div>
-                        @endif
                     </div>
                 </article>
             @endif

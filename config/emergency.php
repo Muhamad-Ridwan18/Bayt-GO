@@ -8,7 +8,7 @@ return [
     'max_auto_batches' => (int) env('EMERGENCY_MAX_AUTO_BATCHES', 10),
 
     /**
-     * Nomor WhatsApp admin yang mendapat notifikasi saat jamaah melaporkan insiden darurat.
+     * Nomor WhatsApp admin (insiden darurat, pendaftaran muthowif baru, dll.).
      * Override via EMERGENCY_ADMIN_WHATSAPP_NUMBERS (koma-separated).
      *
      * @var list<string>

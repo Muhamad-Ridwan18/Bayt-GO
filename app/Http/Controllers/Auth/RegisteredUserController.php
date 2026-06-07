@@ -6,6 +6,7 @@ use App\Enums\CustomerType;
 use App\Enums\MuthowifVerificationStatus;
 use App\Enums\UserRole;
 use App\Http\Controllers\Controller;
+use App\Jobs\NotifyAdminsOfMuthowifRegistration;
 use App\Models\MuthowifProfile;
 use App\Models\User;
 use App\Services\RegistrationOtpService;
@@ -331,6 +332,7 @@ class RegisteredUserController extends Controller
             ? $this->stageMuthowifFilesFromRequest($request)
             : null;
         $user = null;
+        $muthowifProfileId = null;
 
         try {
             DB::beginTransaction();
@@ -382,6 +384,7 @@ class RegisteredUserController extends Controller
                     'verification_status' => MuthowifVerificationStatus::Pending,
                     'referred_by_muthowif_profile_id' => $referredById,
                 ]);
+                $muthowifProfileId = (string) $profile->getKey();
 
                 foreach ($stagedMuthowifFiles['supporting'] as $row) {
                     $profile->supportingDocuments()->create([
@@ -415,6 +418,8 @@ class RegisteredUserController extends Controller
             throw $e;
         }
 
+        NotifyAdminsOfMuthowifRegistration::afterMuthowifRegistered($muthowifProfileId);
+
         event(new Registered($user));
 
         if ($user->isMuthowif()) {
@@ -442,6 +447,7 @@ class RegisteredUserController extends Controller
     private function commitRegistrationFromInput(array $input, ?array $muthowifFiles, RegistrationOtpService $registrationOtp, ?array $pending): RedirectResponse
     {
         $user = null;
+        $muthowifProfileId = null;
 
         try {
             DB::beginTransaction();
@@ -495,6 +501,7 @@ class RegisteredUserController extends Controller
                     'verification_status' => MuthowifVerificationStatus::Pending,
                     'referred_by_muthowif_profile_id' => $referredById,
                 ]);
+                $muthowifProfileId = (string) $profile->getKey();
 
                 foreach ($muthowifFiles['supporting'] as $row) {
                     $profile->supportingDocuments()->create([
@@ -522,6 +529,8 @@ class RegisteredUserController extends Controller
 
             throw $e;
         }
+
+        NotifyAdminsOfMuthowifRegistration::afterMuthowifRegistered($muthowifProfileId);
 
         event(new Registered($user));
 
