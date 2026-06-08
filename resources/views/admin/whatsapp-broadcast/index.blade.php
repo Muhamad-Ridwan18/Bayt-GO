@@ -36,7 +36,6 @@
     <script type="application/json" id="wa-broadcast-config">@json($broadcastConfig)</script>
 
     <x-ui.app-page>
-        <div id="wa-broadcast-root" class="contents" x-data="whatsappBroadcastAdmin">
         <x-page-container class="ui-stack relative">
             @if (session('broadcast_failures'))
                 <x-ui.alert type="warning">
@@ -78,11 +77,19 @@
                 @endunless
             </div>
 
+            <form id="wa-broadcast-search-form" method="get" action="{{ route('admin.whatsapp-broadcast.index') }}" class="hidden" aria-hidden="true">
+                @if ($status !== 'all')
+                    <input type="hidden" name="status" value="{{ $status }}" />
+                @endif
+            </form>
+
             <form
+                id="wa-broadcast-form"
                 method="post"
                 action="{{ route('admin.whatsapp-broadcast.send') }}"
                 enctype="multipart/form-data"
                 class="ui-stack-compact"
+                x-data="whatsappBroadcastAdmin"
                 @submit="confirmSend($event)"
             >
                 @csrf
@@ -136,25 +143,23 @@
                     </div>
 
                     <div class="border-b border-slate-100 px-5 py-4">
-                        <form method="get" action="{{ route('admin.whatsapp-broadcast.index') }}" class="flex flex-col gap-3 lg:flex-row lg:items-end">
-                            @if ($status !== 'all')
-                                <input type="hidden" name="status" value="{{ $status }}" />
-                            @endif
+                        <div class="flex flex-col gap-3 lg:flex-row lg:items-end">
                             <div class="min-w-0 flex-1">
                                 <label for="muthowif-search" class="block text-xs font-semibold uppercase tracking-wide text-slate-500">{{ __('admin.whatsapp_broadcast.search_label') }}</label>
                                 <input
                                     id="muthowif-search"
                                     type="search"
                                     name="q"
+                                    form="wa-broadcast-search-form"
                                     value="{{ $search }}"
                                     placeholder="{{ __('admin.whatsapp_broadcast.search_placeholder') }}"
                                     class="mt-1.5 w-full rounded-xl border-slate-200 text-sm shadow-sm focus:border-brand-500 focus:ring-brand-500"
                                 />
                             </div>
-                            <button type="submit" class="rounded-xl bg-slate-900 px-4 py-2.5 text-xs font-semibold text-white hover:bg-slate-800">
+                            <button type="submit" form="wa-broadcast-search-form" class="rounded-xl bg-slate-900 px-4 py-2.5 text-xs font-semibold text-white hover:bg-slate-800">
                                 {{ __('admin.whatsapp_broadcast.search_label') }}
                             </button>
-                        </form>
+                        </div>
                         <div class="mt-3 flex flex-wrap gap-2">
                                 <a href="{{ route('admin.whatsapp-broadcast.index', $filterParams('all')) }}" class="rounded-xl px-3 py-2 text-xs font-semibold {{ $status === 'all' ? 'bg-brand-600 text-white' : 'bg-slate-100 text-slate-700 hover:bg-slate-200' }}">{{ __('admin.whatsapp_broadcast.filter_all') }} ({{ $counts['all'] }})</a>
                                 <a href="{{ route('admin.whatsapp-broadcast.index', $filterParams('approved')) }}" class="rounded-xl px-3 py-2 text-xs font-semibold {{ $status === 'approved' ? 'bg-emerald-600 text-white' : 'bg-slate-100 text-slate-700 hover:bg-slate-200' }}">{{ __('admin.whatsapp_broadcast.filter_approved') }} ({{ $counts['approved'] }})</a>
@@ -170,7 +175,7 @@
                         </div>
                     </div>
 
-                    <div class="max-h-[28rem] overflow-y-auto">
+                    <div id="wa-broadcast-recipients" class="max-h-[28rem] overflow-y-auto">
                         @if ($muthowifs->isNotEmpty())
                             <label class="sticky top-0 z-10 flex cursor-pointer items-center gap-3 border-b border-slate-100 bg-slate-50/95 px-5 py-3 backdrop-blur-sm">
                                 <input
@@ -262,6 +267,5 @@
                 </div>
             </form>
         </x-page-container>
-        </div>
     </x-ui.app-page>
 </x-app-layout>

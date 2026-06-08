@@ -41,11 +41,17 @@ export function registerWhatsappBroadcastAdmin(Alpine) {
                 }
             },
             recipientCheckboxes() {
-                return this.$el.querySelectorAll('.broadcast-recipient-checkbox');
+                const root = document.getElementById('wa-broadcast-recipients') ?? this.$el;
+                return root.querySelectorAll('.broadcast-recipient-checkbox');
             },
             updateSelectedCount() {
                 const boxes = this.recipientCheckboxes();
-                const checked = this.$el.querySelectorAll('.broadcast-recipient-checkbox:checked').length;
+                let checked = 0;
+                boxes.forEach((box) => {
+                    if (box.checked) {
+                        checked++;
+                    }
+                });
                 this.selectedCount = checked;
                 this.allVisibleSelected = boxes.length > 0 && checked === boxes.length;
                 this.someVisibleSelected = checked > 0 && checked < boxes.length;
