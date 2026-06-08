@@ -6,9 +6,9 @@ use App\Enums\BookingStatus;
 use App\Enums\MuthowifBookingMuthowifRejectionKind;
 use App\Enums\PaymentStatus;
 use App\Http\Controllers\Controller;
-use App\Support\CustomerBookingBroadcast;
-use App\Services\MuthowifBookingWhatsAppNotifier;
+use App\Jobs\NotifyCustomerOfApprovedBooking;
 use App\Jobs\NotifyCustomerOfBookingRejectedJadwalFull;
+use App\Support\CustomerBookingBroadcast;
 use App\Models\MuthowifBooking;
 use App\Services\BookingPendingPaymentEnsurer;
 use Carbon\Carbon;
@@ -113,7 +113,7 @@ class MuthowifBookingController extends Controller
 
         app(BookingPendingPaymentEnsurer::class)->ensure($booking->fresh());
 
-        app(MuthowifBookingWhatsAppNotifier::class)->notifyCustomerApproved($booking->fresh());
+        NotifyCustomerOfApprovedBooking::dispatchAfterResponse((string) $booking->getKey());
 
         return response()->json([
             'message' => 'Pesanan berhasil disetujui',

@@ -7,7 +7,10 @@ use App\Enums\BookingStatus;
 use App\Enums\MuthowifBookingMuthowifRejectionKind;
 use App\Enums\PaymentStatus;
 use App\Http\Controllers\Controller;
+use App\Jobs\NotifyCustomerOfApprovedBooking;
 use App\Jobs\NotifyCustomerOfBookingRejectedJadwalFull;
+use App\Jobs\NotifyCustomerOfRescheduleApproved;
+use App\Jobs\NotifyCustomerOfRescheduleRejected;
 use App\Jobs\NotifyMuthowifOfNewBooking;
 use App\Models\BookingPayment;
 use App\Models\BookingRescheduleRequest;
@@ -15,7 +18,6 @@ use App\Models\MuthowifBooking;
 use App\Models\MuthowifProfile;
 use App\Models\MuthowifServiceAddOn;
 use App\Services\BookingPendingPaymentEnsurer;
-use App\Services\MuthowifBookingWhatsAppNotifier;
 use App\Support\BookingWebLive;
 use App\Support\CustomerBookingBroadcast;
 use App\Support\PlatformFee;
@@ -220,13 +222,9 @@ class BookingController extends Controller
 
         app(BookingPendingPaymentEnsurer::class)->ensure($booking->fresh());
 
-        $notifier = app(MuthowifBookingWhatsAppNotifier::class);
-        $notifier->notifyCustomerApproved($booking->fresh());
+        NotifyCustomerOfApprovedBooking::dispatchAfterResponse((string) $booking->getKey());
         foreach ($rejectedBookingIds as $otherId) {
-            $other = MuthowifBooking::query()->find($otherId);
-            if ($other) {
-                $notifier->notifyCustomerBookingRejectedByMuthowif($other);
-            }
+            NotifyCustomerOfBookingRejectedJadwalFull::dispatchAfterResponse($otherId);
         }
         CustomerBookingBroadcast::afterResponseMany($broadcastIds);
         foreach (array_unique($customerIdsToInvalidate) as $customerId) {
@@ -389,13 +387,12 @@ class BookingController extends Controller
 
         $booking = $booking->fresh();
         $rescheduleRequest = $rescheduleRequest->fresh();
-        $notifier = app(MuthowifBookingWhatsAppNotifier::class);
-        $notifier->notifyCustomerRescheduleApproved($booking, $rescheduleRequest);
+        NotifyCustomerOfRescheduleApproved::dispatchAfterResponse(
+            (string) $booking->getKey(),
+            (string) $rescheduleRequest->getKey(),
+        );
         foreach ($rejectedBookingIds as $otherId) {
-            $other = MuthowifBooking::query()->find($otherId);
-            if ($other) {
-                $notifier->notifyCustomerBookingRejectedByMuthowif($other);
-            }
+            NotifyCustomerOfBookingRejectedJadwalFull::dispatchAfterResponse($otherId);
         }
         CustomerBookingBroadcast::afterResponseMany($broadcastIds);
 
@@ -426,9 +423,9 @@ class BookingController extends Controller
             'muthowif_note' => filled($validated['muthowif_note'] ?? null) ? trim((string) $validated['muthowif_note']) : null,
         ]);
 
-        app(MuthowifBookingWhatsAppNotifier::class)->notifyCustomerRescheduleRejected(
-            $booking->fresh(),
-            $rescheduleRequest->fresh()
+        NotifyCustomerOfRescheduleRejected::dispatchAfterResponse(
+            (string) $booking->getKey(),
+            (string) $rescheduleRequest->getKey(),
         );
         CustomerBookingBroadcast::afterResponse($booking->fresh());
 

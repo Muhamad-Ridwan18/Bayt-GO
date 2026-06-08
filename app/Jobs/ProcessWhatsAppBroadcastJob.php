@@ -40,8 +40,7 @@ class ProcessWhatsAppBroadcastJob implements ShouldQueue
         );
 
         Log::info('whatsapp.broadcast.completed', [
-            'sent' => $result['sent'],
-            'failed' => $result['failed'],
+            'queued' => $result['sent'],
             'skipped' => $result['skipped'],
         ]);
     }

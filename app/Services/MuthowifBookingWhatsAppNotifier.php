@@ -3,6 +3,8 @@
 namespace App\Services;
 
 use App\Enums\MuthowifBookingMuthowifRejectionKind;
+use App\Jobs\SendWhatsAppAttachmentJob;
+use App\Jobs\SendWhatsAppTextJob;
 use App\Models\BookingRefundRequest;
 use App\Models\BookingRescheduleRequest;
 use App\Models\MuthowifBooking;
@@ -11,14 +13,9 @@ use App\Support\IndonesianNumber;
 use App\Support\IntlPhone;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Storage;
-use RuntimeException;
 
 class MuthowifBookingWhatsAppNotifier
 {
-    public function __construct(
-        private readonly FonnteService $fonnte
-    ) {}
-
     /**
      * Kirim WhatsApp ke nomor muthowif (Fonnte). Gagal API tidak mengganggu proses booking — hanya di-log.
      */
@@ -725,20 +722,13 @@ class MuthowifBookingWhatsAppNotifier
      */
     private function sendFileProofToTarget(array $fonnteDial, string $message, string $proofPublicUrl, ?string $filenameForNonImage, string $contextId): void
     {
-        try {
-            $this->fonnte->sendMessageWithPublicFileUrl(
-                $fonnteDial['target'],
-                $message,
-                $proofPublicUrl,
-                $filenameForNonImage,
-                $fonnteDial['country_calling_code'],
-            );
-        } catch (RuntimeException $e) {
-            Log::warning('WhatsApp notify with attachment failed', [
-                'context_id' => $contextId,
-                'error' => $e->getMessage(),
-            ]);
-        }
+        SendWhatsAppAttachmentJob::dispatch(
+            $fonnteDial['target'],
+            $message,
+            $fonnteDial['country_calling_code'],
+            $proofPublicUrl,
+            $filenameForNonImage,
+        );
     }
 
     private function localeForUser(?string $locale): string
@@ -794,17 +784,10 @@ class MuthowifBookingWhatsAppNotifier
      */
     private function sendToTarget(array $fonnteDial, string $message, string $bookingId): void
     {
-        try {
-            $this->fonnte->sendText(
-                $fonnteDial['target'],
-                $message,
-                $fonnteDial['country_calling_code'],
-            );
-        } catch (RuntimeException $e) {
-            Log::warning('WhatsApp notify failed', [
-                'booking_id' => $bookingId,
-                'error' => $e->getMessage(),
-            ]);
-        }
+        SendWhatsAppTextJob::dispatch(
+            $fonnteDial['target'],
+            $message,
+            $fonnteDial['country_calling_code'],
+        );
     }
 }

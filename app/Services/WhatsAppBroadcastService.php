@@ -2,19 +2,15 @@
 
 namespace App\Services;
 
+use App\Jobs\SendWhatsAppAttachmentJob;
+use App\Jobs\SendWhatsAppTextJob;
 use App\Models\MuthowifProfile;
 use App\Support\IntlPhone;
 use App\Support\WhatsAppMediaUrl;
-use Illuminate\Support\Facades\Log;
-use RuntimeException;
 
 class WhatsAppBroadcastService
 {
     private const SEND_DELAY_MICROSECONDS = 300_000;
-
-    public function __construct(
-        private readonly FonnteService $fonnte
-    ) {}
 
     public function whatsappConfigured(): bool
     {
@@ -44,76 +40,50 @@ class WhatsAppBroadcastService
         $resolved = $this->resolveRecipients($muthowifProfileIds, $freeNumbersText);
         $caption = trim($message);
 
-        $fileContents = null;
-        $fileName = $attachmentFilename;
-        if ($attachmentLocalPath !== null && $attachmentLocalPath !== '' && is_readable($attachmentLocalPath)) {
-            $raw = file_get_contents($attachmentLocalPath);
-            if ($raw === false || $raw === '') {
-                throw new RuntimeException('Gagal membaca berkas lampiran broadcast.');
-            }
-            $fileContents = $raw;
-            $fileName = $fileName !== null && $fileName !== ''
-                ? $fileName
-                : basename($attachmentLocalPath);
-        }
+        $hasLocalAttachment = $attachmentLocalPath !== null
+            && $attachmentLocalPath !== ''
+            && is_readable($attachmentLocalPath);
 
         $usePublicFileUrl = $attachmentPublicUrl !== null
             && $attachmentPublicUrl !== ''
             && WhatsAppMediaUrl::isPubliclyReachable($attachmentPublicUrl);
 
-        $sent = 0;
-        $failed = 0;
-        $failures = [];
+        $attachmentFilename = $attachmentFilename !== null && $attachmentFilename !== ''
+            ? $attachmentFilename
+            : ($hasLocalAttachment ? basename($attachmentLocalPath) : null);
+
+        $queued = 0;
 
         foreach ($resolved['recipients'] as $index => $recipient) {
-            if ($index > 0) {
-                usleep(self::SEND_DELAY_MICROSECONDS);
+            if ($usePublicFileUrl || $hasLocalAttachment) {
+                $job = SendWhatsAppAttachmentJob::dispatch(
+                    $recipient['dial']['target'],
+                    $caption,
+                    $recipient['dial']['country_calling_code'],
+                    $attachmentPublicUrl,
+                    $this->documentFilenameForAttachment($attachmentFilename),
+                    $hasLocalAttachment ? $attachmentLocalPath : null,
+                );
+            } else {
+                $job = SendWhatsAppTextJob::dispatch(
+                    $recipient['dial']['target'],
+                    $caption,
+                    $recipient['dial']['country_calling_code'],
+                );
             }
 
-            try {
-                if ($usePublicFileUrl) {
-                    $this->fonnte->sendMessageWithPublicFileUrl(
-                        $recipient['dial']['target'],
-                        $caption,
-                        $attachmentPublicUrl,
-                        $this->documentFilenameForAttachment($fileName),
-                        $recipient['dial']['country_calling_code'],
-                    );
-                } elseif ($fileContents !== null && $fileName !== null) {
-                    $this->sendAttachmentWithUploadFallback(
-                        $recipient['dial']['target'],
-                        $caption,
-                        $fileContents,
-                        $fileName,
-                        $recipient['dial']['country_calling_code'],
-                        $attachmentPublicUrl,
-                    );
-                } else {
-                    $this->fonnte->sendText(
-                        $recipient['dial']['target'],
-                        $caption,
-                        $recipient['dial']['country_calling_code'],
-                    );
-                }
-                $sent++;
-            } catch (RuntimeException $e) {
-                $failed++;
-                $failures[] = [
-                    'label' => $recipient['label'],
-                    'reason' => $e->getMessage(),
-                ];
-                Log::warning('WhatsApp broadcast failed for recipient', [
-                    'label' => $recipient['label'],
-                    'error' => $e->getMessage(),
-                ]);
+            if ($index > 0) {
+                $job->delay(now()->addMilliseconds($index * (self::SEND_DELAY_MICROSECONDS / 1000)));
             }
+
+            $queued++;
         }
 
         return [
-            'sent' => $sent,
-            'failed' => $failed,
+            'sent' => $queued,
+            'failed' => 0,
             'skipped' => $resolved['skipped'],
-            'failures' => $failures,
+            'failures' => [],
             'invalid_numbers' => $resolved['invalid_numbers'],
         ];
     }
@@ -150,8 +120,8 @@ class WhatsAppBroadcastService
                     continue;
                 }
 
-                $phone = trim((string) $profile->phone);
-                if ($phone === '') {
+                $phone = $profile->whatsAppPhone();
+                if ($phone === null) {
                     $skipped++;
                     $invalidNumbers[] = ($profile->user?->name ?? 'Muthowif').' (tanpa nomor)';
 
@@ -204,43 +174,6 @@ class WhatsAppBroadcastService
             'skipped' => $skipped,
             'invalid_numbers' => $invalidNumbers,
         ];
-    }
-
-    private function sendAttachmentWithUploadFallback(
-        string $target,
-        string $caption,
-        string $fileContents,
-        string $fileName,
-        string $countryCallingCode,
-        ?string $attachmentPublicUrl,
-    ): void {
-        try {
-            $this->fonnte->sendMessageWithFileUpload(
-                $target,
-                $caption,
-                $fileContents,
-                $fileName,
-                $countryCallingCode,
-            );
-        } catch (RuntimeException $uploadError) {
-            if (
-                $attachmentPublicUrl !== null
-                && $attachmentPublicUrl !== ''
-                && WhatsAppMediaUrl::isPubliclyReachable($attachmentPublicUrl)
-            ) {
-                $this->fonnte->sendMessageWithPublicFileUrl(
-                    $target,
-                    $caption,
-                    $attachmentPublicUrl,
-                    $this->documentFilenameForAttachment($fileName),
-                    $countryCallingCode,
-                );
-
-                return;
-            }
-
-            throw $uploadError;
-        }
     }
 
     /**

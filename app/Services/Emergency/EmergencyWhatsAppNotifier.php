@@ -5,17 +5,11 @@ namespace App\Services\Emergency;
 use App\Jobs\SendWhatsAppTextJob;
 use App\Models\BookingEmergencyReport;
 use App\Models\BookingReplacementOffer;
-use App\Services\FonnteService;
 use App\Support\IntlPhone;
 use Illuminate\Support\Facades\Log;
-use RuntimeException;
 
 final class EmergencyWhatsAppNotifier
 {
-    public function __construct(
-        private readonly FonnteService $fonnte,
-    ) {}
-
     public function notifyAdminsOfSubmittedReport(BookingEmergencyReport $report): void
     {
         if (! config('services.fonnte.emergency_admin_report_notify_enabled', true)) {
@@ -443,17 +437,10 @@ final class EmergencyWhatsAppNotifier
      */
     private function sendToTarget(array $fonnteDial, string $message, string $bookingId): void
     {
-        try {
-            $this->fonnte->sendText(
-                $fonnteDial['target'],
-                $message,
-                $fonnteDial['country_calling_code'],
-            );
-        } catch (RuntimeException $e) {
-            Log::warning('WhatsApp emergency notify failed', [
-                'booking_id' => $bookingId,
-                'error' => $e->getMessage(),
-            ]);
-        }
+        SendWhatsAppTextJob::dispatch(
+            $fonnteDial['target'],
+            $message,
+            $fonnteDial['country_calling_code'],
+        );
     }
 }

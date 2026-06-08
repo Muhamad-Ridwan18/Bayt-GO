@@ -118,6 +118,36 @@ class MuthowifProfile extends Model
             });
     }
 
+    /**
+     * Profil dengan nomor WA di kolom profil atau fallback ke users.phone.
+     *
+     * @param  \Illuminate\Database\Eloquent\Builder<MuthowifProfile>  $query
+     * @return \Illuminate\Database\Eloquent\Builder<MuthowifProfile>
+     */
+    public function scopeWithReachablePhone($query)
+    {
+        return $query->where(function ($q): void {
+            $q->where(function ($inner): void {
+                $inner->whereNotNull('muthowif_profiles.phone')
+                    ->where('muthowif_profiles.phone', '!=', '');
+            })->orWhereHas('user', function ($userQuery): void {
+                $userQuery->whereNotNull('phone')->where('phone', '!=', '');
+            });
+        });
+    }
+
+    public function whatsAppPhone(): ?string
+    {
+        $phone = trim((string) ($this->phone ?? ''));
+        if ($phone !== '') {
+            return $phone;
+        }
+
+        $userPhone = trim((string) ($this->user?->phone ?? ''));
+
+        return $userPhone !== '' ? $userPhone : null;
+    }
+
     /** Hanya profil yang sudah mengisi minimal satu layanan (paket). */
     public function scopeHasPublishedServices($query)
     {

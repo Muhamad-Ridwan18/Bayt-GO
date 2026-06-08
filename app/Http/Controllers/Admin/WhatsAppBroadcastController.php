@@ -33,8 +33,7 @@ class WhatsAppBroadcastController extends Controller
 
         $query = MuthowifProfile::query()
             ->with('user')
-            ->whereNotNull('phone')
-            ->where('phone', '!=', '')
+            ->withReachablePhone()
             ->orderByDesc('created_at');
 
         if ($status !== 'all') {
@@ -45,15 +44,16 @@ class WhatsAppBroadcastController extends Controller
             $like = '%'.$search.'%';
             $query->where(function ($q) use ($like): void {
                 $q->where('phone', 'like', $like)
-                    ->orWhereHas('user', fn ($uq) => $uq->where('name', 'like', $like)->orWhere('email', 'like', $like));
+                    ->orWhereHas('user', fn ($uq) => $uq->where('name', 'like', $like)
+                        ->orWhere('email', 'like', $like)
+                        ->orWhere('phone', 'like', $like));
             });
         }
 
         $muthowifs = $query->paginate(50)->withQueryString();
 
         $countRows = MuthowifProfile::query()
-            ->whereNotNull('phone')
-            ->where('phone', '!=', '')
+            ->withReachablePhone()
             ->select('verification_status')
             ->selectRaw('count(*) as aggregate')
             ->groupBy('verification_status')
