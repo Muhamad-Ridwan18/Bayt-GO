@@ -17,25 +17,11 @@
 
         return $p;
     };
-
-    $muthowifPayload = $muthowifs->map(fn ($p) => [
-        'id' => $p->id,
-        'name' => $p->user?->name ?? '—',
-        'phone' => $p->whatsAppPhone() ?? '—',
-        'status' => $p->verification_status instanceof MuthowifVerificationStatus
-            ? $p->verification_status->value
-            : (string) $p->verification_status,
-        'status_label' => $p->verification_status instanceof MuthowifVerificationStatus
-            ? $p->verification_status->label()
-            : (string) $p->verification_status,
-    ])->values();
 @endphp
 
 <x-app-layout>
     <x-ui.app-page
         x-data="whatsappBroadcastAdmin({
-            muthowifs: @js($muthowifPayload),
-            initialSelected: @js($oldProfileIds),
             initialFreeNumbers: @js(old('free_numbers', '')),
             initialSearch: @js($search),
             labels: {
@@ -177,32 +163,46 @@
                         </div>
                     </div>
 
-                    <div class="max-h-[28rem] overflow-y-auto p-2">
-                        <template x-if="filteredMuthowifs().length === 0">
+                    <div class="max-h-[28rem] divide-y divide-slate-100 overflow-y-auto p-2">
+                        @forelse ($muthowifs as $profile)
+                            @php
+                                $phone = $profile->whatsAppPhone() ?? '—';
+                                $statusLabel = $profile->verification_status instanceof MuthowifVerificationStatus
+                                    ? $profile->verification_status->label()
+                                    : (string) $profile->verification_status;
+                                $searchHay = mb_strtolower(trim(
+                                    ($profile->user?->name ?? '').' '
+                                    .$phone.' '
+                                    .$statusLabel.' '
+                                    .($profile->user?->email ?? '')
+                                ));
+                                $isChecked = in_array((string) $profile->id, array_map('strval', $oldProfileIds), true);
+                            @endphp
+                            <label
+                                class="broadcast-recipient-row flex cursor-pointer items-start gap-3 rounded-xl px-3 py-3 transition hover:bg-slate-50/80"
+                                data-search="{{ $searchHay }}"
+                                x-show="rowVisible($el)"
+                            >
+                                <input
+                                    type="checkbox"
+                                    class="broadcast-recipient-checkbox mt-1 rounded border-slate-300 text-brand-600 focus:ring-brand-500"
+                                    name="muthowif_profile_ids[]"
+                                    value="{{ $profile->id }}"
+                                    @checked($isChecked)
+                                    @change="updateSelectedCount()"
+                                />
+                                <span class="min-w-0 flex-1">
+                                    <span class="block font-semibold text-slate-900">{{ $profile->user?->name ?? '—' }}</span>
+                                    <span class="mt-0.5 block text-xs text-slate-500">
+                                        {{ $phone }}
+                                        <span class="mx-1">·</span>
+                                        {{ $statusLabel }}
+                                    </span>
+                                </span>
+                            </label>
+                        @empty
                             <p class="px-3 py-8 text-center text-sm text-slate-500">{{ __('admin.whatsapp_broadcast.muthowif_empty') }}</p>
-                        </template>
-                        <ul class="divide-y divide-slate-100">
-                            <template x-for="item in filteredMuthowifs()" :key="item.id">
-                                <li class="flex items-start gap-3 rounded-xl px-3 py-3 transition hover:bg-slate-50/80">
-                                    <input
-                                        type="checkbox"
-                                        class="mt-1 rounded border-slate-300 text-brand-600 focus:ring-brand-500"
-                                        :value="item.id"
-                                        name="muthowif_profile_ids[]"
-                                        :checked="selectedIds.includes(item.id)"
-                                        @change="toggleId(item.id)"
-                                    />
-                                    <div class="min-w-0 flex-1">
-                                        <p class="font-semibold text-slate-900" x-text="item.name"></p>
-                                        <p class="text-xs text-slate-500">
-                                            <span x-text="item.phone"></span>
-                                            <span class="mx-1">·</span>
-                                            <span x-text="item.status_label"></span>
-                                        </p>
-                                    </div>
-                                </li>
-                            </template>
-                        </ul>
+                        @endforelse
                     </div>
 
                     @if ($muthowifs->hasPages())

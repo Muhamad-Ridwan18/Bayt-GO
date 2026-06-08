@@ -1,13 +1,12 @@
 export function registerWhatsappBroadcastAdmin(Alpine) {
     Alpine.data('whatsappBroadcastAdmin', (config) => ({
-        muthowifs: config.muthowifs ?? [],
-        selectedIds: Array.isArray(config.initialSelected) ? [...config.initialSelected] : [],
         freeNumbers: config.initialFreeNumbers ?? '',
         attachmentPreviewUrl: null,
         attachmentFileName: null,
         search: config.initialSearch ?? '',
+        selectedCount: 0,
         init() {
-            this.$nextTick(() => this.syncCheckboxes());
+            this.$nextTick(() => this.updateSelectedCount());
         },
         previewAttachment(event) {
             const file = event.target.files?.[0];
@@ -23,63 +22,57 @@ export function registerWhatsappBroadcastAdmin(Alpine) {
                 this.attachmentPreviewUrl = null;
             }
         },
-        filteredMuthowifs() {
+        rowVisible(el) {
             const q = (this.search ?? '').trim().toLowerCase();
             if (q === '') {
-                return this.muthowifs;
+                return true;
             }
-            return this.muthowifs.filter((item) => {
-                const hay = `${item.name} ${item.phone} ${item.status_label}`.toLowerCase();
-                return hay.includes(q);
-            });
+
+            return (el?.dataset?.search ?? '').includes(q);
         },
-        toggleId(id) {
-            const idx = this.selectedIds.indexOf(id);
-            if (idx === -1) {
-                this.selectedIds.push(id);
-            } else {
-                this.selectedIds.splice(idx, 1);
-            }
+        updateSelectedCount() {
+            this.selectedCount = this.$el.querySelectorAll('.broadcast-recipient-checkbox:checked').length;
         },
         selectAllVisible() {
-            const visibleIds = this.filteredMuthowifs().map((item) => item.id);
-            visibleIds.forEach((id) => {
-                if (!this.selectedIds.includes(id)) {
-                    this.selectedIds.push(id);
+            this.$el.querySelectorAll('.broadcast-recipient-row').forEach((row) => {
+                if (!this.rowVisible(row)) {
+                    return;
+                }
+                const checkbox = row.querySelector('.broadcast-recipient-checkbox');
+                if (checkbox) {
+                    checkbox.checked = true;
                 }
             });
-            this.$nextTick(() => this.syncCheckboxes());
+            this.updateSelectedCount();
         },
         clearSelection() {
-            this.selectedIds = [];
-            this.$nextTick(() => this.syncCheckboxes());
-        },
-        syncCheckboxes() {
-            this.$el.querySelectorAll('input[name="muthowif_profile_ids[]"]').forEach((el) => {
-                el.checked = this.selectedIds.includes(el.value);
+            this.$el.querySelectorAll('.broadcast-recipient-checkbox').forEach((checkbox) => {
+                checkbox.checked = false;
             });
+            this.updateSelectedCount();
         },
         parseFreeNumbers() {
             const raw = (this.freeNumbers ?? '').trim();
             if (raw === '') {
                 return [];
             }
+
             return raw.split(/[\s,;\n\r]+/).map((v) => v.trim()).filter((v) => v !== '');
         },
         selectedCountLabel() {
-            const n = this.selectedIds.length;
-            return (config.labels?.selectedCount ?? ':count selected').replace(':count', String(n));
+            return (config.labels?.selectedCount ?? ':count selected').replace(':count', String(this.selectedCount));
         },
         freeNumbersCountLabel() {
             const n = this.parseFreeNumbers().length;
             return (config.labels?.freeCount ?? ':count free numbers').replace(':count', String(n));
         },
         totalRecipientsLabel() {
-            const n = this.selectedIds.length + this.parseFreeNumbers().length;
+            const n = this.selectedCount + this.parseFreeNumbers().length;
             return (config.labels?.totalEstimate ?? ':count recipients').replace(':count', String(n));
         },
         confirmSend(event) {
-            const total = this.selectedIds.length + this.parseFreeNumbers().length;
+            this.updateSelectedCount();
+            const total = this.selectedCount + this.parseFreeNumbers().length;
             if (total === 0) {
                 event.preventDefault();
                 alert(config.labels?.recipientsRequired ?? 'Select at least one recipient.');
