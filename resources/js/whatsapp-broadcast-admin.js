@@ -21,6 +21,8 @@ export function registerWhatsappBroadcastAdmin(Alpine) {
             attachmentPreviewUrl: null,
             attachmentFileName: null,
             selectedCount: 0,
+            allVisibleSelected: false,
+            someVisibleSelected: false,
             init() {
                 this.updateSelectedCount();
             },
@@ -38,17 +40,36 @@ export function registerWhatsappBroadcastAdmin(Alpine) {
                     this.attachmentPreviewUrl = null;
                 }
             },
+            recipientCheckboxes() {
+                return this.$el.querySelectorAll('.broadcast-recipient-checkbox');
+            },
             updateSelectedCount() {
-                this.selectedCount = this.$el.querySelectorAll('.broadcast-recipient-checkbox:checked').length;
+                const boxes = this.recipientCheckboxes();
+                const checked = this.$el.querySelectorAll('.broadcast-recipient-checkbox:checked').length;
+                this.selectedCount = checked;
+                this.allVisibleSelected = boxes.length > 0 && checked === boxes.length;
+                this.someVisibleSelected = checked > 0 && checked < boxes.length;
+                const master = this.$refs.selectAllCheckbox;
+                if (master) {
+                    master.indeterminate = this.someVisibleSelected;
+                    master.checked = this.allVisibleSelected;
+                }
+            },
+            toggleSelectAll(event) {
+                const checked = event.target.checked;
+                this.recipientCheckboxes().forEach((checkbox) => {
+                    checkbox.checked = checked;
+                });
+                this.updateSelectedCount();
             },
             selectAllVisible() {
-                this.$el.querySelectorAll('.broadcast-recipient-checkbox').forEach((checkbox) => {
+                this.recipientCheckboxes().forEach((checkbox) => {
                     checkbox.checked = true;
                 });
                 this.updateSelectedCount();
             },
             clearSelection() {
-                this.$el.querySelectorAll('.broadcast-recipient-checkbox').forEach((checkbox) => {
+                this.recipientCheckboxes().forEach((checkbox) => {
                     checkbox.checked = false;
                 });
                 this.updateSelectedCount();

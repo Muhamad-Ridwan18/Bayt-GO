@@ -163,9 +163,6 @@
                         </div>
 
                         <div class="mt-4 flex flex-wrap items-center gap-3">
-                            <button type="button" @click="selectAllVisible()" class="rounded-lg border border-slate-200 bg-white px-3 py-1.5 text-xs font-semibold text-slate-700 hover:bg-slate-50">
-                                {{ __('admin.whatsapp_broadcast.select_all_visible') }}
-                            </button>
                             <button type="button" @click="clearSelection()" class="rounded-lg border border-slate-200 bg-white px-3 py-1.5 text-xs font-semibold text-slate-700 hover:bg-slate-50">
                                 {{ __('admin.whatsapp_broadcast.clear_selection') }}
                             </button>
@@ -173,7 +170,22 @@
                         </div>
                     </div>
 
-                    <div class="max-h-[28rem] divide-y divide-slate-100 overflow-y-auto p-2">
+                    <div class="max-h-[28rem] overflow-y-auto">
+                        @if ($muthowifs->isNotEmpty())
+                            <label class="sticky top-0 z-10 flex cursor-pointer items-center gap-3 border-b border-slate-100 bg-slate-50/95 px-5 py-3 backdrop-blur-sm">
+                                <input
+                                    type="checkbox"
+                                    x-ref="selectAllCheckbox"
+                                    class="rounded border-slate-300 text-brand-600 focus:ring-brand-500"
+                                    @change="toggleSelectAll($event)"
+                                />
+                                <span class="text-sm font-semibold text-slate-900">
+                                    {{ __('admin.whatsapp_broadcast.select_all') }}
+                                    <span class="font-normal text-slate-500">({{ $muthowifs->count() }})</span>
+                                </span>
+                            </label>
+                        @endif
+                        <div class="divide-y divide-slate-100 p-2">
                         @forelse ($muthowifs as $profile)
                             @php
                                 $phone = $profile->whatsAppPhone() ?? '—';
@@ -205,6 +217,7 @@
                         @empty
                             <p class="px-3 py-8 text-center text-sm text-slate-500">{{ __('admin.whatsapp_broadcast.muthowif_empty') }}</p>
                         @endforelse
+                        </div>
                     </div>
 
                     @if ($muthowifs->hasPages())

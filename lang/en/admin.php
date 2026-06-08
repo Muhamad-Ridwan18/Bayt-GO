@@ -363,6 +363,7 @@ return [
         'filter_approved' => 'Approved',
         'filter_pending' => 'Pending',
         'filter_rejected' => 'Rejected',
+        'select_all' => 'Select all',
         'select_all_visible' => 'Select all visible',
         'clear_selection' => 'Clear selection',
         'selected_count' => ':count muthowifs selected',

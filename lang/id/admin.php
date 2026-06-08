@@ -363,6 +363,7 @@ return [
         'filter_approved' => 'Disetujui',
         'filter_pending' => 'Menunggu',
         'filter_rejected' => 'Ditolak',
+        'select_all' => 'Pilih semua',
         'select_all_visible' => 'Pilih semua yang terlihat',
         'clear_selection' => 'Hapus pilihan',
         'selected_count' => ':count muthowif dipilih',
