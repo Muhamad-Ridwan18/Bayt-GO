@@ -27,16 +27,25 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::get('/customer/bookings/{booking}', [\App\Http\Controllers\Api\Customer\BookingApiController::class, 'show']);
     Route::post('/customer/bookings', [\App\Http\Controllers\Api\Customer\BookingApiController::class, 'store']);
     Route::post('/customer/bookings/{booking}/pay', [\App\Http\Controllers\Api\Customer\BookingApiController::class, 'pay']);
+    Route::get('/customer/bookings/{booking}/invoice', [\App\Http\Controllers\Api\Customer\BookingApiController::class, 'invoice']);
+    Route::post('/customer/bookings/{booking}/review', [\App\Http\Controllers\Api\Customer\BookingApiController::class, 'review']);
+    Route::post('/customer/bookings/{booking}/refund-request', [\App\Http\Controllers\Api\Customer\BookingApiController::class, 'storeRefundRequest']);
+    Route::post('/customer/bookings/{booking}/reschedule-request', [\App\Http\Controllers\Api\Customer\BookingApiController::class, 'storeRescheduleRequest']);
 
     Route::get('/muthowif/services', [\App\Http\Controllers\Api\Muthowif\MuthowifServiceController::class, 'index']);
     Route::put('/muthowif/services/{id}', [\App\Http\Controllers\Api\Muthowif\MuthowifServiceController::class, 'update']);
     Route::get('/muthowif/blocked-dates', [\App\Http\Controllers\Api\Muthowif\MuthowifBlockedDateController::class, 'index']);
     Route::post('/muthowif/blocked-dates', [\App\Http\Controllers\Api\Muthowif\MuthowifBlockedDateController::class, 'store']);
     Route::delete('/muthowif/blocked-dates/{id}', [\App\Http\Controllers\Api\Muthowif\MuthowifBlockedDateController::class, 'destroy']);
+    Route::get('/muthowif/jadwal', [\App\Http\Controllers\Api\Muthowif\MuthowifBlockedDateController::class, 'index']);
+    Route::post('/muthowif/jadwal', [\App\Http\Controllers\Api\Muthowif\MuthowifBlockedDateController::class, 'store']);
+    Route::delete('/muthowif/jadwal/{id}', [\App\Http\Controllers\Api\Muthowif\MuthowifBlockedDateController::class, 'destroy']);
     Route::get('/muthowif/bookings', [\App\Http\Controllers\Api\Muthowif\MuthowifBookingController::class, 'index']);
     Route::get('/muthowif/bookings/{id}', [\App\Http\Controllers\Api\Muthowif\MuthowifBookingController::class, 'show']);
     Route::post('/muthowif/bookings/{id}/confirm', [\App\Http\Controllers\Api\Muthowif\MuthowifBookingController::class, 'confirm']);
     Route::post('/muthowif/bookings/{id}/cancel', [\App\Http\Controllers\Api\Muthowif\MuthowifBookingController::class, 'cancel']);
+    Route::post('/muthowif/bookings/{booking}/reschedule-requests/{rescheduleRequest}/approve', [\App\Http\Controllers\Api\Muthowif\MuthowifBookingController::class, 'approveReschedule']);
+    Route::post('/muthowif/bookings/{booking}/reschedule-requests/{rescheduleRequest}/reject', [\App\Http\Controllers\Api\Muthowif\MuthowifBookingController::class, 'rejectReschedule']);
     
     Route::get('/muthowif/wallet', [\App\Http\Controllers\Api\Muthowif\WalletController::class, 'index']);
     Route::post('/muthowif/withdrawals', [\App\Http\Controllers\Api\Muthowif\WalletController::class, 'storeWithdrawal']);

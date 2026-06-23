@@ -2,19 +2,29 @@
 
 namespace App\Http\Controllers\Api\Customer;
 
+use App\Enums\BookingChangeRequestStatus;
 use App\Enums\BookingStatus;
 use App\Enums\MuthowifServiceType;
 use App\Enums\MuthowifVerificationStatus;
 use App\Http\Controllers\Controller;
+use App\Jobs\NotifyAdminsOfRefundRequestSubmitted;
+use App\Jobs\NotifyCustomerOfRescheduleSubmitted;
+use App\Jobs\NotifyMuthowifOfRescheduleRequest;
 use App\Models\BookingPayment;
+use App\Models\BookingRescheduleRequest;
+use App\Models\BookingReview;
 use App\Models\MuthowifBooking;
 use App\Models\MuthowifProfile;
 use App\Services\BookingOrderCodeService;
 use App\Services\BookingPricingService;
+use App\Services\BookingRefundExecutor;
 use App\Services\Doku\DokuDirectChargeService;
 use App\Services\Moota\MootaBookingChargeService;
 use App\Services\UploadedImageOptimizer;
+use App\Support\ApiBookingDetail;
+use App\Support\BookingPostPayRules;
 use App\Support\BookingSnapPaymentCatalog;
+use App\Support\CustomerBookingBroadcast;
 use App\Support\MuthowifReferralReward;
 use App\Support\PaymentFlowLog;
 use App\Support\PlatformFee;
@@ -24,6 +34,7 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Validator;
 use Illuminate\Validation\Rule;
+use Illuminate\Validation\ValidationException;
 
 class BookingApiController extends Controller
 {
@@ -46,9 +57,7 @@ class BookingApiController extends Controller
             return response()->json(['message' => 'Unauthorized'], 403);
         }
 
-        $booking->load(['muthowifProfile.user', 'bookingPayments']);
-
-        return response()->json($booking);
+        return response()->json(ApiBookingDetail::format($booking));
     }
 
     public function store(Request $request): JsonResponse
@@ -422,5 +431,175 @@ class BookingApiController extends Controller
 
             return response()->json(['message' => $e->getMessage()], 500);
         }
+    }
+
+    public function invoice(Request $request, MuthowifBooking $booking): JsonResponse
+    {
+        $this->authorize('invoice', $booking);
+
+        return response()->json(ApiBookingDetail::invoice($booking));
+    }
+
+    public function review(Request $request, MuthowifBooking $booking): JsonResponse
+    {
+        $this->authorize('review', $booking);
+
+        $validated = $request->validate([
+            'rating' => ['required', 'integer', 'min:1', 'max:5'],
+            'comment' => ['nullable', 'string', 'max:2000'],
+            'review' => ['nullable', 'string', 'max:2000'],
+        ]);
+
+        $text = $validated['comment'] ?? $validated['review'] ?? null;
+
+        BookingReview::query()->updateOrCreate(
+            ['muthowif_booking_id' => $booking->getKey()],
+            [
+                'muthowif_profile_id' => $booking->muthowif_profile_id,
+                'customer_id' => $request->user()->id,
+                'rating' => (int) $validated['rating'],
+                'review' => filled($text) ? trim((string) $text) : null,
+            ]
+        );
+
+        CustomerBookingBroadcast::afterResponse($booking->fresh());
+
+        return response()->json(['message' => 'Ulasan berhasil disimpan.']);
+    }
+
+    public function storeRefundRequest(Request $request, MuthowifBooking $booking): JsonResponse
+    {
+        $this->authorize('requestPostPayRefund', $booking);
+
+        if ($request->filled('reason') && ! $request->filled('customer_note')) {
+            $request->merge(['customer_note' => $request->input('reason')]);
+        }
+
+        $validated = $request->validate([
+            'customer_note' => ['nullable', 'string', 'max:2000'],
+            'refund_bank_name' => ['required', 'string', 'max:100'],
+            'refund_account_holder' => ['required', 'string', 'max:255'],
+            'refund_account_number' => ['required', 'string', 'max:64', 'regex:/^[\d\s\-]+$/'],
+        ], [
+            'refund_account_number.regex' => __('bookings.validation.refund_account_number_format'),
+        ]);
+
+        $block = BookingPostPayRules::canRequestRefund($booking);
+        if ($block !== null) {
+            return response()->json(['message' => $block], 422);
+        }
+
+        $note = filled($validated['customer_note'] ?? null) ? trim((string) $validated['customer_note']) : null;
+        $bankName = trim((string) $validated['refund_bank_name']);
+        $accountHolder = trim((string) $validated['refund_account_holder']);
+        $accountNumber = preg_replace('/\D+/', '', (string) $validated['refund_account_number']) ?? '';
+
+        if ($accountNumber === '') {
+            throw ValidationException::withMessages([
+                'refund_account_number' => __('bookings.validation.refund_account_number_format'),
+            ]);
+        }
+
+        try {
+            $refund = app(BookingRefundExecutor::class)->execute(
+                $booking,
+                $request->user(),
+                $note,
+                $bankName,
+                $accountHolder,
+                $accountNumber,
+            );
+        } catch (\Throwable $e) {
+            return response()->json(['message' => $e->getMessage()], 422);
+        }
+
+        NotifyAdminsOfRefundRequestSubmitted::afterRefundSubmitted((string) $refund->getKey());
+        CustomerBookingBroadcast::afterResponse($booking->fresh());
+
+        return response()->json(['message' => 'Permintaan refund berhasil diajukan.']);
+    }
+
+    public function storeRescheduleRequest(Request $request, MuthowifBooking $booking): JsonResponse
+    {
+        $this->authorize('requestPostPayReschedule', $booking);
+
+        if ($request->filled('starts_on') && ! $request->filled('new_start_date')) {
+            $request->merge(['new_start_date' => $request->input('starts_on')]);
+        }
+
+        if ($request->filled('reason') && ! $request->filled('reschedule_note')) {
+            $request->merge(['reschedule_note' => $request->input('reason')]);
+        }
+
+        $validated = $request->validate([
+            'new_start_date' => ['required', 'date'],
+            'ends_on' => ['nullable', 'date'],
+            'reschedule_note' => ['nullable', 'string', 'max:2000'],
+        ]);
+
+        $block = BookingPostPayRules::canRequestReschedule($booking);
+        if ($block !== null) {
+            return response()->json(['message' => $block], 422);
+        }
+
+        $oldNights = $booking->billingNightsInclusive();
+        if ($oldNights < 1) {
+            return response()->json(['message' => __('bookings.validation.duration_invalid')], 422);
+        }
+
+        $start = Carbon::parse($validated['new_start_date'])->startOfDay();
+        if (filled($validated['ends_on'] ?? null)) {
+            $end = Carbon::parse($validated['ends_on'])->startOfDay();
+        } else {
+            $end = $start->copy()->addDays($oldNights - 1)->startOfDay();
+        }
+
+        $submittedAt = now();
+
+        if ($start->lt($submittedAt->copy()->startOfDay())) {
+            return response()->json(['message' => __('bookings.validation.new_start_past')], 422);
+        }
+
+        if (! BookingPostPayRules::newStartMeetsRescheduleMinDays($start, $submittedAt)) {
+            return response()->json([
+                'message' => __('bookings.validation.reschedule_new_start_too_soon', [
+                    'days' => BookingPostPayRules::rescheduleMinDaysBeforeService(),
+                ]),
+            ], 422);
+        }
+
+        if ($start->diffInDays($end) > self::MAX_RANGE_DAYS) {
+            return response()->json([
+                'message' => __('bookings.validation.new_range_max', ['days' => self::MAX_RANGE_DAYS]),
+            ], 422);
+        }
+
+        $newNights = MuthowifBooking::inclusiveSpanDays($start, $end);
+        if ($oldNights !== $newNights) {
+            return response()->json(['message' => 'Jumlah hari pada pengajuan harus sama dengan booking.'], 422);
+        }
+
+        $booking->loadMissing('muthowifProfile');
+        $profile = $booking->muthowifProfile;
+        if ($profile === null || ! $profile->isJadwalAvailableForRange($start, $end, (string) $booking->getKey())) {
+            return response()->json(['message' => __('bookings.validation.jadwal_baru_tidak_tersedia')], 422);
+        }
+
+        $rescheduleRequest = BookingRescheduleRequest::query()->create([
+            'muthowif_booking_id' => $booking->getKey(),
+            'customer_id' => $request->user()->id,
+            'status' => BookingChangeRequestStatus::Pending,
+            'previous_starts_on' => $booking->starts_on->toDateString(),
+            'previous_ends_on' => $booking->ends_on->toDateString(),
+            'new_starts_on' => $start->toDateString(),
+            'new_ends_on' => $end->toDateString(),
+            'customer_note' => filled($validated['reschedule_note'] ?? null) ? trim((string) $validated['reschedule_note']) : null,
+        ]);
+
+        NotifyMuthowifOfRescheduleRequest::dispatchAfterResponse((string) $booking->getKey(), (string) $rescheduleRequest->getKey());
+        NotifyCustomerOfRescheduleSubmitted::dispatchAfterResponse((string) $booking->getKey(), (string) $rescheduleRequest->getKey());
+        CustomerBookingBroadcast::afterResponse($booking->fresh());
+
+        return response()->json(['message' => 'Permintaan reschedule berhasil diajukan.']);
     }
 }

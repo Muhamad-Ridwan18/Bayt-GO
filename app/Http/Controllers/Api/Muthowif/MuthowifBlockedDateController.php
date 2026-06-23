@@ -32,6 +32,10 @@ class MuthowifBlockedDateController extends Controller
 
     public function store(Request $request)
     {
+        if ($request->filled('date') && ! $request->filled('blocked_on')) {
+            $request->merge(['blocked_on' => $request->input('date')]);
+        }
+
         $request->validate([
             'blocked_on' => 'nullable|date|after_or_equal:today',
             'start_date' => 'nullable|date|after_or_equal:today',
