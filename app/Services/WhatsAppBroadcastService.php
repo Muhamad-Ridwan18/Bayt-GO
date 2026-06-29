@@ -7,6 +7,7 @@ use App\Jobs\SendWhatsAppTextJob;
 use App\Models\MuthowifProfile;
 use App\Support\IntlPhone;
 use App\Support\WhatsAppMediaUrl;
+use App\Support\WhatsAppNotifySettings;
 
 class WhatsAppBroadcastService
 {
@@ -14,9 +15,7 @@ class WhatsAppBroadcastService
 
     public function whatsappConfigured(): bool
     {
-        $token = config('services.fonnte.token');
-
-        return $token !== null && $token !== '';
+        return WhatsAppNotifySettings::hasToken();
     }
 
     /**

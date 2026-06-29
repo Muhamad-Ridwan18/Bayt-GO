@@ -142,8 +142,7 @@ class MuthowifBookingWhatsAppNotifier
             return;
         }
 
-        $token = config('services.fonnte.token');
-        if ($token === null || $token === '') {
+        if (! WhatsAppNotifySettings::hasToken()) {
             Log::debug('WhatsApp notify customer skipped: FONNTE_TOKEN kosong.');
 
             return;
@@ -219,8 +218,7 @@ class MuthowifBookingWhatsAppNotifier
             return;
         }
 
-        $token = config('services.fonnte.token');
-        if ($token === null || $token === '') {
+        if (! WhatsAppNotifySettings::hasToken()) {
             Log::debug('WhatsApp notify customer jadwal-full rejection skipped: FONNTE_TOKEN kosong.');
 
             return;
@@ -279,8 +277,7 @@ class MuthowifBookingWhatsAppNotifier
      */
     public function notifyCustomerBookingRejectedGeneric(MuthowifBooking $booking): void
     {
-        $token = config('services.fonnte.token');
-        if ($token === null || $token === '') {
+        if (! WhatsAppNotifySettings::hasToken()) {
             Log::debug('WhatsApp notify customer rejection skipped: FONNTE_TOKEN kosong.');
 
             return;
@@ -406,8 +403,7 @@ class MuthowifBookingWhatsAppNotifier
      */
     public function notifyCustomerRescheduleSubmitted(MuthowifBooking $booking, BookingRescheduleRequest $rescheduleRequest): void
     {
-        $token = config('services.fonnte.token');
-        if ($token === null || $token === '') {
+        if (! WhatsAppNotifySettings::hasToken()) {
             Log::debug('WhatsApp reschedule submitted skipped: FONNTE_TOKEN kosong.');
 
             return;
@@ -466,8 +462,7 @@ class MuthowifBookingWhatsAppNotifier
      */
     public function notifyCustomerRescheduleApproved(MuthowifBooking $booking, BookingRescheduleRequest $rescheduleRequest): void
     {
-        $token = config('services.fonnte.token');
-        if ($token === null || $token === '') {
+        if (! WhatsAppNotifySettings::hasToken()) {
             Log::debug('WhatsApp reschedule approved skipped: FONNTE_TOKEN kosong.');
 
             return;
@@ -531,8 +526,7 @@ class MuthowifBookingWhatsAppNotifier
      */
     public function notifyCustomerRescheduleRejected(MuthowifBooking $booking, BookingRescheduleRequest $rescheduleRequest): void
     {
-        $token = config('services.fonnte.token');
-        if ($token === null || $token === '') {
+        if (! WhatsAppNotifySettings::hasToken()) {
             Log::debug('WhatsApp reschedule rejected skipped: FONNTE_TOKEN kosong.');
 
             return;
@@ -600,8 +594,7 @@ class MuthowifBookingWhatsAppNotifier
             return;
         }
 
-        $token = config('services.fonnte.token');
-        if ($token === null || $token === '') {
+        if (! WhatsAppNotifySettings::hasToken()) {
             Log::debug('WhatsApp refund proof skipped: FONNTE_TOKEN kosong.');
 
             return;
@@ -669,8 +662,7 @@ class MuthowifBookingWhatsAppNotifier
             return;
         }
 
-        $token = config('services.fonnte.token');
-        if ($token === null || $token === '') {
+        if (! WhatsAppNotifySettings::hasToken()) {
             Log::debug('WhatsApp withdrawal proof skipped: FONNTE_TOKEN kosong.');
 
             return;
@@ -760,8 +752,7 @@ class MuthowifBookingWhatsAppNotifier
      */
     private function resolveFonnteDial(string $phone, string $profileId, string $bookingId): ?array
     {
-        $token = config('services.fonnte.token');
-        if ($token === null || $token === '') {
+        if (! WhatsAppNotifySettings::hasToken()) {
             Log::debug('WhatsApp notify skipped: FONNTE_TOKEN kosong.');
 
             return null;

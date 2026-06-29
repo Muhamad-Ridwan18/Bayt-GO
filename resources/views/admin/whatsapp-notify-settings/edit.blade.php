@@ -29,6 +29,83 @@
             <form method="post" action="{{ route('admin.whatsapp-notify-settings.update') }}" class="space-y-6">
                 @csrf
 
+                <div class="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm">
+                    <h2 class="text-sm font-bold text-slate-900">{{ __('admin.whatsapp_notify.gateway_heading') }}</h2>
+                    <p class="mt-1 text-xs text-slate-500">{{ __('admin.whatsapp_notify.gateway_hint') }}</p>
+
+                    <div class="mt-5 grid gap-5 sm:grid-cols-2">
+                        <div class="sm:col-span-2">
+                            <x-input-label for="gateway_api_url" :value="__('admin.whatsapp_notify.gateway_api_url')" />
+                            <input
+                                id="gateway_api_url"
+                                name="gateway_api_url"
+                                type="url"
+                                value="{{ old('gateway_api_url', $gateway['api_url']) }}"
+                                placeholder="https://whatsapp.baytgo.id/send"
+                                class="mt-1 block w-full rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm text-slate-900 shadow-sm focus:border-emerald-500 focus:ring-emerald-500"
+                            >
+                            <x-input-error :messages="$errors->get('gateway_api_url')" class="mt-2" />
+                        </div>
+
+                        <div>
+                            <x-input-label for="gateway_token" :value="__('admin.whatsapp_notify.gateway_token')" />
+                            <input
+                                id="gateway_token"
+                                name="gateway_token"
+                                type="password"
+                                autocomplete="new-password"
+                                placeholder="{{ $gateway['token_set'] ? __('admin.whatsapp_notify.gateway_token_placeholder_set') : __('admin.whatsapp_notify.gateway_token_placeholder') }}"
+                                class="mt-1 block w-full rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm text-slate-900 shadow-sm focus:border-emerald-500 focus:ring-emerald-500"
+                            >
+                            @if ($gateway['token_set'])
+                                <p class="mt-1.5 text-xs text-emerald-700">{{ __('admin.whatsapp_notify.gateway_token_set_hint') }}</p>
+                            @endif
+                            <x-input-error :messages="$errors->get('gateway_token')" class="mt-2" />
+                        </div>
+
+                        <div>
+                            <x-input-label for="gateway_session_id" :value="__('admin.whatsapp_notify.gateway_session_id')" />
+                            <input
+                                id="gateway_session_id"
+                                name="gateway_session_id"
+                                type="text"
+                                value="{{ old('gateway_session_id', $gateway['session_id']) }}"
+                                placeholder="wa-628112107021"
+                                class="mt-1 block w-full rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm text-slate-900 shadow-sm focus:border-emerald-500 focus:ring-emerald-500"
+                            >
+                            <p class="mt-1.5 text-xs text-slate-500">{{ __('admin.whatsapp_notify.gateway_session_id_hint') }}</p>
+                            <x-input-error :messages="$errors->get('gateway_session_id')" class="mt-2" />
+                        </div>
+
+                        <div>
+                            <x-input-label for="gateway_country_code" :value="__('admin.whatsapp_notify.gateway_country_code')" />
+                            <input
+                                id="gateway_country_code"
+                                name="gateway_country_code"
+                                type="text"
+                                value="{{ old('gateway_country_code', $gateway['country_code']) }}"
+                                placeholder="62"
+                                class="mt-1 block w-full rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm text-slate-900 shadow-sm focus:border-emerald-500 focus:ring-emerald-500"
+                            >
+                            <x-input-error :messages="$errors->get('gateway_country_code')" class="mt-2" />
+                        </div>
+
+                        <div>
+                            <x-input-label for="gateway_media_public_url" :value="__('admin.whatsapp_notify.gateway_media_public_url')" />
+                            <input
+                                id="gateway_media_public_url"
+                                name="gateway_media_public_url"
+                                type="url"
+                                value="{{ old('gateway_media_public_url', $gateway['media_public_url']) }}"
+                                placeholder="https://baytgo.id"
+                                class="mt-1 block w-full rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm text-slate-900 shadow-sm focus:border-emerald-500 focus:ring-emerald-500"
+                            >
+                            <p class="mt-1.5 text-xs text-slate-500">{{ __('admin.whatsapp_notify.gateway_media_public_url_hint') }}</p>
+                            <x-input-error :messages="$errors->get('gateway_media_public_url')" class="mt-2" />
+                        </div>
+                    </div>
+                </div>
+
                 @foreach ($groups as $groupKey => $groupLabel)
                     @php
                         $groupToggles = array_filter($toggles, fn ($t) => $t['group'] === $groupKey);

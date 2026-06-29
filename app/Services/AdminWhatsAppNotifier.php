@@ -25,8 +25,7 @@ final class AdminWhatsAppNotifier
                 return;
             }
 
-            $token = config('services.fonnte.token');
-            if ($token === null || $token === '') {
+            if (! WhatsAppNotifySettings::hasToken()) {
                 Log::debug('WhatsApp refund admin notify skipped: FONNTE_TOKEN kosong.');
 
                 return;
@@ -109,8 +108,7 @@ final class AdminWhatsAppNotifier
                 return;
             }
 
-            $token = config('services.fonnte.token');
-            if ($token === null || $token === '') {
+            if (! WhatsAppNotifySettings::hasToken()) {
                 Log::debug('WhatsApp muthowif registration admin notify skipped: FONNTE_TOKEN kosong.');
 
                 return;

@@ -353,8 +353,7 @@ final class EmergencyWhatsAppNotifier
      */
     private function sendToPhoneNumbers(array $phones, string $message, string $contextId): void
     {
-        $token = config('services.fonnte.token');
-        if ($token === null || $token === '') {
+        if (! WhatsAppNotifySettings::hasToken()) {
             Log::debug('WhatsApp emergency admin notify skipped: FONNTE_TOKEN kosong.');
 
             return;
@@ -388,8 +387,7 @@ final class EmergencyWhatsAppNotifier
      */
     private function resolveMuthowifDial(string $phone, string $profileId, string $bookingId): ?array
     {
-        $token = config('services.fonnte.token');
-        if ($token === null || $token === '') {
+        if (! WhatsAppNotifySettings::hasToken()) {
             Log::debug('WhatsApp emergency notify skipped: FONNTE_TOKEN kosong.');
 
             return null;
@@ -413,8 +411,7 @@ final class EmergencyWhatsAppNotifier
      */
     private function resolveCustomerDial(string $phone, string $customerId, string $bookingId): ?array
     {
-        $token = config('services.fonnte.token');
-        if ($token === null || $token === '') {
+        if (! WhatsAppNotifySettings::hasToken()) {
             Log::debug('WhatsApp emergency notify skipped: FONNTE_TOKEN kosong.');
 
             return null;

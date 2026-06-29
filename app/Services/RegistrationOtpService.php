@@ -23,9 +23,7 @@ class RegistrationOtpService
             return false;
         }
 
-        $token = config('services.fonnte.token');
-
-        return $token !== null && $token !== '';
+        return WhatsAppNotifySettings::hasToken();
     }
 
     /**

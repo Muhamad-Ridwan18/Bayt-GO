@@ -10,6 +10,7 @@ use App\Models\MuthowifSupportingDocument;
 use App\Jobs\SendWhatsAppTextJob;
 use App\Services\MuthowifReferralCodeService;
 use App\Support\IntlPhone;
+use App\Support\WhatsAppNotifySettings;
 use App\Support\MuthowifVerificationBroadcast;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
@@ -88,8 +89,7 @@ class MuthowifVerificationController extends Controller
 
         app(MuthowifReferralCodeService::class)->ensureAssigned($profile->fresh());
         $fonnteDial = IntlPhone::fonnteDial($profile->phone);
-        $token = config('services.fonnte.token');
-        if ($fonnteDial !== null && filled($token)) {
+        if ($fonnteDial !== null && WhatsAppNotifySettings::hasToken()) {
             $appName = config('app.name', 'BaytGo');
             $name = $profile->user->name;
             $message = "Halo *{$name}*,\n\nPendaftaran muthowif Anda di *{$appName}* telah *disetujui*.\n\nAnda sekarang dapat masuk ke akun menggunakan email terdaftar.\nDan menentukan rate card harian mu😉\nhttps://baytgo.id/login\n\nTerima kasih.";
@@ -103,7 +103,7 @@ class MuthowifVerificationController extends Controller
         } elseif ($fonnteDial === null) {
             $waFlash = ' Nomor WhatsApp tidak valid — notifikasi WA dilewati.';
         } elseif (! filled($token)) {
-            $waFlash = ' FONNTE_TOKEN kosong — notifikasi WA dilewati.';
+            $waFlash = ' Token WhatsApp belum diatur — notifikasi WA dilewati.';
         }
 
         MuthowifVerificationBroadcast::afterResponse($profile->fresh());

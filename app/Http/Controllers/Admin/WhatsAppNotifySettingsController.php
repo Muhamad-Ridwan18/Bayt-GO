@@ -15,7 +15,8 @@ class WhatsAppNotifySettingsController extends Controller
         return view('admin.whatsapp-notify-settings.edit', [
             'toggleValues' => WhatsAppNotifySettings::toggleValuesForForm(),
             'adminNumbers' => WhatsAppNotifySettings::adminNumbersForForm(),
-            'whatsappConfigured' => (string) config('services.fonnte.token') !== '',
+            'gateway' => WhatsAppNotifySettings::gatewayValuesForForm(),
+            'whatsappConfigured' => WhatsAppNotifySettings::hasToken(),
             'groups' => WhatsAppNotifySettings::groups(),
             'toggles' => WhatsAppNotifySettings::toggles(),
         ]);
@@ -25,6 +26,11 @@ class WhatsAppNotifySettingsController extends Controller
     {
         $request->validate([
             'admin_numbers' => ['nullable', 'string', 'max:2000'],
+            'gateway_token' => ['nullable', 'string', 'max:255'],
+            'gateway_api_url' => ['nullable', 'string', 'max:500', 'url'],
+            'gateway_session_id' => ['nullable', 'string', 'max:64'],
+            'gateway_country_code' => ['nullable', 'string', 'max:4', 'regex:/^\d+$/'],
+            'gateway_media_public_url' => ['nullable', 'string', 'max:500'],
         ]);
 
         WhatsAppNotifySettings::saveFromInput($request->all());

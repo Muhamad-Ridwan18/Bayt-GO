@@ -8,6 +8,16 @@ class WhatsAppNotifySettings
 {
     public const SETTING_ADMIN_NUMBERS = 'wa_notify_admin_numbers';
 
+    public const SETTING_TOKEN = 'wa_gateway_token';
+
+    public const SETTING_SESSION_ID = 'wa_gateway_session_id';
+
+    public const SETTING_API_URL = 'wa_gateway_api_url';
+
+    public const SETTING_COUNTRY_CODE = 'wa_gateway_country_code';
+
+    public const SETTING_MEDIA_PUBLIC_URL = 'wa_gateway_media_public_url';
+
     /**
      * @return array<string, array{config: string, label: string, group: string}>
      */
@@ -101,6 +111,64 @@ class WhatsAppNotifySettings
         ];
     }
 
+    public static function token(): ?string
+    {
+        return self::gatewayValue(self::SETTING_TOKEN, 'services.fonnte.token');
+    }
+
+    public static function hasToken(): bool
+    {
+        $token = self::token();
+
+        return is_string($token) && $token !== '';
+    }
+
+    public static function apiUrl(): string
+    {
+        return self::gatewayValue(self::SETTING_API_URL, 'services.fonnte.url')
+            ?? 'https://whatsapp.baytgo.id/send';
+    }
+
+    public static function sessionId(): ?string
+    {
+        $value = self::gatewayValue(self::SETTING_SESSION_ID, 'services.fonnte.session_id');
+
+        return $value !== null && $value !== '' ? $value : null;
+    }
+
+    public static function countryCode(): string
+    {
+        return self::gatewayValue(self::SETTING_COUNTRY_CODE, 'services.fonnte.country_code')
+            ?? '62';
+    }
+
+    public static function mediaPublicUrl(): ?string
+    {
+        $value = self::gatewayValue(self::SETTING_MEDIA_PUBLIC_URL, 'services.fonnte.media_public_url');
+
+        return $value !== null && $value !== '' ? $value : null;
+    }
+
+    /**
+     * @return array{
+     *     api_url: string,
+     *     session_id: string,
+     *     country_code: string,
+     *     media_public_url: string,
+     *     token_set: bool,
+     * }
+     */
+    public static function gatewayValuesForForm(): array
+    {
+        return [
+            'api_url' => self::apiUrl(),
+            'session_id' => self::sessionId() ?? '',
+            'country_code' => self::countryCode(),
+            'media_public_url' => self::mediaPublicUrl() ?? '',
+            'token_set' => self::hasToken(),
+        ];
+    }
+
     public static function enabled(string $key): bool
     {
         if (! isset(self::toggles()[$key])) {
@@ -166,6 +234,51 @@ class WhatsAppNotifySettings
 
         $numbers = trim((string) ($input['admin_numbers'] ?? ''));
         SiteSetting::putValue(self::SETTING_ADMIN_NUMBERS, $numbers === '' ? null : $numbers);
+
+        $token = trim((string) ($input['gateway_token'] ?? ''));
+        if ($token !== '') {
+            SiteSetting::putValue(self::SETTING_TOKEN, $token);
+        }
+
+        SiteSetting::putValue(
+            self::SETTING_API_URL,
+            self::nullableTrimmed($input['gateway_api_url'] ?? null),
+        );
+        SiteSetting::putValue(
+            self::SETTING_SESSION_ID,
+            self::nullableTrimmed($input['gateway_session_id'] ?? null),
+        );
+        SiteSetting::putValue(
+            self::SETTING_COUNTRY_CODE,
+            self::nullableTrimmed($input['gateway_country_code'] ?? null),
+        );
+        SiteSetting::putValue(
+            self::SETTING_MEDIA_PUBLIC_URL,
+            self::nullableTrimmed($input['gateway_media_public_url'] ?? null),
+        );
+    }
+
+    private static function gatewayValue(string $settingKey, string $configKey): ?string
+    {
+        $stored = SiteSetting::getValue($settingKey);
+        if ($stored !== null && $stored !== '') {
+            return $stored;
+        }
+
+        $fromConfig = config($configKey);
+
+        return is_string($fromConfig) && $fromConfig !== '' ? $fromConfig : null;
+    }
+
+    private static function nullableTrimmed(mixed $value): ?string
+    {
+        if (! is_string($value)) {
+            return null;
+        }
+
+        $trimmed = trim($value);
+
+        return $trimmed === '' ? null : $trimmed;
     }
 
     private static function settingKey(string $key): string

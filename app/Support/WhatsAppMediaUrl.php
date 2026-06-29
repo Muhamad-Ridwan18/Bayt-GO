@@ -34,7 +34,7 @@ final class WhatsAppMediaUrl
      */
     public static function baseUrl(): string
     {
-        $configured = config('services.fonnte.media_public_url');
+        $configured = WhatsAppNotifySettings::mediaPublicUrl();
 
         if (is_string($configured) && trim($configured) !== '') {
             return rtrim(trim($configured), '/');
