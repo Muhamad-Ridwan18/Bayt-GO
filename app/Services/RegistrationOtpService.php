@@ -4,6 +4,7 @@ namespace App\Services;
 
 use App\Jobs\SendWhatsAppTextJob;
 use App\Support\IntlPhone;
+use App\Support\WhatsAppNotifySettings;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\RateLimiter;
 use Illuminate\Validation\ValidationException;
@@ -18,7 +19,7 @@ class RegistrationOtpService
 
     public function otpEnabled(): bool
     {
-        if (! config('services.fonnte.otp_enabled', true)) {
+        if (! WhatsAppNotifySettings::enabled('otp')) {
             return false;
         }
 

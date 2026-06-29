@@ -7,6 +7,7 @@ use App\Models\BookingRefundRequest;
 use App\Models\MuthowifProfile;
 use App\Support\IndonesianNumber;
 use App\Support\IntlPhone;
+use App\Support\WhatsAppNotifySettings;
 use Illuminate\Support\Facades\Log;
 use Throwable;
 
@@ -15,11 +16,11 @@ final class AdminWhatsAppNotifier
     public function notifyRefundRequestSubmitted(BookingRefundRequest $refund): void
     {
         try {
-            if (! config('services.fonnte.refund_admin_notify_enabled', true)) {
+            if (! WhatsAppNotifySettings::enabled('refund_admin')) {
                 return;
             }
 
-            $numbers = config('emergency.admin_whatsapp_numbers', []);
+            $numbers = WhatsAppNotifySettings::adminNumbers();
             if (! is_array($numbers) || $numbers === []) {
                 return;
             }
@@ -99,11 +100,11 @@ final class AdminWhatsAppNotifier
     public function notifyMuthowifRegistrationSubmitted(MuthowifProfile $profile): void
     {
         try {
-            if (! config('services.fonnte.muthowif_registration_admin_notify_enabled', true)) {
+            if (! WhatsAppNotifySettings::enabled('muthowif_registration_admin')) {
                 return;
             }
 
-            $numbers = config('emergency.admin_whatsapp_numbers', []);
+            $numbers = WhatsAppNotifySettings::adminNumbers();
             if (! is_array($numbers) || $numbers === []) {
                 return;
             }

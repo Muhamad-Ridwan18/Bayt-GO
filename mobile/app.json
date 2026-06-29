@@ -1,0 +1,31 @@
+{
+  "expo": {
+    "name": "BaytGo",
+    "slug": "baytgo",
+    "version": "1.0.0",
+    "orientation": "portrait",
+    "icon": "./assets/icon.png",
+    "userInterfaceStyle": "light",
+    "splash": {
+      "image": "./assets/splash-icon.png",
+      "resizeMode": "contain",
+      "backgroundColor": "#F9F7F2"
+    },
+    "ios": {
+      "supportsTablet": true,
+      "bundleIdentifier": "id.baytgo.app"
+    },
+    "android": {
+      "package": "id.baytgo.app",
+      "adaptiveIcon": {
+        "backgroundColor": "#1A3D34",
+        "foregroundImage": "./assets/android-icon-foreground.png",
+        "backgroundImage": "./assets/android-icon-background.png",
+        "monochromeImage": "./assets/android-icon-monochrome.png"
+      }
+    },
+    "web": {
+      "favicon": "./assets/favicon.png"
+    }
+  }
+}

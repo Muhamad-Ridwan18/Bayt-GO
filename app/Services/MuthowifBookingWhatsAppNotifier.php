@@ -11,6 +11,7 @@ use App\Models\MuthowifBooking;
 use App\Models\MuthowifWithdrawal;
 use App\Support\IndonesianNumber;
 use App\Support\IntlPhone;
+use App\Support\WhatsAppNotifySettings;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Storage;
 
@@ -21,7 +22,7 @@ class MuthowifBookingWhatsAppNotifier
      */
     public function notify(MuthowifBooking $booking): void
     {
-        if (! config('services.fonnte.booking_notify_enabled', true)) {
+        if (! WhatsAppNotifySettings::enabled('booking')) {
             return;
         }
 
@@ -86,7 +87,7 @@ class MuthowifBookingWhatsAppNotifier
      */
     public function notifyPaymentSettled(MuthowifBooking $booking): void
     {
-        if (! config('services.fonnte.payment_notify_enabled', true)) {
+        if (! WhatsAppNotifySettings::enabled('payment')) {
             return;
         }
 
@@ -137,7 +138,7 @@ class MuthowifBookingWhatsAppNotifier
      */
     public function notifyCustomerApproved(MuthowifBooking $booking): void
     {
-        if (! config('services.fonnte.customer_booking_approved_notify_enabled', true)) {
+        if (! WhatsAppNotifySettings::enabled('customer_booking_approved')) {
             return;
         }
 
@@ -214,7 +215,7 @@ class MuthowifBookingWhatsAppNotifier
      */
     public function notifyCustomerBookingRejectedJadwalFull(MuthowifBooking $booking): void
     {
-        if (! config('services.fonnte.customer_booking_rejected_jadwal_full_notify_enabled', true)) {
+        if (! WhatsAppNotifySettings::enabled('customer_booking_rejected_jadwal_full')) {
             return;
         }
 
@@ -595,7 +596,7 @@ class MuthowifBookingWhatsAppNotifier
      */
     public function notifyCustomerRefundTransferCompleted(BookingRefundRequest $refund): void
     {
-        if (! config('services.fonnte.refund_transfer_proof_notify_enabled', true)) {
+        if (! WhatsAppNotifySettings::enabled('refund_transfer_proof')) {
             return;
         }
 
@@ -664,7 +665,7 @@ class MuthowifBookingWhatsAppNotifier
      */
     public function notifyMuthowifWithdrawalTransferCompleted(MuthowifWithdrawal $withdrawal): void
     {
-        if (! config('services.fonnte.withdrawal_transfer_proof_notify_enabled', true)) {
+        if (! WhatsAppNotifySettings::enabled('withdrawal_transfer_proof')) {
             return;
         }
 

@@ -6,17 +6,18 @@ use App\Jobs\SendWhatsAppTextJob;
 use App\Models\BookingEmergencyReport;
 use App\Models\BookingReplacementOffer;
 use App\Support\IntlPhone;
+use App\Support\WhatsAppNotifySettings;
 use Illuminate\Support\Facades\Log;
 
 final class EmergencyWhatsAppNotifier
 {
     public function notifyAdminsOfSubmittedReport(BookingEmergencyReport $report): void
     {
-        if (! config('services.fonnte.emergency_admin_report_notify_enabled', true)) {
+        if (! WhatsAppNotifySettings::enabled('emergency_admin_report')) {
             return;
         }
 
-        $numbers = config('emergency.admin_whatsapp_numbers', []);
+        $numbers = WhatsAppNotifySettings::adminNumbers();
         if (! is_array($numbers) || $numbers === []) {
             return;
         }
@@ -78,7 +79,7 @@ final class EmergencyWhatsAppNotifier
      */
     public function notifyCustomerOfReportStatus(BookingEmergencyReport $report, string $statusKey): void
     {
-        if (! config('services.fonnte.emergency_customer_report_notify_enabled', true)) {
+        if (! WhatsAppNotifySettings::enabled('emergency_customer_report')) {
             return;
         }
 
@@ -146,7 +147,7 @@ final class EmergencyWhatsAppNotifier
 
     public function notifyCustomerOfCandidate(BookingReplacementOffer $offer): void
     {
-        if (! config('services.fonnte.emergency_candidate_notify_enabled', true)) {
+        if (! WhatsAppNotifySettings::enabled('emergency_candidate')) {
             return;
         }
 
@@ -199,7 +200,7 @@ final class EmergencyWhatsAppNotifier
 
     public function notifyMuthowifOfReplacementOffer(BookingReplacementOffer $offer): void
     {
-        if (! config('services.fonnte.emergency_offer_notify_enabled', true)) {
+        if (! WhatsAppNotifySettings::enabled('emergency_offer')) {
             return;
         }
 
@@ -256,7 +257,7 @@ final class EmergencyWhatsAppNotifier
 
     public function notifyMuthowifSelected(BookingReplacementOffer $offer): void
     {
-        if (! config('services.fonnte.emergency_selection_notify_enabled', true)) {
+        if (! WhatsAppNotifySettings::enabled('emergency_selection')) {
             return;
         }
 
@@ -265,7 +266,7 @@ final class EmergencyWhatsAppNotifier
 
     public function notifyMuthowifNotSelected(BookingReplacementOffer $offer): void
     {
-        if (! config('services.fonnte.emergency_selection_notify_enabled', true)) {
+        if (! WhatsAppNotifySettings::enabled('emergency_selection')) {
             return;
         }
 

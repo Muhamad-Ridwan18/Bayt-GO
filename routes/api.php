@@ -11,6 +11,8 @@ Route::post('/register', [AuthController::class, 'register']);
 Route::post('/otp/send', [OtpController::class, 'send']);
 Route::post('/otp/verify', [OtpController::class, 'verify']);
 
+Route::get('/home', [\App\Http\Controllers\Api\HomeApiController::class, 'index']);
+
 Route::middleware('auth:sanctum')->group(function () {
     Route::get('/user', function (Request $request) {
         return $request->user();

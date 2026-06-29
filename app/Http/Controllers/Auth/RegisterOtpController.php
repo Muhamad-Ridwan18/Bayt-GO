@@ -19,7 +19,7 @@ class RegisterOtpController extends Controller
     {
         if (! $this->registrationOtp->otpEnabled()) {
             return response()->json([
-                'message' => 'Verifikasi OTP WhatsApp tidak aktif. Set FONNTE_TOKEN dan FONNTE_OTP_ENABLED di .env',
+                'message' => 'Verifikasi OTP WhatsApp tidak aktif. Pastikan FONNTE_TOKEN di .env dan toggle OTP aktif di Admin → Notifikasi WhatsApp.',
             ], 503);
         }
 

@@ -45,8 +45,8 @@ return [
 
     /*
     | WhatsApp gateway (format Fonnte: form POST target/message/countryCode).
-    | WSM BaytGo: FONNTE_API_URL=https://whatsapp.baytgo.id/send — session otomatis dari API key.
-    | FONNTE_SESSION_ID opsional (override untuk /api/message/send native).
+    | Toggle notifikasi: Admin → Pengaturan → Notifikasi WhatsApp (site_settings).
+    | Env FONNTE_*_ENABLED hanya fallback awal jika belum disimpan di admin.
     */
     'fonnte' => [
         'token' => env('FONNTE_TOKEN'),

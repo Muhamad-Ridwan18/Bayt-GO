@@ -16,6 +16,7 @@ use App\Http\Controllers\Admin\SiteAppearanceController;
 use App\Http\Controllers\Admin\SupportTicketsController;
 use App\Http\Controllers\Admin\UserManagementController;
 use App\Http\Controllers\Admin\WhatsAppBroadcastController;
+use App\Http\Controllers\Admin\WhatsAppNotifySettingsController;
 use App\Http\Controllers\Admin\WithdrawalsController;
 use App\Http\Controllers\BookingChatController;
 use App\Http\Controllers\Customer\BookingController as CustomerBookingController;
@@ -282,6 +283,8 @@ Route::middleware('auth')->group(function () {
 
     Route::middleware([EnsureUserRole::class.':admin'])->prefix('admin')->name('admin.')->group(function () {
         Route::get('pengaturan', AdminSettingsHubController::class)->name('settings.index');
+        Route::get('pengaturan/whatsapp-notifikasi', [WhatsAppNotifySettingsController::class, 'edit'])->name('whatsapp-notify-settings.edit');
+        Route::post('pengaturan/whatsapp-notifikasi', [WhatsAppNotifySettingsController::class, 'update'])->name('whatsapp-notify-settings.update');
         Route::get('whatsapp-broadcast', [WhatsAppBroadcastController::class, 'index'])->name('whatsapp-broadcast.index');
         Route::post('whatsapp-broadcast/kirim', [WhatsAppBroadcastController::class, 'send'])->name('whatsapp-broadcast.send');
         Route::post('artikel/ckeditor/unggah', [ArticlesAdminController::class, 'ckeditorUpload'])->name('articles.ckeditor_upload');
