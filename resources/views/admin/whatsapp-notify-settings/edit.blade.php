@@ -26,7 +26,7 @@
                 </div>
             @endunless
 
-            <form method="post" action="{{ route('admin.whatsapp-notify-settings.update') }}" class="space-y-6">
+            <form id="wa-notify-settings-form" method="post" action="{{ route('admin.whatsapp-notify-settings.update') }}" class="space-y-6">
                 @csrf
 
                 <div class="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm">
@@ -138,6 +138,7 @@
                 <div class="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm">
                     <h2 class="text-sm font-bold text-slate-900">{{ __('admin.whatsapp_notify.admin_numbers_heading') }}</h2>
                     <p class="mt-1 text-xs text-slate-500">{{ __('admin.whatsapp_notify.admin_numbers_hint') }}</p>
+                    <p class="mt-1 text-xs text-slate-500">{{ __('admin.whatsapp_notify.test_hint') }}</p>
                     <textarea
                         id="admin_numbers"
                         name="admin_numbers"
@@ -148,12 +149,88 @@
                     <x-input-error :messages="$errors->get('admin_numbers')" class="mt-2" />
                 </div>
 
-                <div class="flex justify-end">
+                <div id="wa-test-result" class="hidden rounded-xl border px-4 py-3 text-sm"></div>
+
+                <div class="flex flex-wrap justify-end gap-3">
+                    <button
+                        type="button"
+                        id="wa-test-config-btn"
+                        class="inline-flex items-center rounded-xl border border-emerald-200 bg-white px-6 py-2.5 text-sm font-semibold text-emerald-800 shadow-sm hover:bg-emerald-50 disabled:cursor-not-allowed disabled:opacity-60"
+                    >
+                        {{ __('admin.whatsapp_notify.test_button') }}
+                    </button>
                     <button type="submit" class="inline-flex items-center rounded-xl bg-emerald-600 px-6 py-2.5 text-sm font-semibold text-white shadow-sm hover:bg-emerald-700">
                         {{ __('admin.whatsapp_notify.save') }}
                     </button>
                 </div>
             </form>
+
+            @push('scripts')
+                <script>
+                    (function () {
+                        const form = document.getElementById('wa-notify-settings-form');
+                        const btn = document.getElementById('wa-test-config-btn');
+                        const resultBox = document.getElementById('wa-test-result');
+                        if (!form || !btn || !resultBox) return;
+
+                        const labels = {
+                            testing: @json(__('admin.whatsapp_notify.test_running')),
+                            defaultButton: @json(__('admin.whatsapp_notify.test_button')),
+                        };
+
+                        btn.addEventListener('click', async function () {
+                            btn.disabled = true;
+                            btn.textContent = labels.testing;
+                            resultBox.classList.add('hidden');
+                            resultBox.textContent = '';
+
+                            try {
+                                const response = await fetch(@json(route('admin.whatsapp-notify-settings.test')), {
+                                    method: 'POST',
+                                    headers: {
+                                        'X-CSRF-TOKEN': @json(csrf_token()),
+                                        'Accept': 'application/json',
+                                    },
+                                    body: new FormData(form),
+                                });
+
+                                const data = await response.json();
+                                let text = data.message || '';
+                                if (data.errors) {
+                                    text = Object.values(data.errors).flat().join('\n');
+                                } else if (Array.isArray(data.results)) {
+                                    const lines = data.results.map(function (row) {
+                                        if (row.ok) {
+                                            return '✓ ' + row.phone;
+                                        }
+                                        return '✗ ' + row.phone + (row.error ? ': ' + row.error : '');
+                                    });
+                                    if (lines.length) {
+                                        text += (text ? '\n\n' : '') + lines.join('\n');
+                                    }
+                                }
+
+                                resultBox.textContent = text;
+                                resultBox.style.whiteSpace = 'pre-wrap';
+                                resultBox.classList.remove('hidden');
+                                resultBox.classList.toggle('border-emerald-200', response.ok);
+                                resultBox.classList.toggle('bg-emerald-50', response.ok);
+                                resultBox.classList.toggle('text-emerald-900', response.ok);
+                                resultBox.classList.toggle('border-red-200', !response.ok);
+                                resultBox.classList.toggle('bg-red-50', !response.ok);
+                                resultBox.classList.toggle('text-red-900', !response.ok);
+                            } catch (error) {
+                                resultBox.textContent = @json(__('admin.whatsapp_notify.test_request_failed'));
+                                resultBox.classList.remove('hidden');
+                                resultBox.classList.add('border-red-200', 'bg-red-50', 'text-red-900');
+                            } finally {
+                                btn.disabled = false;
+                                btn.textContent = labels.defaultButton;
+                            }
+                        });
+                    })();
+                </script>
+            @endpush
         </x-page-container>
     </div>
 </x-app-layout>

@@ -11,27 +11,48 @@ use RuntimeException;
 
 class FonnteService
 {
-    /**
-     * @param  string|null  $countryCallingCode  Kode negara pemanggil (digit), mis. 62, 1, 44. Null = pakai FONNTE_COUNTRY_CODE (.env).
-     */
     public function sendText(string $target, string $message, ?string $countryCallingCode = null): void
     {
-        $token = $this->requireToken();
-        $url = WhatsAppNotifySettings::apiUrl();
-        $cc = $this->resolveCountryCode($countryCallingCode);
+        $this->sendTextWithGateway(
+            WhatsAppNotifySettings::token() ?? '',
+            WhatsAppNotifySettings::apiUrl(),
+            WhatsAppNotifySettings::sessionId(),
+            WhatsAppNotifySettings::countryCode(),
+            $target,
+            $message,
+            $countryCallingCode,
+        );
+    }
+
+    public function sendTextWithGateway(
+        string $token,
+        string $apiUrl,
+        ?string $sessionId,
+        string $defaultCountryCode,
+        string $target,
+        string $message,
+        ?string $countryCallingCode = null,
+    ): void {
+        if ($token === '') {
+            throw new RuntimeException('Token WhatsApp belum diatur.');
+        }
+
+        $cc = $countryCallingCode !== null && $countryCallingCode !== ''
+            ? $countryCallingCode
+            : $defaultCountryCode;
 
         $payload = $this->buildPayload([
             'target' => $target,
             'message' => $message,
             'countryCode' => $cc,
-        ]);
+        ], $sessionId);
 
         try {
             /** @var Response $response */
             $response = Http::timeout(30)
                 ->withHeaders($this->authHeaders($token))
                 ->asForm()
-                ->post($url, $payload);
+                ->post($apiUrl, $payload);
         } catch (ConnectionException $e) {
             Log::warning('Fonnte connection failed', ['exception' => $e->getMessage()]);
             throw new RuntimeException('Tidak dapat terhubung ke layanan WhatsApp. Coba lagi.');
@@ -146,9 +167,9 @@ class FonnteService
      * @param  array<string, mixed>  $payload
      * @return array<string, mixed>
      */
-    private function buildPayload(array $payload): array
+    private function buildPayload(array $payload, ?string $sessionId = null): array
     {
-        $sessionId = WhatsAppNotifySettings::sessionId();
+        $sessionId ??= WhatsAppNotifySettings::sessionId();
         if (is_string($sessionId) && $sessionId !== '') {
             $payload['sessionId'] = $sessionId;
         }

@@ -285,6 +285,7 @@ Route::middleware('auth')->group(function () {
         Route::get('pengaturan', AdminSettingsHubController::class)->name('settings.index');
         Route::get('pengaturan/whatsapp-notifikasi', [WhatsAppNotifySettingsController::class, 'edit'])->name('whatsapp-notify-settings.edit');
         Route::post('pengaturan/whatsapp-notifikasi', [WhatsAppNotifySettingsController::class, 'update'])->name('whatsapp-notify-settings.update');
+        Route::post('pengaturan/whatsapp-notifikasi/uji', [WhatsAppNotifySettingsController::class, 'test'])->name('whatsapp-notify-settings.test');
         Route::get('whatsapp-broadcast', [WhatsAppBroadcastController::class, 'index'])->name('whatsapp-broadcast.index');
         Route::post('whatsapp-broadcast/kirim', [WhatsAppBroadcastController::class, 'send'])->name('whatsapp-broadcast.send');
         Route::post('artikel/ckeditor/unggah', [ArticlesAdminController::class, 'ckeditorUpload'])->name('articles.ckeditor_upload');

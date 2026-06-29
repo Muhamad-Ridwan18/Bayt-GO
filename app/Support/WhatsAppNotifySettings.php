@@ -223,6 +223,44 @@ class WhatsAppNotifySettings
     }
 
     /**
+     * Gabungkan nilai form dengan yang sudah tersimpan / .env (untuk uji coba sebelum simpan).
+     *
+     * @param  array<string, mixed>  $input
+     * @return array{token: string, api_url: string, session_id: ?string, country_code: string}
+     */
+    public static function gatewayFromInput(array $input): array
+    {
+        $token = trim((string) ($input['gateway_token'] ?? ''));
+        if ($token === '') {
+            $token = self::token() ?? '';
+        }
+
+        return [
+            'token' => $token,
+            'api_url' => self::nullableTrimmed($input['gateway_api_url'] ?? null) ?? self::apiUrl(),
+            'session_id' => self::nullableTrimmed($input['gateway_session_id'] ?? null) ?? self::sessionId(),
+            'country_code' => self::nullableTrimmed($input['gateway_country_code'] ?? null) ?? self::countryCode(),
+        ];
+    }
+
+    /**
+     * @param  array<string, mixed>  $input
+     * @return list<string>
+     */
+    public static function adminNumbersFromInput(array $input): array
+    {
+        $raw = trim((string) ($input['admin_numbers'] ?? ''));
+        if ($raw === '') {
+            return self::adminNumbers();
+        }
+
+        return array_values(array_filter(array_map(
+            static fn (string $n): string => trim($n),
+            explode(',', $raw),
+        ), static fn (string $n): bool => $n !== ''));
+    }
+
+    /**
      * @param  array<string, mixed>  $input
      */
     public static function saveFromInput(array $input): void
