@@ -3,7 +3,6 @@
 namespace App\Services;
 
 use App\Enums\MuthowifBookingMuthowifRejectionKind;
-use App\Jobs\SendWhatsAppAttachmentJob;
 use App\Jobs\SendWhatsAppTextJob;
 use App\Models\BookingRefundRequest;
 use App\Models\BookingRescheduleRequest;
@@ -11,9 +10,9 @@ use App\Models\MuthowifBooking;
 use App\Models\MuthowifWithdrawal;
 use App\Support\IndonesianNumber;
 use App\Support\IntlPhone;
+use App\Support\WhatsAppMediaUrl;
 use App\Support\WhatsAppNotifySettings;
 use Illuminate\Support\Facades\Log;
-use Illuminate\Support\Facades\Storage;
 
 class MuthowifBookingWhatsAppNotifier
 {
@@ -702,14 +701,14 @@ class MuthowifBookingWhatsAppNotifier
         }
 
         $locale = $this->localeForUser($customer->locale);
-        $proofUrl = url(Storage::disk('public')->url($refund->transfer_proof_path));
+        $proofUrl = WhatsAppMediaUrl::forPublicDiskPath($refund->transfer_proof_path);
         $ext = strtolower((string) pathinfo($refund->transfer_proof_path, PATHINFO_EXTENSION));
         $filename = $ext === 'pdf' ? basename($refund->transfer_proof_path) : null;
         $amountFmt = IndonesianNumber::formatThousands((string) (int) round((float) $refund->net_refund_customer));
         $appName = config('app.name', 'BaytGo');
         $detailUrl = route('bookings.show', $booking);
 
-        $this->withLocale($locale, function () use ($refund, $booking, $fonnteDial, $locale, $proofUrl, $filename, $amountFmt, $appName, $detailUrl): void {
+        $this->withLocale($locale, function () use ($refund, $booking, $fonnteDial, $locale, $proofUrl, $amountFmt, $appName, $detailUrl): void {
             $lines = [
                 __('whatsapp.customer.refund_transfer_done.headline', ['app' => $appName], $locale),
                 '',
@@ -726,10 +725,10 @@ class MuthowifBookingWhatsAppNotifier
             $lines[] = __('whatsapp.customer.refund_transfer_done.view_detail', [], $locale);
             $lines[] = $detailUrl;
             $lines[] = '';
-            $lines[] = __('whatsapp.customer.refund_transfer_done.attachment_caption', [], $locale);
+            $lines[] = __('whatsapp.customer.refund_transfer_done.proof_link', ['url' => $proofUrl], $locale);
 
             $message = implode("\n", $lines);
-            $this->sendFileProofToTarget($fonnteDial, $message, $proofUrl, $filename, (string) $refund->getKey());
+            $this->sendToTarget($fonnteDial, $message, (string) $refund->getKey());
         });
     }
 
@@ -764,14 +763,12 @@ class MuthowifBookingWhatsAppNotifier
         }
 
         $locale = $this->localeForUser($profile->user?->locale);
-        $proofUrl = url(Storage::disk('public')->url($withdrawal->transfer_proof_path));
-        $ext = strtolower((string) pathinfo($withdrawal->transfer_proof_path, PATHINFO_EXTENSION));
-        $filename = $ext === 'pdf' ? basename($withdrawal->transfer_proof_path) : null;
+        $proofUrl = WhatsAppMediaUrl::forPublicDiskPath($withdrawal->transfer_proof_path);
         $amountFmt = IndonesianNumber::formatThousands((string) (int) round((float) $withdrawal->amount));
         $appName = config('app.name', 'BaytGo');
         $panelUrl = route('muthowif.withdrawals.index');
 
-        $this->withLocale($locale, function () use ($withdrawal, $fonnteDial, $locale, $proofUrl, $filename, $amountFmt, $appName, $panelUrl): void {
+        $this->withLocale($locale, function () use ($withdrawal, $fonnteDial, $locale, $proofUrl, $amountFmt, $appName, $panelUrl): void {
             $lines = [
                 __('whatsapp.muthowif.withdrawal_transfer_done.headline', ['app' => $appName], $locale),
                 '',
@@ -782,11 +779,11 @@ class MuthowifBookingWhatsAppNotifier
                 __('whatsapp.muthowif.withdrawal_transfer_done.open_panel', [], $locale),
                 $panelUrl,
                 '',
-                __('whatsapp.muthowif.withdrawal_transfer_done.attachment_caption', [], $locale),
+                __('whatsapp.muthowif.withdrawal_transfer_done.proof_link', ['url' => $proofUrl], $locale),
             ];
 
             $message = implode("\n", $lines);
-            $this->sendFileProofToTarget($fonnteDial, $message, $proofUrl, $filename, (string) $withdrawal->getKey());
+            $this->sendToTarget($fonnteDial, $message, (string) $withdrawal->getKey());
         });
     }
 
@@ -917,20 +914,6 @@ class MuthowifBookingWhatsAppNotifier
         return $booking->starts_at
             ->timezone(config('app.timezone'))
             ->format('d/m/Y H:i');
-    }
-
-    /**
-     * @param  array{target: string, country_calling_code: string}  $fonnteDial
-     */
-    private function sendFileProofToTarget(array $fonnteDial, string $message, string $proofPublicUrl, ?string $filenameForNonImage, string $contextId): void
-    {
-        SendWhatsAppAttachmentJob::dispatch(
-            $fonnteDial['target'],
-            $message,
-            $fonnteDial['country_calling_code'],
-            $proofPublicUrl,
-            $filenameForNonImage,
-        );
     }
 
     private function localeForUser(?string $locale): string

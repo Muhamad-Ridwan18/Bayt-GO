@@ -11,7 +11,6 @@ use App\Support\WhatsAppMediaUrl;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Http\UploadedFile;
-use Illuminate\Support\Facades\Storage;
 use Illuminate\View\View;
 
 class WhatsAppBroadcastController extends Controller
@@ -136,24 +135,18 @@ class WhatsAppBroadcastController extends Controller
                 ->withErrors(['recipients' => __('admin.whatsapp_broadcast.too_many_recipients')]);
         }
 
-        $attachmentLocalPath = null;
         $attachmentPublicUrl = null;
-        $attachmentFilename = null;
         /** @var UploadedFile|null $attachment */
         $attachment = $request->file('attachment');
         if ($attachment !== null) {
             $storedPath = $attachment->store(WhatsAppMediaUrl::ensureBroadcastStorageReady(), 'public');
-            $attachmentLocalPath = Storage::disk('public')->path($storedPath);
             $attachmentPublicUrl = WhatsAppMediaUrl::forPublicDiskPath($storedPath);
-            $attachmentFilename = $attachment->getClientOriginalName();
         }
 
         ProcessWhatsAppBroadcastJob::dispatch(
             trim((string) ($validated['message'] ?? '')),
             $profileIds,
             $freeNumbers,
-            $attachmentLocalPath,
-            $attachmentFilename,
             $attachmentPublicUrl,
         );
 

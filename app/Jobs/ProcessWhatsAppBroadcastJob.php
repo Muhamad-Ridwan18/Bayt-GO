@@ -23,8 +23,6 @@ class ProcessWhatsAppBroadcastJob implements ShouldQueue
         public string $message,
         public array $muthowifProfileIds,
         public string $freeNumbersText,
-        public ?string $attachmentLocalPath = null,
-        public ?string $attachmentFilename = null,
         public ?string $attachmentPublicUrl = null,
     ) {}
 
@@ -34,8 +32,6 @@ class ProcessWhatsAppBroadcastJob implements ShouldQueue
             $this->message,
             $this->muthowifProfileIds,
             $this->freeNumbersText,
-            $this->attachmentLocalPath,
-            $this->attachmentFilename,
             $this->attachmentPublicUrl,
         );
 

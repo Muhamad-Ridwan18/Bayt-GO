@@ -67,10 +67,10 @@ return [
         ],
         'withdrawal_transfer_done' => [
             'headline' => '*:app* — withdraw sudah ditransfer',
-            'body' => 'Pencairan withdraw Anda sudah diproses. Lampiran: bukti transfer.',
+            'body' => 'Pencairan withdraw Anda sudah diproses. Unduh bukti transfer melalui link di bawah.',
             'amount' => '*Nominal:* Rp :amount',
             'open_panel' => '*Withdraw:*',
-            'attachment_caption' => '_(Bukti transfer terlampir di atas.)_',
+            'proof_link' => '*Bukti transfer:* :url',
         ],
         'support_new_booking' => [
             'headline' => '*:app* — permintaan layanan pendukung',
@@ -196,11 +196,11 @@ return [
         ],
         'refund_transfer_done' => [
             'headline' => '*:app* — refund sudah ditransfer',
-            'body' => 'Transfer refund Anda sudah selesai. Lampiran: bukti transfer.',
+            'body' => 'Transfer refund Anda sudah selesai. Unduh bukti transfer melalui link di bawah.',
             'amount' => '*Nominal bersih:* Rp :amount',
             'booking_code' => '*Kode pesanan:* :code',
             'view_detail' => '*Riwayat pesanan:*',
-            'attachment_caption' => '_(Bukti transfer terlampir di atas.)_',
+            'proof_link' => '*Bukti transfer:* :url',
         ],
         'emergency_under_review' => [
             'headline' => '*:app* — laporan insiden ditinjau',

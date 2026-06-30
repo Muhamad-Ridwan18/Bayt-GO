@@ -2,11 +2,9 @@
 
 namespace App\Services;
 
-use App\Jobs\SendWhatsAppAttachmentJob;
 use App\Jobs\SendWhatsAppTextJob;
 use App\Models\MuthowifProfile;
 use App\Support\IntlPhone;
-use App\Support\WhatsAppMediaUrl;
 use App\Support\WhatsAppNotifySettings;
 
 class WhatsAppBroadcastService
@@ -32,44 +30,19 @@ class WhatsAppBroadcastService
         string $message,
         array $muthowifProfileIds,
         string $freeNumbersText,
-        ?string $attachmentLocalPath = null,
-        ?string $attachmentFilename = null,
         ?string $attachmentPublicUrl = null,
     ): array {
         $resolved = $this->resolveRecipients($muthowifProfileIds, $freeNumbersText);
-        $caption = trim($message);
-
-        $hasLocalAttachment = $attachmentLocalPath !== null
-            && $attachmentLocalPath !== ''
-            && is_readable($attachmentLocalPath);
-
-        $usePublicFileUrl = $attachmentPublicUrl !== null
-            && $attachmentPublicUrl !== ''
-            && WhatsAppMediaUrl::isPubliclyReachable($attachmentPublicUrl);
-
-        $attachmentFilename = $attachmentFilename !== null && $attachmentFilename !== ''
-            ? $attachmentFilename
-            : ($hasLocalAttachment ? basename($attachmentLocalPath) : null);
+        $text = $this->messageWithOptionalFileLink($message, $attachmentPublicUrl);
 
         $queued = 0;
 
         foreach ($resolved['recipients'] as $index => $recipient) {
-            if ($usePublicFileUrl || $hasLocalAttachment) {
-                $job = SendWhatsAppAttachmentJob::dispatch(
-                    $recipient['dial']['target'],
-                    $caption,
-                    $recipient['dial']['country_calling_code'],
-                    $attachmentPublicUrl,
-                    $this->documentFilenameForAttachment($attachmentFilename),
-                    $hasLocalAttachment ? $attachmentLocalPath : null,
-                );
-            } else {
-                $job = SendWhatsAppTextJob::dispatch(
-                    $recipient['dial']['target'],
-                    $caption,
-                    $recipient['dial']['country_calling_code'],
-                );
-            }
+            $job = SendWhatsAppTextJob::dispatch(
+                $recipient['dial']['target'],
+                $text,
+                $recipient['dial']['country_calling_code'],
+            );
 
             if ($index > 0) {
                 $job->delay(now()->addMilliseconds($index * (self::SEND_DELAY_MICROSECONDS / 1000)));
@@ -175,18 +148,18 @@ class WhatsAppBroadcastService
         ];
     }
 
-    /**
-     * filename hanya untuk dokumen (PDF); gambar dikirim tanpa filename agar WSM deteksi sebagai image.
-     */
-    private function documentFilenameForAttachment(?string $fileName): ?string
+    private function messageWithOptionalFileLink(string $message, ?string $fileUrl): string
     {
-        if ($fileName === null || $fileName === '') {
-            return null;
+        $caption = trim($message);
+        $url = trim((string) $fileUrl);
+
+        if ($url === '') {
+            return $caption;
         }
 
-        $lower = strtolower($fileName);
+        $linkLine = __('admin.whatsapp_broadcast.file_link', ['url' => $url]);
 
-        return str_ends_with($lower, '.pdf') ? $fileName : null;
+        return $caption === '' ? $linkLine : $caption."\n\n".$linkLine;
     }
 
     /**

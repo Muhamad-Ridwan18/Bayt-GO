@@ -67,10 +67,10 @@ return [
         ],
         'withdrawal_transfer_done' => [
             'headline' => '*:app* — withdrawal payout sent',
-            'body' => 'Your withdrawal has been paid. Attachment: transfer proof.',
+            'body' => 'Your withdrawal has been paid. Download the transfer proof via the link below.',
             'amount' => '*Amount:* Rp :amount',
             'open_panel' => '*Withdrawals:*',
-            'attachment_caption' => '_(Proof of transfer is attached above.)_',
+            'proof_link' => '*Transfer proof:* :url',
         ],
         'support_new_booking' => [
             'headline' => '*:app* — support service request',
@@ -196,11 +196,11 @@ return [
         ],
         'refund_transfer_done' => [
             'headline' => '*:app* — refund transfer completed',
-            'body' => 'Your refund transfer has been completed. Attachment: transfer proof.',
+            'body' => 'Your refund transfer has been completed. Download the transfer proof via the link below.',
             'amount' => '*Net amount:* Rp :amount',
             'booking_code' => '*Booking code:* :code',
             'view_detail' => '*Booking record:*',
-            'attachment_caption' => '_(Proof of transfer is attached above.)_',
+            'proof_link' => '*Transfer proof:* :url',
         ],
         'emergency_under_review' => [
             'headline' => '*:app* — incident report under review',
