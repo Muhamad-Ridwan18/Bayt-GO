@@ -2,7 +2,6 @@
 
 namespace App\Jobs;
 
-use App\Enums\WhatsAppGateway;
 use App\Services\FonnteService;
 use Illuminate\Bus\Queueable;
 use Illuminate\Contracts\Queue\ShouldQueue;
@@ -26,7 +25,6 @@ class SendWhatsAppTextJob implements ShouldQueue
         public string $message,
         public ?string $countryCallingCode = null,
         public array $failureCacheKeysToForget = [],
-        public WhatsAppGateway $gateway = WhatsAppGateway::Transactional,
         public ?string $overrideGatewayToken = null,
         public ?string $overrideGatewayApiUrl = null,
         public ?string $overrideGatewaySessionId = null,
@@ -48,7 +46,7 @@ class SendWhatsAppTextJob implements ShouldQueue
                     $this->countryCallingCode,
                 );
             } else {
-                $fonnte->sendText($this->target, $this->message, $this->countryCallingCode, $this->gateway);
+                $fonnte->sendText($this->target, $this->message, $this->countryCallingCode);
             }
         } catch (RuntimeException|Throwable $e) {
             foreach ($this->failureCacheKeysToForget as $cacheKey) {
@@ -59,7 +57,6 @@ class SendWhatsAppTextJob implements ShouldQueue
 
             Log::warning('whatsapp.job_failed', [
                 'target' => $this->target,
-                'gateway' => $this->gateway->value,
                 'exception' => $e->getMessage(),
             ]);
 

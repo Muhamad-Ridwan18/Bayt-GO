@@ -2,7 +2,6 @@
 
 namespace App\Services;
 
-use App\Enums\WhatsAppGateway;
 use App\Support\WhatsAppNotifySettings;
 use Illuminate\Http\Client\ConnectionException;
 use Illuminate\Http\Client\Response;
@@ -12,17 +11,13 @@ use RuntimeException;
 
 class FonnteService
 {
-    public function sendText(
-        string $target,
-        string $message,
-        ?string $countryCallingCode = null,
-        WhatsAppGateway $gateway = WhatsAppGateway::Transactional,
-    ): void {
+    public function sendText(string $target, string $message, ?string $countryCallingCode = null): void
+    {
         $this->sendTextWithGateway(
-            WhatsAppNotifySettings::token($gateway) ?? '',
-            WhatsAppNotifySettings::apiUrl($gateway),
-            WhatsAppNotifySettings::sessionId($gateway),
-            WhatsAppNotifySettings::countryCode($gateway),
+            WhatsAppNotifySettings::token() ?? '',
+            WhatsAppNotifySettings::apiUrl(),
+            WhatsAppNotifySettings::sessionId(),
+            WhatsAppNotifySettings::countryCode(),
             $target,
             $message,
             $countryCallingCode,
@@ -67,28 +62,19 @@ class FonnteService
         $this->assertSuccessfulResponse($response);
     }
 
-    /**
-     * Kirim teks + lampiran dari URL publik (harus dapat diakses internet; localhost tidak valid).
-     * Untuk PDF/non-image, set $filename agar nama file terbaca di penerima.
-     *
-     * @see https://docs.fonnte.com/api-send-message/
-     *
-     * @param  string|null  $countryCallingCode  Lihat {@see sendText()}.
-     */
     public function sendMessageWithPublicFileUrl(string $target, string $message, string $publicFileUrl, ?string $filename = null, ?string $countryCallingCode = null): void
     {
-        $gateway = WhatsAppGateway::Bulk;
-        $cc = $this->resolveCountryCode($countryCallingCode, $gateway);
+        $cc = $this->resolveCountryCode($countryCallingCode);
 
-        $token = $this->requireToken($gateway);
-        $url = WhatsAppNotifySettings::apiUrl($gateway);
+        $token = $this->requireToken();
+        $url = WhatsAppNotifySettings::apiUrl();
 
         $payload = $this->buildPayload([
             'target' => $target,
             'message' => $message,
             'url' => $publicFileUrl,
             'countryCode' => $cc,
-        ], WhatsAppNotifySettings::sessionId($gateway), $url);
+        ], WhatsAppNotifySettings::sessionId(), $url);
 
         if ($filename !== null && $filename !== '') {
             $payload['filename'] = $filename;
@@ -108,12 +94,6 @@ class FonnteService
         $this->assertSuccessfulResponse($response);
     }
 
-    /**
-     * Upload file langsung ke /send (multipart) — tidak perlu URL publik.
-     * WSM auto-detect: .jpg/.png → image, .pdf → document.
-     *
-     * @param  string|null  $countryCallingCode  Lihat {@see sendText()}.
-     */
     public function sendMessageWithFileUpload(
         string $target,
         string $message,
@@ -125,17 +105,16 @@ class FonnteService
             throw new RuntimeException('Berkas lampiran kosong atau tidak dapat dibaca.');
         }
 
-        $gateway = WhatsAppGateway::Bulk;
-        $token = $this->requireToken($gateway);
-        $url = WhatsAppNotifySettings::apiUrl($gateway);
-        $cc = $this->resolveCountryCode($countryCallingCode, $gateway);
+        $token = $this->requireToken();
+        $url = WhatsAppNotifySettings::apiUrl();
+        $cc = $this->resolveCountryCode($countryCallingCode);
 
         $payload = $this->buildPayload([
             'target' => $target,
             'countryCode' => $cc,
             'message' => $message,
             'filename' => $filename,
-        ], WhatsAppNotifySettings::sessionId($gateway), $url);
+        ], WhatsAppNotifySettings::sessionId(), $url);
 
         try {
             /** @var Response $response */
@@ -151,9 +130,9 @@ class FonnteService
         $this->assertSuccessfulResponse($response);
     }
 
-    private function requireToken(WhatsAppGateway $gateway = WhatsAppGateway::Transactional): string
+    private function requireToken(): string
     {
-        $token = WhatsAppNotifySettings::token($gateway);
+        $token = WhatsAppNotifySettings::token();
         if ($token === null || $token === '') {
             throw new RuntimeException('Token WhatsApp belum diatur.');
         }
@@ -161,26 +140,23 @@ class FonnteService
         return $this->normalizeGatewayToken($token);
     }
 
-    private function resolveCountryCode(?string $countryCallingCode, WhatsAppGateway $gateway = WhatsAppGateway::Transactional): string
+    private function resolveCountryCode(?string $countryCallingCode): string
     {
         return $countryCallingCode !== null && $countryCallingCode !== ''
             ? $countryCallingCode
-            : WhatsAppNotifySettings::countryCode($gateway);
+            : WhatsAppNotifySettings::countryCode();
     }
 
     /**
-     * WSM /send (alias Fonnte): session otomatis dari API key — sessionId tidak wajib.
-     * FONNTE_SESSION_ID hanya override opsional (mis. endpoint native /api/message/send).
-     *
      * @param  array<string, mixed>  $payload
      * @return array<string, mixed>
      */
     private function buildPayload(array $payload, ?string $sessionId = null, ?string $apiUrl = null): array
     {
-        $apiUrl ??= WhatsAppNotifySettings::apiUrl(WhatsAppGateway::Transactional);
+        $apiUrl ??= WhatsAppNotifySettings::apiUrl();
 
         if (! $this->usesFonnteOfficialApi($apiUrl)) {
-            $sessionId ??= WhatsAppNotifySettings::sessionId(WhatsAppGateway::Bulk);
+            $sessionId ??= WhatsAppNotifySettings::sessionId();
             if (is_string($sessionId) && $sessionId !== '') {
                 $payload['sessionId'] = $sessionId;
             }
@@ -231,9 +207,6 @@ class FonnteService
     }
 
     /**
-     * Fonnte: Authorization: {token}
-     * WSM: Authorization: {apiKey} atau Bearer {apiKey} — keduanya didukung.
-     *
      * @return array<string, string>
      */
     private function authHeaders(string $token): array
