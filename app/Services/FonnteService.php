@@ -2,6 +2,7 @@
 
 namespace App\Services;
 
+use App\Enums\WhatsAppGateway;
 use App\Support\WhatsAppNotifySettings;
 use Illuminate\Http\Client\ConnectionException;
 use Illuminate\Http\Client\Response;
@@ -11,13 +12,17 @@ use RuntimeException;
 
 class FonnteService
 {
-    public function sendText(string $target, string $message, ?string $countryCallingCode = null): void
-    {
+    public function sendText(
+        string $target,
+        string $message,
+        ?string $countryCallingCode = null,
+        WhatsAppGateway $gateway = WhatsAppGateway::Transactional,
+    ): void {
         $this->sendTextWithGateway(
-            WhatsAppNotifySettings::token() ?? '',
-            WhatsAppNotifySettings::apiUrl(),
-            WhatsAppNotifySettings::sessionId(),
-            WhatsAppNotifySettings::countryCode(),
+            WhatsAppNotifySettings::token($gateway) ?? '',
+            WhatsAppNotifySettings::apiUrl($gateway),
+            WhatsAppNotifySettings::sessionId($gateway),
+            WhatsAppNotifySettings::countryCode($gateway),
             $target,
             $message,
             $countryCallingCode,
@@ -45,7 +50,7 @@ class FonnteService
             'target' => $target,
             'message' => $message,
             'countryCode' => $cc,
-        ], $sessionId);
+        ], $sessionId, $apiUrl);
 
         try {
             /** @var Response $response */
@@ -71,17 +76,18 @@ class FonnteService
      */
     public function sendMessageWithPublicFileUrl(string $target, string $message, string $publicFileUrl, ?string $filename = null, ?string $countryCallingCode = null): void
     {
-        $cc = $this->resolveCountryCode($countryCallingCode);
+        $gateway = WhatsAppGateway::Bulk;
+        $cc = $this->resolveCountryCode($countryCallingCode, $gateway);
 
-        $token = $this->requireToken();
-        $url = WhatsAppNotifySettings::apiUrl();
+        $token = $this->requireToken($gateway);
+        $url = WhatsAppNotifySettings::apiUrl($gateway);
 
         $payload = $this->buildPayload([
             'target' => $target,
             'message' => $message,
             'url' => $publicFileUrl,
             'countryCode' => $cc,
-        ]);
+        ], WhatsAppNotifySettings::sessionId($gateway), $url);
 
         if ($filename !== null && $filename !== '') {
             $payload['filename'] = $filename;
@@ -118,16 +124,17 @@ class FonnteService
             throw new RuntimeException('Berkas lampiran kosong atau tidak dapat dibaca.');
         }
 
-        $token = $this->requireToken();
-        $url = WhatsAppNotifySettings::apiUrl();
-        $cc = $this->resolveCountryCode($countryCallingCode);
+        $gateway = WhatsAppGateway::Bulk;
+        $token = $this->requireToken($gateway);
+        $url = WhatsAppNotifySettings::apiUrl($gateway);
+        $cc = $this->resolveCountryCode($countryCallingCode, $gateway);
 
         $payload = $this->buildPayload([
             'target' => $target,
             'countryCode' => $cc,
             'message' => $message,
             'filename' => $filename,
-        ]);
+        ], WhatsAppNotifySettings::sessionId($gateway), $url);
 
         try {
             /** @var Response $response */
@@ -143,9 +150,9 @@ class FonnteService
         $this->assertSuccessfulResponse($response);
     }
 
-    private function requireToken(): string
+    private function requireToken(WhatsAppGateway $gateway = WhatsAppGateway::Transactional): string
     {
-        $token = WhatsAppNotifySettings::token();
+        $token = WhatsAppNotifySettings::token($gateway);
         if ($token === null || $token === '') {
             throw new RuntimeException('Token WhatsApp belum diatur.');
         }
@@ -153,11 +160,11 @@ class FonnteService
         return $token;
     }
 
-    private function resolveCountryCode(?string $countryCallingCode): string
+    private function resolveCountryCode(?string $countryCallingCode, WhatsAppGateway $gateway = WhatsAppGateway::Transactional): string
     {
         return $countryCallingCode !== null && $countryCallingCode !== ''
             ? $countryCallingCode
-            : WhatsAppNotifySettings::countryCode();
+            : WhatsAppNotifySettings::countryCode($gateway);
     }
 
     /**
@@ -167,14 +174,37 @@ class FonnteService
      * @param  array<string, mixed>  $payload
      * @return array<string, mixed>
      */
-    private function buildPayload(array $payload, ?string $sessionId = null): array
+    private function buildPayload(array $payload, ?string $sessionId = null, ?string $apiUrl = null): array
     {
-        $sessionId ??= WhatsAppNotifySettings::sessionId();
-        if (is_string($sessionId) && $sessionId !== '') {
-            $payload['sessionId'] = $sessionId;
+        $apiUrl ??= WhatsAppNotifySettings::apiUrl(WhatsAppGateway::Transactional);
+
+        if (! $this->usesFonnteOfficialApi($apiUrl)) {
+            $sessionId ??= WhatsAppNotifySettings::sessionId(WhatsAppGateway::Bulk);
+            if (is_string($sessionId) && $sessionId !== '') {
+                $payload['sessionId'] = $sessionId;
+            }
+        }
+
+        if ($this->usesFonnteOfficialApi($apiUrl) && isset($payload['target'], $payload['countryCode'])) {
+            $cc = (string) $payload['countryCode'];
+            $digits = preg_replace('/\D+/', '', (string) $payload['target']) ?? '';
+            if ($digits !== '') {
+                if (str_starts_with($digits, '0')) {
+                    $digits = $cc.substr($digits, 1);
+                } elseif (! str_starts_with($digits, $cc)) {
+                    $digits = $cc.$digits;
+                }
+                $payload['target'] = $digits;
+            }
+            unset($payload['countryCode']);
         }
 
         return $payload;
+    }
+
+    private function usesFonnteOfficialApi(string $apiUrl): bool
+    {
+        return str_contains(strtolower($apiUrl), 'api.fonnte.com');
     }
 
     /**

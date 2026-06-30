@@ -20,9 +20,15 @@
                 </div>
             @endif
 
-            @unless ($whatsappConfigured)
+            @unless ($whatsappTransactionalConfigured)
                 <div class="rounded-xl border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-950">
                     {{ __('admin.whatsapp_notify.token_missing') }}
+                </div>
+            @endunless
+
+            @unless ($whatsappBulkConfigured)
+                <div class="rounded-xl border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-950">
+                    {{ __('admin.whatsapp_notify.bulk_token_missing') }}
                 </div>
             @endunless
 
@@ -30,8 +36,8 @@
                 @csrf
 
                 <div class="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm">
-                    <h2 class="text-sm font-bold text-slate-900">{{ __('admin.whatsapp_notify.gateway_heading') }}</h2>
-                    <p class="mt-1 text-xs text-slate-500">{{ __('admin.whatsapp_notify.gateway_hint') }}</p>
+                    <h2 class="text-sm font-bold text-slate-900">{{ __('admin.whatsapp_notify.gateway_transactional_heading') }}</h2>
+                    <p class="mt-1 text-xs text-slate-500">{{ __('admin.whatsapp_notify.gateway_transactional_hint') }}</p>
 
                     <div class="mt-5 grid gap-5 sm:grid-cols-2">
                         <div class="sm:col-span-2">
@@ -40,8 +46,8 @@
                                 id="gateway_api_url"
                                 name="gateway_api_url"
                                 type="url"
-                                value="{{ old('gateway_api_url', $gateway['api_url']) }}"
-                                placeholder="https://whatsapp.baytgo.id/send"
+                                value="{{ old('gateway_api_url', $transactionalGateway['api_url']) }}"
+                                placeholder="https://api.fonnte.com/send"
                                 class="mt-1 block w-full rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm text-slate-900 shadow-sm focus:border-emerald-500 focus:ring-emerald-500"
                             >
                             <x-input-error :messages="$errors->get('gateway_api_url')" class="mt-2" />
@@ -54,10 +60,10 @@
                                 name="gateway_token"
                                 type="password"
                                 autocomplete="new-password"
-                                placeholder="{{ $gateway['token_set'] ? __('admin.whatsapp_notify.gateway_token_placeholder_set') : __('admin.whatsapp_notify.gateway_token_placeholder') }}"
+                                placeholder="{{ $transactionalGateway['token_set'] ? __('admin.whatsapp_notify.gateway_token_placeholder_set') : __('admin.whatsapp_notify.gateway_token_placeholder') }}"
                                 class="mt-1 block w-full rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm text-slate-900 shadow-sm focus:border-emerald-500 focus:ring-emerald-500"
                             >
-                            @if ($gateway['token_set'])
+                            @if ($transactionalGateway['token_set'])
                                 <p class="mt-1.5 text-xs text-emerald-700">{{ __('admin.whatsapp_notify.gateway_token_set_hint') }}</p>
                             @endif
                             <x-input-error :messages="$errors->get('gateway_token')" class="mt-2" />
@@ -69,8 +75,8 @@
                                 id="gateway_session_id"
                                 name="gateway_session_id"
                                 type="text"
-                                value="{{ old('gateway_session_id', $gateway['session_id']) }}"
-                                placeholder="wa-628112107021"
+                                value="{{ old('gateway_session_id', $transactionalGateway['session_id']) }}"
+                                placeholder="—"
                                 class="mt-1 block w-full rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm text-slate-900 shadow-sm focus:border-emerald-500 focus:ring-emerald-500"
                             >
                             <p class="mt-1.5 text-xs text-slate-500">{{ __('admin.whatsapp_notify.gateway_session_id_hint') }}</p>
@@ -83,25 +89,88 @@
                                 id="gateway_country_code"
                                 name="gateway_country_code"
                                 type="text"
-                                value="{{ old('gateway_country_code', $gateway['country_code']) }}"
+                                value="{{ old('gateway_country_code', $transactionalGateway['country_code']) }}"
                                 placeholder="62"
                                 class="mt-1 block w-full rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm text-slate-900 shadow-sm focus:border-emerald-500 focus:ring-emerald-500"
                             >
                             <x-input-error :messages="$errors->get('gateway_country_code')" class="mt-2" />
                         </div>
+                    </div>
+                </div>
+
+                <div class="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm">
+                    <h2 class="text-sm font-bold text-slate-900">{{ __('admin.whatsapp_notify.gateway_bulk_heading') }}</h2>
+                    <p class="mt-1 text-xs text-slate-500">{{ __('admin.whatsapp_notify.gateway_bulk_hint') }}</p>
+
+                    <div class="mt-5 grid gap-5 sm:grid-cols-2">
+                        <div class="sm:col-span-2">
+                            <x-input-label for="bulk_gateway_api_url" :value="__('admin.whatsapp_notify.gateway_api_url')" />
+                            <input
+                                id="bulk_gateway_api_url"
+                                name="bulk_gateway_api_url"
+                                type="url"
+                                value="{{ old('bulk_gateway_api_url', $bulkGateway['api_url']) }}"
+                                placeholder="https://whatsapp.baytgo.id/send"
+                                class="mt-1 block w-full rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm text-slate-900 shadow-sm focus:border-emerald-500 focus:ring-emerald-500"
+                            >
+                            <x-input-error :messages="$errors->get('bulk_gateway_api_url')" class="mt-2" />
+                        </div>
 
                         <div>
-                            <x-input-label for="gateway_media_public_url" :value="__('admin.whatsapp_notify.gateway_media_public_url')" />
+                            <x-input-label for="bulk_gateway_token" :value="__('admin.whatsapp_notify.gateway_token')" />
                             <input
-                                id="gateway_media_public_url"
-                                name="gateway_media_public_url"
+                                id="bulk_gateway_token"
+                                name="bulk_gateway_token"
+                                type="password"
+                                autocomplete="new-password"
+                                placeholder="{{ $bulkGateway['token_set'] ? __('admin.whatsapp_notify.gateway_token_placeholder_set') : __('admin.whatsapp_notify.gateway_token_placeholder') }}"
+                                class="mt-1 block w-full rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm text-slate-900 shadow-sm focus:border-emerald-500 focus:ring-emerald-500"
+                            >
+                            @if ($bulkGateway['token_set'])
+                                <p class="mt-1.5 text-xs text-emerald-700">{{ __('admin.whatsapp_notify.gateway_token_set_hint') }}</p>
+                            @endif
+                            <x-input-error :messages="$errors->get('bulk_gateway_token')" class="mt-2" />
+                        </div>
+
+                        <div>
+                            <x-input-label for="bulk_gateway_session_id" :value="__('admin.whatsapp_notify.gateway_session_id')" />
+                            <input
+                                id="bulk_gateway_session_id"
+                                name="bulk_gateway_session_id"
+                                type="text"
+                                value="{{ old('bulk_gateway_session_id', $bulkGateway['session_id']) }}"
+                                placeholder="wa-628112107021"
+                                class="mt-1 block w-full rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm text-slate-900 shadow-sm focus:border-emerald-500 focus:ring-emerald-500"
+                            >
+                            <p class="mt-1.5 text-xs text-slate-500">{{ __('admin.whatsapp_notify.gateway_session_id_hint') }}</p>
+                            <x-input-error :messages="$errors->get('bulk_gateway_session_id')" class="mt-2" />
+                        </div>
+
+                        <div>
+                            <x-input-label for="bulk_gateway_country_code" :value="__('admin.whatsapp_notify.gateway_country_code')" />
+                            <input
+                                id="bulk_gateway_country_code"
+                                name="bulk_gateway_country_code"
+                                type="text"
+                                value="{{ old('bulk_gateway_country_code', $bulkGateway['country_code']) }}"
+                                placeholder="62"
+                                class="mt-1 block w-full rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm text-slate-900 shadow-sm focus:border-emerald-500 focus:ring-emerald-500"
+                            >
+                            <x-input-error :messages="$errors->get('bulk_gateway_country_code')" class="mt-2" />
+                        </div>
+
+                        <div class="sm:col-span-2">
+                            <x-input-label for="bulk_gateway_media_public_url" :value="__('admin.whatsapp_notify.gateway_media_public_url')" />
+                            <input
+                                id="bulk_gateway_media_public_url"
+                                name="bulk_gateway_media_public_url"
                                 type="url"
-                                value="{{ old('gateway_media_public_url', $gateway['media_public_url']) }}"
+                                value="{{ old('bulk_gateway_media_public_url', $bulkGateway['media_public_url']) }}"
                                 placeholder="https://baytgo.id"
                                 class="mt-1 block w-full rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm text-slate-900 shadow-sm focus:border-emerald-500 focus:ring-emerald-500"
                             >
                             <p class="mt-1.5 text-xs text-slate-500">{{ __('admin.whatsapp_notify.gateway_media_public_url_hint') }}</p>
-                            <x-input-error :messages="$errors->get('gateway_media_public_url')" class="mt-2" />
+                            <x-input-error :messages="$errors->get('bulk_gateway_media_public_url')" class="mt-2" />
                         </div>
                     </div>
                 </div>
@@ -154,10 +223,17 @@
                 <div class="flex flex-wrap justify-end gap-3">
                     <button
                         type="button"
-                        id="wa-test-config-btn"
-                        class="inline-flex items-center rounded-xl border border-emerald-200 bg-white px-6 py-2.5 text-sm font-semibold text-emerald-800 shadow-sm hover:bg-emerald-50 disabled:cursor-not-allowed disabled:opacity-60"
+                        data-test-gateway="transactional"
+                        class="wa-test-config-btn inline-flex items-center rounded-xl border border-emerald-200 bg-white px-6 py-2.5 text-sm font-semibold text-emerald-800 shadow-sm hover:bg-emerald-50 disabled:cursor-not-allowed disabled:opacity-60"
                     >
-                        {{ __('admin.whatsapp_notify.test_button') }}
+                        {{ __('admin.whatsapp_notify.test_button_transactional') }}
+                    </button>
+                    <button
+                        type="button"
+                        data-test-gateway="bulk"
+                        class="wa-test-config-btn inline-flex items-center rounded-xl border border-sky-200 bg-white px-6 py-2.5 text-sm font-semibold text-sky-800 shadow-sm hover:bg-sky-50 disabled:cursor-not-allowed disabled:opacity-60"
+                    >
+                        {{ __('admin.whatsapp_notify.test_button_bulk') }}
                     </button>
                     <button type="submit" class="inline-flex items-center rounded-xl bg-emerald-600 px-6 py-2.5 text-sm font-semibold text-white shadow-sm hover:bg-emerald-700">
                         {{ __('admin.whatsapp_notify.save') }}
@@ -169,64 +245,74 @@
                 <script>
                     (function () {
                         const form = document.getElementById('wa-notify-settings-form');
-                        const btn = document.getElementById('wa-test-config-btn');
+                        const buttons = document.querySelectorAll('.wa-test-config-btn');
                         const resultBox = document.getElementById('wa-test-result');
-                        if (!form || !btn || !resultBox) return;
+                        if (!form || !buttons.length || !resultBox) return;
 
                         const labels = {
                             testing: @json(__('admin.whatsapp_notify.test_running')),
-                            defaultButton: @json(__('admin.whatsapp_notify.test_button')),
                         };
 
-                        btn.addEventListener('click', async function () {
-                            btn.disabled = true;
-                            btn.textContent = labels.testing;
-                            resultBox.classList.add('hidden');
-                            resultBox.textContent = '';
+                        buttons.forEach(function (btn) {
+                            const defaultLabel = btn.textContent;
+                            btn.addEventListener('click', async function () {
+                                const gateway = btn.getAttribute('data-test-gateway') || 'transactional';
+                                buttons.forEach(function (b) { b.disabled = true; });
+                                btn.textContent = labels.testing;
+                                resultBox.classList.add('hidden');
+                                resultBox.textContent = '';
 
-                            try {
-                                const response = await fetch(@json(route('admin.whatsapp-notify-settings.test')), {
-                                    method: 'POST',
-                                    headers: {
-                                        'X-CSRF-TOKEN': @json(csrf_token()),
-                                        'Accept': 'application/json',
-                                    },
-                                    body: new FormData(form),
-                                });
+                                try {
+                                    const body = new FormData(form);
+                                    body.append('test_gateway', gateway);
 
-                                const data = await response.json();
-                                let text = data.message || '';
-                                if (data.errors) {
-                                    text = Object.values(data.errors).flat().join('\n');
-                                } else if (Array.isArray(data.results)) {
-                                    const lines = data.results.map(function (row) {
-                                        if (row.ok) {
-                                            return '✓ ' + row.phone;
-                                        }
-                                        return '✗ ' + row.phone + (row.error ? ': ' + row.error : '');
+                                    const response = await fetch(@json(route('admin.whatsapp-notify-settings.test')), {
+                                        method: 'POST',
+                                        headers: {
+                                            'X-CSRF-TOKEN': @json(csrf_token()),
+                                            'Accept': 'application/json',
+                                        },
+                                        body: body,
                                     });
-                                    if (lines.length) {
-                                        text += (text ? '\n\n' : '') + lines.join('\n');
-                                    }
-                                }
 
-                                resultBox.textContent = text;
-                                resultBox.style.whiteSpace = 'pre-wrap';
-                                resultBox.classList.remove('hidden');
-                                resultBox.classList.toggle('border-emerald-200', response.ok);
-                                resultBox.classList.toggle('bg-emerald-50', response.ok);
-                                resultBox.classList.toggle('text-emerald-900', response.ok);
-                                resultBox.classList.toggle('border-red-200', !response.ok);
-                                resultBox.classList.toggle('bg-red-50', !response.ok);
-                                resultBox.classList.toggle('text-red-900', !response.ok);
-                            } catch (error) {
-                                resultBox.textContent = @json(__('admin.whatsapp_notify.test_request_failed'));
-                                resultBox.classList.remove('hidden');
-                                resultBox.classList.add('border-red-200', 'bg-red-50', 'text-red-900');
-                            } finally {
-                                btn.disabled = false;
-                                btn.textContent = labels.defaultButton;
-                            }
+                                    const data = await response.json();
+                                    let text = data.message || '';
+                                    if (data.errors) {
+                                        text = Object.values(data.errors).flat().join('\n');
+                                    } else if (Array.isArray(data.results)) {
+                                        const lines = data.results.map(function (row) {
+                                            if (row.ok) {
+                                                return '✓ ' + row.phone;
+                                            }
+                                            return '✗ ' + row.phone + (row.error ? ': ' + row.error : '');
+                                        });
+                                        if (lines.length) {
+                                            text += (text ? '\n\n' : '') + lines.join('\n');
+                                        }
+                                    }
+
+                                    resultBox.textContent = text;
+                                    resultBox.style.whiteSpace = 'pre-wrap';
+                                    resultBox.classList.remove('hidden');
+                                    resultBox.classList.toggle('border-emerald-200', response.ok);
+                                    resultBox.classList.toggle('bg-emerald-50', response.ok);
+                                    resultBox.classList.toggle('text-emerald-900', response.ok);
+                                    resultBox.classList.toggle('border-red-200', !response.ok);
+                                    resultBox.classList.toggle('bg-red-50', !response.ok);
+                                    resultBox.classList.toggle('text-red-900', !response.ok);
+                                } catch (error) {
+                                    resultBox.textContent = @json(__('admin.whatsapp_notify.test_request_failed'));
+                                    resultBox.classList.remove('hidden');
+                                    resultBox.classList.add('border-red-200', 'bg-red-50', 'text-red-900');
+                                } finally {
+                                    buttons.forEach(function (b) {
+                                        b.disabled = false;
+                                        if (b === btn) {
+                                            b.textContent = defaultLabel;
+                                        }
+                                    });
+                                }
+                            });
                         });
                     })();
                 </script>

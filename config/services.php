@@ -44,49 +44,9 @@ return [
     ],
 
     /*
-    | WhatsApp gateway (format Fonnte: form POST target/message/countryCode).
-    | Toggle notifikasi: Admin → Pengaturan → Notifikasi WhatsApp (site_settings).
-    | Env FONNTE_*_ENABLED hanya fallback awal jika belum disimpan di admin.
+    | WhatsApp: kredensial gateway & toggle notifikasi dikelola di
+    | Admin → Pengaturan → Notifikasi WhatsApp (site_settings).
     */
-    'fonnte' => [
-        'token' => env('FONNTE_TOKEN'),
-        'url' => env('FONNTE_API_URL', 'https://whatsapp.baytgo.id/send'),
-        /** URL publik untuk lampiran WA (WSM harus bisa unduh). Kosong = APP_URL. */
-        'media_public_url' => env('FONNTE_MEDIA_PUBLIC_URL'),
-        'session_id' => env('FONNTE_SESSION_ID'),
-        'otp_enabled' => env('FONNTE_OTP_ENABLED', true),
-        'country_code' => env('FONNTE_COUNTRY_CODE', '62'),
-        /** Notifikasi WhatsApp ke muthowif saat ada booking masuk (perlu FONNTE_TOKEN). */
-        'booking_notify_enabled' => env('FONNTE_BOOKING_NOTIFY_ENABLED', true),
-        /** WhatsApp ke muthowif setelah jamaah lunas (payment gateway). */
-        'payment_notify_enabled' => env('FONNTE_PAYMENT_NOTIFY_ENABLED', true),
-        /** WhatsApp ke customer setelah booking disetujui muthowif. */
-        'customer_booking_approved_notify_enabled' => env('FONNTE_CUSTOMER_BOOKING_APPROVED_NOTIFY_ENABLED', true),
-        /** WA ke jamaah: muthowif menolak karena jadwal penuh — maaf + cek rekomendasi jaringan. */
-        'customer_booking_rejected_jadwal_full_notify_enabled' => env('FONNTE_CUSTOMER_BOOKING_REJECTED_JADWAL_FULL_NOTIFY_ENABLED', true),
-        /** WA ke jamaah: bukti transfer refund (setelah admin upload + tandai selesai). */
-        'refund_transfer_proof_notify_enabled' => env('FONNTE_REFUND_TRANSFER_PROOF_NOTIFY_ENABLED', true),
-        /** WA ke muthowif: bukti transfer withdraw (setelah admin tandai selesai). */
-        'withdrawal_transfer_proof_notify_enabled' => env('FONNTE_WITHDRAWAL_TRANSFER_PROOF_NOTIFY_ENABLED', true),
-        /** WA ke jamaah: ada calon muthowif pengganti yang menerima tawaran insiden. */
-        'emergency_candidate_notify_enabled' => env('FONNTE_EMERGENCY_CANDIDATE_NOTIFY_ENABLED', true),
-        /** WA ke muthowif: hasil pemilihan pengganti insiden (terpilih / belum terpilih). */
-        'emergency_selection_notify_enabled' => env('FONNTE_EMERGENCY_SELECTION_NOTIFY_ENABLED', true),
-        /** WA ke muthowif: tawaran pengganti insiden (broadcast / undangan admin). */
-        'emergency_offer_notify_enabled' => env('FONNTE_EMERGENCY_OFFER_NOTIFY_ENABLED', true),
-        /** WA ke nomor admin saat jamaah melaporkan insiden darurat. */
-        'emergency_admin_report_notify_enabled' => env('FONNTE_EMERGENCY_ADMIN_REPORT_NOTIFY_ENABLED', true),
-        /** WA ke nomor admin saat ada pendaftaran muthowif baru. */
-        'muthowif_registration_admin_notify_enabled' => env('FONNTE_MUTHOWIF_REGISTRATION_ADMIN_NOTIFY_ENABLED', true),
-        /** WA ke nomor admin saat jamaah mengajukan refund. */
-        'refund_admin_notify_enabled' => env('FONNTE_REFUND_ADMIN_NOTIFY_ENABLED', true),
-        /** WA ke jamaah: update status laporan insiden (ditinjau / diverifikasi / ditolak). */
-        'emergency_customer_report_notify_enabled' => env('FONNTE_EMERGENCY_CUSTOMER_REPORT_NOTIFY_ENABLED', true),
-        /** WA ke muthowif: jamaah menandai layanan pendukung selesai. */
-        'support_completion_requested_notify_enabled' => env('FONNTE_SUPPORT_COMPLETION_REQUESTED_NOTIFY_ENABLED', true),
-        /** WA ke jamaah: muthowif mengonfirmasi layanan pendukung selesai. */
-        'support_completion_approved_notify_enabled' => env('FONNTE_SUPPORT_COMPLETION_APPROVED_NOTIFY_ENABLED', true),
-    ],
 
     'midtrans' => [
         'server_key' => env('MIDTRANS_SERVER_KEY'),

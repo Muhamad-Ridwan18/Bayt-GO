@@ -2,6 +2,7 @@
 
 namespace App\Jobs;
 
+use App\Enums\WhatsAppGateway;
 use App\Services\FonnteService;
 use Illuminate\Bus\Queueable;
 use Illuminate\Contracts\Queue\ShouldQueue;
@@ -25,12 +26,13 @@ class SendWhatsAppTextJob implements ShouldQueue
         public string $message,
         public ?string $countryCallingCode = null,
         public array $failureCacheKeysToForget = [],
+        public WhatsAppGateway $gateway = WhatsAppGateway::Transactional,
     ) {}
 
     public function handle(FonnteService $fonnte): void
     {
         try {
-            $fonnte->sendText($this->target, $this->message, $this->countryCallingCode);
+            $fonnte->sendText($this->target, $this->message, $this->countryCallingCode, $this->gateway);
         } catch (RuntimeException|Throwable $e) {
             foreach ($this->failureCacheKeysToForget as $cacheKey) {
                 if ($cacheKey !== '') {

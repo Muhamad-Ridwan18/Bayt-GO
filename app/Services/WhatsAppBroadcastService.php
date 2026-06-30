@@ -2,6 +2,7 @@
 
 namespace App\Services;
 
+use App\Enums\WhatsAppGateway;
 use App\Jobs\SendWhatsAppAttachmentJob;
 use App\Jobs\SendWhatsAppTextJob;
 use App\Models\MuthowifProfile;
@@ -15,7 +16,7 @@ class WhatsAppBroadcastService
 
     public function whatsappConfigured(): bool
     {
-        return WhatsAppNotifySettings::hasToken();
+        return WhatsAppNotifySettings::hasToken(WhatsAppGateway::Bulk);
     }
 
     /**
@@ -68,6 +69,8 @@ class WhatsAppBroadcastService
                     $recipient['dial']['target'],
                     $caption,
                     $recipient['dial']['country_calling_code'],
+                    [],
+                    WhatsAppGateway::Bulk,
                 );
             }
 

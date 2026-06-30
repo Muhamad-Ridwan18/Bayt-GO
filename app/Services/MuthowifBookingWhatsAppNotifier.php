@@ -3,6 +3,7 @@
 namespace App\Services;
 
 use App\Enums\MuthowifBookingMuthowifRejectionKind;
+use App\Enums\WhatsAppGateway;
 use App\Jobs\SendWhatsAppAttachmentJob;
 use App\Jobs\SendWhatsAppTextJob;
 use App\Models\BookingRefundRequest;
@@ -674,8 +675,8 @@ class MuthowifBookingWhatsAppNotifier
             return;
         }
 
-        if (! WhatsAppNotifySettings::hasToken()) {
-            Log::debug('WhatsApp refund proof skipped: FONNTE_TOKEN kosong.');
+        if (! WhatsAppNotifySettings::hasToken(WhatsAppGateway::Bulk)) {
+            Log::debug('WhatsApp refund proof skipped: token gateway massal kosong.');
 
             return;
         }
@@ -742,8 +743,8 @@ class MuthowifBookingWhatsAppNotifier
             return;
         }
 
-        if (! WhatsAppNotifySettings::hasToken()) {
-            Log::debug('WhatsApp withdrawal proof skipped: FONNTE_TOKEN kosong.');
+        if (! WhatsAppNotifySettings::hasToken(WhatsAppGateway::Bulk)) {
+            Log::debug('WhatsApp withdrawal proof skipped: token gateway massal kosong.');
 
             return;
         }
@@ -961,8 +962,8 @@ class MuthowifBookingWhatsAppNotifier
      */
     private function resolveFonnteDial(string $phone, string $profileId, string $bookingId): ?array
     {
-        if (! WhatsAppNotifySettings::hasToken()) {
-            Log::debug('WhatsApp notify skipped: FONNTE_TOKEN kosong.');
+        if (! WhatsAppNotifySettings::hasToken(WhatsAppGateway::Transactional)) {
+            Log::debug('WhatsApp notify skipped: token gateway transaksional kosong.');
 
             return null;
         }

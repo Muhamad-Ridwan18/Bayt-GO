@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers\Admin;
 
+use App\Enums\WhatsAppGateway;
 use App\Http\Controllers\Controller;
 use App\Services\FonnteService;
 use App\Support\IntlPhone;
@@ -9,6 +10,7 @@ use App\Support\WhatsAppNotifySettings;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
+use Illuminate\Validation\Rule;
 use Illuminate\View\View;
 use Throwable;
 
@@ -19,8 +21,10 @@ class WhatsAppNotifySettingsController extends Controller
         return view('admin.whatsapp-notify-settings.edit', [
             'toggleValues' => WhatsAppNotifySettings::toggleValuesForForm(),
             'adminNumbers' => WhatsAppNotifySettings::adminNumbersForForm(),
-            'gateway' => WhatsAppNotifySettings::gatewayValuesForForm(),
-            'whatsappConfigured' => WhatsAppNotifySettings::hasToken(),
+            'transactionalGateway' => WhatsAppNotifySettings::transactionalGatewayValuesForForm(),
+            'bulkGateway' => WhatsAppNotifySettings::bulkGatewayValuesForForm(),
+            'whatsappTransactionalConfigured' => WhatsAppNotifySettings::hasToken(WhatsAppGateway::Transactional),
+            'whatsappBulkConfigured' => WhatsAppNotifySettings::hasToken(WhatsAppGateway::Bulk),
             'groups' => WhatsAppNotifySettings::groups(),
             'toggles' => WhatsAppNotifySettings::toggles(),
         ]);
@@ -39,10 +43,13 @@ class WhatsAppNotifySettingsController extends Controller
 
     public function test(Request $request, FonnteService $fonnte): JsonResponse
     {
-        $request->validate($this->gatewayValidationRules());
+        $request->validate(array_merge($this->gatewayValidationRules(), [
+            'test_gateway' => ['required', Rule::enum(WhatsAppGateway::class)],
+        ]));
 
-        $gateway = WhatsAppNotifySettings::gatewayFromInput($request->all());
-        if ($gateway['token'] === '') {
+        $gateway = WhatsAppGateway::from($request->string('test_gateway')->toString());
+        $gatewayConfig = WhatsAppNotifySettings::gatewayFromInput($request->all(), $gateway);
+        if ($gatewayConfig['token'] === '') {
             return response()->json([
                 'message' => __('admin.whatsapp_notify.test_token_missing'),
             ], 422);
@@ -55,11 +62,16 @@ class WhatsAppNotifySettingsController extends Controller
             ], 422);
         }
 
+        $gatewayLabel = $gateway === WhatsAppGateway::Bulk
+            ? __('admin.whatsapp_notify.gateway_bulk_label')
+            : __('admin.whatsapp_notify.gateway_transactional_label');
+
         $message = __('admin.whatsapp_notify.test_message', [
             'app' => config('app.name', 'BaytGo'),
             'time' => now()->timezone(config('app.timezone', 'Asia/Jakarta'))->format('d M Y H:i'),
-            'url' => $gateway['api_url'],
-            'session' => $gateway['session_id'] ?? '—',
+            'url' => $gatewayConfig['api_url'],
+            'session' => $gatewayConfig['session_id'] ?? '—',
+            'gateway' => $gatewayLabel,
         ]);
 
         $results = [];
@@ -77,10 +89,10 @@ class WhatsAppNotifySettingsController extends Controller
 
             try {
                 $fonnte->sendTextWithGateway(
-                    $gateway['token'],
-                    $gateway['api_url'],
-                    $gateway['session_id'],
-                    $gateway['country_code'],
+                    $gatewayConfig['token'],
+                    $gatewayConfig['api_url'],
+                    $gatewayConfig['session_id'],
+                    $gatewayConfig['country_code'],
                     $dial['target'],
                     $message,
                     $dial['country_calling_code'],
@@ -107,6 +119,7 @@ class WhatsAppNotifySettingsController extends Controller
             'message' => __('admin.whatsapp_notify.test_success', [
                 'sent' => $okCount,
                 'total' => count($results),
+                'gateway' => $gatewayLabel,
             ]),
             'results' => $results,
         ]);
@@ -123,7 +136,11 @@ class WhatsAppNotifySettingsController extends Controller
             'gateway_api_url' => ['nullable', 'string', 'max:500', 'url'],
             'gateway_session_id' => ['nullable', 'string', 'max:64'],
             'gateway_country_code' => ['nullable', 'string', 'max:4', 'regex:/^\d+$/'],
-            'gateway_media_public_url' => ['nullable', 'string', 'max:500'],
+            'bulk_gateway_token' => ['nullable', 'string', 'max:255'],
+            'bulk_gateway_api_url' => ['nullable', 'string', 'max:500', 'url'],
+            'bulk_gateway_session_id' => ['nullable', 'string', 'max:64'],
+            'bulk_gateway_country_code' => ['nullable', 'string', 'max:4', 'regex:/^\d+$/'],
+            'bulk_gateway_media_public_url' => ['nullable', 'string', 'max:500'],
         ];
     }
 }

@@ -2,10 +2,17 @@
 
 namespace App\Support;
 
+use App\Enums\WhatsAppGateway;
 use App\Models\SiteSetting;
 
 class WhatsAppNotifySettings
 {
+    private const DEFAULT_TRANSACTIONAL_API_URL = 'https://api.fonnte.com/send';
+
+    private const DEFAULT_BULK_API_URL = 'https://whatsapp.baytgo.id/send';
+
+    private const DEFAULT_COUNTRY_CODE = '62';
+
     public const SETTING_ADMIN_NUMBERS = 'wa_notify_admin_numbers';
 
     public const SETTING_TOKEN = 'wa_gateway_token';
@@ -16,93 +23,101 @@ class WhatsAppNotifySettings
 
     public const SETTING_COUNTRY_CODE = 'wa_gateway_country_code';
 
-    public const SETTING_MEDIA_PUBLIC_URL = 'wa_gateway_media_public_url';
+    public const SETTING_BULK_TOKEN = 'wa_bulk_gateway_token';
+
+    public const SETTING_BULK_SESSION_ID = 'wa_bulk_gateway_session_id';
+
+    public const SETTING_BULK_API_URL = 'wa_bulk_gateway_api_url';
+
+    public const SETTING_BULK_COUNTRY_CODE = 'wa_bulk_gateway_country_code';
+
+    public const SETTING_BULK_MEDIA_PUBLIC_URL = 'wa_bulk_gateway_media_public_url';
 
     /**
-     * @return array<string, array{config: string, label: string, group: string}>
+     * @return array<string, array{label: string, group: string, default: bool}>
      */
     public static function toggles(): array
     {
         return [
             'otp' => [
-                'config' => 'services.fonnte.otp_enabled',
                 'label' => 'admin.whatsapp_notify.toggles.otp',
                 'group' => 'auth',
+                'default' => true,
             ],
             'booking' => [
-                'config' => 'services.fonnte.booking_notify_enabled',
                 'label' => 'admin.whatsapp_notify.toggles.booking',
                 'group' => 'booking',
+                'default' => true,
             ],
             'payment' => [
-                'config' => 'services.fonnte.payment_notify_enabled',
                 'label' => 'admin.whatsapp_notify.toggles.payment',
                 'group' => 'booking',
+                'default' => true,
             ],
             'customer_booking_approved' => [
-                'config' => 'services.fonnte.customer_booking_approved_notify_enabled',
                 'label' => 'admin.whatsapp_notify.toggles.customer_booking_approved',
                 'group' => 'booking',
+                'default' => true,
             ],
             'customer_booking_rejected_jadwal_full' => [
-                'config' => 'services.fonnte.customer_booking_rejected_jadwal_full_notify_enabled',
                 'label' => 'admin.whatsapp_notify.toggles.customer_booking_rejected_jadwal_full',
                 'group' => 'booking',
+                'default' => true,
             ],
             'refund_transfer_proof' => [
-                'config' => 'services.fonnte.refund_transfer_proof_notify_enabled',
                 'label' => 'admin.whatsapp_notify.toggles.refund_transfer_proof',
                 'group' => 'finance',
+                'default' => true,
             ],
             'withdrawal_transfer_proof' => [
-                'config' => 'services.fonnte.withdrawal_transfer_proof_notify_enabled',
                 'label' => 'admin.whatsapp_notify.toggles.withdrawal_transfer_proof',
                 'group' => 'finance',
+                'default' => true,
             ],
             'refund_admin' => [
-                'config' => 'services.fonnte.refund_admin_notify_enabled',
                 'label' => 'admin.whatsapp_notify.toggles.refund_admin',
                 'group' => 'admin',
+                'default' => true,
             ],
             'muthowif_registration_admin' => [
-                'config' => 'services.fonnte.muthowif_registration_admin_notify_enabled',
                 'label' => 'admin.whatsapp_notify.toggles.muthowif_registration_admin',
                 'group' => 'admin',
+                'default' => true,
             ],
             'emergency_admin_report' => [
-                'config' => 'services.fonnte.emergency_admin_report_notify_enabled',
                 'label' => 'admin.whatsapp_notify.toggles.emergency_admin_report',
                 'group' => 'emergency',
+                'default' => true,
             ],
             'emergency_customer_report' => [
-                'config' => 'services.fonnte.emergency_customer_report_notify_enabled',
                 'label' => 'admin.whatsapp_notify.toggles.emergency_customer_report',
                 'group' => 'emergency',
+                'default' => true,
             ],
             'emergency_candidate' => [
-                'config' => 'services.fonnte.emergency_candidate_notify_enabled',
                 'label' => 'admin.whatsapp_notify.toggles.emergency_candidate',
                 'group' => 'emergency',
+                'default' => true,
             ],
             'emergency_offer' => [
-                'config' => 'services.fonnte.emergency_offer_notify_enabled',
                 'label' => 'admin.whatsapp_notify.toggles.emergency_offer',
                 'group' => 'emergency',
+                'default' => true,
             ],
             'emergency_selection' => [
-                'config' => 'services.fonnte.emergency_selection_notify_enabled',
                 'label' => 'admin.whatsapp_notify.toggles.emergency_selection',
                 'group' => 'emergency',
+                'default' => true,
             ],
             'support_completion_requested' => [
-                'config' => 'services.fonnte.support_completion_requested_notify_enabled',
                 'label' => 'admin.whatsapp_notify.toggles.support_completion_requested',
                 'group' => 'support',
+                'default' => true,
             ],
             'support_completion_approved' => [
-                'config' => 'services.fonnte.support_completion_approved_notify_enabled',
                 'label' => 'admin.whatsapp_notify.toggles.support_completion_approved',
                 'group' => 'support',
+                'default' => true,
             ],
         ];
     }
@@ -122,42 +137,72 @@ class WhatsAppNotifySettings
         ];
     }
 
-    public static function token(): ?string
+    public static function token(WhatsAppGateway $gateway = WhatsAppGateway::Transactional): ?string
     {
-        return self::gatewayValue(self::SETTING_TOKEN, 'services.fonnte.token');
+        return match ($gateway) {
+            WhatsAppGateway::Transactional => self::storedValue(self::SETTING_TOKEN),
+            WhatsAppGateway::Bulk => self::bulkStoredValue(self::SETTING_BULK_TOKEN),
+        };
     }
 
-    public static function hasToken(): bool
+    public static function hasToken(WhatsAppGateway $gateway = WhatsAppGateway::Transactional): bool
     {
-        $token = self::token();
+        $token = self::token($gateway);
 
         return is_string($token) && $token !== '';
     }
 
-    public static function apiUrl(): string
+    public static function apiUrl(WhatsAppGateway $gateway = WhatsAppGateway::Transactional): string
     {
-        return self::gatewayValue(self::SETTING_API_URL, 'services.fonnte.url')
-            ?? 'https://whatsapp.baytgo.id/send';
+        return match ($gateway) {
+            WhatsAppGateway::Transactional => self::storedValue(self::SETTING_API_URL)
+                ?? self::DEFAULT_TRANSACTIONAL_API_URL,
+            WhatsAppGateway::Bulk => self::bulkStoredValue(self::SETTING_BULK_API_URL)
+                ?? self::DEFAULT_BULK_API_URL,
+        };
     }
 
-    public static function sessionId(): ?string
+    public static function sessionId(WhatsAppGateway $gateway = WhatsAppGateway::Transactional): ?string
     {
-        $value = self::gatewayValue(self::SETTING_SESSION_ID, 'services.fonnte.session_id');
+        $value = match ($gateway) {
+            WhatsAppGateway::Transactional => self::storedValue(self::SETTING_SESSION_ID),
+            WhatsAppGateway::Bulk => self::bulkStoredValue(self::SETTING_BULK_SESSION_ID),
+        };
 
         return $value !== null && $value !== '' ? $value : null;
     }
 
-    public static function countryCode(): string
+    public static function countryCode(WhatsAppGateway $gateway = WhatsAppGateway::Transactional): string
     {
-        return self::gatewayValue(self::SETTING_COUNTRY_CODE, 'services.fonnte.country_code')
-            ?? '62';
+        return match ($gateway) {
+            WhatsAppGateway::Transactional => self::storedValue(self::SETTING_COUNTRY_CODE) ?? self::DEFAULT_COUNTRY_CODE,
+            WhatsAppGateway::Bulk => self::bulkStoredValue(self::SETTING_BULK_COUNTRY_CODE) ?? self::DEFAULT_COUNTRY_CODE,
+        };
     }
 
     public static function mediaPublicUrl(): ?string
     {
-        $value = self::gatewayValue(self::SETTING_MEDIA_PUBLIC_URL, 'services.fonnte.media_public_url');
+        $value = self::bulkStoredValue(self::SETTING_BULK_MEDIA_PUBLIC_URL);
 
         return $value !== null && $value !== '' ? $value : null;
+    }
+
+    /**
+     * @return array{
+     *     api_url: string,
+     *     session_id: string,
+     *     country_code: string,
+     *     token_set: bool,
+     * }
+     */
+    public static function transactionalGatewayValuesForForm(): array
+    {
+        return [
+            'api_url' => self::apiUrl(WhatsAppGateway::Transactional),
+            'session_id' => self::sessionId(WhatsAppGateway::Transactional) ?? '',
+            'country_code' => self::countryCode(WhatsAppGateway::Transactional),
+            'token_set' => self::hasToken(WhatsAppGateway::Transactional),
+        ];
     }
 
     /**
@@ -169,14 +214,14 @@ class WhatsAppNotifySettings
      *     token_set: bool,
      * }
      */
-    public static function gatewayValuesForForm(): array
+    public static function bulkGatewayValuesForForm(): array
     {
         return [
-            'api_url' => self::apiUrl(),
-            'session_id' => self::sessionId() ?? '',
-            'country_code' => self::countryCode(),
+            'api_url' => self::apiUrl(WhatsAppGateway::Bulk),
+            'session_id' => self::sessionId(WhatsAppGateway::Bulk) ?? '',
+            'country_code' => self::countryCode(WhatsAppGateway::Bulk),
             'media_public_url' => self::mediaPublicUrl() ?? '',
-            'token_set' => self::hasToken(),
+            'token_set' => self::hasToken(WhatsAppGateway::Bulk),
         ];
     }
 
@@ -191,7 +236,7 @@ class WhatsAppNotifySettings
             return filter_var($stored, FILTER_VALIDATE_BOOLEAN);
         }
 
-        return (bool) config(self::toggles()[$key]['config'], true);
+        return self::toggles()[$key]['default'];
     }
 
     /**
@@ -200,24 +245,19 @@ class WhatsAppNotifySettings
     public static function adminNumbers(): array
     {
         $stored = SiteSetting::getValue(self::SETTING_ADMIN_NUMBERS);
-        if ($stored !== null) {
-            return array_values(array_filter(array_map(
-                static fn (string $n): string => trim($n),
-                explode(',', $stored),
-            ), static fn (string $n): bool => $n !== ''));
+        if ($stored === null || trim($stored) === '') {
+            return [];
         }
 
-        return config('emergency.admin_whatsapp_numbers', []);
+        return array_values(array_filter(array_map(
+            static fn (string $n): string => trim($n),
+            explode(',', $stored),
+        ), static fn (string $n): bool => $n !== ''));
     }
 
     public static function adminNumbersForForm(): string
     {
-        $stored = SiteSetting::getValue(self::SETTING_ADMIN_NUMBERS);
-        if ($stored !== null) {
-            return $stored;
-        }
-
-        return implode(', ', config('emergency.admin_whatsapp_numbers', []));
+        return SiteSetting::getValue(self::SETTING_ADMIN_NUMBERS) ?? '';
     }
 
     /**
@@ -234,23 +274,23 @@ class WhatsAppNotifySettings
     }
 
     /**
-     * Gabungkan nilai form dengan yang sudah tersimpan / .env (untuk uji coba sebelum simpan).
-     *
      * @param  array<string, mixed>  $input
      * @return array{token: string, api_url: string, session_id: ?string, country_code: string}
      */
-    public static function gatewayFromInput(array $input): array
+    public static function gatewayFromInput(array $input, WhatsAppGateway $gateway): array
     {
-        $token = trim((string) ($input['gateway_token'] ?? ''));
+        $prefix = $gateway === WhatsAppGateway::Bulk ? 'bulk_gateway_' : 'gateway_';
+
+        $token = trim((string) ($input[$prefix.'token'] ?? ''));
         if ($token === '') {
-            $token = self::token() ?? '';
+            $token = self::token($gateway) ?? '';
         }
 
         return [
             'token' => $token,
-            'api_url' => self::nullableTrimmed($input['gateway_api_url'] ?? null) ?? self::apiUrl(),
-            'session_id' => self::nullableTrimmed($input['gateway_session_id'] ?? null) ?? self::sessionId(),
-            'country_code' => self::nullableTrimmed($input['gateway_country_code'] ?? null) ?? self::countryCode(),
+            'api_url' => self::nullableTrimmed($input[$prefix.'api_url'] ?? null) ?? self::apiUrl($gateway),
+            'session_id' => self::nullableTrimmed($input[$prefix.'session_id'] ?? null) ?? self::sessionId($gateway),
+            'country_code' => self::nullableTrimmed($input[$prefix.'country_code'] ?? null) ?? self::countryCode($gateway),
         ];
     }
 
@@ -301,22 +341,61 @@ class WhatsAppNotifySettings
             self::SETTING_COUNTRY_CODE,
             self::nullableTrimmed($input['gateway_country_code'] ?? null),
         );
+
+        $bulkToken = trim((string) ($input['bulk_gateway_token'] ?? ''));
+        if ($bulkToken !== '') {
+            SiteSetting::putValue(self::SETTING_BULK_TOKEN, $bulkToken);
+        }
+
         SiteSetting::putValue(
-            self::SETTING_MEDIA_PUBLIC_URL,
-            self::nullableTrimmed($input['gateway_media_public_url'] ?? null),
+            self::SETTING_BULK_API_URL,
+            self::nullableTrimmed($input['bulk_gateway_api_url'] ?? null),
+        );
+        SiteSetting::putValue(
+            self::SETTING_BULK_SESSION_ID,
+            self::nullableTrimmed($input['bulk_gateway_session_id'] ?? null),
+        );
+        SiteSetting::putValue(
+            self::SETTING_BULK_COUNTRY_CODE,
+            self::nullableTrimmed($input['bulk_gateway_country_code'] ?? null),
+        );
+        SiteSetting::putValue(
+            self::SETTING_BULK_MEDIA_PUBLIC_URL,
+            self::nullableTrimmed($input['bulk_gateway_media_public_url'] ?? null),
         );
     }
 
-    private static function gatewayValue(string $settingKey, string $configKey): ?string
+    private static function storedValue(string $settingKey): ?string
     {
         $stored = SiteSetting::getValue($settingKey);
-        if ($stored !== null && $stored !== '') {
+        if ($stored === null || $stored === '') {
+            return null;
+        }
+
+        return $stored;
+    }
+
+    private static function bulkStoredValue(string $bulkSettingKey): ?string
+    {
+        $stored = self::storedValue($bulkSettingKey);
+        if ($stored !== null) {
             return $stored;
         }
 
-        $fromConfig = config($configKey);
+        $legacyKey = match ($bulkSettingKey) {
+            self::SETTING_BULK_TOKEN => self::SETTING_TOKEN,
+            self::SETTING_BULK_API_URL => self::SETTING_API_URL,
+            self::SETTING_BULK_SESSION_ID => self::SETTING_SESSION_ID,
+            self::SETTING_BULK_COUNTRY_CODE => self::SETTING_COUNTRY_CODE,
+            self::SETTING_BULK_MEDIA_PUBLIC_URL => null,
+            default => null,
+        };
 
-        return is_string($fromConfig) && $fromConfig !== '' ? $fromConfig : null;
+        if ($legacyKey === null) {
+            return null;
+        }
+
+        return self::storedValue($legacyKey);
     }
 
     private static function nullableTrimmed(mixed $value): ?string
