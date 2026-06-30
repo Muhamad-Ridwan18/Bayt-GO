@@ -19,6 +19,11 @@ return [
         'private' => 'Jemaah Private',
         'support' => 'Layanan Pendukung',
     ],
+    'muthowif_work_location' => [
+        'makkah' => 'Mekkah',
+        'madinah' => 'Madinah',
+        'makkah_madinah' => 'Mekkah & Madinah',
+    ],
     'support_package_category' => [
         'tawaf' => 'Tawaf',
         'umrah' => 'Umrah',

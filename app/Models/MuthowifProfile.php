@@ -28,7 +28,7 @@ class MuthowifProfile extends Model
         'user_id',
         'phone',
         'address',
-        'current_domicile_address',
+        'work_location',
         'nik',
         'birth_date',
         'passport_number',
@@ -374,6 +374,19 @@ class MuthowifProfile extends Model
     public function workExperiencesForDisplay(): array
     {
         return $this->normalizeStringList($this->work_experiences);
+    }
+
+    public function workLocationLabel(): ?string
+    {
+        $value = filled($this->work_location) ? trim((string) $this->work_location) : null;
+
+        if ($value === null || $value === '') {
+            return null;
+        }
+
+        $legacy = __('enums.muthowif_work_location.'.$value);
+
+        return $legacy !== 'enums.muthowif_work_location.'.$value ? $legacy : $value;
     }
 
     /**

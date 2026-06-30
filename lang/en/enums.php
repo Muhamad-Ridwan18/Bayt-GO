@@ -19,6 +19,11 @@ return [
         'private' => 'Private pilgrims',
         'support' => 'Support service',
     ],
+    'muthowif_work_location' => [
+        'makkah' => 'Makkah',
+        'madinah' => 'Madinah',
+        'makkah_madinah' => 'Makkah & Madinah',
+    ],
     'support_package_category' => [
         'tawaf' => 'Tawaf',
         'umrah' => 'Umrah',

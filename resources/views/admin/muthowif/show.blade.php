@@ -128,9 +128,9 @@
                                 <p class="text-xs text-slate-400 mb-1">Alamat sesuai KTP</p>
                                 <p class="text-sm font-medium leading-relaxed text-slate-900">{{ $profile->address ?: '—' }}</p>
                             </div>
-                            <div class="sm:col-span-2">
-                                <p class="text-xs text-slate-400 mb-1">Alamat domisili saat ini</p>
-                                <p class="text-sm font-medium leading-relaxed text-slate-900">{{ $profile->current_domicile_address ?: '—' }}</p>
+                            <div>
+                                <p class="text-xs text-slate-400 mb-1">Lokasi kerja saat ini</p>
+                                <p class="text-sm font-medium text-slate-900">{{ $profile->workLocationLabel() ?: '—' }}</p>
                             </div>
                         </div>
                     </div>

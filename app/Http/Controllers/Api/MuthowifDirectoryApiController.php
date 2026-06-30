@@ -96,7 +96,7 @@ class MuthowifDirectoryApiController extends Controller
                 'avatar' => $profile->photo_path ? asset('storage/' . $profile->photo_path) : 'https://ui-avatars.com/api/?name=' . urlencode($profile->user->name ?? 'M') . '&background=0984e3&color=fff',
                 'rating' => number_format($profile->average_rating ?? 5.0, 1),
                 'reviews' => $profile->booking_reviews_count ?? 0,
-                'location' => 'Makkah & Madinah', // Or derive from address
+                'location' => $profile->workLocationLabel(),
                 'start_price' => $startPrice,
                 'languages' => array_slice($profile->languagesForDisplay(), 0, 2),
             ];
@@ -173,7 +173,7 @@ class MuthowifDirectoryApiController extends Controller
                 'reviews_count' => $reviewsCount,
                 'confirmed_bookings' => $confirmedBookings,
                 'is_new' => $reviewsCount === 0 && $confirmedBookings === 0,
-                'location' => 'Makkah & Madinah',
+                'location' => $publicProfile->workLocationLabel(),
                 'start_price' => $startPrice,
                 'languages' => $languages,
                 'bio' => $bio,

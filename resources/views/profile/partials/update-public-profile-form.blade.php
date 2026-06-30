@@ -101,11 +101,11 @@
                     <x-input-error class="mt-2" :messages="$errors->get('address')" field="address" />
                 </div>
 
-                <div class="md:col-span-2">
-                    <x-input-label for="public_current_domicile_address" :value="__('profile_public.current_domicile_address')" />
-                    <textarea id="public_current_domicile_address" name="current_domicile_address" rows="2" class="mt-1 block w-full rounded-lg border-slate-300 text-sm shadow-sm focus:border-brand-500 focus:ring-brand-500" placeholder="{{ __('profile_public.current_domicile_address_hint') }}">{{ old('current_domicile_address', $muthowifProfile->current_domicile_address) }}</textarea>
-                    <p class="mt-1 text-xs text-slate-500">{{ __('profile_public.current_domicile_address_hint') }}</p>
-                    <x-input-error class="mt-2" :messages="$errors->get('current_domicile_address')" field="current_domicile_address" />
+                <div>
+                    <x-input-label for="public_work_location" :value="__('profile_public.work_location')" />
+                    <x-text-input id="public_work_location" name="work_location" type="text" class="mt-1 block w-full" :value="old('work_location', $muthowifProfile->work_location)" :placeholder="__('profile_public.work_location_placeholder')" />
+                    <p class="mt-1 text-xs text-slate-500">{{ __('profile_public.work_location_hint') }}</p>
+                    <x-input-error class="mt-2" :messages="$errors->get('work_location')" field="work_location" />
                 </div>
             </div>
         </section>

@@ -48,7 +48,7 @@ class DashboardController extends Controller
                     'avatar' => $profile->photo_path ? asset('storage/' . $profile->photo_path) : 'https://ui-avatars.com/api/?name=' . urlencode($profile->user->name ?? 'M') . '&background=0984e3&color=fff',
                     'rating' => number_format($avgRating, 1),
                     'reviews' => $reviewCount,
-                    'location' => 'Makkah & Madinah',
+                    'location' => $profile->workLocationLabel(),
                     'start_price' => $startPrice,
                     'languages' => array_slice($profile->languagesForDisplay(), 0, 2),
                 ];
