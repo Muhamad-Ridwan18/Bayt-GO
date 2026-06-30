@@ -11,7 +11,7 @@ return [
     'work_location_hint' => 'Isi kota atau wilayah tempat Anda sedang bertugas saat ini.',
     'work_location_placeholder' => 'Contoh: Mekkah, Madinah, Jakarta',
     'photo' => 'Foto profil (opsional)',
-    'photo_hint' => 'JPG, PNG, atau WebP. Maksimal 5 MB.',
+    'photo_hint' => 'JPG, PNG, atau WebP. Maksimal 5 MB. Gunakan foto portrait (3:4) dengan wajah di tengah–atas agar tampil rapi di kartu marketplace.',
     'current_photo' => 'Foto profil saat ini',
     'ktp_image' => 'Foto / scan KTP (opsional)',
     'ktp_image_hint' => 'JPG, PNG, atau WebP. Maksimal 5 MB. Unggah file baru untuk mengganti yang lama.',

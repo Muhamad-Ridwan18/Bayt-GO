@@ -56,12 +56,12 @@
 
 <{{ $as }} class="h-full list-none">
     <article class="group/card relative flex h-full flex-col overflow-hidden rounded-2xl border border-slate-200/90 bg-white shadow-sm ring-1 ring-slate-100/80 transition duration-300 hover:border-baytgo/25 hover:shadow-lg hover:shadow-baytgo/5">
-        <div class="relative aspect-[4/3] overflow-hidden bg-slate-100 sm:aspect-[5/4]">
+        <div class="relative aspect-[4/5] overflow-hidden bg-slate-200">
             <a href="{{ $profileHref }}" class="block h-full focus:outline-none focus-visible:ring-2 focus-visible:ring-baytgo focus-visible:ring-inset" tabindex="-1" aria-hidden="true">
                 <img
                     src="{{ $profile->photoUrl() }}"
                     alt=""
-                    class="h-full w-full object-cover object-top transition duration-500 group-hover/card:scale-[1.02]"
+                    class="h-full w-full object-cover object-[center_35%] transition duration-500 group-hover/card:scale-[1.02]"
                     loading="lazy"
                     decoding="async"
                     onerror="this.onerror=null; this.src={!! json_encode($fallbackSvg) !!}"

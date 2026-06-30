@@ -11,7 +11,7 @@ return [
     'work_location_hint' => 'Enter the city or area where you are currently serving.',
     'work_location_placeholder' => 'e.g. Makkah, Madinah, Jakarta',
     'photo' => 'Profile photo (optional)',
-    'photo_hint' => 'JPG, PNG, or WebP. Maximum 5 MB.',
+    'photo_hint' => 'JPG, PNG, or WebP. Max 5 MB. Use a portrait photo (3:4) with your face in the upper-center area so marketplace cards display cleanly.',
     'current_photo' => 'Current profile photo',
     'ktp_image' => 'KTP photo / scan (optional)',
     'ktp_image_hint' => 'JPG, PNG, or WebP. Maximum 5 MB. Upload a new file to replace the existing one.',
