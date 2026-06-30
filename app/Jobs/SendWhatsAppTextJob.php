@@ -27,12 +27,28 @@ class SendWhatsAppTextJob implements ShouldQueue
         public ?string $countryCallingCode = null,
         public array $failureCacheKeysToForget = [],
         public WhatsAppGateway $gateway = WhatsAppGateway::Transactional,
+        public ?string $overrideGatewayToken = null,
+        public ?string $overrideGatewayApiUrl = null,
+        public ?string $overrideGatewaySessionId = null,
+        public ?string $overrideGatewayCountryCode = null,
     ) {}
 
     public function handle(FonnteService $fonnte): void
     {
         try {
-            $fonnte->sendText($this->target, $this->message, $this->countryCallingCode, $this->gateway);
+            if ($this->overrideGatewayToken !== null) {
+                $fonnte->sendTextWithGateway(
+                    $this->overrideGatewayToken,
+                    $this->overrideGatewayApiUrl ?? '',
+                    $this->overrideGatewaySessionId,
+                    $this->overrideGatewayCountryCode ?? '62',
+                    $this->target,
+                    $this->message,
+                    $this->countryCallingCode,
+                );
+            } else {
+                $fonnte->sendText($this->target, $this->message, $this->countryCallingCode, $this->gateway);
+            }
         } catch (RuntimeException|Throwable $e) {
             foreach ($this->failureCacheKeysToForget as $cacheKey) {
                 if ($cacheKey !== '') {

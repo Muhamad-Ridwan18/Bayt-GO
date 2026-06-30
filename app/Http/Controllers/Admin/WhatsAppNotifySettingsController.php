@@ -4,7 +4,7 @@ namespace App\Http\Controllers\Admin;
 
 use App\Enums\WhatsAppGateway;
 use App\Http\Controllers\Controller;
-use App\Services\FonnteService;
+use App\Jobs\SendWhatsAppTextJob;
 use App\Support\IntlPhone;
 use App\Support\WhatsAppNotifySettings;
 use Illuminate\Http\JsonResponse;
@@ -12,10 +12,11 @@ use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Validation\Rule;
 use Illuminate\View\View;
-use Throwable;
 
 class WhatsAppNotifySettingsController extends Controller
 {
+    private const TEST_SEND_DELAY_MS = 300;
+
     public function edit(): View
     {
         return view('admin.whatsapp-notify-settings.edit', [
@@ -41,7 +42,7 @@ class WhatsAppNotifySettingsController extends Controller
             ->with('status', __('admin.whatsapp_notify.settings_saved'));
     }
 
-    public function test(Request $request, FonnteService $fonnte): JsonResponse
+    public function test(Request $request): JsonResponse
     {
         $request->validate(array_merge($this->gatewayValidationRules(), [
             'test_gateway' => ['required', Rule::enum(WhatsAppGateway::class)],
@@ -75,7 +76,9 @@ class WhatsAppNotifySettingsController extends Controller
         ]);
 
         $results = [];
-        foreach ($numbers as $phone) {
+        $queued = 0;
+
+        foreach ($numbers as $index => $phone) {
             $dial = IntlPhone::fonnteDial($phone);
             if ($dial === null) {
                 $results[] = [
@@ -87,28 +90,27 @@ class WhatsAppNotifySettingsController extends Controller
                 continue;
             }
 
-            try {
-                $fonnte->sendTextWithGateway(
-                    $gatewayConfig['token'],
-                    $gatewayConfig['api_url'],
-                    $gatewayConfig['session_id'],
-                    $gatewayConfig['country_code'],
-                    $dial['target'],
-                    $message,
-                    $dial['country_calling_code'],
-                );
-                $results[] = ['phone' => $phone, 'ok' => true];
-            } catch (Throwable $e) {
-                $results[] = [
-                    'phone' => $phone,
-                    'ok' => false,
-                    'error' => $e->getMessage(),
-                ];
+            $job = SendWhatsAppTextJob::dispatch(
+                $dial['target'],
+                $message,
+                $dial['country_calling_code'],
+                [],
+                $gateway,
+                $gatewayConfig['token'],
+                $gatewayConfig['api_url'],
+                $gatewayConfig['session_id'],
+                $gatewayConfig['country_code'],
+            );
+
+            if ($index > 0) {
+                $job->delay(now()->addMilliseconds($index * self::TEST_SEND_DELAY_MS));
             }
+
+            $queued++;
+            $results[] = ['phone' => $phone, 'ok' => true, 'queued' => true];
         }
 
-        $okCount = count(array_filter($results, static fn (array $r): bool => $r['ok'] === true));
-        if ($okCount === 0) {
+        if ($queued === 0) {
             return response()->json([
                 'message' => __('admin.whatsapp_notify.test_all_failed'),
                 'results' => $results,
@@ -116,9 +118,9 @@ class WhatsAppNotifySettingsController extends Controller
         }
 
         return response()->json([
-            'message' => __('admin.whatsapp_notify.test_success', [
-                'sent' => $okCount,
-                'total' => count($results),
+            'message' => __('admin.whatsapp_notify.test_queued', [
+                'queued' => $queued,
+                'total' => count($numbers),
                 'gateway' => $gatewayLabel,
             ]),
             'results' => $results,
