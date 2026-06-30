@@ -3,12 +3,18 @@
 namespace App\Http\Controllers\Api;
 
 use App\Enums\BookingStatus;
+use App\Enums\MuthowifServiceType;
+use App\Enums\MuthowifVerificationStatus;
 use App\Http\Controllers\Controller;
 use App\Models\MuthowifProfile;
+use App\Models\MuthowifService;
+use App\Support\MarketplaceProfileCache;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Support\Facades\Validator;
+use Illuminate\Support\Str;
+use Laravel\Sanctum\PersonalAccessToken;
 
 class MuthowifDirectoryApiController extends Controller
 {
@@ -110,80 +116,174 @@ class MuthowifDirectoryApiController extends Controller
             ->where('verification_status', MuthowifVerificationStatus::Approved)
             ->firstOrFail();
 
-        $publicProfile->load([
-            'user',
-            'services.addOns',
-            'bookingReviews' => fn ($q) => $q
-                ->with('customer')
-                ->latest()
-                ->limit(10),
-        ]);
-
-        $publicProfile->loadCount([
-            'bookings as confirmed_bookings_count' => static fn ($q) => $q->where('status', BookingStatus::Confirmed),
-            'bookingReviews',
-        ]);
-        $publicProfile->loadAvg('bookingReviews', 'rating');
+        $publicProfile = MarketplaceProfileCache::forShow($publicProfile);
 
         $startDate = (string) $request->query('start_date', '');
         $endDate = (string) $request->query('end_date', '');
-        $bookingIntent = $this->bookingIntentForProfile($request, $publicProfile, $startDate, $endDate);
+        $bookingIntent = $this->bookingIntentForProfile(
+            $this->optionalUser($request),
+            $publicProfile,
+            $startDate,
+            $endDate
+        );
 
+        $group = $publicProfile->services->firstWhere('type', MuthowifServiceType::Group);
+        $private = $publicProfile->services->firstWhere('type', MuthowifServiceType::PrivateJamaah);
+        $reviewsCount = (int) ($publicProfile->booking_reviews_count ?? 0);
+        $avgRating = $publicProfile->booking_reviews_avg_rating !== null
+            ? round((float) $publicProfile->booking_reviews_avg_rating, 1)
+            : null;
+        $confirmedBookings = (int) ($publicProfile->confirmed_bookings_count ?? 0);
+        $languages = $publicProfile->languagesForDisplay();
+        $educations = $publicProfile->educationsForDisplay();
+        $experiences = $publicProfile->workExperiencesForDisplay();
         $startPrice = $publicProfile->services->min('price') ?? 0;
+
+        $bio = filled($publicProfile->reference_text)
+            ? $publicProfile->reference_text
+            : ($group && filled($group->description)
+                ? Str::limit(trim(strip_tags($group->description)), 400)
+                : ($private && filled($private->description)
+                    ? Str::limit(trim(strip_tags($private->description)), 400)
+                    : null));
+
+        $specializations = collect([$group?->name, $private?->name])
+            ->filter()
+            ->merge(collect($languages)->take(3))
+            ->unique()
+            ->values()
+            ->all();
+
+        $allAddons = collect();
+        if ($private) {
+            $allAddons = $allAddons->merge($private->addOns);
+        }
+        if ($group) {
+            $allAddons = $allAddons->merge($group->addOns ?? collect());
+        }
+        $allAddons = $allAddons->unique('id')->values();
 
         return response()->json([
             'profile' => [
                 'id' => $publicProfile->id,
+                'slug' => $publicProfile->slug,
                 'name' => $publicProfile->user->name ?? 'Muthowif',
-                'avatar' => $publicProfile->photo_path ? asset('storage/' . $publicProfile->photo_path) : 'https://ui-avatars.com/api/?name=' . urlencode($publicProfile->user->name ?? 'M') . '&background=0984e3&color=fff',
-                'rating' => number_format($publicProfile->average_rating ?? 5.0, 1),
-                'reviews_count' => $publicProfile->booking_reviews_count ?? 0,
-                'confirmed_bookings' => $publicProfile->confirmed_bookings_count ?? 0,
+                'avatar' => $publicProfile->photoUrl(),
+                'rating' => $avgRating !== null ? number_format($avgRating, 1) : null,
+                'reviews_count' => $reviewsCount,
+                'confirmed_bookings' => $confirmedBookings,
+                'is_new' => $reviewsCount === 0 && $confirmedBookings === 0,
                 'location' => 'Makkah & Madinah',
                 'start_price' => $startPrice,
-                'languages' => $publicProfile->languagesForDisplay(),
-                'bio' => $publicProfile->bio,
+                'languages' => $languages,
+                'bio' => $bio,
+                'experience_summary' => $experiences[0] ?? null,
+                'educations' => $educations,
+                'work_experiences' => $experiences,
+                'specializations' => $specializations,
             ],
-            'services' => $publicProfile->services->map(function($service) {
-                return [
-                    'id' => $service->id,
-                    'name' => $service->name,
-                    'type' => $service->type->value ?? (string)$service->type,
-                    'description' => $service->description,
-                    'price' => $service->price,
-                    'duration_hours' => $service->duration_hours,
-                    'max_pax' => $service->max_pax,
-                    'same_hotel_price_per_day' => (float)$service->same_hotel_price_per_day,
-                    'transport_price_flat' => (float)$service->transport_price_flat,
-                    'add_ons' => $service->addOns->map(function($addon) {
-                        return [
-                            'id' => $addon->id,
-                            'name' => $addon->name,
-                            'price' => $addon->price,
-                            'type' => $addon->type->value ?? (string)$addon->type,
-                        ];
-                    }),
-                ];
-            }),
-            'reviews' => $publicProfile->bookingReviews->map(function($review) {
+            'services' => $publicProfile->services
+                ->filter(fn (MuthowifService $service) => in_array($service->type, [MuthowifServiceType::Group, MuthowifServiceType::PrivateJamaah], true))
+                ->map(fn (MuthowifService $service) => $this->formatServiceForApi($service))
+                ->values(),
+            'add_ons' => $allAddons->map(fn ($addon) => [
+                'id' => $addon->id,
+                'name' => $addon->name,
+                'price' => (float) $addon->price,
+                'type' => $addon->type->value ?? (string) $addon->type,
+            ])->values(),
+            'portfolios' => $publicProfile->portfolios->map(fn ($portfolio) => [
+                'id' => $portfolio->id,
+                'title' => $portfolio->title,
+                'description' => $portfolio->description,
+                'cover_url' => $portfolio->coverUrl(),
+                'images' => $portfolio->images->isNotEmpty()
+                    ? $portfolio->images->map(fn ($image) => $image->publicUrl())->values()
+                    : collect([$portfolio->coverUrl()]),
+            ])->values(),
+            'portfolios_count' => (int) ($publicProfile->portfolios_count ?? $publicProfile->portfolios->count()),
+            'reviews' => $publicProfile->bookingReviews->map(function ($review) {
+                $customerName = $review->customer->name ?? 'Jamaah';
+
                 return [
                     'id' => $review->id,
-                    'customer_name' => $review->customer->name ?? 'Jamaah',
-                    'customer_avatar' => 'https://ui-avatars.com/api/?name=' . urlencode($review->customer->name ?? 'J') . '&background=F1F5F9&color=64748B',
+                    'customer_name' => $customerName,
+                    'customer_avatar' => 'https://ui-avatars.com/api/?name='.urlencode($customerName).'&background=F1F5F9&color=64748B',
                     'rating' => $review->rating,
-                    'comment' => $review->comment,
+                    'comment' => $review->review,
                     'created_at' => $review->created_at->diffForHumans(),
                 ];
             }),
+            'blocked_dates' => $publicProfile->blockedDates->map(fn ($bd) => [
+                'date' => $bd->blocked_on->toDateString(),
+                'note' => $bd->note,
+            ])->values(),
+            'blocked_dates_count' => (int) ($publicProfile->blocked_dates_count ?? $publicProfile->blockedDates->count()),
             'bookingIntent' => $bookingIntent,
         ]);
     }
 
-    private function bookingIntentForProfile(Request $request, MuthowifProfile $profile, string $startDate, string $endDate): array
+    /**
+     * @return array<string, mixed>
+     */
+    private function formatServiceForApi(MuthowifService $service): array
+    {
+        return [
+            'id' => $service->id,
+            'name' => $service->name,
+            'type' => $service->type->value ?? (string) $service->type,
+            'type_label' => $service->type->label(),
+            'description' => $service->description,
+            'price' => $service->price,
+            'min_pilgrims' => $service->min_pilgrims,
+            'max_pilgrims' => $service->max_pilgrims,
+            'same_hotel_price_per_day' => (float) $service->same_hotel_price_per_day,
+            'transport_price_flat' => (float) $service->transport_price_flat,
+            'has_hotel_addon' => (float) ($service->same_hotel_price_per_day ?? 0) > 0,
+            'has_transport_addon' => (float) ($service->transport_price_flat ?? 0) > 0,
+            'features' => $this->packageFeatures($service),
+            'add_ons' => $service->addOns->map(fn ($addon) => [
+                'id' => $addon->id,
+                'name' => $addon->name,
+                'price' => (float) $addon->price,
+                'type' => $addon->type->value ?? (string) $addon->type,
+            ])->values(),
+        ];
+    }
+
+    /**
+     * @return list<string>
+     */
+    private function packageFeatures(MuthowifService $service): array
+    {
+        $items = [__('marketplace.show.feature_guidance')];
+
+        if ((float) ($service->same_hotel_price_per_day ?? 0) > 0) {
+            $items[] = __('marketplace.show.feature_hotel');
+        }
+        if ((float) ($service->transport_price_flat ?? 0) > 0) {
+            $items[] = __('marketplace.show.feature_transport');
+        }
+        if (filled($service->description)) {
+            $items[] = __('marketplace.show.feature_description');
+        }
+
+        return $items;
+    }
+
+    private function optionalUser(Request $request): ?\App\Models\User
+    {
+        if (! $request->bearerToken()) {
+            return null;
+        }
+
+        return PersonalAccessToken::findToken($request->bearerToken())?->tokenable;
+    }
+
+    private function bookingIntentForProfile(?\App\Models\User $user, MuthowifProfile $profile, string $startDate, string $endDate): array
     {
         $empty = ['can_submit' => false, 'reason' => null, 'start' => null, 'end' => null];
 
-        $user = $request->user();
         if (! $user?->isCustomer()) {
             return array_merge($empty, [
                 'reason' => $user ? 'not_customer' : 'guest',

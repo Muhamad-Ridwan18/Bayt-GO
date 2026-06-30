@@ -104,6 +104,10 @@ class BookingCompletionService
 
     public function shouldAutoCompleteNow(MuthowifBooking $booking): bool
     {
+        if ($booking->service_type === \App\Enums\MuthowifServiceType::Support) {
+            return false;
+        }
+
         if ($booking->status !== BookingStatus::Confirmed || ! $booking->isPaid()) {
             return false;
         }

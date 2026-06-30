@@ -2,13 +2,9 @@ import React from 'react';
 import { View, Text, StyleSheet, Image, TouchableOpacity, Dimensions } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { colors } from '../theme/colors';
+import { formatIdr } from '../utils/format';
 
 const CARD_WIDTH = Dimensions.get('window').width * 0.62;
-
-function formatIdr(amount) {
-  if (!amount || amount < 1) return '—';
-  return `Rp ${amount.toString().replace(/\B(?=(\d{3})+(?!\d))/g, '.')}`;
-}
 
 export default function MuthowifCard({ item, onPress }) {
   const langs = (item.languages || []).join(', ');

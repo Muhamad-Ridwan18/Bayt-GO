@@ -136,6 +136,9 @@
                         <x-nav-link :href="route('muthowif.pelayanan.edit')" :active="request()->routeIs('muthowif.pelayanan.*')">
                             {{ __('nav.services') }}
                         </x-nav-link>
+                        <x-nav-link :href="route('muthowif.pelayanan-pendukung.edit')" :active="request()->routeIs('muthowif.pelayanan-pendukung.*')">
+                            {{ __('layanan_pendukung.page_title') }}
+                        </x-nav-link>
                         <x-nav-link :href="route('muthowif.jadwal.index')" :active="request()->routeIs('muthowif.jadwal.*')">
                             {{ __('nav.day_off') }}
                         </x-nav-link>
@@ -307,6 +310,9 @@
             @if (Auth::user()->isVerifiedMuthowif())
                 <x-responsive-nav-link :href="route('muthowif.pelayanan.edit')" :active="request()->routeIs('muthowif.pelayanan.*')">
                     {{ __('nav.services') }}
+                </x-responsive-nav-link>
+                <x-responsive-nav-link :href="route('muthowif.pelayanan-pendukung.edit')" :active="request()->routeIs('muthowif.pelayanan-pendukung.*')">
+                    {{ __('layanan_pendukung.page_title') }}
                 </x-responsive-nav-link>
                 <x-responsive-nav-link :href="route('muthowif.jadwal.index')" :active="request()->routeIs('muthowif.jadwal.*')">
                     {{ __('nav.day_off') }}

@@ -68,6 +68,7 @@ class ProfileController extends Controller
             ],
             'phone' => ['nullable', 'string', 'max:32'],
             'address' => ['nullable', 'string', 'max:2000'],
+            'current_domicile_address' => ['nullable', 'string', 'max:2000'],
             'birth_date' => ['nullable', 'date', 'before:today'],
             'passport_number' => ['nullable', 'string', 'max:64'],
             'languages' => ['nullable', 'array', 'max:30'],
@@ -95,6 +96,7 @@ class ProfileController extends Controller
 
         $profile->phone = $validated['phone'] ?? null;
         $profile->address = $validated['address'] ?? null;
+        $profile->current_domicile_address = $validated['current_domicile_address'] ?? null;
         $profile->birth_date = $validated['birth_date'] ?? null;
         $profile->passport_number = $validated['passport_number'] ?? null;
         $profile->languages = $this->normalizeStringList($validated['languages'] ?? []);

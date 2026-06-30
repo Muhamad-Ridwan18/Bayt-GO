@@ -4,6 +4,7 @@ import { LinearGradient } from 'expo-linear-gradient';
 import AuthScreenShell from '../components/AuthScreenShell';
 import AuthInput from '../components/AuthInput';
 import { useAuth } from '../context/AuthContext';
+import { resetRoot } from '../navigation/rootNavigation';
 import { colors } from '../theme/colors';
 
 export default function LoginScreen({ navigation }) {
@@ -23,7 +24,7 @@ export default function LoginScreen({ navigation }) {
     setError('');
     try {
       await login(email.trim(), password);
-      navigation.reset({ index: 0, routes: [{ name: 'Dashboard' }] });
+      resetRoot(navigation, [{ name: 'Main' }]);
     } catch (err) {
       setError(err.message || 'Gagal login');
     } finally {

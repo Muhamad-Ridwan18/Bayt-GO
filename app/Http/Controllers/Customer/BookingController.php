@@ -104,6 +104,7 @@ class BookingController extends Controller
         $booking->load([
             'muthowifProfile.user',
             'muthowifProfile.services.addOns',
+            'supportPackage',
             'review',
             'refundRequests' => fn ($q) => $q->orderByDesc('created_at'),
             'rescheduleRequests' => fn ($q) => $q->orderByDesc('created_at'),

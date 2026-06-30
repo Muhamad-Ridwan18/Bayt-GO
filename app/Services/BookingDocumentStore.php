@@ -31,11 +31,15 @@ final class BookingDocumentStore
         $rules = [];
 
         foreach (self::FIELDS as $field) {
-            $required = match ($field) {
-                'ticket_outbound', 'ticket_return', 'passport' => true,
-                'itinerary' => $request->input('service_type') === 'group',
-                'visa' => false,
-            };
+            if ($request->input('service_type') === 'support') {
+                $required = false;
+            } else {
+                $required = match ($field) {
+                    'ticket_outbound', 'ticket_return', 'passport' => true,
+                    'itinerary' => $request->input('service_type') === 'group',
+                    'visa' => false,
+                };
+            }
 
             $rules[$field] = $this->rulesForField($request, $field, $required);
         }
@@ -201,6 +205,10 @@ final class BookingDocumentStore
      */
     public function assertRequiredDocumentsStored(MuthowifBooking $booking, MuthowifServiceType $serviceType): void
     {
+        if ($serviceType === MuthowifServiceType::Support) {
+            return;
+        }
+
         $required = [
             'ticket_outbound' => 'ticket_outbound_path',
             'ticket_return' => 'ticket_return_path',

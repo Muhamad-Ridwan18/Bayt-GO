@@ -6,6 +6,7 @@ enum BookingStatus: string
 {
     case Pending = 'pending';
     case Confirmed = 'confirmed';
+    case InProgress = 'in_progress';
     case Completed = 'completed';
     case Cancelled = 'cancelled';
 
@@ -21,6 +22,6 @@ enum BookingStatus: string
      */
     public static function blocksAvailability(): array
     {
-        return [self::Confirmed];
+        return [self::Confirmed, self::InProgress];
     }
 }

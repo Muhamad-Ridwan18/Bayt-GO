@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
+use App\Support\SiteBrand;
 use App\Support\WelcomePageCache;
 use Illuminate\Http\JsonResponse;
 
@@ -34,6 +35,10 @@ class HomeApiController extends Controller
         ])->values();
 
         return response()->json([
+            'brand' => [
+                'name' => config('app.name'),
+                'logo_url' => SiteBrand::logoPublicUrl(),
+            ],
             'featured_muthowifs' => $featured,
             'gallery' => $gallery,
         ]);

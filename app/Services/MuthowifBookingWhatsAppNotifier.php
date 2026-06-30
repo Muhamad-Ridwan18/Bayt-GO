@@ -41,10 +41,38 @@ class MuthowifBookingWhatsAppNotifier
 
         $this->withLocale($locale, function () use ($booking, $fonnteDial, $locale): void {
             $customerName = $booking->customer?->name ?? __('whatsapp.fallback_pilgrim', [], $locale);
-            $start = $booking->starts_on->format('d/m/Y');
-            $end = $booking->ends_on->format('d/m/Y');
             $appName = config('app.name', 'BaytGo');
             $url = route('muthowif.bookings.index');
+
+            if ($booking->isSupport()) {
+                $lines = [
+                    __('whatsapp.muthowif.support_new_booking.headline', ['app' => $appName], $locale),
+                    '',
+                    __('whatsapp.muthowif.support_new_booking.body', ['customer' => $customerName], $locale),
+                    '',
+                ];
+
+                if (filled($booking->booking_code)) {
+                    $lines[] = __('whatsapp.muthowif.support_new_booking.booking_code', ['code' => $booking->booking_code], $locale);
+                    $lines[] = '';
+                }
+
+                $lines[] = __('whatsapp.muthowif.support_new_booking.package', ['package' => $this->supportPackageLabel($booking, $locale)], $locale);
+                $lines[] = __('whatsapp.muthowif.support_new_booking.starts_at', ['datetime' => $this->supportStartsAtFormatted($booking)], $locale);
+                $lines[] = __('whatsapp.muthowif.support_new_booking.pilgrim_count', ['count' => $booking->pilgrim_count], $locale);
+                $lines[] = '';
+                $lines[] = __('whatsapp.muthowif.support_new_booking.status', [], $locale);
+                $lines[] = '';
+                $lines[] = __('whatsapp.muthowif.support_new_booking.open_panel', [], $locale);
+                $lines[] = $url;
+
+                $this->sendToTarget($fonnteDial, implode("\n", $lines), $booking->id);
+
+                return;
+            }
+
+            $start = $booking->starts_on->format('d/m/Y');
+            $end = $booking->ends_on->format('d/m/Y');
 
             $serviceLabel = $booking->service_type?->label() ?? __('whatsapp.fallback_service', [], $locale);
             $countLine = __('whatsapp.muthowif.new_booking.pilgrim_count', ['count' => $booking->pilgrim_count], $locale);
@@ -106,10 +134,36 @@ class MuthowifBookingWhatsAppNotifier
 
         $this->withLocale($locale, function () use ($booking, $fonnteDial, $locale): void {
             $customerName = $booking->customer?->name ?? __('whatsapp.fallback_pilgrim', [], $locale);
-            $start = $booking->starts_on->format('d/m/Y');
-            $end = $booking->ends_on->format('d/m/Y');
             $appName = config('app.name', 'BaytGo');
             $url = route('muthowif.bookings.index');
+
+            if ($booking->isSupport()) {
+                $lines = [
+                    __('whatsapp.muthowif.support_payment_settled.headline', ['app' => $appName], $locale),
+                    '',
+                    __('whatsapp.muthowif.support_payment_settled.body', ['customer' => $customerName], $locale),
+                    '',
+                ];
+
+                if (filled($booking->booking_code)) {
+                    $lines[] = __('whatsapp.muthowif.support_payment_settled.booking_code', ['code' => $booking->booking_code], $locale);
+                    $lines[] = '';
+                }
+
+                $lines[] = __('whatsapp.muthowif.support_payment_settled.package', ['package' => $this->supportPackageLabel($booking, $locale)], $locale);
+                $lines[] = __('whatsapp.muthowif.support_payment_settled.starts_at', ['datetime' => $this->supportStartsAtFormatted($booking)], $locale);
+                $lines[] = __('whatsapp.muthowif.support_payment_settled.status', [], $locale);
+                $lines[] = '';
+                $lines[] = __('whatsapp.muthowif.support_payment_settled.open', [], $locale);
+                $lines[] = $url;
+
+                $this->sendToTarget($fonnteDial, implode("\n", $lines), $booking->id);
+
+                return;
+            }
+
+            $start = $booking->starts_on->format('d/m/Y');
+            $end = $booking->ends_on->format('d/m/Y');
 
             $lines = [
                 __('whatsapp.muthowif.payment_settled.headline', ['app' => $appName], $locale),
@@ -168,10 +222,36 @@ class MuthowifBookingWhatsAppNotifier
 
         $this->withLocale($locale, function () use ($booking, $fonnteDial, $locale): void {
             $muthowifName = $booking->muthowifProfile?->user?->name ?? __('whatsapp.fallback_muthowif', [], $locale);
-            $start = $booking->starts_on->format('d/m/Y');
-            $end = $booking->ends_on->format('d/m/Y');
             $appName = config('app.name', 'BaytGo');
             $url = route('bookings.show', $booking);
+
+            if ($booking->isSupport()) {
+                $lines = [
+                    __('whatsapp.customer.support_approved.headline', ['app' => $appName], $locale),
+                    '',
+                    __('whatsapp.customer.support_approved.body', ['muthowif' => $muthowifName], $locale),
+                    '',
+                ];
+
+                if (filled($booking->booking_code)) {
+                    $lines[] = __('whatsapp.customer.support_approved.booking_code', ['code' => $booking->booking_code], $locale);
+                    $lines[] = '';
+                }
+
+                $lines[] = __('whatsapp.customer.support_approved.package', ['package' => $this->supportPackageLabel($booking, $locale)], $locale);
+                $lines[] = __('whatsapp.customer.support_approved.starts_at', ['datetime' => $this->supportStartsAtFormatted($booking)], $locale);
+                $lines[] = __('whatsapp.customer.support_approved.status', [], $locale);
+                $lines[] = '';
+                $lines[] = __('whatsapp.customer.support_approved.pay_at', [], $locale);
+                $lines[] = $url;
+
+                $this->sendToTarget($fonnteDial, implode("\n", $lines), $booking->id);
+
+                return;
+            }
+
+            $start = $booking->starts_on->format('d/m/Y');
+            $end = $booking->ends_on->format('d/m/Y');
 
             $lines = [
                 __('whatsapp.customer.approved.headline', ['app' => $appName], $locale),
@@ -708,6 +788,135 @@ class MuthowifBookingWhatsAppNotifier
             $message = implode("\n", $lines);
             $this->sendFileProofToTarget($fonnteDial, $message, $proofUrl, $filename, (string) $withdrawal->getKey());
         });
+    }
+
+    /**
+     * Jamaah menandai layanan pendukung selesai — minta konfirmasi muthowif.
+     */
+    public function notifyMuthowifSupportCompletionRequested(MuthowifBooking $booking): void
+    {
+        if (! WhatsAppNotifySettings::enabled('support_completion_requested')) {
+            return;
+        }
+
+        $booking->loadMissing(['muthowifProfile.user', 'customer', 'supportPackage']);
+        $profile = $booking->muthowifProfile;
+        if ($profile === null) {
+            return;
+        }
+
+        $fonnteDial = $this->resolveFonnteDial($profile->phone, $profile->id, $booking->id);
+        if ($fonnteDial === null) {
+            return;
+        }
+
+        $locale = $this->localeForUser($profile->user?->locale);
+
+        $this->withLocale($locale, function () use ($booking, $fonnteDial, $locale): void {
+            $customerName = $booking->customer?->name ?? __('whatsapp.fallback_pilgrim', [], $locale);
+            $appName = config('app.name', 'BaytGo');
+            $url = route('muthowif.bookings.show', $booking);
+
+            $lines = [
+                __('whatsapp.muthowif.support_completion_requested.headline', ['app' => $appName], $locale),
+                '',
+                __('whatsapp.muthowif.support_completion_requested.body', ['customer' => $customerName], $locale),
+                '',
+            ];
+
+            if (filled($booking->booking_code)) {
+                $lines[] = __('whatsapp.muthowif.support_completion_requested.booking_code', ['code' => $booking->booking_code], $locale);
+                $lines[] = '';
+            }
+
+            $lines[] = __('whatsapp.muthowif.support_completion_requested.package', ['package' => $this->supportPackageLabel($booking, $locale)], $locale);
+            $lines[] = '';
+            $lines[] = __('whatsapp.muthowif.support_completion_requested.action', [], $locale);
+            $lines[] = '';
+            $lines[] = __('whatsapp.muthowif.support_completion_requested.open_detail', [], $locale);
+            $lines[] = $url;
+
+            $this->sendToTarget($fonnteDial, implode("\n", $lines), $booking->id);
+        });
+    }
+
+    /**
+     * Muthowif mengonfirmasi layanan pendukung selesai — beri tahu jamaah.
+     */
+    public function notifyCustomerSupportCompletionApproved(MuthowifBooking $booking): void
+    {
+        if (! WhatsAppNotifySettings::enabled('support_completion_approved')) {
+            return;
+        }
+
+        if (! WhatsAppNotifySettings::hasToken()) {
+            Log::debug('WhatsApp support completion approved skipped: FONNTE_TOKEN kosong.');
+
+            return;
+        }
+
+        $booking->loadMissing(['customer', 'muthowifProfile.user', 'supportPackage']);
+        $customer = $booking->customer;
+        if ($customer === null) {
+            return;
+        }
+
+        $fonnteDial = IntlPhone::fonnteDial($customer->phone);
+        if ($fonnteDial === null) {
+            Log::warning('WhatsApp support completion approved skipped: nomor customer kosong atau tidak valid.', [
+                'customer_id' => $customer->id,
+                'booking_id' => $booking->id,
+            ]);
+
+            return;
+        }
+
+        $locale = $this->localeForUser($customer->locale);
+
+        $this->withLocale($locale, function () use ($booking, $fonnteDial, $locale): void {
+            $muthowifName = $booking->muthowifProfile?->user?->name ?? __('whatsapp.fallback_muthowif', [], $locale);
+            $appName = config('app.name', 'BaytGo');
+            $url = route('bookings.show', $booking);
+
+            $lines = [
+                __('whatsapp.customer.support_completed.headline', ['app' => $appName], $locale),
+                '',
+                __('whatsapp.customer.support_completed.body', ['muthowif' => $muthowifName], $locale),
+                '',
+            ];
+
+            if (filled($booking->booking_code)) {
+                $lines[] = __('whatsapp.customer.support_completed.booking_code', ['code' => $booking->booking_code], $locale);
+                $lines[] = '';
+            }
+
+            $lines[] = __('whatsapp.customer.support_completed.package', ['package' => $this->supportPackageLabel($booking, $locale)], $locale);
+            $lines[] = '';
+            $lines[] = __('whatsapp.customer.support_completed.view_detail', [], $locale);
+            $lines[] = $url;
+
+            $this->sendToTarget($fonnteDial, implode("\n", $lines), $booking->id);
+        });
+    }
+
+    private function supportPackageLabel(MuthowifBooking $booking, string $locale): string
+    {
+        $booking->loadMissing('supportPackage');
+
+        return $booking->package_name_snapshot
+            ?? $booking->supportPackage?->name
+            ?? __('whatsapp.fallback_service', [], $locale);
+    }
+
+    private function supportStartsAtFormatted(MuthowifBooking $booking): string
+    {
+        if ($booking->starts_at === null) {
+            return $booking->starts_on?->format('d/m/Y') ?? '—';
+        }
+
+        return $booking->starts_at
+            ->timezone(config('app.timezone'))
+            ->format('d/m/Y H:i');
     }
 
     /**

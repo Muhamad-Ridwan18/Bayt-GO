@@ -373,6 +373,7 @@ return [
             'finance' => 'Refund & withdrawal',
             'admin' => 'To admin',
             'emergency' => 'Emergency incidents',
+            'support' => 'Support services',
         ],
         'toggles' => [
             'otp' => 'Registration & password reset OTP',
@@ -389,6 +390,8 @@ return [
             'emergency_candidate' => 'Replacement candidate → pilgrim',
             'emergency_offer' => 'Replacement offer → muthowif',
             'emergency_selection' => 'Replacement selection result → muthowif',
+            'support_completion_requested' => 'Support marked complete (pilgrim) → muthowif',
+            'support_completion_approved' => 'Support completion confirmed → pilgrim',
         ],
     ],
     'whatsapp_broadcast' => [

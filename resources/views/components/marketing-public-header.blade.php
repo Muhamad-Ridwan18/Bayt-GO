@@ -21,6 +21,7 @@
             <a href="{{ route('welcome') }}" class="{{ $linkBase }} {{ $active === 'welcome' ? $activeClass : $inactive }}">{{ __('welcome.nav_home') }}</a>
             <a href="{{ $homeUrl }}#cara-kerja" class="{{ $linkBase }} {{ $inactive }}">{{ __('welcome.nav_how') }}</a>
             <a href="{{ route('layanan.index') }}" class="{{ $linkBase }} {{ $active === 'layanan' ? $activeClass : $inactive }}">{{ __('welcome.nav_muthowif') }}</a>
+            <a href="{{ route('layanan-pendukung.index') }}" class="{{ $linkBase }} {{ $active === 'layanan_pendukung' ? $activeClass : $inactive }}">{{ __('layanan_pendukung.page_title') }}</a>
             <a href="{{ route('articles.index') }}" class="{{ $linkBase }} {{ $active === 'articles' ? $activeClass : $inactive }}">{{ __('nav.articles') }}</a>
             <a href="{{ $homeUrl }}#harga" class="{{ $linkBase }} {{ $inactive }}">{{ __('welcome.nav_pricing') }}</a>
             <a href="{{ $homeUrl }}#tentang" class="{{ $linkBase }} {{ $inactive }}">{{ __('welcome.nav_about') }}</a>

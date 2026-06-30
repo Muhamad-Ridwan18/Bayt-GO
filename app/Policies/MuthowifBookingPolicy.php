@@ -54,8 +54,35 @@ class MuthowifBookingPolicy
     {
         return $user->isCustomer()
             && $booking->customer_id === $user->id
+            && ! $booking->isSupport()
             && $booking->status === BookingStatus::Confirmed
             && $booking->payment_status === PaymentStatus::Paid;
+    }
+
+    public function requestSupportCompletion(User $user, MuthowifBooking $booking): bool
+    {
+        return $user->isCustomer()
+            && $booking->customer_id === $user->id
+            && $booking->isSupport()
+            && $booking->status === BookingStatus::InProgress
+            && $booking->isPaid()
+            && ! $booking->hasCompletionRequested();
+    }
+
+    public function approveSupportCompletion(User $user, MuthowifBooking $booking): bool
+    {
+        return $this->muthowifOwns($user, $booking)
+            && $booking->isSupport()
+            && $booking->status === BookingStatus::InProgress
+            && $booking->hasCompletionRequested();
+    }
+
+    public function rejectSupportCompletion(User $user, MuthowifBooking $booking): bool
+    {
+        return $this->muthowifOwns($user, $booking)
+            && $booking->isSupport()
+            && $booking->status === BookingStatus::InProgress
+            && $booking->hasCompletionRequested();
     }
 
     public function review(User $user, MuthowifBooking $booking): bool

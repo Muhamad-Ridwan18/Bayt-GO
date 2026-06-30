@@ -22,6 +22,8 @@
         'booking' => $b,
         'daily' => $daily ?? 0.0,
         'nights' => $nights ?? $b->billingNightsInclusive(),
+        'isSupport' => $isSupport ?? $b->isSupport(),
+        'packageName' => $packageName ?? null,
         'baseSubtotal' => $baseSubtotal ?? 0.0,
         'addonLines' => $addonLines ?? collect(),
         'sameHotelLine' => $sameHotelLine ?? 0.0,

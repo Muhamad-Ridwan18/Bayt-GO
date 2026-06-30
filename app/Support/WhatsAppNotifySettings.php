@@ -94,6 +94,16 @@ class WhatsAppNotifySettings
                 'label' => 'admin.whatsapp_notify.toggles.emergency_selection',
                 'group' => 'emergency',
             ],
+            'support_completion_requested' => [
+                'config' => 'services.fonnte.support_completion_requested_notify_enabled',
+                'label' => 'admin.whatsapp_notify.toggles.support_completion_requested',
+                'group' => 'support',
+            ],
+            'support_completion_approved' => [
+                'config' => 'services.fonnte.support_completion_approved_notify_enabled',
+                'label' => 'admin.whatsapp_notify.toggles.support_completion_approved',
+                'group' => 'support',
+            ],
         ];
     }
 
@@ -108,6 +118,7 @@ class WhatsAppNotifySettings
             'finance' => 'admin.whatsapp_notify.groups.finance',
             'admin' => 'admin.whatsapp_notify.groups.admin',
             'emergency' => 'admin.whatsapp_notify.groups.emergency',
+            'support' => 'admin.whatsapp_notify.groups.support',
         ];
     }
 

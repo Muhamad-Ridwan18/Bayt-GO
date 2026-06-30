@@ -125,8 +125,12 @@
                                 <p class="text-sm font-medium text-slate-900">{{ $profile->phone }}</p>
                             </div>
                             <div class="sm:col-span-2">
-                                <p class="text-xs text-slate-400 mb-1">Alamat</p>
-                                <p class="text-sm font-medium leading-relaxed text-slate-900">{{ $profile->address }}</p>
+                                <p class="text-xs text-slate-400 mb-1">Alamat sesuai KTP</p>
+                                <p class="text-sm font-medium leading-relaxed text-slate-900">{{ $profile->address ?: '—' }}</p>
+                            </div>
+                            <div class="sm:col-span-2">
+                                <p class="text-xs text-slate-400 mb-1">Alamat domisili saat ini</p>
+                                <p class="text-sm font-medium leading-relaxed text-slate-900">{{ $profile->current_domicile_address ?: '—' }}</p>
                             </div>
                         </div>
                     </div>

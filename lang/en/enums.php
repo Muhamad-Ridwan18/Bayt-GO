@@ -4,6 +4,7 @@ return [
     'booking_status' => [
         'pending' => 'Pending',
         'confirmed' => 'Confirmed',
+        'in_progress' => 'In progress',
         'completed' => 'Completed',
         'cancelled' => 'Cancelled',
     ],
@@ -16,6 +17,14 @@ return [
     'muthowif_service_type' => [
         'group' => 'Group pilgrims',
         'private' => 'Private pilgrims',
+        'support' => 'Support service',
+    ],
+    'support_package_category' => [
+        'tawaf' => 'Tawaf',
+        'umrah' => 'Umrah',
+        'ziarah' => 'Ziarah',
+        'mobility' => 'Mobility / wheelchair',
+        'other' => 'Other',
     ],
     'muthowif_verification_status' => [
         'pending' => 'Pending verification',

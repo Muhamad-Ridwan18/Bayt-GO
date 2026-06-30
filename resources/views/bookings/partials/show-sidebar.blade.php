@@ -12,6 +12,7 @@
     $statusBadge = match ($st) {
         BookingStatus::Cancelled => 'bg-red-50 text-red-800 ring-red-200/90',
         BookingStatus::Confirmed => 'bg-emerald-50 text-emerald-900 ring-emerald-200/80',
+        BookingStatus::InProgress => 'bg-sky-50 text-sky-900 ring-sky-200/80',
         BookingStatus::Completed => 'bg-brand-50 text-brand-900 ring-brand-200/80',
         BookingStatus::Pending => 'bg-amber-50 text-amber-950 ring-amber-200/80',
         default => 'bg-slate-100 text-slate-800 ring-slate-200/80',
@@ -39,6 +40,14 @@
             <p class="mt-3 text-sm leading-relaxed text-slate-600">{{ __('bookings.show.status_pending_body') }}</p>
         @elseif ($st === BookingStatus::Confirmed)
             <p class="mt-3 text-sm leading-relaxed text-slate-600">{{ __('bookings.show.status_confirmed_body') }}</p>
+        @elseif ($st === BookingStatus::InProgress)
+            <p class="mt-3 text-sm leading-relaxed text-slate-600">
+                @if ($b->hasCompletionRequested())
+                    {{ __('layanan_pendukung.completion_waiting') }}
+                @else
+                    {{ __('layanan_pendukung.starts_at_hint') }}
+                @endif
+            </p>
         @elseif ($st === BookingStatus::Completed)
             <p class="mt-3 text-sm leading-relaxed text-slate-600">{{ __('bookings.show.status_completed_body') }}</p>
         @endif

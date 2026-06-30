@@ -13,6 +13,7 @@
     $statusBadge = match ($st) {
         BookingStatus::Cancelled => 'bg-red-50 text-red-800 ring-red-200/90',
         BookingStatus::Confirmed => 'bg-emerald-50 text-emerald-900 ring-emerald-200/80',
+        BookingStatus::InProgress => 'bg-sky-50 text-sky-900 ring-sky-200/80',
         BookingStatus::Completed => 'bg-brand-50 text-brand-900 ring-brand-200/80',
         BookingStatus::Pending => 'bg-amber-50 text-amber-950 ring-amber-200/80',
         default => 'bg-slate-100 text-slate-800 ring-slate-200/80',
@@ -84,18 +85,28 @@
             <div class="grid w-full shrink-0 grid-cols-1 gap-3 sm:grid-cols-2 lg:w-[min(100%,22rem)] lg:grid-cols-1 xl:grid-cols-2">
                 <div class="rounded-xl border border-slate-100 bg-slate-50/80 p-3.5">
                     <p class="text-[0.65rem] font-semibold uppercase tracking-wide text-slate-500">{{ __('bookings.show.period') }}</p>
-                    <p class="mt-1 text-sm font-semibold tabular-nums text-slate-900">
-                        {{ $fmtDate($b->starts_on) }}
-                        <span class="font-normal text-slate-400">–</span>
-                        {{ $fmtDate($b->ends_on) }}
-                    </p>
-                    <p class="mt-0.5 text-xs text-slate-600">
-                        ({{ __('bookings.show.period_duration_line', ['days' => $nights, 'nights' => $sleepNights]) }})
-                    </p>
+                    @if ($b->isSupport() && $b->starts_at)
+                        <p class="mt-1 text-sm font-semibold tabular-nums text-slate-900">
+                            {{ $b->starts_at->timezone(config('app.timezone'))->translatedFormat('d M Y H:i') }}
+                        </p>
+                        <p class="mt-0.5 text-xs text-slate-600">{{ __('layanan_pendukung.starts_at_hint') }}</p>
+                    @else
+                        <p class="mt-1 text-sm font-semibold tabular-nums text-slate-900">
+                            {{ $fmtDate($b->starts_on) }}
+                            <span class="font-normal text-slate-400">–</span>
+                            {{ $fmtDate($b->ends_on) }}
+                        </p>
+                        <p class="mt-0.5 text-xs text-slate-600">
+                            ({{ __('bookings.show.period_duration_line', ['days' => $nights, 'nights' => $sleepNights]) }})
+                        </p>
+                    @endif
                 </div>
                 <div class="rounded-xl border border-slate-100 bg-slate-50/80 p-3.5">
                     <p class="text-[0.65rem] font-semibold uppercase tracking-wide text-slate-500">{{ __('bookings.show.service') }}</p>
                     <p class="mt-1 text-sm font-semibold text-slate-900">{{ $b->service_type?->label() ?? '—' }}</p>
+                    @if ($b->isSupport() && filled($b->package_name_snapshot))
+                        <p class="mt-0.5 text-xs text-slate-600">{{ $b->package_name_snapshot }}</p>
+                    @endif
                     <p class="mt-0.5 text-xs text-slate-600">{{ __('bookings.index.pilgrims_count', ['count' => $b->pilgrim_count, 'pilgrims_word' => __('common.pilgrims')]) }}</p>
                 </div>
             </div>

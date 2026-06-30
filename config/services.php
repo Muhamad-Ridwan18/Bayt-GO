@@ -82,6 +82,10 @@ return [
         'refund_admin_notify_enabled' => env('FONNTE_REFUND_ADMIN_NOTIFY_ENABLED', true),
         /** WA ke jamaah: update status laporan insiden (ditinjau / diverifikasi / ditolak). */
         'emergency_customer_report_notify_enabled' => env('FONNTE_EMERGENCY_CUSTOMER_REPORT_NOTIFY_ENABLED', true),
+        /** WA ke muthowif: jamaah menandai layanan pendukung selesai. */
+        'support_completion_requested_notify_enabled' => env('FONNTE_SUPPORT_COMPLETION_REQUESTED_NOTIFY_ENABLED', true),
+        /** WA ke jamaah: muthowif mengonfirmasi layanan pendukung selesai. */
+        'support_completion_approved_notify_enabled' => env('FONNTE_SUPPORT_COMPLETION_APPROVED_NOTIFY_ENABLED', true),
     ],
 
     'midtrans' => [
@@ -95,6 +99,10 @@ return [
     'booking' => [
         /** Driver halaman bayar web: `doku` (default) atau `moota`. */
         'payment_driver' => env('BOOKING_PAYMENT_DRIVER', 'doku'),
+    ],
+
+    'expo_push' => [
+        'enabled' => filter_var(env('EXPO_PUSH_ENABLED', true), FILTER_VALIDATE_BOOLEAN),
     ],
 
     'doku' => [

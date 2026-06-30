@@ -16,9 +16,12 @@ class BookingPricingService
      */
     public function calculateTotal(MuthowifBooking $booking): float
     {
-        // Jika total_amount sudah di-snapshot, kembalikan langsung
         if ($booking->total_amount !== null) {
             return (float) $booking->total_amount;
+        }
+
+        if ($booking->service_type === MuthowifServiceType::Support) {
+            return round((float) ($booking->package_price_snapshot ?? 0), 2);
         }
 
         $nights = $booking->billingNightsInclusive();
@@ -50,6 +53,16 @@ class BookingPricingService
      */
     public function getPricingSnapshots(MuthowifBooking $booking): array
     {
+        if ($booking->service_type === MuthowifServiceType::Support) {
+            $booking->loadMissing('supportPackage');
+            $package = $booking->supportPackage;
+
+            return [
+                'package_price_snapshot' => (float) ($package?->price ?? $booking->package_price_snapshot ?? 0),
+                'package_name_snapshot' => $package?->name ?? $booking->package_name_snapshot,
+            ];
+        }
+
         $booking->loadMissing(['muthowifProfile.services.addOns']);
         $service = $booking->muthowifProfile->services->firstWhere('type', $booking->service_type);
         

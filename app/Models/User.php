@@ -88,6 +88,14 @@ class User extends Authenticatable
         return $this->hasMany(SupportTicket::class, 'assigned_admin_id');
     }
 
+    /**
+     * @return HasMany<DevicePushToken, $this>
+     */
+    public function devicePushTokens(): HasMany
+    {
+        return $this->hasMany(DevicePushToken::class);
+    }
+
     public function isVerifiedMuthowif(): bool
     {
         return $this->isMuthowif()

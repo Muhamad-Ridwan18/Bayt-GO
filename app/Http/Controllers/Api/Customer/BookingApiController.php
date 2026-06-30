@@ -15,6 +15,7 @@ use App\Models\BookingRescheduleRequest;
 use App\Models\BookingReview;
 use App\Models\MuthowifBooking;
 use App\Models\MuthowifProfile;
+use App\Services\BookingCompletionService;
 use App\Services\BookingOrderCodeService;
 use App\Services\BookingPricingService;
 use App\Services\BookingRefundExecutor;
@@ -22,6 +23,7 @@ use App\Services\Doku\DokuDirectChargeService;
 use App\Services\Moota\MootaBookingChargeService;
 use App\Services\UploadedImageOptimizer;
 use App\Support\ApiBookingDetail;
+use App\Support\ApiEmergencyDetail;
 use App\Support\BookingPostPayRules;
 use App\Support\BookingSnapPaymentCatalog;
 use App\Support\CustomerBookingBroadcast;
@@ -45,10 +47,12 @@ class BookingApiController extends Controller
         $bookings = MuthowifBooking::query()
             ->where('customer_id', $request->user()->id)
             ->with(['muthowifProfile.user'])
-            ->orderBy('created_at', 'desc')
+            ->orderByDesc('created_at')
             ->get();
 
-        return response()->json($bookings);
+        return response()->json([
+            'data' => $bookings->map(fn (MuthowifBooking $booking) => ApiBookingDetail::formatList($booking))->values(),
+        ]);
     }
 
     public function show(Request $request, MuthowifBooking $booking): JsonResponse
@@ -57,7 +61,11 @@ class BookingApiController extends Controller
             return response()->json(['message' => 'Unauthorized'], 403);
         }
 
-        return response()->json(ApiBookingDetail::format($booking));
+        $data = ApiBookingDetail::format($booking);
+        $data['can_report_emergency'] = $request->user()->can('reportEmergency', $booking);
+        $data['emergency'] = ApiEmergencyDetail::for($booking);
+
+        return response()->json($data);
     }
 
     public function store(Request $request): JsonResponse
@@ -230,6 +238,30 @@ class BookingApiController extends Controller
         };
     }
 
+    /** @param list<string> $methods */
+    private function paymentMethodsMeta(array $methods): array
+    {
+        return array_map(function (string $id): array {
+            if (preg_match('/^bank_transfer_moota__(\d+)$/', $id, $m)) {
+                return [
+                    'id' => $id,
+                    'label' => __('bookings.payment.moota_account_title', ['n' => ((int) $m[1]) + 1]),
+                    'group' => 'moota',
+                ];
+            }
+
+            if ($id === 'bank_transfer_moota') {
+                return [
+                    'id' => $id,
+                    'label' => __('bookings.payment.method_bank_transfer_moota.name'),
+                    'group' => 'moota',
+                ];
+            }
+
+            return ['id' => $id, 'label' => $id, 'group' => 'other'];
+        }, $methods);
+    }
+
     public function pay(Request $request, MuthowifBooking $booking): JsonResponse
     {
         PaymentFlowLog::info('api.payment.enter', [
@@ -281,6 +313,7 @@ class BookingApiController extends Controller
                 'step' => 'select_method',
                 'driver' => $driver,
                 'methods' => $this->apiPaymentMethods(),
+                'methods_meta' => $this->paymentMethodsMeta($this->apiPaymentMethods()),
                 'amount' => (int) round($booking->resolvedAmountDue()),
             ]);
         }
@@ -601,5 +634,60 @@ class BookingApiController extends Controller
         CustomerBookingBroadcast::afterResponse($booking->fresh());
 
         return response()->json(['message' => 'Permintaan reschedule berhasil diajukan.']);
+    }
+
+    public function complete(Request $request, MuthowifBooking $booking, BookingCompletionService $completion): JsonResponse
+    {
+        $this->authorize('complete', $booking);
+
+        $validated = $request->validate([
+            'rating' => ['required', 'integer', 'min:1', 'max:5'],
+            'review' => ['nullable', 'string', 'max:2000'],
+            'comment' => ['nullable', 'string', 'max:2000'],
+        ]);
+
+        $text = $validated['review'] ?? $validated['comment'] ?? null;
+
+        $result = $completion->complete(
+            $booking,
+            (int) $validated['rating'],
+            filled($text) ? trim((string) $text) : null
+        );
+
+        if (! $result['completed']) {
+            return response()->json(['message' => $result['error'] ?? 'Gagal menyelesaikan layanan.'], 422);
+        }
+
+        CustomerBookingBroadcast::afterResponse($booking->fresh());
+
+        return response()->json([
+            'message' => $result['credited']
+                ? 'Layanan selesai. Saldo muthowif telah dicatat.'
+                : 'Layanan berhasil ditandai selesai.',
+            'booking' => ApiBookingDetail::format($booking->fresh()),
+        ]);
+    }
+
+    public function cancel(Request $request, MuthowifBooking $booking): JsonResponse
+    {
+        $this->authorize('cancelAsCustomer', $booking);
+
+        DB::transaction(function () use ($booking): void {
+            $booking->bookingPayments()
+                ->whereNotIn('status', ['settlement', 'capture'])
+                ->delete();
+            $booking->update([
+                'status' => BookingStatus::Cancelled,
+                'muthowif_rejection_kind' => null,
+                'muthowif_rejection_note' => null,
+            ]);
+        });
+
+        CustomerBookingBroadcast::afterResponse($booking->fresh());
+
+        return response()->json([
+            'message' => 'Pesanan berhasil dibatalkan.',
+            'booking' => ApiBookingDetail::format($booking->fresh()),
+        ]);
     }
 }

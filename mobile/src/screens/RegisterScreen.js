@@ -12,9 +12,11 @@ import { LinearGradient } from 'expo-linear-gradient';
 import * as ImagePicker from 'expo-image-picker';
 import AuthScreenShell from '../components/AuthScreenShell';
 import AuthInput from '../components/AuthInput';
+import DatePickerField from '../components/DatePickerField';
 import { useAuth } from '../context/AuthContext';
 import { sendOtp, verifyOtp } from '../api/auth';
 import { colors } from '../theme/colors';
+import { resetRoot, navigateRoot } from '../navigation/rootNavigation';
 
 function RoleTab({ label, active, onPress }) {
   return (
@@ -170,7 +172,7 @@ export default function RegisterScreen({ navigation, route }) {
           ppuiNumber: ppuiNumber.trim(),
         });
         if (data.token) {
-          navigation.reset({ index: 0, routes: [{ name: 'Dashboard' }] });
+          resetRoot(navigation, [{ name: 'Main' }]);
         } else {
           Alert.alert('Berhasil', data.message || 'Pendaftaran berhasil.', [
             { text: 'OK', onPress: () => navigation.navigate('Login') },
@@ -196,7 +198,7 @@ export default function RegisterScreen({ navigation, route }) {
           ktp,
         });
         if (data.token) {
-          navigation.reset({ index: 0, routes: [{ name: 'Dashboard' }] });
+          resetRoot(navigation, [{ name: 'Main' }]);
         } else {
           Alert.alert('Berhasil', data.message || 'Pendaftaran berhasil.', [
             { text: 'OK', onPress: () => navigation.navigate('Login') },
@@ -346,7 +348,13 @@ export default function RegisterScreen({ navigation, route }) {
       {role === 'muthowif' && (
         <>
           <AuthInput label="NIK (16 digit)" icon="card-outline" value={nik} onChangeText={setNik} keyboardType="number-pad" maxLength={16} />
-          <AuthInput label="Tanggal lahir" icon="calendar-outline" value={birthDate} onChangeText={setBirthDate} placeholder="YYYY-MM-DD" />
+          <DatePickerField
+            label="Tanggal lahir"
+            value={birthDate}
+            onChange={setBirthDate}
+            placeholder="Pilih tanggal lahir"
+            maximumDate={new Date()}
+          />
           <AuthInput label="Nomor paspor" icon="airplane-outline" value={passportNumber} onChangeText={setPassportNumber} />
           <AuthInput
             label="Bahasa"

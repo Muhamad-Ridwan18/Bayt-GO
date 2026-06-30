@@ -8,6 +8,26 @@ use App\Models\MuthowifBooking;
 
 final class ApiBookingDetail
 {
+    public static function formatList(MuthowifBooking $booking): array
+    {
+        $booking->loadMissing(['muthowifProfile.user']);
+        $profile = $booking->muthowifProfile;
+
+        return [
+            'id' => $booking->id,
+            'booking_code' => $booking->booking_code,
+            'status' => $booking->status->value,
+            'payment_status' => $booking->payment_status->value,
+            'service_type' => $booking->service_type?->value,
+            'starts_on' => $booking->starts_on->toDateString(),
+            'ends_on' => $booking->ends_on->toDateString(),
+            'total_amount' => (float) $booking->total_amount,
+            'created_at' => $booking->created_at?->toIso8601String(),
+            'muthowif_name' => $profile?->user?->name ?? 'Muthowif',
+            'muthowif_avatar' => $profile?->photoUrl(),
+        ];
+    }
+
     public static function format(MuthowifBooking $booking, bool $forMuthowif = false): array
     {
         $booking->loadMissing([

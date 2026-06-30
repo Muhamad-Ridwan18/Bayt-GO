@@ -1,6 +1,7 @@
 import React, { createContext, useCallback, useContext, useEffect, useMemo, useState } from 'react';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import * as authApi from '../api/auth';
+import { syncPushTokenWithBackend, removePushTokenFromBackend } from '../notifications/pushNotifications';
 
 const TOKEN_KEY = '@baytgo_auth_token';
 const USER_KEY = '@baytgo_auth_user';
@@ -18,6 +19,7 @@ export function AuthProvider({ children }) {
         if (storedToken && storedUser) {
           setToken(storedToken);
           setUser(JSON.parse(storedUser));
+          syncPushTokenWithBackend(storedToken).catch(() => {});
         }
       })
       .finally(() => setBooting(false));
@@ -28,6 +30,7 @@ export function AuthProvider({ children }) {
     setUser(sessionUser);
     await AsyncStorage.setItem(TOKEN_KEY, sessionToken);
     await AsyncStorage.setItem(USER_KEY, JSON.stringify(sessionUser));
+    syncPushTokenWithBackend(sessionToken).catch(() => {});
   }, []);
 
   const login = useCallback(async (email, password) => {
@@ -55,15 +58,34 @@ export function AuthProvider({ children }) {
   const logout = useCallback(async () => {
     if (token) {
       try {
+        await removePushTokenFromBackend(token);
+      } catch {
+        // ignore
+      }
+      try {
         await authApi.logout(token);
       } catch {
         // ignore network errors on logout
       }
     }
+    try {
+      const { disconnectPusher } = await import('../realtime/pusherClient');
+      disconnectPusher();
+    } catch {
+      // realtime optional
+    }
     setToken(null);
     setUser(null);
     await AsyncStorage.multiRemove([TOKEN_KEY, USER_KEY]);
   }, [token]);
+
+  const updateLocalUser = useCallback(async (partial) => {
+    setUser((prev) => {
+      const next = { ...prev, ...partial };
+      AsyncStorage.setItem(USER_KEY, JSON.stringify(next));
+      return next;
+    });
+  }, []);
 
   const value = useMemo(
     () => ({
@@ -75,8 +97,9 @@ export function AuthProvider({ children }) {
       logout,
       registerCustomer,
       registerMuthowif,
+      updateLocalUser,
     }),
-    [token, user, booting, login, logout, registerCustomer, registerMuthowif],
+    [token, user, booting, login, logout, registerCustomer, registerMuthowif, updateLocalUser],
   );
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;

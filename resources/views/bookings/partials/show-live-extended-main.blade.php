@@ -13,7 +13,7 @@
     'variant' => 'cards',
 ])
 
-@if (in_array($st, [BookingStatus::Confirmed, BookingStatus::Completed], true) || ($st === BookingStatus::Cancelled && $b->paid_at))
+@if (in_array($st, [BookingStatus::Confirmed, BookingStatus::InProgress, BookingStatus::Completed], true) || ($st === BookingStatus::Cancelled && $b->paid_at))
     <div class="overflow-hidden rounded-2xl border border-slate-200/90 bg-white shadow-sm ring-1 ring-slate-100/80">
         <div class="border-b border-slate-100 bg-gradient-to-r from-slate-50 to-white px-6 py-4 sm:px-8">
             <h2 class="flex items-center gap-2 text-base font-bold text-slate-900">
@@ -28,6 +28,16 @@
         </div>
         <div class="p-6 sm:p-8">
             <dl class="space-y-3 rounded-2xl bg-slate-50/80 p-4 text-sm ring-1 ring-slate-100 sm:p-5">
+                @if ($isSupport ?? false)
+                    <div class="flex justify-between gap-4">
+                        <dt class="text-slate-600">{{ __('layanan_pendukung.package_detail') }}</dt>
+                        <dd class="font-medium text-slate-900">{{ $packageName ?? '—' }}</dd>
+                    </div>
+                    <div class="flex justify-between gap-4 border-t border-slate-200/80 pt-3">
+                        <dt class="text-slate-600">{{ __('layanan_pendukung.price_label') }}</dt>
+                        <dd class="font-medium tabular-nums text-slate-900">Rp {{ $fmt($baseSubtotal) }}</dd>
+                    </div>
+                @else
                 <div class="flex justify-between gap-4">
                     <dt class="text-slate-600">{{ __('bookings.show.rate_per_day') }}</dt>
                     <dd class="font-medium tabular-nums text-slate-900">
@@ -65,6 +75,7 @@
                         <dt class="text-slate-600">{{ __('bookings.show.transport_label') }}</dt>
                         <dd class="font-medium tabular-nums text-slate-900">Rp {{ $fmt($transportLine) }}</dd>
                     </div>
+                @endif
                 @endif
                 @if ($customerPlatformFee > 0)
                     <div class="flex justify-between gap-4 border-t border-slate-200/80 pt-3">

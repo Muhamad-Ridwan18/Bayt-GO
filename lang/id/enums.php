@@ -4,6 +4,7 @@ return [
     'booking_status' => [
         'pending' => 'Menunggu',
         'confirmed' => 'Terkonfirmasi',
+        'in_progress' => 'Berjalan',
         'completed' => 'Selesai',
         'cancelled' => 'Dibatalkan',
     ],
@@ -16,6 +17,14 @@ return [
     'muthowif_service_type' => [
         'group' => 'Jemaah Group',
         'private' => 'Jemaah Private',
+        'support' => 'Layanan Pendukung',
+    ],
+    'support_package_category' => [
+        'tawaf' => 'Tawaf',
+        'umrah' => 'Umrah',
+        'ziarah' => 'Ziarah',
+        'mobility' => 'Mobilitas / kursi roda',
+        'other' => 'Lainnya',
     ],
     'muthowif_verification_status' => [
         'pending' => 'Menunggu verifikasi',

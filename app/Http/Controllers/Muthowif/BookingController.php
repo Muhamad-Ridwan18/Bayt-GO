@@ -18,6 +18,7 @@ use App\Models\MuthowifBooking;
 use App\Models\MuthowifProfile;
 use App\Models\MuthowifServiceAddOn;
 use App\Services\BookingPendingPaymentEnsurer;
+use App\Services\SupportBookingService;
 use App\Support\BookingWebLive;
 use App\Support\CustomerBookingBroadcast;
 use App\Support\PlatformFee;
@@ -91,6 +92,7 @@ class BookingController extends Controller
 
         $booking->load([
             'customer',
+            'supportPackage',
             'muthowifProfile.services.addOns',
             'refundRequests' => fn ($q) => $q->orderByDesc('created_at'),
             'rescheduleRequests' => fn ($q) => $q->orderByDesc('created_at'),
@@ -150,6 +152,7 @@ class BookingController extends Controller
 
         $booking->load([
             'customer',
+            'supportPackage',
             'muthowifProfile.services.addOns',
             'refundRequests' => fn ($q) => $q->orderByDesc('created_at'),
             'rescheduleRequests' => fn ($q) => $q->orderByDesc('created_at'),
@@ -176,7 +179,7 @@ class BookingController extends Controller
         }
 
         $start = $booking->starts_on->copy()->startOfDay();
-        $end = $booking->ends_on->copy()->startOfDay();
+        $end = ($booking->ends_on ?? $booking->starts_on)->copy()->startOfDay();
         if (! $profile->isJadwalAvailableForRange($start, $end, (string) $booking->getKey())) {
             return redirect()
                 ->route('muthowif.bookings.show', $booking)
@@ -193,11 +196,17 @@ class BookingController extends Controller
         $rejectedBookingIds = [];
 
         DB::transaction(function () use ($booking, $profile, $start, $end, $total, $bookingIdStr, &$broadcastIds, &$customerIdsToInvalidate, &$rejectedBookingIds): void {
-            $booking->update([
+            $confirmPayload = [
                 'status' => BookingStatus::Confirmed,
                 'payment_status' => PaymentStatus::Pending,
                 'total_amount' => $total,
-            ]);
+            ];
+
+            if ($booking->isSupport()) {
+                $confirmPayload['ends_on'] = $start->toDateString();
+            }
+
+            $booking->update($confirmPayload);
 
             // Otomatis tolak pesanan lain yang pending dan bentrok pada jadwal ini
             $overlappingPending = MuthowifBooking::query()
@@ -578,5 +587,40 @@ class BookingController extends Controller
         return collect(BookingStatus::cases())->mapWithKeys(
             fn (BookingStatus $status) => [$status->value => (int) ($statusAggregates[$status->value] ?? 0)]
         )->all();
+    }
+
+    public function approveSupportCompletion(Request $request, MuthowifBooking $booking, SupportBookingService $support): RedirectResponse
+    {
+        $this->authorize('approveSupportCompletion', $booking);
+
+        $result = $support->approveCompletion($booking, (string) $request->user()->id);
+
+        if (! $result['completed']) {
+            return redirect()
+                ->route('muthowif.bookings.show', $booking)
+                ->with('error', $result['error'] ?? __('layanan_pendukung.flash.completion_approve_failed'));
+        }
+
+        CustomerBookingBroadcast::afterResponse($booking->fresh());
+        Cache::forget('customer_booking_status_counts:'.$booking->customer_id);
+
+        return redirect()
+            ->route('muthowif.bookings.show', $booking)
+            ->with('status', __('layanan_pendukung.flash.completion_approved'));
+    }
+
+    public function rejectSupportCompletion(Request $request, MuthowifBooking $booking, SupportBookingService $support): RedirectResponse
+    {
+        $this->authorize('rejectSupportCompletion', $booking);
+
+        $validated = $request->validate([
+            'rejection_note' => ['nullable', 'string', 'max:2000'],
+        ]);
+
+        $support->rejectCompletionRequest($booking);
+
+        return redirect()
+            ->route('muthowif.bookings.show', $booking)
+            ->with('status', __('layanan_pendukung.flash.completion_rejected'));
     }
 }

@@ -30,12 +30,14 @@ class MuthowifBooking extends Model
         'emergency_replacement_at',
         'customer_id',
         'service_type',
+        'support_package_id',
         'pilgrim_count',
         'selected_add_on_ids',
         'with_same_hotel',
         'with_transport',
         'starts_on',
         'ends_on',
+        'starts_at',
         'status',
         'payment_status',
         'total_amount',
@@ -49,6 +51,12 @@ class MuthowifBooking extends Model
         'same_hotel_price_snapshot',
         'transport_price_snapshot',
         'add_ons_snapshot',
+        'package_price_snapshot',
+        'package_name_snapshot',
+        'completion_requested_at',
+        'completion_requested_by',
+        'completed_at',
+        'completed_by',
         'muthowif_rejection_kind',
         'muthowif_rejection_note',
     ];
@@ -58,6 +66,7 @@ class MuthowifBooking extends Model
         return [
             'starts_on' => 'date',
             'ends_on' => 'date',
+            'starts_at' => 'datetime',
             'status' => BookingStatus::class,
             'emergency_overlay_status' => EmergencyOverlayStatus::class,
             'emergency_replacement_at' => 'datetime',
@@ -73,6 +82,9 @@ class MuthowifBooking extends Model
             'same_hotel_price_snapshot' => 'decimal:2',
             'transport_price_snapshot' => 'decimal:2',
             'add_ons_snapshot' => 'array',
+            'package_price_snapshot' => 'decimal:2',
+            'completion_requested_at' => 'datetime',
+            'completed_at' => 'datetime',
         ];
     }
 
@@ -115,6 +127,31 @@ class MuthowifBooking extends Model
     public function customer(): BelongsTo
     {
         return $this->belongsTo(User::class, 'customer_id');
+    }
+
+    public function supportPackage(): BelongsTo
+    {
+        return $this->belongsTo(MuthowifSupportPackage::class, 'support_package_id');
+    }
+
+    public function completionRequestedByUser(): BelongsTo
+    {
+        return $this->belongsTo(User::class, 'completion_requested_by');
+    }
+
+    public function completedByUser(): BelongsTo
+    {
+        return $this->belongsTo(User::class, 'completed_by');
+    }
+
+    public function isSupport(): bool
+    {
+        return $this->service_type === MuthowifServiceType::Support;
+    }
+
+    public function hasCompletionRequested(): bool
+    {
+        return $this->completion_requested_at !== null;
     }
 
     public function review(): HasOne
@@ -171,6 +208,11 @@ class MuthowifBooking extends Model
      */
     public function isBookingChatOpen(): bool
     {
+        if ($this->isSupport()) {
+            return in_array($this->status, [BookingStatus::Confirmed, BookingStatus::InProgress], true)
+                && $this->isPaid();
+        }
+
         return $this->status === BookingStatus::Confirmed && $this->isPaid();
     }
 

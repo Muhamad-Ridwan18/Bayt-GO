@@ -13,6 +13,7 @@ class DatabaseSeeder extends Seeder
             SettingSeeder::class,
             ArticleSeeder::class,
             MuthowifDummySeeder::class,
+            SupportPackageSeeder::class,
             MuthowifReferralCodesSeeder::class,
         ]);
     }

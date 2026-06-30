@@ -20,6 +20,7 @@ use App\Http\Controllers\Admin\WhatsAppNotifySettingsController;
 use App\Http\Controllers\Admin\WithdrawalsController;
 use App\Http\Controllers\BookingChatController;
 use App\Http\Controllers\Customer\BookingController as CustomerBookingController;
+use App\Http\Controllers\Customer\SupportBookingController;
 use App\Http\Controllers\Customer\BookingEmergencyController as CustomerBookingEmergencyController;
 use App\Http\Controllers\GlobalChatController;
 use App\Http\Controllers\LocaleController;
@@ -30,12 +31,14 @@ use App\Http\Controllers\Muthowif\MuthowifDashboardCalendarController;
 use App\Http\Controllers\Muthowif\MuthowifPortfolioController;
 use App\Http\Controllers\Muthowif\MuthowifScheduleController;
 use App\Http\Controllers\Muthowif\MuthowifServiceController;
+use App\Http\Controllers\Muthowif\SupportPackageController;
 use App\Http\Controllers\Muthowif\WithdrawController as MuthowifWithdrawController;
 use App\Http\Controllers\PaymentWebhookController;
 use App\Http\Controllers\ProfileController;
 use App\Http\Controllers\Public\ArticleController;
 use App\Http\Controllers\Public\CampaignController;
 use App\Http\Controllers\Public\MuthowifDirectoryController;
+use App\Http\Controllers\Public\SupportCatalogController;
 use App\Http\Controllers\Public\SeoLandingController;
 use App\Http\Controllers\Public\WelcomeController;
 use App\Http\Controllers\SupportTicketController;
@@ -106,6 +109,10 @@ Route::get('/layanan/portfolio/foto/{image}', [MuthowifDirectoryController::clas
 Route::get('/layanan/{publicProfile}/booking', [MuthowifDirectoryController::class, 'booking'])->name('layanan.book');
 Route::get('/layanan/{publicProfile}/portfolio', [MuthowifDirectoryController::class, 'portfolioIndex'])->name('layanan.portfolio.index');
 Route::get('/layanan/{publicProfile}', [MuthowifDirectoryController::class, 'show'])->name('layanan.show');
+
+Route::get('/layanan-pendukung', [SupportCatalogController::class, 'index'])->name('layanan-pendukung.index');
+Route::get('/layanan-pendukung/{supportPackage}', [SupportCatalogController::class, 'show'])->name('layanan-pendukung.show');
+Route::get('/layanan-pendukung/{supportPackage}/pesan', [SupportCatalogController::class, 'book'])->name('layanan-pendukung.book');
 
 Route::get('/terms', TermsController::class)->name('terms');
 Route::get('/artikel', [ArticleController::class, 'index'])->name('articles.index');
@@ -208,6 +215,8 @@ Route::middleware('auth')->group(function () {
         Route::get('/', [CustomerBookingController::class, 'index'])->name('index');
         Route::post('documents/temp', [CustomerBookingController::class, 'uploadTempDocument'])->name('documents.temp');
         Route::post('/', [CustomerBookingController::class, 'store'])->name('store');
+        Route::post('support', [SupportBookingController::class, 'store'])->name('support.store');
+        Route::post('{booking}/support-selesai', [SupportBookingController::class, 'requestCompletion'])->name('support.request-completion');
         Route::get('{booking}/live-state', [CustomerBookingController::class, 'showLiveState'])->name('show.live-state');
         Route::get('{booking}/fragment', [CustomerBookingController::class, 'showLiveFragment'])->name('show.fragment');
         Route::get('{booking}/pembayaran', [CustomerBookingController::class, 'payment'])->name('payment');
@@ -241,6 +250,9 @@ Route::middleware('auth')->group(function () {
             Route::put('pelayanan/group', [MuthowifServiceController::class, 'updateGroup'])->name('pelayanan.group');
             Route::put('pelayanan/private', [MuthowifServiceController::class, 'updatePrivate'])->name('pelayanan.private');
 
+            Route::get('pelayanan-pendukung', [SupportPackageController::class, 'edit'])->name('pelayanan-pendukung.edit');
+            Route::put('pelayanan-pendukung', [SupportPackageController::class, 'update'])->name('pelayanan-pendukung.update');
+
             Route::get('jadwal', [MuthowifScheduleController::class, 'index'])->name('jadwal.index');
             Route::post('jadwal', [MuthowifScheduleController::class, 'store'])->name('jadwal.store');
             Route::delete('jadwal/{blockedDate}', [MuthowifScheduleController::class, 'destroy'])->name('jadwal.destroy');
@@ -266,6 +278,8 @@ Route::middleware('auth')->group(function () {
                 ->name('bookings.documents.show');
             Route::get('bookings/{booking}', [MuthowifBookingController::class, 'show'])->name('bookings.show');
             Route::post('bookings/{booking}/confirm', [MuthowifBookingController::class, 'confirm'])->name('bookings.confirm');
+            Route::post('bookings/{booking}/support-selesai-setujui', [MuthowifBookingController::class, 'approveSupportCompletion'])->name('bookings.support-completion.approve');
+            Route::post('bookings/{booking}/support-selesai-tolak', [MuthowifBookingController::class, 'rejectSupportCompletion'])->name('bookings.support-completion.reject');
             Route::post('bookings/{booking}/cancel', [MuthowifBookingController::class, 'cancel'])->name('bookings.cancel');
             Route::post('bookings/{booking}/reschedule-requests/{rescheduleRequest}/approve', [MuthowifBookingController::class, 'approveReschedule'])->name('bookings.reschedule_requests.approve');
             Route::post('bookings/{booking}/reschedule-requests/{rescheduleRequest}/reject', [MuthowifBookingController::class, 'rejectReschedule'])->name('bookings.reschedule_requests.reject');

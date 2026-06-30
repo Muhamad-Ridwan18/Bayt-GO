@@ -7,7 +7,27 @@
     $st = $b->status;
 @endphp
 
-@if ($st === BookingStatus::Confirmed)
+@if ($b->isSupport() && $st === BookingStatus::InProgress && $b->isPaid())
+    <section class="overflow-hidden rounded-2xl border border-brand-200 bg-gradient-to-br from-brand-50/90 to-white p-5 shadow-sm ring-1 ring-brand-200/50 sm:p-6">
+        <h2 class="text-base font-bold text-slate-900">{{ __('layanan_pendukung.completion_heading') }}</h2>
+        <p class="mt-1 text-sm text-slate-600">{{ __('layanan_pendukung.completion_intro') }}</p>
+
+        @if ($b->hasCompletionRequested())
+            <p class="mt-4 rounded-xl border border-amber-200 bg-amber-50 px-4 py-3 text-sm font-medium text-amber-900">
+                {{ __('layanan_pendukung.completion_waiting') }}
+            </p>
+        @else
+            <form method="POST" action="{{ route('bookings.support.request-completion', $b) }}" class="mt-5" onsubmit="return confirm(@json(__('layanan_pendukung.completion_confirm')));">
+                @csrf
+                <x-submit-button class="w-full rounded-xl bg-emerald-600 px-5 py-2.5 text-sm font-semibold text-white shadow-md shadow-emerald-600/20 transition hover:bg-emerald-700">
+                    {{ __('layanan_pendukung.completion_submit') }}
+                </x-submit-button>
+            </form>
+        @endif
+    </section>
+@endif
+
+@if (! $b->isSupport() && $st === BookingStatus::Confirmed)
     <section class="rounded-2xl border border-slate-200/90 bg-white p-5 shadow-sm ring-1 ring-slate-100/80 sm:p-6">
         <h2 class="text-base font-bold text-slate-900">{{ __('bookings.show.refund_reschedule_heading') }}</h2>
         <div class="mt-2 text-xs leading-relaxed text-slate-600">
@@ -76,7 +96,7 @@
     </section>
 @endif
 
-@if ($st === BookingStatus::Confirmed && $b->payment_status === PaymentStatus::Paid)
+@if (! $b->isSupport() && $st === BookingStatus::Confirmed && $b->payment_status === PaymentStatus::Paid)
     <section class="overflow-hidden rounded-2xl border border-brand-200 bg-gradient-to-br from-brand-50/90 to-white p-5 shadow-sm ring-1 ring-brand-200/50 sm:p-6">
         <h2 class="text-base font-bold text-slate-900">{{ __('bookings.show.complete_service_heading') }}</h2>
         <p class="mt-1 text-sm text-slate-600">

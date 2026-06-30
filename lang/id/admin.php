@@ -373,6 +373,7 @@ return [
             'finance' => 'Refund & withdraw',
             'admin' => 'Ke admin',
             'emergency' => 'Insiden darurat',
+            'support' => 'Layanan pendukung',
         ],
         'toggles' => [
             'otp' => 'OTP registrasi & reset password',
@@ -389,6 +390,8 @@ return [
             'emergency_candidate' => 'Calon muthowif pengganti → jamaah',
             'emergency_offer' => 'Tawaran pengganti insiden → muthowif',
             'emergency_selection' => 'Hasil pemilihan pengganti → muthowif',
+            'support_completion_requested' => 'Layanan pendukung selesai (jamaah) → muthowif',
+            'support_completion_approved' => 'Konfirmasi selesai layanan pendukung → jamaah',
         ],
     ],
     'whatsapp_broadcast' => [

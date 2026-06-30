@@ -3,6 +3,7 @@
 namespace App\Support;
 
 use App\Events\BookingChatUpdated;
+use App\Jobs\SendBookingChatPushNotification;
 use App\Models\MuthowifBooking;
 /**
  * Chat wajib realtime — broadcast sinkron ke Reverb (ShouldBroadcastNow).
@@ -28,6 +29,14 @@ final class BookingChatBroadcast
             new BookingChatUpdated($model, $action, $messageId, $senderId),
             'chat',
         );
+
+        if ($action === 'message' && $messageId !== null && $senderId !== null) {
+            SendBookingChatPushNotification::dispatch(
+                (string) $model->getKey(),
+                $messageId,
+                $senderId,
+            );
+        }
     }
 
     /** @deprecated Gunakan {@see notify()}; alias agar pemanggil lama tetap jalan. */

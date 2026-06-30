@@ -43,6 +43,11 @@ class GlobalChatApiController extends Controller
             ];
         })->values();
 
-        return response()->json(['conversations' => $conversations]);
+        $unreadTotal = $conversations->sum(static fn (array $item) => (int) ($item['unread_count'] ?? 0));
+
+        return response()->json([
+            'conversations' => $conversations,
+            'unread_total' => $unreadTotal,
+        ]);
     }
 }

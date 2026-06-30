@@ -13,13 +13,13 @@ Route::post('/otp/verify', [OtpController::class, 'verify']);
 
 Route::get('/home', [\App\Http\Controllers\Api\HomeApiController::class, 'index']);
 
+Route::get('/directory', [\App\Http\Controllers\Api\MuthowifDirectoryApiController::class, 'index']);
+Route::get('/directory/{id}', [\App\Http\Controllers\Api\MuthowifDirectoryApiController::class, 'show']);
+
 Route::middleware('auth:sanctum')->group(function () {
     Route::get('/user', function (Request $request) {
         return $request->user();
     });
-    // Mobile Directory/Marketplace
-    Route::get('/directory', [\App\Http\Controllers\Api\MuthowifDirectoryApiController::class, 'index']);
-    Route::get('/directory/{id}', [\App\Http\Controllers\Api\MuthowifDirectoryApiController::class, 'show']);
 
     Route::get('/customer/dashboard', [\App\Http\Controllers\Api\Customer\DashboardController::class, 'index']);
     Route::get('/muthowif/dashboard', [\App\Http\Controllers\Api\Muthowif\DashboardController::class, 'index']);
@@ -33,6 +33,12 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::post('/customer/bookings/{booking}/review', [\App\Http\Controllers\Api\Customer\BookingApiController::class, 'review']);
     Route::post('/customer/bookings/{booking}/refund-request', [\App\Http\Controllers\Api\Customer\BookingApiController::class, 'storeRefundRequest']);
     Route::post('/customer/bookings/{booking}/reschedule-request', [\App\Http\Controllers\Api\Customer\BookingApiController::class, 'storeRescheduleRequest']);
+    Route::post('/customer/bookings/{booking}/complete', [\App\Http\Controllers\Api\Customer\BookingApiController::class, 'complete']);
+    Route::post('/customer/bookings/{booking}/cancel', [\App\Http\Controllers\Api\Customer\BookingApiController::class, 'cancel']);
+    Route::post('/customer/bookings/{booking}/emergency-report', [\App\Http\Controllers\Api\Customer\BookingEmergencyApiController::class, 'store']);
+    Route::post('/customer/bookings/{booking}/emergency-select/{offer}', [\App\Http\Controllers\Api\Customer\BookingEmergencyApiController::class, 'selectReplacement']);
+
+    Route::get('/realtime/config', [\App\Http\Controllers\Api\RealtimeConfigApiController::class, 'show']);
 
     Route::get('/muthowif/services', [\App\Http\Controllers\Api\Muthowif\MuthowifServiceController::class, 'index']);
     Route::put('/muthowif/services/{id}', [\App\Http\Controllers\Api\Muthowif\MuthowifServiceController::class, 'update']);
@@ -56,6 +62,9 @@ Route::middleware('auth:sanctum')->group(function () {
 
     // Chat conversations list
     Route::get('/chat/conversations', [\App\Http\Controllers\Api\GlobalChatApiController::class, 'conversations']);
+
+    Route::post('/push-tokens', [\App\Http\Controllers\Api\DevicePushTokenApiController::class, 'store']);
+    Route::delete('/push-tokens', [\App\Http\Controllers\Api\DevicePushTokenApiController::class, 'destroy']);
 
     // Reverb private channel authentication (for mobile WebSocket)
     Route::post('/broadcasting/auth', [\Illuminate\Broadcasting\BroadcastController::class, 'authenticate']);

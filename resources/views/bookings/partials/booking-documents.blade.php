@@ -9,6 +9,10 @@
 ])
 
 @php
+    if ($booking->isSupport()) {
+        return;
+    }
+
     $hasAny = filled($booking->ticket_outbound_path)
         || filled($booking->ticket_return_path)
         || filled($booking->passport_path)

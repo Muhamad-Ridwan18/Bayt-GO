@@ -1,4 +1,4 @@
-import React, { useCallback, useEffect, useState } from 'react';
+import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import {
   View,
   Text,
@@ -6,9 +6,9 @@ import {
   ScrollView,
   TouchableOpacity,
   StatusBar,
-  Alert,
   ActivityIndicator,
   RefreshControl,
+  TextInput,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { LinearGradient } from 'expo-linear-gradient';
@@ -16,8 +16,12 @@ import { Ionicons } from '@expo/vector-icons';
 import { colors } from '../theme/colors';
 import { fetchHomeData } from '../api/home';
 import { useAuth } from '../context/AuthContext';
+import { useBrand } from '../context/BrandContext';
+import { navigateRoot } from '../navigation/rootNavigation';
+import AppLogo from '../components/AppLogo';
 import MuthowifCard from '../components/MuthowifCard';
 import GallerySection from '../components/GallerySection';
+import DatePickerField, { parseIsoDate } from '../components/DatePickerField';
 
 const FEATURES = [
   { icon: 'cash-outline', title: 'Harga transparan' },
@@ -27,13 +31,50 @@ const FEATURES = [
 
 export default function HomeScreen({ navigation }) {
   const { isAuthenticated, user } = useAuth();
+  const { logoUrl, appName } = useBrand();
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
   const [muthowifs, setMuthowifs] = useState([]);
   const [gallery, setGallery] = useState([]);
   const [error, setError] = useState(null);
+  const [startDate, setStartDate] = useState('');
+  const [endDate, setEndDate] = useState('');
+  const [searchName, setSearchName] = useState('');
 
-  const comingSoon = (label) => Alert.alert('Segera hadir', `${label} akan tersedia di versi berikutnya.`);
+  const today = useMemo(() => {
+    const d = new Date();
+    d.setHours(0, 0, 0, 0);
+    return d;
+  }, []);
+
+  const handleStartDateChange = (iso) => {
+    setStartDate(iso);
+    if (endDate && iso && endDate < iso) setEndDate('');
+  };
+
+  const endMinDate = startDate ? parseIsoDate(startDate) : today;
+  const endMaxDate = useMemo(() => {
+    if (!startDate) return undefined;
+    const max = parseIsoDate(startDate);
+    max.setDate(max.getDate() + 90);
+    return max;
+  }, [startDate]);
+
+  const openDirectory = (params = {}) => {
+    navigation.navigate('Directory', {
+      q: params.q ?? searchName.trim(),
+      startDate: params.startDate ?? startDate.trim(),
+      endDate: params.endDate ?? endDate.trim(),
+    });
+  };
+
+  const openMuthowifDetail = (item) => {
+    navigation.navigate('MuthowifDetail', {
+      id: item.id,
+      startDate: startDate.trim() || undefined,
+      endDate: endDate.trim() || undefined,
+    });
+  };
 
   const loadData = useCallback(async (isRefresh = false) => {
     if (isRefresh) setRefreshing(true);
@@ -66,15 +107,10 @@ export default function HomeScreen({ navigation }) {
 
       <SafeAreaView style={styles.safe} edges={['top']}>
         <View style={styles.header}>
-          <View style={styles.logoRow}>
-            <View style={styles.logoMark}>
-              <Text style={styles.logoMarkText}>B</Text>
-            </View>
-            <Text style={styles.logoText}>BaytGo</Text>
-          </View>
+          <AppLogo url={logoUrl} name={appName} size={36} showName />
           <TouchableOpacity
             style={styles.menuBtn}
-            onPress={() => (isAuthenticated ? navigation.navigate('Dashboard') : navigation.navigate('Login'))}
+            onPress={() => (isAuthenticated ? navigation.getParent()?.navigate('ProfileTab') : navigateRoot(navigation, 'Login'))}
           >
             <Ionicons name={isAuthenticated ? 'person' : 'log-in-outline'} size={22} color={colors.baytgo} />
           </TouchableOpacity>
@@ -110,17 +146,38 @@ export default function HomeScreen({ navigation }) {
 
           <View style={styles.searchCard}>
             <Text style={styles.searchLabel}>Cari ketersediaan muthowif</Text>
-            <TouchableOpacity style={styles.searchField} onPress={() => comingSoon('Pencarian')}>
-              <Ionicons name="calendar-outline" size={20} color={colors.slate400} />
-              <Text style={styles.searchPlaceholder}>Tanggal mulai perjalanan</Text>
-            </TouchableOpacity>
-            <TouchableOpacity style={styles.searchField} onPress={() => comingSoon('Pencarian')}>
+            <DatePickerField
+              value={startDate}
+              onChange={handleStartDateChange}
+              placeholder="Tanggal mulai perjalanan"
+              minimumDate={today}
+              variant="soft"
+            />
+            <DatePickerField
+              value={endDate}
+              onChange={setEndDate}
+              placeholder="Tanggal selesai (opsional)"
+              minimumDate={endMinDate}
+              maximumDate={endMaxDate}
+              clearable
+              onClear={() => setEndDate('')}
+              variant="soft"
+            />
+            <View style={styles.searchField}>
               <Ionicons name="search-outline" size={20} color={colors.slate400} />
-              <Text style={styles.searchPlaceholder}>Nama muthowif (opsional)</Text>
-            </TouchableOpacity>
+              <TextInput
+                style={styles.searchInput}
+                value={searchName}
+                onChangeText={setSearchName}
+                placeholder="Nama muthowif (opsional)"
+                placeholderTextColor={colors.slate400}
+                returnKeyType="search"
+                onSubmitEditing={() => openDirectory()}
+              />
+            </View>
             <TouchableOpacity
               style={styles.searchBtn}
-              onPress={() => comingSoon('Pencarian')}
+              onPress={() => openDirectory()}
               activeOpacity={0.9}
             >
               <LinearGradient
@@ -138,7 +195,7 @@ export default function HomeScreen({ navigation }) {
 
           <View style={styles.sectionHeader}>
             <Text style={styles.sectionTitle}>Muthowif populer</Text>
-            <TouchableOpacity onPress={() => comingSoon('Direktori')}>
+            <TouchableOpacity onPress={() => openDirectory()}>
               <Text style={styles.seeAll}>Lihat semua</Text>
             </TouchableOpacity>
           </View>
@@ -167,7 +224,7 @@ export default function HomeScreen({ navigation }) {
                 <MuthowifCard
                   key={item.id}
                   item={item}
-                  onPress={() => comingSoon('Detail muthowif')}
+                  onPress={() => openMuthowifDetail(item)}
                 />
               ))}
             </ScrollView>
@@ -185,12 +242,12 @@ export default function HomeScreen({ navigation }) {
               {isAuthenticated ? (
                 <>
                   <Text style={styles.ctaTitle}>Halo, {user?.name?.split(' ')[0] || 'Pengguna'}!</Text>
-                  <Text style={styles.ctaSub}>Buka dashboard untuk mengelola akun Anda.</Text>
+                  <Text style={styles.ctaSub}>Buka profil untuk mengelola akun Anda.</Text>
                   <TouchableOpacity
                     style={styles.ctaPrimary}
-                    onPress={() => navigation.navigate('Dashboard')}
+                    onPress={() => navigation.getParent()?.navigate('ProfileTab')}
                   >
-                    <Text style={styles.ctaPrimaryText}>Buka Dashboard</Text>
+                    <Text style={styles.ctaPrimaryText}>Buka Profil</Text>
                   </TouchableOpacity>
                 </>
               ) : (
@@ -202,13 +259,13 @@ export default function HomeScreen({ navigation }) {
                   <View style={styles.ctaBtns}>
                     <TouchableOpacity
                       style={styles.ctaPrimary}
-                      onPress={() => navigation.navigate('Register', { role: 'customer' })}
+                      onPress={() => navigateRoot(navigation, 'Register', { role: 'customer' })}
                     >
                       <Text style={styles.ctaPrimaryText}>Daftar Jamaah</Text>
                     </TouchableOpacity>
                     <TouchableOpacity
                       style={styles.ctaSecondary}
-                      onPress={() => navigation.navigate('Register', { role: 'muthowif' })}
+                      onPress={() => navigateRoot(navigation, 'Register', { role: 'muthowif' })}
                     >
                       <Text style={styles.ctaSecondaryText}>Daftar Muthowif</Text>
                     </TouchableOpacity>
@@ -219,7 +276,7 @@ export default function HomeScreen({ navigation }) {
           </View>
 
           {!isAuthenticated && (
-            <TouchableOpacity style={styles.loginLink} onPress={() => navigation.navigate('Login')}>
+            <TouchableOpacity style={styles.loginLink} onPress={() => navigateRoot(navigation, 'Login')}>
               <Text style={styles.loginText}>Sudah punya akun? </Text>
               <Text style={styles.loginBold}>Masuk</Text>
             </TouchableOpacity>
@@ -332,12 +389,12 @@ const styles = StyleSheet.create({
     backgroundColor: colors.canvas,
     borderRadius: 16,
     paddingHorizontal: 16,
-    paddingVertical: 14,
+    paddingVertical: 4,
     marginBottom: 10,
     borderWidth: 1,
     borderColor: colors.slate100,
   },
-  searchPlaceholder: { fontSize: 14, fontWeight: '600', color: colors.slate400, flex: 1 },
+  searchInput: { flex: 1, paddingVertical: 10, fontSize: 14, fontWeight: '600', color: colors.slate900 },
   searchBtn: { borderRadius: 16, overflow: 'hidden', marginTop: 6 },
   searchBtnGradient: {
     flexDirection: 'row',

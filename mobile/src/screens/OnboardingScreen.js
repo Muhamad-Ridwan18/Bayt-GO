@@ -12,6 +12,8 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { LinearGradient } from 'expo-linear-gradient';
 import { Ionicons } from '@expo/vector-icons';
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import AppLogo from '../components/AppLogo';
+import { useBrand } from '../context/BrandContext';
 import { colors } from '../theme/colors';
 import { ONBOARDING_KEY, ONBOARDING_SLIDES } from '../constants/onboarding';
 
@@ -48,13 +50,14 @@ function Slide({ item }) {
 }
 
 export default function OnboardingScreen({ navigation }) {
+  const { logoUrl, appName } = useBrand();
   const listRef = useRef(null);
   const [index, setIndex] = useState(0);
   const isLast = index === ONBOARDING_SLIDES.length - 1;
 
   const finish = async () => {
     await AsyncStorage.setItem(ONBOARDING_KEY, '1');
-    navigation.replace('Home');
+    navigation.replace('Main');
   };
 
   const goNext = () => {
@@ -77,12 +80,7 @@ export default function OnboardingScreen({ navigation }) {
 
       <SafeAreaView style={styles.safe} edges={['top']}>
         <View style={styles.topBar}>
-          <View style={styles.logoRow}>
-            <View style={styles.logoMark}>
-              <Text style={styles.logoMarkText}>B</Text>
-            </View>
-            <Text style={styles.logoText}>BaytGo</Text>
-          </View>
+          <AppLogo url={logoUrl} name={appName} size={36} showName />
           {!isLast && (
             <TouchableOpacity onPress={skip} hitSlop={12}>
               <Text style={styles.skipText}>Lewati</Text>

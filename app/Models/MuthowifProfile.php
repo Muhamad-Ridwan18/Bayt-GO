@@ -28,6 +28,7 @@ class MuthowifProfile extends Model
         'user_id',
         'phone',
         'address',
+        'current_domicile_address',
         'nik',
         'birth_date',
         'passport_number',
@@ -243,6 +244,16 @@ class MuthowifProfile extends Model
     public function services(): HasMany
     {
         return $this->hasMany(MuthowifService::class)->orderBy('type');
+    }
+
+    public function supportPackages(): HasMany
+    {
+        return $this->hasMany(MuthowifSupportPackage::class)->orderBy('sort_order')->orderBy('name');
+    }
+
+    public function activeSupportPackages(): HasMany
+    {
+        return $this->supportPackages()->where('is_active', true);
     }
 
     public function referredBy(): BelongsTo

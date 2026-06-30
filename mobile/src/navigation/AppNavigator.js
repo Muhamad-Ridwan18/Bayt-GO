@@ -4,18 +4,27 @@ import { NavigationContainer } from '@react-navigation/native';
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import OnboardingScreen from '../screens/OnboardingScreen';
-import HomeScreen from '../screens/HomeScreen';
 import LoginScreen from '../screens/LoginScreen';
 import RegisterScreen from '../screens/RegisterScreen';
-import DashboardScreen from '../screens/DashboardScreen';
+import MainTabNavigator from './MainTabNavigator';
 import { ONBOARDING_KEY } from '../constants/onboarding';
 import { useAuth } from '../context/AuthContext';
+import { navigationRef } from './rootNavigation';
+import { useNotificationNavigation } from '../notifications/useNotificationNavigation';
 import { colors } from '../theme/colors';
 
 const Stack = createNativeStackNavigator();
 
+const stackScreenOptions = {
+  headerShown: false,
+  animation: 'slide_from_right',
+  gestureEnabled: true,
+  fullScreenGestureEnabled: true,
+  gestureDirection: 'horizontal',
+};
+
 function RootNavigator() {
-  const { booting, isAuthenticated } = useAuth();
+  const { booting } = useAuth();
   const [onboardingDone, setOnboardingDone] = useState(false);
   const [onboardingReady, setOnboardingReady] = useState(false);
 
@@ -33,32 +42,41 @@ function RootNavigator() {
     );
   }
 
-  const initialRoute = !onboardingDone
-    ? 'Onboarding'
-    : isAuthenticated
-      ? 'Dashboard'
-      : 'Home';
+  const initialRoute = onboardingDone ? 'Main' : 'Onboarding';
 
   return (
-    <Stack.Navigator
-      initialRouteName={initialRoute}
-      screenOptions={{ headerShown: false, animation: 'slide_from_right' }}
-    >
-      <Stack.Screen name="Onboarding" component={OnboardingScreen} options={{ animation: 'fade' }} />
-      <Stack.Screen name="Home" component={HomeScreen} />
-      <Stack.Screen name="Login" component={LoginScreen} />
-      <Stack.Screen name="Register" component={RegisterScreen} />
-      <Stack.Screen name="Dashboard" component={DashboardScreen} />
+    <Stack.Navigator initialRouteName={initialRoute} screenOptions={stackScreenOptions}>
+      <Stack.Screen
+        name="Onboarding"
+        component={OnboardingScreen}
+        options={{ animation: 'fade', gestureEnabled: false }}
+      />
+      <Stack.Screen name="Main" component={MainTabNavigator} options={{ animation: 'fade' }} />
+      <Stack.Screen
+        name="Login"
+        component={LoginScreen}
+        options={{ animation: 'slide_from_bottom', presentation: 'modal' }}
+      />
+      <Stack.Screen
+        name="Register"
+        component={RegisterScreen}
+        options={{ animation: 'slide_from_bottom', presentation: 'modal' }}
+      />
     </Stack.Navigator>
   );
 }
 
 export default function AppNavigator() {
   return (
-    <NavigationContainer>
-      <RootNavigator />
+    <NavigationContainer ref={navigationRef}>
+      <NavigationRoot />
     </NavigationContainer>
   );
+}
+
+function NavigationRoot() {
+  useNotificationNavigation();
+  return <RootNavigator />;
 }
 
 const styles = StyleSheet.create({
