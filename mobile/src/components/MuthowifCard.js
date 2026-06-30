@@ -20,8 +20,8 @@ export default function MuthowifCard({ item, onPress }) {
       <View style={styles.body}>
         <Text style={styles.name} numberOfLines={1}>{item.name}</Text>
         {item.location ? (
-          <View style={styles.locationRow}>
-            <Ionicons name="location-outline" size={12} color={colors.baytgo} />
+          <View style={styles.locationBadge}>
+            <Ionicons name="location" size={11} color="#0369A1" />
             <Text style={styles.location} numberOfLines={1}>{item.location}</Text>
           </View>
         ) : null}
@@ -66,8 +66,21 @@ const styles = StyleSheet.create({
   },
   body: { padding: 14 },
   name: { fontSize: 15, fontWeight: '800', color: colors.slate900 },
-  locationRow: { flexDirection: 'row', alignItems: 'center', gap: 4, marginTop: 4 },
-  location: { flex: 1, fontSize: 11, fontWeight: '700', color: colors.baytgo },
+  locationBadge: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    alignSelf: 'flex-start',
+    gap: 4,
+    marginTop: 6,
+    maxWidth: '100%',
+    paddingHorizontal: 10,
+    paddingVertical: 5,
+    borderRadius: 999,
+    backgroundColor: '#E0F2FE',
+    borderWidth: 1,
+    borderColor: '#BAE6FD',
+  },
+  location: { flexShrink: 1, fontSize: 11, fontWeight: '800', color: '#0C4A6E' },
   langs: { marginTop: 4, fontSize: 11, color: colors.slate500, fontWeight: '600', lineHeight: 16 },
   ratingRow: { flexDirection: 'row', alignItems: 'center', gap: 4, marginTop: 8 },
   rating: { fontSize: 13, fontWeight: '800', color: colors.slate900 },

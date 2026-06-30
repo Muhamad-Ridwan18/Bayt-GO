@@ -378,9 +378,12 @@ export default function MuthowifDetailScreen({ navigation, route }) {
             ) : null}
 
             {profile.location ? (
-              <View style={styles.profileMetaRow}>
-                <Ionicons name="location-outline" size={14} color={colors.baytgo} />
-                <Text style={styles.profileLocationText}>{profile.location}</Text>
+              <View style={styles.locationBadge}>
+                <Text style={styles.locationBadgeLabel}>Lokasi kerja</Text>
+                <View style={styles.locationBadgeRow}>
+                  <Ionicons name="location" size={14} color="#0369A1" />
+                  <Text style={styles.locationBadgeText}>{profile.location}</Text>
+                </View>
               </View>
             ) : null}
 
@@ -729,7 +732,26 @@ const styles = StyleSheet.create({
   newChipText: { fontSize: 11, fontWeight: '700', color: '#92400E' },
   profileMetaRow: { flexDirection: 'row', alignItems: 'center', gap: 6, marginTop: 10 },
   profileMetaText: { fontSize: 13, fontWeight: '600', color: colors.slate600, flex: 1 },
-  profileLocationText: { fontSize: 14, fontWeight: '700', color: colors.baytgo, flex: 1 },
+  locationBadge: {
+    alignSelf: 'flex-start',
+    marginTop: 10,
+    paddingHorizontal: 12,
+    paddingVertical: 8,
+    borderRadius: 12,
+    backgroundColor: '#E0F2FE',
+    borderWidth: 1,
+    borderColor: '#BAE6FD',
+    gap: 4,
+  },
+  locationBadgeLabel: {
+    fontSize: 10,
+    fontWeight: '800',
+    color: '#0369A1',
+    textTransform: 'uppercase',
+    letterSpacing: 0.6,
+  },
+  locationBadgeRow: { flexDirection: 'row', alignItems: 'center', gap: 6 },
+  locationBadgeText: { flexShrink: 1, fontSize: 14, fontWeight: '800', color: '#0C4A6E' },
   profileRatingRow: { flexDirection: 'row', alignItems: 'center', gap: 8, marginTop: 8 },
   profileRatingText: { fontSize: 13, fontWeight: '700', color: colors.slate700 },
   profileRatingEmpty: { fontSize: 13, fontWeight: '600', color: colors.slate400 },

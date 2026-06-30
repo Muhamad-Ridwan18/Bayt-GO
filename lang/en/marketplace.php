@@ -22,6 +22,7 @@ return [
         'badge_verified' => 'VERIFIED',
         'badge_group' => 'GROUP',
         'badge_private' => 'PRIVATE',
+        'work_location_label' => 'Work location',
     ],
     'trust' => [
         'verified_title' => 'Verified muthowif',

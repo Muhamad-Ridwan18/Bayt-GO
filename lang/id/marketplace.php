@@ -22,6 +22,7 @@ return [
         'badge_verified' => 'VERIFIED',
         'badge_group' => 'GROUP',
         'badge_private' => 'PRIVATE',
+        'work_location_label' => 'Lokasi kerja',
     ],
     'trust' => [
         'verified_title' => 'Muthowif Terverifikasi',
