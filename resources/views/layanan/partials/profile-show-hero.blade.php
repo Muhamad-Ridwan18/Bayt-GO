@@ -11,6 +11,7 @@
     $langStat = count($langList) > 0
         ? __('marketplace.show.stat_languages_count', ['count' => count($langList)])
         : '—';
+    $workLocation = $profile->workLocationLabel();
 @endphp
 
 <section class="overflow-hidden rounded-2xl border border-slate-200/90 bg-white shadow-lg shadow-slate-900/5 ring-1 ring-slate-100/80">
@@ -32,6 +33,14 @@
         <div class="ui-card-pad-lg flex flex-col justify-center lg:p-10">
             <p class="text-xs font-bold uppercase tracking-widest text-brand-700">{{ __('marketplace.show.kicker') }}</p>
             <h1 class="mt-2 text-2xl font-bold tracking-tight text-slate-900 sm:text-3xl lg:text-4xl">{{ $profile->user->name }}</h1>
+
+            @if (filled($workLocation))
+                <p class="mt-2 inline-flex items-center gap-2 rounded-full bg-brand-50 px-3 py-1.5 text-sm font-semibold text-brand-900 ring-1 ring-brand-200/80">
+                    <svg class="h-4 w-4 shrink-0 text-brand-700" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true"><path fill-rule="evenodd" d="M9.69 18.933l.003.001C9.89 19.02 10 19 10 19s.11.02.308-.066l.002-.001.006-.003.018-.008a5.741 5.741 0 00.281-.14c.288-.15.715-.369 1.245-.667 1.032-.6 2.405-1.474 3.79-2.65 1.385-1.176 2.618-2.54 3.39-3.96a10.78 10.78 0 002.133-5.85V6.75A2.25 2.25 0 0013.5 4.5h-7A2.25 2.25 0 004.5 6.75v.823c.001 1.812.317 3.569.92 5.176 1.003 2.63 2.79 4.893 4.87 6.174zM10 10.25a2.25 2.25 0 100-4.5 2.25 2.25 0 000 4.5z" clip-rule="evenodd" /></svg>
+                    {{ $workLocation }}
+                </p>
+            @endif
+
             <p class="mt-2 text-sm text-slate-600 sm:text-base">{{ __('marketplace.show.tagline') }}</p>
 
             @if ($reviewsCount === 0 && $confirmedBookings === 0)

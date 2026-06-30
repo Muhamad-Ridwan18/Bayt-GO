@@ -19,6 +19,12 @@ export default function MuthowifCard({ item, onPress }) {
       </View>
       <View style={styles.body}>
         <Text style={styles.name} numberOfLines={1}>{item.name}</Text>
+        {item.location ? (
+          <View style={styles.locationRow}>
+            <Ionicons name="location-outline" size={12} color={colors.baytgo} />
+            <Text style={styles.location} numberOfLines={1}>{item.location}</Text>
+          </View>
+        ) : null}
         {langs ? <Text style={styles.langs} numberOfLines={2}>{langs}</Text> : null}
         <View style={styles.ratingRow}>
           <Ionicons name="star" size={14} color="#F59E0B" />
@@ -60,6 +66,8 @@ const styles = StyleSheet.create({
   },
   body: { padding: 14 },
   name: { fontSize: 15, fontWeight: '800', color: colors.slate900 },
+  locationRow: { flexDirection: 'row', alignItems: 'center', gap: 4, marginTop: 4 },
+  location: { flex: 1, fontSize: 11, fontWeight: '700', color: colors.baytgo },
   langs: { marginTop: 4, fontSize: 11, color: colors.slate500, fontWeight: '600', lineHeight: 16 },
   ratingRow: { flexDirection: 'row', alignItems: 'center', gap: 4, marginTop: 8 },
   rating: { fontSize: 13, fontWeight: '800', color: colors.slate900 },

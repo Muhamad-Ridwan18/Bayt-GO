@@ -377,10 +377,12 @@ export default function MuthowifDetailScreen({ navigation, route }) {
               </View>
             ) : null}
 
-            <View style={styles.profileMetaRow}>
-              <Ionicons name="location-outline" size={14} color={colors.slate500} />
-              <Text style={styles.profileMetaText}>{profile.location || 'Makkah & Madinah'}</Text>
-            </View>
+            {profile.location ? (
+              <View style={styles.profileMetaRow}>
+                <Ionicons name="location-outline" size={14} color={colors.baytgo} />
+                <Text style={styles.profileLocationText}>{profile.location}</Text>
+              </View>
+            ) : null}
 
             <View style={styles.profileRatingRow}>
               {hasReviews ? (
@@ -727,6 +729,7 @@ const styles = StyleSheet.create({
   newChipText: { fontSize: 11, fontWeight: '700', color: '#92400E' },
   profileMetaRow: { flexDirection: 'row', alignItems: 'center', gap: 6, marginTop: 10 },
   profileMetaText: { fontSize: 13, fontWeight: '600', color: colors.slate600, flex: 1 },
+  profileLocationText: { fontSize: 14, fontWeight: '700', color: colors.baytgo, flex: 1 },
   profileRatingRow: { flexDirection: 'row', alignItems: 'center', gap: 8, marginTop: 8 },
   profileRatingText: { fontSize: 13, fontWeight: '700', color: colors.slate700 },
   profileRatingEmpty: { fontSize: 13, fontWeight: '600', color: colors.slate400 },

@@ -17,6 +17,12 @@ export default function MuthowifListItem({ item, onPress }) {
       </View>
       <View style={styles.body}>
         <Text style={styles.name} numberOfLines={1}>{item.name}</Text>
+        {item.location ? (
+          <View style={styles.locationRow}>
+            <Ionicons name="location-outline" size={12} color={colors.baytgo} />
+            <Text style={styles.location} numberOfLines={1}>{item.location}</Text>
+          </View>
+        ) : null}
         {langs ? <Text style={styles.langs} numberOfLines={1}>{langs}</Text> : null}
         <View style={styles.metaRow}>
           <Ionicons name="star" size={13} color="#F59E0B" />
@@ -54,6 +60,8 @@ const styles = StyleSheet.create({
   },
   body: { flex: 1 },
   name: { fontSize: 15, fontWeight: '800', color: colors.slate900 },
+  locationRow: { flexDirection: 'row', alignItems: 'center', gap: 4, marginTop: 3 },
+  location: { flex: 1, fontSize: 11, fontWeight: '700', color: colors.baytgo },
   langs: { marginTop: 2, fontSize: 11, color: colors.slate500, fontWeight: '600' },
   metaRow: { flexDirection: 'row', alignItems: 'center', gap: 4, marginTop: 6 },
   rating: { fontSize: 12, fontWeight: '800', color: colors.slate900 },
