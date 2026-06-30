@@ -191,9 +191,7 @@ class FonnteService
                 (string) $payload['target'],
                 (string) $payload['countryCode'],
             );
-            if ($this->usesFonnteOfficialApi($apiUrl)) {
-                unset($payload['countryCode']);
-            }
+            unset($payload['countryCode']);
         }
 
         return $payload;
