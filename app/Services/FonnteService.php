@@ -38,6 +38,7 @@ class FonnteService
         string $message,
         ?string $countryCallingCode = null,
     ): void {
+        $token = $this->normalizeGatewayToken($token);
         if ($token === '') {
             throw new RuntimeException('Token WhatsApp belum diatur.');
         }
@@ -157,7 +158,7 @@ class FonnteService
             throw new RuntimeException('Token WhatsApp belum diatur.');
         }
 
-        return $token;
+        return $this->normalizeGatewayToken($token);
     }
 
     private function resolveCountryCode(?string $countryCallingCode, WhatsAppGateway $gateway = WhatsAppGateway::Transactional): string
@@ -185,21 +186,45 @@ class FonnteService
             }
         }
 
-        if ($this->usesFonnteOfficialApi($apiUrl) && isset($payload['target'], $payload['countryCode'])) {
-            $cc = (string) $payload['countryCode'];
-            $digits = preg_replace('/\D+/', '', (string) $payload['target']) ?? '';
-            if ($digits !== '') {
-                if (str_starts_with($digits, '0')) {
-                    $digits = $cc.substr($digits, 1);
-                } elseif (! str_starts_with($digits, $cc)) {
-                    $digits = $cc.$digits;
-                }
-                $payload['target'] = $digits;
+        if (isset($payload['target'], $payload['countryCode'])) {
+            $payload['target'] = $this->normalizeTargetDigits(
+                (string) $payload['target'],
+                (string) $payload['countryCode'],
+            );
+            if ($this->usesFonnteOfficialApi($apiUrl)) {
+                unset($payload['countryCode']);
             }
-            unset($payload['countryCode']);
         }
 
         return $payload;
+    }
+
+    private function normalizeTargetDigits(string $target, string $countryCode): string
+    {
+        $digits = preg_replace('/\D+/', '', $target) ?? '';
+        if ($digits === '') {
+            return $target;
+        }
+
+        if (str_starts_with($digits, '0')) {
+            return $countryCode.substr($digits, 1);
+        }
+
+        if (! str_starts_with($digits, $countryCode)) {
+            return $countryCode.$digits;
+        }
+
+        return $digits;
+    }
+
+    private function normalizeGatewayToken(string $token): string
+    {
+        $token = trim($token);
+        if (str_starts_with(strtolower($token), 'bearer ')) {
+            $token = trim(substr($token, 7));
+        }
+
+        return $token;
     }
 
     private function usesFonnteOfficialApi(string $apiUrl): bool
@@ -236,8 +261,24 @@ class FonnteService
             return;
         }
 
+        if (($data['success'] ?? null) === false) {
+            $reason = $data['message'] ?? $data['reason'] ?? $data['Reason'] ?? 'Tidak diketahui';
+            Log::warning('Fonnte send failed', ['reason' => $reason, 'body' => $data]);
+            throw new RuntimeException('WhatsApp: '.(string) $reason);
+        }
+
+        $nested = $data['data'] ?? null;
+        if (is_array($nested) && ($nested['success'] ?? null) === true) {
+            return;
+        }
+
         $ok = $data['status'] ?? $data['Status'] ?? $data['success'] ?? null;
-        if ($ok === true || $ok === 'true') {
+        if ($ok === true || $ok === 'true' || $ok === 1 || $ok === '1') {
+            return;
+        }
+
+        $detail = $data['detail'] ?? $data['Detail'] ?? null;
+        if (is_string($detail) && stripos($detail, 'success') === 0) {
             return;
         }
 

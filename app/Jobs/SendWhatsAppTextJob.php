@@ -31,6 +31,7 @@ class SendWhatsAppTextJob implements ShouldQueue
         public ?string $overrideGatewayApiUrl = null,
         public ?string $overrideGatewaySessionId = null,
         public ?string $overrideGatewayCountryCode = null,
+        public bool $rethrowOnFailure = false,
     ) {}
 
     public function handle(FonnteService $fonnte): void
@@ -58,8 +59,13 @@ class SendWhatsAppTextJob implements ShouldQueue
 
             Log::warning('whatsapp.job_failed', [
                 'target' => $this->target,
+                'gateway' => $this->gateway->value,
                 'exception' => $e->getMessage(),
             ]);
+
+            if ($this->rethrowOnFailure) {
+                throw $e;
+            }
         }
     }
 }

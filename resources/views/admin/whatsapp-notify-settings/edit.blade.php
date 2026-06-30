@@ -282,7 +282,7 @@
                                     } else if (Array.isArray(data.results)) {
                                     const lines = data.results.map(function (row) {
                                         if (row.ok) {
-                                            return '↻ ' + row.phone + (row.queued ? ' (antrian)' : '');
+                                            return '✓ ' + row.phone;
                                         }
                                         return '✗ ' + row.phone + (row.error ? ': ' + row.error : '');
                                     });

@@ -377,25 +377,7 @@ class WhatsAppNotifySettings
 
     private static function bulkStoredValue(string $bulkSettingKey): ?string
     {
-        $stored = self::storedValue($bulkSettingKey);
-        if ($stored !== null) {
-            return $stored;
-        }
-
-        $legacyKey = match ($bulkSettingKey) {
-            self::SETTING_BULK_TOKEN => self::SETTING_TOKEN,
-            self::SETTING_BULK_API_URL => self::SETTING_API_URL,
-            self::SETTING_BULK_SESSION_ID => self::SETTING_SESSION_ID,
-            self::SETTING_BULK_COUNTRY_CODE => self::SETTING_COUNTRY_CODE,
-            self::SETTING_BULK_MEDIA_PUBLIC_URL => null,
-            default => null,
-        };
-
-        if ($legacyKey === null) {
-            return null;
-        }
-
-        return self::storedValue($legacyKey);
+        return self::storedValue($bulkSettingKey);
     }
 
     private static function nullableTrimmed(mixed $value): ?string

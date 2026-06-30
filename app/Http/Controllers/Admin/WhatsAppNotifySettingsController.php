@@ -12,11 +12,10 @@ use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Validation\Rule;
 use Illuminate\View\View;
+use Throwable;
 
 class WhatsAppNotifySettingsController extends Controller
 {
-    private const TEST_SEND_DELAY_MS = 300;
-
     public function edit(): View
     {
         return view('admin.whatsapp-notify-settings.edit', [
@@ -56,6 +55,11 @@ class WhatsAppNotifySettingsController extends Controller
             ], 422);
         }
 
+        $mismatch = $this->gatewayCredentialMismatch($gateway, $gatewayConfig);
+        if ($mismatch !== null) {
+            return response()->json(['message' => $mismatch], 422);
+        }
+
         $numbers = WhatsAppNotifySettings::adminNumbersFromInput($request->all());
         if ($numbers === []) {
             return response()->json([
@@ -76,9 +80,9 @@ class WhatsAppNotifySettingsController extends Controller
         ]);
 
         $results = [];
-        $queued = 0;
+        $sent = 0;
 
-        foreach ($numbers as $index => $phone) {
+        foreach ($numbers as $phone) {
             $dial = IntlPhone::fonnteDial($phone);
             if ($dial === null) {
                 $results[] = [
@@ -90,27 +94,31 @@ class WhatsAppNotifySettingsController extends Controller
                 continue;
             }
 
-            $job = SendWhatsAppTextJob::dispatch(
-                $dial['target'],
-                $message,
-                $dial['country_calling_code'],
-                [],
-                $gateway,
-                $gatewayConfig['token'],
-                $gatewayConfig['api_url'],
-                $gatewayConfig['session_id'],
-                $gatewayConfig['country_code'],
-            );
-
-            if ($index > 0) {
-                $job->delay(now()->addMilliseconds($index * self::TEST_SEND_DELAY_MS));
+            try {
+                SendWhatsAppTextJob::dispatchSync(
+                    $dial['target'],
+                    $message,
+                    $dial['country_calling_code'],
+                    [],
+                    $gateway,
+                    $gatewayConfig['token'],
+                    $gatewayConfig['api_url'],
+                    $gatewayConfig['session_id'],
+                    $gatewayConfig['country_code'],
+                    true,
+                );
+                $sent++;
+                $results[] = ['phone' => $phone, 'ok' => true];
+            } catch (Throwable $e) {
+                $results[] = [
+                    'phone' => $phone,
+                    'ok' => false,
+                    'error' => $e->getMessage(),
+                ];
             }
-
-            $queued++;
-            $results[] = ['phone' => $phone, 'ok' => true, 'queued' => true];
         }
 
-        if ($queued === 0) {
+        if ($sent === 0) {
             return response()->json([
                 'message' => __('admin.whatsapp_notify.test_all_failed'),
                 'results' => $results,
@@ -118,13 +126,42 @@ class WhatsAppNotifySettingsController extends Controller
         }
 
         return response()->json([
-            'message' => __('admin.whatsapp_notify.test_queued', [
-                'queued' => $queued,
+            'message' => __('admin.whatsapp_notify.test_success', [
+                'sent' => $sent,
                 'total' => count($numbers),
                 'gateway' => $gatewayLabel,
             ]),
             'results' => $results,
         ]);
+    }
+
+    /**
+     * @param  array{token: string, api_url: string, session_id: ?string, country_code: string}  $gatewayConfig
+     */
+    private function gatewayCredentialMismatch(WhatsAppGateway $gateway, array $gatewayConfig): ?string
+    {
+        $url = strtolower($gatewayConfig['api_url']);
+        $token = strtolower($gatewayConfig['token']);
+        $isFonnteUrl = str_contains($url, 'api.fonnte.com');
+        $isWsmToken = str_starts_with($token, 'wsm_');
+
+        if ($gateway === WhatsAppGateway::Bulk && $isFonnteUrl) {
+            return __('admin.whatsapp_notify.test_bulk_fonnte_url_mismatch');
+        }
+
+        if ($gateway === WhatsAppGateway::Bulk && ! $isWsmToken && ! $isFonnteUrl) {
+            return null;
+        }
+
+        if ($gateway === WhatsAppGateway::Bulk && $isWsmToken && $isFonnteUrl) {
+            return __('admin.whatsapp_notify.test_bulk_fonnte_url_mismatch');
+        }
+
+        if ($gateway === WhatsAppGateway::Transactional && $isWsmToken && ! $isFonnteUrl) {
+            return __('admin.whatsapp_notify.test_transactional_wsm_token_mismatch');
+        }
+
+        return null;
     }
 
     /**
