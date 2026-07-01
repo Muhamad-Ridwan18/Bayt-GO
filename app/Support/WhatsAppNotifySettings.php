@@ -48,6 +48,11 @@ class WhatsAppNotifySettings
                 'group' => 'booking',
                 'default' => true,
             ],
+            'customer_payment_settled' => [
+                'label' => 'admin.whatsapp_notify.toggles.customer_payment_settled',
+                'group' => 'booking',
+                'default' => true,
+            ],
             'customer_booking_rejected_jadwal_full' => [
                 'label' => 'admin.whatsapp_notify.toggles.customer_booking_rejected_jadwal_full',
                 'group' => 'booking',

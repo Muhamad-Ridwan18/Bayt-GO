@@ -8,6 +8,7 @@ use App\Models\BookingRefundRequest;
 use App\Models\BookingRescheduleRequest;
 use App\Models\MuthowifBooking;
 use App\Models\MuthowifWithdrawal;
+use App\Support\BookingInvoiceUrl;
 use App\Support\IndonesianNumber;
 use App\Support\IntlPhone;
 use App\Support\WhatsAppMediaUrl;
@@ -181,6 +182,103 @@ class MuthowifBookingWhatsAppNotifier
             $lines[] = '';
             $lines[] = __('whatsapp.muthowif.payment_settled.open', [], $locale);
             $lines[] = $url;
+
+            $this->sendToTarget($fonnteDial, implode("\n", $lines), $booking->id);
+        });
+    }
+
+    /**
+     * Setelah jamaah membayar — kirim WA ke customer dengan detail & link invoice.
+     */
+    public function notifyCustomerPaymentSettled(MuthowifBooking $booking): void
+    {
+        if (! WhatsAppNotifySettings::enabled('customer_payment_settled')) {
+            return;
+        }
+
+        if (! WhatsAppNotifySettings::hasToken()) {
+            Log::debug('WhatsApp customer payment settled skipped: token gateway kosong.');
+
+            return;
+        }
+
+        $booking->loadMissing(['customer', 'muthowifProfile.user']);
+        $customer = $booking->customer;
+        if ($customer === null) {
+            return;
+        }
+
+        $fonnteDial = IntlPhone::fonnteDial($customer->phone);
+        if ($fonnteDial === null) {
+            Log::warning('WhatsApp customer payment settled skipped: nomor customer kosong atau tidak valid.', [
+                'customer_id' => $customer->id,
+                'booking_id' => $booking->id,
+            ]);
+
+            return;
+        }
+
+        $locale = $this->localeForUser($customer->locale);
+        $payment = $booking->settledBookingPayment();
+        $amountFmt = IndonesianNumber::formatThousands((string) (int) ($payment?->gross_amount ?? round((float) $booking->resolvedAmountDue())));
+        $detailUrl = route('bookings.show', $booking);
+        $invoiceUrl = BookingInvoiceUrl::signed($booking);
+
+        $this->withLocale($locale, function () use ($booking, $fonnteDial, $locale, $amountFmt, $detailUrl, $invoiceUrl): void {
+            $muthowifName = $booking->muthowifProfile?->user?->name ?? __('whatsapp.fallback_muthowif', [], $locale);
+            $appName = config('app.name', 'BaytGo');
+
+            if ($booking->isSupport()) {
+                $lines = [
+                    __('whatsapp.customer.support_payment_settled.headline', ['app' => $appName], $locale),
+                    '',
+                    __('whatsapp.customer.support_payment_settled.body', ['muthowif' => $muthowifName], $locale),
+                    '',
+                ];
+
+                if (filled($booking->booking_code)) {
+                    $lines[] = __('whatsapp.customer.support_payment_settled.booking_code', ['code' => $booking->booking_code], $locale);
+                    $lines[] = '';
+                }
+
+                $lines[] = __('whatsapp.customer.support_payment_settled.package', ['package' => $this->supportPackageLabel($booking, $locale)], $locale);
+                $lines[] = __('whatsapp.customer.support_payment_settled.starts_at', ['datetime' => $this->supportStartsAtFormatted($booking)], $locale);
+                $lines[] = __('whatsapp.customer.support_payment_settled.amount', ['amount' => $amountFmt], $locale);
+                $lines[] = __('whatsapp.customer.support_payment_settled.status', [], $locale);
+                $lines[] = '';
+                $lines[] = __('whatsapp.customer.support_payment_settled.view_detail', [], $locale);
+                $lines[] = $detailUrl;
+                $lines[] = '';
+                $lines[] = __('whatsapp.customer.support_payment_settled.invoice_link', ['url' => $invoiceUrl], $locale);
+
+                $this->sendToTarget($fonnteDial, implode("\n", $lines), $booking->id);
+
+                return;
+            }
+
+            $start = $booking->starts_on->format('d/m/Y');
+            $end = $booking->ends_on->format('d/m/Y');
+
+            $lines = [
+                __('whatsapp.customer.payment_settled.headline', ['app' => $appName], $locale),
+                '',
+                __('whatsapp.customer.payment_settled.body', ['muthowif' => $muthowifName], $locale),
+                '',
+            ];
+
+            if (filled($booking->booking_code)) {
+                $lines[] = __('whatsapp.customer.payment_settled.booking_code', ['code' => $booking->booking_code], $locale);
+                $lines[] = '';
+            }
+
+            $lines[] = __('whatsapp.customer.payment_settled.service_dates', ['start' => $start, 'end' => $end], $locale);
+            $lines[] = __('whatsapp.customer.payment_settled.amount', ['amount' => $amountFmt], $locale);
+            $lines[] = __('whatsapp.customer.payment_settled.status', [], $locale);
+            $lines[] = '';
+            $lines[] = __('whatsapp.customer.payment_settled.view_detail', [], $locale);
+            $lines[] = $detailUrl;
+            $lines[] = '';
+            $lines[] = __('whatsapp.customer.payment_settled.invoice_link', ['url' => $invoiceUrl], $locale);
 
             $this->sendToTarget($fonnteDial, implode("\n", $lines), $booking->id);
         });

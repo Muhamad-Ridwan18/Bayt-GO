@@ -6,6 +6,7 @@ use App\Enums\BookingChangeRequestStatus;
 use App\Enums\BookingStatus;
 use App\Enums\MuthowifServiceType;
 use App\Enums\MuthowifVerificationStatus;
+use App\Enums\PaymentStatus;
 use App\Http\Controllers\Controller;
 use App\Jobs\NotifyAdminsOfRefundRequestSubmitted;
 use App\Jobs\NotifyCustomerOfRescheduleSubmitted;
@@ -453,6 +454,24 @@ class BookingController extends Controller
     {
         $this->authorize('invoice', $booking);
 
+        return $this->renderInvoice($booking);
+    }
+
+    public function signedInvoice(Request $request, MuthowifBooking $booking): View
+    {
+        if (! in_array($booking->payment_status, [
+            PaymentStatus::Paid,
+            PaymentStatus::RefundPending,
+            PaymentStatus::Refunded,
+        ], true)) {
+            abort(404);
+        }
+
+        return $this->renderInvoice($booking);
+    }
+
+    private function renderInvoice(MuthowifBooking $booking): View
+    {
         $booking->load(['muthowifProfile.user', 'customer']);
         $settled = $booking->settledBookingPayment();
 

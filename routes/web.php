@@ -4,6 +4,7 @@ use App\Enums\MuthowifVerificationStatus;
 use App\Http\Controllers\Admin\AdminSettingsHubController;
 use App\Http\Controllers\Admin\ArticlesAdminController;
 use App\Http\Controllers\Admin\BookingEmergencyController;
+use App\Http\Controllers\Admin\BookingNotificationController;
 use App\Http\Controllers\Admin\BookingRefundController;
 use App\Http\Controllers\Admin\CampaignsAdminController;
 use App\Http\Controllers\Admin\CompanyApprovalController;
@@ -188,6 +189,10 @@ Route::middleware('guest')->get('/masuk/setelah', function (Request $request) {
     return redirect()->route('login');
 })->name('login.intended');
 
+Route::get('/invoice/{booking}', [CustomerBookingController::class, 'signedInvoice'])
+    ->middleware(['signed', 'throttle:60,1'])
+    ->name('bookings.invoice.signed');
+
 Route::middleware('auth')->group(function () {
     Route::get('/profile', [ProfileController::class, 'edit'])->name('profile.edit');
     Route::patch('/profile', [ProfileController::class, 'update'])->name('profile.update');
@@ -331,6 +336,8 @@ Route::middleware('auth')->group(function () {
         Route::get('refund-menunggu', [BookingRefundController::class, 'index'])->name('refunds.index');
         Route::post('refund-menunggu/{refund}/selesai', [BookingRefundController::class, 'complete'])->name('refunds.complete');
         Route::get('keuangan', [FinanceController::class, 'index'])->name('finance.index');
+        Route::post('pesanan/{booking}/wa-pembayaran-jamaah', [BookingNotificationController::class, 'resendCustomerPaymentSettled'])
+            ->name('bookings.resend_customer_payment_wa');
         Route::get('moota-webhooks/testing', [MootaWebhookHistoriesLiveController::class, 'testing'])
             ->name('moota_webhooks.testing');
         Route::get('moota-webhooks', [MootaWebhookHistoriesLiveController::class, 'live'])

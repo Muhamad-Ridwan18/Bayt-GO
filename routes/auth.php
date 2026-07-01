@@ -2,6 +2,7 @@
 
 use App\Http\Controllers\Auth\AuthenticatedSessionController;
 use App\Http\Controllers\Auth\ConfirmablePasswordController;
+use App\Http\Controllers\Auth\LoginOtpController;
 use App\Http\Controllers\Auth\EmailVerificationNotificationController;
 use App\Http\Controllers\Auth\EmailVerificationPromptController;
 use App\Http\Controllers\Auth\NewPasswordController;
@@ -39,6 +40,10 @@ Route::middleware('guest')->group(function () {
         ->name('register.otp.verify');
     Route::post('register/otp/clear', [RegisterOtpController::class, 'clear'])
         ->name('register.otp.clear');
+
+    Route::post('login/otp/send', [LoginOtpController::class, 'send'])
+        ->middleware('throttle:10,1')
+        ->name('login.otp.send');
 
     Route::get('login', [AuthenticatedSessionController::class, 'create'])
         ->name('login');

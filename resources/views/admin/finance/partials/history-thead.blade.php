@@ -10,5 +10,6 @@
         <th class="px-4 py-3 text-right">{{ __('admin.finance.fee_muthowif_side') }}</th>
         <th class="px-4 py-3 text-right">{{ __('admin.finance.fee_total') }}</th>
         <th class="px-4 py-3 text-right">{{ __('admin.finance.col_net') }}</th>
+        <th class="px-4 py-3 text-right">{{ __('admin.finance.actions') }}</th>
     </tr>
 </thead>

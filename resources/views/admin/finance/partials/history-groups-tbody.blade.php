@@ -17,7 +17,7 @@
 @endphp
 @foreach ($groups as $group)
     <tr class="bg-slate-100/95">
-        <td colspan="10" class="px-4 py-2.5 text-xs font-bold tracking-wide text-slate-800">
+        <td colspan="11" class="px-4 py-2.5 text-xs font-bold tracking-wide text-slate-800">
             @if ($group['is_withdraw_group'])
                 <span class="text-sm text-slate-900">{{ $group['display_label'] }}</span>
             @else
@@ -82,6 +82,22 @@
                         </div>
                     @endif
                 </td>
+                <td class="px-4 py-3 align-top text-right">
+                    @if ($b !== null && $b->paid_at !== null)
+                        <form
+                            method="POST"
+                            action="{{ route('admin.bookings.resend_customer_payment_wa', $b) }}"
+                            onsubmit="return confirm(@json(__('admin.finance.resend_customer_payment_wa_confirm')));"
+                        >
+                            @csrf
+                            <button type="submit" class="inline-flex items-center rounded-lg border border-emerald-200 bg-emerald-50 px-2.5 py-1 text-[11px] font-semibold text-emerald-900 transition hover:bg-emerald-100">
+                                {{ __('admin.finance.resend_customer_payment_wa') }}
+                            </button>
+                        </form>
+                    @else
+                        <span class="text-xs text-slate-400">—</span>
+                    @endif
+                </td>
             </tr>
         @elseif ($row['kind'] === 'refund')
             @php
@@ -120,6 +136,7 @@
                     <div class="font-medium text-slate-900">Rp {{ $fmt((float) $r->net_refund_customer) }}</div>
                     <div class="text-[10px] text-slate-500">{{ __('admin.finance.net_to_pilgrim') }}</div>
                 </td>
+                <td class="px-4 py-3 align-top text-right text-slate-400">—</td>
             </tr>
         @else
             @php
@@ -157,6 +174,7 @@
                         <div class="mt-0.5 text-xs text-red-600">{{ Str::limit($w->failed_reason, 80) }}</div>
                     @endif
                 </td>
+                <td class="px-4 py-3 align-top text-right text-slate-400">—</td>
             </tr>
         @endif
     @endforeach

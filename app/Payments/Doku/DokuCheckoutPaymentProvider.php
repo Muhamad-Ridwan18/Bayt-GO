@@ -4,6 +4,7 @@ namespace App\Payments\Doku;
 
 use App\Enums\BookingStatus;
 use App\Enums\PaymentStatus;
+use App\Jobs\NotifyCustomerOfPaidBooking;
 use App\Jobs\NotifyMuthowifOfPaidBooking;
 use App\Support\CustomerBookingBroadcast;
 use App\Models\BookingPayment;
@@ -295,6 +296,7 @@ class DokuCheckoutPaymentProvider implements SnapPaymentProviderInterface
             $payment = BookingPayment::query()->where('order_id', $orderId)->first();
             if ($payment) {
                 NotifyMuthowifOfPaidBooking::dispatchAfterResponse((string) $payment->muthowif_booking_id);
+                NotifyCustomerOfPaidBooking::dispatchAfterResponse((string) $payment->muthowif_booking_id);
                 CustomerBookingBroadcast::afterResponse((string) $payment->muthowif_booking_id);
             }
         }
