@@ -13,7 +13,7 @@ final class BookingNotificationController extends Controller
     {
         abort_unless(auth()->user()?->isAdmin(), 403);
 
-        if ($booking->paid_at === null) {
+        if ($booking->paid_at === null && ! $booking->isPaid()) {
             return back()->with('error', __('admin.finance.resend_customer_payment_wa_not_paid'));
         }
 

@@ -83,7 +83,7 @@
                     @endif
                 </td>
                 <td class="px-4 py-3 align-top text-right">
-                    @if ($b !== null && $b->paid_at !== null)
+                    @if ($b !== null && ($b->paid_at !== null || in_array($p->status, ['settlement', 'capture'], true)))
                         <form
                             method="POST"
                             action="{{ route('admin.bookings.resend_customer_payment_wa', $b) }}"
