@@ -137,7 +137,8 @@
                             $sameHotelPrice = (float) ($booking->same_hotel_price_snapshot ?? 0.0);
                             $sameHotelLine = $booking->with_same_hotel ? ($nights * $sameHotelPrice) : 0.0;
 
-                            $transportLine = (float) ($booking->transport_price_snapshot ?? 0.0);
+                            $transportPrice = (float) ($booking->transport_price_snapshot ?? 0.0);
+                            $transportLine = $booking->with_transport ? $transportPrice : 0.0;
 
                             $totalDue = (float) ($serviceSubtotal + $addonsSum + $sameHotelLine + $transportLine);
                             $isCompany = $booking->customer?->isCompanyCustomer() ?? false;

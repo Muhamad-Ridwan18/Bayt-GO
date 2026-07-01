@@ -29,7 +29,8 @@
     $sameHotelPrice = (float) ($booking->same_hotel_price_snapshot ?? ($service ? $service->same_hotel_price_per_day : 0.0));
     $sameHotelLine = $booking->with_same_hotel ? ($nights * $sameHotelPrice) : 0.0;
 
-    $transportLine = (float) ($booking->transport_price_snapshot ?? ($booking->with_transport && $service ? (float) $service->transport_price_flat : 0.0));
+    $transportPrice = (float) ($booking->transport_price_snapshot ?? ($service ? (float) $service->transport_price_flat : 0.0));
+    $transportLine = $booking->with_transport ? $transportPrice : 0.0;
 
     $totalGross = (float) ($serviceSubtotal + $addonsSum + $sameHotelLine + $transportLine);
     $priceSplit = PlatformFee::split($totalGross);
