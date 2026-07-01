@@ -3,8 +3,7 @@
 namespace App\Http\Controllers\Auth;
 
 use App\Http\Controllers\Controller;
-use App\Http\Requests\Auth\LoginOtpRequest;
-use App\Services\LoginOtpService;
+use App\Http\Requests\Auth\LoginRequest;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
@@ -23,11 +22,9 @@ class AuthenticatedSessionController extends Controller
     /**
      * Handle an incoming authentication request.
      */
-    public function store(LoginOtpRequest $request, LoginOtpService $loginOtp): RedirectResponse
+    public function store(LoginRequest $request): RedirectResponse
     {
-        $user = $request->authenticate($loginOtp);
-
-        Auth::login($user, $request->boolean('remember'));
+        $request->authenticate();
 
         $request->session()->regenerate();
 
