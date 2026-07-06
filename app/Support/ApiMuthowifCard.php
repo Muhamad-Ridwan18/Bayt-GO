@@ -14,7 +14,7 @@ class ApiMuthowifCard
     {
         $experiences = $profile->workExperiencesForDisplay();
         $primaryService = $profile->services->first();
-        $startPrice = (int) round((float) ($profile->services->min('price') ?? $profile->services->min('daily_price') ?? 0));
+        $startPrice = (int) round((float) ($profile->services->min('daily_price') ?? 0));
         $avgRating = $profile->average_rating ?? $profile->booking_reviews_avg_rating ?? null;
         $reviewCount = (int) ($profile->booking_reviews_count ?? 0);
 
