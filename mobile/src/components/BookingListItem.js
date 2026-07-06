@@ -12,6 +12,7 @@ import {
   canPayBooking,
   isAwaitingMuthowifConfirmation,
 } from '../utils/bookingLabels';
+import { customerPayableAmount } from '../components/BookingPricingBreakdown';
 
 function StatusBadge({ label, color }) {
   return (
@@ -71,7 +72,7 @@ export default function BookingListItem({ item, onPress, onPay }) {
           <StatusBadge label={paymentMeta.label} color={paymentMeta.color} />
         </View>
 
-        <Text style={styles.amount}>{formatIdr(item.total_amount)}</Text>
+        <Text style={styles.amount}>{formatIdr(customerPayableAmount(item.pricing, item.total_amount))}</Text>
 
         {showPay ? (
           <TouchableOpacity

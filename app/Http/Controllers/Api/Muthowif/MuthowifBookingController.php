@@ -35,6 +35,8 @@ class MuthowifBookingController extends Controller
             ->orderBy('created_at', 'desc')
             ->get()
             ->map(function ($b) {
+                $pricing = ApiBookingDetail::pricing($b, forMuthowif: true);
+
                 return [
                     'id' => $b->id,
                     'booking_code' => $b->booking_code,
@@ -48,7 +50,10 @@ class MuthowifBookingController extends Controller
                     'ends_on' => Carbon::parse($b->ends_on)->format('d M Y'),
                     'service_type' => $b->service_type?->label() ?? '—',
                     'pilgrim_count' => $b->pilgrim_count,
+                    'total_amount' => (float) $b->total_amount,
                     'total_price' => 'Rp '.number_format($b->total_amount, 0, ',', '.'),
+                    'pricing' => $pricing,
+                    'net_earning' => $pricing['net_after_referral'],
                 ];
             });
 

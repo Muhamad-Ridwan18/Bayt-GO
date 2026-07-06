@@ -8,6 +8,105 @@ use App\Models\MuthowifBooking;
 
 final class ApiBookingDetail
 {
+    /**
+     * @return array<string, mixed>
+     */
+    public static function pricing(MuthowifBooking $booking, bool $forMuthowif = false): array
+    {
+        $booking->loadMissing(['customer']);
+
+        $base = (float) $booking->resolvedAmountDue();
+        $isCompany = $booking->customer?->isCompanyCustomer() ?? false;
+        $split = PlatformFee::split($base, $isCompany);
+        $lines = self::pricingLines($booking);
+        $rate = PlatformFee::getRate();
+
+        if ($forMuthowif) {
+            $referral = MuthowifReferralReward::paymentSnapshot(
+                (float) $split['muthowif_net'],
+                (string) $booking->muthowif_profile_id,
+            );
+            $referralAmount = (float) $referral['referral_reward_amount'];
+            $netAfterReferral = round(max(0.0, $split['muthowif_net'] - $referralAmount), 2);
+
+            return [
+                'base' => (float) $split['base'],
+                'platform_fee' => (float) $split['muthowif_fee'],
+                'platform_fee_rate' => $rate,
+                'platform_fee_percent' => round($rate * 100, 2),
+                'net_earning' => (float) $split['muthowif_net'],
+                'referral_deduction' => $referralAmount,
+                'net_after_referral' => $netAfterReferral,
+                'lines' => $lines,
+            ];
+        }
+
+        return [
+            'base' => (float) $split['base'],
+            'platform_fee' => (float) $split['customer_fee'],
+            'platform_fee_rate' => $rate,
+            'platform_fee_percent' => round($rate * 100, 2),
+            'total_payable' => (float) $split['customer_gross'],
+            'is_company_customer' => $isCompany,
+            'lines' => $lines,
+        ];
+    }
+
+    /**
+     * @return list<array{key: string, label: string, amount: float}>
+     */
+    private static function pricingLines(MuthowifBooking $booking): array
+    {
+        if ($booking->isSupport()) {
+            $package = (float) ($booking->package_price_snapshot ?? $booking->resolvedAmountDue());
+            if ($package <= 0) {
+                return [];
+            }
+
+            return [
+                ['key' => 'package', 'label' => 'Paket layanan', 'amount' => $package],
+            ];
+        }
+
+        $nights = $booking->billingNightsInclusive();
+        $lines = [];
+
+        $daily = (float) ($booking->daily_price_snapshot ?? 0);
+        if ($daily > 0 && $nights > 0) {
+            $lines[] = [
+                'key' => 'daily',
+                'label' => "Tarif harian × {$nights} hari",
+                'amount' => round($nights * $daily, 2),
+            ];
+        }
+
+        foreach ($booking->add_ons_snapshot ?? [] as $addon) {
+            $addon = (array) $addon;
+            $lines[] = [
+                'key' => 'addon',
+                'label' => (string) ($addon['name'] ?? 'Add-on'),
+                'amount' => (float) ($addon['price'] ?? 0),
+            ];
+        }
+
+        if ($booking->with_same_hotel) {
+            $perDay = (float) ($booking->same_hotel_price_snapshot ?? 0);
+            $amount = round($nights * $perDay, 2);
+            if ($amount > 0) {
+                $lines[] = ['key' => 'same_hotel', 'label' => 'Hotel sama', 'amount' => $amount];
+            }
+        }
+
+        if ($booking->with_transport) {
+            $amount = (float) ($booking->transport_price_snapshot ?? 0);
+            if ($amount > 0) {
+                $lines[] = ['key' => 'transport', 'label' => 'Transport', 'amount' => $amount];
+            }
+        }
+
+        return $lines;
+    }
+
     public static function formatList(MuthowifBooking $booking): array
     {
         $booking->loadMissing(['muthowifProfile.user']);
@@ -22,6 +121,7 @@ final class ApiBookingDetail
             'starts_on' => $booking->starts_on->toDateString(),
             'ends_on' => $booking->ends_on->toDateString(),
             'total_amount' => (float) $booking->total_amount,
+            'pricing' => self::pricing($booking),
             'created_at' => $booking->created_at?->toIso8601String(),
             'muthowif_name' => $profile?->user?->name ?? 'Muthowif',
             'muthowif_avatar' => $profile ? ApiMediaUrl::muthowifAvatar($profile) : null,
@@ -52,6 +152,8 @@ final class ApiBookingDetail
             'with_same_hotel' => (bool) $booking->with_same_hotel,
             'with_transport' => (bool) $booking->with_transport,
             'total_amount' => (float) $booking->total_amount,
+            'package_price_snapshot' => (float) ($booking->package_price_snapshot ?? 0),
+            'pricing' => self::pricing($booking, $forMuthowif),
             'daily_price_snapshot' => (float) ($booking->daily_price_snapshot ?? 0),
             'same_hotel_price_snapshot' => (float) ($booking->same_hotel_price_snapshot ?? 0),
             'transport_price_snapshot' => (float) ($booking->transport_price_snapshot ?? 0),

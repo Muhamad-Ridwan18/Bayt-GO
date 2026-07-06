@@ -24,6 +24,7 @@ import {
   formatDateRange,
   isAwaitingMuthowifConfirmation,
 } from '../utils/bookingLabels';
+import { CustomerPricingBreakdown } from '../components/BookingPricingBreakdown';
 
 const BANK_ICONS = {
   bca: 'card-outline',
@@ -149,6 +150,7 @@ export default function BookingPaymentScreen({ navigation, route }) {
   const [paying, setPaying] = useState(false);
   const [error, setError] = useState('');
   const [amount, setAmount] = useState(0);
+  const [pricing, setPricing] = useState(null);
   const [methods, setMethods] = useState([]);
   const [selectedMethod, setSelectedMethod] = useState('');
   const [instructions, setInstructions] = useState(null);
@@ -165,7 +167,8 @@ export default function BookingPaymentScreen({ navigation, route }) {
         setError('Aplikasi mobile saat ini hanya mendukung pembayaran Moota.');
         return;
       }
-      setAmount(data.amount || 0);
+      setAmount(data.amounts?.total || data.amount || 0);
+      setPricing(data.pricing || booking?.pricing || null);
       const meta = data.methods_meta || (data.methods || []).map((id) => ({ id, label: id }));
       setMethods(meta);
       setPaymentEnvironment(data.payment_environment || null);
@@ -182,6 +185,7 @@ export default function BookingPaymentScreen({ navigation, route }) {
     try {
       const data = await fetchBooking(token, bookingId);
       setBooking(data);
+      if (data.pricing) setPricing(data.pricing);
       if (data.payment_status === 'paid') {
         clearInterval(pollRef.current);
         if (!silent) {
@@ -340,6 +344,13 @@ export default function BookingPaymentScreen({ navigation, route }) {
             </View>
           ) : null}
         </View>
+
+        {pricing ? (
+          <View style={styles.pricingCard}>
+            <Text style={styles.pricingTitle}>Rincian pembayaran</Text>
+            <CustomerPricingBreakdown pricing={pricing} />
+          </View>
+        ) : null}
 
         {awaitingMuthowif ? (
           <View style={styles.waitBanner}>
@@ -516,6 +527,20 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
   },
   summaryDivider: { height: 1, backgroundColor: colors.slate100, marginVertical: 14 },
+  pricingCard: {
+    backgroundColor: colors.white,
+    borderRadius: 18,
+    padding: 16,
+    marginBottom: 14,
+    borderWidth: 1,
+    borderColor: 'rgba(26,61,52,0.08)',
+  },
+  pricingTitle: {
+    fontSize: 14,
+    fontWeight: '800',
+    color: colors.slate900,
+    marginBottom: 4,
+  },
   infoRow: { flexDirection: 'row', alignItems: 'center', gap: 8, paddingVertical: 6 },
   infoLabel: { flex: 1, fontSize: 13, fontWeight: '600', color: colors.slate500 },
   infoValue: { fontSize: 13, fontWeight: '800', color: colors.slate900 },

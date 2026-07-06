@@ -27,6 +27,7 @@ import {
 import { useAuth } from '../context/AuthContext';
 import { colors } from '../theme/colors';
 import { formatIdr } from '../utils/format';
+import { MuthowifPricingBreakdown } from '../components/BookingPricingBreakdown';
 import {
   bookingStatusMeta,
   paymentStatusMeta,
@@ -299,9 +300,20 @@ export default function MuthowifBookingDetailScreen({ navigation, route }) {
             </View>
           </View>
           <View style={styles.totalRow}>
-            <Text style={styles.totalLabel}>Total booking</Text>
-            <Text style={styles.totalValue}>{formatIdr(booking.total_amount)}</Text>
+            <Text style={styles.totalLabel}>Subtotal layanan</Text>
+            <Text style={styles.totalValue}>{formatIdr(booking.pricing?.base ?? booking.total_amount)}</Text>
           </View>
+          {booking.pricing?.net_after_referral != null ? (
+            <View style={styles.netRow}>
+              <Text style={styles.netLabel}>Estimasi diterima</Text>
+              <Text style={styles.netValue}>{formatIdr(booking.pricing.net_after_referral)}</Text>
+            </View>
+          ) : null}
+        </View>
+
+        <View style={styles.card}>
+          <Text style={styles.cardTitle}>Rincian pendapatan</Text>
+          <MuthowifPricingBreakdown pricing={booking.pricing} />
         </View>
 
         <View style={styles.card}>
@@ -497,6 +509,17 @@ const styles = StyleSheet.create({
   },
   totalLabel: { fontSize: 13, fontWeight: '700', color: colors.slate500 },
   totalValue: { fontSize: 18, fontWeight: '900', color: colors.baytgo },
+  netRow: {
+    marginTop: 10,
+    paddingTop: 10,
+    borderTopWidth: 1,
+    borderTopColor: colors.slate100,
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+  },
+  netLabel: { fontSize: 13, fontWeight: '700', color: colors.slate600 },
+  netValue: { fontSize: 20, fontWeight: '900', color: colors.emerald600 },
   card: {
     backgroundColor: colors.white,
     borderRadius: 20,

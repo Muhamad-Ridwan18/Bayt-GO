@@ -40,6 +40,10 @@ import {
   changeRequestStatusLabel,
   billingNights,
 } from '../utils/bookingLabels';
+import {
+  CustomerPricingBreakdown,
+  customerPayableAmount,
+} from '../components/BookingPricingBreakdown';
 
 function InfoRow({ label, value }) {
   return (
@@ -230,7 +234,6 @@ export default function BookingDetailScreen({ navigation, route }) {
   const unpaid = needsPayment(booking);
   const showChat = canOpenChat(booking);
   const nights = billingNights(booking.starts_on, booking.ends_on);
-  const addOns = booking.add_ons_snapshot || [];
   const emergency = booking.emergency || {};
   const emergencyReport = emergency.report;
   const replacementOffers = emergency.replacement_offers || [];
@@ -255,7 +258,14 @@ export default function BookingDetailScreen({ navigation, route }) {
             <StatusPill label={bookingMeta.label} color={bookingMeta.color} />
             <StatusPill label={paymentMeta.label} color={paymentMeta.color} />
           </View>
-          <Text style={styles.total}>{formatIdr(booking.total_amount)}</Text>
+          <Text style={styles.total}>
+            {formatIdr(customerPayableAmount(booking.pricing, booking.total_amount))}
+          </Text>
+          {booking.pricing?.base > 0 && booking.pricing?.platform_fee > 0 ? (
+            <Text style={styles.totalHint}>
+              Termasuk biaya platform {booking.pricing.platform_fee_percent || 7.5}%
+            </Text>
+          ) : null}
         </View>
 
         <View style={styles.section}>
@@ -279,19 +289,7 @@ export default function BookingDetailScreen({ navigation, route }) {
 
         <View style={styles.section}>
           <Text style={styles.sectionTitle}>Rincian Biaya</Text>
-          {booking.daily_price_snapshot > 0 ? (
-            <InfoRow label={`Tarif harian × ${nights}`} value={formatIdr(booking.daily_price_snapshot * nights)} />
-          ) : null}
-          {booking.same_hotel_price_snapshot > 0 ? (
-            <InfoRow label="Hotel sama" value={formatIdr(booking.same_hotel_price_snapshot)} />
-          ) : null}
-          {booking.transport_price_snapshot > 0 ? (
-            <InfoRow label="Transport" value={formatIdr(booking.transport_price_snapshot)} />
-          ) : null}
-          {addOns.map((addon) => (
-            <InfoRow key={addon.name || addon.id} label={addon.name || 'Add-on'} value={formatIdr(addon.price || 0)} />
-          ))}
-          <InfoRow label="Total" value={formatIdr(booking.total_amount)} />
+          <CustomerPricingBreakdown pricing={booking.pricing} />
         </View>
 
         {booking.paid_at ? (
@@ -572,6 +570,7 @@ const styles = StyleSheet.create({
   pill: { borderRadius: 999, paddingHorizontal: 10, paddingVertical: 5 },
   pillText: { fontSize: 11, fontWeight: '800' },
   total: { marginTop: 14, fontSize: 22, fontWeight: '900', color: colors.slate900 },
+  totalHint: { marginTop: 4, fontSize: 11, fontWeight: '600', color: colors.slate500 },
   section: {
     backgroundColor: colors.white,
     borderRadius: 18,

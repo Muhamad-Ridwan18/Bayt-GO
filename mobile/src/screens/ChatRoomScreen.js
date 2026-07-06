@@ -38,6 +38,8 @@ export default function ChatRoomScreen({ navigation, route }) {
 
   const listRef = useRef(null);
   const pollRef = useRef(null);
+  const safetyPollRef = useRef(null);
+  const liveRef = useRef(false);
   const lastIdRef = useRef(null);
 
   const mergeMessages = useCallback((incoming, replace = false) => {
@@ -83,8 +85,15 @@ export default function ChatRoomScreen({ navigation, route }) {
   useBookingChatRealtime({
     token,
     bookingId,
-    onEvent: (payload) => {
+    onConnected: () => {
+      liveRef.current = true;
       setLiveConnected(true);
+    },
+    onError: () => {
+      liveRef.current = false;
+      setLiveConnected(false);
+    },
+    onEvent: (payload) => {
       const action = payload?.action || 'message';
       if (action === 'read') {
         setMessages((prev) => prev.map((m) => (m.is_me ? { ...m, is_read: true } : m)));
@@ -99,10 +108,16 @@ export default function ChatRoomScreen({ navigation, route }) {
       setActiveBookingId(bookingId);
       clearUnreadForBooking(bookingId);
       loadInitial();
-      pollRef.current = setInterval(pollNew, 15000);
+      pollRef.current = setInterval(() => {
+        if (!liveRef.current) pollNew();
+      }, 5000);
+      safetyPollRef.current = setInterval(() => {
+        if (liveRef.current) pollNew();
+      }, 60000);
       return () => {
         setActiveBookingId(null);
         clearInterval(pollRef.current);
+        clearInterval(safetyPollRef.current);
       };
     }, [bookingId, setActiveBookingId, clearUnreadForBooking, loadInitial, pollNew]),
   );

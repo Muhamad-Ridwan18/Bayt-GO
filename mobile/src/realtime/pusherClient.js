@@ -36,6 +36,27 @@ function resolveScheme(config) {
   return config.scheme || 'http';
 }
 
+async function authorizeChannel(token, authEndpoint, socketId, channelName) {
+  const response = await fetch(authEndpoint, {
+    method: 'POST',
+    headers: {
+      Accept: 'application/json',
+      'Content-Type': 'application/json',
+      Authorization: `Bearer ${token}`,
+    },
+    body: JSON.stringify({
+      socket_id: socketId,
+      channel_name: channelName,
+    }),
+  });
+
+  const data = await response.json().catch(() => ({}));
+  if (!response.ok) {
+    throw new Error(data.message || `Auth channel gagal (${response.status})`);
+  }
+  return data;
+}
+
 export async function getPusherClient(token) {
   if (!token) return null;
 
@@ -55,27 +76,29 @@ export async function getPusherClient(token) {
     return null;
   }
 
-  const PusherModule = await import('pusher-js');
+  const PusherModule = await import('pusher-js/react-native');
   const PusherClient = PusherModule.default || PusherModule;
   const host = resolveHost(config);
   const port = resolvePort(config);
   const scheme = resolveScheme(config);
   const useTLS = scheme === 'https';
+  const authEndpoint = config.auth_endpoint || `${API_BASE_URL}/broadcasting/auth`;
 
   pusherInstance = new PusherClient(config.key, {
     wsHost: host,
-    wsPort: port,
+    wsPort: useTLS ? port : port,
     wssPort: port,
     forceTLS: useTLS,
-    enabledTransports: ['ws', 'wss'],
-    cluster: 'mt1',
-    authEndpoint: config.auth_endpoint || `${API_BASE_URL}/broadcasting/auth`,
-    auth: {
-      headers: {
-        Authorization: `Bearer ${token}`,
-        Accept: 'application/json',
+    enabledTransports: useTLS ? ['wss'] : ['ws', 'wss'],
+    disableStats: true,
+    cluster: '',
+    authorizer: (channel) => ({
+      authorize: (socketId, callback) => {
+        authorizeChannel(token, authEndpoint, socketId, channel.name)
+          .then((data) => callback(false, data))
+          .catch((error) => callback(true, error));
       },
-    },
+    }),
   });
 
   pusherToken = token;
@@ -93,7 +116,7 @@ export function disconnectPusher() {
   cachedConfig = null;
 }
 
-export async function subscribePrivateChannel(token, channelName, eventName, callback) {
+export async function subscribePrivateChannel(token, channelName, eventName, callback, hooks = {}) {
   const pusher = await getPusherClient(token);
   if (!pusher) return () => {};
 
@@ -103,18 +126,30 @@ export async function subscribePrivateChannel(token, channelName, eventName, cal
   const handler = (payload) => callback(payload);
   channel.bind(eventName, handler);
 
+  const onConnected = () => hooks.onConnected?.();
+  const onError = (status) => hooks.onError?.(status);
+
+  channel.bind('pusher:subscription_succeeded', onConnected);
+  channel.bind('pusher:subscription_error', onError);
+
+  if (channel.subscriptionPending === false && channel.subscribed) {
+    onConnected();
+  }
+
   return () => {
     channel.unbind(eventName, handler);
+    channel.unbind('pusher:subscription_succeeded', onConnected);
+    channel.unbind('pusher:subscription_error', onError);
     pusher.unsubscribe(fullName);
   };
 }
 
-export async function subscribeBookingChat(token, bookingId, callback) {
-  return subscribePrivateChannel(token, `booking.chat.${bookingId}`, 'chat.updated', callback);
+export async function subscribeBookingChat(token, bookingId, callback, hooks = {}) {
+  return subscribePrivateChannel(token, `booking.chat.${bookingId}`, 'chat.updated', callback, hooks);
 }
 
-export async function subscribeUserBookings(token, userId, callback) {
-  return subscribePrivateChannel(token, `App.Models.User.${userId}`, 'booking.updated', callback);
+export async function subscribeUserBookings(token, userId, callback, hooks = {}) {
+  return subscribePrivateChannel(token, `App.Models.User.${userId}`, 'booking.updated', callback, hooks);
 }
 
 export function isRealtimeEnabled() {

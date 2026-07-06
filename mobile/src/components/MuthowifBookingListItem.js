@@ -3,6 +3,7 @@ import { View, Text, StyleSheet, TouchableOpacity } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { colors } from '../theme/colors';
 import { bookingStatusMeta, paymentStatusMeta } from '../utils/bookingLabels';
+import { formatIdr } from '../utils/format';
 
 function StatusBadge({ label, color }) {
   return (
@@ -57,7 +58,14 @@ export default function MuthowifBookingListItem({ item, onPress }) {
           <StatusBadge label={paymentMeta.label} color={paymentMeta.color} />
         </View>
 
-        <Text style={styles.amount}>{item.total_price}</Text>
+        <Text style={styles.amount}>
+          {item.pricing?.net_after_referral != null
+            ? formatIdr(item.pricing.net_after_referral)
+            : item.total_price}
+        </Text>
+        {item.pricing?.net_after_referral != null ? (
+          <Text style={styles.amountHint}>Estimasi diterima</Text>
+        ) : null}
       </View>
 
       <Ionicons name="chevron-forward" size={18} color={colors.slate400} />
@@ -124,4 +132,5 @@ const styles = StyleSheet.create({
   badge: { borderRadius: 999, paddingHorizontal: 8, paddingVertical: 4 },
   badgeText: { fontSize: 10, fontWeight: '800' },
   amount: { marginTop: 8, fontSize: 14, fontWeight: '900', color: colors.baytgo },
+  amountHint: { marginTop: 2, fontSize: 10, fontWeight: '700', color: colors.slate500 },
 });

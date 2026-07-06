@@ -314,9 +314,12 @@ class BookingApiController extends Controller
 
         // Jika belum ada metode → kembalikan daftar metode saja
         if ($method === '') {
+            $baseInt = (int) round($booking->resolvedAmountDue());
+            $split = PlatformFee::split((float) $baseInt, $booking->customer?->isCompanyCustomer() ?? false);
+
             PaymentFlowLog::info('api.payment.select_method_step', [
                 'booking_id' => $booking->getKey(),
-                'amount' => (int) round($booking->resolvedAmountDue()),
+                'amount' => (int) round($split['customer_gross']),
                 'driver' => $driver,
             ]);
 
@@ -325,7 +328,13 @@ class BookingApiController extends Controller
                 'driver' => $driver,
                 'methods' => $this->apiPaymentMethods(),
                 'methods_meta' => $this->paymentMethodsMeta($this->apiPaymentMethods()),
-                'amount' => (int) round($booking->resolvedAmountDue()),
+                'amount' => (int) round($split['customer_gross']),
+                'amounts' => [
+                    'base' => (int) round($split['base']),
+                    'platform_fee' => (int) round($split['customer_fee']),
+                    'total' => (int) round($split['customer_gross']),
+                ],
+                'pricing' => ApiBookingDetail::pricing($booking),
                 'payment_environment' => $this->paymentEnvironmentPayload(),
             ]);
         }
