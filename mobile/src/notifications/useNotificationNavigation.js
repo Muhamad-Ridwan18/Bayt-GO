@@ -1,7 +1,7 @@
 import { useEffect } from 'react';
 import * as Notifications from 'expo-notifications';
-import { navigateToChatRoom } from './rootNavigation';
-import { extractChatNavigationParams } from '../notifications/pushNotifications';
+import { navigateToChatRoom } from '../navigation/rootNavigation';
+import { extractChatNavigationParams } from './pushNotifications';
 
 function openFromNotificationData(data) {
   const chatParams = extractChatNavigationParams(data);

@@ -8,6 +8,7 @@ use App\Enums\MuthowifVerificationStatus;
 use App\Http\Controllers\Controller;
 use App\Models\MuthowifProfile;
 use App\Models\MuthowifService;
+use App\Support\ApiMediaUrl;
 use App\Support\MarketplaceProfileCache;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
@@ -93,7 +94,7 @@ class MuthowifDirectoryApiController extends Controller
             return [
                 'id' => $profile->id,
                 'name' => $profile->user->name ?? 'Muthowif',
-                'avatar' => $profile->photo_path ? asset('storage/' . $profile->photo_path) : 'https://ui-avatars.com/api/?name=' . urlencode($profile->user->name ?? 'M') . '&background=0984e3&color=fff',
+                'avatar' => ApiMediaUrl::muthowifAvatar($profile),
                 'rating' => number_format($profile->average_rating ?? 5.0, 1),
                 'reviews' => $profile->booking_reviews_count ?? 0,
                 'location' => $profile->workLocationLabel(),
@@ -168,7 +169,7 @@ class MuthowifDirectoryApiController extends Controller
                 'id' => $publicProfile->id,
                 'slug' => $publicProfile->slug,
                 'name' => $publicProfile->user->name ?? 'Muthowif',
-                'avatar' => $publicProfile->photoUrl(),
+                'avatar' => ApiMediaUrl::absolute($publicProfile->photoUrl()),
                 'rating' => $avgRating !== null ? number_format($avgRating, 1) : null,
                 'reviews_count' => $reviewsCount,
                 'confirmed_bookings' => $confirmedBookings,
@@ -196,10 +197,10 @@ class MuthowifDirectoryApiController extends Controller
                 'id' => $portfolio->id,
                 'title' => $portfolio->title,
                 'description' => $portfolio->description,
-                'cover_url' => $portfolio->coverUrl(),
+                'cover_url' => ApiMediaUrl::absolute($portfolio->coverUrl()),
                 'images' => $portfolio->images->isNotEmpty()
-                    ? $portfolio->images->map(fn ($image) => $image->publicUrl())->values()
-                    : collect([$portfolio->coverUrl()]),
+                    ? $portfolio->images->map(fn ($image) => ApiMediaUrl::absolute($image->publicUrl()))->values()
+                    : collect([ApiMediaUrl::absolute($portfolio->coverUrl())]),
             ])->values(),
             'portfolios_count' => (int) ($publicProfile->portfolios_count ?? $publicProfile->portfolios->count()),
             'reviews' => $publicProfile->bookingReviews->map(function ($review) {

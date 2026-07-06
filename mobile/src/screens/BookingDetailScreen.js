@@ -21,6 +21,7 @@ import { useAuth } from '../context/AuthContext';
 import { useUserBookingRealtime } from '../hooks/useUserBookingRealtime';
 import { colors } from '../theme/colors';
 import { formatIdr } from '../utils/format';
+import { resolveMediaUrl } from '../utils/mediaUrl';
 import {
   bookingStatusMeta,
   paymentStatusMeta,
@@ -259,7 +260,7 @@ export default function BookingDetailScreen({ navigation, route }) {
       >
         <View style={styles.heroCard}>
           {muthowif?.avatar ? (
-            <Image source={{ uri: muthowif.avatar }} style={styles.avatar} />
+            <Image source={{ uri: resolveMediaUrl(muthowif.avatar) }} style={styles.avatar} />
           ) : null}
           <Text style={styles.muthowifName}>{muthowifName}</Text>
           <View style={styles.pillRow}>
@@ -412,7 +413,7 @@ export default function BookingDetailScreen({ navigation, route }) {
                       <View key={offer.id} style={styles.candidateCard}>
                         <View style={styles.candidateRow}>
                           {offer.muthowif?.avatar ? (
-                            <Image source={{ uri: offer.muthowif.avatar }} style={styles.candidateAvatar} />
+                            <Image source={{ uri: resolveMediaUrl(offer.muthowif.avatar) }} style={styles.candidateAvatar} />
                           ) : null}
                           <View style={styles.candidateMeta}>
                             <Text style={styles.candidateName}>{offer.muthowif?.name}</Text>

@@ -8,6 +8,7 @@ use App\Models\MuthowifProfile;
 use App\Models\User;
 use App\Services\MuthowifReferralCodeService;
 use App\Services\UploadedImageOptimizer;
+use App\Support\ApiMediaUrl;
 use Illuminate\Auth\Notifications\VerifyEmail;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Hash;
@@ -45,8 +46,8 @@ class ProfileController extends Controller
                 'address' => $muthowif->address,
                 'work_location' => $muthowif->work_location,
                 'work_location_label' => $muthowif->workLocationLabel(),
-                'photo_url' => $muthowif->photo_url,
-                'ktp_url' => $muthowif->ktp_url,
+                'photo_url' => filled($muthowif->photo_path) ? ApiMediaUrl::muthowifAvatar($muthowif) : null,
+                'ktp_url' => filled($muthowif->ktp_image_path) ? ApiMediaUrl::publicDisk($muthowif->ktp_image_path) : null,
                 'languages' => $muthowif->languagesForDisplay() ?: [],
                 'educations' => $muthowif->educationsForDisplay() ?: [],
                 'work_experiences' => $muthowif->workExperiencesForDisplay() ?: [],
@@ -57,7 +58,7 @@ class ProfileController extends Controller
                 'inviter_referral_code' => $muthowif->referredBy?->referral_code,
                 'supporting_documents' => $muthowif->supportingDocuments->map(fn ($d) => [
                     'id' => $d->id,
-                    'url' => asset('storage/'.$d->path),
+                    'url' => ApiMediaUrl::publicDisk($d->path),
                     'name' => $d->original_name,
                 ]),
             ] : null,
@@ -248,7 +249,7 @@ class ProfileController extends Controller
 
             return response()->json([
                 'message' => 'Foto profil berhasil diunggah',
-                'photo_url' => asset('storage/'.$path),
+                'photo_url' => ApiMediaUrl::publicDisk($path),
             ]);
         }
 
@@ -275,7 +276,7 @@ class ProfileController extends Controller
 
             return response()->json([
                 'message' => 'Scan KTP berhasil diunggah',
-                'ktp_url' => asset('storage/'.$path),
+                'ktp_url' => ApiMediaUrl::publicDisk($path),
             ]);
         }
 
@@ -311,7 +312,7 @@ class ProfileController extends Controller
                 'document' => [
                     'id' => $doc->id,
                     'path' => $doc->path,
-                    'url' => asset('storage/'.$doc->path),
+                    'url' => ApiMediaUrl::publicDisk($doc->path),
                     'name' => $doc->original_name,
                 ],
             ]);

@@ -3,6 +3,7 @@ import { View, Text, StyleSheet, Image, TouchableOpacity } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { colors } from '../theme/colors';
 import { formatIdr } from '../utils/format';
+import { resolveMediaUrl } from '../utils/mediaUrl';
 
 export default function MuthowifListItem({ item, onPress }) {
   const langs = (item.languages || []).join(', ');
@@ -10,7 +11,7 @@ export default function MuthowifListItem({ item, onPress }) {
   return (
     <TouchableOpacity style={styles.row} onPress={onPress} activeOpacity={0.92}>
       <View style={styles.avatarWrap}>
-        <Image source={{ uri: item.avatar }} style={styles.avatar} />
+        <Image source={{ uri: resolveMediaUrl(item.avatar) }} style={styles.avatar} />
         <View style={styles.verified}>
           <Ionicons name="checkmark-circle" size={14} color="#0EA5E9" />
         </View>

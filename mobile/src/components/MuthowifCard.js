@@ -3,6 +3,7 @@ import { View, Text, StyleSheet, Image, TouchableOpacity, Dimensions } from 'rea
 import { Ionicons } from '@expo/vector-icons';
 import { colors } from '../theme/colors';
 import { formatIdr } from '../utils/format';
+import { resolveMediaUrl } from '../utils/mediaUrl';
 
 const CARD_WIDTH = Dimensions.get('window').width * 0.62;
 
@@ -12,7 +13,7 @@ export default function MuthowifCard({ item, onPress }) {
   return (
     <TouchableOpacity style={styles.card} onPress={onPress} activeOpacity={0.92}>
       <View style={styles.photoWrap}>
-        <Image source={{ uri: item.avatar }} style={styles.photo} />
+        <Image source={{ uri: resolveMediaUrl(item.avatar) }} style={styles.photo} />
         <View style={styles.verified}>
           <Ionicons name="checkmark-circle" size={16} color="#0EA5E9" />
         </View>

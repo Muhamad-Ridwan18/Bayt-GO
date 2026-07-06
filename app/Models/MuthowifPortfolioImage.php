@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use App\Support\ApiMediaUrl;
 use App\Support\PublicMarketplaceMedia;
 use Illuminate\Database\Eloquent\Concerns\HasUuids;
 use Illuminate\Database\Eloquent\Model;
@@ -46,7 +47,8 @@ class MuthowifPortfolioImage extends Model
             return $this->path;
         }
 
-        return PublicMarketplaceMedia::portfolioImageUrl($this)
-            ?? route('layanan.portfolio.image', $this);
+        return ApiMediaUrl::absolute(
+            PublicMarketplaceMedia::portfolioImageUrl($this) ?? route('layanan.portfolio.image', $this)
+        ) ?? route('layanan.portfolio.image', $this);
     }
 }

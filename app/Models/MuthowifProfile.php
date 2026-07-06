@@ -6,6 +6,7 @@ use App\Enums\BookingStatus;
 use App\Enums\MuthowifAccountStatus;
 use App\Enums\MuthowifVerificationStatus;
 use App\Support\IntlPhone;
+use App\Support\ApiMediaUrl;
 use App\Support\MarketplaceProfileCache;
 use App\Support\PublicMarketplaceMedia;
 use Carbon\CarbonInterface;
@@ -93,8 +94,9 @@ class MuthowifProfile extends Model
             return $this->photo_path;
         }
 
-        return PublicMarketplaceMedia::profilePhotoUrl($this)
-            ?? route('layanan.photo', $this);
+        return ApiMediaUrl::absolute(
+            PublicMarketplaceMedia::profilePhotoUrl($this) ?? route('layanan.photo', $this)
+        ) ?? route('layanan.photo', $this);
     }
 
     public static function photoPathIsExternalUrl(?string $path): bool

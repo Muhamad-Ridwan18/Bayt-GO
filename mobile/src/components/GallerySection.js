@@ -1,6 +1,7 @@
 import React from 'react';
 import { View, Text, StyleSheet, ScrollView, Image, Dimensions } from 'react-native';
 import { colors } from '../theme/colors';
+import { resolveMediaUrl } from '../utils/mediaUrl';
 
 const IMG_W = Dimensions.get('window').width * 0.48;
 const IMG_H = IMG_W * 0.65;
@@ -17,7 +18,7 @@ function GalleryRow({ images }) {
     >
       {images.map((img) => (
         <View key={img.id} style={styles.imageWrap}>
-          <Image source={{ uri: img.url }} style={styles.image} />
+          <Image source={{ uri: resolveMediaUrl(img.url) }} style={styles.image} />
         </View>
       ))}
     </ScrollView>

@@ -31,6 +31,7 @@ import {
 } from '../api/profile';
 import { useAuth } from '../context/AuthContext';
 import { DEFAULT_PHONE_COUNTRY, buildFullPhone, parsePhoneForInput } from '../utils/phoneCountries';
+import { resolveMediaUrl } from '../utils/mediaUrl';
 import { colors } from '../theme/colors';
 
 function rowsFromList(items) {
@@ -72,7 +73,7 @@ function DocumentRow({ doc, onDelete, deleting }) {
   return (
     <View style={styles.docRow}>
       {doc.url ? (
-        <Image source={{ uri: doc.url }} style={styles.docThumb} />
+        <Image source={{ uri: resolveMediaUrl(doc.url) }} style={styles.docThumb} />
       ) : (
         <View style={[styles.docThumb, styles.docThumbPlaceholder]}>
           <Ionicons name="document-outline" size={20} color={colors.slate400} />

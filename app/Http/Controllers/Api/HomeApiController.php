@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
+use App\Support\ApiMediaUrl;
 use App\Support\SiteBrand;
 use App\Support\WelcomePageCache;
 use Illuminate\Http\JsonResponse;
@@ -19,7 +20,7 @@ class HomeApiController extends Controller
             return [
                 'id' => $profile->id,
                 'name' => $profile->user->name ?? 'Muthowif',
-                'avatar' => $profile->photoUrl(),
+                'avatar' => ApiMediaUrl::muthowifAvatar($profile),
                 'rating' => $profile->average_rating !== null
                     ? number_format((float) $profile->average_rating, 1)
                     : null,
@@ -31,13 +32,13 @@ class HomeApiController extends Controller
 
         $gallery = $data['galleryImages']->map(fn ($img) => [
             'id' => $img->id,
-            'url' => $img->publicUrl(),
+            'url' => ApiMediaUrl::absolute($img->publicUrl()),
         ])->values();
 
         return response()->json([
             'brand' => [
                 'name' => config('app.name'),
-                'logo_url' => SiteBrand::logoPublicUrl(),
+                'logo_url' => ApiMediaUrl::absolute(SiteBrand::logoPublicUrl()),
             ],
             'featured_muthowifs' => $featured,
             'gallery' => $gallery,

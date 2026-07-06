@@ -1,6 +1,7 @@
 import React from 'react';
 import { View, Text, StyleSheet, Image, TouchableOpacity } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
+import { resolveMediaUrl } from '../utils/mediaUrl';
 import { colors } from '../theme/colors';
 import { formatIdr } from '../utils/format';
 import {
@@ -25,7 +26,7 @@ export default function BookingListItem({ item, onPress }) {
 
   return (
     <TouchableOpacity style={styles.card} onPress={onPress} activeOpacity={0.92}>
-      <Image source={{ uri: item.muthowif_avatar }} style={styles.avatar} />
+      <Image source={{ uri: resolveMediaUrl(item.muthowif_avatar) }} style={styles.avatar} />
       <View style={styles.body}>
         <Text style={styles.code}>{item.booking_code}</Text>
         <Text style={styles.name} numberOfLines={1}>{item.muthowif_name}</Text>

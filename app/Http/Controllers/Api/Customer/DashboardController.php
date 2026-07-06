@@ -4,6 +4,7 @@ namespace App\Http\Controllers\Api\Customer;
 
 use App\Http\Controllers\Controller;
 use App\Models\MuthowifBooking;
+use App\Support\ApiMediaUrl;
 use App\Support\CustomerDashboardCache;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
@@ -51,7 +52,7 @@ class DashboardController extends Controller
                 return [
                     'id' => $profile->id,
                     'name' => $profile->user->name ?? 'Muthowif',
-                    'avatar' => $profile->photo_path ? asset('storage/'.$profile->photo_path) : 'https://ui-avatars.com/api/?name='.urlencode($profile->user->name ?? 'M').'&background=0984e3&color=fff',
+                    'avatar' => ApiMediaUrl::muthowifAvatar($profile),
                     'rating' => number_format($avgRating, 1),
                     'reviews' => $reviewCount,
                     'location' => $profile->workLocationLabel(),
@@ -71,13 +72,20 @@ class DashboardController extends Controller
         $nextBooking = null;
         if ($next instanceof MuthowifBooking) {
             $next->loadMissing('muthowifProfile.user');
+            $profile = $next->muthowifProfile;
+            $muthowifName = $profile?->user?->name ?? 'Muthowif';
             $nextBooking = [
                 'id' => (string) $next->getKey(),
                 'booking_code' => $next->booking_code,
                 'status' => $next->status->value,
+                'payment_status' => $next->payment_status->value,
                 'starts_on' => $next->starts_on?->toDateString(),
                 'ends_on' => $next->ends_on?->toDateString(),
-                'muthowif_name' => $next->muthowifProfile?->user?->name,
+                'muthowif_name' => $muthowifName,
+                'muthowif_avatar' => $profile
+                    ? ApiMediaUrl::muthowifAvatar($profile, $muthowifName)
+                    : ApiMediaUrl::fallbackAvatar($muthowifName),
+                'pilgrim_count' => (int) $next->pilgrim_count,
             ];
         }
 

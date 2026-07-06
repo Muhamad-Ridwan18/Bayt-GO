@@ -52,14 +52,20 @@ class DashboardController extends Controller
             ->take(5)
             ->get()
             ->map(function ($booking) {
+                $customerName = $booking->customer->name ?? 'Jamaah';
+
                 return [
                     'id' => $booking->id,
                     'booking_number' => $booking->booking_code ?? ('#BGO-'.$booking->id),
-                    'customer_name' => $booking->customer->name ?? 'Jamaah',
+                    'customer_name' => $customerName,
+                    'customer_avatar' => 'https://ui-avatars.com/api/?name='.urlencode($customerName).'&background=1A3D34&color=fff',
                     'date' => $booking->starts_on ? $booking->starts_on->format('d M Y') : '-',
+                    'starts_on' => $booking->starts_on?->toDateString(),
+                    'ends_on' => $booking->ends_on?->toDateString(),
                     'raw_date' => $booking->starts_on ? $booking->starts_on->format('Y-m-d') : null,
                     'duration' => $booking->billingNightsInclusive().' Hari',
-                    'status' => strtoupper($booking->status->value ?? (string) $booking->status),
+                    'status' => $booking->status->value,
+                    'pilgrim_count' => (int) $booking->pilgrim_count,
                 ];
             });
 
@@ -79,6 +85,7 @@ class DashboardController extends Controller
             'referral_code' => $profile->referral_code,
             'rating' => $avgRating !== null ? number_format((float) $avgRating, 1) : null,
             'review_count' => (int) $profile->bookingReviews()->count(),
+            'wallet_balance' => (float) ($profile->wallet_balance ?? 0),
         ]);
     }
 }

@@ -24,7 +24,7 @@ final class ApiBookingDetail
             'total_amount' => (float) $booking->total_amount,
             'created_at' => $booking->created_at?->toIso8601String(),
             'muthowif_name' => $profile?->user?->name ?? 'Muthowif',
-            'muthowif_avatar' => $profile?->photoUrl(),
+            'muthowif_avatar' => $profile ? ApiMediaUrl::muthowifAvatar($profile) : null,
         ];
     }
 
@@ -91,7 +91,7 @@ final class ApiBookingDetail
         } else {
             $data['muthowif_profile'] = $profile ? [
                 'id' => $profile->id,
-                'avatar' => $profile->photoUrl(),
+                'avatar' => ApiMediaUrl::muthowifAvatar($profile),
                 'user' => $profile->user ? [
                     'id' => $profile->user->id,
                     'name' => $profile->user->name,

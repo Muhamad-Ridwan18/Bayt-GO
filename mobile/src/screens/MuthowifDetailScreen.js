@@ -20,6 +20,7 @@ import { useAuth } from '../context/AuthContext';
 import { navigateRoot } from '../navigation/rootNavigation';
 import { colors } from '../theme/colors';
 import { formatIdr } from '../utils/format';
+import { resolveMediaUrl } from '../utils/mediaUrl';
 
 const { width: SCREEN_W } = Dimensions.get('window');
 const HERO_H = Math.min(SCREEN_W * 0.78, 340);
@@ -346,7 +347,7 @@ export default function MuthowifDetailScreen({ navigation, route }) {
     <View style={styles.container}>
       <ScrollView contentContainerStyle={styles.scroll} showsVerticalScrollIndicator={false}>
         <View style={styles.heroWrap}>
-          <Image source={{ uri: profile.avatar }} style={styles.heroImage} />
+          <Image source={{ uri: resolveMediaUrl(profile.avatar) }} style={styles.heroImage} />
           <LinearGradient
             colors={['rgba(15,34,29,0.25)', 'transparent']}
             locations={[0, 0.45]}
@@ -540,7 +541,7 @@ export default function MuthowifDetailScreen({ navigation, route }) {
                     activeOpacity={0.9}
                     onPress={() => openLightbox(item.images, item.title)}
                   >
-                    <Image source={{ uri: item.cover_url }} style={styles.galleryImage} />
+                    <Image source={{ uri: resolveMediaUrl(item.cover_url) }} style={styles.galleryImage} />
                     {item.title ? (
                       <LinearGradient
                         colors={['transparent', 'rgba(0,0,0,0.7)']}
