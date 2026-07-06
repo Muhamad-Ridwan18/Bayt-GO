@@ -3,41 +3,47 @@
 namespace App\Http\Controllers\Api\Customer;
 
 use App\Http\Controllers\Controller;
-use Illuminate\Http\Request;
 use App\Models\MuthowifBooking;
+use App\Support\CustomerDashboardCache;
+use Illuminate\Http\JsonResponse;
+use Illuminate\Http\Request;
 
 class DashboardController extends Controller
 {
-    public function index(Request $request)
+    public function index(Request $request): JsonResponse
     {
         $user = $request->user();
+        $dash = CustomerDashboardCache::stats($user);
 
-        // Statistik booking asli
         $stats = [
             [
                 'label' => 'Booking Aktif',
-                'value' => (string) MuthowifBooking::where('customer_id', $user->id)->whereIn('status', ['confirmed', 'ongoing'])->count(),
-                'color' => '#0984e3'
+                'value' => (string) $dash['activeBookingCount'],
+                'color' => '#0984e3',
             ],
             [
-                'label' => 'Menunggu',
-                'value' => (string) MuthowifBooking::where('customer_id', $user->id)->where('status', 'pending')->count(),
-                'color' => '#6c5ce7'
+                'label' => 'Tiket Bantuan',
+                'value' => (string) $dash['supportOpenCount'],
+                'color' => '#6c5ce7',
             ],
             [
-                'label' => 'Selesai',
-                'value' => (string) MuthowifBooking::where('customer_id', $user->id)->where('status', 'completed')->count(),
-                'color' => '#00b894'
+                'label' => 'Perjalanan Mendatang',
+                'value' => (string) $dash['upcomingTripCount'],
+                'color' => '#00b894',
+            ],
+            [
+                'label' => 'Ulasan Diberikan',
+                'value' => (string) $dash['reviewsGivenCount'],
+                'color' => '#f39c12',
             ],
         ];
 
-        // Mengambil 5 rekomendasi muthowif terverifikasi
         $topMuthowifs = \App\Models\MuthowifProfile::with(['user', 'services'])
             ->where('verification_status', \App\Enums\MuthowifVerificationStatus::Approved)
             ->inRandomOrder()
             ->take(5)
             ->get()
-            ->map(function($profile) {
+            ->map(function ($profile) {
                 $avgRating = $profile->bookingReviews()->avg('rating') ?? 5.0;
                 $reviewCount = $profile->bookingReviews()->count();
                 $startPrice = $profile->services->min('price') ?? 0;
@@ -45,7 +51,7 @@ class DashboardController extends Controller
                 return [
                     'id' => $profile->id,
                     'name' => $profile->user->name ?? 'Muthowif',
-                    'avatar' => $profile->photo_path ? asset('storage/' . $profile->photo_path) : 'https://ui-avatars.com/api/?name=' . urlencode($profile->user->name ?? 'M') . '&background=0984e3&color=fff',
+                    'avatar' => $profile->photo_path ? asset('storage/'.$profile->photo_path) : 'https://ui-avatars.com/api/?name='.urlencode($profile->user->name ?? 'M').'&background=0984e3&color=fff',
                     'rating' => number_format($avgRating, 1),
                     'reviews' => $reviewCount,
                     'location' => $profile->workLocationLabel(),
@@ -54,17 +60,32 @@ class DashboardController extends Controller
                 ];
             });
 
-        $unreadCount = \App\Models\MuthowifBooking::where('customer_id', $user->id)
+        $unreadCount = MuthowifBooking::where('customer_id', $user->id)
             ->withCount(['chatMessages as unread_count' => function ($q) use ($user) {
                 $q->where('user_id', '!=', $user->id)->whereNull('read_at');
             }])
             ->get()
             ->sum('unread_count');
 
+        $next = $dash['nextBooking'];
+        $nextBooking = null;
+        if ($next instanceof MuthowifBooking) {
+            $next->loadMissing('muthowifProfile.user');
+            $nextBooking = [
+                'id' => (string) $next->getKey(),
+                'booking_code' => $next->booking_code,
+                'status' => $next->status->value,
+                'starts_on' => $next->starts_on?->toDateString(),
+                'ends_on' => $next->ends_on?->toDateString(),
+                'muthowif_name' => $next->muthowifProfile?->user?->name,
+            ];
+        }
+
         return response()->json([
             'stats' => $stats,
             'top_muthowifs' => $topMuthowifs,
             'unread_messages' => $unreadCount,
+            'next_booking' => $nextBooking,
         ]);
     }
 }

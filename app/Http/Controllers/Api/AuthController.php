@@ -47,12 +47,7 @@ class AuthController extends Controller
 
         return response()->json([
             'token' => $token,
-            'user' => [
-                'id' => $user->id,
-                'name' => $user->name,
-                'email' => $user->email,
-                'role' => $user->role,
-            ],
+            'user' => $this->apiUserPayload($user),
         ]);
     }
 
@@ -81,6 +76,7 @@ class AuthController extends Controller
             'work_experiences' => ['nullable', 'array'],
             'work_experiences.*' => ['nullable', 'string', 'max:2000'],
             'reference_text' => ['nullable', 'string', 'max:10000'],
+            'muthowif_referral_code' => ['nullable', 'string', 'max:16'],
             'photo' => ['required_if:role,muthowif', 'nullable', 'file', 'mimes:jpeg,jpg,png,webp', 'max:5120'],
             'ktp_image' => ['required_if:role,muthowif', 'nullable', 'file', 'mimes:jpeg,jpg,png,webp', 'max:5120'],
             'supporting_documents' => ['nullable', 'array', 'max:20'],
@@ -101,6 +97,21 @@ class AuthController extends Controller
                     'languages' => 'Isi minimal satu bahasa.',
                 ]);
             }
+
+            $codeRaw = $request->input('muthowif_referral_code');
+            $code = is_string($codeRaw) ? strtoupper(trim($codeRaw)) : '';
+            if ($code !== '') {
+                $exists = MuthowifProfile::query()
+                    ->where('referral_code', $code)
+                    ->where('verification_status', MuthowifVerificationStatus::Approved)
+                    ->exists();
+                if (! $exists) {
+                    throw ValidationException::withMessages([
+                        'muthowif_referral_code' => [__('auth_custom.muthowif_referral_invalid')],
+                    ]);
+                }
+            }
+            $request->merge(['muthowif_referral_code' => $code !== '' ? $code : null]);
         }
 
         $storedDir = null;
@@ -140,6 +151,10 @@ class AuthController extends Controller
                 $educations = $this->requestStringList($request->input('educations'));
                 $workExperiences = $this->requestStringList($request->input('work_experiences'));
 
+                $referralRaw = $request->input('muthowif_referral_code');
+                $referralNorm = is_string($referralRaw) ? strtoupper(trim($referralRaw)) : '';
+                $referredById = $referralNorm !== '' ? $this->resolveReferredByMuthowifProfileId($referralNorm) : null;
+
                 $profile = MuthowifProfile::create([
                     'user_id' => $user->id,
                     'phone' => $request->input('phone'),
@@ -154,6 +169,7 @@ class AuthController extends Controller
                     'photo_path' => $photoPath,
                     'ktp_image_path' => $ktpPath,
                     'verification_status' => MuthowifVerificationStatus::Pending,
+                    'referred_by_muthowif_profile_id' => $referredById,
                 ]);
                 $muthowifProfileId = (string) $profile->getKey();
 
@@ -197,13 +213,29 @@ class AuthController extends Controller
 
         return response()->json([
             'token' => $token,
-            'user' => [
-                'id' => $user->id,
-                'name' => $user->name,
-                'email' => $user->email,
-                'role' => $user->role,
-            ],
+            'user' => $this->apiUserPayload($user),
         ], 201);
+    }
+
+    /**
+     * @return array<string, mixed>
+     */
+    private function apiUserPayload(User $user): array
+    {
+        $user->loadMissing('muthowifProfile');
+
+        $payload = [
+            'id' => $user->id,
+            'name' => $user->name,
+            'email' => $user->email,
+            'role' => $user->role,
+        ];
+
+        if ($user->isMuthowif() && $user->muthowifProfile !== null) {
+            $payload['muthowif_verification_status'] = $user->muthowifProfile->verification_status->value;
+        }
+
+        return $payload;
     }
 
     /**
@@ -220,6 +252,21 @@ class AuthController extends Controller
             array_map(static fn ($s): string => is_string($s) ? trim($s) : '', $input),
             static fn (string $s): bool => $s !== ''
         ));
+    }
+
+    private function resolveReferredByMuthowifProfileId(string $normalizedReferralCode): ?string
+    {
+        $code = strtoupper(trim($normalizedReferralCode));
+        if ($code === '') {
+            return null;
+        }
+
+        $id = MuthowifProfile::query()
+            ->where('referral_code', $code)
+            ->where('verification_status', MuthowifVerificationStatus::Approved)
+            ->value('id');
+
+        return $id !== null ? (string) $id : null;
     }
 
     public function logout(Request $request)

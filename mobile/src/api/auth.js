@@ -50,6 +50,9 @@ export async function registerCustomer(payload) {
   formData.append('role', 'customer');
   formData.append('phone', payload.phone);
   formData.append('address', payload.address);
+  if (payload.country) {
+    formData.append('country', payload.country);
+  }
   formData.append('customer_type', payload.customerType);
   formData.append('device_name', DEVICE_NAME);
   if (payload.customerType === 'company' && payload.ppuiNumber) {
@@ -73,10 +76,16 @@ export async function registerMuthowif(payload) {
   formData.append('role', 'muthowif');
   formData.append('phone', payload.phone);
   formData.append('address', payload.address);
+  if (payload.country) {
+    formData.append('country', payload.country);
+  }
   formData.append('nik', payload.nik);
   formData.append('birth_date', payload.birthDate);
   formData.append('passport_number', payload.passportNumber);
   formData.append('reference_text', payload.referenceText || '');
+  if (payload.referralCode?.trim()) {
+    formData.append('muthowif_referral_code', payload.referralCode.trim().toUpperCase());
+  }
   formData.append('device_name', DEVICE_NAME);
 
   payload.languages.forEach((lang, i) => {
@@ -100,6 +109,14 @@ export async function registerMuthowif(payload) {
     type: 'image/jpeg',
   });
 
+  (payload.supportingDocuments || []).forEach((doc, i) => {
+    formData.append(`supporting_documents[${i}]`, {
+      uri: doc.uri,
+      name: doc.name || `document-${i}.pdf`,
+      type: doc.mimeType || doc.type || 'application/pdf',
+    });
+  });
+
   const response = await fetch(`${API_BASE_URL}/register`, {
     method: 'POST',
     headers: { Accept: 'application/json' },
@@ -115,6 +132,29 @@ export async function logout(token) {
       Accept: 'application/json',
       Authorization: `Bearer ${token}`,
     },
+  });
+  return parseResponse(response);
+}
+
+export async function sendPasswordResetOtp(phone) {
+  const response = await fetch(`${API_BASE_URL}/password/forgot`, {
+    method: 'POST',
+    headers: { Accept: 'application/json', 'Content-Type': 'application/json' },
+    body: JSON.stringify({ phone }),
+  });
+  return parseResponse(response);
+}
+
+export async function resetPassword({ token, otp, password, passwordConfirmation }) {
+  const response = await fetch(`${API_BASE_URL}/password/reset`, {
+    method: 'POST',
+    headers: { Accept: 'application/json', 'Content-Type': 'application/json' },
+    body: JSON.stringify({
+      token,
+      otp,
+      password,
+      password_confirmation: passwordConfirmation,
+    }),
   });
   return parseResponse(response);
 }

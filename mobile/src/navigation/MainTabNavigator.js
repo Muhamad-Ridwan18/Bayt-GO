@@ -2,18 +2,37 @@ import React from 'react';
 import { Platform } from 'react-native';
 import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
 import { Ionicons } from '@expo/vector-icons';
-import HomeStack from './HomeStack';
+import DashboardStack from './DashboardStack';
 import BookingsStack from './BookingsStack';
+import MuthowifBookingsStack from './MuthowifBookingsStack';
+import WalletStack from './WalletStack';
 import ChatStack from './ChatStack';
+import SupportStack from './SupportStack';
 import ProfileStack from './ProfileStack';
 import { useChatInbox } from '../context/ChatInboxContext';
+import { useAuth } from '../context/AuthContext';
 import { colors } from '../theme/colors';
 
 const Tab = createBottomTabNavigator();
 
+function tabIcon(routeName, focused) {
+  const icons = {
+    HomeTab: focused ? 'home' : 'home-outline',
+    BookingsTab: focused ? 'receipt' : 'receipt-outline',
+    MuthowifBookingsTab: focused ? 'clipboard' : 'clipboard-outline',
+    WalletTab: focused ? 'wallet' : 'wallet-outline',
+    ChatTab: focused ? 'chatbubbles' : 'chatbubbles-outline',
+    SupportTab: focused ? 'help-buoy' : 'help-buoy-outline',
+    ProfileTab: focused ? 'person' : 'person-outline',
+  };
+  return icons[routeName] || 'ellipse-outline';
+}
+
 export default function MainTabNavigator() {
   const { unreadTotal } = useChatInbox();
+  const { isAuthenticated, isVerifiedMuthowif, isPendingMuthowif, isMuthowif } = useAuth();
   const chatBadge = unreadTotal > 0 ? (unreadTotal > 99 ? '99+' : unreadTotal) : undefined;
+  const showMuthowifTabs = isAuthenticated && isVerifiedMuthowif;
 
   return (
     <Tab.Navigator
@@ -32,24 +51,38 @@ export default function MainTabNavigator() {
           fontSize: 11,
           fontWeight: '700',
         },
-        tabBarIcon: ({ color, size, focused }) => {
-          const icons = {
-            HomeTab: focused ? 'home' : 'home-outline',
-            BookingsTab: focused ? 'receipt' : 'receipt-outline',
-            ChatTab: focused ? 'chatbubbles' : 'chatbubbles-outline',
-            ProfileTab: focused ? 'person' : 'person-outline',
-          };
-          return <Ionicons name={icons[route.name]} size={size} color={color} />;
-        },
+        tabBarIcon: ({ color, size, focused }) => (
+          <Ionicons name={tabIcon(route.name, focused)} size={size} color={color} />
+        ),
       })}
     >
-      <Tab.Screen name="HomeTab" component={HomeStack} options={{ tabBarLabel: 'Beranda' }} />
-      <Tab.Screen name="BookingsTab" component={BookingsStack} options={{ tabBarLabel: 'Pesanan' }} />
-      <Tab.Screen
-        name="ChatTab"
-        component={ChatStack}
-        options={{ tabBarLabel: 'Chat', tabBarBadge: chatBadge }}
-      />
+      <Tab.Screen name="HomeTab" component={DashboardStack} options={{ tabBarLabel: 'Beranda' }} />
+
+      {showMuthowifTabs ? (
+        <>
+          <Tab.Screen
+            name="MuthowifBookingsTab"
+            component={MuthowifBookingsStack}
+            options={{ tabBarLabel: 'Permintaan' }}
+          />
+          <Tab.Screen name="WalletTab" component={WalletStack} options={{ tabBarLabel: 'Dompet' }} />
+        </>
+      ) : (
+        <Tab.Screen name="BookingsTab" component={BookingsStack} options={{ tabBarLabel: 'Pesanan' }} />
+      )}
+
+      {!isPendingMuthowif ? (
+        <Tab.Screen
+          name="ChatTab"
+          component={ChatStack}
+          options={{ tabBarLabel: 'Chat', tabBarBadge: chatBadge }}
+        />
+      ) : null}
+
+      {isAuthenticated && !isMuthowif ? (
+        <Tab.Screen name="SupportTab" component={SupportStack} options={{ tabBarLabel: 'Bantuan' }} />
+      ) : null}
+
       <Tab.Screen name="ProfileTab" component={ProfileStack} options={{ tabBarLabel: 'Profil' }} />
     </Tab.Navigator>
   );

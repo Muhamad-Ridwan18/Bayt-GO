@@ -14,8 +14,9 @@ import { useFocusEffect } from '@react-navigation/native';
 import { LinearGradient } from 'expo-linear-gradient';
 import { Ionicons } from '@expo/vector-icons';
 import ScreenHeader from '../components/ScreenHeader';
-import { fetchBooking, cancelBooking } from '../api/bookings';
+import { fetchBooking, cancelBooking, requestSupportCompletion } from '../api/bookings';
 import { selectEmergencyReplacement } from '../api/emergency';
+import { openBookingDocument } from '../utils/openDocument';
 import { useAuth } from '../context/AuthContext';
 import { useUserBookingRealtime } from '../hooks/useUserBookingRealtime';
 import { colors } from '../theme/colors';
@@ -33,6 +34,8 @@ import {
   canRequestRefund,
   canRequestReschedule,
   hasPendingReschedule,
+  canRequestSupportCompletion,
+  hasSupportCompletionPending,
   changeRequestStatusLabel,
   billingNights,
 } from '../utils/bookingLabels';
@@ -92,6 +95,8 @@ export default function BookingDetailScreen({ navigation, route }) {
   const [refreshing, setRefreshing] = useState(false);
   const [error, setError] = useState(null);
   const [cancelling, setCancelling] = useState(false);
+  const [requestingCompletion, setRequestingCompletion] = useState(false);
+  const [openingDoc, setOpeningDoc] = useState(false);
 
   const load = useCallback(async (refresh = false) => {
     if (refresh) setRefreshing(true);
@@ -170,6 +175,42 @@ export default function BookingDetailScreen({ navigation, route }) {
     ]);
   };
 
+  const handleRequestSupportCompletion = () => {
+    Alert.alert(
+      'Minta penyelesaian layanan?',
+      'Muthowif akan diminta mengonfirmasi bahwa layanan pendukung sudah selesai.',
+      [
+        { text: 'Batal', style: 'cancel' },
+        {
+          text: 'Kirim permintaan',
+          onPress: async () => {
+            setRequestingCompletion(true);
+            try {
+              await requestSupportCompletion(token, bookingId);
+              Alert.alert('Berhasil', 'Permintaan penyelesaian telah dikirim ke muthowif.');
+              load(true);
+            } catch (err) {
+              Alert.alert('Gagal', err.message || 'Tidak dapat mengirim permintaan');
+            } finally {
+              setRequestingCompletion(false);
+            }
+          },
+        },
+      ],
+    );
+  };
+
+  const handleOpenDocument = async (doc) => {
+    setOpeningDoc(true);
+    try {
+      await openBookingDocument(token, bookingId, doc.type, doc.label);
+    } catch (err) {
+      Alert.alert('Gagal', err.message || 'Tidak dapat membuka dokumen');
+    } finally {
+      setOpeningDoc(false);
+    }
+  };
+
   if (loading && !refreshing) {
     return (
       <View style={styles.container}>
@@ -237,6 +278,20 @@ export default function BookingDetailScreen({ navigation, route }) {
           {booking.with_same_hotel ? <InfoRow label="Hotel sama" value="Ya" /> : null}
           {booking.with_transport ? <InfoRow label="Transport" value="Ya" /> : null}
         </View>
+
+        {(booking.documents || []).length > 0 ? (
+          <View style={styles.section}>
+            <Text style={styles.sectionTitle}>Dokumen Anda</Text>
+            {(booking.documents || []).map((doc) => (
+              <ActionBtn
+                key={doc.type}
+                icon="document-text-outline"
+                label={openingDoc ? 'Membuka…' : doc.label}
+                onPress={() => handleOpenDocument(doc)}
+              />
+            ))}
+          </View>
+        ) : null}
 
         <View style={styles.section}>
           <Text style={styles.sectionTitle}>Rincian Biaya</Text>
@@ -396,6 +451,28 @@ export default function BookingDetailScreen({ navigation, route }) {
           </View>
         ) : null}
 
+        {booking.is_support && booking.payment_status === 'paid' && booking.status === 'in_progress' ? (
+          <View style={[styles.section, styles.supportSection]}>
+            <Text style={styles.sectionTitle}>Penyelesaian layanan pendukung</Text>
+            <Text style={styles.supportIntro}>
+              Setelah layanan selesai, kirim permintaan agar muthowif mengonfirmasi penyelesaian.
+            </Text>
+            {hasSupportCompletionPending(booking) ? (
+              <View style={styles.pendingBanner}>
+                <Ionicons name="time-outline" size={16} color="#B45309" />
+                <Text style={styles.pendingText}>Menunggu konfirmasi muthowif</Text>
+              </View>
+            ) : canRequestSupportCompletion(booking) ? (
+              <ActionBtn
+                icon="checkmark-done-outline"
+                label={requestingCompletion ? 'Mengirim...' : 'Minta penyelesaian layanan'}
+                variant="primary"
+                onPress={handleRequestSupportCompletion}
+              />
+            ) : null}
+          </View>
+        ) : null}
+
         <View style={styles.actions}>
           {unpaid ? (
             <TouchableOpacity style={styles.payBtn} onPress={() => navigation.navigate('BookingPayment', { bookingId: booking.id, bookingCode: booking.booking_code })} activeOpacity={0.9}>
@@ -520,6 +597,8 @@ const styles = StyleSheet.create({
     borderColor: colors.slate100,
   },
   sectionTitle: { fontSize: 15, fontWeight: '900', color: colors.baytgo, marginBottom: 12 },
+  supportSection: { borderColor: '#A7F3D0', backgroundColor: '#F0FDF4' },
+  supportIntro: { fontSize: 13, lineHeight: 20, color: colors.slate600, fontWeight: '500', marginBottom: 12 },
   infoRow: {
     flexDirection: 'row',
     justifyContent: 'space-between',

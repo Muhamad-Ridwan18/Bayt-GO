@@ -4,7 +4,9 @@ import { useAuth } from '../context/AuthContext';
 import ProfileScreen from '../screens/ProfileScreen';
 import ProfileGuestScreen from '../screens/ProfileGuestScreen';
 import EditProfileScreen from '../screens/EditProfileScreen';
+import EditMuthowifProfileScreen from '../screens/EditMuthowifProfileScreen';
 import ChangePasswordScreen from '../screens/ChangePasswordScreen';
+import DeleteAccountScreen from '../screens/DeleteAccountScreen';
 
 const Stack = createNativeStackNavigator();
 
@@ -26,7 +28,9 @@ export default function ProfileStack() {
     <Stack.Navigator screenOptions={stackScreenOptions}>
       <Stack.Screen name="ProfileMain" component={ProfileRoot} />
       <Stack.Screen name="EditProfile" component={EditProfileScreen} />
+      <Stack.Screen name="EditMuthowifProfile" component={EditMuthowifProfileScreen} />
       <Stack.Screen name="ChangePassword" component={ChangePasswordScreen} />
+      <Stack.Screen name="DeleteAccount" component={DeleteAccountScreen} />
     </Stack.Navigator>
   );
 }

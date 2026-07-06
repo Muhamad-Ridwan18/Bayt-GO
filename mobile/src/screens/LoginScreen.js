@@ -59,6 +59,10 @@ export default function LoginScreen({ navigation }) {
         secureTextEntry
       />
 
+      <TouchableOpacity style={styles.forgotBtn} onPress={() => navigation.navigate('ForgotPassword')}>
+        <Text style={styles.forgotText}>Lupa password?</Text>
+      </TouchableOpacity>
+
       <TouchableOpacity
         style={styles.primaryBtn}
         onPress={handleLogin}
@@ -97,6 +101,8 @@ const styles = StyleSheet.create({
   primaryBtn: { borderRadius: 16, overflow: 'hidden', marginTop: 8 },
   primaryGradient: { paddingVertical: 16, alignItems: 'center' },
   primaryText: { color: colors.white, fontSize: 16, fontWeight: '800' },
+  forgotBtn: { alignSelf: 'flex-end', marginTop: 8, marginBottom: 4 },
+  forgotText: { fontSize: 13, fontWeight: '800', color: colors.baytgo },
   footerRow: { flexDirection: 'row', justifyContent: 'center', marginTop: 24 },
   footerText: { fontSize: 14, color: colors.slate500, fontWeight: '600' },
   footerLink: { fontSize: 14, color: colors.baytgo, fontWeight: '800' },

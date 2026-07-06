@@ -21,6 +21,7 @@ use App\Services\BookingPricingService;
 use App\Services\BookingRefundExecutor;
 use App\Services\Doku\DokuDirectChargeService;
 use App\Services\Moota\MootaBookingChargeService;
+use App\Services\SupportBookingService;
 use App\Services\UploadedImageOptimizer;
 use App\Support\ApiBookingDetail;
 use App\Support\ApiEmergencyDetail;
@@ -63,6 +64,7 @@ class BookingApiController extends Controller
 
         $data = ApiBookingDetail::format($booking);
         $data['can_report_emergency'] = $request->user()->can('reportEmergency', $booking);
+        $data['can_request_support_completion'] = $request->user()->can('requestSupportCompletion', $booking);
         $data['emergency'] = ApiEmergencyDetail::for($booking);
 
         return response()->json($data);
@@ -664,6 +666,26 @@ class BookingApiController extends Controller
             'message' => $result['credited']
                 ? 'Layanan selesai. Saldo muthowif telah dicatat.'
                 : 'Layanan berhasil ditandai selesai.',
+            'booking' => ApiBookingDetail::format($booking->fresh()),
+        ]);
+    }
+
+    public function requestSupportCompletion(
+        Request $request,
+        MuthowifBooking $booking,
+        SupportBookingService $support,
+    ): JsonResponse {
+        $this->authorize('requestSupportCompletion', $booking);
+
+        if ($booking->customer_id !== $request->user()->id) {
+            return response()->json(['message' => 'Unauthorized'], 403);
+        }
+
+        $support->requestCompletion($booking, (string) $request->user()->id);
+        CustomerBookingBroadcast::afterResponse($booking->fresh());
+
+        return response()->json([
+            'message' => __('layanan_pendukung.flash.completion_requested'),
             'booking' => ApiBookingDetail::format($booking->fresh()),
         ]);
     }

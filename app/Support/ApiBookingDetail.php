@@ -76,6 +76,9 @@ final class ApiBookingDetail
                 'reason' => $req->customer_note,
                 'created_at' => $req->created_at?->toIso8601String(),
             ])->values()->all(),
+            'documents' => self::documents($booking),
+            'is_support' => $booking->isSupport(),
+            'completion_requested_at' => $booking->completion_requested_at?->toIso8601String(),
         ];
 
         if ($forMuthowif) {
@@ -98,6 +101,30 @@ final class ApiBookingDetail
         }
 
         return $data;
+    }
+
+    /**
+     * @return list<array{type: string, label: string, available: bool}>
+     */
+    public static function documents(MuthowifBooking $booking): array
+    {
+        if ($booking->isSupport()) {
+            return [];
+        }
+
+        $items = [
+            ['type' => 'outbound', 'path' => $booking->ticket_outbound_path, 'label' => 'Tiket berangkat'],
+            ['type' => 'return', 'path' => $booking->ticket_return_path, 'label' => 'Tiket pulang'],
+            ['type' => 'passport', 'path' => $booking->passport_path, 'label' => 'Paspor'],
+            ['type' => 'itinerary', 'path' => $booking->itinerary_path, 'label' => 'Itinerary'],
+            ['type' => 'visa', 'path' => $booking->visa_path, 'label' => 'Visa'],
+        ];
+
+        return array_values(array_map(static fn (array $item): array => [
+            'type' => $item['type'],
+            'label' => $item['label'],
+            'available' => filled($item['path']),
+        ], array_filter($items, static fn (array $item): bool => filled($item['path']))));
     }
 
     /**

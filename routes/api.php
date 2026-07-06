@@ -11,6 +11,9 @@ Route::post('/register', [AuthController::class, 'register']);
 Route::post('/otp/send', [OtpController::class, 'send']);
 Route::post('/otp/verify', [OtpController::class, 'verify']);
 
+Route::post('/password/forgot', [\App\Http\Controllers\Api\PasswordResetApiController::class, 'sendOtp']);
+Route::post('/password/reset', [\App\Http\Controllers\Api\PasswordResetApiController::class, 'reset']);
+
 Route::get('/home', [\App\Http\Controllers\Api\HomeApiController::class, 'index']);
 
 Route::get('/directory', [\App\Http\Controllers\Api\MuthowifDirectoryApiController::class, 'index']);
@@ -18,7 +21,19 @@ Route::get('/directory/{id}', [\App\Http\Controllers\Api\MuthowifDirectoryApiCon
 
 Route::middleware('auth:sanctum')->group(function () {
     Route::get('/user', function (Request $request) {
-        return $request->user();
+        $user = $request->user();
+        $user->loadMissing('muthowifProfile');
+        $payload = [
+            'id' => $user->id,
+            'name' => $user->name,
+            'email' => $user->email,
+            'role' => $user->role,
+        ];
+        if ($user->isMuthowif() && $user->muthowifProfile) {
+            $payload['muthowif_verification_status'] = $user->muthowifProfile->verification_status->value;
+        }
+
+        return response()->json(['user' => $payload]);
     });
 
     Route::get('/customer/dashboard', [\App\Http\Controllers\Api\Customer\DashboardController::class, 'index']);
@@ -34,6 +49,7 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::post('/customer/bookings/{booking}/refund-request', [\App\Http\Controllers\Api\Customer\BookingApiController::class, 'storeRefundRequest']);
     Route::post('/customer/bookings/{booking}/reschedule-request', [\App\Http\Controllers\Api\Customer\BookingApiController::class, 'storeRescheduleRequest']);
     Route::post('/customer/bookings/{booking}/complete', [\App\Http\Controllers\Api\Customer\BookingApiController::class, 'complete']);
+    Route::post('/customer/bookings/{booking}/support-completion-request', [\App\Http\Controllers\Api\Customer\BookingApiController::class, 'requestSupportCompletion']);
     Route::post('/customer/bookings/{booking}/cancel', [\App\Http\Controllers\Api\Customer\BookingApiController::class, 'cancel']);
     Route::post('/customer/bookings/{booking}/emergency-report', [\App\Http\Controllers\Api\Customer\BookingEmergencyApiController::class, 'store']);
     Route::post('/customer/bookings/{booking}/emergency-select/{offer}', [\App\Http\Controllers\Api\Customer\BookingEmergencyApiController::class, 'selectReplacement']);
@@ -54,7 +70,33 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::post('/muthowif/bookings/{id}/cancel', [\App\Http\Controllers\Api\Muthowif\MuthowifBookingController::class, 'cancel']);
     Route::post('/muthowif/bookings/{booking}/reschedule-requests/{rescheduleRequest}/approve', [\App\Http\Controllers\Api\Muthowif\MuthowifBookingController::class, 'approveReschedule']);
     Route::post('/muthowif/bookings/{booking}/reschedule-requests/{rescheduleRequest}/reject', [\App\Http\Controllers\Api\Muthowif\MuthowifBookingController::class, 'rejectReschedule']);
-    
+    Route::post('/muthowif/bookings/{id}/support-completion/approve', [\App\Http\Controllers\Api\Muthowif\MuthowifBookingController::class, 'approveSupportCompletion']);
+    Route::post('/muthowif/bookings/{id}/support-completion/reject', [\App\Http\Controllers\Api\Muthowif\MuthowifBookingController::class, 'rejectSupportCompletion']);
+
+    Route::get('/muthowif/emergency-offers', [\App\Http\Controllers\Api\Muthowif\EmergencyOfferApiController::class, 'index']);
+    Route::get('/muthowif/emergency-offers/pending-count', [\App\Http\Controllers\Api\Muthowif\EmergencyOfferApiController::class, 'pendingCount']);
+    Route::post('/muthowif/emergency-offers/{offer}/accept', [\App\Http\Controllers\Api\Muthowif\EmergencyOfferApiController::class, 'accept']);
+    Route::post('/muthowif/emergency-offers/{offer}/decline', [\App\Http\Controllers\Api\Muthowif\EmergencyOfferApiController::class, 'decline']);
+
+    Route::get('/muthowif/portfolio', [\App\Http\Controllers\Api\Muthowif\MuthowifPortfolioApiController::class, 'index']);
+    Route::post('/muthowif/portfolio', [\App\Http\Controllers\Api\Muthowif\MuthowifPortfolioApiController::class, 'store']);
+    Route::get('/muthowif/portfolio/{portfolio}', [\App\Http\Controllers\Api\Muthowif\MuthowifPortfolioApiController::class, 'show']);
+    Route::post('/muthowif/portfolio/{portfolio}', [\App\Http\Controllers\Api\Muthowif\MuthowifPortfolioApiController::class, 'update']);
+    Route::get('/muthowif/portfolio/cover/{portfolio}', [\App\Http\Controllers\Api\Muthowif\MuthowifPortfolioApiController::class, 'cover']);
+    Route::get('/muthowif/portfolio/images/{image}', [\App\Http\Controllers\Api\Muthowif\MuthowifPortfolioApiController::class, 'image']);
+    Route::delete('/muthowif/portfolio/{portfolio}', [\App\Http\Controllers\Api\Muthowif\MuthowifPortfolioApiController::class, 'destroy']);
+
+    Route::get('/muthowif/support-packages', [\App\Http\Controllers\Api\Muthowif\MuthowifSupportPackageApiController::class, 'index']);
+    Route::put('/muthowif/support-packages', [\App\Http\Controllers\Api\Muthowif\MuthowifSupportPackageApiController::class, 'update']);
+
+    Route::get('/support/tickets/meta', [\App\Http\Controllers\Api\SupportTicketApiController::class, 'meta']);
+    Route::get('/support/tickets', [\App\Http\Controllers\Api\SupportTicketApiController::class, 'index']);
+    Route::post('/support/tickets', [\App\Http\Controllers\Api\SupportTicketApiController::class, 'store']);
+    Route::get('/support/tickets/{ticket}', [\App\Http\Controllers\Api\SupportTicketApiController::class, 'show']);
+    Route::post('/support/tickets/{ticket}/reply', [\App\Http\Controllers\Api\SupportTicketApiController::class, 'reply']);
+
+    Route::get('/bookings/{booking}/documents/{type}', [\App\Http\Controllers\Api\BookingDocumentApiController::class, 'show']);
+
     Route::get('/muthowif/wallet', [\App\Http\Controllers\Api\Muthowif\WalletController::class, 'index']);
     Route::post('/muthowif/withdrawals', [\App\Http\Controllers\Api\Muthowif\WalletController::class, 'storeWithdrawal']);
 
@@ -76,6 +118,8 @@ Route::middleware('auth:sanctum')->group(function () {
 
     Route::get('/profile', [\App\Http\Controllers\Api\ProfileController::class, 'show']);
     Route::patch('/profile', [\App\Http\Controllers\Api\ProfileController::class, 'update']);
+    Route::post('/profile/verification-notification', [\App\Http\Controllers\Api\ProfileController::class, 'sendVerificationEmail']);
+    Route::delete('/profile', [\App\Http\Controllers\Api\ProfileController::class, 'destroy']);
     Route::patch('/profile/public', [\App\Http\Controllers\Api\ProfileController::class, 'updatePublic']);
     Route::post('/profile/photo', [\App\Http\Controllers\Api\ProfileController::class, 'uploadPhoto']);
     Route::post('/profile/ktp', [\App\Http\Controllers\Api\ProfileController::class, 'uploadKtp']);

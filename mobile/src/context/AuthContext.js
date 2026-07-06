@@ -88,17 +88,27 @@ export function AuthProvider({ children }) {
   }, []);
 
   const value = useMemo(
-    () => ({
-      token,
-      user,
-      booting,
-      isAuthenticated: Boolean(token && user),
-      login,
-      logout,
-      registerCustomer,
-      registerMuthowif,
-      updateLocalUser,
-    }),
+    () => {
+      const isMuthowif = user?.role === 'muthowif';
+      const muthowifVerification = user?.muthowif_verification_status ?? null;
+      const isVerifiedMuthowif = isMuthowif && muthowifVerification === 'approved';
+      const isPendingMuthowif = isMuthowif && !isVerifiedMuthowif;
+
+      return {
+        token,
+        user,
+        booting,
+        isAuthenticated: Boolean(token && user),
+        isMuthowif,
+        isVerifiedMuthowif,
+        isPendingMuthowif,
+        login,
+        logout,
+        registerCustomer,
+        registerMuthowif,
+        updateLocalUser,
+      };
+    },
     [token, user, booting, login, logout, registerCustomer, registerMuthowif, updateLocalUser],
   );
 

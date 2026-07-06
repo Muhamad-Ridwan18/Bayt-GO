@@ -27,8 +27,7 @@ function StatCard({ stat }) {
 }
 
 export default function ProfileScreen({ navigation }) {
-  const { user, token, logout } = useAuth();
-  const isMuthowif = user?.role === 'muthowif';
+  const { user, token, logout, isMuthowif, isVerifiedMuthowif, updateLocalUser } = useAuth();
 
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
@@ -46,6 +45,9 @@ export default function ProfileScreen({ navigation }) {
       ]);
       setProfile(profileData);
       setStats(dashboardData.stats || []);
+      if (profileData?.muthowif?.verification_status) {
+        updateLocalUser({ muthowif_verification_status: profileData.muthowif.verification_status });
+      }
     } catch {
       setProfile(null);
       setStats([]);
@@ -53,7 +55,7 @@ export default function ProfileScreen({ navigation }) {
       setLoading(false);
       setRefreshing(false);
     }
-  }, [token, isMuthowif]);
+  }, [token, isMuthowif, updateLocalUser]);
 
   useFocusEffect(
     useCallback(() => {
@@ -66,7 +68,9 @@ export default function ProfileScreen({ navigation }) {
     resetRoot(navigation, [{ name: 'Main' }]);
   };
 
-  const roleLabel = isMuthowif ? 'Muthowif' : 'Jamaah';
+  const roleLabel = isMuthowif
+    ? (isVerifiedMuthowif ? 'Muthowif' : 'Muthowif (menunggu verifikasi)')
+    : 'Jamaah';
 
   return (
     <View style={styles.container}>
@@ -108,14 +112,83 @@ export default function ProfileScreen({ navigation }) {
           ) : null}
 
           {!isMuthowif ? (
-            <TouchableOpacity
-              style={styles.menuBtn}
-              onPress={() => navigation.getParent()?.navigate('BookingsTab', { screen: 'BookingsList' })}
-            >
-              <Ionicons name="receipt-outline" size={20} color={colors.baytgo} />
-              <Text style={styles.menuText}>Pesanan Saya</Text>
-              <Ionicons name="chevron-forward" size={18} color={colors.slate400} />
-            </TouchableOpacity>
+            <>
+              <TouchableOpacity
+                style={styles.menuBtn}
+                onPress={() => navigation.getParent()?.navigate('BookingsTab', { screen: 'BookingsList' })}
+              >
+                <Ionicons name="receipt-outline" size={20} color={colors.baytgo} />
+                <Text style={styles.menuText}>Pesanan Saya</Text>
+                <Ionicons name="chevron-forward" size={18} color={colors.slate400} />
+              </TouchableOpacity>
+              <TouchableOpacity
+                style={styles.menuBtn}
+                onPress={() => navigation.getParent()?.navigate('SupportTab', { screen: 'SupportList' })}
+              >
+                <Ionicons name="help-buoy-outline" size={20} color={colors.baytgo} />
+                <Text style={styles.menuText}>Tiket bantuan</Text>
+                <Ionicons name="chevron-forward" size={18} color={colors.slate400} />
+              </TouchableOpacity>
+            </>
+          ) : isVerifiedMuthowif ? (
+            <>
+              <TouchableOpacity
+                style={styles.menuBtn}
+                onPress={() => navigation.getParent()?.navigate('MuthowifBookingsTab', { screen: 'MuthowifBookingsList' })}
+              >
+                <Ionicons name="clipboard-outline" size={20} color={colors.baytgo} />
+                <Text style={styles.menuText}>Permintaan booking</Text>
+                <Ionicons name="chevron-forward" size={18} color={colors.slate400} />
+              </TouchableOpacity>
+              <TouchableOpacity
+                style={styles.menuBtn}
+                onPress={() => navigation.getParent()?.navigate('WalletTab', { screen: 'WalletMain' })}
+              >
+                <Ionicons name="wallet-outline" size={20} color={colors.baytgo} />
+                <Text style={styles.menuText}>Dompet</Text>
+                <Ionicons name="chevron-forward" size={18} color={colors.slate400} />
+              </TouchableOpacity>
+              <TouchableOpacity
+                style={styles.menuBtn}
+                onPress={() => navigation.getParent()?.navigate('HomeTab', { screen: 'Schedule' })}
+              >
+                <Ionicons name="calendar-outline" size={20} color={colors.baytgo} />
+                <Text style={styles.menuText}>Jadwal libur</Text>
+                <Ionicons name="chevron-forward" size={18} color={colors.slate400} />
+              </TouchableOpacity>
+              <TouchableOpacity
+                style={styles.menuBtn}
+                onPress={() => navigation.getParent()?.navigate('HomeTab', { screen: 'Services' })}
+              >
+                <Ionicons name="pricetag-outline" size={20} color={colors.baytgo} />
+                <Text style={styles.menuText}>Kelola layanan</Text>
+                <Ionicons name="chevron-forward" size={18} color={colors.slate400} />
+              </TouchableOpacity>
+              <TouchableOpacity
+                style={styles.menuBtn}
+                onPress={() => navigation.getParent()?.navigate('HomeTab', { screen: 'SupportPackages' })}
+              >
+                <Ionicons name="medkit-outline" size={20} color={colors.baytgo} />
+                <Text style={styles.menuText}>Paket layanan pendukung</Text>
+                <Ionicons name="chevron-forward" size={18} color={colors.slate400} />
+              </TouchableOpacity>
+              <TouchableOpacity
+                style={styles.menuBtn}
+                onPress={() => navigation.getParent()?.navigate('HomeTab', { screen: 'Portfolio' })}
+              >
+                <Ionicons name="images-outline" size={20} color={colors.baytgo} />
+                <Text style={styles.menuText}>Portfolio</Text>
+                <Ionicons name="chevron-forward" size={18} color={colors.slate400} />
+              </TouchableOpacity>
+              <TouchableOpacity
+                style={styles.menuBtn}
+                onPress={() => navigation.navigate('EditMuthowifProfile', { profile })}
+              >
+                <Ionicons name="create-outline" size={20} color={colors.baytgo} />
+                <Text style={styles.menuText}>Profil publik muthowif</Text>
+                <Ionicons name="chevron-forward" size={18} color={colors.slate400} />
+              </TouchableOpacity>
+            </>
           ) : null}
 
           <TouchableOpacity

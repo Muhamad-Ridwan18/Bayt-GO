@@ -56,7 +56,21 @@ export function canCancelBooking(booking) {
 }
 
 export function canCompleteBooking(booking) {
-  return booking?.status === 'confirmed' && booking?.payment_status === 'paid';
+  return !booking?.is_support && booking?.status === 'confirmed' && booking?.payment_status === 'paid';
+}
+
+export function canRequestSupportCompletion(booking) {
+  if (booking?.can_request_support_completion !== undefined) {
+    return booking.can_request_support_completion;
+  }
+  return booking?.is_support
+    && booking?.status === 'in_progress'
+    && booking?.payment_status === 'paid'
+    && !booking?.completion_requested_at;
+}
+
+export function hasSupportCompletionPending(booking) {
+  return booking?.is_support && booking?.completion_requested_at && booking?.status !== 'completed';
 }
 
 export function canReviewBooking(booking) {

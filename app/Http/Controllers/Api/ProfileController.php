@@ -5,10 +5,13 @@ namespace App\Http\Controllers\Api;
 use App\Enums\MuthowifVerificationStatus;
 use App\Http\Controllers\Controller;
 use App\Models\MuthowifProfile;
+use App\Models\User;
 use App\Services\MuthowifReferralCodeService;
 use App\Services\UploadedImageOptimizer;
+use Illuminate\Auth\Notifications\VerifyEmail;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Hash;
+use Illuminate\Validation\Rule;
 use Illuminate\Validation\Rules\Password;
 use Illuminate\Validation\ValidationException;
 
@@ -27,8 +30,15 @@ class ProfileController extends Controller
             'user' => [
                 'name' => $user->name,
                 'email' => $user->email,
+                'phone' => $user->phone,
+                'email_verified_at' => $user->email_verified_at?->toIso8601String(),
             ],
             'muthowif' => $muthowif ? [
+                'verification_status' => $muthowif->verification_status->value,
+                'slug' => $muthowif->slug,
+                'public_profile_url' => $muthowif->isApproved()
+                    ? url('/layanan/'.$muthowif->slug)
+                    : null,
                 'phone' => $muthowif->phone,
                 'passport_number' => $muthowif->passport_number,
                 'birth_date' => $muthowif->birth_date ? $muthowif->birth_date->toDateString() : null,
@@ -61,9 +71,10 @@ class ProfileController extends Controller
         $request->validate([
             'name' => ['required', 'string', 'max:255'],
             'email' => ['required', 'string', 'lowercase', 'email', 'max:255', 'unique:users,email,'.$user->id],
+            'phone' => ['nullable', 'string', 'max:32'],
         ]);
 
-        $user->fill($request->only('name', 'email'));
+        $user->fill($request->only('name', 'email', 'phone'));
 
         if ($user->isDirty('email')) {
             $user->email_verified_at = null;
@@ -73,8 +84,39 @@ class ProfileController extends Controller
 
         return response()->json([
             'message' => 'Informasi akun berhasil diperbarui',
-            'user' => $user,
+            'user' => [
+                'name' => $user->name,
+                'email' => $user->email,
+                'phone' => $user->phone,
+                'email_verified_at' => $user->email_verified_at?->toIso8601String(),
+            ],
         ]);
+    }
+
+    public function sendVerificationEmail(Request $request)
+    {
+        $user = $request->user();
+
+        if ($user->hasVerifiedEmail()) {
+            return response()->json(['message' => 'Email sudah terverifikasi.']);
+        }
+
+        $user->notify(new VerifyEmail);
+
+        return response()->json(['message' => 'Link verifikasi telah dikirim ke email Anda.']);
+    }
+
+    public function destroy(Request $request)
+    {
+        $request->validate([
+            'password' => ['required', 'current_password'],
+        ]);
+
+        $user = $request->user();
+        $user->tokens()->delete();
+        $user->delete();
+
+        return response()->json(['message' => 'Akun berhasil dihapus.']);
     }
 
     public function updatePublic(Request $request)
@@ -87,17 +129,35 @@ class ProfileController extends Controller
         }
 
         $request->validate([
-            'phone' => 'nullable|string|max:20',
-            'passport_number' => 'nullable|string|max:50',
-            'birth_date' => 'nullable|date',
-            'address' => 'nullable|string',
+            'name' => ['required', 'string', 'max:255'],
+            'email' => [
+                'required',
+                'string',
+                'lowercase',
+                'email',
+                'max:255',
+                Rule::unique(User::class)->ignore($user->id),
+            ],
+            'phone' => 'nullable|string|max:32',
+            'passport_number' => 'nullable|string|max:64',
+            'birth_date' => 'nullable|date|before:today',
+            'address' => 'nullable|string|max:2000',
             'work_location' => 'nullable|string|max:255',
-            'languages' => 'nullable|array',
-            'educations' => 'nullable|array',
-            'work_experiences' => 'nullable|array',
-            'reference_text' => 'nullable|string',
+            'languages' => 'nullable|array|max:30',
+            'languages.*' => 'nullable|string|max:120',
+            'educations' => 'nullable|array|max:30',
+            'educations.*' => 'nullable|string|max:180',
+            'work_experiences' => 'nullable|array|max:30',
+            'work_experiences.*' => 'nullable|string|max:180',
+            'reference_text' => 'nullable|string|max:3000',
             'inviter_referral_code' => 'nullable|string|max:16',
         ]);
+
+        $user->fill($request->only(['name', 'email']));
+        if ($user->isDirty('email')) {
+            $user->email_verified_at = null;
+        }
+        $user->save();
 
         $payload = [
             'phone' => $request->phone,
@@ -105,9 +165,9 @@ class ProfileController extends Controller
             'birth_date' => $request->birth_date,
             'address' => $request->address,
             'work_location' => filled($request->work_location) ? trim($request->work_location) : null,
-            'languages' => $request->languages,
-            'educations' => $request->educations,
-            'work_experiences' => $request->work_experiences,
+            'languages' => $this->normalizeStringList($request->input('languages', [])),
+            'educations' => $this->normalizeStringList($request->input('educations', [])),
+            'work_experiences' => $this->normalizeStringList($request->input('work_experiences', [])),
             'reference_text' => $request->reference_text,
         ];
 
@@ -143,8 +203,29 @@ class ProfileController extends Controller
 
         return response()->json([
             'message' => 'Profil publik berhasil diperbarui',
+            'user' => [
+                'name' => $user->name,
+                'email' => $user->email,
+                'email_verified_at' => $user->email_verified_at?->toIso8601String(),
+            ],
             'muthowif' => $muthowif->fresh()?->load('referredBy.user'),
         ]);
+    }
+
+    /**
+     * @param  array<int, mixed>|null  $rows
+     * @return list<string>
+     */
+    private function normalizeStringList(?array $rows): array
+    {
+        if ($rows === null) {
+            return [];
+        }
+
+        return array_values(array_filter(
+            array_map(static fn ($item): string => trim((string) $item), $rows),
+            static fn (string $item): bool => $item !== ''
+        ));
     }
 
     public function uploadPhoto(Request $request)
@@ -207,7 +288,7 @@ class ProfileController extends Controller
         $muthowif = $user->muthowifProfile;
 
         $request->validate([
-            'document' => 'required|image|max:2048',
+            'document' => 'required|file|mimes:pdf,jpeg,jpg,png,webp|max:10240',
         ]);
 
         if ($request->hasFile('document')) {

@@ -1,4 +1,4 @@
-import React, { useCallback, useState } from 'react';
+import React, { useCallback, useMemo, useState } from 'react';
 import {
   View,
   Text,
@@ -7,6 +7,7 @@ import {
   ActivityIndicator,
   RefreshControl,
   TouchableOpacity,
+  ScrollView,
 } from 'react-native';
 import { useFocusEffect } from '@react-navigation/native';
 import TabPageHeader from '../components/TabPageHeader';
@@ -15,9 +16,19 @@ import { fetchBookings } from '../api/bookings';
 import { useAuth } from '../context/AuthContext';
 import { colors } from '../theme/colors';
 
+const STATUS_FILTERS = [
+  { value: 'all', label: 'Semua' },
+  { value: 'pending', label: 'Menunggu' },
+  { value: 'confirmed', label: 'Dikonfirmasi' },
+  { value: 'in_progress', label: 'Berlangsung' },
+  { value: 'completed', label: 'Selesai' },
+  { value: 'cancelled', label: 'Dibatalkan' },
+];
+
 export default function BookingsListScreen({ navigation }) {
   const { token } = useAuth();
   const [items, setItems] = useState([]);
+  const [statusFilter, setStatusFilter] = useState('all');
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
   const [error, setError] = useState(null);
@@ -45,6 +56,28 @@ export default function BookingsListScreen({ navigation }) {
     }, [load]),
   );
 
+  const filteredItems = useMemo(() => {
+    if (statusFilter === 'all') return items;
+    return items.filter((item) => item.status === statusFilter);
+  }, [items, statusFilter]);
+
+  const renderFilters = () => (
+    <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.filters}>
+      {STATUS_FILTERS.map((filter) => {
+        const active = statusFilter === filter.value;
+        return (
+          <TouchableOpacity
+            key={filter.value}
+            style={[styles.filterChip, active && styles.filterChipActive]}
+            onPress={() => setStatusFilter(filter.value)}
+          >
+            <Text style={[styles.filterText, active && styles.filterTextActive]}>{filter.label}</Text>
+          </TouchableOpacity>
+        );
+      })}
+    </ScrollView>
+  );
+
   return (
     <View style={styles.container}>
       <TabPageHeader title="Pesanan Saya" subtitle="Kelola booking muthowif Anda" />
@@ -53,8 +86,9 @@ export default function BookingsListScreen({ navigation }) {
         <ActivityIndicator color={colors.baytgo} style={styles.loader} />
       ) : (
         <FlatList
-          data={items}
+          data={filteredItems}
           keyExtractor={(item) => String(item.id)}
+          ListHeaderComponent={renderFilters}
           renderItem={({ item }) => (
             <BookingListItem
               item={item}
@@ -92,6 +126,18 @@ export default function BookingsListScreen({ navigation }) {
 
 const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: colors.canvas },
+  filters: { gap: 8, paddingBottom: 12 },
+  filterChip: {
+    borderRadius: 999,
+    paddingHorizontal: 14,
+    paddingVertical: 8,
+    backgroundColor: colors.white,
+    borderWidth: 1,
+    borderColor: colors.slate200,
+  },
+  filterChipActive: { backgroundColor: colors.baytgo, borderColor: colors.baytgo },
+  filterText: { fontSize: 12, fontWeight: '800', color: colors.slate600 },
+  filterTextActive: { color: colors.white },
   list: { padding: 16, paddingBottom: 24 },
   loader: { marginTop: 40 },
   empty: {

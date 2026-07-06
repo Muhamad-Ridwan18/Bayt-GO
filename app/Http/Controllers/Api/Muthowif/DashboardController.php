@@ -2,57 +2,64 @@
 
 namespace App\Http\Controllers\Api\Muthowif;
 
+use App\Enums\BookingStatus;
 use App\Http\Controllers\Controller;
-use Illuminate\Http\Request;
 use App\Models\MuthowifBooking;
+use App\Support\MuthowifEmergencyOfferCounts;
+use Illuminate\Http\JsonResponse;
+use Illuminate\Http\Request;
 
 class DashboardController extends Controller
 {
-    public function index(Request $request)
+    public function index(Request $request): JsonResponse
     {
         $user = $request->user();
-        
-        if (!$user->isMuthowif()) {
+
+        if (! $user->isMuthowif()) {
             return response()->json(['message' => 'Unauthorized'], 403);
         }
 
         $profile = $user->muthowifProfile;
+        $pendingCount = (int) MuthowifBooking::query()
+            ->where('muthowif_profile_id', $profile->id)
+            ->where('status', BookingStatus::Pending)
+            ->count();
 
-        // Statistik Muthowif
+        $avgRating = $profile->bookingReviews()->avg('rating');
+
         $stats = [
             [
-                'label' => 'Jadwal Aktif',
-                'value' => (string) MuthowifBooking::where('muthowif_profile_id', $profile->id)->whereIn('status', ['confirmed', 'ongoing'])->count(),
-                'color' => '#0984e3'
+                'label' => 'Permintaan Baru',
+                'value' => (string) $pendingCount,
+                'color' => '#6c5ce7',
             ],
             [
-                'label' => 'Total Selesai',
-                'value' => (string) MuthowifBooking::where('muthowif_profile_id', $profile->id)->where('status', 'completed')->count(),
-                'color' => '#00b894'
+                'label' => 'Jadwal Aktif',
+                'value' => (string) MuthowifBooking::where('muthowif_profile_id', $profile->id)->whereIn('status', ['confirmed', 'in_progress'])->count(),
+                'color' => '#0984e3',
             ],
             [
                 'label' => 'Saldo (IDR)',
-                'value' => 'Rp ' . number_format($profile->wallet_balance ?? 0, 0, ',', '.'),
-                'color' => '#f39c12'
+                'value' => 'Rp '.number_format($profile->wallet_balance ?? 0, 0, ',', '.'),
+                'color' => '#f39c12',
             ],
         ];
 
-        // Jadwal Mendatang
         $schedules = MuthowifBooking::where('muthowif_profile_id', $profile->id)
             ->with('customer')
-            ->whereIn('status', ['confirmed', 'ongoing'])
+            ->whereIn('status', ['confirmed', 'in_progress'])
             ->orderBy('starts_on', 'asc')
             ->take(5)
             ->get()
-            ->map(function($booking) {
+            ->map(function ($booking) {
                 return [
                     'id' => $booking->id,
-                    'booking_number' => $booking->booking_code ?? ('#BGO-' . $booking->id),
+                    'booking_number' => $booking->booking_code ?? ('#BGO-'.$booking->id),
                     'customer_name' => $booking->customer->name ?? 'Jamaah',
                     'date' => $booking->starts_on ? $booking->starts_on->format('d M Y') : '-',
                     'raw_date' => $booking->starts_on ? $booking->starts_on->format('Y-m-d') : null,
-                    'duration' => $booking->billingNightsInclusive() . ' Hari',
-                    'status' => strtoupper($booking->status->value ?? (string)$booking->status),
+                    'duration' => $booking->billingNightsInclusive().' Hari',
+                    'status' => strtoupper($booking->status->value ?? (string) $booking->status),
                 ];
             });
 
@@ -67,6 +74,11 @@ class DashboardController extends Controller
             'stats' => $stats,
             'recent_schedules' => $schedules,
             'unread_messages' => $unreadCount,
+            'pending_booking_count' => $pendingCount,
+            'emergency_offer_count' => MuthowifEmergencyOfferCounts::pendingOfferedCountForUser($user),
+            'referral_code' => $profile->referral_code,
+            'rating' => $avgRating !== null ? number_format((float) $avgRating, 1) : null,
+            'review_count' => (int) $profile->bookingReviews()->count(),
         ]);
     }
 }

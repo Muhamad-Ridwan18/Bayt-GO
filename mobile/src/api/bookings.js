@@ -98,3 +98,10 @@ export async function submitRescheduleRequest(token, bookingId, payload) {
     body: payload,
   });
 }
+
+export async function requestSupportCompletion(token, bookingId) {
+  return apiFetch(`/customer/bookings/${bookingId}/support-completion-request`, {
+    token,
+    method: 'POST',
+  });
+}

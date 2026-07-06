@@ -290,4 +290,31 @@ class MuthowifBookingController extends Controller
 
         return response()->json(['message' => 'Pengajuan reschedule ditolak.']);
     }
+
+    public function approveSupportCompletion(Request $request, $id): JsonResponse
+    {
+        $user = $request->user();
+        $booking = MuthowifBooking::where('muthowif_profile_id', $user->muthowifProfile->id)->findOrFail($id);
+        $this->authorize('approveSupportCompletion', $booking);
+
+        $result = app(\App\Services\SupportBookingService::class)->approveCompletion($booking, (string) $user->id);
+        if (! ($result['completed'] ?? false)) {
+            return response()->json(['message' => $result['error'] ?? __('layanan_pendukung.flash.completion_approve_failed')], 422);
+        }
+
+        CustomerBookingBroadcast::afterResponse($booking->fresh());
+
+        return response()->json(['message' => __('layanan_pendukung.flash.completion_approved')]);
+    }
+
+    public function rejectSupportCompletion(Request $request, $id): JsonResponse
+    {
+        $user = $request->user();
+        $booking = MuthowifBooking::where('muthowif_profile_id', $user->muthowifProfile->id)->findOrFail($id);
+        $this->authorize('rejectSupportCompletion', $booking);
+
+        app(\App\Services\SupportBookingService::class)->rejectCompletionRequest($booking);
+
+        return response()->json(['message' => __('layanan_pendukung.flash.completion_rejected')]);
+    }
 }

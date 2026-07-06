@@ -6,6 +6,8 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 import OnboardingScreen from '../screens/OnboardingScreen';
 import LoginScreen from '../screens/LoginScreen';
 import RegisterScreen from '../screens/RegisterScreen';
+import ForgotPasswordScreen from '../screens/ForgotPasswordScreen';
+import CompanyRegistrationPendingScreen from '../screens/CompanyRegistrationPendingScreen';
 import MainTabNavigator from './MainTabNavigator';
 import { ONBOARDING_KEY } from '../constants/onboarding';
 import { useAuth } from '../context/AuthContext';
@@ -60,6 +62,16 @@ function RootNavigator() {
       <Stack.Screen
         name="Register"
         component={RegisterScreen}
+        options={{ animation: 'slide_from_bottom', presentation: 'modal' }}
+      />
+      <Stack.Screen
+        name="ForgotPassword"
+        component={ForgotPasswordScreen}
+        options={{ animation: 'slide_from_bottom', presentation: 'modal' }}
+      />
+      <Stack.Screen
+        name="CompanyRegistrationPending"
+        component={CompanyRegistrationPendingScreen}
         options={{ animation: 'slide_from_bottom', presentation: 'modal' }}
       />
     </Stack.Navigator>
