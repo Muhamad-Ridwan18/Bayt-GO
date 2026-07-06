@@ -14,9 +14,9 @@ import { useFocusEffect } from '@react-navigation/native';
 import { LinearGradient } from 'expo-linear-gradient';
 import { Ionicons } from '@expo/vector-icons';
 import ScreenHeader from '../components/ScreenHeader';
+import BookingDocumentGallery from '../components/BookingDocumentGallery';
 import { fetchBooking, cancelBooking, requestSupportCompletion } from '../api/bookings';
 import { selectEmergencyReplacement } from '../api/emergency';
-import { openBookingDocument } from '../utils/openDocument';
 import { useAuth } from '../context/AuthContext';
 import { useUserBookingRealtime } from '../hooks/useUserBookingRealtime';
 import { colors } from '../theme/colors';
@@ -97,7 +97,6 @@ export default function BookingDetailScreen({ navigation, route }) {
   const [error, setError] = useState(null);
   const [cancelling, setCancelling] = useState(false);
   const [requestingCompletion, setRequestingCompletion] = useState(false);
-  const [openingDoc, setOpeningDoc] = useState(false);
 
   const load = useCallback(async (refresh = false) => {
     if (refresh) setRefreshing(true);
@@ -201,17 +200,6 @@ export default function BookingDetailScreen({ navigation, route }) {
     );
   };
 
-  const handleOpenDocument = async (doc) => {
-    setOpeningDoc(true);
-    try {
-      await openBookingDocument(token, bookingId, doc.type, doc.label);
-    } catch (err) {
-      Alert.alert('Gagal', err.message || 'Tidak dapat membuka dokumen');
-    } finally {
-      setOpeningDoc(false);
-    }
-  };
-
   if (loading && !refreshing) {
     return (
       <View style={styles.container}>
@@ -281,17 +269,12 @@ export default function BookingDetailScreen({ navigation, route }) {
         </View>
 
         {(booking.documents || []).length > 0 ? (
-          <View style={styles.section}>
-            <Text style={styles.sectionTitle}>Dokumen Anda</Text>
-            {(booking.documents || []).map((doc) => (
-              <ActionBtn
-                key={doc.type}
-                icon="document-text-outline"
-                label={openingDoc ? 'Membuka…' : doc.label}
-                onPress={() => handleOpenDocument(doc)}
-              />
-            ))}
-          </View>
+          <BookingDocumentGallery
+            token={token}
+            bookingId={bookingId}
+            documents={booking.documents}
+            title="Dokumen Anda"
+          />
         ) : null}
 
         <View style={styles.section}>

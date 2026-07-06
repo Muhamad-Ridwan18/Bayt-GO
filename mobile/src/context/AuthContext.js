@@ -2,6 +2,7 @@ import React, { createContext, useCallback, useContext, useEffect, useMemo, useS
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import * as authApi from '../api/auth';
 import { syncPushTokenWithBackend, removePushTokenFromBackend } from '../notifications/pushNotifications';
+import { flushPendingChatNavigation } from '../navigation/rootNavigation';
 
 const TOKEN_KEY = '@baytgo_auth_token';
 const USER_KEY = '@baytgo_auth_user';
@@ -20,6 +21,7 @@ export function AuthProvider({ children }) {
           setToken(storedToken);
           setUser(JSON.parse(storedUser));
           syncPushTokenWithBackend(storedToken).catch(() => {});
+          flushPendingChatNavigation();
         }
       })
       .finally(() => setBooting(false));
@@ -31,6 +33,7 @@ export function AuthProvider({ children }) {
     await AsyncStorage.setItem(TOKEN_KEY, sessionToken);
     await AsyncStorage.setItem(USER_KEY, JSON.stringify(sessionUser));
     syncPushTokenWithBackend(sessionToken).catch(() => {});
+    flushPendingChatNavigation();
   }, []);
 
   const login = useCallback(async (email, password) => {

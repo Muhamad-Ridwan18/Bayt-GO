@@ -14,6 +14,7 @@ import {
 import { useFocusEffect } from '@react-navigation/native';
 import { Ionicons } from '@expo/vector-icons';
 import ScreenHeader from '../components/ScreenHeader';
+import BookingDocumentGallery from '../components/BookingDocumentGallery';
 import {
   fetchMuthowifBooking,
   confirmMuthowifBooking,
@@ -23,7 +24,6 @@ import {
   approveSupportCompletion,
   rejectSupportCompletion,
 } from '../api/muthowifBookings';
-import { openBookingDocument } from '../utils/openDocument';
 import { useAuth } from '../context/AuthContext';
 import { colors } from '../theme/colors';
 import { formatIdr } from '../utils/format';
@@ -32,25 +32,37 @@ import {
   paymentStatusMeta,
   serviceTypeLabel,
   formatDateRange,
+  billingNights,
   changeRequestStatusLabel,
 } from '../utils/bookingLabels';
 
-function InfoRow({ label, value }) {
+function InfoCell({ icon, label, value }) {
   return (
-    <View style={styles.infoRow}>
-      <Text style={styles.infoLabel}>{label}</Text>
-      <Text style={styles.infoValue}>{value}</Text>
+    <View style={styles.infoCell}>
+      <View style={styles.infoIcon}>
+        <Ionicons name={icon} size={16} color={colors.baytgo} />
+      </View>
+      <View style={styles.infoCopy}>
+        <Text style={styles.infoLabel}>{label}</Text>
+        <Text style={styles.infoValue}>{value}</Text>
+      </View>
     </View>
   );
 }
 
-function ActionBtn({ icon, label, onPress, variant = 'outline', danger }) {
+function ActionBtn({ icon, label, onPress, variant = 'outline', danger, disabled }) {
   const isPrimary = variant === 'primary';
   return (
     <TouchableOpacity
-      style={[styles.actionBtn, isPrimary && styles.actionPrimary, danger && styles.actionDanger]}
+      style={[
+        styles.actionBtn,
+        isPrimary && styles.actionPrimary,
+        danger && styles.actionDanger,
+        disabled && styles.actionDisabled,
+      ]}
       onPress={onPress}
       activeOpacity={0.9}
+      disabled={disabled}
     >
       <Ionicons
         name={icon}
@@ -195,17 +207,6 @@ export default function MuthowifBookingDetailScreen({ navigation, route }) {
     });
   };
 
-  const handleOpenDocument = async (doc) => {
-    setActing(true);
-    try {
-      await openBookingDocument(token, bookingId, doc.type, doc.label);
-    } catch (err) {
-      Alert.alert('Gagal', err.message || 'Tidak dapat membuka dokumen');
-    } finally {
-      setActing(false);
-    }
-  };
-
   const handleSupportCompletion = (approve) => {
     const title = approve ? 'Setujui penyelesaian layanan?' : 'Tolak permintaan penyelesaian?';
     Alert.alert(title, 'Konfirmasi keputusan Anda.', [
@@ -256,19 +257,39 @@ export default function MuthowifBookingDetailScreen({ navigation, route }) {
   const pendingReschedule = (booking.reschedule_requests || []).find((r) => r.status === 'pending');
   const documents = booking.documents || [];
   const showSupportCompletion = booking.is_support && booking.completion_requested_at && booking.status !== 'completed';
+  const nights = billingNights(booking.starts_on, booking.ends_on);
 
   return (
     <View style={styles.container}>
-      <ScreenHeader title={booking.booking_code || 'Booking'} onBack={() => navigation.goBack()} />
+      <ScreenHeader
+        title={booking.booking_code || 'Booking'}
+        subtitle="Detail permintaan jamaah"
+        onBack={() => navigation.goBack()}
+      />
+
       <ScrollView
         contentContainerStyle={styles.scroll}
+        showsVerticalScrollIndicator={false}
         refreshControl={
-          <RefreshControl refreshing={refreshing} onRefresh={() => { setRefreshing(true); load(true); }} tintColor={colors.baytgo} />
+          <RefreshControl
+            refreshing={refreshing}
+            onRefresh={() => { setRefreshing(true); load(true); }}
+            tintColor={colors.baytgo}
+          />
         }
       >
-        <View style={styles.card}>
-          <Text style={styles.customerName}>{booking.customer?.name || 'Jamaah'}</Text>
-          <Text style={styles.customerMeta}>{booking.customer?.phone || booking.customer?.email || '—'}</Text>
+        <View style={styles.heroCard}>
+          <View style={styles.heroTop}>
+            <View style={styles.avatar}>
+              <Ionicons name="person" size={28} color={colors.baytgo} />
+            </View>
+            <View style={styles.heroCopy}>
+              <Text style={styles.customerName}>{booking.customer?.name || 'Jamaah'}</Text>
+              <Text style={styles.customerMeta}>
+                {booking.customer?.phone || booking.customer?.email || '—'}
+              </Text>
+            </View>
+          </View>
           <View style={styles.badgeRow}>
             <View style={[styles.pill, { backgroundColor: bookingMeta.color + '18' }]}>
               <Text style={[styles.pillText, { color: bookingMeta.color }]}>{bookingMeta.label}</Text>
@@ -277,20 +298,30 @@ export default function MuthowifBookingDetailScreen({ navigation, route }) {
               <Text style={[styles.pillText, { color: paymentMeta.color }]}>{paymentMeta.label}</Text>
             </View>
           </View>
+          <View style={styles.totalRow}>
+            <Text style={styles.totalLabel}>Total booking</Text>
+            <Text style={styles.totalValue}>{formatIdr(booking.total_amount)}</Text>
+          </View>
         </View>
 
         <View style={styles.card}>
-          <InfoRow label="Layanan" value={serviceTypeLabel(booking.service_type)} />
-          <InfoRow label="Tanggal" value={formatDateRange(booking.starts_on, booking.ends_on)} />
-          <InfoRow label="Jamaah" value={`${booking.pilgrim_count || 1} orang`} />
-          <InfoRow label="Total" value={formatIdr(booking.total_amount)} />
+          <Text style={styles.cardTitle}>Informasi perjalanan</Text>
+          <InfoCell icon="briefcase-outline" label="Layanan" value={serviceTypeLabel(booking.service_type)} />
+          <InfoCell icon="calendar-outline" label="Tanggal" value={formatDateRange(booking.starts_on, booking.ends_on)} />
+          <InfoCell icon="time-outline" label="Durasi" value={`${nights} hari`} />
+          <InfoCell icon="people-outline" label="Jumlah jamaah" value={`${booking.pilgrim_count || 1} orang`} />
+          {booking.with_same_hotel ? <InfoCell icon="bed-outline" label="Hotel sama" value="Ya" /> : null}
+          {booking.with_transport ? <InfoCell icon="car-outline" label="Transport" value="Ya" /> : null}
         </View>
 
         {pendingReschedule ? (
           <View style={styles.alertCard}>
-            <Text style={styles.alertTitle}>Pengajuan reschedule</Text>
+            <View style={styles.alertHead}>
+              <Ionicons name="calendar" size={20} color="#92400E" />
+              <Text style={styles.alertTitle}>Pengajuan reschedule</Text>
+            </View>
             <Text style={styles.alertBody}>
-              {formatDateRange(pendingReschedule.starts_on, pendingReschedule.ends_on)}
+              Jadwal baru: {formatDateRange(pendingReschedule.starts_on, pendingReschedule.ends_on)}
               {'\n'}Status: {changeRequestStatusLabel(pendingReschedule.status)}
             </Text>
             <View style={styles.actionRow}>
@@ -302,7 +333,10 @@ export default function MuthowifBookingDetailScreen({ navigation, route }) {
 
         {showSupportCompletion ? (
           <View style={styles.alertCard}>
-            <Text style={styles.alertTitle}>Permintaan penyelesaian layanan</Text>
+            <View style={styles.alertHead}>
+              <Ionicons name="checkmark-done-circle" size={20} color="#92400E" />
+              <Text style={styles.alertTitle}>Permintaan penyelesaian layanan</Text>
+            </View>
             <Text style={styles.alertBody}>Jamaah meminta layanan pendukung ditandai selesai.</Text>
             <View style={styles.actionRow}>
               <ActionBtn icon="checkmark-circle-outline" label="Setujui" variant="primary" onPress={() => handleSupportCompletion(true)} />
@@ -311,31 +345,27 @@ export default function MuthowifBookingDetailScreen({ navigation, route }) {
           </View>
         ) : null}
 
-        {documents.length > 0 ? (
-          <View style={styles.card}>
-            <Text style={styles.sectionLabel}>Dokumen jamaah</Text>
-            {documents.map((doc) => (
-              <ActionBtn
-                key={doc.type}
-                icon="document-text-outline"
-                label={doc.label}
-                onPress={() => handleOpenDocument(doc)}
-              />
-            ))}
+        <BookingDocumentGallery
+          token={token}
+          bookingId={bookingId}
+          documents={documents}
+          title="Dokumen jamaah"
+        />
+
+        {booking.status === 'pending' ? (
+          <View style={styles.decisionCard}>
+            <Text style={styles.decisionTitle}>Keputusan booking</Text>
+            <Text style={styles.decisionSub}>
+              Tinjau dokumen jamaah lalu setujui atau tolak permintaan ini.
+            </Text>
+            <ActionBtn icon="checkmark-circle-outline" label="Setujui booking" variant="primary" onPress={handleConfirm} disabled={acting} />
+            <ActionBtn icon="close-circle-outline" label="Tolak booking" danger onPress={handleReject} disabled={acting} />
           </View>
         ) : null}
 
-        <View style={styles.actions}>
-          {booking.status === 'pending' ? (
-            <>
-              <ActionBtn icon="checkmark-circle-outline" label="Setujui booking" variant="primary" onPress={handleConfirm} />
-              <ActionBtn icon="close-circle-outline" label="Tolak booking" danger onPress={handleReject} />
-            </>
-          ) : null}
-          {booking.payment_status === 'paid' ? (
-            <ActionBtn icon="chatbubble-ellipses-outline" label="Chat jamaah" onPress={openChat} />
-          ) : null}
-        </View>
+        {booking.payment_status === 'paid' ? (
+          <ActionBtn icon="chatbubble-ellipses-outline" label="Chat jamaah" onPress={openChat} />
+        ) : null}
 
         {acting ? <ActivityIndicator color={colors.baytgo} style={{ marginTop: 16 }} /> : null}
       </ScrollView>
@@ -428,23 +458,66 @@ const styles = StyleSheet.create({
   scroll: { padding: 20, paddingBottom: 32 },
   loader: { marginTop: 40 },
   errorText: { marginTop: 40, textAlign: 'center', color: colors.slate500, fontWeight: '600' },
+  heroCard: {
+    backgroundColor: colors.white,
+    borderRadius: 20,
+    padding: 18,
+    marginBottom: 12,
+    borderWidth: 1,
+    borderColor: 'rgba(26,61,52,0.08)',
+    shadowColor: '#0F2E28',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.05,
+    shadowRadius: 12,
+    elevation: 2,
+  },
+  heroTop: { flexDirection: 'row', alignItems: 'center', gap: 14 },
+  avatar: {
+    width: 56,
+    height: 56,
+    borderRadius: 18,
+    backgroundColor: colors.baytgoLight,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  heroCopy: { flex: 1 },
+  customerName: { fontSize: 20, fontWeight: '900', color: colors.baytgo },
+  customerMeta: { marginTop: 4, fontSize: 13, color: colors.slate500, fontWeight: '600' },
+  badgeRow: { flexDirection: 'row', flexWrap: 'wrap', gap: 8, marginTop: 14 },
+  pill: { borderRadius: 999, paddingHorizontal: 10, paddingVertical: 5 },
+  pillText: { fontSize: 11, fontWeight: '800' },
+  totalRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginTop: 16,
+    paddingTop: 14,
+    borderTopWidth: 1,
+    borderTopColor: colors.slate100,
+  },
+  totalLabel: { fontSize: 13, fontWeight: '700', color: colors.slate500 },
+  totalValue: { fontSize: 18, fontWeight: '900', color: colors.baytgo },
   card: {
     backgroundColor: colors.white,
-    borderRadius: 18,
+    borderRadius: 20,
     padding: 16,
     marginBottom: 12,
     borderWidth: 1,
-    borderColor: colors.slate100,
+    borderColor: 'rgba(26,61,52,0.08)',
   },
-  customerName: { fontSize: 20, fontWeight: '900', color: colors.baytgo },
-  customerMeta: { marginTop: 4, fontSize: 13, color: colors.slate500, fontWeight: '600' },
-  badgeRow: { flexDirection: 'row', flexWrap: 'wrap', gap: 8, marginTop: 12 },
-  pill: { borderRadius: 999, paddingHorizontal: 10, paddingVertical: 5 },
-  pillText: { fontSize: 11, fontWeight: '800' },
-  infoRow: { flexDirection: 'row', justifyContent: 'space-between', gap: 12, paddingVertical: 8 },
-  infoLabel: { fontSize: 13, color: colors.slate500, fontWeight: '600' },
-  infoValue: { flex: 1, textAlign: 'right', fontSize: 13, fontWeight: '800', color: colors.slate900 },
-  sectionLabel: { fontSize: 14, fontWeight: '900', color: colors.baytgo, marginBottom: 8 },
+  cardTitle: { fontSize: 14, fontWeight: '900', color: colors.baytgo, marginBottom: 12 },
+  infoCell: { flexDirection: 'row', alignItems: 'flex-start', gap: 12, paddingVertical: 10 },
+  infoIcon: {
+    width: 34,
+    height: 34,
+    borderRadius: 10,
+    backgroundColor: colors.baytgoLight,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  infoCopy: { flex: 1 },
+  infoLabel: { fontSize: 11, fontWeight: '700', color: colors.slate500 },
+  infoValue: { marginTop: 2, fontSize: 14, fontWeight: '800', color: colors.slate900 },
   alertCard: {
     backgroundColor: '#FFFBEB',
     borderRadius: 18,
@@ -453,10 +526,21 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     borderColor: '#FDE68A',
   },
+  alertHead: { flexDirection: 'row', alignItems: 'center', gap: 8, marginBottom: 8 },
   alertTitle: { fontSize: 14, fontWeight: '900', color: '#92400E' },
-  alertBody: { marginTop: 8, fontSize: 13, lineHeight: 20, color: '#78350F', fontWeight: '600' },
+  alertBody: { fontSize: 13, lineHeight: 20, color: '#78350F', fontWeight: '600' },
   actionRow: { flexDirection: 'row', gap: 10, marginTop: 12 },
-  actions: { gap: 10 },
+  decisionCard: {
+    backgroundColor: colors.white,
+    borderRadius: 20,
+    padding: 16,
+    marginBottom: 12,
+    borderWidth: 1,
+    borderColor: '#DDD6FE',
+    gap: 10,
+  },
+  decisionTitle: { fontSize: 15, fontWeight: '900', color: colors.baytgo },
+  decisionSub: { fontSize: 12, fontWeight: '600', color: colors.slate500, lineHeight: 17, marginBottom: 4 },
   actionBtn: {
     flexDirection: 'row',
     alignItems: 'center',
@@ -470,6 +554,7 @@ const styles = StyleSheet.create({
   },
   actionPrimary: { backgroundColor: colors.baytgo, borderColor: colors.baytgo },
   actionDanger: { backgroundColor: '#FEF2F2', borderColor: '#FECACA' },
+  actionDisabled: { opacity: 0.6 },
   actionText: { fontSize: 14, fontWeight: '800', color: colors.baytgo },
   actionTextPrimary: { color: colors.white },
   actionTextDanger: { color: '#B91C1C' },

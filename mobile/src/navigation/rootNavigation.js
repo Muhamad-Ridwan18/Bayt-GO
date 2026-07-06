@@ -1,6 +1,8 @@
-import { createNavigationContainerRef } from '@react-navigation/native';
+import { createNavigationContainerRef, CommonActions } from '@react-navigation/native';
 
 export const navigationRef = createNavigationContainerRef();
+
+let pendingChatNavigation = null;
 
 export function getRootNavigation(navigation) {
   let current = navigation;
@@ -28,18 +30,49 @@ export function navigateToBookingDetail(navigation, bookingId) {
   });
 }
 
-export function navigateToChatRoom(params) {
-  if (!navigationRef.isReady()) return;
+function rootHasMainRoute() {
+  const state = navigationRef.getRootState();
+  return Boolean(state?.routes?.some((route) => route.name === 'Main'));
+}
 
-  navigationRef.navigate('Main', {
-    screen: 'ChatTab',
-    params: {
-      screen: 'ChatRoom',
+export function queueChatNavigation(params) {
+  if (params?.bookingId) {
+    pendingChatNavigation = params;
+  }
+}
+
+export function flushPendingChatNavigation() {
+  if (!pendingChatNavigation || !navigationRef.isReady() || !rootHasMainRoute()) {
+    return;
+  }
+
+  const params = pendingChatNavigation;
+  pendingChatNavigation = null;
+  navigateToChatRoom(params);
+}
+
+export function navigateToChatRoom(params) {
+  if (!params?.bookingId) return;
+
+  if (!navigationRef.isReady() || !rootHasMainRoute()) {
+    queueChatNavigation(params);
+    return;
+  }
+
+  navigationRef.dispatch(
+    CommonActions.navigate({
+      name: 'Main',
       params: {
-        bookingId: params.bookingId,
-        bookingCode: params.bookingCode || '--',
-        otherName: params.otherName || 'Chat',
+        screen: 'ChatTab',
+        params: {
+          screen: 'ChatRoom',
+          params: {
+            bookingId: params.bookingId,
+            bookingCode: params.bookingCode || '--',
+            otherName: params.otherName || 'Chat',
+          },
+        },
       },
-    },
-  });
+    }),
+  );
 }

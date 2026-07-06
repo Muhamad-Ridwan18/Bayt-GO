@@ -222,41 +222,37 @@ export default function MuthowifDashboardScreen({ navigation }) {
 
   return (
     <View style={styles.root}>
+      <SafeAreaView edges={['top']} style={styles.topBar}>
+        <View style={styles.heroTop}>
+          <View style={styles.heroLeft}>
+            <Text style={styles.heroGreet}>Assalamu'alaikum,</Text>
+            <Text style={styles.heroName}>{firstName}</Text>
+            {rating ? (
+              <View style={styles.ratingChip}>
+                <Ionicons name="star" size={12} color={colors.gold} />
+                <Text style={styles.ratingText}>{rating}</Text>
+                <Text style={styles.ratingReviews}>({reviewCount} ulasan)</Text>
+              </View>
+            ) : null}
+          </View>
+          <TouchableOpacity style={styles.bellBtn} onPress={goRequests}>
+            <Ionicons name="notifications-outline" size={22} color={colors.baytgo} />
+            {pendingCount > 0 ? (
+              <View style={styles.bellBadge}>
+                <Text style={styles.bellBadgeText}>{pendingCount > 9 ? '9+' : pendingCount}</Text>
+              </View>
+            ) : null}
+          </TouchableOpacity>
+        </View>
+        <Text style={styles.heroTagline}>Kelola jadwal dan pendapatan Anda</Text>
+      </SafeAreaView>
+
       <ScrollView
         showsVerticalScrollIndicator={false}
         refreshControl={
-          <RefreshControl refreshing={refreshing} onRefresh={() => loadDashboard(true)} tintColor={colors.white} />
+          <RefreshControl refreshing={refreshing} onRefresh={() => loadDashboard(true)} tintColor={colors.baytgo} />
         }
       >
-        <LinearGradient colors={['#0F2E28', '#1A3D34', '#2D5A4E']} style={styles.hero}>
-          <SafeAreaView edges={['top']}>
-            <View style={styles.heroInner}>
-              <View style={styles.heroTop}>
-                <View style={styles.heroLeft}>
-                  <Text style={styles.heroGreet}>Assalamu'alaikum,</Text>
-                  <Text style={styles.heroName}>{firstName}</Text>
-                  {rating ? (
-                    <View style={styles.ratingChip}>
-                      <Ionicons name="star" size={12} color={colors.gold} />
-                      <Text style={styles.ratingText}>{rating}</Text>
-                      <Text style={styles.ratingReviews}>({reviewCount} ulasan)</Text>
-                    </View>
-                  ) : null}
-                </View>
-                <TouchableOpacity style={styles.bellBtn} onPress={goRequests}>
-                  <Ionicons name="notifications-outline" size={22} color={colors.white} />
-                  {pendingCount > 0 ? (
-                    <View style={styles.bellBadge}>
-                      <Text style={styles.bellBadgeText}>{pendingCount > 9 ? '9+' : pendingCount}</Text>
-                    </View>
-                  ) : null}
-                </TouchableOpacity>
-              </View>
-              <Text style={styles.heroTagline}>Kelola jadwal dan pendapatan Anda</Text>
-            </View>
-          </SafeAreaView>
-        </LinearGradient>
-
         <TouchableOpacity style={styles.walletCard} onPress={goWallet} activeOpacity={0.92}>
           <LinearGradient colors={['#C5A059', '#E8C97A', '#B8954D']} start={{ x: 0, y: 0 }} end={{ x: 1, y: 1 }} style={styles.walletGradient}>
             <View style={styles.walletTop}>
@@ -386,39 +382,41 @@ export default function MuthowifDashboardScreen({ navigation }) {
 
 const styles = StyleSheet.create({
   root: { flex: 1, backgroundColor: colors.canvas },
-  hero: {
-    paddingBottom: 72,
-    borderBottomLeftRadius: 28,
-    borderBottomRightRadius: 28,
+  topBar: {
+    backgroundColor: colors.white,
+    borderBottomWidth: 1,
+    borderBottomColor: colors.slate100,
+    paddingHorizontal: 20,
+    paddingTop: 8,
+    paddingBottom: 14,
   },
-  heroInner: { paddingHorizontal: 20, paddingTop: 8 },
   heroTop: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'flex-start' },
   heroLeft: { flex: 1 },
-  heroGreet: { fontSize: 14, fontWeight: '600', color: 'rgba(255,255,255,0.75)' },
-  heroName: { fontSize: 26, fontWeight: '900', color: colors.white, marginTop: 2, letterSpacing: -0.5 },
+  heroGreet: { fontSize: 14, fontWeight: '600', color: colors.slate500 },
+  heroName: { fontSize: 24, fontWeight: '900', color: colors.baytgo, marginTop: 2, letterSpacing: -0.5 },
   ratingChip: {
     flexDirection: 'row',
     alignItems: 'center',
     gap: 4,
     alignSelf: 'flex-start',
     marginTop: 8,
-    backgroundColor: 'rgba(255,255,255,0.12)',
+    backgroundColor: colors.baytgoLight,
     paddingHorizontal: 10,
     paddingVertical: 5,
     borderRadius: 999,
   },
   ratingText: { fontSize: 13, fontWeight: '900', color: colors.gold },
-  ratingReviews: { fontSize: 11, fontWeight: '600', color: 'rgba(255,255,255,0.65)' },
-  heroTagline: { marginTop: 12, fontSize: 13, fontWeight: '500', color: 'rgba(255,255,255,0.65)' },
+  ratingReviews: { fontSize: 11, fontWeight: '600', color: colors.slate500 },
+  heroTagline: { marginTop: 10, fontSize: 13, fontWeight: '500', color: colors.slate500 },
   bellBtn: {
     width: 44,
     height: 44,
     borderRadius: 14,
-    backgroundColor: 'rgba(255,255,255,0.12)',
+    backgroundColor: colors.canvas,
     alignItems: 'center',
     justifyContent: 'center',
     borderWidth: 1,
-    borderColor: 'rgba(255,255,255,0.15)',
+    borderColor: colors.slate100,
   },
   bellBadge: {
     position: 'absolute',
@@ -432,12 +430,12 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     paddingHorizontal: 4,
     borderWidth: 2,
-    borderColor: '#1A3D34',
+    borderColor: colors.white,
   },
   bellBadgeText: { fontSize: 10, fontWeight: '900', color: colors.white },
   walletCard: {
     marginHorizontal: 20,
-    marginTop: -52,
+    marginTop: 16,
     borderRadius: 22,
     overflow: 'hidden',
     shadowColor: '#B8954D',

@@ -8,6 +8,7 @@ use App\Enums\MuthowifVerificationStatus;
 use App\Http\Controllers\Controller;
 use App\Models\MuthowifProfile;
 use App\Models\MuthowifService;
+use App\Support\ApiMuthowifCard;
 use App\Support\ApiMediaUrl;
 use App\Support\MarketplaceProfileCache;
 use Carbon\Carbon;
@@ -88,25 +89,9 @@ class MuthowifDirectoryApiController extends Controller
 
         $profiles = $query->orderByMarketplaceRanking()->paginate(12)->withQueryString();
 
-        // Format data to be easily consumed by mobile
-        $formattedData = $profiles->getCollection()->map(function($profile) {
-            $startPrice = $profile->services->min('price') ?? 0;
-            $experiences = $profile->workExperiencesForDisplay();
-            $primaryService = $profile->services->first();
-
-            return [
-                'id' => $profile->id,
-                'name' => $profile->user->name ?? 'Muthowif',
-                'avatar' => ApiMediaUrl::muthowifAvatar($profile),
-                'rating' => number_format($profile->average_rating ?? 5.0, 1),
-                'reviews' => $profile->booking_reviews_count ?? 0,
-                'location' => $profile->workLocationLabel(),
-                'start_price' => $startPrice,
-                'languages' => array_slice($profile->languagesForDisplay(), 0, 3),
-                'specialty' => $primaryService?->name,
-                'experience' => $experiences[0] ?? null,
-            ];
-        });
+        $formattedData = $profiles->getCollection()->map(
+            fn ($profile) => ApiMuthowifCard::fromProfile($profile)
+        );
 
         return response()->json([
             'data' => $formattedData,

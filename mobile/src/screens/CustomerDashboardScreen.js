@@ -241,31 +241,27 @@ export default function CustomerDashboardScreen({ navigation }) {
 
   return (
     <View style={styles.root}>
+      <SafeAreaView edges={['top']} style={styles.topBar}>
+        <View style={styles.heroTop}>
+          <View>
+            <Text style={styles.heroGreet}>Assalamu'alaikum,</Text>
+            <Text style={styles.heroName}>{firstName} 👋</Text>
+          </View>
+          <TouchableOpacity style={styles.bellBtn} onPress={goBookings}>
+            <Ionicons name="notifications-outline" size={22} color={colors.baytgo} />
+            {unreadMessages > 0 ? <View style={styles.bellDot} /> : null}
+          </TouchableOpacity>
+        </View>
+        <Text style={styles.heroTagline}>Rencanakan ibadah umrah Anda dengan nyaman</Text>
+      </SafeAreaView>
+
       <ScrollView
         showsVerticalScrollIndicator={false}
         bounces
         refreshControl={
-          <RefreshControl refreshing={refreshing} onRefresh={() => loadDashboard(true)} tintColor={colors.white} />
+          <RefreshControl refreshing={refreshing} onRefresh={() => loadDashboard(true)} tintColor={colors.baytgo} />
         }
       >
-        <LinearGradient colors={['#0F2E28', '#1A3D34', '#256B5C']} style={styles.hero}>
-          <SafeAreaView edges={['top']}>
-            <View style={styles.heroInner}>
-              <View style={styles.heroTop}>
-                <View>
-                  <Text style={styles.heroGreet}>Assalamu'alaikum,</Text>
-                  <Text style={styles.heroName}>{firstName} 👋</Text>
-                </View>
-                <TouchableOpacity style={styles.bellBtn} onPress={goBookings}>
-                  <Ionicons name="notifications-outline" size={22} color={colors.white} />
-                  {unreadMessages > 0 ? <View style={styles.bellDot} /> : null}
-                </TouchableOpacity>
-              </View>
-              <Text style={styles.heroTagline}>Rencanakan ibadah umrah Anda dengan nyaman</Text>
-            </View>
-          </SafeAreaView>
-        </LinearGradient>
-
         <TouchableOpacity style={styles.searchCard} onPress={goDirectory} activeOpacity={0.92}>
           <View style={styles.searchRow}>
             <View style={styles.searchIconWrap}>
@@ -387,25 +383,27 @@ export default function CustomerDashboardScreen({ navigation }) {
 
 const styles = StyleSheet.create({
   root: { flex: 1, backgroundColor: colors.canvas },
-  hero: {
-    paddingBottom: 56,
-    borderBottomLeftRadius: 28,
-    borderBottomRightRadius: 28,
+  topBar: {
+    backgroundColor: colors.white,
+    borderBottomWidth: 1,
+    borderBottomColor: colors.slate100,
+    paddingHorizontal: 20,
+    paddingTop: 8,
+    paddingBottom: 14,
   },
-  heroInner: { paddingHorizontal: 20, paddingTop: 8, paddingBottom: 4 },
   heroTop: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'flex-start' },
-  heroGreet: { fontSize: 14, fontWeight: '600', color: 'rgba(255,255,255,0.75)' },
-  heroName: { fontSize: 26, fontWeight: '900', color: colors.white, marginTop: 2, letterSpacing: -0.5 },
-  heroTagline: { marginTop: 10, fontSize: 13, fontWeight: '500', color: 'rgba(255,255,255,0.65)', lineHeight: 18 },
+  heroGreet: { fontSize: 14, fontWeight: '600', color: colors.slate500 },
+  heroName: { fontSize: 24, fontWeight: '900', color: colors.baytgo, marginTop: 2, letterSpacing: -0.5 },
+  heroTagline: { marginTop: 10, fontSize: 13, fontWeight: '500', color: colors.slate500, lineHeight: 18 },
   bellBtn: {
     width: 44,
     height: 44,
     borderRadius: 14,
-    backgroundColor: 'rgba(255,255,255,0.12)',
+    backgroundColor: colors.canvas,
     alignItems: 'center',
     justifyContent: 'center',
     borderWidth: 1,
-    borderColor: 'rgba(255,255,255,0.15)',
+    borderColor: colors.slate100,
   },
   bellDot: {
     position: 'absolute',
@@ -416,11 +414,11 @@ const styles = StyleSheet.create({
     borderRadius: 4,
     backgroundColor: '#F59E0B',
     borderWidth: 1.5,
-    borderColor: '#1A3D34',
+    borderColor: colors.white,
   },
   searchCard: {
     marginHorizontal: 20,
-    marginTop: -40,
+    marginTop: 16,
     backgroundColor: colors.white,
     borderRadius: 20,
     padding: 16,

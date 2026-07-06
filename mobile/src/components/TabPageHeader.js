@@ -15,8 +15,12 @@ export default function TabPageHeader({ title, subtitle }) {
 }
 
 const styles = StyleSheet.create({
-  safe: { backgroundColor: colors.canvas },
-  row: { paddingHorizontal: 20, paddingBottom: 12 },
-  title: { fontSize: 24, fontWeight: '900', color: colors.baytgo },
+  safe: {
+    backgroundColor: colors.white,
+    borderBottomWidth: 1,
+    borderBottomColor: colors.slate100,
+  },
+  row: { paddingHorizontal: 20, paddingTop: 8, paddingBottom: 14 },
+  title: { fontSize: 20, fontWeight: '900', color: colors.baytgo },
   subtitle: { marginTop: 4, fontSize: 13, fontWeight: '600', color: colors.slate500 },
 });

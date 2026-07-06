@@ -11,7 +11,7 @@ import CompanyRegistrationPendingScreen from '../screens/CompanyRegistrationPend
 import MainTabNavigator from './MainTabNavigator';
 import { ONBOARDING_KEY } from '../constants/onboarding';
 import { useAuth } from '../context/AuthContext';
-import { navigationRef } from './rootNavigation';
+import { navigationRef, flushPendingChatNavigation } from './rootNavigation';
 import { useNotificationNavigation } from '../notifications/useNotificationNavigation';
 import { colors } from '../theme/colors';
 
@@ -80,7 +80,7 @@ function RootNavigator() {
 
 export default function AppNavigator() {
   return (
-    <NavigationContainer ref={navigationRef}>
+    <NavigationContainer ref={navigationRef} onReady={flushPendingChatNavigation}>
       <NavigationRoot />
     </NavigationContainer>
   );

@@ -88,7 +88,6 @@ const FEATURES = [
 
 const TRUST_USPS = [
   { icon: 'shield-checkmark', title: 'Terverifikasi', sub: 'Muthowif melalui proses verifikasi' },
-  { icon: 'chatbubbles', title: 'Chat Sebelum Booking', sub: 'Komunikasi langsung sebelum pesan' },
   { icon: 'calendar', title: 'Jadwal Real-time', sub: 'Ketersediaan selalu diperbarui' },
 ];
 
@@ -225,12 +224,6 @@ export default function HomeScreen({ navigation }) {
   const [unreadMessages, setUnreadMessages] = useState(0);
 
   const firstName = useMemo(() => user?.name?.split(' ')[0] || 'Jamaah', [user?.name]);
-
-  const sortedMuthowifs = useMemo(() => {
-    return [...muthowifs].sort(
-      (a, b) => (parseFloat(b.rating) || 0) - (parseFloat(a.rating) || 0),
-    );
-  }, [muthowifs]);
 
   const today = useMemo(() => {
     const d = new Date();
@@ -497,18 +490,6 @@ export default function HomeScreen({ navigation }) {
             </TouchableOpacity>
           </View>
 
-          <View style={styles.listToolbar}>
-            <TouchableOpacity style={styles.toolbarBtn} onPress={() => openDirectory()} activeOpacity={0.88}>
-              <Ionicons name="options-outline" size={15} color={colors.baytgo} />
-              <Text style={styles.toolbarBtnText}>Filter</Text>
-              <Ionicons name="chevron-down" size={14} color={colors.slate400} />
-            </TouchableOpacity>
-            <View style={styles.toolbarBtn}>
-              <Text style={styles.toolbarBtnText}>Rating tertinggi</Text>
-              <Ionicons name="chevron-down" size={14} color={colors.slate400} />
-            </View>
-          </View>
-
           {loading && !refreshing ? (
             <ActivityIndicator color={colors.baytgo} style={styles.loader} />
           ) : error ? (
@@ -524,7 +505,7 @@ export default function HomeScreen({ navigation }) {
               <Text style={styles.emptyText}>Muthowif terverifikasi akan muncul di sini.</Text>
             </View>
           ) : (
-            sortedMuthowifs.map((item) => (
+            muthowifs.map((item) => (
               <MuthowifListingCard
                 key={item.id}
                 item={item}
@@ -803,22 +784,7 @@ const styles = StyleSheet.create({
   },
   featureTitle: { marginTop: 12, fontSize: 13, fontWeight: '900', color: colors.slate900 },
   featureSub: { marginTop: 4, fontSize: 11, fontWeight: '600', color: colors.slate600, lineHeight: 15 },
-  sectionHead: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginBottom: 12 },
-  listToolbar: { flexDirection: 'row', gap: 10, marginBottom: 14 },
-  toolbarBtn: {
-    flex: 1,
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
-    gap: 6,
-    paddingVertical: 10,
-    paddingHorizontal: 12,
-    borderRadius: 12,
-    backgroundColor: colors.white,
-    borderWidth: 1,
-    borderColor: colors.slate200,
-  },
-  toolbarBtnText: { fontSize: 13, fontWeight: '700', color: colors.slate700 },
+  sectionHead: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginBottom: 14 },
   sectionTitle: { fontSize: 18, fontWeight: '900', color: colors.baytgo },
   seeAll: { fontSize: 13, fontWeight: '800', color: colors.goldMuted },
   loader: { marginVertical: 24 },

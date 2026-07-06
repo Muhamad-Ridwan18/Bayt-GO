@@ -347,15 +347,13 @@ export default function MuthowifDetailScreen({ navigation, route }) {
 
   return (
     <View style={styles.container}>
-      <ScrollView contentContainerStyle={styles.scroll} showsVerticalScrollIndicator={false}>
-        <LinearGradient colors={[colors.baytgo, '#2D6A5A']} style={styles.headerBand}>
-          <SafeAreaView edges={['top']}>
-            <TouchableOpacity style={styles.backBtnHero} onPress={() => navigation.goBack()}>
-              <Ionicons name="chevron-back" size={22} color={colors.baytgo} />
-            </TouchableOpacity>
-          </SafeAreaView>
-        </LinearGradient>
+      <SafeAreaView edges={['top']} style={styles.topBar}>
+        <TouchableOpacity style={styles.backBtn} onPress={() => navigation.goBack()}>
+          <Ionicons name="chevron-back" size={22} color={colors.baytgo} />
+        </TouchableOpacity>
+      </SafeAreaView>
 
+      <ScrollView contentContainerStyle={styles.scroll} showsVerticalScrollIndicator={false}>
         <View style={styles.profileHero}>
           <View style={styles.avatarOuter}>
             <View style={styles.avatarRing}>
@@ -667,7 +665,13 @@ export default function MuthowifDetailScreen({ navigation, route }) {
 const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: colors.canvas },
   scroll: { paddingBottom: 110 },
-  loadingSafe: { paddingHorizontal: 16, paddingBottom: 8 },
+  loadingSafe: {
+    paddingHorizontal: 16,
+    paddingBottom: 8,
+    backgroundColor: colors.white,
+    borderBottomWidth: 1,
+    borderBottomColor: colors.slate100,
+  },
   loader: { marginTop: 40 },
   empty: { padding: 24, alignItems: 'center' },
   emptyText: { fontSize: 14, color: colors.slate500, fontWeight: '600', textAlign: 'center' },
@@ -676,37 +680,23 @@ const styles = StyleSheet.create({
     width: 40,
     height: 40,
     borderRadius: 12,
-    backgroundColor: colors.white,
+    backgroundColor: colors.canvas,
     alignItems: 'center',
     justifyContent: 'center',
     borderWidth: 1,
     borderColor: colors.slate100,
   },
-  headerBand: {
-    paddingBottom: 56,
-    borderBottomLeftRadius: 28,
-    borderBottomRightRadius: 28,
-  },
-  backBtnHero: {
-    width: 42,
-    height: 42,
-    borderRadius: 21,
+  topBar: {
     backgroundColor: colors.white,
-    alignItems: 'center',
-    justifyContent: 'center',
-    marginLeft: 16,
-    marginTop: 4,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.1,
-    shadowRadius: 6,
-    elevation: 3,
+    borderBottomWidth: 1,
+    borderBottomColor: colors.slate100,
+    paddingHorizontal: 16,
+    paddingBottom: 10,
   },
   profileHero: {
     alignItems: 'center',
-    marginTop: -(AVATAR_SIZE / 2 + 8),
+    marginTop: 16,
     marginBottom: 8,
-    zIndex: 2,
   },
   avatarOuter: { alignItems: 'center' },
   avatarRing: {

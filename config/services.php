@@ -104,6 +104,8 @@ return [
         'bank_account_pick' => strtolower(trim((string) env('MOOTA_BANK_ACCOUNT_PICK', 'first'))),
         'payment_expire_minutes' => (int) env('MOOTA_PAYMENT_EXPIRE_MINUTES', 1440),
         'token_cache_minutes' => (int) env('MOOTA_ACCESS_TOKEN_CACHE_MINUTES', 55),
+        /** true = tampilkan badge sandbox di UI pembayaran (staging/local). */
+        'is_sandbox' => filter_var(env('MOOTA_IS_SANDBOX', false), FILTER_VALIDATE_BOOLEAN),
         /** Rentang filter kode unik untuk webhook mutasi (POST /api/v2/integration/webhook). */
         'webhook_unique_start' => (int) env('MOOTA_WEBHOOK_UNIQUE_START', 0),
         'webhook_unique_end' => (int) env('MOOTA_WEBHOOK_UNIQUE_END', 999),

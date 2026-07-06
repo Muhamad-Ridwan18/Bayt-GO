@@ -32,7 +32,17 @@ export function serviceTypeLabel(type) {
 }
 
 export function needsPayment(booking) {
-  return booking?.payment_status === 'pending' && booking?.status === 'pending';
+  return canPayBooking(booking);
+}
+
+export function canPayBooking(booking) {
+  if (!booking || booking.payment_status !== 'pending') return false;
+  if (booking.status === 'cancelled') return false;
+  return booking.status === 'pending' || booking.status === 'confirmed';
+}
+
+export function isAwaitingMuthowifConfirmation(booking) {
+  return booking?.status === 'pending' && booking?.payment_status === 'pending';
 }
 
 export function formatDateRange(start, end) {

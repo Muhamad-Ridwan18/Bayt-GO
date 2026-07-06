@@ -25,6 +25,7 @@ use App\Services\SupportBookingService;
 use App\Services\UploadedImageOptimizer;
 use App\Support\ApiBookingDetail;
 use App\Support\ApiEmergencyDetail;
+use App\Support\ApiMootaPaymentMeta;
 use App\Support\BookingPostPayRules;
 use App\Support\BookingSnapPaymentCatalog;
 use App\Support\CustomerBookingBroadcast;
@@ -243,25 +244,33 @@ class BookingApiController extends Controller
     /** @param list<string> $methods */
     private function paymentMethodsMeta(array $methods): array
     {
-        return array_map(function (string $id): array {
-            if (preg_match('/^bank_transfer_moota__(\d+)$/', $id, $m)) {
-                return [
-                    'id' => $id,
-                    'label' => __('bookings.payment.moota_account_title', ['n' => ((int) $m[1]) + 1]),
-                    'group' => 'moota',
-                ];
-            }
+        return ApiMootaPaymentMeta::methodsMeta($methods);
+    }
 
-            if ($id === 'bank_transfer_moota') {
-                return [
-                    'id' => $id,
-                    'label' => __('bookings.payment.method_bank_transfer_moota.name'),
-                    'group' => 'moota',
-                ];
-            }
+    /**
+     * @return array<string, mixed>
+     */
+    private function paymentEnvironmentPayload(): array
+    {
+        if (config('services.booking.payment_driver') !== 'moota') {
+            return [];
+        }
 
-            return ['id' => $id, 'label' => $id, 'group' => 'other'];
-        }, $methods);
+        return ApiMootaPaymentMeta::environment();
+    }
+
+    /**
+     * @return array<string, mixed>|null
+     */
+    private function methodMetaFor(string $method): ?array
+    {
+        foreach (ApiMootaPaymentMeta::methodsMeta([$method]) as $row) {
+            if (($row['id'] ?? '') === $method) {
+                return $row;
+            }
+        }
+
+        return null;
     }
 
     public function pay(Request $request, MuthowifBooking $booking): JsonResponse
@@ -317,6 +326,7 @@ class BookingApiController extends Controller
                 'methods' => $this->apiPaymentMethods(),
                 'methods_meta' => $this->paymentMethodsMeta($this->apiPaymentMethods()),
                 'amount' => (int) round($booking->resolvedAmountDue()),
+                'payment_environment' => $this->paymentEnvironmentPayload(),
             ]);
         }
 
@@ -415,11 +425,13 @@ class BookingApiController extends Controller
                     'driver' => 'moota',
                     'order_id' => $orderId,
                     'method' => $method,
+                    'method_meta' => $this->methodMetaFor($method),
                     'gross_amount' => $payment->gross_amount,
                     'expected_transfer_total' => $result['moota_total'],
                     'trx_id' => $result['trx_id'],
                     'checkout_url' => $result['payment_url'],
                     'expiry_time' => $result['expiry_time'],
+                    'payment_environment' => $this->paymentEnvironmentPayload(),
                 ]);
             }
 
