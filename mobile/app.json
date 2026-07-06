@@ -36,6 +36,12 @@
           "color": "#1A3D34"
         }
       ]
-    ]
+    ],
+    "extra": {
+      "eas": {
+        "projectId": "4e261915-6790-48c7-b247-33d56c5c1cfe"
+      }
+    },
+    "owner": "mrdwn1812"
   }
 }

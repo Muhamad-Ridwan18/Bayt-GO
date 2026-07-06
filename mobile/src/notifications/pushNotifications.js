@@ -1,8 +1,10 @@
 import { Platform } from 'react-native';
 import * as Device from 'expo-device';
 import * as Notifications from 'expo-notifications';
-import Constants from 'expo-constants';
+import Constants, { ExecutionEnvironment } from 'expo-constants';
 import { registerPushToken, unregisterPushToken } from '../api/pushTokens';
+
+const isExpoGo = Constants.executionEnvironment === ExecutionEnvironment.StoreClient;
 
 Notifications.setNotificationHandler({
   handleNotification: async () => ({
@@ -18,8 +20,20 @@ export function getCachedExpoPushToken() {
   return cachedExpoPushToken;
 }
 
+function logPushDebug(message, extra) {
+  if (__DEV__) {
+    console.warn(`[push] ${message}`, extra ?? '');
+  }
+}
+
 export async function registerForPushNotificationsAsync() {
   if (!Device.isDevice) {
+    logPushDebug('skipped: simulator/emulator');
+    return null;
+  }
+
+  if (isExpoGo) {
+    logPushDebug('Expo Go SDK 53+ tidak mendukung remote push — gunakan development build (eas build)');
     return null;
   }
 
@@ -39,6 +53,7 @@ export async function registerForPushNotificationsAsync() {
   }
 
   if (finalStatus !== 'granted') {
+    logPushDebug('skipped: notification permission not granted', finalStatus);
     return null;
   }
 
@@ -46,12 +61,20 @@ export async function registerForPushNotificationsAsync() {
     Constants.expoConfig?.extra?.eas?.projectId
     ?? Constants.easConfig?.projectId;
 
-  const tokenResponse = projectId
-    ? await Notifications.getExpoPushTokenAsync({ projectId })
-    : await Notifications.getExpoPushTokenAsync();
+  if (!projectId) {
+    logPushDebug('skipped: EAS projectId missing in app.json');
+    return null;
+  }
 
-  cachedExpoPushToken = tokenResponse.data;
-  return cachedExpoPushToken;
+  try {
+    const tokenResponse = await Notifications.getExpoPushTokenAsync({ projectId });
+    cachedExpoPushToken = tokenResponse.data;
+    logPushDebug('token obtained', cachedExpoPushToken);
+    return cachedExpoPushToken;
+  } catch (error) {
+    logPushDebug('getExpoPushTokenAsync failed', error?.message ?? error);
+    return null;
+  }
 }
 
 export async function syncPushTokenWithBackend(authToken) {
@@ -60,11 +83,17 @@ export async function syncPushTokenWithBackend(authToken) {
   const expoToken = await registerForPushNotificationsAsync();
   if (!expoToken) return null;
 
-  await registerPushToken(authToken, {
-    token: expoToken,
-    platform: Platform.OS,
-    device_name: Device.modelName || Platform.OS,
-  });
+  try {
+    await registerPushToken(authToken, {
+      token: expoToken,
+      platform: Platform.OS,
+      device_name: Device.modelName || Platform.OS,
+    });
+    logPushDebug('token registered to backend');
+  } catch (error) {
+    logPushDebug('backend registration failed', error?.message ?? error);
+    throw error;
+  }
 
   return expoToken;
 }

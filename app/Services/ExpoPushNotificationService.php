@@ -32,7 +32,11 @@ final class ExpoPushNotificationService
         foreach (array_chunk($messages, 100) as $chunk) {
             try {
                 $response = Http::timeout(10)
-                    ->acceptJson()
+                    ->withHeaders([
+                        'Accept' => 'application/json',
+                        'Accept-Encoding' => 'gzip, deflate',
+                        'Content-Type' => 'application/json',
+                    ])
                     ->post(self::ENDPOINT, $chunk);
 
                 if (! $response->successful()) {
@@ -40,6 +44,17 @@ final class ExpoPushNotificationService
                         'status' => $response->status(),
                         'body' => $response->json(),
                     ]);
+
+                    continue;
+                }
+
+                foreach ($response->json('data') ?? [] as $ticket) {
+                    if (($ticket['status'] ?? null) === 'error') {
+                        Log::warning('expo_push.ticket_error', [
+                            'message' => $ticket['message'] ?? null,
+                            'details' => $ticket['details'] ?? null,
+                        ]);
+                    }
                 }
             } catch (\Throwable $e) {
                 Log::warning('expo_push.exception', ['message' => $e->getMessage()]);

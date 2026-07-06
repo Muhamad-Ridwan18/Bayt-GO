@@ -6,10 +6,9 @@ use App\Models\BookingChatMessage;
 use App\Models\MuthowifBooking;
 use App\Models\User;
 use App\Services\BookingChatPushNotifier;
-use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Foundation\Queue\Queueable;
 
-class SendBookingChatPushNotification implements ShouldQueue
+class SendBookingChatPushNotification
 {
     use Queueable;
 

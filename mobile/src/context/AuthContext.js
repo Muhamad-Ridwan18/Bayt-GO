@@ -20,7 +20,9 @@ export function AuthProvider({ children }) {
         if (storedToken && storedUser) {
           setToken(storedToken);
           setUser(JSON.parse(storedUser));
-          syncPushTokenWithBackend(storedToken).catch(() => {});
+          syncPushTokenWithBackend(storedToken).catch((error) => {
+            if (__DEV__) console.warn('[push] sync on boot failed', error?.message ?? error);
+          });
           flushPendingChatNavigation();
         }
       })
@@ -32,7 +34,9 @@ export function AuthProvider({ children }) {
     setUser(sessionUser);
     await AsyncStorage.setItem(TOKEN_KEY, sessionToken);
     await AsyncStorage.setItem(USER_KEY, JSON.stringify(sessionUser));
-    syncPushTokenWithBackend(sessionToken).catch(() => {});
+    syncPushTokenWithBackend(sessionToken).catch((error) => {
+      if (__DEV__) console.warn('[push] sync on login failed', error?.message ?? error);
+    });
     flushPendingChatNavigation();
   }, []);
 
