@@ -1,5 +1,13 @@
 import React, { useState } from 'react';
-import { View, Text, StyleSheet, TouchableOpacity, Platform } from 'react-native';
+import {
+  View,
+  Text,
+  StyleSheet,
+  TouchableOpacity,
+  Platform,
+  Modal,
+  Pressable,
+} from 'react-native';
 import DateTimePicker from '@react-native-community/datetimepicker';
 import { Ionicons } from '@expo/vector-icons';
 import { colors } from '../theme/colors';
@@ -20,18 +28,18 @@ export function parseIsoDate(value) {
   return Number.isNaN(parsed.getTime()) ? new Date() : parsed;
 }
 
-function formatDisplay(value) {
+function formatDisplay(value, compact = false) {
   if (!value) return '';
   try {
-    return parseIsoDate(value).toLocaleDateString('id-ID', {
-      day: 'numeric',
-      month: 'short',
-      year: 'numeric',
-    });
+    return parseIsoDate(value).toLocaleDateString('id-ID', compact
+      ? { day: 'numeric', month: 'short' }
+      : { day: 'numeric', month: 'short', year: 'numeric' });
   } catch {
     return value;
   }
 }
+
+const CALENDAR_DISPLAY = Platform.OS === 'ios' ? 'inline' : 'calendar';
 
 export default function DatePickerField({
   label,
@@ -43,96 +51,134 @@ export default function DatePickerField({
   onClear,
   clearable = false,
   variant = 'default',
+  compact = false,
 }) {
   const [show, setShow] = useState(false);
-  const [iosDraft, setIosDraft] = useState(parseIsoDate(value));
+  const [draft, setDraft] = useState(parseIsoDate(value));
 
   const openPicker = () => {
-    setIosDraft(parseIsoDate(value));
+    setDraft(parseIsoDate(value));
     setShow(true);
   };
 
+  const closePicker = () => setShow(false);
+
   const handleChange = (event, selectedDate) => {
     if (Platform.OS === 'android') {
-      setShow(false);
+      closePicker();
       if (event.type === 'dismissed') return;
       if (selectedDate) onChange(toIsoDate(selectedDate));
       return;
     }
-    if (selectedDate) setIosDraft(selectedDate);
+    if (selectedDate) setDraft(selectedDate);
   };
 
-  const confirmIos = () => {
-    onChange(toIsoDate(iosDraft));
-    setShow(false);
+  const confirm = () => {
+    onChange(toIsoDate(draft));
+    closePicker();
   };
+
+  const isChip = variant === 'chip';
 
   return (
-    <View style={styles.wrap}>
-      {label ? <Text style={styles.label}>{label}</Text> : null}
+    <View style={[styles.wrap, isChip && styles.wrapChip]}>
+      {label && !isChip ? <Text style={styles.label}>{label}</Text> : null}
+
       <TouchableOpacity
-        style={[styles.field, variant === 'soft' && styles.fieldSoft]}
+        style={[
+          styles.field,
+          variant === 'soft' && styles.fieldSoft,
+          isChip && styles.fieldChip,
+        ]}
         onPress={openPicker}
-        activeOpacity={0.9}
+        activeOpacity={0.88}
       >
-        <Ionicons name="calendar-outline" size={20} color={colors.slate400} />
-        <Text style={[styles.value, !value && styles.placeholder]} numberOfLines={1}>
-          {value ? formatDisplay(value) : placeholder}
-        </Text>
-        {clearable && value ? (
-          <TouchableOpacity
-            onPress={(e) => {
-              e.stopPropagation?.();
-              onClear?.();
-            }}
-            hitSlop={8}
-          >
-            <Ionicons name="close-circle" size={18} color={colors.slate400} />
-          </TouchableOpacity>
+        {isChip ? (
+          <>
+            <View style={styles.chipTopRow}>
+              <Text style={styles.chipLabel}>{label}</Text>
+              {clearable && value ? (
+                <TouchableOpacity
+                  onPress={(e) => {
+                    e.stopPropagation?.();
+                    onClear?.();
+                  }}
+                  hitSlop={8}
+                >
+                  <Ionicons name="close-circle" size={14} color={colors.slate400} />
+                </TouchableOpacity>
+              ) : null}
+            </View>
+            <View style={styles.chipValueRow}>
+              <Ionicons name="calendar" size={15} color={colors.baytgo} />
+              <Text style={[styles.chipValue, !value && styles.placeholder]} numberOfLines={1}>
+                {value ? formatDisplay(value, true) : placeholder}
+              </Text>
+            </View>
+          </>
         ) : (
-          <Ionicons name="chevron-down" size={16} color={colors.slate400} />
+          <>
+            <Ionicons name="calendar-outline" size={20} color={colors.baytgo} />
+            <Text style={[styles.value, !value && styles.placeholder]} numberOfLines={1}>
+              {value ? formatDisplay(value) : placeholder}
+            </Text>
+            {clearable && value ? (
+              <TouchableOpacity
+                onPress={(e) => {
+                  e.stopPropagation?.();
+                  onClear?.();
+                }}
+                hitSlop={8}
+              >
+                <Ionicons name="close-circle" size={18} color={colors.slate400} />
+              </TouchableOpacity>
+            ) : (
+              <Ionicons name="chevron-down" size={16} color={colors.slate400} />
+            )}
+          </>
         )}
       </TouchableOpacity>
 
-      {show && Platform.OS === 'android' ? (
-        <DateTimePicker
-          value={parseIsoDate(value)}
-          mode="date"
-          display="default"
-          minimumDate={minimumDate}
-          maximumDate={maximumDate}
-          onChange={handleChange}
-        />
-      ) : null}
-
-      {show && Platform.OS === 'ios' ? (
-        <View style={styles.iosSheet}>
-          <View style={styles.iosToolbar}>
-            <TouchableOpacity onPress={() => setShow(false)}>
-              <Text style={styles.iosCancel}>Batal</Text>
-            </TouchableOpacity>
-            <TouchableOpacity onPress={confirmIos}>
-              <Text style={styles.iosDone}>Selesai</Text>
+      <Modal visible={show} transparent animationType="slide" onRequestClose={closePicker}>
+        <Pressable style={styles.overlay} onPress={closePicker} />
+        <View style={styles.sheet}>
+          <View style={styles.sheetHandle} />
+          <View style={styles.sheetHeader}>
+            <Text style={styles.sheetTitle}>{label || 'Pilih tanggal'}</Text>
+            <TouchableOpacity onPress={closePicker} hitSlop={12}>
+              <Ionicons name="close" size={22} color={colors.slate500} />
             </TouchableOpacity>
           </View>
-          <DateTimePicker
-            value={iosDraft}
-            mode="date"
-            display="spinner"
-            minimumDate={minimumDate}
-            maximumDate={maximumDate}
-            onChange={handleChange}
-            locale="id-ID"
-            style={styles.iosPicker}
-          />
+
+          <View style={styles.calendarWrap}>
+            <DateTimePicker
+              value={draft}
+              mode="date"
+              display={CALENDAR_DISPLAY}
+              minimumDate={minimumDate}
+              maximumDate={maximumDate}
+              onChange={handleChange}
+              locale="id-ID"
+              themeVariant="light"
+              accentColor={colors.baytgo}
+              style={Platform.OS === 'ios' ? styles.iosCalendar : undefined}
+            />
+          </View>
+
+          {Platform.OS === 'ios' ? (
+            <TouchableOpacity style={styles.confirmBtn} onPress={confirm} activeOpacity={0.9}>
+              <Text style={styles.confirmBtnText}>Pilih tanggal</Text>
+            </TouchableOpacity>
+          ) : null}
         </View>
-      ) : null}
+      </Modal>
     </View>
   );
 }
 
 const styles = StyleSheet.create({
   wrap: { marginBottom: 10 },
+  wrapChip: { marginBottom: 0, flex: 1 },
   label: {
     fontSize: 11,
     fontWeight: '800',
@@ -154,25 +200,81 @@ const styles = StyleSheet.create({
   fieldSoft: {
     backgroundColor: colors.canvas,
   },
-  value: { flex: 1, fontSize: 14, fontWeight: '600', color: colors.slate900 },
-  placeholder: { color: colors.slate400 },
-  iosSheet: {
-    marginTop: 8,
-    backgroundColor: colors.white,
+  fieldChip: {
+    flexDirection: 'column',
+    alignItems: 'flex-start',
+    gap: 6,
+    paddingHorizontal: 12,
+    paddingVertical: 12,
+    backgroundColor: colors.canvas,
     borderRadius: 16,
-    borderWidth: 1,
-    borderColor: colors.slate100,
+    borderColor: 'rgba(26,61,52,0.1)',
+  },
+  chipLabel: {
+    fontSize: 10,
+    fontWeight: '800',
+    color: colors.slate500,
+    textTransform: 'uppercase',
+    letterSpacing: 0.3,
+  },
+  chipTopRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    width: '100%',
+  },
+  chipValueRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 6,
+    width: '100%',
+  },
+  chipValue: { flex: 1, fontSize: 14, fontWeight: '800', color: colors.slate900 },
+  value: { flex: 1, fontSize: 14, fontWeight: '600', color: colors.slate900 },
+  placeholder: { color: colors.slate400, fontWeight: '600' },
+  overlay: {
+    flex: 1,
+    backgroundColor: 'rgba(15,23,42,0.45)',
+  },
+  sheet: {
+    backgroundColor: colors.white,
+    borderTopLeftRadius: 24,
+    borderTopRightRadius: 24,
+    paddingBottom: Platform.OS === 'ios' ? 34 : 24,
+    paddingHorizontal: 20,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: -4 },
+    shadowOpacity: 0.12,
+    shadowRadius: 16,
+    elevation: 20,
+  },
+  sheetHandle: {
+    alignSelf: 'center',
+    width: 40,
+    height: 4,
+    borderRadius: 2,
+    backgroundColor: colors.slate200,
+    marginTop: 10,
+    marginBottom: 8,
+  },
+  sheetHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    marginBottom: 8,
+  },
+  sheetTitle: { fontSize: 17, fontWeight: '900', color: colors.baytgo },
+  calendarWrap: {
+    alignItems: 'center',
     overflow: 'hidden',
   },
-  iosToolbar: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    paddingHorizontal: 16,
-    paddingVertical: 12,
-    borderBottomWidth: 1,
-    borderBottomColor: colors.slate100,
+  iosCalendar: { width: '100%', height: 340 },
+  confirmBtn: {
+    marginTop: 12,
+    backgroundColor: colors.baytgo,
+    borderRadius: 14,
+    paddingVertical: 15,
+    alignItems: 'center',
   },
-  iosCancel: { fontSize: 15, fontWeight: '600', color: colors.slate500 },
-  iosDone: { fontSize: 15, fontWeight: '800', color: colors.baytgo },
-  iosPicker: { height: 180 },
+  confirmBtnText: { fontSize: 15, fontWeight: '800', color: colors.white },
 });

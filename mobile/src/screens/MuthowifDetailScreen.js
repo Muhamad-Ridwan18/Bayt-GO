@@ -23,7 +23,7 @@ import { formatIdr } from '../utils/format';
 import { resolveMediaUrl } from '../utils/mediaUrl';
 
 const { width: SCREEN_W } = Dimensions.get('window');
-const HERO_H = Math.min(SCREEN_W * 0.78, 340);
+const AVATAR_SIZE = 124;
 
 const ADDON_ICONS = ['star-outline', 'car-outline', 'bed-outline', 'restaurant-outline', 'camera-outline', 'map-outline'];
 
@@ -343,34 +343,42 @@ export default function MuthowifDetailScreen({ navigation, route }) {
   const reviewStat = hasReviews ? `${profile.rating} (${profile.reviews_count})` : 'Belum ada';
   const experienceStat = profile.experience_summary || 'Belum diisi';
 
+  const avatarUri = resolveMediaUrl(profile.avatar);
+
   return (
     <View style={styles.container}>
       <ScrollView contentContainerStyle={styles.scroll} showsVerticalScrollIndicator={false}>
-        <View style={styles.heroWrap}>
-          <Image source={{ uri: resolveMediaUrl(profile.avatar) }} style={styles.heroImage} />
-          <LinearGradient
-            colors={['rgba(15,34,29,0.25)', 'transparent']}
-            locations={[0, 0.45]}
-            style={StyleSheet.absoluteFill}
-          />
-          <SafeAreaView edges={['top']} style={styles.heroTopBar}>
+        <LinearGradient colors={[colors.baytgo, '#2D6A5A']} style={styles.headerBand}>
+          <SafeAreaView edges={['top']}>
             <TouchableOpacity style={styles.backBtnHero} onPress={() => navigation.goBack()}>
-              <Ionicons name="chevron-back" size={22} color={colors.white} />
+              <Ionicons name="chevron-back" size={22} color={colors.baytgo} />
             </TouchableOpacity>
           </SafeAreaView>
+        </LinearGradient>
+
+        <View style={styles.profileHero}>
+          <View style={styles.avatarOuter}>
+            <View style={styles.avatarRing}>
+              {avatarUri ? (
+                <Image source={{ uri: avatarUri }} style={styles.avatarImage} resizeMode="cover" />
+              ) : (
+                <View style={[styles.avatarImage, styles.avatarPlaceholder]}>
+                  <Ionicons name="person" size={48} color={colors.slate400} />
+                </View>
+              )}
+            </View>
+            {profile.is_verified !== false ? (
+              <View style={styles.verifiedBelow}>
+                <Ionicons name="shield-checkmark" size={12} color={colors.emerald600} />
+                <Text style={styles.verifiedBelowText}>Terverifikasi</Text>
+              </View>
+            ) : null}
+          </View>
         </View>
 
         <View style={styles.content}>
           <View style={styles.profileCard}>
-            <View style={styles.profileTitleRow}>
-              <Text style={styles.profileName}>{profile.name}</Text>
-              {profile.is_verified !== false ? (
-                <View style={styles.verifiedChip}>
-                  <Ionicons name="shield-checkmark" size={11} color={colors.emerald600} />
-                  <Text style={styles.verifiedChipText}>Terverifikasi</Text>
-                </View>
-              ) : null}
-            </View>
+            <Text style={styles.profileName}>{profile.name}</Text>
 
             {profile.is_new ? (
               <View style={styles.newChip}>
@@ -378,20 +386,10 @@ export default function MuthowifDetailScreen({ navigation, route }) {
               </View>
             ) : null}
 
-            {profile.location ? (
-              <View style={styles.locationBadge}>
-                <Text style={styles.locationBadgeLabel}>Lokasi kerja</Text>
-                <View style={styles.locationBadgeRow}>
-                  <Ionicons name="location" size={14} color="#0369A1" />
-                  <Text style={styles.locationBadgeText}>{profile.location}</Text>
-                </View>
-              </View>
-            ) : null}
-
             <View style={styles.profileRatingRow}>
               {hasReviews ? (
                 <>
-                  <Stars rating={parseFloat(profile.rating) || 0} size={14} />
+                  <Stars rating={parseFloat(profile.rating) || 0} size={15} />
                   <Text style={styles.profileRatingText}>
                     {profile.rating} · {profile.reviews_count} ulasan
                   </Text>
@@ -400,6 +398,13 @@ export default function MuthowifDetailScreen({ navigation, route }) {
                 <Text style={styles.profileRatingEmpty}>Belum ada ulasan</Text>
               )}
             </View>
+
+            {profile.location ? (
+              <View style={styles.locationRow}>
+                <Ionicons name="location-outline" size={15} color={colors.baytgo} />
+                <Text style={styles.locationText}>{profile.location}</Text>
+              </View>
+            ) : null}
 
             {langs.length > 0 ? (
               <View style={styles.langRow}>
@@ -541,7 +546,7 @@ export default function MuthowifDetailScreen({ navigation, route }) {
                     activeOpacity={0.9}
                     onPress={() => openLightbox(item.images, item.title)}
                   >
-                    <Image source={{ uri: resolveMediaUrl(item.cover_url) }} style={styles.galleryImage} />
+                    <Image source={{ uri: resolveMediaUrl(item.cover_url) }} style={styles.galleryImage} resizeMode="cover" />
                     {item.title ? (
                       <LinearGradient
                         colors={['transparent', 'rgba(0,0,0,0.7)']}
@@ -677,51 +682,102 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     borderColor: colors.slate100,
   },
-  heroWrap: {
-    width: SCREEN_W,
-    height: HERO_H,
-    backgroundColor: colors.slate200,
+  headerBand: {
+    paddingBottom: 56,
+    borderBottomLeftRadius: 28,
+    borderBottomRightRadius: 28,
   },
-  heroImage: { width: '100%', height: '100%' },
-  heroTopBar: { position: 'absolute', top: 0, left: 0, right: 0, paddingHorizontal: 16 },
   backBtnHero: {
     width: 42,
     height: 42,
-    borderRadius: 14,
-    backgroundColor: 'rgba(0,0,0,0.35)',
+    borderRadius: 21,
+    backgroundColor: colors.white,
     alignItems: 'center',
     justifyContent: 'center',
-    borderWidth: 1,
-    borderColor: 'rgba(255,255,255,0.15)',
-  },
-  content: { paddingHorizontal: 16, marginTop: -16 },
-  profileCard: {
-    backgroundColor: colors.white,
-    borderRadius: 20,
-    padding: 18,
-    marginBottom: 4,
-    borderWidth: 1,
-    borderColor: colors.slate100,
+    marginLeft: 16,
+    marginTop: 4,
     shadowColor: '#000',
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.06,
-    shadowRadius: 12,
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.1,
+    shadowRadius: 6,
     elevation: 3,
   },
-  profileTitleRow: { flexDirection: 'row', alignItems: 'center', flexWrap: 'wrap', gap: 8 },
-  profileName: { fontSize: 22, fontWeight: '900', color: colors.slate900, flexShrink: 1 },
-  verifiedChip: {
+  profileHero: {
+    alignItems: 'center',
+    marginTop: -(AVATAR_SIZE / 2 + 8),
+    marginBottom: 8,
+    zIndex: 2,
+  },
+  avatarOuter: { alignItems: 'center' },
+  avatarRing: {
+    padding: 4,
+    borderRadius: (AVATAR_SIZE + 8) / 2,
+    backgroundColor: colors.white,
+    borderWidth: 3,
+    borderColor: colors.goldLight,
+    shadowColor: '#0F2E28',
+    shadowOffset: { width: 0, height: 8 },
+    shadowOpacity: 0.15,
+    shadowRadius: 16,
+    elevation: 8,
+  },
+  avatarImage: {
+    width: AVATAR_SIZE,
+    height: AVATAR_SIZE,
+    borderRadius: AVATAR_SIZE / 2,
+    backgroundColor: colors.slate100,
+  },
+  avatarPlaceholder: { alignItems: 'center', justifyContent: 'center' },
+  verifiedBelow: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 4,
+    gap: 5,
+    marginTop: 10,
     backgroundColor: colors.emerald50,
-    paddingHorizontal: 8,
-    paddingVertical: 4,
+    paddingHorizontal: 10,
+    paddingVertical: 5,
     borderRadius: 999,
     borderWidth: 1,
-    borderColor: '#A7F3D0',
+    borderColor: 'rgba(5,150,105,0.15)',
   },
-  verifiedChipText: { fontSize: 10, fontWeight: '800', color: colors.emerald600, textTransform: 'uppercase' },
+  verifiedBelowText: { fontSize: 11, fontWeight: '800', color: colors.emerald600 },
+  content: { paddingHorizontal: 16 },
+  profileCard: {
+    backgroundColor: colors.white,
+    borderRadius: 22,
+    paddingHorizontal: 18,
+    paddingTop: 12,
+    paddingBottom: 18,
+    marginBottom: 4,
+    borderWidth: 1,
+    borderColor: 'rgba(26,61,52,0.08)',
+    shadowColor: '#0F2E28',
+    shadowOffset: { width: 0, height: 6 },
+    shadowOpacity: 0.08,
+    shadowRadius: 16,
+    elevation: 4,
+    alignItems: 'center',
+  },
+  profileName: {
+    fontSize: 22,
+    fontWeight: '900',
+    color: colors.slate900,
+    textAlign: 'center',
+    marginTop: 4,
+  },
+  locationRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 6,
+    marginTop: 10,
+    backgroundColor: colors.canvas,
+    paddingHorizontal: 12,
+    paddingVertical: 8,
+    borderRadius: 12,
+    borderWidth: 1,
+    borderColor: 'rgba(26,61,52,0.06)',
+  },
+  locationText: { fontSize: 13, fontWeight: '700', color: colors.slate700 },
   newChip: {
     alignSelf: 'flex-start',
     marginTop: 8,
@@ -731,29 +787,14 @@ const styles = StyleSheet.create({
     borderRadius: 999,
   },
   newChipText: { fontSize: 11, fontWeight: '700', color: '#92400E' },
-  profileMetaRow: { flexDirection: 'row', alignItems: 'center', gap: 6, marginTop: 10 },
-  profileMetaText: { fontSize: 13, fontWeight: '600', color: colors.slate600, flex: 1 },
-  locationBadge: {
-    alignSelf: 'flex-start',
+  profileRatingRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    flexWrap: 'wrap',
+    gap: 8,
     marginTop: 10,
-    paddingHorizontal: 12,
-    paddingVertical: 8,
-    borderRadius: 12,
-    backgroundColor: '#E0F2FE',
-    borderWidth: 1,
-    borderColor: '#BAE6FD',
-    gap: 4,
   },
-  locationBadgeLabel: {
-    fontSize: 10,
-    fontWeight: '800',
-    color: '#0369A1',
-    textTransform: 'uppercase',
-    letterSpacing: 0.6,
-  },
-  locationBadgeRow: { flexDirection: 'row', alignItems: 'center', gap: 6 },
-  locationBadgeText: { flexShrink: 1, fontSize: 14, fontWeight: '800', color: '#0C4A6E' },
-  profileRatingRow: { flexDirection: 'row', alignItems: 'center', gap: 8, marginTop: 8 },
   profileRatingText: { fontSize: 13, fontWeight: '700', color: colors.slate700 },
   profileRatingEmpty: { fontSize: 13, fontWeight: '600', color: colors.slate400 },
   statBar: {
@@ -763,12 +804,13 @@ const styles = StyleSheet.create({
     paddingTop: 16,
     borderTopWidth: 1,
     borderTopColor: colors.slate100,
+    width: '100%',
   },
   statCell: { flex: 1, alignItems: 'center', paddingHorizontal: 4 },
   statCellLabel: { marginTop: 6, fontSize: 10, fontWeight: '700', color: colors.slate500, textTransform: 'uppercase' },
   statCellValue: { marginTop: 4, fontSize: 12, fontWeight: '800', color: colors.slate900, textAlign: 'center', lineHeight: 16 },
   statDivider: { width: 1, backgroundColor: colors.slate100, marginVertical: 4 },
-  langRow: { flexDirection: 'row', flexWrap: 'wrap', gap: 6, marginTop: 12 },
+  langRow: { flexDirection: 'row', flexWrap: 'wrap', gap: 6, marginTop: 12, justifyContent: 'center' },
   langChip: {
     backgroundColor: colors.baytgoLight,
     borderRadius: 999,
@@ -786,6 +828,7 @@ const styles = StyleSheet.create({
     marginTop: 14,
     borderWidth: 1,
     borderColor: '#A7F3D0',
+    width: '100%',
   },
   dateBannerWarn: { backgroundColor: '#FFFBEB', borderColor: '#FDE68A' },
   dateBannerContent: { flex: 1 },

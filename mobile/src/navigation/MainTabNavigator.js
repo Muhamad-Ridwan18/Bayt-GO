@@ -17,7 +17,7 @@ const Tab = createBottomTabNavigator();
 
 function tabIcon(routeName, focused) {
   const icons = {
-    HomeTab: focused ? 'home' : 'home-outline',
+    HomeTab: focused ? 'search' : 'search-outline',
     BookingsTab: focused ? 'receipt' : 'receipt-outline',
     MuthowifBookingsTab: focused ? 'clipboard' : 'clipboard-outline',
     WalletTab: focused ? 'wallet' : 'wallet-outline',
@@ -56,7 +56,7 @@ export default function MainTabNavigator() {
         ),
       })}
     >
-      <Tab.Screen name="HomeTab" component={DashboardStack} options={{ tabBarLabel: 'Beranda' }} />
+      <Tab.Screen name="HomeTab" component={DashboardStack} options={{ tabBarLabel: 'Telusuri' }} />
 
       {showMuthowifTabs ? (
         <>

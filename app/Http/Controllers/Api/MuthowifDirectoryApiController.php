@@ -91,6 +91,9 @@ class MuthowifDirectoryApiController extends Controller
         // Format data to be easily consumed by mobile
         $formattedData = $profiles->getCollection()->map(function($profile) {
             $startPrice = $profile->services->min('price') ?? 0;
+            $experiences = $profile->workExperiencesForDisplay();
+            $primaryService = $profile->services->first();
+
             return [
                 'id' => $profile->id,
                 'name' => $profile->user->name ?? 'Muthowif',
@@ -99,7 +102,9 @@ class MuthowifDirectoryApiController extends Controller
                 'reviews' => $profile->booking_reviews_count ?? 0,
                 'location' => $profile->workLocationLabel(),
                 'start_price' => $startPrice,
-                'languages' => array_slice($profile->languagesForDisplay(), 0, 2),
+                'languages' => array_slice($profile->languagesForDisplay(), 0, 3),
+                'specialty' => $primaryService?->name,
+                'experience' => $experiences[0] ?? null,
             ];
         });
 

@@ -4,6 +4,7 @@ namespace App\Http\Controllers\Api\Customer;
 
 use App\Http\Controllers\Controller;
 use App\Models\MuthowifBooking;
+use App\Support\ApiMuthowifCard;
 use App\Support\ApiMediaUrl;
 use App\Support\CustomerDashboardCache;
 use Illuminate\Http\JsonResponse;
@@ -40,26 +41,12 @@ class DashboardController extends Controller
         ];
 
         $topMuthowifs = \App\Models\MuthowifProfile::with(['user', 'services'])
+            ->withMarketplaceStats()
             ->where('verification_status', \App\Enums\MuthowifVerificationStatus::Approved)
             ->inRandomOrder()
             ->take(5)
             ->get()
-            ->map(function ($profile) {
-                $avgRating = $profile->bookingReviews()->avg('rating') ?? 5.0;
-                $reviewCount = $profile->bookingReviews()->count();
-                $startPrice = $profile->services->min('price') ?? 0;
-
-                return [
-                    'id' => $profile->id,
-                    'name' => $profile->user->name ?? 'Muthowif',
-                    'avatar' => ApiMediaUrl::muthowifAvatar($profile),
-                    'rating' => number_format($avgRating, 1),
-                    'reviews' => $reviewCount,
-                    'location' => $profile->workLocationLabel(),
-                    'start_price' => $startPrice,
-                    'languages' => array_slice($profile->languagesForDisplay(), 0, 2),
-                ];
-            });
+            ->map(fn ($profile) => ApiMuthowifCard::fromProfile($profile));
 
         $unreadCount = MuthowifBooking::where('customer_id', $user->id)
             ->withCount(['chatMessages as unread_count' => function ($q) use ($user) {

@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
+use App\Support\ApiMuthowifCard;
 use App\Support\ApiMediaUrl;
 use App\Support\SiteBrand;
 use App\Support\WelcomePageCache;
@@ -14,21 +15,9 @@ class HomeApiController extends Controller
     {
         $data = WelcomePageCache::data();
 
-        $featured = $data['featuredMuthowifs']->map(function ($profile) {
-            $minPrice = (int) round((float) ($profile->services->min('daily_price') ?? 0));
-
-            return [
-                'id' => $profile->id,
-                'name' => $profile->user->name ?? 'Muthowif',
-                'avatar' => ApiMediaUrl::muthowifAvatar($profile),
-                'rating' => $profile->average_rating !== null
-                    ? number_format((float) $profile->average_rating, 1)
-                    : null,
-                'reviews' => (int) ($profile->booking_reviews_count ?? 0),
-                'languages' => array_slice($profile->languagesForDisplay(), 0, 3),
-                'start_price' => $minPrice,
-            ];
-        })->values();
+        $featured = $data['featuredMuthowifs']->map(
+            fn ($profile) => ApiMuthowifCard::fromProfile($profile)
+        )->values();
 
         $gallery = $data['galleryImages']->map(fn ($img) => [
             'id' => $img->id,

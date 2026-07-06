@@ -9,6 +9,7 @@ export const colors = {
   canvasSoft: '#FBF9F5',
   white: '#FFFFFF',
   slate900: '#0F172A',
+  slate800: '#1E293B',
   slate700: '#334155',
   slate600: '#475569',
   slate500: '#64748B',

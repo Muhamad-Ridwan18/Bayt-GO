@@ -53,7 +53,7 @@ final class WelcomePageCache
     private static function buildPayload(): array
     {
         $featuredMuthowifs = MuthowifProfile::query()
-            ->with(['user:id,name', 'services:id,muthowif_profile_id,daily_price'])
+            ->with(['user:id,name', 'services:id,muthowif_profile_id,daily_price,price,name'])
             ->approved()
             ->hasPublishedServices()
             ->withMarketplaceStats()
@@ -134,7 +134,7 @@ final class WelcomePageCache
         $featuredMuthowifs = self::orderedModels(
             $featuredIds,
             MuthowifProfile::query()
-                ->with(['user:id,name', 'services:id,muthowif_profile_id,daily_price'])
+                ->with(['user:id,name', 'services:id,muthowif_profile_id,daily_price,price,name'])
                 ->whereIn((new MuthowifProfile)->getQualifiedKeyName(), $featuredIds)
                 ->get(),
         );

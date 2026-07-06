@@ -2,7 +2,6 @@ import React from 'react';
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
 import { useAuth } from '../context/AuthContext';
 import HomeScreen from '../screens/HomeScreen';
-import CustomerDashboardScreen from '../screens/CustomerDashboardScreen';
 import MuthowifDashboardScreen from '../screens/MuthowifDashboardScreen';
 import MuthowifPendingScreen from '../screens/MuthowifPendingScreen';
 import DirectoryScreen from '../screens/DirectoryScreen';
@@ -42,7 +41,7 @@ function DashboardRoot(props) {
   if (isMuthowif) {
     return <MuthowifPendingScreen {...props} />;
   }
-  return <CustomerDashboardScreen {...props} />;
+  return <HomeScreen {...props} />;
 }
 
 export default function DashboardStack() {
