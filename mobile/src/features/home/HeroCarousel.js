@@ -9,7 +9,7 @@ import { colors, layout, radius, shadows, spacing, typography } from '../../them
 
 const { width: SCREEN_W } = Dimensions.get('window');
 const HERO_W = SCREEN_W - layout.screenPadding * 2;
-const HERO_H = 212;
+const HERO_H = 168;
 const SURFACE = '#1A3D34';
 const BLEND_LOCATIONS = [0, 0.14, 0.28, 0.42, 0.58, 0.76];
 
@@ -155,7 +155,7 @@ export default function HeroCarousel({ onCta, faces = [], countLabel = '1.200+ M
 }
 
 const styles = StyleSheet.create({
-  wrap: { marginTop: spacing.lg, marginBottom: spacing.sm },
+  wrap: { marginTop: spacing.md, marginBottom: spacing.xs },
   scroll: { paddingHorizontal: layout.screenPadding, gap: spacing.md },
   card: {
     width: HERO_W,
@@ -168,10 +168,10 @@ const styles = StyleSheet.create({
   image: { ...StyleSheet.absoluteFillObject },
   inner: {
     flex: 1,
-    paddingTop: spacing.lg,
-    paddingBottom: spacing['2xl'] + 6,
-    paddingLeft: spacing.lg + 2,
-    paddingRight: 92,
+    paddingTop: spacing.md + 2,
+    paddingBottom: spacing.xl + 4,
+    paddingLeft: spacing.lg,
+    paddingRight: 80,
     justifyContent: 'flex-start',
     maxWidth: '74%',
   },
@@ -190,8 +190,8 @@ const styles = StyleSheet.create({
     letterSpacing: 0.15,
   },
   title: {
-    fontSize: 17,
-    lineHeight: 24,
+    fontSize: 16,
+    lineHeight: 22,
     color: colors.white,
     fontFamily: 'PlusJakartaSans_800ExtraBold',
     fontWeight: '800',
@@ -202,7 +202,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     flexWrap: 'wrap',
     gap: spacing.sm,
-    marginTop: spacing.md,
+    marginTop: spacing.sm + 2,
   },
   proofLeft: { flexDirection: 'row', alignItems: 'center', gap: spacing.sm - 1 },
   avatarStack: { flexDirection: 'row', alignItems: 'center' },
@@ -228,7 +228,7 @@ const styles = StyleSheet.create({
     fontWeight: '600',
     color: 'rgba(255,255,255,0.88)',
   },
-  ctaPress: { marginTop: spacing.md, alignSelf: 'flex-start' },
+  ctaPress: { marginTop: spacing.sm + 2, alignSelf: 'flex-start' },
   ctaBtn: {
     flexDirection: 'row',
     alignItems: 'center',

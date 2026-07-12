@@ -192,7 +192,6 @@ export default function HomeScreen({ navigation }) {
           endMinDate={endMinDate}
           endMaxDate={endMaxDate}
           onSearch={() => openDirectory()}
-          onServicePress={() => openDirectory()}
         />
 
         <HeroCarousel
@@ -320,8 +319,8 @@ const styles = StyleSheet.create({
     marginTop: spacing.sm,
     borderRadius: radius.md,
     overflow: 'hidden',
-    padding: spacing.lg + 2,
-    minHeight: 108,
+    padding: spacing.md + 2,
+    minHeight: 84,
     justifyContent: 'flex-end',
   },
   greetingBg: { ...StyleSheet.absoluteFillObject, opacity: 0.22 },
@@ -336,9 +335,9 @@ const styles = StyleSheet.create({
     color: colors.baytgo,
   },
   greetingTitle: {
-    marginTop: spacing.sm,
-    fontSize: 22,
-    lineHeight: 30,
+    marginTop: spacing.xs + 2,
+    fontSize: 20,
+    lineHeight: 26,
     fontFamily: 'PlusJakartaSans_800ExtraBold',
     fontWeight: '800',
     color: colors.textPrimary,

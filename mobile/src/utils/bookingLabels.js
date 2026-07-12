@@ -38,7 +38,7 @@ export function needsPayment(booking) {
 export function canPayBooking(booking) {
   if (!booking || booking.payment_status !== 'pending') return false;
   if (booking.status === 'cancelled') return false;
-  return booking.status === 'pending' || booking.status === 'confirmed';
+  return booking.status === 'confirmed';
 }
 
 export function isAwaitingMuthowifConfirmation(booking) {

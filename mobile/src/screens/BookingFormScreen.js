@@ -12,6 +12,7 @@ import {
 import { colors, layout, spacing, typography } from '../theme/tokens';
 import { formatIdr } from '../utils/format';
 import { estimateBookingPricing } from '../utils/bookingEstimate';
+import { navigateToSuccess } from '../navigation/rootNavigation';
 
 async function pickDocument() {
   const result = await DocumentPicker.getDocumentAsync({
@@ -145,9 +146,18 @@ export default function BookingFormScreen({ navigation, route }) {
         visa,
       });
 
-      navigation.replace('BookingPayment', {
-        bookingId: data.booking_id,
-        bookingCode: data.booking_code,
+      navigateToSuccess(navigation, {
+        title: 'Pemesanan berhasil',
+        description: `Kode pesanan ${data.booking_code}. Permintaan Anda telah dikirim ke muthowif untuk ditinjau. Anda bisa melihat statusnya di halaman Pesanan.`,
+        primaryLabel: 'Lihat pesanan',
+        primaryTarget: {
+          root: true,
+          name: 'Main',
+          params: {
+            screen: 'BookingsTab',
+            params: { screen: 'BookingsList' },
+          },
+        },
       });
     } catch (err) {
       setError(err.message || 'Gagal membuat pemesanan');

@@ -1,8 +1,8 @@
 import React from 'react';
-import { StyleSheet, Text, View } from 'react-native';
-import { ArrowRight, LayoutGrid, Search } from 'lucide-react-native';
+import { StyleSheet, View } from 'react-native';
+import { ArrowRight } from 'lucide-react-native';
 import DatePickerField from '../../components/DatePickerField';
-import { Button, PressableScale, SearchBar } from '../../ui';
+import { Button, SearchBar } from '../../ui';
 import { colors, layout, radius, shadows, spacing } from '../../theme/tokens';
 
 export default function SearchPanel({
@@ -17,7 +17,6 @@ export default function SearchPanel({
   endMinDate,
   endMaxDate,
   onSearch,
-  onServicePress,
 }) {
   return (
     <View style={styles.card}>
@@ -45,11 +44,6 @@ export default function SearchPanel({
             variant="chip"
           />
         </View>
-        <PressableScale onPress={onServicePress} haptic="light" style={styles.serviceBox}>
-          <LayoutGrid size={16} color={colors.baytgo} strokeWidth={2.2} />
-          <Text style={styles.serviceLabel}>Pilihan Layanan</Text>
-          <Text style={styles.serviceValue} numberOfLines={1}>Semua Layanan</Text>
-        </PressableScale>
       </View>
 
       <SearchBar
@@ -79,31 +73,7 @@ const styles = StyleSheet.create({
     borderColor: 'rgba(26,61,52,0.08)',
     ...shadows.float,
   },
-  topRow: { flexDirection: 'row', gap: spacing.sm, marginBottom: spacing.md },
+  topRow: { flexDirection: 'row', gap: spacing.md, marginBottom: spacing.md },
   dateCol: { flex: 1 },
-  serviceBox: {
-    width: 92,
-    borderRadius: radius.sm - 2,
-    backgroundColor: colors.background,
-    borderWidth: 1,
-    borderColor: colors.border,
-    paddingHorizontal: spacing.sm,
-    paddingVertical: spacing.sm,
-    justifyContent: 'center',
-  },
-  serviceLabel: {
-    marginTop: spacing.xs,
-    fontSize: 9,
-    fontWeight: '600',
-    fontFamily: 'PlusJakartaSans_600SemiBold',
-    color: colors.textSecondary,
-  },
-  serviceValue: {
-    marginTop: 2,
-    fontSize: 10,
-    fontWeight: '700',
-    fontFamily: 'PlusJakartaSans_700Bold',
-    color: colors.baytgo,
-  },
   searchBar: { marginBottom: spacing.md, ...shadows.sm, shadowOpacity: 0.03, elevation: 1 },
 });

@@ -45,6 +45,7 @@ export default function BookingPaymentScreen({ navigation, route }) {
   const [paymentEnvironment, setPaymentEnvironment] = useState(null);
   const [selectedMethodMeta, setSelectedMethodMeta] = useState(null);
   const pollRef = useRef(null);
+  const bookingRef = useRef(null);
 
   const loadMethods = useCallback(async () => {
     setError('');
@@ -55,7 +56,7 @@ export default function BookingPaymentScreen({ navigation, route }) {
         return;
       }
       setAmount(data.amounts?.total || data.amount || 0);
-      setPricing(data.pricing || booking?.pricing || null);
+      if (data.pricing) setPricing(data.pricing);
       const meta = data.methods_meta || (data.methods || []).map((id) => ({ id, label: id }));
       setMethods(meta);
       setPaymentEnvironment(data.payment_environment || null);
@@ -66,13 +67,24 @@ export default function BookingPaymentScreen({ navigation, route }) {
     } catch (err) {
       setError(err.message || 'Gagal memuat metode pembayaran');
     }
-  }, [token, bookingId, booking?.pricing]);
+  }, [token, bookingId]);
 
   const refreshBooking = useCallback(async (silent = false) => {
     try {
       const data = await fetchBooking(token, bookingId);
-      setBooking(data);
-      if (data.pricing) setPricing(data.pricing);
+      const prev = bookingRef.current;
+      const unchanged = prev
+        && prev.payment_status === data.payment_status
+        && prev.status === data.status
+        && prev.starts_on === data.starts_on
+        && prev.ends_on === data.ends_on;
+
+      if (!unchanged) {
+        bookingRef.current = data;
+        setBooking(data);
+        if (data.pricing) setPricing(data.pricing);
+      }
+
       if (data.payment_status === 'paid') {
         clearInterval(pollRef.current);
         if (!silent) {
@@ -87,18 +99,34 @@ export default function BookingPaymentScreen({ navigation, route }) {
   }, [token, bookingId, navigation]);
 
   const loadAll = useCallback(async (refresh = false) => {
-    if (refresh) setRefreshing(true);
-    else setLoading(true);
+    if (refresh) {
+      setRefreshing(true);
+    } else {
+      setLoading(true);
+    }
     await Promise.all([loadMethods(), refreshBooking(true)]);
     setLoading(false);
     setRefreshing(false);
   }, [loadMethods, refreshBooking]);
 
   useEffect(() => {
-    loadAll();
+    let cancelled = false;
+
+    (async () => {
+      setLoading(true);
+      await Promise.all([loadMethods(), refreshBooking(true)]);
+      if (!cancelled) setLoading(false);
+    })();
+
+    return () => {
+      cancelled = true;
+    };
+  }, [loadMethods, refreshBooking]);
+
+  useEffect(() => {
     pollRef.current = setInterval(() => refreshBooking(true), 10000);
     return () => clearInterval(pollRef.current);
-  }, [loadAll, refreshBooking]);
+  }, [refreshBooking]);
   useHideTabBarOnFocus(navigation);
 
   const handlePay = async () => {
@@ -165,6 +193,24 @@ export default function BookingPaymentScreen({ navigation, route }) {
     );
   }
 
+  if (awaitingMuthowif) {
+    return (
+      <View style={styles.container}>
+        <ScreenHeader title="Pembayaran" subtitle={bookingCode} onBack={() => navigation.goBack()} />
+        <View style={styles.paidWrap}>
+          <EmptyState
+            variant="package"
+            icon={<Clock size={30} color="#7C3AED" strokeWidth={1.8} />}
+            title="Menunggu konfirmasi muthowif"
+            description="Pembayaran akan tersedia setelah muthowif mengonfirmasi pesanan Anda."
+            actionLabel="Lihat detail pesanan"
+            onAction={() => navigateToBookingDetail(navigation, bookingId)}
+          />
+        </View>
+      </View>
+    );
+  }
+
   const footerCta = instructions ? (
     <Button
       label="Buka halaman pembayaran Moota"
@@ -223,15 +269,6 @@ export default function BookingPaymentScreen({ navigation, route }) {
           <Card style={styles.pricingCard} padding={spacing.lg}>
             <Text style={styles.pricingTitle}>Rincian pembayaran</Text>
             <CustomerPricingBreakdown pricing={pricing} />
-          </Card>
-        ) : null}
-
-        {awaitingMuthowif ? (
-          <Card style={styles.waitBanner} padding={spacing.lg} elevated={false}>
-            <Clock size={18} color="#7C3AED" strokeWidth={2} />
-            <Text style={styles.waitBannerText}>
-              Muthowif belum mengonfirmasi pesanan. Anda tetap bisa melanjutkan pembayaran.
-            </Text>
           </Card>
         ) : null}
 
@@ -339,11 +376,6 @@ const styles = StyleSheet.create({
   pricingCard: { marginBottom: spacing.lg },
   pricingTitle: { ...typography.caption, fontFamily: 'PlusJakartaSans_700Bold', color: colors.textPrimary, marginBottom: spacing.xs },
   badgeRow: { flexDirection: 'row', flexWrap: 'wrap', gap: spacing.sm, marginTop: spacing.md },
-  waitBanner: {
-    flexDirection: 'row', alignItems: 'flex-start', gap: spacing.md,
-    marginBottom: spacing.lg, borderColor: '#DDD6FE', backgroundColor: '#F5F3FF',
-  },
-  waitBannerText: { flex: 1, ...typography.caption, color: '#5B21B6', lineHeight: 19 },
   errorBox: {
     flexDirection: 'row', alignItems: 'flex-start', gap: spacing.md,
     marginBottom: spacing.lg, borderColor: '#FECACA', backgroundColor: colors.errorLight,
