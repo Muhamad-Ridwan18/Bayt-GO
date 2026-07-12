@@ -127,6 +127,24 @@ return [
         ],
     ],
     'customer' => [
+        'submitted' => [
+            'headline' => '*:app* — booking request received',
+            'body' => 'Your guidance request with *:muthowif* has been received.',
+            'booking_code' => '*Booking code:* :code',
+            'service_dates' => '*Service dates:* :start - :end',
+            'service' => '*Service:* :service',
+            'status' => '*Status:* Awaiting muthowif approval',
+            'view_detail' => '*Track status at:*',
+        ],
+        'support_submitted' => [
+            'headline' => '*:app* — support service request received',
+            'body' => 'Your support service request with *:muthowif* has been received.',
+            'booking_code' => '*Booking code:* :code',
+            'package' => '*Package:* :package',
+            'starts_at' => '*Starts at:* :datetime',
+            'status' => '*Status:* Awaiting muthowif approval',
+            'view_detail' => '*Track status at:*',
+        ],
         'approved' => [
             'headline' => '*:app* — booking approved',
             'body' => 'Your booking with *:muthowif* has been approved.',

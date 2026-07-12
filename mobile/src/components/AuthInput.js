@@ -1,7 +1,40 @@
-import React from 'react';
-import { View, Text, TextInput, StyleSheet, TouchableOpacity } from 'react-native';
-import { Ionicons } from '@expo/vector-icons';
-import { colors } from '../theme/colors';
+import React, { useState } from 'react';
+import { Platform, StyleSheet, Text, TextInput, View } from 'react-native';
+import {
+  Eye,
+  EyeOff,
+  Mail,
+  Lock,
+  User,
+  Building2,
+  CreditCard,
+  Plane,
+  MapPin,
+  FileText,
+  Gift,
+  Phone,
+} from 'lucide-react-native';
+import PressableScale from '../ui/PressableScale';
+import { colors, layout, radius, spacing, typography } from '../theme/tokens';
+
+const LEGACY_ICONS = {
+  'mail-outline': Mail,
+  'lock-closed-outline': Lock,
+  'person-outline': User,
+  'business-outline': Building2,
+  'card-outline': CreditCard,
+  'airplane-outline': Plane,
+  'location-outline': MapPin,
+  'document-text-outline': FileText,
+  'gift-outline': Gift,
+  'call-outline': Phone,
+};
+
+function resolveIcon(icon) {
+  if (!icon) return null;
+  if (typeof icon === 'string') return LEGACY_ICONS[icon] || null;
+  return icon;
+}
 
 export default function AuthInput({
   label,
@@ -11,25 +44,37 @@ export default function AuthInput({
   containerStyle,
   ...props
 }) {
-  const [hidden, setHidden] = React.useState(Boolean(secureTextEntry));
+  const Icon = resolveIcon(icon);
+  const [hidden, setHidden] = useState(Boolean(secureTextEntry));
+  const [focused, setFocused] = useState(false);
 
   return (
     <View style={[styles.wrap, containerStyle]}>
       {label ? <Text style={styles.label}>{label}</Text> : null}
-      <View style={[styles.field, error && styles.fieldError]}>
-        {icon ? (
-          <Ionicons name={icon} size={18} color={colors.slate400} style={styles.icon} />
+      <View style={[
+        styles.field,
+        focused && styles.fieldFocused,
+        error && styles.fieldError,
+      ]}>
+        {Icon ? (
+          <Icon size={18} color={focused ? colors.baytgo : colors.textMuted} strokeWidth={2} />
         ) : null}
         <TextInput
           style={styles.input}
-          placeholderTextColor={colors.slate400}
+          placeholderTextColor={colors.textMuted}
           secureTextEntry={hidden}
+          onFocus={() => setFocused(true)}
+          onBlur={() => setFocused(false)}
           {...props}
         />
         {secureTextEntry ? (
-          <TouchableOpacity onPress={() => setHidden((v) => !v)} hitSlop={8}>
-            <Ionicons name={hidden ? 'eye-off-outline' : 'eye-outline'} size={18} color={colors.slate400} />
-          </TouchableOpacity>
+          <PressableScale onPress={() => setHidden((v) => !v)} haptic="light" scaleTo={0.9}>
+            {hidden ? (
+              <EyeOff size={18} color={colors.textMuted} strokeWidth={2} />
+            ) : (
+              <Eye size={18} color={colors.textMuted} strokeWidth={2} />
+            )}
+          </PressableScale>
         ) : null}
       </View>
       {error ? <Text style={styles.error}>{error}</Text> : null}
@@ -38,20 +83,47 @@ export default function AuthInput({
 }
 
 const styles = StyleSheet.create({
-  wrap: { marginBottom: 14 },
-  label: { fontSize: 12, fontWeight: '800', color: colors.slate600, marginBottom: 8, marginLeft: 2 },
+  wrap: { marginBottom: spacing.lg },
+  label: {
+    ...typography.small,
+    color: colors.textSecondary,
+    marginBottom: spacing.sm,
+    marginLeft: spacing.xs,
+  },
   field: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: colors.white,
-    borderRadius: 16,
+    gap: spacing.md,
+    backgroundColor: colors.card,
+    borderRadius: radius.md,
     borderWidth: 1,
-    borderColor: colors.slate100,
-    paddingHorizontal: 14,
-    minHeight: 52,
+    borderColor: colors.border,
+    paddingHorizontal: spacing.lg,
+    minHeight: layout.minTouch,
   },
-  fieldError: { borderColor: '#FCA5A5' },
-  icon: { marginRight: 10 },
-  input: { flex: 1, fontSize: 15, fontWeight: '600', color: colors.slate900, paddingVertical: 12 },
-  error: { marginTop: 6, marginLeft: 4, fontSize: 12, color: '#DC2626', fontWeight: '600' },
+  fieldFocused: {
+    borderColor: colors.baytgo,
+    backgroundColor: colors.card,
+  },
+  fieldError: { borderColor: colors.error },
+  input: {
+    flex: 1,
+    fontSize: typography.body.fontSize,
+    fontFamily: typography.body.fontFamily,
+    fontWeight: typography.body.fontWeight,
+    color: colors.textPrimary,
+    paddingVertical: 0,
+    margin: 0,
+    ...(Platform.OS === 'android'
+      ? { textAlignVertical: 'center', includeFontPadding: false }
+      : { paddingTop: 1 }),
+  },
+  error: {
+    ...typography.small,
+    color: colors.error,
+    marginTop: spacing.sm,
+    marginLeft: spacing.xs,
+    fontWeight: '500',
+    fontFamily: 'PlusJakartaSans_500Medium',
+  },
 });

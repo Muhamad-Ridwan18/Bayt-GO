@@ -1,22 +1,14 @@
 import React, { useState } from 'react';
-import {
-  View,
-  Text,
-  StyleSheet,
-  ScrollView,
-  TouchableOpacity,
-  ActivityIndicator,
-  Alert,
-  TextInput,
-} from 'react-native';
-import { LinearGradient } from 'expo-linear-gradient';
+import { View, Text, StyleSheet, ScrollView, Alert, TextInput } from 'react-native';
+import { AlertTriangle, CloudUpload } from 'lucide-react-native';
 import * as ImagePicker from 'expo-image-picker';
 import * as DocumentPicker from 'expo-document-picker';
-import { Ionicons } from '@expo/vector-icons';
 import ScreenHeader from '../components/ScreenHeader';
 import { submitEmergencyReport } from '../api/emergency';
 import { useAuth } from '../context/AuthContext';
-import { colors } from '../theme/colors';
+import { Button, Card, FilterChip, InlineAlert, PressableScale, UploadPreviewStrip } from '../ui';
+import { notifySuccessThen } from '../utils/feedback';
+import { colors, layout, radius, spacing, typography } from '../theme/tokens';
 
 export default function BookingEmergencyReportScreen({ navigation, route }) {
   const { token } = useAuth();
@@ -79,14 +71,13 @@ export default function BookingEmergencyReportScreen({ navigation, route }) {
             setLoading(true);
             setError('');
             try {
-              await submitEmergencyReport(token, bookingId, {
-                caseType,
-                description,
-                evidence,
-              });
-              Alert.alert('Berhasil', 'Laporan insiden darurat telah dikirim.', [
-                { text: 'OK', onPress: () => navigation.navigate('BookingDetail', { bookingId }) },
-              ]);
+              await submitEmergencyReport(token, bookingId, { caseType, description, evidence });
+              notifySuccessThen(
+                navigation,
+                'Laporan insiden darurat telah dikirim.',
+                'BookingDetail',
+                { bookingId },
+              );
             } catch (err) {
               setError(err.message || 'Gagal mengirim laporan');
             } finally {
@@ -103,29 +94,25 @@ export default function BookingEmergencyReportScreen({ navigation, route }) {
       <ScreenHeader title="Lapor Insiden Darurat" onBack={() => navigation.goBack()} />
 
       <ScrollView contentContainerStyle={styles.scroll} keyboardShouldPersistTaps="handled">
-        <View style={styles.warning}>
-          <Ionicons name="warning" size={20} color="#B91C1C" />
+        <Card style={styles.warning} padding={spacing.lg} elevated={false}>
+          <AlertTriangle size={20} color={colors.error} strokeWidth={2} />
           <Text style={styles.warningText}>
             Gunakan fitur ini jika muthowif tidak dapat dihubungi, meninggalkan tugas, atau melanggar kesepakatan layanan.
           </Text>
-        </View>
+        </Card>
 
-        {error ? <Text style={styles.error}>{error}</Text> : null}
+        {error ? <InlineAlert variant="error">{error}</InlineAlert> : null}
 
         <Text style={styles.label}>Jenis insiden *</Text>
         <View style={styles.caseList}>
-          {caseTypes.map((item) => {
-            const active = caseType === item.value;
-            return (
-              <TouchableOpacity
-                key={item.value}
-                style={[styles.caseChip, active && styles.caseChipActive]}
-                onPress={() => setCaseType(item.value)}
-              >
-                <Text style={[styles.caseChipText, active && styles.caseChipTextActive]}>{item.label}</Text>
-              </TouchableOpacity>
-            );
-          })}
+          {caseTypes.map((item) => (
+            <FilterChip
+              key={item.value}
+              label={item.label}
+              active={caseType === item.value}
+              onPress={() => setCaseType(item.value)}
+            />
+          ))}
         </View>
 
         <Text style={styles.label}>Keterangan</Text>
@@ -134,103 +121,64 @@ export default function BookingEmergencyReportScreen({ navigation, route }) {
           value={description}
           onChangeText={setDescription}
           placeholder="Jelaskan situasi yang terjadi..."
-          placeholderTextColor={colors.slate400}
+          placeholderTextColor={colors.textMuted}
           multiline
           maxLength={5000}
           textAlignVertical="top"
         />
 
         <Text style={styles.label}>Bukti (opsional, max 5)</Text>
-        <TouchableOpacity style={styles.uploadBtn} onPress={pickEvidence}>
-          <Ionicons name="cloud-upload-outline" size={20} color={colors.baytgo} />
-          <Text style={styles.uploadText}>Tambah foto / PDF</Text>
-        </TouchableOpacity>
+        <PressableScale onPress={pickEvidence} haptic="light">
+          <Card style={styles.uploadBtn} padding={spacing.lg} elevated={false}>
+            <CloudUpload size={20} color={colors.baytgo} strokeWidth={2} />
+            <Text style={styles.uploadText}>Tambah foto / PDF</Text>
+          </Card>
+        </PressableScale>
 
-        {evidence.map((file, index) => (
-          <View key={`${file.uri}-${index}`} style={styles.fileRow}>
-            <Text style={styles.fileName} numberOfLines={1}>{file.name || file.fileName || `File ${index + 1}`}</Text>
-            <TouchableOpacity onPress={() => setEvidence((prev) => prev.filter((_, i) => i !== index))}>
-              <Text style={styles.fileRemove}>Hapus</Text>
-            </TouchableOpacity>
-          </View>
-        ))}
+        <UploadPreviewStrip
+          files={evidence}
+          onRemove={(index) => setEvidence((prev) => prev.filter((_, i) => i !== index))}
+          style={styles.previewStrip}
+        />
 
-        <TouchableOpacity style={styles.submitBtn} onPress={handleSubmit} disabled={loading} activeOpacity={0.9}>
-          <LinearGradient colors={['#B91C1C', '#991B1B']} style={styles.submitGradient}>
-            {loading ? (
-              <ActivityIndicator color={colors.white} />
-            ) : (
-              <Text style={styles.submitText}>Kirim Laporan Darurat</Text>
-            )}
-          </LinearGradient>
-        </TouchableOpacity>
+        <Button label="Kirim Laporan Darurat" onPress={handleSubmit} loading={loading} variant="danger" style={styles.cta} />
       </ScrollView>
     </View>
   );
 }
 
 const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: colors.canvas },
-  scroll: { padding: 16, paddingBottom: 32 },
+  container: { flex: 1, backgroundColor: colors.background },
+  scroll: { padding: layout.screenPadding, paddingBottom: spacing['3xl'] },
   warning: {
     flexDirection: 'row',
-    gap: 10,
-    backgroundColor: '#FEF2F2',
-    borderRadius: 14,
-    padding: 14,
-    marginBottom: 16,
-    borderWidth: 1,
+    gap: spacing.md,
+    backgroundColor: colors.errorLight,
     borderColor: '#FECACA',
+    marginBottom: spacing.lg,
   },
-  warningText: { flex: 1, fontSize: 13, lineHeight: 19, color: '#991B1B', fontWeight: '600' },
-  error: { marginBottom: 12, fontSize: 13, color: '#DC2626', fontWeight: '600' },
-  label: { fontSize: 12, fontWeight: '800', color: colors.slate600, marginBottom: 8, marginTop: 4 },
-  caseList: { flexDirection: 'row', flexWrap: 'wrap', gap: 8, marginBottom: 16 },
-  caseChip: {
-    borderRadius: 999,
-    paddingHorizontal: 12,
-    paddingVertical: 8,
-    backgroundColor: colors.white,
-    borderWidth: 1,
-    borderColor: colors.slate100,
-  },
-  caseChipActive: { backgroundColor: '#FEE2E2', borderColor: '#FECACA' },
-  caseChipText: { fontSize: 12, fontWeight: '700', color: colors.slate700 },
-  caseChipTextActive: { color: '#991B1B' },
+  warningText: { flex: 1, ...typography.caption, lineHeight: 20, color: colors.error, fontWeight: '600' },
+  label: { ...typography.label, color: colors.textSecondary, marginBottom: spacing.sm, marginTop: spacing.xs },
+  caseList: { flexDirection: 'row', flexWrap: 'wrap', gap: spacing.sm, marginBottom: spacing.lg },
   textarea: {
     minHeight: 120,
-    backgroundColor: colors.white,
-    borderRadius: 16,
+    backgroundColor: colors.card,
+    borderRadius: radius.sm,
     borderWidth: 1,
-    borderColor: colors.slate100,
-    padding: 14,
-    fontSize: 14,
-    fontWeight: '500',
-    color: colors.slate900,
-    marginBottom: 16,
+    borderColor: colors.border,
+    padding: spacing.lg,
+    ...typography.caption,
+    color: colors.textPrimary,
+    marginBottom: spacing.lg,
   },
   uploadBtn: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
-    gap: 8,
-    backgroundColor: colors.white,
-    borderRadius: 14,
-    padding: 14,
-    borderWidth: 1,
-    borderColor: colors.slate100,
-    marginBottom: 10,
+    gap: spacing.sm,
+    marginBottom: spacing.md,
   },
-  uploadText: { fontSize: 14, fontWeight: '800', color: colors.baytgo },
-  fileRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 8,
-    paddingVertical: 8,
-  },
-  fileName: { flex: 1, fontSize: 12, fontWeight: '600', color: colors.slate600 },
-  fileRemove: { fontSize: 12, fontWeight: '800', color: colors.baytgo },
-  submitBtn: { marginTop: 12, borderRadius: 16, overflow: 'hidden' },
-  submitGradient: { paddingVertical: 16, alignItems: 'center' },
-  submitText: { color: colors.white, fontSize: 15, fontWeight: '800' },
+  uploadText: { ...typography.caption, fontFamily: 'PlusJakartaSans_800ExtraBold', color: colors.baytgo },
+  previewStrip: { marginBottom: spacing.md },
+  cta: { marginTop: spacing.md },
 });

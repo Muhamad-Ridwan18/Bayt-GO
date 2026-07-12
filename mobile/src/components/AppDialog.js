@@ -5,21 +5,28 @@ import {
   Pressable,
   StyleSheet,
   Text,
-  TouchableOpacity,
   View,
 } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
-import { Ionicons } from '@expo/vector-icons';
-import { colors } from '../theme/colors';
+import {
+  AlertCircle,
+  AlertTriangle,
+  CheckCircle2,
+  HelpCircle,
+  Info,
+  XCircle,
+} from 'lucide-react-native';
+import PressableScale from '../ui/PressableScale';
+import { colors, gradients, radius, shadows, spacing, typography } from '../theme/tokens';
 import { registerAlertPresenter, unregisterAlertPresenter } from '../utils/alert';
 
 const VARIANTS = {
-  success: { icon: 'checkmark-circle', color: colors.emerald600, bg: colors.emerald50 },
-  error: { icon: 'close-circle', color: '#DC2626', bg: '#FEF2F2' },
-  warning: { icon: 'alert-circle', color: '#D97706', bg: '#FFFBEB' },
-  danger: { icon: 'warning', color: '#DC2626', bg: '#FEF2F2' },
-  confirm: { icon: 'help-circle', color: colors.baytgo, bg: colors.baytgoLight },
-  info: { icon: 'information-circle', color: colors.baytgo, bg: colors.baytgoLight },
+  success: { Icon: CheckCircle2, color: colors.success, bg: colors.successLight },
+  error: { Icon: XCircle, color: colors.error, bg: colors.errorLight },
+  warning: { Icon: AlertCircle, color: colors.warning, bg: colors.warningLight },
+  danger: { Icon: AlertTriangle, color: colors.error, bg: colors.errorLight },
+  confirm: { Icon: HelpCircle, color: colors.baytgo, bg: colors.baytgoLight },
+  info: { Icon: Info, color: colors.baytgo, bg: colors.baytgoLight },
 };
 
 function DialogButton({ button, onPress, stacked, primary }) {
@@ -28,16 +35,18 @@ function DialogButton({ button, onPress, stacked, primary }) {
 
   if (primary && !isCancel && !isDestructive) {
     return (
-      <TouchableOpacity style={[styles.btn, stacked && styles.btnStacked]} onPress={onPress} activeOpacity={0.9}>
-        <LinearGradient colors={[colors.baytgo, colors.baytgoDark]} style={styles.btnGradient}>
+      <PressableScale onPress={onPress} haptic="medium" style={[styles.btn, stacked && styles.btnStacked]}>
+        <LinearGradient colors={gradients.primarySoft} style={styles.btnGradient}>
           <Text style={styles.btnPrimaryText}>{button.text}</Text>
         </LinearGradient>
-      </TouchableOpacity>
+      </PressableScale>
     );
   }
 
   return (
-    <TouchableOpacity
+    <PressableScale
+      onPress={onPress}
+      haptic="light"
       style={[
         styles.btn,
         stacked && styles.btnStacked,
@@ -45,8 +54,6 @@ function DialogButton({ button, onPress, stacked, primary }) {
         isDestructive && styles.btnDestructive,
         !isCancel && !isDestructive && !primary && styles.btnSecondary,
       ]}
-      onPress={onPress}
-      activeOpacity={0.85}
     >
       <Text
         style={[
@@ -58,7 +65,7 @@ function DialogButton({ button, onPress, stacked, primary }) {
       >
         {button.text}
       </Text>
-    </TouchableOpacity>
+    </PressableScale>
   );
 }
 
@@ -98,6 +105,7 @@ export default function AppDialogHost() {
   if (!payload) return null;
 
   const variant = VARIANTS[payload.variant] || VARIANTS.info;
+  const VariantIcon = variant.Icon;
   const isActionSheet = payload.layout === 'actions';
   const buttons = payload.buttons || [];
   const primaryIndex = buttons.findIndex((b) => b.style !== 'cancel' && b.style !== 'destructive');
@@ -122,7 +130,7 @@ export default function AppDialogHost() {
           {!isActionSheet ? (
             <View style={styles.header}>
               <View style={[styles.iconWrap, { backgroundColor: variant.bg }]}>
-                <Ionicons name={variant.icon} size={28} color={variant.color} />
+                <VariantIcon size={28} color={variant.color} strokeWidth={2} />
               </View>
               {payload.title ? <Text style={styles.title}>{payload.title}</Text> : null}
               {payload.message ? <Text style={styles.message}>{payload.message}</Text> : null}
@@ -154,120 +162,130 @@ export default function AppDialogHost() {
 const styles = StyleSheet.create({
   overlay: {
     flex: 1,
-    backgroundColor: 'rgba(15, 23, 42, 0.45)',
+    backgroundColor: colors.overlay,
     justifyContent: 'center',
     alignItems: 'center',
-    padding: 24,
+    padding: spacing['2xl'],
   },
   overlaySheet: {
     justifyContent: 'flex-end',
-    paddingBottom: 28,
+    paddingBottom: spacing['3xl'],
   },
   card: {
     width: '100%',
     maxWidth: 360,
-    backgroundColor: colors.white,
-    borderRadius: 24,
-    padding: 22,
+    backgroundColor: colors.card,
+    borderRadius: radius.lg,
+    padding: spacing['2xl'],
     borderWidth: 1,
-    borderColor: 'rgba(26,61,52,0.08)',
-    shadowColor: '#0F2E28',
-    shadowOffset: { width: 0, height: 16 },
-    shadowOpacity: 0.12,
-    shadowRadius: 24,
-    elevation: 10,
+    borderColor: 'rgba(226,232,240,0.8)',
+    ...shadows.lg,
   },
   sheet: {
     width: '100%',
     maxWidth: 360,
-    backgroundColor: colors.white,
-    borderRadius: 24,
-    padding: 12,
-    borderWidth: 1,
-    borderColor: 'rgba(26,61,52,0.08)',
+    backgroundColor: colors.card,
+    borderRadius: radius.lg,
+    padding: spacing.lg,
+    ...shadows.lg,
   },
   header: { alignItems: 'center' },
   iconWrap: {
     width: 56,
     height: 56,
-    borderRadius: 18,
+    borderRadius: radius.md,
     alignItems: 'center',
     justifyContent: 'center',
-    marginBottom: 14,
+    marginBottom: spacing.lg,
   },
   title: {
-    fontSize: 18,
-    fontWeight: '900',
-    color: colors.slate900,
+    ...typography.subtitle,
+    color: colors.textPrimary,
     textAlign: 'center',
   },
   message: {
-    marginTop: 8,
-    fontSize: 14,
-    lineHeight: 20,
-    fontWeight: '500',
-    color: colors.slate600,
+    ...typography.caption,
+    color: colors.textSecondary,
     textAlign: 'center',
+    marginTop: spacing.sm,
+    lineHeight: 22,
   },
   sheetHeader: {
-    paddingHorizontal: 10,
-    paddingTop: 8,
-    paddingBottom: 4,
+    paddingHorizontal: spacing.md,
+    paddingTop: spacing.sm,
+    paddingBottom: spacing.xs,
     alignItems: 'center',
   },
   sheetTitle: {
-    fontSize: 16,
-    fontWeight: '800',
-    color: colors.slate900,
+    ...typography.body,
+    fontFamily: 'PlusJakartaSans_700Bold',
+    color: colors.textPrimary,
     textAlign: 'center',
   },
   sheetMessage: {
-    marginTop: 4,
-    fontSize: 13,
-    fontWeight: '500',
-    color: colors.slate500,
+    ...typography.caption,
+    color: colors.textSecondary,
     textAlign: 'center',
+    marginTop: spacing.xs,
   },
   actions: {
     flexDirection: 'row',
-    gap: 10,
-    marginTop: 20,
+    gap: spacing.md,
+    marginTop: spacing.xl,
   },
   actionsStack: {
     flexDirection: 'column',
-    marginTop: 12,
+    marginTop: spacing.lg,
   },
-  btn: { flex: 1, borderRadius: 14, overflow: 'hidden' },
+  btn: { flex: 1, borderRadius: radius.sm, overflow: 'hidden' },
   btnStacked: { flex: 0, width: '100%' },
   btnGradient: {
-    paddingVertical: 14,
+    paddingVertical: spacing.lg,
     alignItems: 'center',
     justifyContent: 'center',
   },
-  btnPrimaryText: { fontSize: 15, fontWeight: '800', color: colors.white },
+  btnPrimaryText: {
+    ...typography.caption,
+    fontFamily: 'PlusJakartaSans_700Bold',
+    color: colors.white,
+  },
   btnSecondary: {
-    backgroundColor: colors.canvas,
+    backgroundColor: colors.surface,
     borderWidth: 1,
-    borderColor: colors.slate200,
-    paddingVertical: 14,
+    borderColor: colors.border,
+    paddingVertical: spacing.lg,
     alignItems: 'center',
   },
-  btnSecondaryText: { fontSize: 15, fontWeight: '800', color: colors.baytgo },
+  btnSecondaryText: {
+    ...typography.caption,
+    fontFamily: 'PlusJakartaSans_700Bold',
+    color: colors.baytgo,
+  },
   btnCancel: {
     backgroundColor: colors.white,
     borderWidth: 1,
-    borderColor: colors.slate200,
-    paddingVertical: 14,
+    borderColor: colors.border,
+    paddingVertical: spacing.lg,
     alignItems: 'center',
   },
-  btnCancelText: { fontSize: 15, fontWeight: '700', color: colors.slate500 },
+  btnCancelText: {
+    ...typography.caption,
+    color: colors.textSecondary,
+  },
   btnDestructive: {
-    backgroundColor: '#FEF2F2',
+    backgroundColor: colors.errorLight,
     borderWidth: 1,
     borderColor: '#FECACA',
-    paddingVertical: 14,
+    paddingVertical: spacing.lg,
     alignItems: 'center',
   },
-  btnDestructiveText: { fontSize: 15, fontWeight: '800', color: '#DC2626' },
-  btnText: { fontSize: 15, fontWeight: '800' },
+  btnDestructiveText: {
+    ...typography.caption,
+    fontFamily: 'PlusJakartaSans_700Bold',
+    color: colors.error,
+  },
+  btnText: {
+    ...typography.caption,
+    fontFamily: 'PlusJakartaSans_700Bold',
+  },
 });

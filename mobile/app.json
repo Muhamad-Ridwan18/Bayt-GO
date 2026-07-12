@@ -9,11 +9,14 @@
     "splash": {
       "image": "./assets/splash-icon.png",
       "resizeMode": "contain",
-      "backgroundColor": "#F9F7F2"
+      "backgroundColor": "#F8FAFC"
     },
     "ios": {
       "supportsTablet": true,
-      "bundleIdentifier": "id.baytgo.app"
+      "bundleIdentifier": "id.baytgo.app",
+      "infoPlist": {
+        "ITSAppUsesNonExemptEncryption": false
+      }
     },
     "android": {
       "package": "id.baytgo.app",
@@ -35,7 +38,8 @@
           "icon": "./assets/icon.png",
           "color": "#1A3D34"
         }
-      ]
+      ],
+      "expo-font"
     ],
     "extra": {
       "eas": {

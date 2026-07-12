@@ -3,12 +3,11 @@ import {
   View,
   Text,
   TextInput,
-  TouchableOpacity,
   Modal,
-  FlatList,
   StyleSheet,
 } from 'react-native';
-import { Ionicons } from '@expo/vector-icons';
+import { FlashList } from '@shopify/flash-list';
+import { ChevronDown, X } from 'lucide-react-native';
 import {
   PHONE_COUNTRIES,
   DEFAULT_PHONE_COUNTRY,
@@ -16,7 +15,8 @@ import {
   findCountryByIso,
   findCountryByDial,
 } from '../utils/phoneCountries';
-import { colors } from '../theme/colors';
+import { PressableScale } from '../ui';
+import { colors, spacing, radius, typography } from '../theme/tokens';
 
 export default function PhoneInternationalInput({
   label,
@@ -73,11 +73,11 @@ export default function PhoneInternationalInput({
     <View style={styles.wrap}>
       {label ? <Text style={styles.label}>{label}</Text> : null}
       <View style={styles.field}>
-        <TouchableOpacity style={styles.countryBtn} onPress={() => setPickerOpen(true)}>
+        <PressableScale style={styles.countryBtn} onPress={() => setPickerOpen(true)} haptic="light">
           <Text style={styles.flag}>{selected.flag}</Text>
           <Text style={styles.dial}>+{dial || selected.d}</Text>
-          <Ionicons name="chevron-down" size={14} color={colors.slate400} />
-        </TouchableOpacity>
+          <ChevronDown size={14} color={colors.textMuted} strokeWidth={2} />
+        </PressableScale>
         <TextInput
           style={styles.input}
           value={national}
@@ -92,9 +92,9 @@ export default function PhoneInternationalInput({
         <View style={styles.modal}>
           <View style={styles.modalHeader}>
             <Text style={styles.modalTitle}>Pilih negara</Text>
-            <TouchableOpacity onPress={() => setPickerOpen(false)}>
-              <Ionicons name="close" size={24} color={colors.slate600} />
-            </TouchableOpacity>
+            <PressableScale onPress={() => setPickerOpen(false)} haptic="light">
+              <X size={24} color={colors.slate600} strokeWidth={2} />
+            </PressableScale>
           </View>
           <TextInput
             style={styles.search}
@@ -103,15 +103,16 @@ export default function PhoneInternationalInput({
             placeholder="Cari negara atau kode..."
             autoCapitalize="none"
           />
-          <FlatList
+          <FlashList
             data={filtered}
             keyExtractor={(item) => item.iso || item.d}
+            estimatedItemSize={52}
             renderItem={({ item }) => (
-              <TouchableOpacity style={styles.countryRow} onPress={() => pickCountry(item)}>
+              <PressableScale style={styles.countryRow} onPress={() => pickCountry(item)} haptic="light">
                 <Text style={styles.flag}>{item.flag}</Text>
                 <Text style={styles.countryName}>{item.name}</Text>
                 <Text style={styles.countryDial}>+{item.d}</Text>
-              </TouchableOpacity>
+              </PressableScale>
             )}
             ListEmptyComponent={
               <Text style={styles.empty}>Negara tidak ditemukan.</Text>
@@ -124,70 +125,70 @@ export default function PhoneInternationalInput({
 }
 
 const styles = StyleSheet.create({
-  wrap: { marginBottom: 14 },
-  label: { fontSize: 12, fontWeight: '800', color: colors.slate600, marginBottom: 8, marginLeft: 2 },
+  wrap: { marginBottom: spacing.md + 2 },
+  label: { ...typography.caption, fontWeight: '800', color: colors.slate600, marginBottom: spacing.sm, marginLeft: 2 },
   field: {
     flexDirection: 'row',
     alignItems: 'center',
     backgroundColor: colors.white,
-    borderRadius: 16,
+    borderRadius: radius.md,
     borderWidth: 1,
-    borderColor: colors.slate100,
+    borderColor: colors.surface,
     overflow: 'hidden',
   },
   countryBtn: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 6,
-    paddingHorizontal: 12,
-    paddingVertical: 14,
+    gap: spacing.sm - 2,
+    paddingHorizontal: spacing.md,
+    paddingVertical: spacing.md + 2,
     borderRightWidth: 1,
-    borderRightColor: colors.slate100,
-    backgroundColor: '#F8FAFC',
+    borderRightColor: colors.surface,
+    backgroundColor: colors.canvas,
   },
   flag: { fontSize: 18 },
-  dial: { fontSize: 14, fontWeight: '800', color: colors.slate700 },
+  dial: { ...typography.caption, fontWeight: '800', color: colors.slate700 },
   input: {
     flex: 1,
-    paddingHorizontal: 14,
-    paddingVertical: 14,
-    fontSize: 15,
+    paddingHorizontal: spacing.md + 2,
+    paddingVertical: spacing.md + 2,
+    ...typography.body,
     fontWeight: '600',
-    color: colors.slate900,
+    color: colors.textPrimary,
   },
-  hint: { marginTop: 6, fontSize: 11, fontWeight: '600', color: colors.slate500, marginLeft: 2 },
-  modal: { flex: 1, backgroundColor: colors.canvas, paddingTop: 48 },
+  hint: { marginTop: spacing.sm - 2, ...typography.small, fontWeight: '600', color: colors.textSecondary, marginLeft: 2 },
+  modal: { flex: 1, backgroundColor: colors.canvas, paddingTop: spacing['5xl'] },
   modalHeader: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
-    paddingHorizontal: 20,
-    marginBottom: 12,
+    paddingHorizontal: spacing.xl,
+    marginBottom: spacing.md,
   },
-  modalTitle: { fontSize: 18, fontWeight: '900', color: colors.baytgo },
+  modalTitle: { ...typography.subtitle, fontWeight: '900', color: colors.baytgo },
   search: {
-    marginHorizontal: 20,
-    marginBottom: 12,
+    marginHorizontal: spacing.xl,
+    marginBottom: spacing.md,
     backgroundColor: colors.white,
-    borderRadius: 14,
+    borderRadius: radius.sm,
     borderWidth: 1,
-    borderColor: colors.slate100,
-    paddingHorizontal: 14,
-    paddingVertical: 12,
-    fontSize: 15,
+    borderColor: colors.surface,
+    paddingHorizontal: spacing.md + 2,
+    paddingVertical: spacing.md,
+    ...typography.body,
     fontWeight: '600',
   },
   countryRow: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 12,
-    paddingHorizontal: 20,
-    paddingVertical: 14,
+    gap: spacing.md,
+    paddingHorizontal: spacing.xl,
+    paddingVertical: spacing.md + 2,
     borderBottomWidth: 1,
-    borderBottomColor: colors.slate100,
+    borderBottomColor: colors.surface,
     backgroundColor: colors.white,
   },
-  countryName: { flex: 1, fontSize: 15, fontWeight: '600', color: colors.slate900 },
-  countryDial: { fontSize: 14, fontWeight: '700', color: colors.slate500 },
-  empty: { textAlign: 'center', padding: 24, color: colors.slate500, fontWeight: '600' },
+  countryName: { flex: 1, ...typography.body, fontWeight: '600', color: colors.textPrimary },
+  countryDial: { ...typography.caption, fontWeight: '700', color: colors.textSecondary },
+  empty: { textAlign: 'center', padding: spacing['2xl'], color: colors.textSecondary, fontWeight: '600' },
 });

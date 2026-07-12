@@ -1,39 +1,28 @@
 import React, { useCallback, useState } from 'react';
 import {
-  View,
-  Text,
-  StyleSheet,
-  ScrollView,
-  ActivityIndicator,
-  RefreshControl,
-  TouchableOpacity,
-  TextInput,
-  Alert,
+  View, Text, StyleSheet, ScrollView, RefreshControl, TextInput, Alert,
 } from 'react-native';
 import { useFocusEffect } from '@react-navigation/native';
-import { Ionicons } from '@expo/vector-icons';
+import { Trash2 } from 'lucide-react-native';
 import TabPageHeader from '../components/TabPageHeader';
 import DatePickerField, { parseIsoDate } from '../components/DatePickerField';
 import { fetchBlockedDates, addBlockedDates, removeBlockedDate } from '../api/jadwal';
 import { useAuth } from '../context/AuthContext';
-import { colors } from '../theme/colors';
+import { Button, Card, EmptyState, PressableScale, SkeletonList } from '../ui';
+import { colors, layout, radius, spacing, typography } from '../theme/tokens';
+import { notifyError, notifySuccess } from '../utils/feedback';
 
 function BlockedDateRow({ item, onDelete, deleting }) {
   return (
-    <View style={styles.row}>
+    <Card style={styles.row} padding={spacing.lg} elevated={false}>
       <View style={styles.rowMeta}>
         <Text style={styles.rowDate}>{item.date}</Text>
-        <Text style={styles.rowNote}>{item.note}</Text>
+        {item.note ? <Text style={styles.rowNote}>{item.note}</Text> : null}
       </View>
-      <TouchableOpacity
-        style={styles.deleteBtn}
-        onPress={() => onDelete(item)}
-        disabled={deleting}
-        hitSlop={8}
-      >
-        <Ionicons name="trash-outline" size={18} color="#B91C1C" />
-      </TouchableOpacity>
-    </View>
+      <PressableScale onPress={() => onDelete(item)} disabled={deleting} haptic="light" style={styles.deleteBtn}>
+        <Trash2 size={18} color={colors.error} strokeWidth={2} />
+      </PressableScale>
+    </Card>
   );
 }
 
@@ -63,11 +52,7 @@ export default function ScheduleScreen() {
     }
   }, [token]);
 
-  useFocusEffect(
-    useCallback(() => {
-      load();
-    }, [load]),
-  );
+  useFocusEffect(useCallback(() => { load(); }, [load]));
 
   const handleAdd = async () => {
     if (!startDate) {
@@ -82,13 +67,13 @@ export default function ScheduleScreen() {
         end_date: endDate || startDate,
         note: note.trim() || null,
       });
-      Alert.alert('Berhasil', 'Jadwal libur berhasil disimpan.');
+      notifySuccess('Jadwal libur berhasil disimpan.');
       setStartDate('');
       setEndDate('');
       setNote('');
       await load(true);
     } catch (err) {
-      Alert.alert('Gagal', err.message || 'Tidak dapat menyimpan jadwal libur');
+      notifyError(err.message || 'Tidak dapat menyimpan jadwal libur');
     } finally {
       setSubmitting(false);
     }
@@ -120,7 +105,7 @@ export default function ScheduleScreen() {
       <TabPageHeader title="Jadwal libur" subtitle="Blokir tanggal tidak tersedia" />
 
       {loading && !refreshing ? (
-        <ActivityIndicator color={colors.baytgo} style={styles.loader} />
+        <SkeletonList count={3} style={styles.skeleton} />
       ) : (
         <ScrollView
           contentContainerStyle={styles.scroll}
@@ -128,7 +113,7 @@ export default function ScheduleScreen() {
             <RefreshControl refreshing={refreshing} onRefresh={() => load(true)} tintColor={colors.baytgo} />
           }
         >
-          <View style={styles.formCard}>
+          <Card padding={spacing.lg} elevated={false}>
             <Text style={styles.formTitle}>Tambah libur</Text>
             <DatePickerField
               label="Tanggal mulai"
@@ -148,21 +133,20 @@ export default function ScheduleScreen() {
             <TextInput
               style={styles.input}
               placeholder="Catatan (opsional)"
+              placeholderTextColor={colors.textMuted}
               value={note}
               onChangeText={setNote}
             />
-            <TouchableOpacity
-              style={[styles.submitBtn, submitting && styles.submitBtnDisabled]}
-              onPress={handleAdd}
-              disabled={submitting}
-            >
-              <Text style={styles.submitBtnText}>{submitting ? 'Menyimpan…' : 'Simpan libur'}</Text>
-            </TouchableOpacity>
-          </View>
+            <Button label="Simpan libur" onPress={handleAdd} loading={submitting} />
+          </Card>
 
           <Text style={styles.sectionTitle}>Tanggal diblokir</Text>
           {items.length === 0 ? (
-            <Text style={styles.muted}>Belum ada jadwal libur.</Text>
+            <EmptyState
+              variant="schedule"
+              title="Belum ada jadwal libur"
+              description="Tambahkan tanggal libur agar jamaah tidak bisa memesan pada hari tersebut."
+            />
           ) : (
             items.map((item) => (
               <BlockedDateRow
@@ -180,60 +164,31 @@ export default function ScheduleScreen() {
 }
 
 const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: colors.canvas },
-  scroll: { paddingHorizontal: 20, paddingBottom: 32 },
-  loader: { marginTop: 40 },
-  formCard: {
-    backgroundColor: colors.white,
-    borderRadius: 18,
-    padding: 16,
-    marginBottom: 16,
-    borderWidth: 1,
-    borderColor: colors.slate100,
-  },
-  formTitle: { fontSize: 16, fontWeight: '900', color: colors.baytgo, marginBottom: 12 },
+  container: { flex: 1, backgroundColor: colors.background },
+  skeleton: { paddingHorizontal: layout.screenPadding, paddingTop: spacing.lg },
+  scroll: { paddingHorizontal: layout.screenPadding, paddingBottom: spacing['3xl'] },
+  formTitle: { ...typography.caption, fontFamily: 'PlusJakartaSans_800ExtraBold', color: colors.baytgo, marginBottom: spacing.md },
   input: {
-    backgroundColor: colors.canvas,
-    borderRadius: 12,
-    paddingHorizontal: 14,
-    paddingVertical: 12,
-    marginBottom: 10,
-    fontSize: 14,
-    fontWeight: '600',
-    color: colors.slate900,
+    backgroundColor: colors.background,
+    borderRadius: radius.sm,
+    paddingHorizontal: spacing.lg,
+    paddingVertical: spacing.md,
+    marginBottom: spacing.md,
+    ...typography.caption,
+    color: colors.textPrimary,
     borderWidth: 1,
-    borderColor: colors.slate100,
+    borderColor: colors.border,
   },
-  submitBtn: {
-    marginTop: 4,
-    backgroundColor: colors.baytgo,
-    borderRadius: 14,
-    paddingVertical: 14,
-    alignItems: 'center',
-  },
-  submitBtnDisabled: { opacity: 0.6 },
-  submitBtnText: { color: colors.white, fontWeight: '800', fontSize: 14 },
-  sectionTitle: { fontSize: 18, fontWeight: '900', color: colors.baytgo, marginBottom: 12 },
-  muted: { fontSize: 14, color: colors.slate500, fontWeight: '600' },
-  row: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 12,
-    backgroundColor: colors.white,
-    borderRadius: 14,
-    padding: 14,
-    marginBottom: 8,
-    borderWidth: 1,
-    borderColor: colors.slate100,
-  },
+  sectionTitle: { ...typography.subtitle, color: colors.baytgo, marginTop: spacing.xl, marginBottom: spacing.md },
+  row: { flexDirection: 'row', alignItems: 'center', gap: spacing.md, marginBottom: spacing.sm },
   rowMeta: { flex: 1 },
-  rowDate: { fontSize: 14, fontWeight: '800', color: colors.slate900 },
-  rowNote: { marginTop: 4, fontSize: 12, fontWeight: '600', color: colors.slate500 },
+  rowDate: { ...typography.caption, fontFamily: 'PlusJakartaSans_800ExtraBold', color: colors.textPrimary },
+  rowNote: { marginTop: spacing.xs, ...typography.small, color: colors.textSecondary, fontWeight: '500' },
   deleteBtn: {
     width: 36,
     height: 36,
-    borderRadius: 10,
-    backgroundColor: '#FEF2F2',
+    borderRadius: radius.sm - 2,
+    backgroundColor: colors.errorLight,
     alignItems: 'center',
     justifyContent: 'center',
   },

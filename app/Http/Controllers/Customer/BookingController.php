@@ -10,6 +10,7 @@ use App\Enums\PaymentStatus;
 use App\Http\Controllers\Controller;
 use App\Jobs\NotifyAdminsOfRefundRequestSubmitted;
 use App\Jobs\NotifyCustomerOfRescheduleSubmitted;
+use App\Jobs\NotifyCustomerOfBookingSubmitted;
 use App\Jobs\NotifyMuthowifOfNewBooking;
 use App\Jobs\NotifyMuthowifOfRescheduleRequest;
 use App\Models\BookingPayment;
@@ -748,6 +749,7 @@ class BookingController extends Controller
         }
 
         NotifyMuthowifOfNewBooking::dispatchAfterResponse((string) $booking->getKey());
+        NotifyCustomerOfBookingSubmitted::dispatchAfterResponse((string) $booking->getKey());
         $this->forgetCustomerBookingStatusCounts((string) $request->user()->getKey());
         CustomerBookingBroadcast::afterResponse($booking);
 

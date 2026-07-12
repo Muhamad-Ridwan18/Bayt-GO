@@ -3,14 +3,22 @@ import {
   View,
   Text,
   StyleSheet,
-  TouchableOpacity,
-  ActivityIndicator,
   Alert,
-  Image,
   Linking,
   Modal,
 } from 'react-native';
-import { LinearGradient } from 'expo-linear-gradient';
+import {
+  Building2,
+  CreditCard,
+  FileText,
+  Gift,
+  KeyRound,
+  Lock,
+  Mail,
+  MapPin,
+  Plane,
+  User,
+} from 'lucide-react-native';
 import * as ImagePicker from 'expo-image-picker';
 import * as DocumentPicker from 'expo-document-picker';
 import AuthScreenShell from '../components/AuthScreenShell';
@@ -18,21 +26,27 @@ import AuthInput from '../components/AuthInput';
 import DatePickerField from '../components/DatePickerField';
 import PhoneInternationalInput from '../components/PhoneInternationalInput';
 import RepeatingTextField from '../components/RepeatingTextField';
+import Button from '../ui/Button';
+import PressableScale from '../ui/PressableScale';
+import Card from '../ui/Card';
+import SingleImagePreview from '../ui/SingleImagePreview';
+import UploadPreviewStrip from '../ui/UploadPreviewStrip';
 import { DEFAULT_PHONE_COUNTRY, buildFullPhone } from '../utils/phoneCountries';
 import { useAuth } from '../context/AuthContext';
 import { sendOtp, verifyOtp } from '../api/auth';
-import { colors } from '../theme/colors';
+import { colors, radius, spacing, typography } from '../theme/tokens';
 import { WEB_BASE_URL } from '../config/api';
-import { resetRoot, navigateRoot } from '../navigation/rootNavigation';
+import { resetRoot, navigateToSuccess } from '../navigation/rootNavigation';
 
 function RoleTab({ label, active, onPress }) {
   return (
-    <TouchableOpacity
-      style={[styles.roleTab, active && styles.roleTabActive]}
+    <PressableScale
       onPress={onPress}
+      haptic="light"
+      style={[styles.roleTab, active && styles.roleTabActive]}
     >
       <Text style={[styles.roleTabText, active && styles.roleTabTextActive]}>{label}</Text>
-    </TouchableOpacity>
+    </PressableScale>
   );
 }
 
@@ -46,17 +60,16 @@ function cleanRows(rows) {
   return (rows || []).map((s) => s.trim()).filter(Boolean);
 }
 
-function ImagePickerField({ label, image, onPick }) {
+function ImagePickerField({ label, image, onPick, onClear }) {
   return (
     <View style={styles.imageField}>
       <Text style={styles.imageLabel}>{label}</Text>
-      <TouchableOpacity style={styles.imageBtn} onPress={onPick}>
-        {image ? (
-          <Image source={{ uri: image.uri }} style={styles.imagePreview} />
-        ) : (
-          <Text style={styles.imagePlaceholder}>Pilih foto</Text>
-        )}
-      </TouchableOpacity>
+      {image ? (
+        <SingleImagePreview uri={image.uri} onRemove={onClear || (() => onPick())} size={120} />
+      ) : null}
+      <PressableScale onPress={onPick} haptic="light" style={styles.imageBtn}>
+        <Text style={styles.imagePlaceholder}>{image ? 'Ganti foto' : 'Pilih foto'}</Text>
+      </PressableScale>
     </View>
   );
 }
@@ -146,12 +159,8 @@ export default function RegisterScreen({ navigation, route }) {
       if (!nik.trim() || nik.trim().length !== 16) return 'NIK harus 16 digit.';
       if (!birthDate.trim()) return 'Tanggal lahir wajib diisi.';
       if (!passportNumber.trim()) return 'Nomor paspor wajib diisi.';
-      if (!cleanRows(languages).length) {
-        return 'Isi minimal satu bahasa.';
-      }
-      if (!cleanRows(workExperiences).length) {
-        return 'Isi minimal satu pengalaman kerja.';
-      }
+      if (!cleanRows(languages).length) return 'Isi minimal satu bahasa.';
+      if (!cleanRows(workExperiences).length) return 'Isi minimal satu pengalaman kerja.';
       if (!photo || !ktp) return 'Foto profil dan KTP wajib diupload.';
     }
     return null;
@@ -165,6 +174,7 @@ export default function RegisterScreen({ navigation, route }) {
       const data = await sendOtp(fullPhone, role);
       setOtpMessage(data.message || 'Kode OTP berhasil dikirim.');
     } catch (err) {
+      setError(err.message || 'Gagal mengirim OTP');
       throw err;
     } finally {
       setSendingOtp(false);
@@ -191,12 +201,10 @@ export default function RegisterScreen({ navigation, route }) {
       setError(validationError);
       return;
     }
-
     if (!termsAccepted) {
       setTermsModalOpen(true);
       return;
     }
-
     await proceedToOtp();
   };
 
@@ -236,9 +244,12 @@ export default function RegisterScreen({ navigation, route }) {
         } else if (customerType === 'company') {
           navigation.replace('CompanyRegistrationPending', { message: data.message });
         } else {
-          Alert.alert('Berhasil', data.message || 'Pendaftaran berhasil.', [
-            { text: 'OK', onPress: () => navigation.navigate('Login') },
-          ]);
+          navigateToSuccess(navigation, {
+            title: 'Pendaftaran berhasil',
+            description: data.message || 'Akun jamaah Anda sudah dibuat. Silakan masuk.',
+            primaryLabel: 'Masuk',
+            primaryTarget: { replace: true, name: 'Login' },
+          });
         }
       } else {
         const data = await registerMuthowif({
@@ -264,9 +275,12 @@ export default function RegisterScreen({ navigation, route }) {
         if (data.token) {
           resetRoot(navigation, [{ name: 'Main' }]);
         } else {
-          Alert.alert('Berhasil', data.message || 'Pendaftaran berhasil.', [
-            { text: 'OK', onPress: () => navigation.navigate('Login') },
-          ]);
+          navigateToSuccess(navigation, {
+            title: 'Pendaftaran berhasil',
+            description: data.message || 'Pendaftaran muthowif diterima. Silakan masuk setelah verifikasi.',
+            primaryLabel: 'Masuk',
+            primaryTarget: { replace: true, name: 'Login' },
+          });
         }
       }
     } catch (err) {
@@ -295,47 +309,31 @@ export default function RegisterScreen({ navigation, route }) {
       >
         {error ? <Text style={styles.bannerError}>{error}</Text> : null}
 
-        <View style={styles.otpBox}>
+        <Card style={styles.otpBox} padding={spacing.lg} elevated={false} variant="flat">
           <Text style={styles.otpHint}>
             Kami telah mengirim kode verifikasi ke nomor WhatsApp Anda. Masukkan kode tersebut untuk menyelesaikan pendaftaran.
           </Text>
           <AuthInput
             label="Kode OTP"
-            icon="key-outline"
+            icon={KeyRound}
             value={otp}
             onChangeText={setOtp}
             keyboardType="number-pad"
             maxLength={6}
             placeholder="000000"
           />
-          <TouchableOpacity
-            style={styles.otpSendBtn}
+          <Button
+            label="Kirim ulang kode"
             onPress={dispatchOtp}
-            disabled={sendingOtp}
-          >
-            {sendingOtp ? (
-              <ActivityIndicator color={colors.baytgo} />
-            ) : (
-              <Text style={styles.otpSendText}>Kirim ulang kode</Text>
-            )}
-          </TouchableOpacity>
+            loading={sendingOtp}
+            variant="secondary"
+            size="sm"
+            fullWidth={false}
+          />
           {otpMessage ? <Text style={styles.otpMessage}>{otpMessage}</Text> : null}
-        </View>
+        </Card>
 
-        <TouchableOpacity
-          style={styles.primaryBtn}
-          onPress={completeRegistration}
-          disabled={loading}
-          activeOpacity={0.9}
-        >
-          <LinearGradient colors={[colors.baytgo, colors.baytgoDark]} style={styles.primaryGradient}>
-            {loading ? (
-              <ActivityIndicator color={colors.white} />
-            ) : (
-              <Text style={styles.primaryText}>Selesaikan Pendaftaran</Text>
-            )}
-          </LinearGradient>
-        </TouchableOpacity>
+        <Button label="Selesaikan Pendaftaran" onPress={completeRegistration} loading={loading} />
       </AuthScreenShell>
     );
   }
@@ -347,45 +345,22 @@ export default function RegisterScreen({ navigation, route }) {
       onBack={handleBack}
     >
       <View style={styles.roleRow}>
-        <RoleTab
-          label="Jamaah"
-          active={role === 'customer'}
-          onPress={() => setRole('customer')}
-        />
-        <RoleTab
-          label="Muthowif"
-          active={role === 'muthowif'}
-          onPress={() => setRole('muthowif')}
-        />
+        <RoleTab label="Jamaah" active={role === 'customer'} onPress={() => setRole('customer')} />
+        <RoleTab label="Muthowif" active={role === 'muthowif'} onPress={() => setRole('muthowif')} />
       </View>
 
       {error ? <Text style={styles.bannerError}>{error}</Text> : null}
 
       <AuthInput
         label={role === 'customer' && customerType === 'company' ? 'Nama perusahaan' : 'Nama lengkap'}
-        icon="person-outline"
+        icon={User}
         value={name}
         onChangeText={setName}
         placeholder={role === 'customer' && customerType === 'company' ? 'Nama perusahaan' : 'Nama Anda'}
       />
-      <AuthInput
-        label="Email"
-        icon="mail-outline"
-        value={email}
-        onChangeText={setEmail}
-        placeholder="nama@email.com"
-        keyboardType="email-address"
-        autoCapitalize="none"
-      />
-      <AuthInput label="Password" icon="lock-closed-outline" value={password} onChangeText={setPassword} secureTextEntry placeholder="Min. 8 karakter" />
-      <AuthInput
-        label="Konfirmasi password"
-        icon="lock-closed-outline"
-        value={passwordConfirmation}
-        onChangeText={setPasswordConfirmation}
-        secureTextEntry
-        placeholder="Ulangi password"
-      />
+      <AuthInput label="Email" icon={Mail} value={email} onChangeText={setEmail} placeholder="nama@email.com" keyboardType="email-address" autoCapitalize="none" />
+      <AuthInput label="Password" icon={Lock} value={password} onChangeText={setPassword} secureTextEntry placeholder="Min. 8 karakter" />
+      <AuthInput label="Konfirmasi password" icon={Lock} value={passwordConfirmation} onChangeText={setPasswordConfirmation} secureTextEntry placeholder="Ulangi password" />
       <PhoneInternationalInput
         label="Nomor HP / WhatsApp"
         dial={phoneDial}
@@ -394,7 +369,7 @@ export default function RegisterScreen({ navigation, route }) {
         onChange={handlePhoneChange}
         hint="Pilih kode negara lalu masukkan nomor tanpa kode negara."
       />
-      <AuthInput label="Alamat" icon="location-outline" value={address} onChangeText={setAddress} placeholder="Alamat lengkap" multiline />
+      <AuthInput label="Alamat" icon={MapPin} value={address} onChangeText={setAddress} placeholder="Alamat lengkap" multiline />
 
       {role === 'customer' && (
         <>
@@ -404,153 +379,82 @@ export default function RegisterScreen({ navigation, route }) {
             <RoleTab label="Perusahaan" active={customerType === 'company'} onPress={() => setCustomerType('company')} />
           </View>
           {customerType === 'company' && (
-            <AuthInput
-              label="Nomor PPUI"
-              icon="business-outline"
-              value={ppuiNumber}
-              onChangeText={setPpuiNumber}
-              placeholder="Nomor PPUI perusahaan"
-            />
+            <AuthInput label="Nomor PPUI" icon={Building2} value={ppuiNumber} onChangeText={setPpuiNumber} placeholder="Nomor PPUI perusahaan" />
           )}
         </>
       )}
 
       {role === 'muthowif' && (
         <>
-          <AuthInput label="NIK (16 digit)" icon="card-outline" value={nik} onChangeText={setNik} keyboardType="number-pad" maxLength={16} />
-          <DatePickerField
-            label="Tanggal lahir"
-            value={birthDate}
-            onChange={setBirthDate}
-            placeholder="Pilih tanggal lahir"
-            maximumDate={new Date()}
-          />
-          <AuthInput label="Nomor paspor" icon="airplane-outline" value={passportNumber} onChangeText={setPassportNumber} />
-          <RepeatingTextField
-            label="Penguasaan bahasa"
-            items={languages}
-            onChange={setLanguages}
-            placeholder="Contoh: Arab (fasih), Inggris"
-            addLabel="Tambah bahasa"
-          />
-          <RepeatingTextField
-            label="Studi / pendidikan"
-            items={educations}
-            onChange={setEducations}
-            placeholder="Riwayat studi atau pendidikan formal"
-            addLabel="Tambah studi"
-            optional
-          />
-          <RepeatingTextField
-            label="Pengalaman kerja"
-            items={workExperiences}
-            onChange={setWorkExperiences}
-            placeholder="Masukkan pengalaman kerja sebagai muthowif"
-            addLabel="Tambah pengalaman"
-          />
-          <AuthInput
-            label="Referensi muthowif (opsional)"
-            icon="document-text-outline"
-            value={referenceText}
-            onChangeText={setReferenceText}
-            multiline
-            placeholder="Nama lembaga, kontak, atau keterangan referensi"
-          />
-          <AuthInput
-            label="Kode referral muthowif (opsional)"
-            icon="gift-outline"
-            value={referralCode}
-            onChangeText={setReferralCode}
-            placeholder="Contoh: ABCD12"
-            autoCapitalize="characters"
-          />
+          <AuthInput label="NIK (16 digit)" icon={CreditCard} value={nik} onChangeText={setNik} keyboardType="number-pad" maxLength={16} />
+          <DatePickerField label="Tanggal lahir" value={birthDate} onChange={setBirthDate} placeholder="Pilih tanggal lahir" maximumDate={new Date()} />
+          <AuthInput label="Nomor paspor" icon={Plane} value={passportNumber} onChangeText={setPassportNumber} />
+          <RepeatingTextField label="Penguasaan bahasa" items={languages} onChange={setLanguages} placeholder="Contoh: Arab (fasih), Inggris" addLabel="Tambah bahasa" />
+          <RepeatingTextField label="Studi / pendidikan" items={educations} onChange={setEducations} placeholder="Riwayat studi atau pendidikan formal" addLabel="Tambah studi" optional />
+          <RepeatingTextField label="Pengalaman kerja" items={workExperiences} onChange={setWorkExperiences} placeholder="Masukkan pengalaman kerja sebagai muthowif" addLabel="Tambah pengalaman" />
+          <AuthInput label="Referensi muthowif (opsional)" icon={FileText} value={referenceText} onChangeText={setReferenceText} multiline placeholder="Nama lembaga, kontak, atau keterangan referensi" />
+          <AuthInput label="Kode referral muthowif (opsional)" icon={Gift} value={referralCode} onChangeText={setReferralCode} placeholder="Contoh: ABCD12" autoCapitalize="characters" />
           <Text style={styles.fieldHint}>
             Jika ada muthowif yang mengundang Anda, masukkan kode mereka. Hanya kode muthowif terverifikasi yang diterima.
           </Text>
-          <ImagePickerField label="Foto profil *" image={photo} onPick={() => pickImage(setPhoto)} />
-          <ImagePickerField label="Foto KTP *" image={ktp} onPick={() => pickImage(setKtp)} />
+          <ImagePickerField label="Foto profil *" image={photo} onPick={() => pickImage(setPhoto)} onClear={() => setPhoto(null)} />
+          <ImagePickerField label="Foto KTP *" image={ktp} onPick={() => pickImage(setKtp)} onClear={() => setKtp(null)} />
           <View style={styles.imageField}>
             <Text style={styles.imageLabel}>Dokumen pendukung (opsional)</Text>
-            <TouchableOpacity style={styles.imageBtn} onPress={pickSupportingDocs}>
+            <PressableScale onPress={pickSupportingDocs} haptic="light" style={styles.imageBtn}>
               <Text style={styles.imagePlaceholder}>
                 {supportingDocs.length > 0 ? 'Tambah file lagi' : 'Pilih PDF / foto'}
               </Text>
-            </TouchableOpacity>
-            {supportingDocs.length > 0 ? (
-              <View style={styles.docList}>
-                {supportingDocs.map((doc, index) => (
-                  <View key={`${doc.uri}-${index}`} style={styles.docRow}>
-                    <Text style={styles.docName} numberOfLines={1}>
-                      {doc.name || `Dokumen ${index + 1}`}
-                    </Text>
-                    <TouchableOpacity
-                      onPress={() => setSupportingDocs((prev) => prev.filter((_, i) => i !== index))}
-                      hitSlop={8}
-                    >
-                      <Text style={styles.docRemove}>Hapus</Text>
-                    </TouchableOpacity>
-                  </View>
-                ))}
-              </View>
-            ) : null}
+            </PressableScale>
+            <UploadPreviewStrip
+              files={supportingDocs}
+              onRemove={(index) => setSupportingDocs((prev) => prev.filter((_, i) => i !== index))}
+              style={styles.docPreview}
+            />
           </View>
         </>
       )}
 
-      <TouchableOpacity
-        style={styles.termsRow}
-        onPress={() => setTermsAccepted((v) => !v)}
-        activeOpacity={0.8}
-      >
+      <PressableScale onPress={() => setTermsAccepted((v) => !v)} haptic="light" style={styles.termsRow}>
         <View style={[styles.termsCheck, termsAccepted && styles.termsCheckActive]}>
           {termsAccepted ? <Text style={styles.termsCheckMark}>✓</Text> : null}
         </View>
         <Text style={styles.termsText}>
           Saya telah membaca dan menyetujui{' '}
-          <Text
-            style={styles.termsLink}
-            onPress={() => Linking.openURL(`${WEB_BASE_URL}/terms`)}
-          >
+          <Text style={styles.termsLink} onPress={() => Linking.openURL(`${WEB_BASE_URL}/terms`)}>
             Syarat & Ketentuan
           </Text>
         </Text>
-      </TouchableOpacity>
+      </PressableScale>
 
-      <TouchableOpacity style={styles.primaryBtn} onPress={handleSubmitForm} disabled={loading} activeOpacity={0.9}>
-        <LinearGradient colors={[colors.baytgo, colors.baytgoDark]} style={styles.primaryGradient}>
-          {loading ? <ActivityIndicator color={colors.white} /> : <Text style={styles.primaryText}>Daftar Sekarang</Text>}
-        </LinearGradient>
-      </TouchableOpacity>
+      <Button label="Daftar Sekarang" onPress={handleSubmitForm} loading={loading} />
 
       <View style={styles.footerRow}>
         <Text style={styles.footerText}>Sudah punya akun? </Text>
-        <TouchableOpacity onPress={() => navigation.replace('Login')}>
+        <PressableScale onPress={() => navigation.replace('Login')} haptic="light">
           <Text style={styles.footerLink}>Masuk</Text>
-        </TouchableOpacity>
+        </PressableScale>
       </View>
 
       <Modal visible={termsModalOpen} transparent animationType="fade" onRequestClose={() => setTermsModalOpen(false)}>
         <View style={styles.modalBackdrop}>
-          <View style={styles.modalCard}>
+          <Card style={styles.modalCard} padding={spacing.xl}>
             <Text style={styles.modalTitle}>Syarat & Ketentuan</Text>
             <Text style={styles.modalBody}>
               Sebelum mendaftar, pastikan Anda sudah membaca dan menyetujui syarat & ketentuan BaytGo.
             </Text>
-            <TouchableOpacity onPress={() => Linking.openURL(`${WEB_BASE_URL}/terms`)}>
+            <PressableScale onPress={() => Linking.openURL(`${WEB_BASE_URL}/terms`)} haptic="light">
               <Text style={styles.modalLink}>Baca Syarat & Ketentuan</Text>
-            </TouchableOpacity>
+            </PressableScale>
             <View style={styles.modalActions}>
-              <TouchableOpacity style={styles.modalCancelBtn} onPress={() => setTermsModalOpen(false)}>
-                <Text style={styles.modalCancelText}>Batal</Text>
-              </TouchableOpacity>
-              <TouchableOpacity
-                style={styles.modalAgreeBtn}
-                onPress={agreeAndSubmit}
-              >
-                <Text style={styles.modalAgreeText}>Setuju dan Daftar</Text>
-              </TouchableOpacity>
+              <View style={styles.modalBtn}>
+                <Button label="Batal" onPress={() => setTermsModalOpen(false)} variant="secondary" />
+              </View>
+              <View style={styles.modalBtn}>
+                <Button label="Setuju dan Daftar" onPress={agreeAndSubmit} />
+              </View>
             </View>
-          </View>
+          </Card>
         </View>
       </Modal>
     </AuthScreenShell>
@@ -558,136 +462,83 @@ export default function RegisterScreen({ navigation, route }) {
 }
 
 const styles = StyleSheet.create({
-  roleRow: { flexDirection: 'row', gap: 10, marginBottom: 18 },
+  roleRow: { flexDirection: 'row', gap: spacing.sm, marginBottom: spacing.lg },
   roleTab: {
     flex: 1,
-    paddingVertical: 12,
-    borderRadius: 14,
-    backgroundColor: colors.white,
+    paddingVertical: spacing.md,
+    borderRadius: radius.sm,
+    backgroundColor: colors.card,
     borderWidth: 1,
-    borderColor: colors.slate100,
+    borderColor: colors.border,
     alignItems: 'center',
   },
   roleTabActive: { backgroundColor: colors.baytgo, borderColor: colors.baytgo },
-  roleTabText: { fontSize: 13, fontWeight: '800', color: colors.slate600 },
+  roleTabText: { ...typography.small, color: colors.textSecondary },
   roleTabTextActive: { color: colors.white },
-  sectionLabel: { fontSize: 12, fontWeight: '800', color: colors.slate600, marginBottom: 10 },
+  sectionLabel: { ...typography.small, color: colors.textSecondary, marginBottom: spacing.sm },
   fieldHint: {
-    fontSize: 11,
-    color: colors.slate500,
-    fontWeight: '600',
-    marginTop: -8,
-    marginBottom: 14,
+    ...typography.small,
+    color: colors.textMuted,
+    marginTop: -spacing.sm,
+    marginBottom: spacing.lg,
     lineHeight: 16,
+    fontFamily: 'PlusJakartaSans_500Medium',
   },
   bannerError: {
-    backgroundColor: '#FEF2F2',
-    color: '#B91C1C',
-    padding: 12,
-    borderRadius: 14,
-    marginBottom: 16,
-    fontSize: 13,
-    fontWeight: '600',
+    backgroundColor: colors.errorLight,
+    color: colors.error,
+    padding: spacing.md,
+    borderRadius: radius.sm,
+    marginBottom: spacing.lg,
+    ...typography.caption,
+    fontFamily: 'PlusJakartaSans_600SemiBold',
   },
-  otpBox: {
-    backgroundColor: colors.white,
-    borderRadius: 18,
-    padding: 16,
-    marginBottom: 18,
-    borderWidth: 1,
-    borderColor: '#BAE6FD',
-  },
-  otpHint: { fontSize: 13, color: colors.slate600, marginBottom: 16, lineHeight: 20, fontWeight: '500' },
-  otpSendBtn: {
-    alignSelf: 'flex-start',
-    paddingHorizontal: 14,
-    paddingVertical: 10,
-    borderRadius: 12,
-    backgroundColor: '#EFF6FF',
-    marginTop: 4,
-  },
-  otpSendText: { fontSize: 13, fontWeight: '800', color: colors.baytgo },
-  otpMessage: { marginTop: 12, fontSize: 12, color: colors.emerald600, fontWeight: '600' },
-  imageField: { marginBottom: 14 },
-  imageLabel: { fontSize: 12, fontWeight: '800', color: colors.slate600, marginBottom: 8 },
+  otpBox: { marginBottom: spacing.lg, borderColor: '#BAE6FD' },
+  otpHint: { ...typography.caption, color: colors.textSecondary, marginBottom: spacing.lg, lineHeight: 20 },
+  otpMessage: { marginTop: spacing.md, ...typography.small, color: colors.success, fontFamily: 'PlusJakartaSans_500Medium' },
+  imageField: { marginBottom: spacing.lg },
+  imageLabel: { ...typography.small, color: colors.textSecondary, marginBottom: spacing.sm },
   imageBtn: {
     height: 120,
-    borderRadius: 16,
+    borderRadius: radius.md,
     borderWidth: 1,
-    borderColor: colors.slate200,
+    borderColor: colors.border,
     borderStyle: 'dashed',
-    backgroundColor: colors.white,
+    backgroundColor: colors.card,
     overflow: 'hidden',
     alignItems: 'center',
     justifyContent: 'center',
   },
-  imagePreview: { width: '100%', height: '100%' },
-  imagePlaceholder: { color: colors.slate400, fontWeight: '700' },
-  docList: { marginTop: 10, gap: 6 },
-  docRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 8,
-    backgroundColor: colors.white,
-    borderRadius: 12,
-    paddingHorizontal: 12,
-    paddingVertical: 10,
-    borderWidth: 1,
-    borderColor: colors.slate100,
-  },
-  docName: { flex: 1, fontSize: 13, fontWeight: '600', color: colors.slate700 },
-  docRemove: { fontSize: 12, fontWeight: '800', color: '#B91C1C' },
-  primaryBtn: { borderRadius: 16, overflow: 'hidden', marginTop: 8 },
-  primaryGradient: { paddingVertical: 16, alignItems: 'center' },
-  primaryText: { color: colors.white, fontSize: 16, fontWeight: '800' },
-  footerRow: { flexDirection: 'row', justifyContent: 'center', marginTop: 24 },
-  footerText: { fontSize: 14, color: colors.slate500, fontWeight: '600' },
-  footerLink: { fontSize: 14, color: colors.baytgo, fontWeight: '800' },
-  termsRow: { flexDirection: 'row', alignItems: 'flex-start', gap: 10, marginBottom: 16 },
+  imagePlaceholder: { ...typography.caption, color: colors.textMuted, fontFamily: 'PlusJakartaSans_700Bold' },
+  docPreview: { marginTop: spacing.sm },
+  footerRow: { flexDirection: 'row', justifyContent: 'center', marginTop: spacing['2xl'] },
+  footerText: { ...typography.caption, color: colors.textSecondary },
+  footerLink: { ...typography.caption, fontFamily: 'PlusJakartaSans_700Bold', color: colors.baytgo },
+  termsRow: { flexDirection: 'row', alignItems: 'flex-start', gap: spacing.sm, marginBottom: spacing.lg },
   termsCheck: {
     width: 22,
     height: 22,
     borderRadius: 6,
     borderWidth: 2,
-    borderColor: colors.slate200,
+    borderColor: colors.border,
     alignItems: 'center',
     justifyContent: 'center',
     marginTop: 1,
   },
   termsCheckActive: { backgroundColor: colors.baytgo, borderColor: colors.baytgo },
   termsCheckMark: { color: colors.white, fontSize: 13, fontWeight: '900' },
-  termsText: { flex: 1, fontSize: 13, lineHeight: 20, color: colors.slate600, fontWeight: '600' },
-  termsLink: { color: colors.baytgo, fontWeight: '800' },
+  termsText: { flex: 1, ...typography.caption, lineHeight: 20, color: colors.textSecondary },
+  termsLink: { color: colors.baytgo, fontFamily: 'PlusJakartaSans_700Bold' },
   modalBackdrop: {
     flex: 1,
-    backgroundColor: 'rgba(15, 23, 42, 0.45)',
+    backgroundColor: colors.overlay,
     justifyContent: 'center',
-    padding: 24,
+    padding: spacing['2xl'],
   },
-  modalCard: {
-    backgroundColor: colors.white,
-    borderRadius: 20,
-    padding: 20,
-  },
-  modalTitle: { fontSize: 18, fontWeight: '900', color: colors.slate900 },
-  modalBody: { marginTop: 10, fontSize: 14, lineHeight: 21, color: colors.slate600, fontWeight: '500' },
-  modalLink: { marginTop: 12, fontSize: 14, fontWeight: '800', color: colors.baytgo },
-  modalActions: { flexDirection: 'row', gap: 10, marginTop: 20 },
-  modalCancelBtn: {
-    flex: 1,
-    paddingVertical: 14,
-    borderRadius: 14,
-    borderWidth: 1,
-    borderColor: colors.slate200,
-    alignItems: 'center',
-  },
-  modalCancelText: { fontSize: 14, fontWeight: '800', color: colors.slate600 },
-  modalAgreeBtn: {
-    flex: 1,
-    paddingVertical: 14,
-    borderRadius: 14,
-    backgroundColor: colors.baytgo,
-    alignItems: 'center',
-  },
-  modalAgreeText: { fontSize: 14, fontWeight: '800', color: colors.white },
+  modalCard: { width: '100%' },
+  modalTitle: { ...typography.subtitle, color: colors.textPrimary },
+  modalBody: { marginTop: spacing.sm, ...typography.caption, lineHeight: 22, color: colors.textSecondary },
+  modalLink: { marginTop: spacing.md, ...typography.caption, fontFamily: 'PlusJakartaSans_700Bold', color: colors.baytgo },
+  modalActions: { flexDirection: 'row', gap: spacing.sm, marginTop: spacing.xl },
+  modalBtn: { flex: 1 },
 });

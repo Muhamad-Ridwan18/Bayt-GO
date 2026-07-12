@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { View, Image, ActivityIndicator, StyleSheet } from 'react-native';
 import * as FileSystem from 'expo-file-system/legacy';
-import { colors } from '../theme/colors';
+import { colors } from '../theme/tokens';
 
 export default function AuthenticatedImage({ uri, token, style, imageStyle }) {
   const [localUri, setLocalUri] = useState(null);

@@ -385,6 +385,7 @@ return [
             'booking' => 'Booking baru → muthowif',
             'payment' => 'Pembayaran lunas → muthowif',
             'customer_payment_settled' => 'Pembayaran lunas → jamaah',
+            'customer_booking_submitted' => 'Booking baru → jamaah',
             'customer_booking_approved' => 'Booking disetujui → jamaah',
             'customer_booking_rejected_jadwal_full' => 'Ditolak (jadwal penuh) → jamaah',
             'refund_transfer_proof' => 'Bukti transfer refund → jamaah',

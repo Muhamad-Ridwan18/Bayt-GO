@@ -1,9 +1,12 @@
-import React from 'react';
-import { View, Text, StyleSheet, Image, TouchableOpacity } from 'react-native';
+import React, { memo } from 'react';
+import { StyleSheet, Text, View } from 'react-native';
+import { Calendar, ChevronRight, Wallet } from 'lucide-react-native';
 import { LinearGradient } from 'expo-linear-gradient';
-import { Ionicons } from '@expo/vector-icons';
+import AppImage from '../ui/AppImage';
+import Card from '../ui/Card';
+import PressableScale from '../ui/PressableScale';
+import { colors, gradients, radius, spacing, typography } from '../theme/tokens';
 import { resolveMediaUrl } from '../utils/mediaUrl';
-import { colors } from '../theme/colors';
 import { formatIdr } from '../utils/format';
 import {
   bookingStatusMeta,
@@ -16,152 +19,192 @@ import { customerPayableAmount } from '../components/BookingPricingBreakdown';
 
 function StatusBadge({ label, color }) {
   return (
-    <View style={[styles.badge, { backgroundColor: color + '18' }]}>
+    <View style={[styles.badge, { backgroundColor: `${color}18` }]}>
       <Text style={[styles.badgeText, { color }]}>{label}</Text>
     </View>
   );
 }
 
-export default function BookingListItem({ item, onPress, onPay }) {
+function BookingListItem({ item, onPress, onPay }) {
   const bookingMeta = bookingStatusMeta(item.status);
   const paymentMeta = paymentStatusMeta(item.payment_status);
   const showPay = canPayBooking(item);
   const awaiting = isAwaitingMuthowifConfirmation(item);
-  const avatarUri = resolveMediaUrl(item.muthowif_avatar);
 
   return (
-    <TouchableOpacity
-      style={[styles.card, showPay && styles.cardUnpaid]}
-      onPress={onPress}
-      activeOpacity={0.9}
-    >
-      <View style={styles.avatarWrap}>
-        {avatarUri ? (
-          <Image source={{ uri: avatarUri }} style={styles.avatar} />
-        ) : (
-          <View style={[styles.avatar, styles.avatarPlaceholder]}>
-            <Ionicons name="person" size={24} color={colors.slate400} />
+    <PressableScale onPress={onPress} haptic="light" style={styles.press}>
+      <Card
+        style={[styles.card, showPay && styles.cardUnpaid]}
+        padding={spacing.lg}
+        elevated
+      >
+        <View style={styles.row}>
+          <View style={styles.avatarWrap}>
+            <AppImage uri={resolveMediaUrl(item.muthowif_avatar)} name={item.muthowif_name} size={56} rounded={radius.md} />
+            {showPay ? <View style={styles.payDot} /> : null}
           </View>
-        )}
-        {showPay ? <View style={styles.payDot} /> : null}
-      </View>
 
-      <View style={styles.body}>
-        <View style={styles.topRow}>
-          <Text style={styles.code}>{item.booking_code}</Text>
-          {showPay ? (
-            <View style={styles.payChip}>
-              <Text style={styles.payChipText}>Belum bayar</Text>
+          <View style={styles.body}>
+            <View style={styles.topRow}>
+              <Text style={styles.code}>{item.booking_code}</Text>
+              {showPay ? (
+                <View style={styles.payChip}>
+                  <Text style={styles.payChipText}>Belum bayar</Text>
+                </View>
+              ) : awaiting ? (
+                <View style={styles.waitChip}>
+                  <Text style={styles.waitChipText}>Menunggu</Text>
+                </View>
+              ) : null}
             </View>
-          ) : awaiting ? (
-            <View style={styles.waitChip}>
-              <Text style={styles.waitChipText}>Menunggu</Text>
+
+            <Text style={styles.name} numberOfLines={1}>{item.muthowif_name}</Text>
+
+            <View style={styles.metaRow}>
+              <Calendar size={14} color={colors.textMuted} strokeWidth={2} />
+              <Text style={styles.dates}>{formatDateRange(item.starts_on, item.ends_on)}</Text>
             </View>
-          ) : null}
+
+            <View style={styles.badgeRow}>
+              <StatusBadge label={bookingMeta.label} color={bookingMeta.color} />
+              <StatusBadge label={paymentMeta.label} color={paymentMeta.color} />
+            </View>
+
+            <Text style={styles.amount}>
+              {formatIdr(customerPayableAmount(item.pricing, item.total_amount))}
+            </Text>
+
+            {showPay ? (
+              <PressableScale
+                onPress={() => onPay?.(item)}
+                haptic="medium"
+                style={styles.payBtn}
+              >
+                <LinearGradient colors={gradients.gold} style={styles.payGradient}>
+                  <Wallet size={16} color={colors.white} strokeWidth={2} />
+                  <Text style={styles.payBtnText}>Bayar sekarang</Text>
+                </LinearGradient>
+              </PressableScale>
+            ) : null}
+          </View>
+
+          <ChevronRight size={20} color={colors.textMuted} strokeWidth={2} />
         </View>
-
-        <Text style={styles.name} numberOfLines={1}>{item.muthowif_name}</Text>
-
-        <View style={styles.metaRow}>
-          <Ionicons name="calendar-outline" size={13} color={colors.slate400} />
-          <Text style={styles.dates}>{formatDateRange(item.starts_on, item.ends_on)}</Text>
-        </View>
-
-        <View style={styles.badgeRow}>
-          <StatusBadge label={bookingMeta.label} color={bookingMeta.color} />
-          <StatusBadge label={paymentMeta.label} color={paymentMeta.color} />
-        </View>
-
-        <Text style={styles.amount}>{formatIdr(customerPayableAmount(item.pricing, item.total_amount))}</Text>
-
-        {showPay ? (
-          <TouchableOpacity
-            style={styles.payBtn}
-            onPress={(e) => {
-              e?.stopPropagation?.();
-              onPay?.(item);
-            }}
-            activeOpacity={0.9}
-          >
-            <LinearGradient colors={['#F59E0B', '#D97706']} style={styles.payGradient}>
-              <Ionicons name="wallet-outline" size={16} color={colors.white} />
-              <Text style={styles.payBtnText}>Bayar sekarang</Text>
-            </LinearGradient>
-          </TouchableOpacity>
-        ) : null}
-      </View>
-
-      <Ionicons name="chevron-forward" size={18} color={colors.slate400} />
-    </TouchableOpacity>
+      </Card>
+    </PressableScale>
   );
 }
 
+export default memo(BookingListItem);
+
 const styles = StyleSheet.create({
-  card: {
-    flexDirection: 'row',
-    alignItems: 'flex-start',
-    backgroundColor: colors.white,
-    borderRadius: 18,
-    padding: 14,
-    marginBottom: 12,
-    borderWidth: 1,
-    borderColor: 'rgba(26,61,52,0.08)',
-    gap: 12,
-    shadowColor: '#0F2E28',
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.04,
-    shadowRadius: 10,
-    elevation: 2,
-  },
+  press: { marginBottom: spacing.lg },
+  card: { borderRadius: radius.md },
   cardUnpaid: {
     borderColor: '#FDE68A',
-    backgroundColor: '#FFFBEB',
+    backgroundColor: colors.warningLight,
   },
+  row: { flexDirection: 'row', alignItems: 'flex-start', gap: spacing.md },
   avatarWrap: { position: 'relative' },
-  avatar: { width: 52, height: 52, borderRadius: 16, backgroundColor: colors.slate100 },
-  avatarPlaceholder: { alignItems: 'center', justifyContent: 'center' },
   payDot: {
     position: 'absolute',
     top: -2,
     right: -2,
-    width: 10,
-    height: 10,
-    borderRadius: 5,
-    backgroundColor: '#F59E0B',
+    width: 12,
+    height: 12,
+    borderRadius: 6,
+    backgroundColor: colors.warning,
     borderWidth: 2,
     borderColor: colors.white,
   },
   body: { flex: 1 },
-  topRow: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', gap: 8 },
-  code: { fontSize: 12, fontWeight: '800', color: colors.baytgo },
+  topRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    gap: spacing.sm,
+  },
+  code: {
+    ...typography.small,
+    color: colors.baytgo,
+    fontFamily: 'PlusJakartaSans_800ExtraBold',
+  },
   payChip: {
     backgroundColor: '#FEF3C7',
-    paddingHorizontal: 8,
-    paddingVertical: 3,
-    borderRadius: 999,
+    paddingHorizontal: spacing.sm,
+    paddingVertical: spacing.xs,
+    borderRadius: radius.full,
   },
-  payChipText: { fontSize: 10, fontWeight: '800', color: '#B45309' },
+  payChipText: {
+    ...typography.label,
+    color: '#B45309',
+    fontSize: 10,
+  },
   waitChip: {
     backgroundColor: '#EDE9FE',
-    paddingHorizontal: 8,
-    paddingVertical: 3,
-    borderRadius: 999,
+    paddingHorizontal: spacing.sm,
+    paddingVertical: spacing.xs,
+    borderRadius: radius.full,
   },
-  waitChipText: { fontSize: 10, fontWeight: '800', color: '#7C3AED' },
-  name: { marginTop: 3, fontSize: 16, fontWeight: '900', color: colors.slate900 },
-  metaRow: { flexDirection: 'row', alignItems: 'center', gap: 5, marginTop: 6 },
-  dates: { fontSize: 12, fontWeight: '600', color: colors.slate500, flex: 1 },
-  badgeRow: { flexDirection: 'row', flexWrap: 'wrap', gap: 6, marginTop: 10 },
-  badge: { borderRadius: 999, paddingHorizontal: 8, paddingVertical: 4 },
-  badgeText: { fontSize: 10, fontWeight: '800' },
-  amount: { marginTop: 8, fontSize: 15, fontWeight: '900', color: colors.baytgo },
-  payBtn: { marginTop: 12, borderRadius: 12, overflow: 'hidden' },
+  waitChipText: {
+    ...typography.label,
+    color: '#7C3AED',
+    fontSize: 10,
+  },
+  name: {
+    ...typography.body,
+    fontFamily: 'PlusJakartaSans_700Bold',
+    color: colors.textPrimary,
+    marginTop: spacing.xs,
+  },
+  metaRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: spacing.sm,
+    marginTop: spacing.sm,
+  },
+  dates: {
+    ...typography.caption,
+    color: colors.textSecondary,
+    flex: 1,
+  },
+  badgeRow: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    gap: spacing.sm,
+    marginTop: spacing.md,
+  },
+  badge: {
+    borderRadius: radius.full,
+    paddingHorizontal: spacing.md,
+    paddingVertical: spacing.xs,
+  },
+  badgeText: {
+    ...typography.label,
+    fontSize: 10,
+  },
+  amount: {
+    ...typography.subtitle,
+    fontSize: 18,
+    color: colors.baytgo,
+    marginTop: spacing.md,
+  },
+  payBtn: {
+    marginTop: spacing.lg,
+    borderRadius: radius.sm,
+    overflow: 'hidden',
+  },
   payGradient: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
-    gap: 6,
-    paddingVertical: 11,
+    gap: spacing.sm,
+    paddingVertical: spacing.md,
+    minHeight: 48,
   },
-  payBtnText: { fontSize: 13, fontWeight: '800', color: colors.white },
+  payBtnText: {
+    ...typography.caption,
+    fontFamily: 'PlusJakartaSans_700Bold',
+    color: colors.white,
+  },
 });

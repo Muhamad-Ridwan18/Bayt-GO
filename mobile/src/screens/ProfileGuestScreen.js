@@ -1,15 +1,17 @@
 import React from 'react';
-import { View, Text, StyleSheet, TouchableOpacity, ScrollView } from 'react-native';
-import { LinearGradient } from 'expo-linear-gradient';
-import { Ionicons } from '@expo/vector-icons';
+import { ScrollView, StyleSheet, Text, View } from 'react-native';
+import { Calendar, LogIn, MessageCircle, Search, User } from 'lucide-react-native';
 import TabPageHeader from '../components/TabPageHeader';
 import { navigateRoot } from '../navigation/rootNavigation';
-import { colors } from '../theme/colors';
+import Button from '../ui/Button';
+import Card from '../ui/Card';
+import PressableScale from '../ui/PressableScale';
+import { colors, layout, radius, spacing, typography } from '../theme/tokens';
 
 const FEATURES = [
-  { icon: 'search', title: 'Cari Muthowif', sub: 'Temukan pendamping ibadah terpercaya' },
-  { icon: 'calendar', title: 'Kelola Booking', sub: 'Pantau pesanan dan jadwal perjalanan' },
-  { icon: 'chatbubbles', title: 'Chat Langsung', sub: 'Komunikasi dengan muthowif sebelum pesan' },
+  { icon: Search, title: 'Cari Muthowif', sub: 'Temukan pendamping ibadah terpercaya' },
+  { icon: Calendar, title: 'Kelola Booking', sub: 'Pantau pesanan dan jadwal perjalanan' },
+  { icon: MessageCircle, title: 'Chat Langsung', sub: 'Komunikasi dengan muthowif sebelum pesan' },
 ];
 
 export default function ProfileGuestScreen({ navigation }) {
@@ -18,72 +20,72 @@ export default function ProfileGuestScreen({ navigation }) {
       <TabPageHeader title="Profil" subtitle="Masuk untuk mengelola akun Anda" />
 
       <ScrollView contentContainerStyle={styles.scroll} showsVerticalScrollIndicator={false}>
-        <View style={styles.heroCard}>
+        <Card style={styles.heroCard} padding={spacing['2xl']} elevated>
           <View style={styles.avatar}>
-            <Ionicons name="person" size={40} color={colors.gold} />
+            <User size={40} color={colors.gold} strokeWidth={1.8} />
           </View>
           <Text style={styles.title}>Selamat datang di BaytGo</Text>
           <Text style={styles.sub}>
             Masuk atau daftar untuk memesan muthowif dan mengelola perjalanan ibadah Anda.
           </Text>
 
-          <TouchableOpacity
-            style={styles.primaryBtn}
-            onPress={() => navigateRoot(navigation, 'Login')}
-            activeOpacity={0.9}
-          >
-            <LinearGradient colors={[colors.baytgo, colors.baytgoDark]} style={styles.primaryGradient}>
-              <Ionicons name="log-in-outline" size={18} color={colors.white} />
-              <Text style={styles.primaryText}>Masuk</Text>
-            </LinearGradient>
-          </TouchableOpacity>
+          <View style={styles.primaryBtn}>
+            <Button
+              label="Masuk"
+              onPress={() => navigateRoot(navigation, 'Login')}
+              icon={<LogIn size={18} color={colors.white} strokeWidth={2} />}
+            />
+          </View>
 
-          <TouchableOpacity
-            style={styles.secondaryBtn}
-            onPress={() => navigateRoot(navigation, 'Register', { role: 'customer' })}
-            activeOpacity={0.88}
-          >
-            <Text style={styles.secondaryText}>Daftar sebagai Jamaah</Text>
-          </TouchableOpacity>
+          <View style={styles.secondaryBtn}>
+            <Button
+              label="Daftar sebagai Jamaah"
+              onPress={() => navigateRoot(navigation, 'Register', { role: 'customer' })}
+              variant="secondary"
+            />
+          </View>
 
-          <TouchableOpacity onPress={() => navigateRoot(navigation, 'Register', { role: 'muthowif' })}>
+          <PressableScale
+            onPress={() => navigateRoot(navigation, 'Register', { role: 'muthowif' })}
+            haptic="light"
+          >
             <Text style={styles.link}>Daftar sebagai Muthowif ›</Text>
-          </TouchableOpacity>
-        </View>
+          </PressableScale>
+        </Card>
 
         <Text style={styles.sectionTitle}>Yang bisa Anda lakukan</Text>
-        {FEATURES.map((feat) => (
-          <View key={feat.title} style={styles.featureRow}>
-            <View style={styles.featureIcon}>
-              <Ionicons name={feat.icon} size={20} color={colors.baytgo} />
-            </View>
-            <View style={styles.featureCopy}>
-              <Text style={styles.featureTitle}>{feat.title}</Text>
-              <Text style={styles.featureSub}>{feat.sub}</Text>
-            </View>
-          </View>
-        ))}
+        {FEATURES.map((feat) => {
+          const Icon = feat.icon;
+          return (
+            <Card key={feat.title} style={styles.featureRow} padding={spacing.lg} elevated={false} variant="flat">
+              <View style={styles.featureInner}>
+                <View style={styles.featureIcon}>
+                  <Icon size={20} color={colors.baytgo} strokeWidth={2} />
+                </View>
+                <View style={styles.featureCopy}>
+                  <Text style={styles.featureTitle}>{feat.title}</Text>
+                  <Text style={styles.featureSub}>{feat.sub}</Text>
+                </View>
+              </View>
+            </Card>
+          );
+        })}
       </ScrollView>
     </View>
   );
 }
 
 const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: colors.canvas },
-  scroll: { paddingHorizontal: 20, paddingTop: 16, paddingBottom: 32 },
+  container: { flex: 1, backgroundColor: colors.background },
+  scroll: {
+    paddingHorizontal: layout.screenPadding,
+    paddingTop: spacing.lg,
+    paddingBottom: spacing.lg,
+  },
   heroCard: {
-    backgroundColor: colors.white,
-    borderRadius: 22,
-    padding: 24,
     alignItems: 'center',
-    borderWidth: 1,
-    borderColor: 'rgba(26,61,52,0.08)',
-    shadowColor: '#0F2E28',
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.06,
-    shadowRadius: 14,
-    elevation: 4,
-    marginBottom: 24,
+    marginBottom: spacing['2xl'],
+    borderRadius: radius.md,
   },
   avatar: {
     width: 80,
@@ -92,69 +94,67 @@ const styles = StyleSheet.create({
     backgroundColor: colors.baytgo,
     alignItems: 'center',
     justifyContent: 'center',
-    marginBottom: 16,
+    marginBottom: spacing.lg,
     borderWidth: 3,
     borderColor: colors.goldLight,
   },
-  title: { fontSize: 20, fontWeight: '900', color: colors.baytgo, textAlign: 'center' },
-  sub: {
-    marginTop: 8,
-    fontSize: 14,
-    lineHeight: 21,
-    color: colors.slate500,
+  title: {
+    ...typography.subtitle,
+    fontFamily: 'PlusJakartaSans_800ExtraBold',
+    color: colors.baytgo,
     textAlign: 'center',
-    fontWeight: '500',
   },
-  primaryBtn: { marginTop: 22, width: '100%', borderRadius: 14, overflow: 'hidden' },
-  primaryGradient: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
-    gap: 8,
-    paddingVertical: 15,
+  sub: {
+    marginTop: spacing.sm,
+    ...typography.caption,
+    lineHeight: 21,
+    color: colors.textSecondary,
+    textAlign: 'center',
   },
-  primaryText: { color: colors.white, fontSize: 15, fontWeight: '800' },
-  secondaryBtn: {
-    marginTop: 10,
-    width: '100%',
-    borderRadius: 14,
-    paddingVertical: 15,
-    alignItems: 'center',
-    borderWidth: 1.5,
-    borderColor: colors.baytgo,
-    backgroundColor: colors.white,
+  primaryBtn: { marginTop: spacing.xl },
+  secondaryBtn: { marginTop: spacing.md },
+  link: {
+    marginTop: spacing.lg,
+    ...typography.caption,
+    fontFamily: 'PlusJakartaSans_800ExtraBold',
+    color: colors.goldMuted,
   },
-  secondaryText: { color: colors.baytgo, fontSize: 15, fontWeight: '800' },
-  link: { marginTop: 14, fontSize: 13, fontWeight: '800', color: colors.goldMuted },
   sectionTitle: {
-    fontSize: 12,
-    fontWeight: '800',
-    color: colors.slate500,
+    ...typography.label,
+    color: colors.textSecondary,
     textTransform: 'uppercase',
-    letterSpacing: 0.5,
-    marginBottom: 12,
-    marginLeft: 4,
+    marginBottom: spacing.md,
+    marginLeft: spacing.xs,
   },
   featureRow: {
+    marginBottom: spacing.md,
+    borderRadius: radius.md,
+  },
+  featureInner: {
     flexDirection: 'row',
     alignItems: 'flex-start',
-    gap: 12,
-    backgroundColor: colors.white,
-    borderRadius: 16,
-    padding: 14,
-    marginBottom: 10,
-    borderWidth: 1,
-    borderColor: 'rgba(26,61,52,0.08)',
+    gap: spacing.md,
   },
   featureIcon: {
     width: 40,
     height: 40,
-    borderRadius: 12,
+    borderRadius: radius.sm,
     backgroundColor: colors.baytgoLight,
     alignItems: 'center',
     justifyContent: 'center',
   },
   featureCopy: { flex: 1 },
-  featureTitle: { fontSize: 14, fontWeight: '800', color: colors.slate900 },
-  featureSub: { marginTop: 3, fontSize: 12, fontWeight: '600', color: colors.slate500, lineHeight: 17 },
+  featureTitle: {
+    ...typography.caption,
+    fontFamily: 'PlusJakartaSans_800ExtraBold',
+    color: colors.textPrimary,
+  },
+  featureSub: {
+    marginTop: spacing.xs,
+    ...typography.small,
+    fontWeight: '600',
+    fontFamily: 'PlusJakartaSans_600SemiBold',
+    color: colors.textSecondary,
+    lineHeight: 17,
+  },
 });

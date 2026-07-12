@@ -1,40 +1,38 @@
 import React, { useCallback, useMemo, useState } from 'react';
-import {
-  View,
-  Text,
-  StyleSheet,
-  FlatList,
-  ActivityIndicator,
-  RefreshControl,
-  TouchableOpacity,
-  ScrollView,
-} from 'react-native';
+import { ScrollView, StyleSheet, Text, View } from 'react-native';
+import { FlashList } from '@shopify/flash-list';
 import { useFocusEffect } from '@react-navigation/native';
-import { Ionicons } from '@expo/vector-icons';
+import { Bell, CalendarCheck, CheckCircle2, ChevronRight } from 'lucide-react-native';
 import TabPageHeader from '../components/TabPageHeader';
 import MuthowifBookingListItem from '../components/MuthowifBookingListItem';
 import { fetchMuthowifBookings } from '../api/muthowifBookings';
 import { useAuth } from '../context/AuthContext';
-import { colors } from '../theme/colors';
+import { MUTHOWIF_BOOKING_FILTERS } from '../constants/muthowifBookingFilters';
+import EmptyState from '../ui/EmptyState';
+import ErrorState from '../ui/ErrorState';
+import FilterChip from '../ui/FilterChip';
+import PressableScale from '../ui/PressableScale';
+import { SkeletonList } from '../ui/Skeleton';
+import StatTile from '../ui/StatTile';
+import { colors, layout, spacing, typography } from '../theme/tokens';
+import { bookingStatusMeta } from '../utils/bookingLabels';
 
-const STATUS_FILTERS = [
-  { value: 'all', label: 'Semua', icon: 'layers-outline' },
-  { value: 'pending', label: 'Menunggu', icon: 'time-outline' },
-  { value: 'confirmed', label: 'Dikonfirmasi', icon: 'checkmark-circle-outline' },
-  { value: 'in_progress', label: 'Berlangsung', icon: 'walk-outline' },
-  { value: 'completed', label: 'Selesai', icon: 'flag-outline' },
-  { value: 'cancelled', label: 'Dibatalkan', icon: 'close-circle-outline' },
-];
+function PendingBanner({ count, color, onPress }) {
+  if (count < 1) return null;
 
-function StatCard({ label, value, color, icon }) {
   return (
-    <View style={[styles.statCard, { borderColor: color + '30' }]}>
-      <View style={[styles.statIcon, { backgroundColor: color + '18' }]}>
-        <Ionicons name={icon} size={16} color={color} />
+    <PressableScale onPress={onPress} haptic="light" style={styles.bannerPress}>
+      <View style={[styles.banner, { backgroundColor: `${color}12`, borderColor: `${color}30` }]}>
+        <View style={[styles.bannerIcon, { backgroundColor: colors.white }]}>
+          <Bell size={18} color={color} strokeWidth={2} />
+        </View>
+        <View style={styles.bannerCopy}>
+          <Text style={[styles.bannerTitle, { color }]}>{count} permintaan menunggu konfirmasi</Text>
+          <Text style={styles.bannerSub}>Tinjau dan konfirmasi permintaan jamaah</Text>
+        </View>
+        <ChevronRight size={18} color={color} strokeWidth={2} />
       </View>
-      <Text style={[styles.statValue, { color }]}>{value}</Text>
-      <Text style={styles.statLabel}>{label}</Text>
-    </View>
+    </PressableScale>
   );
 }
 
@@ -45,6 +43,10 @@ export default function MuthowifBookingsListScreen({ navigation }) {
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
   const [error, setError] = useState(null);
+
+  const pendingMeta = bookingStatusMeta('pending');
+  const confirmedMeta = bookingStatusMeta('confirmed');
+  const completedMeta = bookingStatusMeta('completed');
 
   const load = useCallback(async (refresh = false) => {
     if (refresh) setRefreshing(true);
@@ -80,38 +82,41 @@ export default function MuthowifBookingsListScreen({ navigation }) {
     return items.filter((item) => item.status === statusFilter);
   }, [items, statusFilter]);
 
-  const renderHeader = () => (
+  const renderItem = useCallback(({ item }) => (
+    <MuthowifBookingListItem
+      item={item}
+      onPress={() => navigation.navigate('MuthowifBookingDetail', { bookingId: item.id })}
+    />
+  ), [navigation]);
+
+  const listHeader = (
     <View style={styles.headerBlock}>
-      {stats.pending > 0 ? (
-        <View style={styles.alertBanner}>
-          <Ionicons name="notifications-outline" size={18} color="#7C3AED" />
-          <Text style={styles.alertText}>
-            {stats.pending} permintaan menunggu konfirmasi Anda
-          </Text>
-        </View>
-      ) : null}
+      <PendingBanner
+        count={stats.pending}
+        color={pendingMeta.color}
+        onPress={() => setStatusFilter('pending')}
+      />
 
       <View style={styles.statsRow}>
-        <StatCard label="Menunggu" value={stats.pending} color="#7C3AED" icon="time-outline" />
-        <StatCard label="Aktif" value={stats.active} color="#0984E3" icon="calendar-outline" />
-        <StatCard label="Selesai" value={stats.done} color="#00B894" icon="checkmark-done-outline" />
+        <StatTile label="Menunggu" value={stats.pending} color={pendingMeta.color} icon={Bell} />
+        <StatTile label="Aktif" value={stats.active} color={confirmedMeta.color} icon={CalendarCheck} />
+        <StatTile label="Selesai" value={stats.done} color={completedMeta.color} icon={CheckCircle2} />
       </View>
 
-      <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.tabBar}>
-        {STATUS_FILTERS.map((filter) => {
-          const active = statusFilter === filter.value;
-          return (
-            <TouchableOpacity
-              key={filter.value}
-              style={[styles.tabBtn, active && styles.tabBtnActive]}
-              onPress={() => setStatusFilter(filter.value)}
-              activeOpacity={0.88}
-            >
-              <Ionicons name={filter.icon} size={14} color={active ? colors.white : colors.slate500} />
-              <Text style={[styles.tabText, active && styles.tabTextActive]}>{filter.label}</Text>
-            </TouchableOpacity>
-          );
-        })}
+      <ScrollView
+        horizontal
+        showsHorizontalScrollIndicator={false}
+        contentContainerStyle={styles.filters}
+      >
+        {MUTHOWIF_BOOKING_FILTERS.map((filter) => (
+          <FilterChip
+            key={filter.value}
+            label={filter.label}
+            icon={filter.icon}
+            active={statusFilter === filter.value}
+            onPress={() => setStatusFilter(filter.value)}
+          />
+        ))}
       </ScrollView>
 
       {filteredItems.length > 0 ? (
@@ -120,6 +125,15 @@ export default function MuthowifBookingsListScreen({ navigation }) {
     </View>
   );
 
+  if (loading && !refreshing) {
+    return (
+      <View style={styles.container}>
+        <TabPageHeader title="Permintaan" subtitle="Kelola booking jamaah" />
+        <SkeletonList count={4} style={styles.skeleton} />
+      </View>
+    );
+  }
+
   return (
     <View style={styles.container}>
       <TabPageHeader
@@ -127,41 +141,29 @@ export default function MuthowifBookingsListScreen({ navigation }) {
         subtitle={stats.pending > 0 ? `${stats.pending} menunggu konfirmasi` : 'Kelola booking jamaah'}
       />
 
-      {loading && !refreshing ? (
-        <ActivityIndicator color={colors.baytgo} style={styles.loader} />
+      {error && items.length === 0 ? (
+        <ErrorState description={error} onRetry={() => load()} />
       ) : (
-        <FlatList
+        <FlashList
           data={filteredItems}
           keyExtractor={(item) => String(item.id)}
-          ListHeaderComponent={renderHeader}
-          renderItem={({ item }) => (
-            <MuthowifBookingListItem
-              item={item}
-              onPress={() => navigation.navigate('MuthowifBookingDetail', { bookingId: item.id })}
-            />
-          )}
+          renderItem={renderItem}
+          estimatedItemSize={200}
+          ListHeaderComponent={listHeader}
           contentContainerStyle={styles.list}
           showsVerticalScrollIndicator={false}
-          refreshControl={
-            <RefreshControl refreshing={refreshing} onRefresh={() => load(true)} tintColor={colors.baytgo} />
-          }
+          refreshing={refreshing}
+          onRefresh={() => load(true)}
           ListEmptyComponent={
-            <View style={styles.empty}>
-              <View style={styles.emptyIcon}>
-                <Ionicons name="clipboard-outline" size={32} color={colors.slate400} />
-              </View>
-              <Text style={styles.emptyTitle}>
-                {error ? 'Gagal memuat data' : 'Belum ada permintaan'}
-              </Text>
-              <Text style={styles.emptyText}>
-                {error || 'Permintaan booking dari jamaah akan muncul di sini.'}
-              </Text>
-              {error ? (
-                <TouchableOpacity style={styles.retryBtn} onPress={() => load()}>
-                  <Text style={styles.retryText}>Coba lagi</Text>
-                </TouchableOpacity>
-              ) : null}
-            </View>
+            error ? (
+              <ErrorState description={error} onRetry={() => load()} />
+            ) : (
+              <EmptyState
+                variant="bookings"
+                title="Belum ada permintaan"
+                description="Permintaan booking dari jamaah akan muncul di sini."
+              />
+            )
           }
         />
       )}
@@ -170,95 +172,67 @@ export default function MuthowifBookingsListScreen({ navigation }) {
 }
 
 const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: colors.canvas },
-  headerBlock: { paddingBottom: 4 },
-  alertBanner: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 10,
-    backgroundColor: '#F5F3FF',
-    borderRadius: 14,
-    padding: 14,
-    marginBottom: 14,
-    borderWidth: 1,
-    borderColor: '#DDD6FE',
-  },
-  alertText: { flex: 1, fontSize: 13, fontWeight: '700', color: '#5B21B6', lineHeight: 18 },
-  statsRow: { flexDirection: 'row', gap: 10, marginBottom: 14 },
-  statCard: {
+  container: {
     flex: 1,
-    backgroundColor: colors.white,
-    borderRadius: 16,
-    padding: 12,
-    borderWidth: 1,
-    alignItems: 'center',
+    backgroundColor: colors.background,
   },
-  statIcon: {
-    width: 32,
-    height: 32,
-    borderRadius: 10,
-    alignItems: 'center',
-    justifyContent: 'center',
-    marginBottom: 8,
+  skeleton: {
+    paddingHorizontal: layout.screenPadding,
+    paddingTop: spacing.lg,
   },
-  statValue: { fontSize: 20, fontWeight: '900' },
-  statLabel: { marginTop: 2, fontSize: 11, fontWeight: '700', color: colors.slate500 },
-  tabBar: {
-    flexDirection: 'row',
-    gap: 8,
-    marginBottom: 12,
-    paddingRight: 4,
+  headerBlock: {
+    paddingBottom: spacing.sm,
   },
-  tabBtn: {
+  bannerPress: {
+    marginBottom: spacing.lg,
+  },
+  banner: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 5,
-    paddingHorizontal: 12,
-    paddingVertical: 9,
-    borderRadius: 999,
-    backgroundColor: colors.white,
+    gap: spacing.md,
+    borderRadius: 20,
+    padding: spacing.lg,
     borderWidth: 1,
-    borderColor: colors.slate100,
   },
-  tabBtnActive: { backgroundColor: colors.baytgo, borderColor: colors.baytgo },
-  tabText: { fontSize: 12, fontWeight: '800', color: colors.slate600 },
-  tabTextActive: { color: colors.white },
-  resultCount: {
-    fontSize: 12,
-    fontWeight: '700',
-    color: colors.slate500,
-    marginBottom: 10,
-    marginLeft: 2,
-  },
-  list: { paddingHorizontal: 20, paddingBottom: 32 },
-  loader: { marginTop: 40 },
-  empty: { alignItems: 'center', paddingTop: 40, paddingHorizontal: 20 },
-  emptyIcon: {
-    width: 72,
-    height: 72,
-    borderRadius: 36,
-    backgroundColor: colors.white,
-    alignItems: 'center',
-    justifyContent: 'center',
-    marginBottom: 16,
-    borderWidth: 1,
-    borderColor: colors.slate100,
-  },
-  emptyTitle: { fontSize: 16, fontWeight: '900', color: colors.baytgo },
-  emptyText: {
-    marginTop: 8,
-    fontSize: 13,
-    fontWeight: '600',
-    color: colors.slate500,
-    textAlign: 'center',
-    lineHeight: 19,
-  },
-  retryBtn: {
-    marginTop: 16,
-    paddingHorizontal: 20,
-    paddingVertical: 12,
+  bannerIcon: {
+    width: 40,
+    height: 40,
     borderRadius: 12,
-    backgroundColor: colors.baytgo,
+    alignItems: 'center',
+    justifyContent: 'center',
   },
-  retryText: { fontSize: 14, fontWeight: '800', color: colors.white },
+  bannerCopy: { flex: 1 },
+  bannerTitle: {
+    ...typography.caption,
+    fontFamily: 'PlusJakartaSans_700Bold',
+  },
+  bannerSub: {
+    ...typography.small,
+    color: colors.textSecondary,
+    marginTop: spacing.xs,
+    fontWeight: '500',
+    fontFamily: 'PlusJakartaSans_500Medium',
+  },
+  statsRow: {
+    flexDirection: 'row',
+    gap: spacing.md,
+    marginBottom: spacing.lg,
+  },
+  filters: {
+    gap: spacing.sm,
+    paddingRight: spacing.lg,
+    marginBottom: spacing.md,
+  },
+  resultCount: {
+    ...typography.small,
+    color: colors.textSecondary,
+    marginBottom: spacing.md,
+    marginLeft: spacing.xs,
+    fontWeight: '500',
+    fontFamily: 'PlusJakartaSans_500Medium',
+  },
+  list: {
+    paddingHorizontal: layout.screenPadding,
+    paddingBottom: spacing.lg,
+  },
 });

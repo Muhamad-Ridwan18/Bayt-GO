@@ -1,19 +1,13 @@
 import React, { useState } from 'react';
-import {
-  View,
-  Text,
-  StyleSheet,
-  TouchableOpacity,
-  ActivityIndicator,
-  Alert,
-  ScrollView,
-} from 'react-native';
-import { LinearGradient } from 'expo-linear-gradient';
+import { View, Text, StyleSheet, ScrollView } from 'react-native';
+import { Lock, KeyRound } from 'lucide-react-native';
 import AuthInput from '../components/AuthInput';
 import ScreenHeader from '../components/ScreenHeader';
+import Button from '../ui/Button';
 import { updatePassword } from '../api/profile';
 import { useAuth } from '../context/AuthContext';
-import { colors } from '../theme/colors';
+import { notifySuccessThen } from '../utils/feedback';
+import { colors, layout, radius, spacing, typography } from '../theme/tokens';
 
 export default function ChangePasswordScreen({ navigation }) {
   const { token } = useAuth();
@@ -37,9 +31,7 @@ export default function ChangePasswordScreen({ navigation }) {
     setError('');
     try {
       await updatePassword(token, { currentPassword, password, passwordConfirmation });
-      Alert.alert('Berhasil', 'Password berhasil diperbarui.', [
-        { text: 'OK', onPress: () => navigation.goBack() },
-      ]);
+      notifySuccessThen(navigation, 'Password berhasil diperbarui.', () => navigation.goBack());
     } catch (err) {
       setError(err.message || 'Gagal memperbarui password');
     } finally {
@@ -56,7 +48,7 @@ export default function ChangePasswordScreen({ navigation }) {
 
         <AuthInput
           label="Password saat ini"
-          icon="lock-closed-outline"
+          icon={Lock}
           secureTextEntry
           value={currentPassword}
           onChangeText={setCurrentPassword}
@@ -64,7 +56,7 @@ export default function ChangePasswordScreen({ navigation }) {
         />
         <AuthInput
           label="Password baru"
-          icon="key-outline"
+          icon={KeyRound}
           secureTextEntry
           value={password}
           onChangeText={setPassword}
@@ -72,32 +64,29 @@ export default function ChangePasswordScreen({ navigation }) {
         />
         <AuthInput
           label="Konfirmasi password baru"
-          icon="key-outline"
+          icon={KeyRound}
           secureTextEntry
           value={passwordConfirmation}
           onChangeText={setPasswordConfirmation}
           placeholder="Ulangi password baru"
         />
 
-        <TouchableOpacity style={styles.saveBtn} onPress={handleSave} disabled={loading} activeOpacity={0.9}>
-          <LinearGradient colors={[colors.baytgo, colors.baytgoDark]} style={styles.saveGradient}>
-            {loading ? (
-              <ActivityIndicator color={colors.white} />
-            ) : (
-              <Text style={styles.saveText}>Simpan Password</Text>
-            )}
-          </LinearGradient>
-        </TouchableOpacity>
+        <Button label="Simpan Password" onPress={handleSave} loading={loading} />
       </ScrollView>
     </View>
   );
 }
 
 const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: colors.canvas },
-  scroll: { padding: 16, paddingBottom: 32 },
-  error: { marginBottom: 12, fontSize: 13, color: '#DC2626', fontWeight: '600' },
-  saveBtn: { marginTop: 8, borderRadius: 16, overflow: 'hidden' },
-  saveGradient: { paddingVertical: 16, alignItems: 'center' },
-  saveText: { color: colors.white, fontSize: 15, fontWeight: '800' },
+  container: { flex: 1, backgroundColor: colors.background },
+  scroll: { padding: layout.screenPadding, paddingBottom: spacing['3xl'] },
+  error: {
+    backgroundColor: colors.errorLight,
+    color: colors.error,
+    padding: spacing.md,
+    borderRadius: radius.sm,
+    marginBottom: spacing.lg,
+    ...typography.caption,
+    fontFamily: 'PlusJakartaSans_600SemiBold',
+  },
 });

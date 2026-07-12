@@ -103,6 +103,11 @@ export function canRequestReschedule(booking) {
   return canRequestRefund(booking) && !hasPendingReschedule(booking);
 }
 
+export function canOpenBookingChat(booking) {
+  if (!booking || booking.payment_status !== 'paid') return false;
+  return ['confirmed', 'in_progress', 'completed'].includes(booking.status);
+}
+
 export function changeRequestStatusLabel(status) {
   const map = {
     pending: 'Menunggu',

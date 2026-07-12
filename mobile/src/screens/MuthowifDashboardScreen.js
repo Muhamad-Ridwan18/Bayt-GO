@@ -4,36 +4,56 @@ import {
   Text,
   StyleSheet,
   ScrollView,
-  TouchableOpacity,
-  ActivityIndicator,
   RefreshControl,
   Share,
-  Image,
   Dimensions,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { LinearGradient } from 'expo-linear-gradient';
-import { Ionicons } from '@expo/vector-icons';
+import {
+  ArrowRight,
+  Bell,
+  Calendar,
+  ChevronRight,
+  ClipboardList,
+  Gift,
+  Images,
+  MessageCircle,
+  Share2,
+  Star,
+  Tag,
+  User,
+  Wallet,
+  HeartPulse,
+} from 'lucide-react-native';
 import { useAuth } from '../context/AuthContext';
 import { fetchMuthowifDashboard } from '../api/dashboard';
-import { colors } from '../theme/colors';
-import { formatIdr } from '../utils/format';
+import {
+  AppImage,
+  Card,
+  EmptyState,
+  ErrorState,
+  PressableScale,
+  SkeletonList,
+} from '../ui';
 import { bookingStatusMeta, formatDateRange } from '../utils/bookingLabels';
+import { formatIdr } from '../utils/format';
+import { colors, gradients, layout, radius, shadows, spacing, typography } from '../theme/tokens';
 
 const { width: SCREEN_W } = Dimensions.get('window');
 
 const PRIMARY_SERVICES = [
-  { key: 'requests', icon: 'clipboard', label: 'Permintaan', bg: '#EDE9FE', color: '#7C3AED' },
-  { key: 'wallet', icon: 'wallet', label: 'Dompet', bg: '#FEF3C7', color: '#D97706' },
-  { key: 'chat', icon: 'chatbubbles', label: 'Chat', bg: '#DCFCE7', color: '#16A34A' },
-  { key: 'emergency', icon: 'medkit', label: 'Darurat', bg: '#FEE2E2', color: '#DC2626' },
+  { key: 'requests', Icon: ClipboardList, label: 'Permintaan', bg: '#EDE9FE', color: '#7C3AED' },
+  { key: 'wallet', Icon: Wallet, label: 'Dompet', bg: colors.warningLight, color: colors.warning },
+  { key: 'chat', Icon: MessageCircle, label: 'Chat', bg: colors.successLight, color: colors.success },
+  { key: 'emergency', Icon: HeartPulse, label: 'Darurat', bg: colors.errorLight, color: colors.error },
 ];
 
 const SECONDARY_SERVICES = [
-  { key: 'schedule', icon: 'calendar', label: 'Libur', bg: '#E0F2FE', color: '#0284C7' },
-  { key: 'services', icon: 'pricetag', label: 'Layanan', bg: '#FCE7F3', color: '#DB2777' },
-  { key: 'portfolio', icon: 'images', label: 'Portfolio', bg: '#F3E8FF', color: '#9333EA' },
-  { key: 'profile', icon: 'person', label: 'Profil', bg: '#ECFDF5', color: '#059669' },
+  { key: 'schedule', Icon: Calendar, label: 'Libur', bg: '#E0F2FE', color: '#0284C7' },
+  { key: 'services', Icon: Tag, label: 'Layanan', bg: '#FCE7F3', color: '#DB2777' },
+  { key: 'portfolio', Icon: Images, label: 'Portfolio', bg: '#F3E8FF', color: '#9333EA' },
+  { key: 'profile', Icon: User, label: 'Profil', bg: colors.primaryLight, color: colors.primary },
 ];
 
 function daysUntil(iso) {
@@ -49,10 +69,11 @@ function daysUntil(iso) {
 }
 
 function ServiceTile({ item, badge, onPress }) {
+  const Icon = item.Icon;
   return (
-    <TouchableOpacity style={styles.serviceTile} onPress={onPress} activeOpacity={0.88}>
+    <PressableScale onPress={onPress} haptic="light" scaleTo={0.94} style={styles.serviceTile}>
       <View style={[styles.serviceIcon, { backgroundColor: item.bg }]}>
-        <Ionicons name={item.icon} size={22} color={item.color} />
+        <Icon size={22} color={item.color} strokeWidth={2} />
         {badge ? (
           <View style={styles.serviceBadge}>
             <Text style={styles.serviceBadgeText}>{badge > 99 ? '99+' : badge}</Text>
@@ -60,17 +81,17 @@ function ServiceTile({ item, badge, onPress }) {
         ) : null}
       </View>
       <Text style={styles.serviceLabel}>{item.label}</Text>
-    </TouchableOpacity>
+    </PressableScale>
   );
 }
 
 function StatPill({ label, value, color }) {
   return (
-    <View style={styles.statPill}>
+    <Card style={styles.statPill} padding={spacing.md + 2} elevated={false}>
       <View style={[styles.statDot, { backgroundColor: color }]} />
       <Text style={styles.statPillValue}>{value}</Text>
       <Text style={styles.statPillLabel}>{label}</Text>
-    </View>
+    </Card>
   );
 }
 
@@ -78,50 +99,48 @@ function ScheduleCard({ item, featured, onPress }) {
   const statusMeta = bookingStatusMeta(item.status);
   const countdown = featured ? daysUntil(item.starts_on) : null;
 
-  return (
-    <TouchableOpacity
-      style={[styles.scheduleCard, featured && styles.scheduleCardFeatured]}
-      onPress={onPress}
-      activeOpacity={0.92}
-    >
-      {featured ? (
-        <LinearGradient colors={['#1A3D34', '#256B5C']} style={styles.scheduleFeaturedGradient}>
+  if (featured) {
+    return (
+      <PressableScale onPress={onPress} haptic="light" style={styles.scheduleCard}>
+        <LinearGradient colors={gradients.primary} style={styles.scheduleFeatured}>
           <View style={styles.scheduleFeaturedTop}>
             <Text style={styles.scheduleFeaturedKicker}>Jadwal terdekat</Text>
             {countdown ? <Text style={styles.scheduleCountdown}>{countdown}</Text> : null}
           </View>
           <View style={styles.scheduleFeaturedBody}>
-            <Image source={{ uri: item.customer_avatar }} style={styles.scheduleAvatar} />
+            <AppImage uri={item.customer_avatar} size={52} rounded={radius.sm} />
             <View style={styles.scheduleInfo}>
               <Text style={styles.scheduleCustomerFeatured} numberOfLines={1}>{item.customer_name}</Text>
-              <Text style={styles.scheduleDatesFeatured}>
-                {formatDateRange(item.starts_on, item.ends_on)}
-              </Text>
+              <Text style={styles.scheduleDatesFeatured}>{formatDateRange(item.starts_on, item.ends_on)}</Text>
               <Text style={styles.scheduleMetaFeatured}>
                 {item.duration}
                 {item.pilgrim_count ? ` · ${item.pilgrim_count} jamaah` : ''}
               </Text>
             </View>
-            <View style={[styles.scheduleStatusBadge, { backgroundColor: statusMeta.color + '40' }]}>
+            <View style={[styles.scheduleStatusBadge, { backgroundColor: `${statusMeta.color}40` }]}>
               <Text style={styles.scheduleStatusFeatured}>{statusMeta.label}</Text>
             </View>
           </View>
           <Text style={styles.scheduleCodeFeatured}>#{item.booking_number}</Text>
         </LinearGradient>
-      ) : (
-        <View style={styles.scheduleCompact}>
-          <Image source={{ uri: item.customer_avatar }} style={styles.scheduleAvatarSm} />
-          <View style={styles.scheduleCompactInfo}>
-            <Text style={styles.scheduleCustomer} numberOfLines={1}>{item.customer_name}</Text>
-            <Text style={styles.scheduleDates}>{item.date} · {item.duration}</Text>
-          </View>
-          <View style={styles.scheduleCompactRight}>
-            <View style={[styles.statusDot, { backgroundColor: statusMeta.color }]} />
-            <Text style={styles.scheduleStatus}>{statusMeta.label}</Text>
-          </View>
+      </PressableScale>
+    );
+  }
+
+  return (
+    <PressableScale onPress={onPress} haptic="light" style={styles.scheduleCard}>
+      <Card style={styles.scheduleCompact} padding={spacing.lg - 2} elevated={false}>
+        <AppImage uri={item.customer_avatar} size={44} rounded={radius.sm} />
+        <View style={styles.scheduleCompactInfo}>
+          <Text style={styles.scheduleCustomer} numberOfLines={1}>{item.customer_name}</Text>
+          <Text style={styles.scheduleDates}>{item.date} · {item.duration}</Text>
         </View>
-      )}
-    </TouchableOpacity>
+        <View style={styles.scheduleCompactRight}>
+          <View style={[styles.statusDot, { backgroundColor: statusMeta.color }]} />
+          <Text style={styles.scheduleStatus}>{statusMeta.label}</Text>
+        </View>
+      </Card>
+    </PressableScale>
   );
 }
 
@@ -146,7 +165,6 @@ export default function MuthowifDashboardScreen({ navigation }) {
   const loadDashboard = useCallback(async (refresh = false) => {
     if (refresh) setRefreshing(true);
     else setLoading(true);
-
     try {
       const data = await fetchMuthowifDashboard(token);
       setStats(data.stats || []);
@@ -167,36 +185,20 @@ export default function MuthowifDashboardScreen({ navigation }) {
     }
   }, [token]);
 
-  useEffect(() => {
-    loadDashboard();
-  }, [loadDashboard]);
+  useEffect(() => { loadDashboard(); }, [loadDashboard]);
 
-  const goRequests = () => {
-    navigation.getParent()?.navigate('MuthowifBookingsTab', { screen: 'MuthowifBookingsList' });
-  };
-
-  const goWallet = () => {
-    navigation.getParent()?.navigate('WalletTab', { screen: 'WalletMain' });
-  };
-
-  const goChat = () => {
-    navigation.getParent()?.navigate('ChatTab', { screen: 'ChatList' });
-  };
-
-  const openSchedule = (item) => {
-    navigation.getParent()?.navigate('MuthowifBookingsTab', {
-      screen: 'MuthowifBookingDetail',
-      params: { bookingId: item.id },
-    });
-  };
+  const goRequests = () => navigation.getParent()?.navigate('MuthowifBookingsTab', { screen: 'MuthowifBookingsList' });
+  const goWallet = () => navigation.getParent()?.navigate('WalletTab', { screen: 'WalletMain' });
+  const goChat = () => navigation.getParent()?.navigate('ChatTab', { screen: 'ChatList' });
+  const openSchedule = (item) => navigation.getParent()?.navigate('MuthowifBookingsTab', {
+    screen: 'MuthowifBookingDetail', params: { bookingId: item.id },
+  });
 
   const shareReferral = async () => {
     if (!referralCode) return;
     try {
       await Share.share({ message: `Daftar sebagai muthowif di BaytGo dengan kode referral saya: ${referralCode}` });
-    } catch {
-      // ignore
-    }
+    } catch { /* ignore */ }
   };
 
   const handleService = (key) => {
@@ -229,89 +231,73 @@ export default function MuthowifDashboardScreen({ navigation }) {
             <Text style={styles.heroName}>{firstName}</Text>
             {rating ? (
               <View style={styles.ratingChip}>
-                <Ionicons name="star" size={12} color={colors.gold} />
+                <Star size={12} color={colors.gold} fill={colors.gold} strokeWidth={2} />
                 <Text style={styles.ratingText}>{rating}</Text>
                 <Text style={styles.ratingReviews}>({reviewCount} ulasan)</Text>
               </View>
             ) : null}
           </View>
-          <TouchableOpacity style={styles.bellBtn} onPress={goRequests}>
-            <Ionicons name="notifications-outline" size={22} color={colors.baytgo} />
+          <PressableScale onPress={goRequests} haptic="light" style={styles.bellBtn}>
+            <Bell size={22} color={colors.baytgo} strokeWidth={2} />
             {pendingCount > 0 ? (
               <View style={styles.bellBadge}>
                 <Text style={styles.bellBadgeText}>{pendingCount > 9 ? '9+' : pendingCount}</Text>
               </View>
             ) : null}
-          </TouchableOpacity>
+          </PressableScale>
         </View>
         <Text style={styles.heroTagline}>Kelola jadwal dan pendapatan Anda</Text>
       </SafeAreaView>
 
       <ScrollView
         showsVerticalScrollIndicator={false}
-        refreshControl={
-          <RefreshControl refreshing={refreshing} onRefresh={() => loadDashboard(true)} tintColor={colors.baytgo} />
-        }
+        contentContainerStyle={{ paddingBottom: spacing.lg }}
+        refreshControl={<RefreshControl refreshing={refreshing} onRefresh={() => loadDashboard(true)} tintColor={colors.baytgo} />}
       >
-        <TouchableOpacity style={styles.walletCard} onPress={goWallet} activeOpacity={0.92}>
-          <LinearGradient colors={['#C5A059', '#E8C97A', '#B8954D']} start={{ x: 0, y: 0 }} end={{ x: 1, y: 1 }} style={styles.walletGradient}>
+        <PressableScale onPress={goWallet} haptic="light" style={styles.walletCard}>
+          <LinearGradient colors={gradients.gold} start={{ x: 0, y: 0 }} end={{ x: 1, y: 1 }} style={styles.walletGradient}>
             <View style={styles.walletTop}>
               <View>
                 <Text style={styles.walletLabel}>Saldo dompet</Text>
                 <Text style={styles.walletAmount}>{formatIdr(walletBalance)}</Text>
               </View>
               <View style={styles.walletIconWrap}>
-                <Ionicons name="wallet" size={28} color={colors.baytgoDark} />
+                <Wallet size={28} color={colors.baytgoDark} strokeWidth={1.8} />
               </View>
             </View>
             <View style={styles.walletFooter}>
               <Text style={styles.walletHint}>Tarik saldo kapan saja</Text>
               <View style={styles.walletCta}>
                 <Text style={styles.walletCtaText}>Buka dompet</Text>
-                <Ionicons name="arrow-forward" size={14} color={colors.baytgoDark} />
+                <ArrowRight size={14} color={colors.baytgoDark} strokeWidth={2.5} />
               </View>
             </View>
           </LinearGradient>
-        </TouchableOpacity>
+        </PressableScale>
 
         {pendingCount > 0 ? (
-          <TouchableOpacity style={styles.alertCard} onPress={goRequests} activeOpacity={0.9}>
+          <PressableScale onPress={goRequests} haptic="light" style={styles.alertCard}>
             <View style={styles.alertIcon}>
-              <Ionicons name="clipboard" size={20} color="#7C3AED" />
+              <ClipboardList size={20} color="#7C3AED" strokeWidth={2} />
             </View>
             <View style={styles.alertTexts}>
               <Text style={styles.alertTitle}>{pendingCount} permintaan baru</Text>
               <Text style={styles.alertSub}>Jamaah menunggu konfirmasi Anda</Text>
             </View>
-            <Ionicons name="chevron-forward" size={18} color={colors.slate400} />
-          </TouchableOpacity>
+            <ChevronRight size={18} color={colors.textMuted} strokeWidth={2} />
+          </PressableScale>
         ) : null}
 
         <View style={styles.body}>
-          {loading && !refreshing ? (
-            <ActivityIndicator color={colors.baytgo} style={styles.loader} />
-          ) : null}
-
-          {error ? (
-            <View style={styles.errorBox}>
-              <Text style={styles.errorText}>{error}</Text>
-              <TouchableOpacity onPress={() => loadDashboard()}>
-                <Text style={styles.retry}>Coba lagi</Text>
-              </TouchableOpacity>
-            </View>
-          ) : null}
+          {loading && !refreshing ? <SkeletonList count={2} /> : null}
+          {error ? <ErrorState description={error} onRetry={() => loadDashboard()} /> : null}
 
           {!loading ? (
             <>
               <Text style={styles.gridTitle}>Menu cepat</Text>
               <View style={styles.serviceGrid}>
                 {PRIMARY_SERVICES.map((item) => (
-                  <ServiceTile
-                    key={item.key}
-                    item={item}
-                    badge={serviceBadge(item.key)}
-                    onPress={() => handleService(item.key)}
-                  />
+                  <ServiceTile key={item.key} item={item} badge={serviceBadge(item.key)} onPress={() => handleService(item.key)} />
                 ))}
               </View>
               <View style={[styles.serviceGrid, styles.serviceGridSecond]}>
@@ -330,20 +316,19 @@ export default function MuthowifDashboardScreen({ navigation }) {
 
               <View style={styles.sectionHead}>
                 <Text style={styles.sectionTitle}>Jadwal mendatang</Text>
-                <TouchableOpacity onPress={goRequests}>
+                <PressableScale onPress={goRequests} haptic="light">
                   <Text style={styles.seeAll}>Lihat semua</Text>
-                </TouchableOpacity>
+                </PressableScale>
               </View>
 
               {!nextSchedule ? (
-                <View style={styles.emptySchedule}>
-                  <Ionicons name="calendar-outline" size={36} color={colors.slate400} />
-                  <Text style={styles.emptyScheduleTitle}>Belum ada jadwal aktif</Text>
-                  <Text style={styles.emptyScheduleSub}>Permintaan yang disetujui akan muncul di sini</Text>
-                  <TouchableOpacity style={styles.emptyScheduleBtn} onPress={() => navigation.navigate('Schedule')}>
-                    <Text style={styles.emptyScheduleBtnText}>Atur jadwal libur</Text>
-                  </TouchableOpacity>
-                </View>
+                <EmptyState
+                  variant="schedule"
+                  title="Belum ada jadwal aktif"
+                  description="Permintaan yang disetujui akan muncul di sini"
+                  actionLabel="Atur jadwal libur"
+                  onAction={() => navigation.navigate('Schedule')}
+                />
               ) : (
                 <>
                   <ScheduleCard item={nextSchedule} featured onPress={() => openSchedule(nextSchedule)} />
@@ -354,23 +339,20 @@ export default function MuthowifDashboardScreen({ navigation }) {
               )}
 
               {referralCode ? (
-                <TouchableOpacity style={styles.referralCard} onPress={shareReferral} activeOpacity={0.9}>
-                  <LinearGradient
-                    colors={[colors.baytgoLight, colors.white]}
-                    style={styles.referralGradient}
-                  >
+                <PressableScale onPress={shareReferral} haptic="light" style={styles.referralCard}>
+                  <LinearGradient colors={[colors.baytgoLight, colors.white]} style={styles.referralGradient}>
                     <View style={styles.referralLeft}>
-                      <Ionicons name="gift" size={24} color={colors.baytgo} />
+                      <Gift size={24} color={colors.baytgo} strokeWidth={2} />
                       <View style={styles.referralTexts}>
                         <Text style={styles.referralTitle}>Kode referral Anda</Text>
                         <Text style={styles.referralCode}>{referralCode}</Text>
                       </View>
                     </View>
                     <View style={styles.referralShare}>
-                      <Ionicons name="share-outline" size={18} color={colors.baytgo} />
+                      <Share2 size={18} color={colors.baytgo} strokeWidth={2} />
                     </View>
                   </LinearGradient>
-                </TouchableOpacity>
+                </PressableScale>
               ) : null}
             </>
           ) : null}
@@ -381,42 +363,49 @@ export default function MuthowifDashboardScreen({ navigation }) {
 }
 
 const styles = StyleSheet.create({
-  root: { flex: 1, backgroundColor: colors.canvas },
+  root: { flex: 1, backgroundColor: colors.background },
   topBar: {
-    backgroundColor: colors.white,
+    backgroundColor: colors.card,
     borderBottomWidth: 1,
-    borderBottomColor: colors.slate100,
-    paddingHorizontal: 20,
-    paddingTop: 8,
-    paddingBottom: 14,
+    borderBottomColor: colors.border,
+    paddingHorizontal: layout.screenPadding,
+    paddingTop: spacing.sm,
+    paddingBottom: spacing.md + 2,
   },
   heroTop: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'flex-start' },
   heroLeft: { flex: 1 },
-  heroGreet: { fontSize: 14, fontWeight: '600', color: colors.slate500 },
-  heroName: { fontSize: 24, fontWeight: '900', color: colors.baytgo, marginTop: 2, letterSpacing: -0.5 },
+  heroGreet: { ...typography.caption, color: colors.textSecondary },
+  heroName: {
+    ...typography.title,
+    color: colors.baytgo,
+    marginTop: 2,
+    letterSpacing: -0.5,
+    fontFamily: 'PlusJakartaSans_800ExtraBold',
+    fontWeight: '800',
+  },
   ratingChip: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 4,
+    gap: spacing.xs,
     alignSelf: 'flex-start',
-    marginTop: 8,
+    marginTop: spacing.sm,
     backgroundColor: colors.baytgoLight,
-    paddingHorizontal: 10,
-    paddingVertical: 5,
-    borderRadius: 999,
+    paddingHorizontal: spacing.md,
+    paddingVertical: spacing.xs + 1,
+    borderRadius: radius.full,
   },
-  ratingText: { fontSize: 13, fontWeight: '900', color: colors.gold },
-  ratingReviews: { fontSize: 11, fontWeight: '600', color: colors.slate500 },
-  heroTagline: { marginTop: 10, fontSize: 13, fontWeight: '500', color: colors.slate500 },
+  ratingText: { ...typography.caption, fontWeight: '900', color: colors.gold },
+  ratingReviews: { ...typography.small, color: colors.textSecondary },
+  heroTagline: { marginTop: spacing.md - 2, ...typography.caption, color: colors.textSecondary },
   bellBtn: {
     width: 44,
     height: 44,
-    borderRadius: 14,
-    backgroundColor: colors.canvas,
+    borderRadius: radius.sm,
+    backgroundColor: colors.background,
     alignItems: 'center',
     justifyContent: 'center',
     borderWidth: 1,
-    borderColor: colors.slate100,
+    borderColor: colors.border,
   },
   bellBadge: {
     position: 'absolute',
@@ -425,89 +414,87 @@ const styles = StyleSheet.create({
     minWidth: 18,
     height: 18,
     borderRadius: 9,
-    backgroundColor: '#EF4444',
+    backgroundColor: colors.error,
     alignItems: 'center',
     justifyContent: 'center',
-    paddingHorizontal: 4,
+    paddingHorizontal: spacing.xs,
     borderWidth: 2,
     borderColor: colors.white,
   },
   bellBadgeText: { fontSize: 10, fontWeight: '900', color: colors.white },
   walletCard: {
-    marginHorizontal: 20,
-    marginTop: 16,
-    borderRadius: 22,
+    marginHorizontal: layout.screenPadding,
+    marginTop: spacing.lg,
+    borderRadius: radius.md,
     overflow: 'hidden',
-    shadowColor: '#B8954D',
-    shadowOffset: { width: 0, height: 8 },
-    shadowOpacity: 0.25,
-    shadowRadius: 16,
-    elevation: 8,
+    ...shadows.lg,
+    shadowColor: colors.goldMuted,
   },
-  walletGradient: { padding: 20 },
+  walletGradient: { padding: spacing.xl },
   walletTop: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'flex-start' },
-  walletLabel: { fontSize: 12, fontWeight: '700', color: colors.baytgoDark, opacity: 0.75 },
-  walletAmount: { marginTop: 4, fontSize: 28, fontWeight: '900', color: colors.baytgoDark, letterSpacing: -0.5 },
+  walletLabel: { ...typography.small, color: colors.baytgoDark, opacity: 0.75 },
+  walletAmount: {
+    marginTop: spacing.xs,
+    fontSize: 28,
+    fontWeight: '900',
+    color: colors.baytgoDark,
+    letterSpacing: -0.5,
+    fontFamily: 'PlusJakartaSans_800ExtraBold',
+  },
   walletIconWrap: {
     width: 52,
     height: 52,
-    borderRadius: 16,
+    borderRadius: radius.sm,
     backgroundColor: 'rgba(255,255,255,0.45)',
     alignItems: 'center',
     justifyContent: 'center',
   },
-  walletFooter: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginTop: 16 },
-  walletHint: { fontSize: 12, fontWeight: '600', color: colors.baytgoDark, opacity: 0.7 },
-  walletCta: { flexDirection: 'row', alignItems: 'center', gap: 4, backgroundColor: 'rgba(255,255,255,0.5)', paddingHorizontal: 12, paddingVertical: 6, borderRadius: 10 },
-  walletCtaText: { fontSize: 12, fontWeight: '900', color: colors.baytgoDark },
+  walletFooter: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginTop: spacing.lg },
+  walletHint: { ...typography.small, color: colors.baytgoDark, opacity: 0.7 },
+  walletCta: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: spacing.xs,
+    backgroundColor: 'rgba(255,255,255,0.5)',
+    paddingHorizontal: spacing.md,
+    paddingVertical: spacing.sm - 2,
+    borderRadius: radius.sm - 2,
+  },
+  walletCtaText: { ...typography.small, color: colors.baytgoDark, fontFamily: 'PlusJakartaSans_800ExtraBold', fontWeight: '800' },
   alertCard: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 12,
-    marginHorizontal: 20,
-    marginTop: 14,
-    backgroundColor: colors.white,
-    borderRadius: 16,
-    padding: 14,
+    gap: spacing.md,
+    marginHorizontal: layout.screenPadding,
+    marginTop: spacing.md + 2,
+    backgroundColor: colors.card,
+    borderRadius: radius.sm,
+    padding: spacing.lg - 2,
     borderWidth: 1,
     borderColor: '#EDE9FE',
+    ...shadows.sm,
     shadowColor: '#7C3AED',
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.08,
-    shadowRadius: 10,
-    elevation: 3,
   },
   alertIcon: {
     width: 44,
     height: 44,
-    borderRadius: 14,
+    borderRadius: radius.sm,
     backgroundColor: '#EDE9FE',
     alignItems: 'center',
     justifyContent: 'center',
   },
   alertTexts: { flex: 1 },
-  alertTitle: { fontSize: 15, fontWeight: '900', color: colors.slate900 },
-  alertSub: { marginTop: 2, fontSize: 12, fontWeight: '600', color: colors.slate500 },
-  body: { paddingHorizontal: 20, paddingTop: 20, paddingBottom: 32 },
-  loader: { marginVertical: 24 },
-  errorBox: {
-    backgroundColor: colors.white,
-    borderRadius: 16,
-    padding: 16,
-    marginBottom: 16,
-    borderWidth: 1,
-    borderColor: colors.slate100,
-  },
-  errorText: { fontSize: 14, color: colors.slate500, fontWeight: '600' },
-  retry: { marginTop: 8, fontSize: 14, fontWeight: '800', color: colors.baytgo },
-  gridTitle: { fontSize: 16, fontWeight: '900', color: colors.baytgo, marginBottom: 12 },
+  alertTitle: { ...typography.caption, fontWeight: '900', color: colors.textPrimary, fontFamily: 'PlusJakartaSans_800ExtraBold' },
+  alertSub: { marginTop: 2, ...typography.small, color: colors.textSecondary },
+  body: { paddingHorizontal: layout.screenPadding, paddingTop: spacing.xl, paddingBottom: spacing.xl },
+  gridTitle: { ...typography.subtitle, fontSize: 16, color: colors.baytgo, fontFamily: 'PlusJakartaSans_800ExtraBold', fontWeight: '800', marginBottom: spacing.md },
   serviceGrid: { flexDirection: 'row', justifyContent: 'space-between' },
-  serviceGridSecond: { marginTop: 12, marginBottom: 16 },
+  serviceGridSecond: { marginTop: spacing.md, marginBottom: spacing.lg },
   serviceTile: { alignItems: 'center', width: (SCREEN_W - 40) / 4 - 4 },
   serviceIcon: {
     width: 54,
     height: 54,
-    borderRadius: 18,
+    borderRadius: radius.md - 2,
     alignItems: 'center',
     justifyContent: 'center',
     position: 'relative',
@@ -519,99 +506,57 @@ const styles = StyleSheet.create({
     minWidth: 18,
     height: 18,
     borderRadius: 9,
-    backgroundColor: '#EF4444',
+    backgroundColor: colors.error,
     alignItems: 'center',
     justifyContent: 'center',
-    paddingHorizontal: 4,
+    paddingHorizontal: spacing.xs,
     borderWidth: 2,
-    borderColor: colors.canvas,
+    borderColor: colors.background,
   },
   serviceBadgeText: { fontSize: 9, fontWeight: '900', color: colors.white },
-  serviceLabel: { marginTop: 8, fontSize: 11, fontWeight: '700', color: colors.slate700, textAlign: 'center' },
-  statsRow: { gap: 10, paddingBottom: 4, marginBottom: 20 },
-  statPill: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 8,
-    backgroundColor: colors.white,
-    paddingHorizontal: 14,
-    paddingVertical: 10,
-    borderRadius: 14,
-    borderWidth: 1,
-    borderColor: colors.slate100,
-  },
+  serviceLabel: { marginTop: spacing.sm, ...typography.small, color: colors.slate700, textAlign: 'center' },
+  statsRow: { gap: spacing.md - 2, paddingBottom: spacing.xs, marginBottom: spacing.xl },
+  statPill: { flexDirection: 'row', alignItems: 'center', gap: spacing.sm },
   statDot: { width: 8, height: 8, borderRadius: 4 },
-  statPillValue: { fontSize: 14, fontWeight: '900', color: colors.slate900 },
-  statPillLabel: { fontSize: 11, fontWeight: '600', color: colors.slate500 },
-  sectionHead: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginBottom: 14 },
-  sectionTitle: { fontSize: 20, fontWeight: '900', color: colors.baytgo },
-  seeAll: { fontSize: 13, fontWeight: '800', color: colors.goldMuted },
-  scheduleCard: { marginBottom: 10, borderRadius: 18, overflow: 'hidden' },
-  scheduleCardFeatured: { marginBottom: 12 },
-  scheduleFeaturedGradient: { padding: 18 },
+  statPillValue: { ...typography.caption, fontWeight: '900', color: colors.textPrimary, fontFamily: 'PlusJakartaSans_800ExtraBold' },
+  statPillLabel: { ...typography.small, color: colors.textSecondary },
+  sectionHead: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginBottom: spacing.md + 2 },
+  sectionTitle: { ...typography.title, color: colors.baytgo, fontFamily: 'PlusJakartaSans_800ExtraBold', fontWeight: '800' },
+  seeAll: { ...typography.caption, fontWeight: '800', color: colors.goldMuted },
+  scheduleCard: { marginBottom: spacing.md - 2, borderRadius: radius.md - 2, overflow: 'hidden' },
+  scheduleFeatured: { padding: spacing.lg + 2 },
   scheduleFeaturedTop: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' },
-  scheduleFeaturedKicker: { fontSize: 11, fontWeight: '800', color: 'rgba(255,255,255,0.65)', textTransform: 'uppercase', letterSpacing: 0.8 },
-  scheduleCountdown: { fontSize: 14, fontWeight: '900', color: colors.gold },
-  scheduleFeaturedBody: { flexDirection: 'row', alignItems: 'center', gap: 12, marginTop: 14 },
-  scheduleAvatar: { width: 52, height: 52, borderRadius: 16, borderWidth: 2, borderColor: 'rgba(255,255,255,0.25)' },
+  scheduleFeaturedKicker: { ...typography.label, color: 'rgba(255,255,255,0.65)', textTransform: 'uppercase', letterSpacing: 0.8 },
+  scheduleCountdown: { ...typography.caption, fontWeight: '900', color: colors.gold, fontFamily: 'PlusJakartaSans_800ExtraBold' },
+  scheduleFeaturedBody: { flexDirection: 'row', alignItems: 'center', gap: spacing.md, marginTop: spacing.md + 2 },
   scheduleInfo: { flex: 1 },
-  scheduleCustomerFeatured: { fontSize: 17, fontWeight: '900', color: colors.white },
-  scheduleDatesFeatured: { marginTop: 4, fontSize: 13, fontWeight: '600', color: 'rgba(255,255,255,0.85)' },
-  scheduleMetaFeatured: { marginTop: 2, fontSize: 11, fontWeight: '600', color: 'rgba(255,255,255,0.55)' },
-  scheduleStatusBadge: { paddingHorizontal: 10, paddingVertical: 5, borderRadius: 999 },
-  scheduleStatusFeatured: { fontSize: 11, fontWeight: '800', color: colors.white },
-  scheduleCodeFeatured: { marginTop: 12, fontSize: 11, fontWeight: '700', color: 'rgba(255,255,255,0.45)' },
-  scheduleCompact: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 12,
-    backgroundColor: colors.white,
-    padding: 14,
-    borderRadius: 16,
-    borderWidth: 1,
-    borderColor: colors.slate100,
-  },
-  scheduleAvatarSm: { width: 44, height: 44, borderRadius: 14, backgroundColor: colors.slate100 },
+  scheduleCustomerFeatured: { ...typography.subtitle, fontSize: 17, color: colors.white, fontFamily: 'PlusJakartaSans_800ExtraBold', fontWeight: '800' },
+  scheduleDatesFeatured: { marginTop: spacing.xs, ...typography.caption, color: 'rgba(255,255,255,0.85)' },
+  scheduleMetaFeatured: { marginTop: 2, ...typography.small, color: 'rgba(255,255,255,0.55)' },
+  scheduleStatusBadge: { paddingHorizontal: spacing.md - 2, paddingVertical: spacing.xs + 1, borderRadius: radius.full },
+  scheduleStatusFeatured: { ...typography.small, fontWeight: '800', color: colors.white },
+  scheduleCodeFeatured: { marginTop: spacing.md, ...typography.small, color: 'rgba(255,255,255,0.45)' },
+  scheduleCompact: { flexDirection: 'row', alignItems: 'center', gap: spacing.md },
   scheduleCompactInfo: { flex: 1 },
-  scheduleCustomer: { fontSize: 14, fontWeight: '800', color: colors.slate900 },
-  scheduleDates: { marginTop: 3, fontSize: 12, fontWeight: '600', color: colors.slate500 },
-  scheduleCompactRight: { alignItems: 'flex-end', gap: 4 },
+  scheduleCustomer: { ...typography.caption, fontWeight: '800', color: colors.textPrimary, fontFamily: 'PlusJakartaSans_800ExtraBold' },
+  scheduleDates: { marginTop: 3, ...typography.small, color: colors.textSecondary },
+  scheduleCompactRight: { alignItems: 'flex-end', gap: spacing.xs },
   statusDot: { width: 8, height: 8, borderRadius: 4 },
-  scheduleStatus: { fontSize: 10, fontWeight: '800', color: colors.slate500 },
-  emptySchedule: {
-    alignItems: 'center',
-    backgroundColor: colors.white,
-    borderRadius: 20,
-    padding: 28,
-    borderWidth: 1,
-    borderStyle: 'dashed',
-    borderColor: colors.slate200,
-    marginBottom: 16,
-  },
-  emptyScheduleTitle: { marginTop: 12, fontSize: 16, fontWeight: '900', color: colors.slate700 },
-  emptyScheduleSub: { marginTop: 6, fontSize: 13, fontWeight: '600', color: colors.slate500, textAlign: 'center' },
-  emptyScheduleBtn: {
-    marginTop: 16,
-    backgroundColor: colors.emerald50,
-    paddingHorizontal: 16,
-    paddingVertical: 10,
-    borderRadius: 12,
-  },
-  emptyScheduleBtnText: { fontSize: 13, fontWeight: '800', color: colors.baytgo },
-  referralCard: { borderRadius: 18, overflow: 'hidden', marginTop: 8, borderWidth: 1, borderColor: colors.slate100 },
-  referralGradient: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', padding: 16 },
-  referralLeft: { flexDirection: 'row', alignItems: 'center', gap: 12, flex: 1 },
+  scheduleStatus: { ...typography.label, fontSize: 10, color: colors.textSecondary },
+  referralCard: { borderRadius: radius.md - 2, overflow: 'hidden', marginTop: spacing.sm, borderWidth: 1, borderColor: colors.border },
+  referralGradient: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', padding: spacing.lg },
+  referralLeft: { flexDirection: 'row', alignItems: 'center', gap: spacing.md, flex: 1 },
   referralTexts: { flex: 1 },
-  referralTitle: { fontSize: 12, fontWeight: '700', color: colors.slate600 },
-  referralCode: { marginTop: 4, fontSize: 20, fontWeight: '900', color: colors.baytgo, letterSpacing: 2 },
+  referralTitle: { ...typography.small, color: colors.textSecondary },
+  referralCode: { marginTop: spacing.xs, fontSize: 20, fontWeight: '900', color: colors.baytgo, letterSpacing: 2, fontFamily: 'PlusJakartaSans_800ExtraBold' },
   referralShare: {
     width: 40,
     height: 40,
-    borderRadius: 12,
-    backgroundColor: colors.white,
+    borderRadius: radius.sm,
+    backgroundColor: colors.card,
     alignItems: 'center',
     justifyContent: 'center',
     borderWidth: 1,
-    borderColor: colors.slate100,
+    borderColor: colors.border,
   },
 });

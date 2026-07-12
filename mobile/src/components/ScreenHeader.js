@@ -1,16 +1,17 @@
 import React from 'react';
-import { View, Text, StyleSheet, TouchableOpacity } from 'react-native';
+import { StyleSheet, Text, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { Ionicons } from '@expo/vector-icons';
-import { colors } from '../theme/colors';
+import { ChevronLeft } from 'lucide-react-native';
+import PressableScale from '../ui/PressableScale';
+import { colors, radius, shadows, spacing, typography } from '../theme/tokens';
 
 export default function ScreenHeader({ title, subtitle, onBack, rightAction }) {
   return (
     <SafeAreaView edges={['top']} style={styles.safe}>
       <View style={styles.row}>
-        <TouchableOpacity style={styles.backBtn} onPress={onBack}>
-          <Ionicons name="chevron-back" size={22} color={colors.baytgo} />
-        </TouchableOpacity>
+        <PressableScale onPress={onBack} haptic="light" style={styles.backBtn}>
+          <ChevronLeft size={22} color={colors.baytgo} strokeWidth={2.2} />
+        </PressableScale>
         <View style={styles.titleWrap}>
           <Text style={styles.title} numberOfLines={1}>{title}</Text>
           {subtitle ? <Text style={styles.subtitle} numberOfLines={1}>{subtitle}</Text> : null}
@@ -22,38 +23,38 @@ export default function ScreenHeader({ title, subtitle, onBack, rightAction }) {
 }
 
 const styles = StyleSheet.create({
-  safe: { backgroundColor: colors.canvas },
+  safe: { backgroundColor: colors.background },
   row: {
     flexDirection: 'row',
     alignItems: 'center',
-    paddingHorizontal: 12,
-    paddingBottom: 12,
-    gap: 8,
+    paddingHorizontal: spacing.lg,
+    paddingBottom: spacing.md,
+    gap: spacing.sm,
   },
   backBtn: {
-    width: 40,
-    height: 40,
-    borderRadius: 12,
-    backgroundColor: colors.white,
+    width: 44,
+    height: 44,
+    borderRadius: radius.sm,
+    backgroundColor: colors.card,
     alignItems: 'center',
     justifyContent: 'center',
+    ...shadows.sm,
     borderWidth: 1,
-    borderColor: colors.slate100,
+    borderColor: 'rgba(226,232,240,0.8)',
   },
-  titleWrap: { flex: 1, alignItems: 'center' },
+  titleWrap: { flex: 1, paddingHorizontal: spacing.xs },
   title: {
-    fontSize: 18,
-    fontWeight: '900',
-    color: colors.baytgo,
-    textAlign: 'center',
+    ...typography.subtitle,
+    color: colors.textPrimary,
+    letterSpacing: -0.2,
   },
   subtitle: {
+    ...typography.small,
+    color: colors.textSecondary,
     marginTop: 2,
-    fontSize: 11,
-    fontWeight: '700',
-    color: colors.slate500,
-    textAlign: 'center',
+    fontWeight: '500',
+    fontFamily: 'PlusJakartaSans_500Medium',
   },
-  right: { width: 40, alignItems: 'flex-end' },
-  placeholder: { width: 40 },
+  right: { minWidth: 44, alignItems: 'flex-end' },
+  placeholder: { width: 44 },
 });

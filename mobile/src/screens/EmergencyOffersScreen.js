@@ -1,76 +1,21 @@
 import React, { useCallback, useState } from 'react';
-import {
-  View,
-  Text,
-  StyleSheet,
-  FlatList,
-  ActivityIndicator,
-  RefreshControl,
-  TouchableOpacity,
-  Alert,
-} from 'react-native';
+import { Alert, StyleSheet, Text, View } from 'react-native';
+import { FlashList } from '@shopify/flash-list';
 import { useFocusEffect } from '@react-navigation/native';
+import { AlertTriangle } from 'lucide-react-native';
 import TabPageHeader from '../components/TabPageHeader';
+import EmergencyOfferListItem from '../components/EmergencyOfferListItem';
 import {
   fetchEmergencyOffers,
   acceptEmergencyOffer,
   declineEmergencyOffer,
 } from '../api/emergencyOffers';
 import { useAuth } from '../context/AuthContext';
-import { colors } from '../theme/colors';
-
-const STATUS_LABELS = {
-  offered: 'Menunggu respons',
-  accepted: 'Diterima',
-};
-
-function formatDateRange(startsOn, endsOn) {
-  if (!startsOn) return '—';
-  if (!endsOn || endsOn === startsOn) return startsOn;
-  return `${startsOn} – ${endsOn}`;
-}
-
-function OfferCard({ offer, onAccept, onDecline, busy }) {
-  const pending = offer.status === 'offered';
-
-  return (
-    <View style={styles.card}>
-      <View style={styles.cardHeader}>
-        <Text style={styles.bookingCode}>{offer.booking_code || 'Booking'}</Text>
-        <View style={[styles.badge, pending ? styles.badgePending : styles.badgeAccepted]}>
-          <Text style={[styles.badgeText, pending ? styles.badgeTextPending : styles.badgeTextAccepted]}>
-            {STATUS_LABELS[offer.status] || offer.status}
-          </Text>
-        </View>
-      </View>
-
-      <Text style={styles.customer}>{offer.customer_name || 'Jamaah'}</Text>
-      <Text style={styles.dates}>{formatDateRange(offer.starts_on, offer.ends_on)}</Text>
-      {offer.original_muthowif ? (
-        <Text style={styles.original}>Menggantikan: {offer.original_muthowif}</Text>
-      ) : null}
-
-      {pending ? (
-        <View style={styles.actions}>
-          <TouchableOpacity
-            style={[styles.declineBtn, busy && styles.btnDisabled]}
-            onPress={() => onDecline(offer)}
-            disabled={busy}
-          >
-            <Text style={styles.declineText}>Tolak</Text>
-          </TouchableOpacity>
-          <TouchableOpacity
-            style={[styles.acceptBtn, busy && styles.btnDisabled]}
-            onPress={() => onAccept(offer)}
-            disabled={busy}
-          >
-            <Text style={styles.acceptText}>Terima</Text>
-          </TouchableOpacity>
-        </View>
-      ) : null}
-    </View>
-  );
-}
+import EmptyState from '../ui/EmptyState';
+import ErrorState from '../ui/ErrorState';
+import { SkeletonList } from '../ui/Skeleton';
+import { colors, layout, spacing, typography } from '../theme/tokens';
+import { notifyError, notifySuccess } from '../utils/feedback';
 
 export default function EmergencyOffersScreen() {
   const { token } = useAuth();
@@ -103,7 +48,7 @@ export default function EmergencyOffersScreen() {
     }, [load]),
   );
 
-  const handleAccept = (offer) => {
+  const handleAccept = useCallback((offer) => {
     Alert.alert('Terima penawaran?', 'Anda akan ditugaskan menggantikan muthowif pada booking ini.', [
       { text: 'Batal', style: 'cancel' },
       {
@@ -112,19 +57,19 @@ export default function EmergencyOffersScreen() {
           setBusyId(offer.id);
           try {
             await acceptEmergencyOffer(token, offer.id);
-            Alert.alert('Berhasil', 'Penawaran darurat diterima.');
+            notifySuccess('Penawaran darurat diterima.');
             await load(true);
           } catch (err) {
-            Alert.alert('Gagal', err.message || 'Tidak dapat menerima penawaran');
+            notifyError(err.message || 'Tidak dapat menerima penawaran');
           } finally {
             setBusyId(null);
           }
         },
       },
     ]);
-  };
+  }, [load, token]);
 
-  const handleDecline = (offer) => {
+  const handleDecline = useCallback((offer) => {
     Alert.alert('Tolak penawaran?', 'Penawaran ini akan dilewati.', [
       { text: 'Batal', style: 'cancel' },
       {
@@ -134,19 +79,47 @@ export default function EmergencyOffersScreen() {
           setBusyId(offer.id);
           try {
             await declineEmergencyOffer(token, offer.id);
-            Alert.alert('Berhasil', 'Penawaran darurat ditolak.');
+            notifySuccess('Penawaran darurat ditolak.');
             await load(true);
           } catch (err) {
-            Alert.alert('Gagal', err.message || 'Tidak dapat menolak penawaran');
+            notifyError(err.message || 'Tidak dapat menolak penawaran');
           } finally {
             setBusyId(null);
           }
         },
       },
     ]);
-  };
+  }, [load, token]);
+
+  const renderItem = useCallback(({ item }) => (
+    <EmergencyOfferListItem
+      offer={item}
+      onAccept={handleAccept}
+      onDecline={handleDecline}
+      busy={busyId === item.id}
+    />
+  ), [busyId, handleAccept, handleDecline]);
 
   const pendingCount = offers.filter((o) => o.status === 'offered').length;
+
+  const listHeader = pendingCount > 0 ? (
+    <View style={styles.alert}>
+      <AlertTriangle size={18} color={colors.warning} strokeWidth={2} />
+      <Text style={styles.alertText}>{pendingCount} penawaran menunggu respons Anda</Text>
+    </View>
+  ) : null;
+
+  if (loading && !refreshing) {
+    return (
+      <View style={styles.container}>
+        <TabPageHeader
+          title="Penawaran darurat"
+          subtitle="Ganti muthowif darurat"
+        />
+        <SkeletonList count={3} style={styles.skeleton} />
+      </View>
+    );
+  }
 
   return (
     <View style={styles.container}>
@@ -155,33 +128,29 @@ export default function EmergencyOffersScreen() {
         subtitle={pendingCount > 0 ? `${pendingCount} menunggu respons` : 'Ganti muthowif darurat'}
       />
 
-      {loading && !refreshing ? (
-        <ActivityIndicator color={colors.baytgo} style={styles.loader} />
+      {error && offers.length === 0 ? (
+        <ErrorState description={error} onRetry={() => load()} />
       ) : (
-        <FlatList
+        <FlashList
           data={offers}
           keyExtractor={(item) => String(item.id)}
-          renderItem={({ item }) => (
-            <OfferCard
-              offer={item}
-              onAccept={handleAccept}
-              onDecline={handleDecline}
-              busy={busyId === item.id}
-            />
-          )}
+          renderItem={renderItem}
+          estimatedItemSize={180}
+          ListHeaderComponent={listHeader}
           contentContainerStyle={styles.list}
-          refreshControl={
-            <RefreshControl refreshing={refreshing} onRefresh={() => load(true)} tintColor={colors.baytgo} />
-          }
+          showsVerticalScrollIndicator={false}
+          refreshing={refreshing}
+          onRefresh={() => load(true)}
           ListEmptyComponent={
-            <View style={styles.empty}>
-              <Text style={styles.emptyText}>{error || 'Belum ada penawaran darurat.'}</Text>
-              {error ? (
-                <TouchableOpacity onPress={() => load()}>
-                  <Text style={styles.retry}>Coba lagi</Text>
-                </TouchableOpacity>
-              ) : null}
-            </View>
+            error ? (
+              <ErrorState description={error} onRetry={() => load()} />
+            ) : (
+              <EmptyState
+                variant="default"
+                title="Belum ada penawaran darurat"
+                description="Penawaran penggantian muthowif akan muncul di sini."
+              />
+            )
           }
         />
       )}
@@ -190,54 +159,33 @@ export default function EmergencyOffersScreen() {
 }
 
 const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: colors.canvas },
-  list: { paddingHorizontal: 20, paddingBottom: 32 },
-  loader: { marginTop: 40 },
-  card: {
-    backgroundColor: colors.white,
-    borderRadius: 16,
-    padding: 16,
-    marginBottom: 10,
-    borderWidth: 1,
-    borderColor: colors.slate100,
+  container: {
+    flex: 1,
+    backgroundColor: colors.background,
   },
-  cardHeader: {
+  skeleton: {
+    paddingHorizontal: layout.screenPadding,
+    paddingTop: spacing.lg,
+  },
+  list: {
+    paddingHorizontal: layout.screenPadding,
+    paddingBottom: spacing.lg,
+  },
+  alert: {
     flexDirection: 'row',
-    justifyContent: 'space-between',
     alignItems: 'center',
-    gap: 8,
-  },
-  bookingCode: { fontSize: 14, fontWeight: '900', color: colors.baytgo },
-  badge: { borderRadius: 999, paddingHorizontal: 10, paddingVertical: 4 },
-  badgePending: { backgroundColor: '#FEF3C7' },
-  badgeAccepted: { backgroundColor: colors.emerald50 },
-  badgeText: { fontSize: 10, fontWeight: '800' },
-  badgeTextPending: { color: '#B45309' },
-  badgeTextAccepted: { color: colors.emerald600 },
-  customer: { marginTop: 10, fontSize: 15, fontWeight: '800', color: colors.slate900 },
-  dates: { marginTop: 4, fontSize: 12, fontWeight: '700', color: colors.slate600 },
-  original: { marginTop: 6, fontSize: 11, fontWeight: '600', color: colors.slate500 },
-  actions: { flexDirection: 'row', gap: 10, marginTop: 14 },
-  declineBtn: {
-    flex: 1,
-    borderRadius: 12,
-    paddingVertical: 12,
-    alignItems: 'center',
-    backgroundColor: '#FEF2F2',
+    gap: spacing.md,
+    backgroundColor: colors.warningLight,
+    borderRadius: 20,
+    padding: spacing.lg,
+    marginBottom: spacing.lg,
     borderWidth: 1,
-    borderColor: '#FECACA',
+    borderColor: `${colors.warning}30`,
   },
-  declineText: { fontSize: 13, fontWeight: '800', color: '#B91C1C' },
-  acceptBtn: {
+  alertText: {
+    ...typography.caption,
+    fontFamily: 'PlusJakartaSans_700Bold',
+    color: colors.warning,
     flex: 1,
-    borderRadius: 12,
-    paddingVertical: 12,
-    alignItems: 'center',
-    backgroundColor: colors.baytgo,
   },
-  acceptText: { fontSize: 13, fontWeight: '800', color: colors.white },
-  btnDisabled: { opacity: 0.6 },
-  empty: { paddingTop: 48, alignItems: 'center' },
-  emptyText: { fontSize: 14, color: colors.slate500, fontWeight: '600', textAlign: 'center' },
-  retry: { marginTop: 12, fontSize: 14, fontWeight: '800', color: colors.baytgo },
 });

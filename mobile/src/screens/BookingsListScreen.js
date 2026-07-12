@@ -1,42 +1,42 @@
 import React, { useCallback, useMemo, useState } from 'react';
-import {
-  View,
-  Text,
-  StyleSheet,
-  FlatList,
-  ActivityIndicator,
-  RefreshControl,
-  TouchableOpacity,
-  ScrollView,
-} from 'react-native';
+import { ScrollView, StyleSheet, Text, View } from 'react-native';
+import { FlashList } from '@shopify/flash-list';
 import { useFocusEffect } from '@react-navigation/native';
-import { Ionicons } from '@expo/vector-icons';
+import { CalendarCheck, ChevronRight, SlidersHorizontal, Wallet } from 'lucide-react-native';
 import TabPageHeader from '../components/TabPageHeader';
 import BookingListItem from '../components/BookingListItem';
 import { fetchBookings } from '../api/bookings';
 import { useAuth } from '../context/AuthContext';
-import { colors } from '../theme/colors';
-import { canPayBooking } from '../utils/bookingLabels';
+import { BOOKING_STATUS_FILTERS } from '../constants/bookingFilters';
+import EmptyState from '../ui/EmptyState';
+import ErrorState from '../ui/ErrorState';
+import FilterChip from '../ui/FilterChip';
+import FilterSheet from '../ui/FilterSheet';
+import Button from '../ui/Button';
+import PressableScale from '../ui/PressableScale';
+import { SkeletonList } from '../ui/Skeleton';
+import StatTile from '../ui/StatTile';
+import { colors, layout, radius, spacing, typography } from '../theme/tokens';
+import { canPayBooking, canOpenBookingChat } from '../utils/bookingLabels';
+import SwipeableRow from '../ui/SwipeableRow';
+import { navigateToChatRoom } from '../navigation/rootNavigation';
 
-const STATUS_FILTERS = [
-  { value: 'all', label: 'Semua', icon: 'layers-outline' },
-  { value: 'unpaid', label: 'Belum bayar', icon: 'wallet-outline' },
-  { value: 'pending', label: 'Menunggu', icon: 'time-outline' },
-  { value: 'confirmed', label: 'Dikonfirmasi', icon: 'checkmark-circle-outline' },
-  { value: 'in_progress', label: 'Berlangsung', icon: 'walk-outline' },
-  { value: 'completed', label: 'Selesai', icon: 'flag-outline' },
-  { value: 'cancelled', label: 'Dibatalkan', icon: 'close-circle-outline' },
-];
+function UnpaidBanner({ count, onPress }) {
+  if (count < 1) return null;
 
-function StatCard({ label, value, color, icon }) {
   return (
-    <View style={[styles.statCard, { borderColor: color + '30' }]}>
-      <View style={[styles.statIcon, { backgroundColor: color + '18' }]}>
-        <Ionicons name={icon} size={16} color={color} />
+    <PressableScale onPress={onPress} haptic="light" style={styles.bannerPress}>
+      <View style={styles.banner}>
+        <View style={styles.bannerIcon}>
+          <Wallet size={18} color={colors.warning} strokeWidth={2} />
+        </View>
+        <View style={styles.bannerCopy}>
+          <Text style={styles.bannerTitle}>{count} pesanan menunggu pembayaran</Text>
+          <Text style={styles.bannerSub}>Selesaikan pembayaran agar booking diproses</Text>
+        </View>
+        <ChevronRight size={18} color={colors.warning} strokeWidth={2} />
       </View>
-      <Text style={[styles.statValue, { color }]}>{value}</Text>
-      <Text style={styles.statLabel}>{label}</Text>
-    </View>
+    </PressableScale>
   );
 }
 
@@ -44,6 +44,7 @@ export default function BookingsListScreen({ navigation }) {
   const { token } = useAuth();
   const [items, setItems] = useState([]);
   const [statusFilter, setStatusFilter] = useState('all');
+  const [filterSheetOpen, setFilterSheetOpen] = useState(false);
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
   const [error, setError] = useState(null);
@@ -83,46 +84,85 @@ export default function BookingsListScreen({ navigation }) {
     return items.filter((item) => item.status === statusFilter);
   }, [items, statusFilter]);
 
-  const openPayment = (item) => {
+  const openPayment = useCallback((item) => {
     navigation.navigate('BookingPayment', {
       bookingId: item.id,
       bookingCode: item.booking_code,
     });
-  };
+  }, [navigation]);
 
-  const renderHeader = () => (
+  const openChat = useCallback((item) => {
+    navigateToChatRoom({
+      bookingId: item.id,
+      bookingCode: item.booking_code,
+      otherName: item.muthowif_name,
+    });
+  }, []);
+
+  const renderItem = useCallback(({ item }) => {
+    const rightActions = [];
+    const leftActions = [];
+
+    if (canPayBooking(item)) {
+      rightActions.push({
+        key: 'pay',
+        label: 'Bayar',
+        backgroundColor: '#D97706',
+        width: 92,
+        onPress: () => openPayment(item),
+      });
+    }
+    if (canOpenBookingChat(item)) {
+      leftActions.push({
+        key: 'chat',
+        label: 'Chat',
+        backgroundColor: colors.success,
+        width: 88,
+        onPress: () => openChat(item),
+      });
+    }
+
+    return (
+      <SwipeableRow leftActions={leftActions} rightActions={rightActions}>
+        <BookingListItem
+          item={item}
+          onPress={() => navigation.navigate('BookingDetail', { bookingId: item.id })}
+          onPay={openPayment}
+        />
+      </SwipeableRow>
+    );
+  }, [navigation, openPayment, openChat]);
+
+  const listHeader = (
     <View style={styles.headerBlock}>
-      {stats.unpaid > 0 ? (
-        <TouchableOpacity style={styles.alertBanner} onPress={() => setStatusFilter('unpaid')} activeOpacity={0.9}>
-          <Ionicons name="wallet-outline" size={18} color="#B45309" />
-          <Text style={styles.alertText}>
-            {stats.unpaid} pesanan menunggu pembayaran
-          </Text>
-          <Ionicons name="chevron-forward" size={16} color="#B45309" />
-        </TouchableOpacity>
-      ) : null}
+      <UnpaidBanner count={stats.unpaid} onPress={() => setStatusFilter('unpaid')} />
 
       <View style={styles.statsRow}>
-        <StatCard label="Belum bayar" value={stats.unpaid} color="#F59E0B" icon="wallet-outline" />
-        <StatCard label="Aktif" value={stats.active} color="#0984E3" icon="calendar-outline" />
-        <StatCard label="Selesai" value={stats.done} color="#00B894" icon="checkmark-done-outline" />
+        <StatTile label="Belum bayar" value={stats.unpaid} color={colors.warning} icon={Wallet} />
+        <StatTile label="Aktif" value={stats.active} color="#0284C7" icon={CalendarCheck} />
+        <StatTile label="Selesai" value={stats.done} color={colors.success} icon={CalendarCheck} />
       </View>
 
-      <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.tabBar}>
-        {STATUS_FILTERS.map((filter) => {
-          const active = statusFilter === filter.value;
-          return (
-            <TouchableOpacity
-              key={filter.value}
-              style={[styles.tabBtn, active && styles.tabBtnActive]}
-              onPress={() => setStatusFilter(filter.value)}
-              activeOpacity={0.88}
-            >
-              <Ionicons name={filter.icon} size={14} color={active ? colors.white : colors.slate500} />
-              <Text style={[styles.tabText, active && styles.tabTextActive]}>{filter.label}</Text>
-            </TouchableOpacity>
-          );
-        })}
+      <ScrollView
+        horizontal
+        showsHorizontalScrollIndicator={false}
+        contentContainerStyle={styles.filters}
+      >
+        <PressableScale onPress={() => setFilterSheetOpen(true)} haptic="light">
+          <View style={styles.filterSheetBtn}>
+            <SlidersHorizontal size={16} color={colors.baytgo} strokeWidth={2} />
+            <Text style={styles.filterSheetText}>Filter</Text>
+          </View>
+        </PressableScale>
+        {BOOKING_STATUS_FILTERS.map((filter) => (
+          <FilterChip
+            key={filter.value}
+            label={filter.label}
+            icon={filter.icon}
+            active={statusFilter === filter.value}
+            onPress={() => setStatusFilter(filter.value)}
+          />
+        ))}
       </ScrollView>
 
       {filteredItems.length > 0 ? (
@@ -131,153 +171,149 @@ export default function BookingsListScreen({ navigation }) {
     </View>
   );
 
+  if (loading && !refreshing) {
+    return (
+      <View style={styles.container}>
+        <TabPageHeader title="Pesanan Saya" subtitle="Kelola booking muthowif Anda" />
+        <SkeletonList count={4} style={styles.skeleton} />
+      </View>
+    );
+  }
+
   return (
     <View style={styles.container}>
       <TabPageHeader title="Pesanan Saya" subtitle="Kelola booking muthowif Anda" />
 
-      {loading && !refreshing ? (
-        <ActivityIndicator color={colors.baytgo} style={styles.loader} />
+      {error && items.length === 0 ? (
+        <ErrorState description={error} onRetry={() => load()} />
       ) : (
-        <FlatList
+        <FlashList
           data={filteredItems}
           keyExtractor={(item) => String(item.id)}
-          ListHeaderComponent={renderHeader}
-          renderItem={({ item }) => (
-            <BookingListItem
-              item={item}
-              onPress={() => navigation.navigate('BookingDetail', { bookingId: item.id })}
-              onPay={openPayment}
-            />
-          )}
+          renderItem={renderItem}
+          estimatedItemSize={180}
+          ListHeaderComponent={listHeader}
           contentContainerStyle={styles.list}
           showsVerticalScrollIndicator={false}
-          refreshControl={
-            <RefreshControl refreshing={refreshing} onRefresh={() => load(true)} tintColor={colors.baytgo} />
-          }
+          refreshing={refreshing}
+          onRefresh={() => load(true)}
           ListEmptyComponent={
-            <View style={styles.empty}>
-              <View style={styles.emptyIcon}>
-                <Ionicons name="receipt-outline" size={32} color={colors.slate400} />
-              </View>
-              <Text style={styles.emptyTitle}>
-                {error ? 'Gagal memuat data' : 'Belum ada pesanan'}
-              </Text>
-              <Text style={styles.emptyText}>
-                {error || 'Cari muthowif untuk memulai perjalanan ibadah Anda.'}
-              </Text>
-              {error ? (
-                <TouchableOpacity style={styles.retryBtn} onPress={() => load()}>
-                  <Text style={styles.retryText}>Coba lagi</Text>
-                </TouchableOpacity>
-              ) : (
-                <TouchableOpacity
-                  style={styles.cta}
-                  onPress={() => navigation.getParent()?.navigate('HomeTab', { screen: 'Directory' })}
-                >
-                  <Text style={styles.ctaText}>Cari Muthowif</Text>
-                </TouchableOpacity>
-              )}
-            </View>
+            error ? (
+              <ErrorState description={error} onRetry={() => load()} />
+            ) : (
+              <EmptyState
+                variant="bookings"
+                title="Belum ada pesanan"
+                description="Cari muthowif terpercaya dan mulai rencanakan perjalanan ibadah Anda."
+                actionLabel="Cari Muthowif"
+                onAction={() => navigation.getParent()?.navigate('HomeTab', { screen: 'Directory' })}
+              />
+            )
           }
         />
       )}
+
+      <FilterSheet
+        visible={filterSheetOpen}
+        onClose={() => setFilterSheetOpen(false)}
+        title="Filter pesanan"
+        subtitle={`${filteredItems.length} dari ${items.length} pesanan`}
+        footer={(
+          <Button label="Terapkan" onPress={() => setFilterSheetOpen(false)} />
+        )}
+      >
+        {BOOKING_STATUS_FILTERS.map((filter) => (
+          <FilterChip
+            key={`sheet-${filter.value}`}
+            label={filter.label}
+            icon={filter.icon}
+            active={statusFilter === filter.value}
+            onPress={() => setStatusFilter(filter.value)}
+          />
+        ))}
+      </FilterSheet>
     </View>
   );
 }
 
 const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: colors.canvas },
-  headerBlock: { paddingBottom: 4 },
-  alertBanner: {
+  container: {
+    flex: 1,
+    backgroundColor: colors.background,
+  },
+  skeleton: {
+    paddingHorizontal: layout.screenPadding,
+    paddingTop: spacing.lg,
+  },
+  headerBlock: {
+    paddingBottom: spacing.sm,
+  },
+  bannerPress: {
+    marginBottom: spacing.lg,
+  },
+  banner: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 10,
-    backgroundColor: '#FFFBEB',
-    borderRadius: 14,
-    padding: 14,
-    marginBottom: 14,
+    gap: spacing.md,
+    backgroundColor: colors.warningLight,
+    borderRadius: 20,
+    padding: spacing.lg,
     borderWidth: 1,
     borderColor: '#FDE68A',
   },
-  alertText: { flex: 1, fontSize: 13, fontWeight: '700', color: '#B45309', lineHeight: 18 },
-  statsRow: { flexDirection: 'row', gap: 10, marginBottom: 14 },
-  statCard: {
-    flex: 1,
+  bannerIcon: {
+    width: 40,
+    height: 40,
+    borderRadius: 12,
     backgroundColor: colors.white,
-    borderRadius: 16,
-    padding: 12,
-    borderWidth: 1,
-    alignItems: 'center',
-  },
-  statIcon: {
-    width: 32,
-    height: 32,
-    borderRadius: 10,
     alignItems: 'center',
     justifyContent: 'center',
-    marginBottom: 8,
   },
-  statValue: { fontSize: 20, fontWeight: '900' },
-  statLabel: { marginTop: 2, fontSize: 11, fontWeight: '700', color: colors.slate500 },
-  tabBar: { flexDirection: 'row', gap: 8, marginBottom: 12, paddingRight: 4 },
-  tabBtn: {
+  bannerCopy: { flex: 1 },
+  bannerTitle: {
+    ...typography.caption,
+    fontFamily: 'PlusJakartaSans_700Bold',
+    color: '#B45309',
+  },
+  bannerSub: {
+    ...typography.small,
+    color: colors.textSecondary,
+    marginTop: spacing.xs,
+    fontWeight: '500',
+    fontFamily: 'PlusJakartaSans_500Medium',
+  },
+  statsRow: {
+    flexDirection: 'row',
+    gap: spacing.md,
+    marginBottom: spacing.lg,
+  },
+  filters: {
+    gap: spacing.sm,
+    paddingRight: spacing.lg,
+    marginBottom: spacing.md,
+  },
+  filterSheetBtn: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 5,
-    paddingHorizontal: 12,
-    paddingVertical: 9,
-    borderRadius: 999,
-    backgroundColor: colors.white,
+    gap: spacing.xs,
+    backgroundColor: colors.baytgoLight,
+    borderRadius: radius.full,
+    paddingHorizontal: spacing.md,
+    paddingVertical: spacing.sm,
     borderWidth: 1,
-    borderColor: colors.slate100,
+    borderColor: colors.border,
   },
-  tabBtnActive: { backgroundColor: colors.baytgo, borderColor: colors.baytgo },
-  tabText: { fontSize: 12, fontWeight: '800', color: colors.slate600 },
-  tabTextActive: { color: colors.white },
+  filterSheetText: { ...typography.small, color: colors.baytgo, fontWeight: '700' },
   resultCount: {
-    fontSize: 12,
-    fontWeight: '700',
-    color: colors.slate500,
-    marginBottom: 10,
-    marginLeft: 2,
+    ...typography.small,
+    color: colors.textSecondary,
+    marginBottom: spacing.md,
+    marginLeft: spacing.xs,
+    fontWeight: '500',
+    fontFamily: 'PlusJakartaSans_500Medium',
   },
-  list: { paddingHorizontal: 20, paddingBottom: 32 },
-  loader: { marginTop: 40 },
-  empty: { alignItems: 'center', paddingTop: 40, paddingHorizontal: 20 },
-  emptyIcon: {
-    width: 72,
-    height: 72,
-    borderRadius: 36,
-    backgroundColor: colors.white,
-    alignItems: 'center',
-    justifyContent: 'center',
-    marginBottom: 16,
-    borderWidth: 1,
-    borderColor: colors.slate100,
+  list: {
+    paddingHorizontal: layout.screenPadding,
+    paddingBottom: spacing.lg,
   },
-  emptyTitle: { fontSize: 16, fontWeight: '900', color: colors.baytgo },
-  emptyText: {
-    marginTop: 8,
-    fontSize: 13,
-    fontWeight: '600',
-    color: colors.slate500,
-    textAlign: 'center',
-    lineHeight: 19,
-  },
-  retryBtn: {
-    marginTop: 16,
-    paddingHorizontal: 20,
-    paddingVertical: 12,
-    borderRadius: 12,
-    backgroundColor: colors.baytgo,
-  },
-  retryText: { fontSize: 14, fontWeight: '800', color: colors.white },
-  cta: {
-    marginTop: 16,
-    backgroundColor: colors.baytgo,
-    borderRadius: 14,
-    paddingHorizontal: 20,
-    paddingVertical: 13,
-  },
-  ctaText: { color: colors.white, fontWeight: '800', fontSize: 14 },
 });

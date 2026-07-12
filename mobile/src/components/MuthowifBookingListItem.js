@@ -1,136 +1,185 @@
-import React from 'react';
-import { View, Text, StyleSheet, TouchableOpacity } from 'react-native';
-import { Ionicons } from '@expo/vector-icons';
-import { colors } from '../theme/colors';
-import { bookingStatusMeta, paymentStatusMeta } from '../utils/bookingLabels';
+import React, { memo } from 'react';
+import { StyleSheet, Text, View } from 'react-native';
+import { Calendar, ChevronRight, User, Users } from 'lucide-react-native';
+import Card from '../ui/Card';
+import PressableScale from '../ui/PressableScale';
+import { colors, radius, spacing, typography } from '../theme/tokens';
 import { formatIdr } from '../utils/format';
+import {
+  bookingStatusMeta,
+  paymentStatusMeta,
+  formatDateRange,
+  serviceTypeLabel,
+} from '../utils/bookingLabels';
 
 function StatusBadge({ label, color }) {
   return (
-    <View style={[styles.badge, { backgroundColor: color + '18' }]}>
+    <View style={[styles.badge, { backgroundColor: `${color}18` }]}>
       <Text style={[styles.badgeText, { color }]}>{label}</Text>
     </View>
   );
 }
 
-export default function MuthowifBookingListItem({ item, onPress }) {
+function MuthowifBookingListItem({ item, onPress }) {
   const bookingMeta = bookingStatusMeta(item.status);
   const paymentMeta = paymentStatusMeta(item.payment_status);
   const isPending = item.status === 'pending';
 
   return (
-    <TouchableOpacity
-      style={[styles.card, isPending && styles.cardPending]}
-      onPress={onPress}
-      activeOpacity={0.9}
-    >
-      <View style={[styles.iconWrap, isPending && styles.iconWrapPending]}>
-        <Ionicons name="person" size={22} color={isPending ? '#7C3AED' : colors.baytgo} />
-        {isPending ? <View style={styles.pendingDot} /> : null}
-      </View>
-
-      <View style={styles.body}>
-        <View style={styles.topRow}>
-          <Text style={styles.code}>{item.booking_code || `#${item.id}`}</Text>
-          {isPending ? (
-            <View style={styles.newChip}>
-              <Text style={styles.newChipText}>Baru</Text>
+    <PressableScale onPress={onPress} haptic="light" style={styles.press}>
+      <Card
+        style={[
+          styles.card,
+          isPending && {
+            borderColor: `${bookingMeta.color}40`,
+            backgroundColor: `${bookingMeta.color}08`,
+          },
+        ]}
+        padding={spacing.lg}
+        elevated
+      >
+        <View style={styles.row}>
+          <View style={styles.avatarWrap}>
+            <View style={[styles.avatar, { backgroundColor: `${bookingMeta.color}18` }]}>
+              <User size={22} color={bookingMeta.color} strokeWidth={2} />
             </View>
-          ) : null}
+            {isPending ? <View style={[styles.pendingDot, { backgroundColor: bookingMeta.color }]} /> : null}
+          </View>
+
+          <View style={styles.body}>
+            <View style={styles.topRow}>
+              <Text style={styles.code}>{item.booking_code || `#${item.id}`}</Text>
+              {isPending ? (
+                <View style={[styles.newChip, { backgroundColor: `${bookingMeta.color}18` }]}>
+                  <Text style={[styles.newChipText, { color: bookingMeta.color }]}>Baru</Text>
+                </View>
+              ) : null}
+            </View>
+
+            <Text style={styles.name} numberOfLines={1}>{item.customer_name}</Text>
+
+            <View style={styles.metaRow}>
+              <Calendar size={14} color={colors.textMuted} strokeWidth={2} />
+              <Text style={styles.metaText}>
+                {formatDateRange(item.starts_on, item.ends_on)}
+              </Text>
+            </View>
+
+            <View style={styles.metaRow}>
+              <Users size={14} color={colors.textMuted} strokeWidth={2} />
+              <Text style={styles.metaText}>
+                {item.pilgrim_count || 1} jamaah · {serviceTypeLabel(item.service_type) || 'Layanan'}
+              </Text>
+            </View>
+
+            <View style={styles.badgeRow}>
+              <StatusBadge label={bookingMeta.label} color={bookingMeta.color} />
+              <StatusBadge label={paymentMeta.label} color={paymentMeta.color} />
+            </View>
+
+            <Text style={styles.amount}>
+              {item.pricing?.net_after_referral != null
+                ? formatIdr(item.pricing.net_after_referral)
+                : item.total_price}
+            </Text>
+            {item.pricing?.net_after_referral != null ? (
+              <Text style={styles.amountHint}>Estimasi diterima</Text>
+            ) : null}
+          </View>
+
+          <ChevronRight size={20} color={colors.textMuted} strokeWidth={2} />
         </View>
-
-        <Text style={styles.name} numberOfLines={1}>{item.customer_name}</Text>
-
-        <View style={styles.metaRow}>
-          <Ionicons name="calendar-outline" size={13} color={colors.slate400} />
-          <Text style={styles.dates}>{item.starts_on} — {item.ends_on}</Text>
-        </View>
-
-        <View style={styles.metaRow}>
-          <Ionicons name="people-outline" size={13} color={colors.slate400} />
-          <Text style={styles.metaText}>
-            {item.pilgrim_count || 1} jamaah · {item.service_type || 'Layanan'}
-          </Text>
-        </View>
-
-        <View style={styles.badgeRow}>
-          <StatusBadge label={bookingMeta.label} color={bookingMeta.color} />
-          <StatusBadge label={paymentMeta.label} color={paymentMeta.color} />
-        </View>
-
-        <Text style={styles.amount}>
-          {item.pricing?.net_after_referral != null
-            ? formatIdr(item.pricing.net_after_referral)
-            : item.total_price}
-        </Text>
-        {item.pricing?.net_after_referral != null ? (
-          <Text style={styles.amountHint}>Estimasi diterima</Text>
-        ) : null}
-      </View>
-
-      <Ionicons name="chevron-forward" size={18} color={colors.slate400} />
-    </TouchableOpacity>
+      </Card>
+    </PressableScale>
   );
 }
 
+export default memo(MuthowifBookingListItem);
+
 const styles = StyleSheet.create({
-  card: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    backgroundColor: colors.white,
-    borderRadius: 18,
-    padding: 14,
-    marginBottom: 12,
-    borderWidth: 1,
-    borderColor: 'rgba(26,61,52,0.08)',
-    gap: 12,
-    shadowColor: '#0F2E28',
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.04,
-    shadowRadius: 10,
-    elevation: 2,
-  },
-  cardPending: {
-    borderColor: '#DDD6FE',
-    backgroundColor: '#FDFCFF',
-  },
-  iconWrap: {
-    width: 50,
-    height: 50,
-    borderRadius: 16,
-    backgroundColor: colors.baytgoLight,
+  press: { marginBottom: spacing.lg },
+  card: { borderRadius: radius.md },
+  row: { flexDirection: 'row', alignItems: 'flex-start', gap: spacing.md },
+  avatarWrap: { position: 'relative' },
+  avatar: {
+    width: 56,
+    height: 56,
+    borderRadius: radius.md,
     alignItems: 'center',
     justifyContent: 'center',
   },
-  iconWrapPending: { backgroundColor: '#EDE9FE' },
   pendingDot: {
     position: 'absolute',
-    top: 8,
-    right: 8,
-    width: 8,
-    height: 8,
-    borderRadius: 4,
-    backgroundColor: '#7C3AED',
-    borderWidth: 1.5,
+    top: -2,
+    right: -2,
+    width: 12,
+    height: 12,
+    borderRadius: 6,
+    borderWidth: 2,
     borderColor: colors.white,
   },
   body: { flex: 1 },
-  topRow: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', gap: 8 },
-  code: { fontSize: 12, fontWeight: '800', color: colors.baytgo },
-  newChip: {
-    backgroundColor: '#EDE9FE',
-    paddingHorizontal: 8,
-    paddingVertical: 3,
-    borderRadius: 999,
+  topRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    gap: spacing.sm,
   },
-  newChipText: { fontSize: 10, fontWeight: '800', color: '#7C3AED' },
-  name: { marginTop: 3, fontSize: 16, fontWeight: '900', color: colors.slate900 },
-  metaRow: { flexDirection: 'row', alignItems: 'center', gap: 5, marginTop: 6 },
-  dates: { fontSize: 12, fontWeight: '600', color: colors.slate500, flex: 1 },
-  metaText: { fontSize: 12, fontWeight: '600', color: colors.slate500, flex: 1 },
-  badgeRow: { flexDirection: 'row', flexWrap: 'wrap', gap: 6, marginTop: 10 },
-  badge: { borderRadius: 999, paddingHorizontal: 8, paddingVertical: 4 },
-  badgeText: { fontSize: 10, fontWeight: '800' },
-  amount: { marginTop: 8, fontSize: 14, fontWeight: '900', color: colors.baytgo },
-  amountHint: { marginTop: 2, fontSize: 10, fontWeight: '700', color: colors.slate500 },
+  code: {
+    ...typography.small,
+    color: colors.baytgo,
+    fontFamily: 'PlusJakartaSans_800ExtraBold',
+  },
+  newChip: {
+    paddingHorizontal: spacing.sm,
+    paddingVertical: spacing.xs,
+    borderRadius: radius.full,
+  },
+  newChipText: {
+    ...typography.label,
+    fontSize: 10,
+  },
+  name: {
+    ...typography.body,
+    fontFamily: 'PlusJakartaSans_700Bold',
+    color: colors.textPrimary,
+    marginTop: spacing.xs,
+  },
+  metaRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: spacing.sm,
+    marginTop: spacing.sm,
+  },
+  metaText: {
+    ...typography.caption,
+    color: colors.textSecondary,
+    flex: 1,
+  },
+  badgeRow: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    gap: spacing.sm,
+    marginTop: spacing.md,
+  },
+  badge: {
+    borderRadius: radius.full,
+    paddingHorizontal: spacing.md,
+    paddingVertical: spacing.xs,
+  },
+  badgeText: {
+    ...typography.label,
+    fontSize: 10,
+  },
+  amount: {
+    ...typography.subtitle,
+    fontSize: 18,
+    color: colors.baytgo,
+    marginTop: spacing.md,
+  },
+  amountHint: {
+    ...typography.label,
+    color: colors.textSecondary,
+    marginTop: spacing.xs,
+  },
 });

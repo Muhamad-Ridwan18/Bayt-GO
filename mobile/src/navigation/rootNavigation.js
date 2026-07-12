@@ -51,6 +51,10 @@ export function flushPendingChatNavigation() {
   navigateToChatRoom(params);
 }
 
+export function navigateToSuccess(navigation, params) {
+  getRootNavigation(navigation).navigate('Success', params);
+}
+
 export function navigateToChatRoom(params) {
   if (!params?.bookingId) return;
 

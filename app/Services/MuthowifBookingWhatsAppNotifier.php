@@ -285,6 +285,96 @@ class MuthowifBookingWhatsAppNotifier
     }
 
     /**
+     * Setelah jamaah mengirim permintaan booking baru.
+     */
+    public function notifyCustomerBookingSubmitted(MuthowifBooking $booking): void
+    {
+        if (! WhatsAppNotifySettings::enabled('customer_booking_submitted')) {
+            return;
+        }
+
+        if (! WhatsAppNotifySettings::hasToken()) {
+            Log::debug('WhatsApp notify customer submitted skipped: token gateway kosong.');
+
+            return;
+        }
+
+        $booking->loadMissing(['customer', 'muthowifProfile.user']);
+        $customer = $booking->customer;
+        if ($customer === null) {
+            return;
+        }
+
+        $fonnteDial = IntlPhone::fonnteDial($customer->phone);
+        if ($fonnteDial === null) {
+            Log::warning('WhatsApp notify customer submitted skipped: nomor customer kosong atau tidak valid.', [
+                'customer_id' => $customer->id,
+                'booking_id' => $booking->id,
+            ]);
+
+            return;
+        }
+
+        $locale = $this->localeForUser($customer->locale);
+
+        $this->withLocale($locale, function () use ($booking, $fonnteDial, $locale): void {
+            $muthowifName = $booking->muthowifProfile?->user?->name ?? __('whatsapp.fallback_muthowif', [], $locale);
+            $appName = config('app.name', 'BaytGo');
+            $url = route('bookings.show', $booking);
+
+            if ($booking->isSupport()) {
+                $lines = [
+                    __('whatsapp.customer.support_submitted.headline', ['app' => $appName], $locale),
+                    '',
+                    __('whatsapp.customer.support_submitted.body', ['muthowif' => $muthowifName], $locale),
+                    '',
+                ];
+
+                if (filled($booking->booking_code)) {
+                    $lines[] = __('whatsapp.customer.support_submitted.booking_code', ['code' => $booking->booking_code], $locale);
+                    $lines[] = '';
+                }
+
+                $lines[] = __('whatsapp.customer.support_submitted.package', ['package' => $this->supportPackageLabel($booking, $locale)], $locale);
+                $lines[] = __('whatsapp.customer.support_submitted.starts_at', ['datetime' => $this->supportStartsAtFormatted($booking)], $locale);
+                $lines[] = __('whatsapp.customer.support_submitted.status', [], $locale);
+                $lines[] = '';
+                $lines[] = __('whatsapp.customer.support_submitted.view_detail', [], $locale);
+                $lines[] = $url;
+
+                $this->sendToTarget($fonnteDial, implode("\n", $lines), $booking->id);
+
+                return;
+            }
+
+            $start = $booking->starts_on->format('d/m/Y');
+            $end = $booking->ends_on->format('d/m/Y');
+            $serviceLabel = $booking->service_type?->label() ?? __('whatsapp.fallback_service', [], $locale);
+
+            $lines = [
+                __('whatsapp.customer.submitted.headline', ['app' => $appName], $locale),
+                '',
+                __('whatsapp.customer.submitted.body', ['muthowif' => $muthowifName], $locale),
+                '',
+            ];
+
+            if (filled($booking->booking_code)) {
+                $lines[] = __('whatsapp.customer.submitted.booking_code', ['code' => $booking->booking_code], $locale);
+                $lines[] = '';
+            }
+
+            $lines[] = __('whatsapp.customer.submitted.service_dates', ['start' => $start, 'end' => $end], $locale);
+            $lines[] = __('whatsapp.customer.submitted.service', ['service' => $serviceLabel], $locale);
+            $lines[] = __('whatsapp.customer.submitted.status', [], $locale);
+            $lines[] = '';
+            $lines[] = __('whatsapp.customer.submitted.view_detail', [], $locale);
+            $lines[] = $url;
+
+            $this->sendToTarget($fonnteDial, implode("\n", $lines), $booking->id);
+        });
+    }
+
+    /**
      * Saat booking disetujui muthowif, kirim WA ke customer.
      */
     public function notifyCustomerApproved(MuthowifBooking $booking): void

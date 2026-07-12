@@ -1,7 +1,8 @@
 import React from 'react';
-import { View, Text, StyleSheet, TouchableOpacity } from 'react-native';
-import { Ionicons } from '@expo/vector-icons';
-import { colors } from '../theme/colors';
+import { View, Text, StyleSheet } from 'react-native';
+import { Star } from 'lucide-react-native';
+import { PressableScale } from '../ui';
+import { colors, spacing, radius, typography } from '../theme/tokens';
 
 export default function StarRatingPicker({ value, onChange, label }) {
   return (
@@ -12,15 +13,20 @@ export default function StarRatingPicker({ value, onChange, label }) {
           const star = i + 1;
           const active = star <= value;
           return (
-            <TouchableOpacity
+            <PressableScale
               key={star}
               style={[styles.starBtn, active && styles.starBtnActive]}
               onPress={() => onChange(star)}
-              activeOpacity={0.85}
+              haptic="light"
             >
-              <Ionicons name={active ? 'star' : 'star-outline'} size={22} color={active ? colors.gold : colors.slate400} />
+              <Star
+                size={22}
+                color={active ? colors.gold : colors.textMuted}
+                fill={active ? colors.gold : 'transparent'}
+                strokeWidth={2}
+              />
               <Text style={[styles.starNum, active && styles.starNumActive]}>{star}</Text>
-            </TouchableOpacity>
+            </PressableScale>
           );
         })}
       </View>
@@ -29,21 +35,21 @@ export default function StarRatingPicker({ value, onChange, label }) {
 }
 
 const styles = StyleSheet.create({
-  wrap: { marginBottom: 16 },
-  label: { fontSize: 12, fontWeight: '800', color: colors.slate600, marginBottom: 10 },
-  row: { flexDirection: 'row', flexWrap: 'wrap', gap: 8 },
+  wrap: { marginBottom: spacing.lg },
+  label: { ...typography.caption, fontWeight: '800', color: colors.slate600, marginBottom: spacing.sm + 2 },
+  row: { flexDirection: 'row', flexWrap: 'wrap', gap: spacing.sm },
   starBtn: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 4,
-    paddingHorizontal: 10,
-    paddingVertical: 8,
-    borderRadius: 12,
+    gap: spacing.xs,
+    paddingHorizontal: spacing.sm + 2,
+    paddingVertical: spacing.sm,
+    borderRadius: radius.sm,
     borderWidth: 1,
-    borderColor: colors.slate100,
+    borderColor: colors.surface,
     backgroundColor: colors.white,
   },
-  starBtnActive: { borderColor: colors.goldLight, backgroundColor: '#FFFBEB' },
-  starNum: { fontSize: 13, fontWeight: '700', color: colors.slate500 },
+  starBtnActive: { borderColor: colors.goldLight, backgroundColor: colors.goldLight },
+  starNum: { ...typography.caption, fontWeight: '700', color: colors.textSecondary },
   starNumActive: { color: '#92400E' },
 });

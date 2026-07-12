@@ -1,6 +1,6 @@
 import React from 'react';
 import { View, Text, StyleSheet } from 'react-native';
-import { colors } from '../theme/colors';
+import { colors, spacing, typography } from '../theme/tokens';
 import { formatIdr } from '../utils/format';
 
 function Row({ label, value, bold, negative, muted }) {
@@ -81,29 +81,30 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'flex-start',
-    gap: 12,
-    paddingVertical: 8,
+    gap: spacing.md,
+    paddingVertical: spacing.sm,
     borderBottomWidth: 1,
-    borderBottomColor: colors.slate100,
+    borderBottomColor: colors.surface,
   },
   label: {
     flex: 1,
-    fontSize: 13,
+    ...typography.caption,
     fontWeight: '600',
     color: colors.slate600,
   },
-  labelMuted: { color: colors.slate400 },
+  labelMuted: { color: colors.textMuted },
   value: {
-    fontSize: 13,
+    ...typography.caption,
     fontWeight: '700',
-    color: colors.slate900,
+    color: colors.textPrimary,
     textAlign: 'right',
   },
   valueBold: {
+    ...typography.body,
     fontSize: 15,
     fontWeight: '900',
     color: colors.baytgo,
   },
-  valueNegative: { color: '#B91C1C' },
-  valueMuted: { color: colors.slate400 },
+  valueNegative: { color: colors.error },
+  valueMuted: { color: colors.textMuted },
 });

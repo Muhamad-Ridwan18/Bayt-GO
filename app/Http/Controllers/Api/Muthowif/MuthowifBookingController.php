@@ -19,6 +19,7 @@ use App\Support\CustomerBookingBroadcast;
 use Carbon\Carbon;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Validation\Rule;
 use RuntimeException;
@@ -88,7 +89,7 @@ class MuthowifBookingController extends Controller
         }
 
         $start = $booking->starts_on->copy()->startOfDay();
-        $end = $booking->ends_on->copy()->startOfDay();
+        $end = ($booking->ends_on ?? $booking->starts_on)->copy()->startOfDay();
         if (! $profile->isJadwalAvailableForRange($start, $end, (string) $booking->getKey())) {
             return response()->json([
                 'message' => 'Jadwal tanggal bentrok dengan booking lain yang sudah disetujui.',
@@ -96,16 +97,54 @@ class MuthowifBookingController extends Controller
         }
 
         $total = $booking->computeTotalAmount();
+        $bookingIdStr = (string) $booking->getKey();
+        $broadcastIds = [$bookingIdStr];
+        $customerIdsToInvalidate = [(string) $booking->customer_id];
+        $rejectedBookingIds = [];
 
-        $booking->update([
-            'status' => BookingStatus::Confirmed,
-            'payment_status' => PaymentStatus::Pending,
-            'total_amount' => $total,
-        ]);
+        DB::transaction(function () use ($booking, $profile, $start, $end, $total, $bookingIdStr, &$broadcastIds, &$customerIdsToInvalidate, &$rejectedBookingIds): void {
+            $confirmPayload = [
+                'status' => BookingStatus::Confirmed,
+                'payment_status' => PaymentStatus::Pending,
+                'total_amount' => $total,
+            ];
+
+            if ($booking->isSupport()) {
+                $confirmPayload['ends_on'] = $start->toDateString();
+            }
+
+            $booking->update($confirmPayload);
+
+            $overlappingPending = MuthowifBooking::query()
+                ->where('muthowif_profile_id', $profile->id)
+                ->where('status', BookingStatus::Pending)
+                ->whereKeyNot($bookingIdStr)
+                ->where('starts_on', '<=', $end->toDateString())
+                ->where('ends_on', '>=', $start->toDateString())
+                ->get();
+
+            foreach ($overlappingPending as $other) {
+                $other->update([
+                    'status' => BookingStatus::Cancelled,
+                    'muthowif_rejection_kind' => MuthowifBookingMuthowifRejectionKind::JadwalFull,
+                    'muthowif_rejection_note' => __('bookings.show.muthowif_rejection_auto_collision'),
+                ]);
+                $rejectedBookingIds[] = (string) $other->getKey();
+                $broadcastIds[] = (string) $other->getKey();
+                $customerIdsToInvalidate[] = (string) $other->customer_id;
+            }
+        });
 
         app(BookingPendingPaymentEnsurer::class)->ensure($booking->fresh());
 
         NotifyCustomerOfApprovedBooking::dispatchAfterResponse((string) $booking->getKey());
+        foreach ($rejectedBookingIds as $otherId) {
+            NotifyCustomerOfBookingRejectedJadwalFull::dispatchAfterResponse($otherId);
+        }
+        CustomerBookingBroadcast::afterResponseMany($broadcastIds);
+        foreach (array_unique($customerIdsToInvalidate) as $customerId) {
+            Cache::forget('customer_booking_status_counts:'.$customerId);
+        }
 
         return response()->json([
             'message' => 'Pesanan berhasil disetujui',

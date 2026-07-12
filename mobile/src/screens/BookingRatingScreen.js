@@ -1,20 +1,12 @@
 import React, { useState } from 'react';
-import {
-  View,
-  Text,
-  StyleSheet,
-  ScrollView,
-  TouchableOpacity,
-  ActivityIndicator,
-  Alert,
-  TextInput,
-} from 'react-native';
-import { LinearGradient } from 'expo-linear-gradient';
+import { View, Text, StyleSheet, ScrollView, TextInput } from 'react-native';
 import ScreenHeader from '../components/ScreenHeader';
 import StarRatingPicker from '../components/StarRatingPicker';
 import { completeBooking, submitReview } from '../api/bookings';
 import { useAuth } from '../context/AuthContext';
-import { colors } from '../theme/colors';
+import { Button, Card, InlineAlert } from '../ui';
+import { notifySuccessThen } from '../utils/feedback';
+import { colors, layout, radius, spacing, typography } from '../theme/tokens';
 
 export default function BookingRatingScreen({ navigation, route }) {
   const { token } = useAuth();
@@ -37,14 +29,15 @@ export default function BookingRatingScreen({ navigation, route }) {
     try {
       if (isComplete) {
         await completeBooking(token, bookingId, { rating, comment: comment.trim() || null });
-        Alert.alert('Berhasil', 'Layanan ditandai selesai. Terima kasih atas ulasannya.', [
-          { text: 'OK', onPress: () => navigation.navigate('BookingDetail', { bookingId }) },
-        ]);
+        notifySuccessThen(
+          navigation,
+          'Layanan ditandai selesai. Terima kasih atas ulasannya.',
+          'BookingDetail',
+          { bookingId },
+        );
       } else {
         await submitReview(token, bookingId, { rating, comment: comment.trim() || null });
-        Alert.alert('Berhasil', 'Ulasan berhasil disimpan.', [
-          { text: 'OK', onPress: () => navigation.goBack() },
-        ]);
+        notifySuccessThen(navigation, 'Ulasan berhasil disimpan.', () => navigation.goBack());
       }
     } catch (err) {
       setError(err.message || 'Gagal menyimpan');
@@ -67,9 +60,11 @@ export default function BookingRatingScreen({ navigation, route }) {
             : 'Bagikan pengalaman Anda dengan muthowif ini.'}
         </Text>
 
-        {error ? <Text style={styles.error}>{error}</Text> : null}
+        {error ? <InlineAlert variant="error">{error}</InlineAlert> : null}
 
-        <StarRatingPicker label="Rating *" value={rating} onChange={setRating} />
+        <Card padding={spacing.lg} elevated={false}>
+          <StarRatingPicker label="Rating *" value={rating} onChange={setRating} />
+        </Card>
 
         <Text style={styles.label}>Ulasan (opsional)</Text>
         <TextInput
@@ -77,45 +72,36 @@ export default function BookingRatingScreen({ navigation, route }) {
           value={comment}
           onChangeText={setComment}
           placeholder="Ceritakan pengalaman ibadah Anda..."
-          placeholderTextColor={colors.slate400}
+          placeholderTextColor={colors.textMuted}
           multiline
           maxLength={2000}
           textAlignVertical="top"
         />
 
-        <TouchableOpacity style={styles.submitBtn} onPress={handleSubmit} disabled={loading} activeOpacity={0.9}>
-          <LinearGradient colors={[colors.baytgo, colors.baytgoDark]} style={styles.submitGradient}>
-            {loading ? (
-              <ActivityIndicator color={colors.white} />
-            ) : (
-              <Text style={styles.submitText}>{isComplete ? 'Selesaikan & Kirim Ulasan' : 'Simpan Ulasan'}</Text>
-            )}
-          </LinearGradient>
-        </TouchableOpacity>
+        <Button
+          label={isComplete ? 'Selesaikan & Kirim Ulasan' : 'Simpan Ulasan'}
+          onPress={handleSubmit}
+          loading={loading}
+        />
       </ScrollView>
     </View>
   );
 }
 
 const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: colors.canvas },
-  scroll: { padding: 16, paddingBottom: 32 },
-  intro: { fontSize: 14, lineHeight: 21, color: colors.slate600, fontWeight: '500', marginBottom: 16 },
-  error: { marginBottom: 12, fontSize: 13, color: '#DC2626', fontWeight: '600' },
-  label: { fontSize: 12, fontWeight: '800', color: colors.slate600, marginBottom: 8 },
+  container: { flex: 1, backgroundColor: colors.background },
+  scroll: { padding: layout.screenPadding, paddingBottom: spacing['3xl'] },
+  intro: { ...typography.caption, lineHeight: 22, color: colors.textSecondary, marginBottom: spacing.lg },
+  label: { ...typography.label, color: colors.textSecondary, marginBottom: spacing.sm, marginTop: spacing.lg },
   textarea: {
     minHeight: 120,
-    backgroundColor: colors.white,
-    borderRadius: 16,
+    backgroundColor: colors.card,
+    borderRadius: radius.sm,
     borderWidth: 1,
-    borderColor: colors.slate100,
-    padding: 14,
-    fontSize: 14,
-    fontWeight: '500',
-    color: colors.slate900,
-    marginBottom: 20,
+    borderColor: colors.border,
+    padding: spacing.lg,
+    ...typography.caption,
+    color: colors.textPrimary,
+    marginBottom: spacing.xl,
   },
-  submitBtn: { borderRadius: 16, overflow: 'hidden' },
-  submitGradient: { paddingVertical: 16, alignItems: 'center' },
-  submitText: { color: colors.white, fontSize: 15, fontWeight: '800' },
 });

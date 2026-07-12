@@ -1,7 +1,8 @@
 import React from 'react';
-import { View, Text, TextInput, TouchableOpacity, StyleSheet } from 'react-native';
-import { Ionicons } from '@expo/vector-icons';
-import { colors } from '../theme/colors';
+import { View, Text, TextInput, StyleSheet } from 'react-native';
+import { CirclePlus, Trash2 } from 'lucide-react-native';
+import { PressableScale } from '../ui';
+import { colors, spacing, radius, typography } from '../theme/tokens';
 
 export default function RepeatingTextField({
   label,
@@ -45,37 +46,37 @@ export default function RepeatingTextField({
             placeholder={placeholder}
             multiline={multiline}
           />
-          <TouchableOpacity style={styles.removeBtn} onPress={() => removeRow(index)} hitSlop={8}>
-            <Ionicons name="trash-outline" size={18} color="#B91C1C" />
-          </TouchableOpacity>
+          <PressableScale style={styles.removeBtn} onPress={() => removeRow(index)} hitSlop={8} haptic="light">
+            <Trash2 size={18} color={colors.error} strokeWidth={2} />
+          </PressableScale>
         </View>
       ))}
-      <TouchableOpacity style={styles.addBtn} onPress={addRow}>
-        <Ionicons name="add-circle-outline" size={16} color={colors.baytgo} />
+      <PressableScale style={styles.addBtn} onPress={addRow} haptic="light">
+        <CirclePlus size={16} color={colors.baytgo} strokeWidth={2} />
         <Text style={styles.addText}>{addLabel}</Text>
-      </TouchableOpacity>
+      </PressableScale>
     </View>
   );
 }
 
 const styles = StyleSheet.create({
-  wrap: { marginBottom: 14 },
-  label: { fontSize: 12, fontWeight: '800', color: colors.slate600, marginBottom: 8, marginLeft: 2 },
-  row: { flexDirection: 'row', alignItems: 'flex-start', gap: 8, marginBottom: 8 },
+  wrap: { marginBottom: spacing.md + 2 },
+  label: { ...typography.caption, fontWeight: '800', color: colors.slate600, marginBottom: spacing.sm, marginLeft: 2 },
+  row: { flexDirection: 'row', alignItems: 'flex-start', gap: spacing.sm, marginBottom: spacing.sm },
   input: {
     flex: 1,
     backgroundColor: colors.white,
-    borderRadius: 16,
+    borderRadius: radius.md,
     borderWidth: 1,
-    borderColor: colors.slate100,
-    paddingHorizontal: 14,
-    paddingVertical: 12,
-    fontSize: 15,
+    borderColor: colors.surface,
+    paddingHorizontal: spacing.md + 2,
+    paddingVertical: spacing.md,
+    ...typography.body,
     fontWeight: '600',
-    color: colors.slate900,
+    color: colors.textPrimary,
   },
   inputMultiline: { minHeight: 72, textAlignVertical: 'top' },
-  removeBtn: { marginTop: 12 },
-  addBtn: { flexDirection: 'row', alignItems: 'center', gap: 6 },
-  addText: { fontSize: 12, fontWeight: '800', color: colors.baytgo },
+  removeBtn: { marginTop: spacing.md },
+  addBtn: { flexDirection: 'row', alignItems: 'center', gap: spacing.sm - 2 },
+  addText: { ...typography.caption, fontWeight: '800', color: colors.baytgo },
 });

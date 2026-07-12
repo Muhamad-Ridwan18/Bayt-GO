@@ -1,18 +1,13 @@
 import React, { useState } from 'react';
-import {
-  View,
-  Text,
-  StyleSheet,
-  TouchableOpacity,
-  ActivityIndicator,
-  Alert,
-} from 'react-native';
+import { View, Text, StyleSheet, Alert } from 'react-native';
+import { Lock } from 'lucide-react-native';
 import AuthInput from '../components/AuthInput';
 import ScreenHeader from '../components/ScreenHeader';
+import Button from '../ui/Button';
 import { deleteAccount } from '../api/profile';
 import { useAuth } from '../context/AuthContext';
 import { resetRoot } from '../navigation/rootNavigation';
-import { colors } from '../theme/colors';
+import { colors, layout, radius, spacing, typography } from '../theme/tokens';
 
 export default function DeleteAccountScreen({ navigation }) {
   const { token, logout } = useAuth();
@@ -65,50 +60,40 @@ export default function DeleteAccountScreen({ navigation }) {
 
         <AuthInput
           label="Password"
-          icon="lock-closed-outline"
+          icon={Lock}
           value={password}
           onChangeText={setPassword}
           secureTextEntry
           placeholder="Password akun Anda"
         />
 
-        <TouchableOpacity style={styles.deleteBtn} onPress={handleDelete} disabled={loading} activeOpacity={0.9}>
-          {loading ? (
-            <ActivityIndicator color={colors.white} />
-          ) : (
-            <Text style={styles.deleteText}>Hapus akun permanen</Text>
-          )}
-        </TouchableOpacity>
+        <Button
+          label="Hapus akun permanen"
+          onPress={handleDelete}
+          loading={loading}
+          variant="danger"
+        />
       </View>
     </View>
   );
 }
 
 const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: colors.canvas },
-  form: { padding: 20 },
+  container: { flex: 1, backgroundColor: colors.background },
+  form: { padding: layout.screenPadding },
   warning: {
-    fontSize: 14,
-    lineHeight: 21,
-    color: colors.slate600,
-    fontWeight: '600',
-    marginBottom: 16,
+    ...typography.caption,
+    lineHeight: 22,
+    color: colors.textSecondary,
+    marginBottom: spacing.lg,
   },
   error: {
-    backgroundColor: '#FEF2F2',
-    color: '#B91C1C',
-    padding: 12,
-    borderRadius: 12,
-    fontSize: 13,
-    fontWeight: '600',
-    marginBottom: 16,
+    backgroundColor: colors.errorLight,
+    color: colors.error,
+    padding: spacing.md,
+    borderRadius: radius.sm,
+    marginBottom: spacing.lg,
+    ...typography.caption,
+    fontFamily: 'PlusJakartaSans_600SemiBold',
   },
-  deleteBtn: {
-    marginTop: 8,
-    borderRadius: 16,
-    backgroundColor: '#B91C1C',
-    paddingVertical: 16,
-    alignItems: 'center',
-  },
-  deleteText: { color: colors.white, fontSize: 16, fontWeight: '800' },
 });

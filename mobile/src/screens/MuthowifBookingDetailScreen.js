@@ -1,47 +1,38 @@
 import React, { useCallback, useState } from 'react';
-import {
-  View,
-  Text,
-  StyleSheet,
-  ScrollView,
-  TouchableOpacity,
-  ActivityIndicator,
-  RefreshControl,
-  Alert,
-  Modal,
-  TextInput,
-} from 'react-native';
+import { StyleSheet, Text, View, ScrollView, RefreshControl, Alert, ActivityIndicator } from 'react-native';
 import { useFocusEffect } from '@react-navigation/native';
-import { Ionicons } from '@expo/vector-icons';
+import {
+  User, Briefcase, Calendar, Clock, Users, Bed, Car, CheckCircle, XCircle, MessagesSquare,
+  CircleCheckBig,
+} from 'lucide-react-native';
 import ScreenHeader from '../components/ScreenHeader';
 import BookingDocumentGallery from '../components/BookingDocumentGallery';
 import {
-  fetchMuthowifBooking,
-  confirmMuthowifBooking,
-  cancelMuthowifBooking,
-  approveReschedule,
-  rejectReschedule,
-  approveSupportCompletion,
-  rejectSupportCompletion,
+  fetchMuthowifBooking, confirmMuthowifBooking, cancelMuthowifBooking,
+  approveReschedule, rejectReschedule, approveSupportCompletion, rejectSupportCompletion,
 } from '../api/muthowifBookings';
 import { useAuth } from '../context/AuthContext';
-import { colors } from '../theme/colors';
+import Button from '../ui/Button';
+import Card from '../ui/Card';
+import ErrorState from '../ui/ErrorState';
+import { SkeletonList } from '../ui/Skeleton';
+import BookingSection from '../features/booking/BookingSection';
+import StatusPill from '../features/booking/StatusPill';
+import { REJECTION_OPTIONS, RejectBookingModal, RescheduleDecisionModal } from '../features/booking/MuthowifBookingModals';
+import { notifyError, notifySuccess, notifySuccessThen } from '../utils/feedback';
+import { colors, layout, radius, spacing, typography } from '../theme/tokens';
 import { formatIdr } from '../utils/format';
 import { MuthowifPricingBreakdown } from '../components/BookingPricingBreakdown';
 import {
-  bookingStatusMeta,
-  paymentStatusMeta,
-  serviceTypeLabel,
-  formatDateRange,
-  billingNights,
-  changeRequestStatusLabel,
+  bookingStatusMeta, paymentStatusMeta, serviceTypeLabel, formatDateRange,
+  billingNights, changeRequestStatusLabel,
 } from '../utils/bookingLabels';
 
-function InfoCell({ icon, label, value }) {
+function InfoCell({ icon: Icon, label, value }) {
   return (
     <View style={styles.infoCell}>
       <View style={styles.infoIcon}>
-        <Ionicons name={icon} size={16} color={colors.baytgo} />
+        <Icon size={16} color={colors.baytgo} strokeWidth={2} />
       </View>
       <View style={styles.infoCopy}>
         <Text style={styles.infoLabel}>{label}</Text>
@@ -51,38 +42,18 @@ function InfoCell({ icon, label, value }) {
   );
 }
 
-function ActionBtn({ icon, label, onPress, variant = 'outline', danger, disabled }) {
-  const isPrimary = variant === 'primary';
+function AlertCard({ icon: Icon, title, body, children }) {
   return (
-    <TouchableOpacity
-      style={[
-        styles.actionBtn,
-        isPrimary && styles.actionPrimary,
-        danger && styles.actionDanger,
-        disabled && styles.actionDisabled,
-      ]}
-      onPress={onPress}
-      activeOpacity={0.9}
-      disabled={disabled}
-    >
-      <Ionicons
-        name={icon}
-        size={18}
-        color={isPrimary ? colors.white : danger ? '#B91C1C' : colors.baytgo}
-      />
-      <Text style={[styles.actionText, isPrimary && styles.actionTextPrimary, danger && styles.actionTextDanger]}>
-        {label}
-      </Text>
-    </TouchableOpacity>
+    <BookingSection variant="warning">
+      <View style={styles.alertHead}>
+        <Icon size={20} color="#92400E" strokeWidth={2} />
+        <Text style={styles.alertTitle}>{title}</Text>
+      </View>
+      <Text style={styles.alertBody}>{body}</Text>
+      {children}
+    </BookingSection>
   );
 }
-
-const REJECTION_OPTIONS = [
-  { value: 'jadwal_full', label: 'Jadwal penuh' },
-  { value: 'illness', label: 'Sakit' },
-  { value: 'force_majeure', label: 'Force majeure' },
-  { value: 'other', label: 'Lainnya' },
-];
 
 export default function MuthowifBookingDetailScreen({ navigation, route }) {
   const { bookingId } = route.params;
@@ -114,11 +85,7 @@ export default function MuthowifBookingDetailScreen({ navigation, route }) {
     }
   }, [token, bookingId]);
 
-  useFocusEffect(
-    useCallback(() => {
-      load();
-    }, [load]),
-  );
+  useFocusEffect(useCallback(() => { load(); }, [load]));
 
   const handleConfirm = () => {
     Alert.alert('Setujui booking?', 'Jamaah akan diminta membayar setelah disetujui.', [
@@ -129,22 +96,16 @@ export default function MuthowifBookingDetailScreen({ navigation, route }) {
           setActing(true);
           try {
             await confirmMuthowifBooking(token, bookingId);
-            Alert.alert('Berhasil', 'Booking disetujui.');
+            notifySuccess('Booking disetujui.');
             await load(true);
           } catch (err) {
-            Alert.alert('Gagal', err.message || 'Tidak dapat menyetujui');
+            notifyError(err.message || 'Tidak dapat menyetujui');
           } finally {
             setActing(false);
           }
         },
       },
     ]);
-  };
-
-  const handleReject = () => {
-    setRejectKind(REJECTION_OPTIONS[0].value);
-    setRejectNote('');
-    setRejectModalOpen(true);
   };
 
   const submitReject = async () => {
@@ -155,10 +116,10 @@ export default function MuthowifBookingDetailScreen({ navigation, route }) {
         muthowif_rejection_kind: rejectKind,
         muthowif_rejection_note: rejectNote.trim() || null,
       });
-      Alert.alert('Berhasil', 'Booking ditolak.');
+      notifySuccess('Booking ditolak.');
       await load(true);
     } catch (err) {
-      Alert.alert('Gagal', err.message || 'Tidak dapat menolak');
+      notifyError(err.message || 'Tidak dapat menolak');
     } finally {
       setActing(false);
     }
@@ -182,10 +143,10 @@ export default function MuthowifBookingDetailScreen({ navigation, route }) {
       } else {
         await rejectReschedule(token, bookingId, rescheduleReq.id, note);
       }
-      Alert.alert('Berhasil', rescheduleApprove ? 'Reschedule disetujui.' : 'Reschedule ditolak.');
+      notifySuccess(rescheduleApprove ? 'Reschedule disetujui.' : 'Reschedule ditolak.');
       await load(true);
     } catch (err) {
-      Alert.alert('Gagal', err.message || 'Tidak dapat memproses');
+      notifyError(err.message || 'Tidak dapat memproses');
     } finally {
       setActing(false);
       setRescheduleReq(null);
@@ -193,8 +154,28 @@ export default function MuthowifBookingDetailScreen({ navigation, route }) {
     }
   };
 
-  const handleReschedule = (req, approve) => {
-    openRescheduleModal(req, approve);
+  const handleSupportCompletion = (approve) => {
+    const title = approve ? 'Setujui penyelesaian layanan?' : 'Tolak permintaan penyelesaian?';
+    Alert.alert(title, 'Konfirmasi keputusan Anda.', [
+      { text: 'Batal', style: 'cancel' },
+      {
+        text: approve ? 'Setujui' : 'Tolak',
+        style: approve ? 'default' : 'destructive',
+        onPress: async () => {
+          setActing(true);
+          try {
+            if (approve) await approveSupportCompletion(token, bookingId);
+            else await rejectSupportCompletion(token, bookingId);
+            notifySuccess(approve ? 'Layanan ditandai selesai.' : 'Permintaan ditolak.');
+            await load(true);
+          } catch (err) {
+            notifyError(err.message || 'Tidak dapat memproses');
+          } finally {
+            setActing(false);
+          }
+        },
+      },
+    ]);
   };
 
   const openChat = () => {
@@ -208,38 +189,11 @@ export default function MuthowifBookingDetailScreen({ navigation, route }) {
     });
   };
 
-  const handleSupportCompletion = (approve) => {
-    const title = approve ? 'Setujui penyelesaian layanan?' : 'Tolak permintaan penyelesaian?';
-    Alert.alert(title, 'Konfirmasi keputusan Anda.', [
-      { text: 'Batal', style: 'cancel' },
-      {
-        text: approve ? 'Setujui' : 'Tolak',
-        style: approve ? 'default' : 'destructive',
-        onPress: async () => {
-          setActing(true);
-          try {
-            if (approve) {
-              await approveSupportCompletion(token, bookingId);
-            } else {
-              await rejectSupportCompletion(token, bookingId);
-            }
-            Alert.alert('Berhasil', approve ? 'Layanan ditandai selesai.' : 'Permintaan ditolak.');
-            await load(true);
-          } catch (err) {
-            Alert.alert('Gagal', err.message || 'Tidak dapat memproses');
-          } finally {
-            setActing(false);
-          }
-        },
-      },
-    ]);
-  };
-
   if (loading && !booking) {
     return (
       <View style={styles.container}>
         <ScreenHeader title="Detail permintaan" onBack={() => navigation.goBack()} />
-        <ActivityIndicator color={colors.baytgo} style={styles.loader} />
+        <SkeletonList count={3} style={styles.skeleton} />
       </View>
     );
   }
@@ -248,7 +202,7 @@ export default function MuthowifBookingDetailScreen({ navigation, route }) {
     return (
       <View style={styles.container}>
         <ScreenHeader title="Detail permintaan" onBack={() => navigation.goBack()} />
-        <Text style={styles.errorText}>{error}</Text>
+        <ErrorState description={error} onRetry={() => load()} />
       </View>
     );
   }
@@ -256,7 +210,6 @@ export default function MuthowifBookingDetailScreen({ navigation, route }) {
   const bookingMeta = bookingStatusMeta(booking.status);
   const paymentMeta = paymentStatusMeta(booking.payment_status);
   const pendingReschedule = (booking.reschedule_requests || []).find((r) => r.status === 'pending');
-  const documents = booking.documents || [];
   const showSupportCompletion = booking.is_support && booking.completion_requested_at && booking.status !== 'completed';
   const nights = billingNights(booking.starts_on, booking.ends_on);
 
@@ -272,17 +225,13 @@ export default function MuthowifBookingDetailScreen({ navigation, route }) {
         contentContainerStyle={styles.scroll}
         showsVerticalScrollIndicator={false}
         refreshControl={
-          <RefreshControl
-            refreshing={refreshing}
-            onRefresh={() => { setRefreshing(true); load(true); }}
-            tintColor={colors.baytgo}
-          />
+          <RefreshControl refreshing={refreshing} onRefresh={() => { setRefreshing(true); load(true); }} tintColor={colors.baytgo} />
         }
       >
-        <View style={styles.heroCard}>
+        <Card style={styles.hero} padding={spacing.xl}>
           <View style={styles.heroTop}>
             <View style={styles.avatar}>
-              <Ionicons name="person" size={28} color={colors.baytgo} />
+              <User size={28} color={colors.baytgo} strokeWidth={2} />
             </View>
             <View style={styles.heroCopy}>
               <Text style={styles.customerName}>{booking.customer?.name || 'Jamaah'}</Text>
@@ -292,12 +241,8 @@ export default function MuthowifBookingDetailScreen({ navigation, route }) {
             </View>
           </View>
           <View style={styles.badgeRow}>
-            <View style={[styles.pill, { backgroundColor: bookingMeta.color + '18' }]}>
-              <Text style={[styles.pillText, { color: bookingMeta.color }]}>{bookingMeta.label}</Text>
-            </View>
-            <View style={[styles.pill, { backgroundColor: paymentMeta.color + '18' }]}>
-              <Text style={[styles.pillText, { color: paymentMeta.color }]}>{paymentMeta.label}</Text>
-            </View>
+            <StatusPill label={bookingMeta.label} color={bookingMeta.color} />
+            <StatusPill label={paymentMeta.label} color={paymentMeta.color} />
           </View>
           <View style={styles.totalRow}>
             <Text style={styles.totalLabel}>Subtotal layanan</Text>
@@ -309,333 +254,131 @@ export default function MuthowifBookingDetailScreen({ navigation, route }) {
               <Text style={styles.netValue}>{formatIdr(booking.pricing.net_after_referral)}</Text>
             </View>
           ) : null}
-        </View>
+        </Card>
 
-        <View style={styles.card}>
-          <Text style={styles.cardTitle}>Rincian pendapatan</Text>
+        <BookingSection title="Rincian pendapatan">
           <MuthowifPricingBreakdown pricing={booking.pricing} />
-        </View>
+        </BookingSection>
 
-        <View style={styles.card}>
-          <Text style={styles.cardTitle}>Informasi perjalanan</Text>
-          <InfoCell icon="briefcase-outline" label="Layanan" value={serviceTypeLabel(booking.service_type)} />
-          <InfoCell icon="calendar-outline" label="Tanggal" value={formatDateRange(booking.starts_on, booking.ends_on)} />
-          <InfoCell icon="time-outline" label="Durasi" value={`${nights} hari`} />
-          <InfoCell icon="people-outline" label="Jumlah jamaah" value={`${booking.pilgrim_count || 1} orang`} />
-          {booking.with_same_hotel ? <InfoCell icon="bed-outline" label="Hotel sama" value="Ya" /> : null}
-          {booking.with_transport ? <InfoCell icon="car-outline" label="Transport" value="Ya" /> : null}
-        </View>
+        <BookingSection title="Informasi perjalanan">
+          <InfoCell icon={Briefcase} label="Layanan" value={serviceTypeLabel(booking.service_type)} />
+          <InfoCell icon={Calendar} label="Tanggal" value={formatDateRange(booking.starts_on, booking.ends_on)} />
+          <InfoCell icon={Clock} label="Durasi" value={`${nights} hari`} />
+          <InfoCell icon={Users} label="Jumlah jamaah" value={`${booking.pilgrim_count || 1} orang`} />
+          {booking.with_same_hotel ? <InfoCell icon={Bed} label="Hotel sama" value="Ya" /> : null}
+          {booking.with_transport ? <InfoCell icon={Car} label="Transport" value="Ya" /> : null}
+        </BookingSection>
 
         {pendingReschedule ? (
-          <View style={styles.alertCard}>
-            <View style={styles.alertHead}>
-              <Ionicons name="calendar" size={20} color="#92400E" />
-              <Text style={styles.alertTitle}>Pengajuan reschedule</Text>
-            </View>
-            <Text style={styles.alertBody}>
-              Jadwal baru: {formatDateRange(pendingReschedule.starts_on, pendingReschedule.ends_on)}
-              {'\n'}Status: {changeRequestStatusLabel(pendingReschedule.status)}
-            </Text>
+          <AlertCard
+            icon={Calendar}
+            title="Pengajuan reschedule"
+            body={`Jadwal baru: ${formatDateRange(pendingReschedule.starts_on, pendingReschedule.ends_on)}\nStatus: ${changeRequestStatusLabel(pendingReschedule.status)}`}
+          >
             <View style={styles.actionRow}>
-              <ActionBtn icon="checkmark-circle-outline" label="Setujui" variant="primary" onPress={() => handleReschedule(pendingReschedule, true)} />
-              <ActionBtn icon="close-circle-outline" label="Tolak" danger onPress={() => handleReschedule(pendingReschedule, false)} />
+              <View style={styles.actionBtn}><Button label="Setujui" size="sm" icon={<CheckCircle size={16} color={colors.white} strokeWidth={2} />}
+                onPress={() => openRescheduleModal(pendingReschedule, true)} fullWidth={false} /></View>
+              <View style={styles.actionBtn}><Button label="Tolak" size="sm" variant="danger" icon={<XCircle size={16} color={colors.error} strokeWidth={2} />}
+                onPress={() => openRescheduleModal(pendingReschedule, false)} fullWidth={false} /></View>
             </View>
-          </View>
+          </AlertCard>
         ) : null}
 
         {showSupportCompletion ? (
-          <View style={styles.alertCard}>
-            <View style={styles.alertHead}>
-              <Ionicons name="checkmark-done-circle" size={20} color="#92400E" />
-              <Text style={styles.alertTitle}>Permintaan penyelesaian layanan</Text>
-            </View>
-            <Text style={styles.alertBody}>Jamaah meminta layanan pendukung ditandai selesai.</Text>
+          <AlertCard icon={CircleCheckBig} title="Permintaan penyelesaian layanan" body="Jamaah meminta layanan pendukung ditandai selesai.">
             <View style={styles.actionRow}>
-              <ActionBtn icon="checkmark-circle-outline" label="Setujui" variant="primary" onPress={() => handleSupportCompletion(true)} />
-              <ActionBtn icon="close-circle-outline" label="Tolak" danger onPress={() => handleSupportCompletion(false)} />
+              <View style={styles.actionBtn}><Button label="Setujui" size="sm" icon={<CheckCircle size={16} color={colors.white} strokeWidth={2} />}
+                onPress={() => handleSupportCompletion(true)} fullWidth={false} /></View>
+              <View style={styles.actionBtn}><Button label="Tolak" size="sm" variant="danger" icon={<XCircle size={16} color={colors.error} strokeWidth={2} />}
+                onPress={() => handleSupportCompletion(false)} fullWidth={false} /></View>
             </View>
-          </View>
+          </AlertCard>
         ) : null}
 
-        <BookingDocumentGallery
-          token={token}
-          bookingId={bookingId}
-          documents={documents}
-          title="Dokumen jamaah"
-        />
+        <BookingDocumentGallery token={token} bookingId={bookingId} documents={booking.documents || []} title="Dokumen jamaah" />
 
         {booking.status === 'pending' ? (
-          <View style={styles.decisionCard}>
-            <Text style={styles.decisionTitle}>Keputusan booking</Text>
-            <Text style={styles.decisionSub}>
-              Tinjau dokumen jamaah lalu setujui atau tolak permintaan ini.
-            </Text>
-            <ActionBtn icon="checkmark-circle-outline" label="Setujui booking" variant="primary" onPress={handleConfirm} disabled={acting} />
-            <ActionBtn icon="close-circle-outline" label="Tolak booking" danger onPress={handleReject} disabled={acting} />
-          </View>
+          <BookingSection title="Keputusan booking" style={styles.decisionCard}>
+            <Text style={styles.decisionSub}>Tinjau dokumen jamaah lalu setujui atau tolak permintaan ini.</Text>
+            <Button label="Setujui booking" icon={<CheckCircle size={18} color={colors.white} strokeWidth={2} />}
+              onPress={handleConfirm} disabled={acting} />
+            <Button label="Tolak booking" variant="danger" icon={<XCircle size={18} color={colors.error} strokeWidth={2} />}
+              onPress={() => { setRejectKind(REJECTION_OPTIONS[0].value); setRejectNote(''); setRejectModalOpen(true); }}
+              disabled={acting} />
+          </BookingSection>
         ) : null}
 
         {booking.payment_status === 'paid' ? (
-          <ActionBtn icon="chatbubble-ellipses-outline" label="Chat jamaah" onPress={openChat} />
+          <Button label="Chat jamaah" variant="secondary"
+            icon={<MessagesSquare size={18} color={colors.baytgo} strokeWidth={2} />}
+            onPress={openChat} />
         ) : null}
 
-        {acting ? <ActivityIndicator color={colors.baytgo} style={{ marginTop: 16 }} /> : null}
+        {acting ? <ActivityIndicator color={colors.baytgo} style={styles.acting} /> : null}
       </ScrollView>
 
-      <Modal visible={rejectModalOpen} transparent animationType="fade" onRequestClose={() => setRejectModalOpen(false)}>
-        <View style={styles.modalBackdrop}>
-          <View style={styles.modalCard}>
-            <Text style={styles.modalTitle}>Tolak booking</Text>
-            <Text style={styles.modalLabel}>Alasan penolakan</Text>
-            <View style={styles.chipRow}>
-              {REJECTION_OPTIONS.map((opt) => (
-                <TouchableOpacity
-                  key={opt.value}
-                  style={[styles.chip, rejectKind === opt.value && styles.chipActive]}
-                  onPress={() => setRejectKind(opt.value)}
-                >
-                  <Text style={[styles.chipText, rejectKind === opt.value && styles.chipTextActive]}>
-                    {opt.label}
-                  </Text>
-                </TouchableOpacity>
-              ))}
-            </View>
-            <Text style={styles.modalLabel}>Catatan (opsional)</Text>
-            <TextInput
-              style={styles.modalInput}
-              value={rejectNote}
-              onChangeText={setRejectNote}
-              placeholder="Jelaskan alasan penolakan kepada jamaah"
-              multiline
-              maxLength={2000}
-            />
-            <View style={styles.modalActions}>
-              <TouchableOpacity style={styles.modalCancelBtn} onPress={() => setRejectModalOpen(false)}>
-                <Text style={styles.modalCancelText}>Batal</Text>
-              </TouchableOpacity>
-              <TouchableOpacity style={styles.modalRejectBtn} onPress={submitReject}>
-                <Text style={styles.modalRejectText}>Tolak booking</Text>
-              </TouchableOpacity>
-            </View>
-          </View>
-        </View>
-      </Modal>
+      <RejectBookingModal
+        visible={rejectModalOpen}
+        rejectKind={rejectKind}
+        rejectNote={rejectNote}
+        onChangeKind={setRejectKind}
+        onChangeNote={setRejectNote}
+        onClose={() => setRejectModalOpen(false)}
+        onSubmit={submitReject}
+      />
 
-      <Modal
+      <RescheduleDecisionModal
         visible={rescheduleModalOpen}
-        transparent
-        animationType="fade"
-        onRequestClose={() => setRescheduleModalOpen(false)}
-      >
-        <View style={styles.modalBackdrop}>
-          <View style={styles.modalCard}>
-            <Text style={styles.modalTitle}>
-              {rescheduleApprove ? 'Setujui reschedule' : 'Tolak reschedule'}
-            </Text>
-            <Text style={styles.modalLabel}>Catatan untuk jamaah (opsional)</Text>
-            <TextInput
-              style={styles.modalInput}
-              value={rescheduleNote}
-              onChangeText={setRescheduleNote}
-              placeholder={
-                rescheduleApprove
-                  ? 'Contoh: Jadwal baru sudah saya sesuaikan'
-                  : 'Jelaskan alasan penolakan reschedule'
-              }
-              multiline
-              maxLength={2000}
-            />
-            <View style={styles.modalActions}>
-              <TouchableOpacity style={styles.modalCancelBtn} onPress={() => setRescheduleModalOpen(false)}>
-                <Text style={styles.modalCancelText}>Batal</Text>
-              </TouchableOpacity>
-              <TouchableOpacity
-                style={[styles.modalRejectBtn, rescheduleApprove && styles.modalApproveBtn]}
-                onPress={submitReschedule}
-              >
-                <Text style={[styles.modalRejectText, rescheduleApprove && styles.modalApproveText]}>
-                  {rescheduleApprove ? 'Setujui' : 'Tolak'}
-                </Text>
-              </TouchableOpacity>
-            </View>
-          </View>
-        </View>
-      </Modal>
+        approve={rescheduleApprove}
+        note={rescheduleNote}
+        onChangeNote={setRescheduleNote}
+        onClose={() => setRescheduleModalOpen(false)}
+        onSubmit={submitReschedule}
+      />
     </View>
   );
 }
 
 const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: colors.canvas },
-  scroll: { padding: 20, paddingBottom: 32 },
-  loader: { marginTop: 40 },
-  errorText: { marginTop: 40, textAlign: 'center', color: colors.slate500, fontWeight: '600' },
-  heroCard: {
-    backgroundColor: colors.white,
-    borderRadius: 20,
-    padding: 18,
-    marginBottom: 12,
-    borderWidth: 1,
-    borderColor: 'rgba(26,61,52,0.08)',
-    shadowColor: '#0F2E28',
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.05,
-    shadowRadius: 12,
-    elevation: 2,
-  },
-  heroTop: { flexDirection: 'row', alignItems: 'center', gap: 14 },
+  container: { flex: 1, backgroundColor: colors.background },
+  scroll: { padding: layout.screenPadding, paddingBottom: spacing['4xl'] },
+  skeleton: { padding: layout.screenPadding },
+  hero: { marginBottom: spacing.md },
+  heroTop: { flexDirection: 'row', alignItems: 'center', gap: spacing.lg },
   avatar: {
-    width: 56,
-    height: 56,
-    borderRadius: 18,
-    backgroundColor: colors.baytgoLight,
-    alignItems: 'center',
-    justifyContent: 'center',
+    width: 56, height: 56, borderRadius: radius.sm,
+    backgroundColor: colors.baytgoLight, alignItems: 'center', justifyContent: 'center',
   },
   heroCopy: { flex: 1 },
-  customerName: { fontSize: 20, fontWeight: '900', color: colors.baytgo },
-  customerMeta: { marginTop: 4, fontSize: 13, color: colors.slate500, fontWeight: '600' },
-  badgeRow: { flexDirection: 'row', flexWrap: 'wrap', gap: 8, marginTop: 14 },
-  pill: { borderRadius: 999, paddingHorizontal: 10, paddingVertical: 5 },
-  pillText: { fontSize: 11, fontWeight: '800' },
+  customerName: { ...typography.subtitle, color: colors.baytgo },
+  customerMeta: { marginTop: spacing.xs, ...typography.caption, color: colors.textSecondary },
+  badgeRow: { flexDirection: 'row', flexWrap: 'wrap', gap: spacing.sm, marginTop: spacing.lg },
   totalRow: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    marginTop: 16,
-    paddingTop: 14,
-    borderTopWidth: 1,
-    borderTopColor: colors.slate100,
+    flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center',
+    marginTop: spacing.lg, paddingTop: spacing.lg, borderTopWidth: 1, borderTopColor: colors.border,
   },
-  totalLabel: { fontSize: 13, fontWeight: '700', color: colors.slate500 },
-  totalValue: { fontSize: 18, fontWeight: '900', color: colors.baytgo },
+  totalLabel: { ...typography.caption, color: colors.textSecondary },
+  totalValue: { ...typography.subtitle, color: colors.baytgo },
   netRow: {
-    marginTop: 10,
-    paddingTop: 10,
-    borderTopWidth: 1,
-    borderTopColor: colors.slate100,
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
+    marginTop: spacing.md, paddingTop: spacing.md, borderTopWidth: 1, borderTopColor: colors.border,
+    flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center',
   },
-  netLabel: { fontSize: 13, fontWeight: '700', color: colors.slate600 },
-  netValue: { fontSize: 20, fontWeight: '900', color: colors.emerald600 },
-  card: {
-    backgroundColor: colors.white,
-    borderRadius: 20,
-    padding: 16,
-    marginBottom: 12,
-    borderWidth: 1,
-    borderColor: 'rgba(26,61,52,0.08)',
-  },
-  cardTitle: { fontSize: 14, fontWeight: '900', color: colors.baytgo, marginBottom: 12 },
-  infoCell: { flexDirection: 'row', alignItems: 'flex-start', gap: 12, paddingVertical: 10 },
+  netLabel: { ...typography.caption, color: colors.textSecondary },
+  netValue: { ...typography.title, fontSize: 20, color: colors.success },
+  infoCell: { flexDirection: 'row', alignItems: 'flex-start', gap: spacing.md, paddingVertical: spacing.sm },
   infoIcon: {
-    width: 34,
-    height: 34,
-    borderRadius: 10,
-    backgroundColor: colors.baytgoLight,
-    alignItems: 'center',
-    justifyContent: 'center',
+    width: 34, height: 34, borderRadius: radius.sm,
+    backgroundColor: colors.baytgoLight, alignItems: 'center', justifyContent: 'center',
   },
   infoCopy: { flex: 1 },
-  infoLabel: { fontSize: 11, fontWeight: '700', color: colors.slate500 },
-  infoValue: { marginTop: 2, fontSize: 14, fontWeight: '800', color: colors.slate900 },
-  alertCard: {
-    backgroundColor: '#FFFBEB',
-    borderRadius: 18,
-    padding: 16,
-    marginBottom: 12,
-    borderWidth: 1,
-    borderColor: '#FDE68A',
-  },
-  alertHead: { flexDirection: 'row', alignItems: 'center', gap: 8, marginBottom: 8 },
-  alertTitle: { fontSize: 14, fontWeight: '900', color: '#92400E' },
-  alertBody: { fontSize: 13, lineHeight: 20, color: '#78350F', fontWeight: '600' },
-  actionRow: { flexDirection: 'row', gap: 10, marginTop: 12 },
-  decisionCard: {
-    backgroundColor: colors.white,
-    borderRadius: 20,
-    padding: 16,
-    marginBottom: 12,
-    borderWidth: 1,
-    borderColor: '#DDD6FE',
-    gap: 10,
-  },
-  decisionTitle: { fontSize: 15, fontWeight: '900', color: colors.baytgo },
-  decisionSub: { fontSize: 12, fontWeight: '600', color: colors.slate500, lineHeight: 17, marginBottom: 4 },
-  actionBtn: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
-    gap: 8,
-    borderRadius: 14,
-    paddingVertical: 14,
-    borderWidth: 1,
-    borderColor: colors.slate200,
-    backgroundColor: colors.white,
-  },
-  actionPrimary: { backgroundColor: colors.baytgo, borderColor: colors.baytgo },
-  actionDanger: { backgroundColor: '#FEF2F2', borderColor: '#FECACA' },
-  actionDisabled: { opacity: 0.6 },
-  actionText: { fontSize: 14, fontWeight: '800', color: colors.baytgo },
-  actionTextPrimary: { color: colors.white },
-  actionTextDanger: { color: '#B91C1C' },
-  modalBackdrop: {
-    flex: 1,
-    backgroundColor: 'rgba(15, 23, 42, 0.45)',
-    justifyContent: 'center',
-    padding: 20,
-  },
-  modalCard: {
-    backgroundColor: colors.white,
-    borderRadius: 20,
-    padding: 18,
-  },
-  modalTitle: { fontSize: 18, fontWeight: '900', color: colors.baytgo },
-  modalLabel: { marginTop: 14, marginBottom: 8, fontSize: 12, fontWeight: '800', color: colors.slate600 },
-  chipRow: { flexDirection: 'row', flexWrap: 'wrap', gap: 8 },
-  chip: {
-    borderRadius: 999,
-    paddingHorizontal: 12,
-    paddingVertical: 8,
-    backgroundColor: colors.canvas,
-    borderWidth: 1,
-    borderColor: colors.slate200,
-  },
-  chipActive: { backgroundColor: colors.baytgo, borderColor: colors.baytgo },
-  chipText: { fontSize: 12, fontWeight: '800', color: colors.slate600 },
-  chipTextActive: { color: colors.white },
-  modalInput: {
-    minHeight: 88,
-    borderRadius: 14,
-    borderWidth: 1,
-    borderColor: colors.slate200,
-    paddingHorizontal: 14,
-    paddingVertical: 12,
-    fontSize: 14,
-    fontWeight: '600',
-    color: colors.slate900,
-    textAlignVertical: 'top',
-  },
-  modalActions: { flexDirection: 'row', gap: 10, marginTop: 18 },
-  modalCancelBtn: {
-    flex: 1,
-    paddingVertical: 14,
-    borderRadius: 14,
-    borderWidth: 1,
-    borderColor: colors.slate200,
-    alignItems: 'center',
-  },
-  modalCancelText: { fontSize: 14, fontWeight: '800', color: colors.slate600 },
-  modalRejectBtn: {
-    flex: 1,
-    paddingVertical: 14,
-    borderRadius: 14,
-    backgroundColor: '#B91C1C',
-    alignItems: 'center',
-  },
-  modalRejectText: { fontSize: 14, fontWeight: '800', color: colors.white },
-  modalApproveBtn: { backgroundColor: colors.baytgo },
-  modalApproveText: { color: colors.white },
+  infoLabel: { ...typography.label, color: colors.textSecondary },
+  infoValue: { marginTop: 2, ...typography.caption, fontFamily: 'PlusJakartaSans_700Bold', color: colors.textPrimary },
+  alertHead: { flexDirection: 'row', alignItems: 'center', gap: spacing.sm, marginBottom: spacing.sm },
+  alertTitle: { ...typography.caption, fontFamily: 'PlusJakartaSans_800ExtraBold', color: '#92400E' },
+  alertBody: { ...typography.caption, lineHeight: 20, color: '#78350F' },
+  actionRow: { flexDirection: 'row', gap: spacing.md, marginTop: spacing.md },
+  actionBtn: { flex: 1 },
+  decisionCard: { borderColor: '#DDD6FE' },
+  decisionSub: { ...typography.small, color: colors.textSecondary, lineHeight: 17, marginBottom: spacing.md },
+  acting: { marginTop: spacing.lg },
 });

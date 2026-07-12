@@ -1,21 +1,34 @@
-import React from 'react';
-import { View, Text, StyleSheet, Image, TouchableOpacity } from 'react-native';
-import { Ionicons } from '@expo/vector-icons';
-import { colors } from '../theme/colors';
+import React, { memo } from 'react';
+import { StyleSheet, Text, View } from 'react-native';
+import {
+  Check,
+  Heart,
+  Info,
+  MapPin,
+  MessageCircle,
+  Quote,
+  Star,
+  User,
+} from 'lucide-react-native';
+import AppImage from '../ui/AppImage';
+import Button from '../ui/Button';
+import Card from '../ui/Card';
+import PressableScale from '../ui/PressableScale';
+import { colors, radius, spacing, typography } from '../theme/tokens';
 import { formatIdr } from '../utils/format';
 import { resolveMediaUrl } from '../utils/mediaUrl';
 
-function AttrCell({ icon, label, value }) {
+function AttrCell({ icon: Icon, label, value }) {
   return (
     <View style={styles.attrCell}>
-      <Ionicons name={icon} size={16} color={colors.baytgo} />
+      <Icon size={16} color={colors.baytgo} strokeWidth={2} />
       <Text style={styles.attrValue} numberOfLines={2}>{value || '—'}</Text>
       <Text style={styles.attrLabel}>{label}</Text>
     </View>
   );
 }
 
-export default function MuthowifListingCard({ item, onPressDetail, onPressBook }) {
+function MuthowifListingCard({ item, onPressDetail, onPressBook }) {
   const langs = item.languages || [];
   const avatarUri = resolveMediaUrl(item.avatar);
   const rating = item.rating ?? null;
@@ -24,29 +37,23 @@ export default function MuthowifListingCard({ item, onPressDetail, onPressBook }
   const specialty = item.specialty || 'Pendamping Ibadah';
 
   return (
-    <View style={styles.card}>
+    <Card style={styles.card} padding={spacing.lg} elevated>
       <View style={styles.topRow}>
         <View style={styles.avatarWrap}>
-          {avatarUri ? (
-            <Image source={{ uri: avatarUri }} style={styles.avatar} resizeMode="cover" />
-          ) : (
-            <View style={[styles.avatar, styles.avatarPlaceholder]}>
-              <Ionicons name="person" size={32} color={colors.slate400} />
-            </View>
-          )}
+          <AppImage uri={avatarUri} size={72} rounded={radius.full} />
           <View style={styles.verifiedDot}>
-            <Ionicons name="checkmark" size={11} color={colors.white} />
+            <Check size={12} color={colors.white} strokeWidth={2.5} />
           </View>
         </View>
 
         <View style={styles.topInfo}>
           <View style={styles.nameRow}>
             <Text style={styles.name} numberOfLines={1}>{item.name}</Text>
-            <Ionicons name="heart-outline" size={20} color={colors.slate400} />
+            <Heart size={20} color={colors.textMuted} strokeWidth={2} />
           </View>
 
           <View style={styles.ratingRow}>
-            <Ionicons name="star" size={13} color="#F59E0B" />
+            <Star size={13} color={colors.warning} fill={colors.warning} strokeWidth={2} />
             <Text style={styles.ratingText}>{rating ?? '—'}</Text>
             <Text style={styles.reviewText}>({item.reviews ?? 0} ulasan)</Text>
           </View>
@@ -68,16 +75,16 @@ export default function MuthowifListingCard({ item, onPressDetail, onPressBook }
       </View>
 
       <View style={styles.attrGrid}>
-        <AttrCell icon="person-outline" label="Spesialisasi" value={specialty} />
+        <AttrCell icon={User} label="Spesialisasi" value={specialty} />
         <View style={styles.attrDivider} />
-        <AttrCell icon="location-outline" label="Domisili" value={item.location} />
+        <AttrCell icon={MapPin} label="Domisili" value={item.location} />
         <View style={styles.attrDivider} />
-        <AttrCell icon="chatbubble-outline" label="Bahasa" value={langDisplay} />
+        <AttrCell icon={MessageCircle} label="Bahasa" value={langDisplay} />
       </View>
 
       {item.bio ? (
         <View style={styles.quoteBox}>
-          <Ionicons name="chatbox-ellipses-outline" size={16} color={colors.baytgo} style={styles.quoteIcon} />
+          <Quote size={16} color={colors.baytgo} strokeWidth={2} style={styles.quoteIcon} />
           <Text style={styles.quoteText}>{item.bio}</Text>
         </View>
       ) : null}
@@ -92,45 +99,34 @@ export default function MuthowifListingCard({ item, onPressDetail, onPressBook }
         </View>
 
         <View style={styles.actions}>
-          <TouchableOpacity style={styles.detailBtn} onPress={onPressDetail} activeOpacity={0.88}>
-            <Ionicons name="information-circle-outline" size={16} color={colors.baytgo} />
+          <PressableScale onPress={onPressDetail} haptic="light" style={styles.detailBtn}>
+            <Info size={16} color={colors.baytgo} strokeWidth={2} />
             <Text style={styles.detailBtnText}>Detail</Text>
-          </TouchableOpacity>
-          <TouchableOpacity style={styles.bookBtn} onPress={onPressBook} activeOpacity={0.88}>
-            <Ionicons name="chatbubble-ellipses-outline" size={15} color={colors.white} />
-            <Text style={styles.bookBtnText}>Pesan</Text>
-          </TouchableOpacity>
+          </PressableScale>
+          <View style={styles.bookBtn}>
+            <Button
+              label="Pesan"
+              onPress={onPressBook}
+              size="sm"
+              fullWidth={false}
+              icon={<MessageCircle size={15} color={colors.white} strokeWidth={2} />}
+            />
+          </View>
         </View>
       </View>
-    </View>
+    </Card>
   );
 }
 
+export default memo(MuthowifListingCard);
+
 const styles = StyleSheet.create({
   card: {
-    backgroundColor: colors.white,
-    borderRadius: 18,
-    padding: 14,
-    marginBottom: 14,
-    borderWidth: 1,
-    borderColor: 'rgba(26,61,52,0.08)',
-    shadowColor: '#0F2E28',
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.07,
-    shadowRadius: 14,
-    elevation: 4,
+    marginBottom: spacing.lg,
+    borderRadius: radius.md,
   },
-  topRow: { flexDirection: 'row', gap: 12 },
+  topRow: { flexDirection: 'row', gap: spacing.md },
   avatarWrap: { position: 'relative' },
-  avatar: {
-    width: 72,
-    height: 72,
-    borderRadius: 36,
-    backgroundColor: colors.slate100,
-    borderWidth: 2,
-    borderColor: colors.white,
-  },
-  avatarPlaceholder: { alignItems: 'center', justifyContent: 'center' },
   verifiedDot: {
     position: 'absolute',
     right: -2,
@@ -138,94 +134,157 @@ const styles = StyleSheet.create({
     width: 22,
     height: 22,
     borderRadius: 11,
-    backgroundColor: colors.emerald600,
+    backgroundColor: colors.success,
     alignItems: 'center',
     justifyContent: 'center',
     borderWidth: 2,
     borderColor: colors.white,
   },
-  topInfo: { flex: 1, paddingTop: 2 },
-  nameRow: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', gap: 8 },
-  name: { flex: 1, fontSize: 16, fontWeight: '900', color: colors.slate900 },
-  ratingRow: { flexDirection: 'row', alignItems: 'center', gap: 4, marginTop: 5 },
-  ratingText: { fontSize: 13, fontWeight: '800', color: colors.slate900 },
-  reviewText: { fontSize: 12, fontWeight: '600', color: colors.slate500 },
-  experienceText: { marginTop: 4, fontSize: 12, fontWeight: '600', color: colors.slate500 },
-  tagRow: { flexDirection: 'row', flexWrap: 'wrap', gap: 6, marginTop: 8 },
-  tag: {
-    backgroundColor: colors.slate100,
-    paddingHorizontal: 9,
-    paddingVertical: 4,
-    borderRadius: 999,
+  topInfo: { flex: 1, paddingTop: spacing.xs },
+  nameRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    gap: spacing.sm,
   },
-  tagText: { fontSize: 11, fontWeight: '700', color: colors.slate600 },
+  name: {
+    flex: 1,
+    ...typography.body,
+    fontFamily: 'PlusJakartaSans_800ExtraBold',
+    color: colors.textPrimary,
+  },
+  ratingRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: spacing.xs,
+    marginTop: spacing.xs,
+  },
+  ratingText: {
+    ...typography.caption,
+    fontFamily: 'PlusJakartaSans_800ExtraBold',
+    color: colors.textPrimary,
+  },
+  reviewText: {
+    ...typography.small,
+    fontWeight: '600',
+    fontFamily: 'PlusJakartaSans_600SemiBold',
+    color: colors.textSecondary,
+  },
+  experienceText: {
+    marginTop: spacing.xs,
+    ...typography.small,
+    fontWeight: '600',
+    fontFamily: 'PlusJakartaSans_600SemiBold',
+    color: colors.textSecondary,
+  },
+  tagRow: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    gap: spacing.sm,
+    marginTop: spacing.sm,
+  },
+  tag: {
+    backgroundColor: colors.surface,
+    paddingHorizontal: spacing.md,
+    paddingVertical: spacing.xs,
+    borderRadius: radius.full,
+  },
+  tagText: {
+    ...typography.label,
+    color: colors.slate600,
+  },
   attrGrid: {
     flexDirection: 'row',
     alignItems: 'stretch',
-    marginTop: 14,
-    paddingTop: 14,
+    marginTop: spacing.lg,
+    paddingTop: spacing.lg,
     borderTopWidth: 1,
-    borderTopColor: colors.slate100,
+    borderTopColor: colors.border,
   },
-  attrCell: { flex: 1, alignItems: 'center', paddingHorizontal: 4 },
+  attrCell: { flex: 1, alignItems: 'center', paddingHorizontal: spacing.xs },
   attrValue: {
-    marginTop: 6,
-    fontSize: 11,
-    fontWeight: '800',
-    color: colors.slate900,
+    marginTop: spacing.sm,
+    ...typography.label,
+    color: colors.textPrimary,
     textAlign: 'center',
     lineHeight: 15,
   },
-  attrLabel: { marginTop: 3, fontSize: 10, fontWeight: '600', color: colors.slate500 },
-  attrDivider: { width: 1, backgroundColor: colors.slate100, marginVertical: 4 },
+  attrLabel: {
+    marginTop: spacing.xs,
+    ...typography.label,
+    fontSize: 10,
+    fontWeight: '600',
+    fontFamily: 'PlusJakartaSans_600SemiBold',
+    color: colors.textSecondary,
+  },
+  attrDivider: {
+    width: 1,
+    backgroundColor: colors.border,
+    marginVertical: spacing.xs,
+  },
   quoteBox: {
     flexDirection: 'row',
     alignItems: 'flex-start',
-    gap: 8,
-    marginTop: 12,
-    backgroundColor: colors.canvas,
-    borderRadius: 12,
-    padding: 12,
+    gap: spacing.sm,
+    marginTop: spacing.md,
+    backgroundColor: colors.background,
+    borderRadius: radius.sm,
+    padding: spacing.md,
     borderWidth: 1,
-    borderColor: 'rgba(26,61,52,0.06)',
+    borderColor: colors.border,
   },
   quoteIcon: { marginTop: 1 },
-  quoteText: { flex: 1, fontSize: 12, fontWeight: '600', color: colors.slate600, lineHeight: 18 },
+  quoteText: {
+    flex: 1,
+    ...typography.small,
+    fontWeight: '600',
+    fontFamily: 'PlusJakartaSans_600SemiBold',
+    color: colors.slate600,
+    lineHeight: 18,
+  },
   footer: {
     flexDirection: 'row',
     alignItems: 'flex-end',
     justifyContent: 'space-between',
-    marginTop: 14,
-    paddingTop: 12,
+    marginTop: spacing.lg,
+    paddingTop: spacing.md,
     borderTopWidth: 1,
-    borderTopColor: colors.slate100,
-    gap: 10,
+    borderTopColor: colors.border,
+    gap: spacing.md,
   },
   priceBlock: { flex: 1 },
-  priceLabel: { fontSize: 9, fontWeight: '700', color: colors.slate500, textTransform: 'uppercase', letterSpacing: 0.4 },
-  price: { marginTop: 2, fontSize: 16, fontWeight: '900', color: colors.slate900 },
-  priceUnit: { fontSize: 12, fontWeight: '700', color: colors.slate500 },
-  actions: { flexDirection: 'row', alignItems: 'center', gap: 8 },
+  priceLabel: {
+    ...typography.label,
+    color: colors.textSecondary,
+    textTransform: 'uppercase',
+  },
+  price: {
+    marginTop: spacing.xs,
+    ...typography.body,
+    fontFamily: 'PlusJakartaSans_800ExtraBold',
+    color: colors.textPrimary,
+  },
+  priceUnit: {
+    ...typography.caption,
+    fontFamily: 'PlusJakartaSans_700Bold',
+    color: colors.textSecondary,
+  },
+  actions: { flexDirection: 'row', alignItems: 'center', gap: spacing.sm },
   detailBtn: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 5,
-    paddingHorizontal: 12,
-    paddingVertical: 10,
-    borderRadius: 12,
+    gap: spacing.xs,
+    paddingHorizontal: spacing.md,
+    paddingVertical: spacing.md,
+    borderRadius: radius.sm,
     backgroundColor: colors.white,
     borderWidth: 1.5,
     borderColor: colors.baytgo,
   },
-  detailBtnText: { fontSize: 13, fontWeight: '800', color: colors.baytgo },
-  bookBtn: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 5,
-    paddingHorizontal: 14,
-    paddingVertical: 10,
-    borderRadius: 12,
-    backgroundColor: colors.baytgo,
+  detailBtnText: {
+    ...typography.caption,
+    fontFamily: 'PlusJakartaSans_800ExtraBold',
+    color: colors.baytgo,
   },
-  bookBtnText: { fontSize: 13, fontWeight: '800', color: colors.white },
+  bookBtn: { minWidth: 96 },
 });

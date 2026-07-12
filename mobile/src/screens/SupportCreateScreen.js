@@ -1,43 +1,14 @@
 import React, { useEffect, useState } from 'react';
-import {
-  View,
-  Text,
-  StyleSheet,
-  ScrollView,
-  TouchableOpacity,
-  ActivityIndicator,
-  Alert,
-  TextInput,
-} from 'react-native';
-import { LinearGradient } from 'expo-linear-gradient';
+import { View, Text, StyleSheet, ScrollView, TextInput } from 'react-native';
 import ScreenHeader from '../components/ScreenHeader';
 import AttachmentPicker from '../components/AttachmentPicker';
 import AuthInput from '../components/AuthInput';
 import { fetchSupportMeta, createSupportTicket } from '../api/support';
 import { useAuth } from '../context/AuthContext';
-import { colors } from '../theme/colors';
-
-function ChipPicker({ label, options, value, onChange }) {
-  return (
-    <View style={styles.field}>
-      <Text style={styles.label}>{label}</Text>
-      <View style={styles.chipList}>
-        {options.map((item) => {
-          const active = value === item.value;
-          return (
-            <TouchableOpacity
-              key={item.value}
-              style={[styles.chip, active && styles.chipActive]}
-              onPress={() => onChange(item.value)}
-            >
-              <Text style={[styles.chipText, active && styles.chipTextActive]}>{item.label}</Text>
-            </TouchableOpacity>
-          );
-        })}
-      </View>
-    </View>
-  );
-}
+import { Button, Card, SkeletonList } from '../ui';
+import { ChipPicker } from '../features/support/SupportFormParts';
+import { notifySuccessThen } from '../utils/feedback';
+import { colors, layout, radius, spacing, typography } from '../theme/tokens';
 
 export default function SupportCreateScreen({ navigation }) {
   const { token } = useAuth();
@@ -72,18 +43,9 @@ export default function SupportCreateScreen({ navigation }) {
   }, [token]);
 
   const handleSubmit = async () => {
-    if (!subject.trim()) {
-      setError('Subjek wajib diisi.');
-      return;
-    }
-    if (!body.trim()) {
-      setError('Pesan wajib diisi.');
-      return;
-    }
-    if (!category || !priority) {
-      setError('Kategori dan prioritas wajib dipilih.');
-      return;
-    }
+    if (!subject.trim()) { setError('Subjek wajib diisi.'); return; }
+    if (!body.trim()) { setError('Pesan wajib diisi.'); return; }
+    if (!category || !priority) { setError('Kategori dan prioritas wajib dipilih.'); return; }
 
     setLoading(true);
     setError('');
@@ -95,12 +57,11 @@ export default function SupportCreateScreen({ navigation }) {
         body: body.trim(),
         attachments,
       });
-      Alert.alert('Berhasil', 'Tiket bantuan berhasil dibuat.', [
-        {
-          text: 'OK',
-          onPress: () => navigation.replace('SupportDetail', { ticketId: data.ticket?.id }),
-        },
-      ]);
+      notifySuccessThen(
+        navigation,
+        'Tiket bantuan berhasil dibuat.',
+        () => navigation.replace('SupportDetail', { ticketId: data.ticket?.id }),
+      );
     } catch (err) {
       setError(err.message || 'Gagal membuat tiket');
     } finally {
@@ -113,10 +74,14 @@ export default function SupportCreateScreen({ navigation }) {
       <ScreenHeader title="Buat Tiket" subtitle="Ajukan bantuan ke tim Bayt-GO" onBack={() => navigation.goBack()} />
 
       {metaLoading ? (
-        <ActivityIndicator color={colors.baytgo} style={styles.loader} />
+        <SkeletonList count={4} style={styles.skeleton} />
       ) : (
         <ScrollView contentContainerStyle={styles.scroll} keyboardShouldPersistTaps="handled">
-          {error ? <Text style={styles.error}>{error}</Text> : null}
+          {error ? (
+            <Card style={styles.errorCard} padding={spacing.md} elevated={false}>
+              <Text style={styles.errorText}>{error}</Text>
+            </Card>
+          ) : null}
 
           <AuthInput
             label="Subjek"
@@ -127,19 +92,8 @@ export default function SupportCreateScreen({ navigation }) {
             maxLength={160}
           />
 
-          <ChipPicker
-            label="Kategori *"
-            options={categories}
-            value={category}
-            onChange={setCategory}
-          />
-
-          <ChipPicker
-            label="Prioritas *"
-            options={priorities}
-            value={priority}
-            onChange={setPriority}
-          />
+          <ChipPicker label="Kategori *" options={categories} value={category} onChange={setCategory} />
+          <ChipPicker label="Prioritas *" options={priorities} value={priority} onChange={setPriority} />
 
           <Text style={styles.label}>Pesan *</Text>
           <TextInput
@@ -147,7 +101,7 @@ export default function SupportCreateScreen({ navigation }) {
             value={body}
             onChangeText={setBody}
             placeholder="Jelaskan masalah atau pertanyaan Anda secara detail..."
-            placeholderTextColor={colors.slate400}
+            placeholderTextColor={colors.textMuted}
             multiline
             maxLength={12000}
             textAlignVertical="top"
@@ -161,15 +115,7 @@ export default function SupportCreateScreen({ navigation }) {
             disabled={loading}
           />
 
-          <TouchableOpacity style={styles.submitBtn} onPress={handleSubmit} disabled={loading} activeOpacity={0.9}>
-            <LinearGradient colors={[colors.baytgo, colors.baytgoDark]} style={styles.submitGradient}>
-              {loading ? (
-                <ActivityIndicator color={colors.white} />
-              ) : (
-                <Text style={styles.submitText}>Kirim Tiket</Text>
-              )}
-            </LinearGradient>
-          </TouchableOpacity>
+          <Button label="Kirim Tiket" onPress={handleSubmit} loading={loading} />
         </ScrollView>
       )}
     </View>
@@ -177,45 +123,21 @@ export default function SupportCreateScreen({ navigation }) {
 }
 
 const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: colors.canvas },
-  scroll: { padding: 20, paddingBottom: 32 },
-  loader: { marginTop: 40 },
-  error: {
-    backgroundColor: '#FEF2F2',
-    color: '#B91C1C',
-    padding: 12,
-    borderRadius: 12,
-    fontSize: 13,
-    fontWeight: '600',
-    marginBottom: 16,
-  },
-  field: { marginBottom: 16 },
-  label: { fontSize: 12, fontWeight: '800', color: colors.slate600, marginBottom: 8 },
-  chipList: { flexDirection: 'row', flexWrap: 'wrap', gap: 8 },
-  chip: {
-    borderRadius: 999,
-    paddingHorizontal: 12,
-    paddingVertical: 8,
-    backgroundColor: colors.white,
-    borderWidth: 1,
-    borderColor: colors.slate100,
-  },
-  chipActive: { backgroundColor: colors.emerald50, borderColor: colors.baytgo },
-  chipText: { fontSize: 12, fontWeight: '700', color: colors.slate700 },
-  chipTextActive: { color: colors.baytgo },
+  container: { flex: 1, backgroundColor: colors.background },
+  skeleton: { padding: layout.screenPadding, paddingTop: spacing.lg },
+  scroll: { padding: layout.screenPadding, paddingBottom: spacing['3xl'] },
+  errorCard: { backgroundColor: colors.errorLight, borderColor: '#FECACA', marginBottom: spacing.lg },
+  errorText: { ...typography.caption, color: colors.error, fontWeight: '600' },
+  label: { ...typography.label, color: colors.textSecondary, marginBottom: spacing.sm },
   textarea: {
     minHeight: 140,
-    backgroundColor: colors.white,
-    borderRadius: 16,
+    backgroundColor: colors.card,
+    borderRadius: radius.sm,
     borderWidth: 1,
-    borderColor: colors.slate100,
-    padding: 14,
-    fontSize: 14,
-    fontWeight: '500',
-    color: colors.slate900,
-    marginBottom: 20,
+    borderColor: colors.border,
+    padding: spacing.lg,
+    ...typography.caption,
+    color: colors.textPrimary,
+    marginBottom: spacing.xl,
   },
-  submitBtn: { borderRadius: 16, overflow: 'hidden' },
-  submitGradient: { paddingVertical: 16, alignItems: 'center' },
-  submitText: { color: colors.white, fontSize: 15, fontWeight: '800' },
 });

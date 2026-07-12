@@ -1,43 +1,20 @@
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
-import {
-  View,
-  Text,
-  StyleSheet,
-  FlatList,
-  TextInput,
-  TouchableOpacity,
-  ActivityIndicator,
-  RefreshControl,
-} from 'react-native';
+import { ActivityIndicator, StyleSheet, Text, View } from 'react-native';
+import { FlashList } from '@shopify/flash-list';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { LinearGradient } from 'expo-linear-gradient';
-import { Ionicons } from '@expo/vector-icons';
+import { ArrowLeft, ArrowRight, Compass, Search, Users } from 'lucide-react-native';
 import DatePickerField, { parseIsoDate } from '../components/DatePickerField';
 import MuthowifListingCard from '../components/MuthowifListingCard';
 import { fetchDirectory } from '../api/directory';
 import { useAuth } from '../context/AuthContext';
-import { colors } from '../theme/colors';
-
-function EmptyState({ error, onRetry }) {
-  return (
-    <View style={styles.empty}>
-      <View style={styles.emptyIcon}>
-        <Ionicons name="search-outline" size={36} color={colors.slate400} />
-      </View>
-      <Text style={styles.emptyTitle}>
-        {error ? 'Gagal memuat data' : 'Tidak ada muthowif ditemukan'}
-      </Text>
-      <Text style={styles.emptyText}>
-        {error || 'Coba ubah tanggal perjalanan atau kata kunci pencarian.'}
-      </Text>
-      {error ? (
-        <TouchableOpacity style={styles.emptyBtn} onPress={onRetry}>
-          <Text style={styles.emptyBtnText}>Coba lagi</Text>
-        </TouchableOpacity>
-      ) : null}
-    </View>
-  );
-}
+import Button from '../ui/Button';
+import Card from '../ui/Card';
+import EmptyState from '../ui/EmptyState';
+import ErrorState from '../ui/ErrorState';
+import PressableScale from '../ui/PressableScale';
+import SearchBar from '../ui/SearchBar';
+import { SkeletonList } from '../ui/Skeleton';
+import { colors, layout, radius, spacing, typography } from '../theme/tokens';
 
 export default function DirectoryScreen({ navigation, route }) {
   const { token } = useAuth();
@@ -132,16 +109,20 @@ export default function DirectoryScreen({ navigation, route }) {
     navigation.navigate('MuthowifDetail', { ...navParams(item), autoBook: true });
   };
 
-  const renderListHeader = () => (
+  const renderItem = useCallback(({ item }) => (
+    <MuthowifListingCard
+      item={item}
+      onPressDetail={() => openDetail(item)}
+      onPressBook={() => openBook(item)}
+    />
+  ), [startDate, endDate, navigation]);
+
+  const listHeader = (
     <View style={styles.listHeader}>
-      <View style={styles.searchCard}>
-        <LinearGradient
-          colors={['rgba(26,61,52,0.06)', 'transparent']}
-          style={styles.searchCardAccent}
-        />
+      <Card style={styles.searchCard} padding={spacing.xl} elevated>
         <View style={styles.searchCardHead}>
           <View style={styles.searchCardIcon}>
-            <Ionicons name="compass" size={18} color={colors.baytgo} />
+            <Compass size={18} color={colors.baytgo} strokeWidth={2} />
           </View>
           <View style={styles.searchCardHeadText}>
             <Text style={styles.searchCardTitle}>Sesuaikan Pencarian</Text>
@@ -161,7 +142,7 @@ export default function DirectoryScreen({ navigation, route }) {
             />
           </View>
           <View style={styles.dateArrow}>
-            <Ionicons name="arrow-forward" size={16} color={colors.slate400} />
+            <ArrowRight size={16} color={colors.textMuted} strokeWidth={2} />
           </View>
           <View style={styles.dateField}>
             <DatePickerField
@@ -178,34 +159,26 @@ export default function DirectoryScreen({ navigation, route }) {
           </View>
         </View>
 
-        <View style={styles.searchInputWrap}>
-          <Ionicons name="search" size={18} color={colors.slate400} />
-          <TextInput
-            style={styles.searchInput}
-            value={q}
-            onChangeText={setQ}
-            placeholder="Nama muthowif, bahasa, atau kota..."
-            placeholderTextColor={colors.slate400}
-            returnKeyType="search"
-            onSubmitEditing={handleSearch}
-          />
-          {q ? (
-            <TouchableOpacity onPress={() => setQ('')} hitSlop={8}>
-              <Ionicons name="close-circle" size={18} color={colors.slate400} />
-            </TouchableOpacity>
-          ) : null}
-        </View>
+        <SearchBar
+          value={q}
+          onChangeText={setQ}
+          placeholder="Nama muthowif, bahasa, atau kota..."
+          style={styles.searchBar}
+        />
 
-        <TouchableOpacity style={styles.searchCta} onPress={handleSearch} activeOpacity={0.9}>
-          <Ionicons name="search" size={18} color={colors.white} />
-          <Text style={styles.searchCtaText}>Tampilkan hasil</Text>
-        </TouchableOpacity>
-      </View>
+        <View style={styles.searchCta}>
+          <Button
+            label="Tampilkan hasil"
+            onPress={handleSearch}
+            icon={<Search size={18} color={colors.white} strokeWidth={2} />}
+          />
+        </View>
+      </Card>
 
       {!loading && total > 0 ? (
         <View style={styles.resultBanner}>
           <View style={styles.resultIcon}>
-            <Ionicons name="people" size={18} color={colors.baytgo} />
+            <Users size={18} color={colors.baytgo} strokeWidth={2} />
           </View>
           <View style={styles.resultCopy}>
             <Text style={styles.resultText}>
@@ -218,44 +191,55 @@ export default function DirectoryScreen({ navigation, route }) {
     </View>
   );
 
+  if (loading && !refreshing) {
+    return (
+      <View style={styles.container}>
+        <SafeAreaView edges={['top']} style={styles.topBar}>
+          <PressableScale onPress={() => navigation.goBack()} haptic="light" style={styles.backBtn}>
+            <ArrowLeft size={22} color={colors.baytgo} strokeWidth={2} />
+          </PressableScale>
+          <Text style={styles.pageTitle}>Cari Muthowif</Text>
+        </SafeAreaView>
+        <SkeletonList count={4} style={styles.skeleton} />
+      </View>
+    );
+  }
+
   return (
     <View style={styles.container}>
       <SafeAreaView edges={['top']} style={styles.topBar}>
-        <TouchableOpacity style={styles.backBtn} onPress={() => navigation.goBack()} hitSlop={8}>
-          <Ionicons name="arrow-back" size={22} color={colors.baytgo} />
-        </TouchableOpacity>
+        <PressableScale onPress={() => navigation.goBack()} haptic="light" style={styles.backBtn}>
+          <ArrowLeft size={22} color={colors.baytgo} strokeWidth={2} />
+        </PressableScale>
         <Text style={styles.pageTitle}>Cari Muthowif</Text>
       </SafeAreaView>
 
-      {loading && !refreshing ? (
-        <View style={styles.loadingWrap}>
-          <ActivityIndicator color={colors.baytgo} size="large" />
-          <Text style={styles.loadingText}>Mencari muthowif terbaik...</Text>
-        </View>
+      {error && items.length === 0 ? (
+        <ErrorState description={error} onRetry={() => loadPage(1)} />
       ) : (
-        <FlatList
+        <FlashList
           data={items}
           keyExtractor={(item) => String(item.id)}
-          renderItem={({ item }) => (
-            <MuthowifListingCard
-              item={item}
-              onPressDetail={() => openDetail(item)}
-              onPressBook={() => openBook(item)}
-            />
-          )}
+          renderItem={renderItem}
+          estimatedItemSize={320}
           contentContainerStyle={styles.list}
           showsVerticalScrollIndicator={false}
-          refreshControl={
-            <RefreshControl
-              refreshing={refreshing}
-              onRefresh={() => loadPage(1, { refresh: true })}
-              tintColor={colors.baytgo}
-            />
-          }
+          refreshing={refreshing}
+          onRefresh={() => loadPage(1, { refresh: true })}
           onEndReached={handleLoadMore}
           onEndReachedThreshold={0.35}
-          ListHeaderComponent={renderListHeader}
-          ListEmptyComponent={<EmptyState error={error} onRetry={() => loadPage(1)} />}
+          ListHeaderComponent={listHeader}
+          ListEmptyComponent={
+            error ? (
+              <ErrorState description={error} onRetry={() => loadPage(1)} />
+            ) : (
+              <EmptyState
+                variant="search"
+                title="Tidak ada muthowif ditemukan"
+                description="Coba ubah tanggal perjalanan atau kata kunci pencarian."
+              />
+            )
+          }
           ListFooterComponent={
             loadingMore ? (
               <View style={styles.footerLoader}>
@@ -273,159 +257,130 @@ export default function DirectoryScreen({ navigation, route }) {
 }
 
 const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: colors.canvas },
+  container: { flex: 1, backgroundColor: colors.background },
   topBar: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 12,
-    paddingHorizontal: 16,
-    paddingBottom: 12,
-    backgroundColor: colors.white,
+    gap: spacing.md,
+    paddingHorizontal: spacing.lg,
+    paddingBottom: spacing.md,
+    backgroundColor: colors.card,
     borderBottomWidth: 1,
-    borderBottomColor: colors.slate100,
+    borderBottomColor: colors.border,
   },
   backBtn: {
     width: 40,
     height: 40,
-    borderRadius: 12,
-    backgroundColor: colors.canvas,
+    borderRadius: radius.sm,
+    backgroundColor: colors.background,
     alignItems: 'center',
     justifyContent: 'center',
     borderWidth: 1,
-    borderColor: colors.slate100,
+    borderColor: colors.border,
   },
-  pageTitle: { flex: 1, fontSize: 18, fontWeight: '900', color: colors.baytgo },
-  list: { paddingHorizontal: 20, paddingTop: 12, paddingBottom: 24 },
-  listHeader: { marginBottom: 4 },
+  pageTitle: {
+    flex: 1,
+    ...typography.subtitle,
+    fontFamily: 'PlusJakartaSans_800ExtraBold',
+    color: colors.baytgo,
+  },
+  skeleton: {
+    paddingHorizontal: layout.screenPadding,
+    paddingTop: spacing.md,
+  },
+  list: {
+    paddingHorizontal: layout.screenPadding,
+    paddingTop: spacing.md,
+    paddingBottom: spacing['2xl'],
+  },
+  listHeader: { marginBottom: spacing.xs },
   searchCard: {
-    marginTop: 0,
-    backgroundColor: colors.white,
-    borderRadius: 22,
-    padding: 18,
-    marginBottom: 16,
-    borderWidth: 1,
-    borderColor: 'rgba(26,61,52,0.08)',
-    shadowColor: '#0F2E28',
-    shadowOffset: { width: 0, height: 10 },
-    shadowOpacity: 0.12,
-    shadowRadius: 24,
-    elevation: 10,
-    overflow: 'hidden',
-  },
-  searchCardAccent: {
-    position: 'absolute',
-    top: 0,
-    left: 0,
-    right: 0,
-    height: 72,
+    marginBottom: spacing.lg,
+    borderRadius: radius.md,
   },
   searchCardHead: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 12,
-    marginBottom: 14,
+    gap: spacing.md,
+    marginBottom: spacing.lg,
   },
   searchCardIcon: {
     width: 40,
     height: 40,
-    borderRadius: 12,
+    borderRadius: radius.sm,
     backgroundColor: colors.baytgoLight,
     alignItems: 'center',
     justifyContent: 'center',
   },
   searchCardHeadText: { flex: 1 },
-  searchCardTitle: { fontSize: 16, fontWeight: '900', color: colors.baytgo },
-  searchCardSub: { marginTop: 2, fontSize: 12, fontWeight: '600', color: colors.slate500, lineHeight: 17 },
+  searchCardTitle: {
+    ...typography.body,
+    fontFamily: 'PlusJakartaSans_800ExtraBold',
+    color: colors.baytgo,
+  },
+  searchCardSub: {
+    marginTop: spacing.xs,
+    ...typography.small,
+    fontWeight: '600',
+    fontFamily: 'PlusJakartaSans_600SemiBold',
+    color: colors.textSecondary,
+    lineHeight: 17,
+  },
   dateRow: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 6,
-    marginBottom: 12,
+    gap: spacing.sm,
+    marginBottom: spacing.md,
   },
   dateField: { flex: 1 },
   dateArrow: {
     width: 20,
     alignItems: 'center',
     justifyContent: 'center',
-    paddingTop: 14,
+    paddingTop: spacing.lg,
   },
-  searchInputWrap: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 10,
-    backgroundColor: colors.canvas,
-    borderRadius: 14,
-    paddingHorizontal: 14,
-    borderWidth: 1,
-    borderColor: 'rgba(26,61,52,0.08)',
-    marginBottom: 12,
-  },
-  searchInput: { flex: 1, paddingVertical: 13, fontSize: 14, fontWeight: '600', color: colors.slate900 },
-  searchCta: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
-    gap: 8,
-    backgroundColor: colors.baytgo,
-    borderRadius: 14,
-    paddingVertical: 15,
-  },
-  searchCtaText: { fontSize: 15, fontWeight: '800', color: colors.white },
+  searchBar: { marginBottom: spacing.md },
+  searchCta: { marginTop: spacing.xs },
   resultBanner: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 12,
-    backgroundColor: colors.white,
-    borderRadius: 14,
-    paddingHorizontal: 14,
-    paddingVertical: 12,
-    marginBottom: 14,
+    gap: spacing.md,
+    backgroundColor: colors.card,
+    borderRadius: radius.sm,
+    paddingHorizontal: spacing.lg,
+    paddingVertical: spacing.md,
+    marginBottom: spacing.lg,
     borderWidth: 1,
-    borderColor: 'rgba(26,61,52,0.08)',
+    borderColor: colors.border,
   },
   resultIcon: {
     width: 36,
     height: 36,
-    borderRadius: 10,
+    borderRadius: radius.sm,
     backgroundColor: colors.baytgoLight,
     alignItems: 'center',
     justifyContent: 'center',
   },
   resultCopy: { flex: 1 },
-  resultText: { fontSize: 14, fontWeight: '700', color: colors.slate700 },
-  resultCount: { fontWeight: '900', color: colors.baytgo },
-  loadingWrap: { flex: 1, alignItems: 'center', justifyContent: 'center', gap: 12 },
-  loadingText: { fontSize: 14, fontWeight: '600', color: colors.slate500 },
-  empty: {
-    alignItems: 'center',
-    backgroundColor: colors.white,
-    borderRadius: 22,
-    padding: 32,
-    marginTop: 8,
-    borderWidth: 1,
-    borderStyle: 'dashed',
-    borderColor: colors.slate200,
+  resultText: {
+    ...typography.caption,
+    fontFamily: 'PlusJakartaSans_700Bold',
+    color: colors.slate700,
   },
-  emptyIcon: {
-    width: 72,
-    height: 72,
-    borderRadius: 22,
-    backgroundColor: colors.canvas,
+  resultCount: {
+    fontFamily: 'PlusJakartaSans_800ExtraBold',
+    color: colors.baytgo,
+  },
+  footerLoader: {
+    flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
-    marginBottom: 16,
+    gap: spacing.md,
+    paddingVertical: spacing.xl,
   },
-  emptyTitle: { fontSize: 16, fontWeight: '900', color: colors.slate700 },
-  emptyText: { marginTop: 8, fontSize: 13, fontWeight: '600', color: colors.slate500, textAlign: 'center', lineHeight: 20 },
-  emptyBtn: {
-    marginTop: 16,
-    backgroundColor: colors.emerald50,
-    paddingHorizontal: 20,
-    paddingVertical: 10,
-    borderRadius: 12,
+  footerText: {
+    ...typography.caption,
+    color: colors.textSecondary,
   },
-  emptyBtnText: { fontSize: 13, fontWeight: '800', color: colors.baytgo },
-  footerLoader: { flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 10, paddingVertical: 20 },
-  footerText: { fontSize: 13, fontWeight: '600', color: colors.slate500 },
-  listBottom: { height: 8 },
+  listBottom: { height: spacing.sm },
 });

@@ -1,62 +1,64 @@
 import React from 'react';
-import { View, Text, StyleSheet, TouchableOpacity } from 'react-native';
+import { View, Text, StyleSheet } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { LinearGradient } from 'expo-linear-gradient';
-import { Ionicons } from '@expo/vector-icons';
+import { StatusBar } from 'expo-status-bar';
+import { Lock } from 'lucide-react-native';
 import { navigateRoot } from '../navigation/rootNavigation';
-import { colors } from '../theme/colors';
+import Button from '../ui/Button';
+import PressableScale from '../ui/PressableScale';
+import { colors, layout, radius, shadows, spacing, typography } from '../theme/tokens';
 
 export default function AuthGateScreen({ navigation, title, message }) {
   return (
     <SafeAreaView style={styles.safe} edges={['top', 'bottom']}>
-      <LinearGradient colors={[colors.canvas, colors.white]} style={StyleSheet.absoluteFill} />
+      <StatusBar style="dark" />
       <View style={styles.content}>
         <View style={styles.iconWrap}>
-          <Ionicons name="lock-closed-outline" size={32} color={colors.gold} />
+          <Lock size={32} color={colors.gold} strokeWidth={2} />
         </View>
         <Text style={styles.title}>{title}</Text>
         <Text style={styles.message}>{message}</Text>
-        <TouchableOpacity
-          style={styles.primaryBtn}
-          onPress={() => navigateRoot(navigation, 'Login')}
-          activeOpacity={0.9}
+        <View style={styles.btnWrap}>
+          <Button label="Masuk" onPress={() => navigateRoot(navigation, 'Login')} />
+        </View>
+        <PressableScale
+          onPress={() => navigateRoot(navigation, 'Register', { role: 'customer' })}
+          haptic="light"
         >
-          <LinearGradient colors={[colors.baytgo, colors.baytgoDark]} style={styles.primaryGradient}>
-            <Text style={styles.primaryText}>Masuk</Text>
-          </LinearGradient>
-        </TouchableOpacity>
-        <TouchableOpacity onPress={() => navigateRoot(navigation, 'Register', { role: 'customer' })}>
           <Text style={styles.link}>Belum punya akun? Daftar</Text>
-        </TouchableOpacity>
+        </PressableScale>
       </View>
     </SafeAreaView>
   );
 }
 
 const styles = StyleSheet.create({
-  safe: { flex: 1, backgroundColor: colors.canvas },
-  content: { flex: 1, alignItems: 'center', justifyContent: 'center', padding: 24 },
+  safe: { flex: 1, backgroundColor: colors.background },
+  content: { flex: 1, alignItems: 'center', justifyContent: 'center', padding: layout.screenPadding },
   iconWrap: {
     width: 72,
     height: 72,
-    borderRadius: 22,
+    borderRadius: radius.md,
     backgroundColor: colors.baytgo,
     alignItems: 'center',
     justifyContent: 'center',
-    marginBottom: 20,
+    marginBottom: spacing.xl,
+    ...shadows.md,
   },
-  title: { fontSize: 22, fontWeight: '900', color: colors.baytgo, textAlign: 'center' },
+  title: { ...typography.title, color: colors.baytgo, textAlign: 'center' },
   message: {
-    marginTop: 10,
-    fontSize: 14,
-    lineHeight: 21,
-    color: colors.slate500,
-    fontWeight: '500',
+    marginTop: spacing.sm,
+    ...typography.caption,
+    lineHeight: 22,
+    color: colors.textSecondary,
     textAlign: 'center',
     maxWidth: 300,
   },
-  primaryBtn: { marginTop: 24, width: '100%', maxWidth: 280, borderRadius: 16, overflow: 'hidden' },
-  primaryGradient: { paddingVertical: 16, alignItems: 'center' },
-  primaryText: { color: colors.white, fontSize: 15, fontWeight: '800' },
-  link: { marginTop: 16, fontSize: 14, fontWeight: '800', color: colors.baytgo },
+  btnWrap: { marginTop: spacing['2xl'], width: '100%', maxWidth: 280 },
+  link: {
+    marginTop: spacing.lg,
+    ...typography.caption,
+    fontFamily: 'PlusJakartaSans_700Bold',
+    color: colors.baytgo,
+  },
 });

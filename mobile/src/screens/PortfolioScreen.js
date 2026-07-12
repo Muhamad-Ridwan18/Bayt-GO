@@ -1,84 +1,21 @@
 import React, { useCallback, useMemo, useState } from 'react';
 import {
-  View,
-  Text,
-  StyleSheet,
-  ScrollView,
-  ActivityIndicator,
-  RefreshControl,
-  TouchableOpacity,
-  TextInput,
-  Alert,
-  Image,
-  Dimensions,
-  KeyboardAvoidingView,
-  Platform,
+  View, Text, StyleSheet, ScrollView, RefreshControl, Alert,
+  KeyboardAvoidingView, Platform,
 } from 'react-native';
 import { useFocusEffect } from '@react-navigation/native';
-import { LinearGradient } from 'expo-linear-gradient';
 import * as ImagePicker from 'expo-image-picker';
-import { Ionicons } from '@expo/vector-icons';
+import {
+  Camera, Images,
+} from 'lucide-react-native';
 import TabPageHeader from '../components/TabPageHeader';
-import AuthenticatedImage from '../components/AuthenticatedImage';
 import ImageLightbox from '../components/ImageLightbox';
 import { fetchPortfolio, fetchPortfolioItem, createPortfolio, deletePortfolio } from '../api/portfolio';
 import { useAuth } from '../context/AuthContext';
-import { colors } from '../theme/colors';
-
-const { width: SCREEN_W } = Dimensions.get('window');
-const CARD_W = (SCREEN_W - 40 - 12) / 2;
-
-function StatCard({ label, value, icon }) {
-  return (
-    <View style={styles.statCard}>
-      <View style={styles.statIcon}>
-        <Ionicons name={icon} size={16} color={colors.baytgo} />
-      </View>
-      <Text style={styles.statValue}>{value}</Text>
-      <Text style={styles.statLabel}>{label}</Text>
-    </View>
-  );
-}
-
-function AlbumCard({ item, token, onPreview, onEdit, onDelete, deleting }) {
-  return (
-    <View style={styles.albumCard}>
-      <TouchableOpacity style={styles.albumCoverWrap} onPress={onPreview} activeOpacity={0.9}>
-        {item.cover_url ? (
-          <AuthenticatedImage uri={item.cover_url} token={token} style={styles.albumCover} />
-        ) : (
-          <View style={[styles.albumCover, styles.albumCoverPlaceholder]}>
-            <Ionicons name="images-outline" size={28} color={colors.slate400} />
-          </View>
-        )}
-        <View style={styles.albumOverlay}>
-          <Ionicons name="expand-outline" size={16} color={colors.white} />
-        </View>
-        <View style={styles.photoCount}>
-          <Ionicons name="camera-outline" size={11} color={colors.white} />
-          <Text style={styles.photoCountText}>{item.images_count || 0}</Text>
-        </View>
-      </TouchableOpacity>
-
-      <View style={styles.albumMeta}>
-        <Text style={styles.albumTitle} numberOfLines={2}>{item.title}</Text>
-        <View style={styles.albumActions}>
-          <TouchableOpacity style={styles.albumActionBtn} onPress={onEdit} hitSlop={6}>
-            <Ionicons name="create-outline" size={16} color={colors.baytgo} />
-          </TouchableOpacity>
-          <TouchableOpacity
-            style={[styles.albumActionBtn, styles.albumDeleteBtn]}
-            onPress={onDelete}
-            disabled={deleting}
-            hitSlop={6}
-          >
-            <Ionicons name="trash-outline" size={16} color="#B91C1C" />
-          </TouchableOpacity>
-        </View>
-      </View>
-    </View>
-  );
-}
+import { Card, EmptyState, SkeletonList } from '../ui';
+import { AlbumCard, PortfolioCreateSection, StatCard } from '../features/portfolio/PortfolioScreenParts';
+import { notifyError, notifySuccess } from '../utils/feedback';
+import { colors, layout, spacing, typography } from '../theme/tokens';
 
 export default function PortfolioScreen({ navigation }) {
   const { token } = useAuth();
@@ -109,11 +46,7 @@ export default function PortfolioScreen({ navigation }) {
     }
   }, [token]);
 
-  useFocusEffect(
-    useCallback(() => {
-      load();
-    }, [load]),
-  );
+  useFocusEffect(useCallback(() => { load(); }, [load]));
 
   const totalPhotos = useMemo(
     () => albums.reduce((sum, a) => sum + (a.images_count || 0), 0),
@@ -167,14 +100,14 @@ export default function PortfolioScreen({ navigation }) {
     setSubmitting(true);
     try {
       await createPortfolio(token, formData);
-      Alert.alert('Berhasil', 'Album portofolio ditambahkan.');
+      notifySuccess('Album portofolio ditambahkan.');
       setTitle('');
       setDescription('');
       setImages([]);
       setFormOpen(false);
       await load(true);
     } catch (err) {
-      Alert.alert('Gagal', err.message || 'Tidak dapat menambah portofolio');
+      notifyError(err.message || 'Tidak dapat menambah portofolio');
     } finally {
       setSubmitting(false);
     }
@@ -206,9 +139,7 @@ export default function PortfolioScreen({ navigation }) {
     try {
       const data = await fetchPortfolioItem(token, item.id);
       const urls = (data.portfolio?.images || []).map((img) => img.url);
-      if (urls.length === 0 && item.cover_url) {
-        urls.push(item.cover_url);
-      }
+      if (urls.length === 0 && item.cover_url) urls.push(item.cover_url);
       if (urls.length === 0) {
         Alert.alert('Info', 'Album belum memiliki foto.');
         return;
@@ -226,12 +157,9 @@ export default function PortfolioScreen({ navigation }) {
       <TabPageHeader title="Portofolio" subtitle="Galeri dokumentasi layanan Anda" />
 
       {loading && !refreshing ? (
-        <ActivityIndicator color={colors.baytgo} style={styles.loader} />
+        <SkeletonList count={3} style={styles.skeleton} />
       ) : (
-        <KeyboardAvoidingView
-          style={styles.flex}
-          behavior={Platform.OS === 'ios' ? 'padding' : undefined}
-        >
+        <KeyboardAvoidingView style={styles.flex} behavior={Platform.OS === 'ios' ? 'padding' : undefined}>
           <ScrollView
             contentContainerStyle={styles.scroll}
             showsVerticalScrollIndicator={false}
@@ -240,105 +168,40 @@ export default function PortfolioScreen({ navigation }) {
               <RefreshControl refreshing={refreshing} onRefresh={() => load(true)} tintColor={colors.baytgo} />
             }
           >
-            <View style={styles.infoBanner}>
-              <Ionicons name="images-outline" size={18} color={colors.baytgo} />
+            <Card style={styles.infoBanner} padding={spacing.lg} elevated={false}>
+              <Images size={18} color={colors.baytgo} strokeWidth={2} />
               <Text style={styles.infoText}>
                 Unggah foto terbaik saat membimbing jamaah. Album ini tampil di profil publik Anda.
               </Text>
-            </View>
+            </Card>
 
             <View style={styles.statsRow}>
-              <StatCard label="Album" value={albums.length} icon="albums-outline" />
-              <StatCard label="Total foto" value={totalPhotos} icon="camera-outline" />
+              <StatCard label="Album" value={albums.length} Icon={Images} />
+              <StatCard label="Total foto" value={totalPhotos} Icon={Camera} />
             </View>
 
-            <TouchableOpacity
-              style={styles.formToggle}
-              onPress={() => setFormOpen((v) => !v)}
-              activeOpacity={0.9}
-            >
-              <View style={styles.formToggleLeft}>
-                <View style={styles.formToggleIcon}>
-                  <Ionicons name="add-circle" size={18} color={colors.baytgo} />
-                </View>
-                <View>
-                  <Text style={styles.formToggleTitle}>Tambah album baru</Text>
-                  <Text style={styles.formToggleSub}>Judul kegiatan + beberapa foto sekaligus</Text>
-                </View>
-              </View>
-              <Ionicons name={formOpen ? 'chevron-up' : 'chevron-down'} size={20} color={colors.slate500} />
-            </TouchableOpacity>
-
-            {formOpen ? (
-              <View style={styles.formCard}>
-                <Text style={styles.fieldLabel}>Judul kegiatan</Text>
-                <TextInput
-                  style={styles.input}
-                  placeholder="Misal: Ziarah Jabal Rahmah Jamaah VIP"
-                  placeholderTextColor={colors.slate400}
-                  value={title}
-                  onChangeText={setTitle}
-                />
-
-                <Text style={styles.fieldLabel}>Deskripsi (opsional)</Text>
-                <TextInput
-                  style={[styles.input, styles.textarea]}
-                  placeholder="Ceritakan singkat pelayanan di foto ini..."
-                  placeholderTextColor={colors.slate400}
-                  value={description}
-                  onChangeText={setDescription}
-                  multiline
-                  textAlignVertical="top"
-                />
-
-                <Text style={styles.fieldLabel}>Foto album</Text>
-                <TouchableOpacity style={styles.pickBtn} onPress={pickImages} activeOpacity={0.88}>
-                  <Ionicons name="image-outline" size={20} color={colors.baytgo} />
-                  <Text style={styles.pickBtnText}>
-                    {images.length > 0 ? `Tambah foto (${images.length}/10)` : 'Pilih foto dari galeri'}
-                  </Text>
-                </TouchableOpacity>
-
-                {images.length > 0 ? (
-                  <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.previewRow}>
-                    {images.map((img, index) => (
-                      <View key={img.uri} style={styles.previewWrap}>
-                        <Image source={{ uri: img.uri }} style={styles.preview} />
-                        <TouchableOpacity style={styles.previewRemove} onPress={() => removePick(index)}>
-                          <Ionicons name="close" size={12} color={colors.white} />
-                        </TouchableOpacity>
-                      </View>
-                    ))}
-                  </ScrollView>
-                ) : null}
-
-                <TouchableOpacity style={styles.submitBtn} onPress={handleAdd} disabled={submitting} activeOpacity={0.9}>
-                  <LinearGradient colors={[colors.baytgo, colors.baytgoDark]} style={styles.submitGradient}>
-                    {submitting ? (
-                      <ActivityIndicator color={colors.white} size="small" />
-                    ) : (
-                      <>
-                        <Ionicons name="cloud-upload-outline" size={18} color={colors.white} />
-                        <Text style={styles.submitBtnText}>Simpan album</Text>
-                      </>
-                    )}
-                  </LinearGradient>
-                </TouchableOpacity>
-              </View>
-            ) : null}
+            <PortfolioCreateSection
+              formOpen={formOpen}
+              onToggleForm={() => setFormOpen((v) => !v)}
+              title={title}
+              description={description}
+              images={images}
+              submitting={submitting}
+              onChangeTitle={setTitle}
+              onChangeDescription={setDescription}
+              onPickImages={pickImages}
+              onRemoveImage={removePick}
+              onSubmit={handleAdd}
+            />
 
             <Text style={styles.sectionTitle}>Album saya</Text>
 
             {albums.length === 0 ? (
-              <View style={styles.empty}>
-                <View style={styles.emptyIcon}>
-                  <Ionicons name="images-outline" size={32} color={colors.slate400} />
-                </View>
-                <Text style={styles.emptyTitle}>Belum ada album</Text>
-                <Text style={styles.emptyText}>
-                  Tambahkan album pertama untuk menampilkan dokumentasi layanan ke jamaah.
-                </Text>
-              </View>
+              <EmptyState
+                variant="package"
+                title="Belum ada album"
+                description="Tambahkan album pertama untuk menampilkan dokumentasi layanan ke jamaah."
+              />
             ) : (
               <View style={styles.grid}>
                 {albums.map((item) => (
@@ -372,211 +235,20 @@ export default function PortfolioScreen({ navigation }) {
 }
 
 const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: colors.canvas },
+  container: { flex: 1, backgroundColor: colors.background },
   flex: { flex: 1 },
-  scroll: { paddingHorizontal: 20, paddingTop: 16, paddingBottom: 40 },
-  loader: { marginTop: 40 },
+  skeleton: { paddingHorizontal: layout.screenPadding, paddingTop: spacing.lg },
+  scroll: { paddingHorizontal: layout.screenPadding, paddingTop: spacing.lg, paddingBottom: spacing['4xl'] },
   infoBanner: {
     flexDirection: 'row',
     alignItems: 'flex-start',
-    gap: 10,
+    gap: spacing.md,
     backgroundColor: colors.baytgoLight,
-    borderRadius: 14,
-    padding: 14,
-    marginBottom: 14,
-    borderWidth: 1,
     borderColor: 'rgba(26,61,52,0.1)',
+    marginBottom: spacing.md,
   },
-  infoText: { flex: 1, fontSize: 13, lineHeight: 19, fontWeight: '600', color: colors.baytgo },
-  statsRow: { flexDirection: 'row', gap: 10, marginBottom: 14 },
-  statCard: {
-    flex: 1,
-    backgroundColor: colors.white,
-    borderRadius: 16,
-    padding: 14,
-    alignItems: 'center',
-    borderWidth: 1,
-    borderColor: 'rgba(26,61,52,0.08)',
-  },
-  statIcon: {
-    width: 32,
-    height: 32,
-    borderRadius: 10,
-    backgroundColor: colors.baytgoLight,
-    alignItems: 'center',
-    justifyContent: 'center',
-    marginBottom: 8,
-  },
-  statValue: { fontSize: 22, fontWeight: '900', color: colors.baytgo },
-  statLabel: { marginTop: 2, fontSize: 11, fontWeight: '700', color: colors.slate500 },
-  formToggle: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    backgroundColor: colors.white,
-    borderRadius: 16,
-    padding: 14,
-    marginBottom: 10,
-    borderWidth: 1,
-    borderColor: 'rgba(26,61,52,0.08)',
-  },
-  formToggleLeft: { flexDirection: 'row', alignItems: 'center', gap: 12, flex: 1 },
-  formToggleIcon: {
-    width: 40,
-    height: 40,
-    borderRadius: 12,
-    backgroundColor: colors.baytgoLight,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  formToggleTitle: { fontSize: 14, fontWeight: '900', color: colors.baytgo },
-  formToggleSub: { marginTop: 2, fontSize: 11, fontWeight: '600', color: colors.slate500 },
-  formCard: {
-    backgroundColor: colors.white,
-    borderRadius: 20,
-    padding: 16,
-    marginBottom: 20,
-    borderWidth: 1,
-    borderColor: 'rgba(26,61,52,0.08)',
-    shadowColor: '#0F2E28',
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.05,
-    shadowRadius: 12,
-    elevation: 2,
-  },
-  fieldLabel: { fontSize: 12, fontWeight: '800', color: colors.slate600, marginBottom: 8 },
-  input: {
-    backgroundColor: colors.canvas,
-    borderRadius: 14,
-    paddingHorizontal: 14,
-    paddingVertical: 13,
-    marginBottom: 14,
-    fontSize: 14,
-    fontWeight: '600',
-    color: colors.slate900,
-    borderWidth: 1,
-    borderColor: colors.slate100,
-  },
-  textarea: { minHeight: 88, textAlignVertical: 'top' },
-  pickBtn: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
-    gap: 8,
-    backgroundColor: colors.canvas,
-    borderRadius: 14,
-    paddingVertical: 16,
-    marginBottom: 12,
-    borderWidth: 1.5,
-    borderColor: colors.baytgo,
-    borderStyle: 'dashed',
-  },
-  pickBtnText: { fontSize: 13, fontWeight: '800', color: colors.baytgo },
-  previewRow: { gap: 10, paddingBottom: 14 },
-  previewWrap: { position: 'relative' },
-  preview: { width: 72, height: 72, borderRadius: 12 },
-  previewRemove: {
-    position: 'absolute',
-    top: 4,
-    right: 4,
-    width: 20,
-    height: 20,
-    borderRadius: 10,
-    backgroundColor: '#B91C1C',
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  submitBtn: { borderRadius: 14, overflow: 'hidden' },
-  submitGradient: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
-    gap: 8,
-    paddingVertical: 15,
-  },
-  submitBtnText: { color: colors.white, fontWeight: '800', fontSize: 14 },
-  sectionTitle: { fontSize: 16, fontWeight: '900', color: colors.baytgo, marginBottom: 14 },
-  grid: { flexDirection: 'row', flexWrap: 'wrap', gap: 12 },
-  albumCard: {
-    width: CARD_W,
-    backgroundColor: colors.white,
-    borderRadius: 16,
-    overflow: 'hidden',
-    borderWidth: 1,
-    borderColor: 'rgba(26,61,52,0.08)',
-    shadowColor: '#0F2E28',
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.05,
-    shadowRadius: 10,
-    elevation: 2,
-  },
-  albumCoverWrap: { position: 'relative' },
-  albumCover: { width: '100%', height: CARD_W * 0.85 },
-  albumCoverPlaceholder: {
-    backgroundColor: colors.slate100,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  albumOverlay: {
-    position: 'absolute',
-    right: 8,
-    bottom: 8,
-    width: 28,
-    height: 28,
-    borderRadius: 14,
-    backgroundColor: 'rgba(15,46,40,0.55)',
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  photoCount: {
-    position: 'absolute',
-    left: 8,
-    top: 8,
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 4,
-    backgroundColor: 'rgba(15,46,40,0.65)',
-    paddingHorizontal: 8,
-    paddingVertical: 4,
-    borderRadius: 999,
-  },
-  photoCountText: { fontSize: 11, fontWeight: '800', color: colors.white },
-  albumMeta: {
-    flexDirection: 'row',
-    alignItems: 'flex-start',
-    gap: 8,
-    padding: 10,
-  },
-  albumTitle: { flex: 1, fontSize: 13, fontWeight: '800', color: colors.slate900, lineHeight: 17 },
-  albumActions: { gap: 6 },
-  albumActionBtn: {
-    width: 30,
-    height: 30,
-    borderRadius: 8,
-    backgroundColor: colors.baytgoLight,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  albumDeleteBtn: { backgroundColor: '#FEF2F2' },
-  empty: { alignItems: 'center', paddingVertical: 40, paddingHorizontal: 16 },
-  emptyIcon: {
-    width: 72,
-    height: 72,
-    borderRadius: 36,
-    backgroundColor: colors.white,
-    alignItems: 'center',
-    justifyContent: 'center',
-    marginBottom: 16,
-    borderWidth: 1,
-    borderColor: colors.slate100,
-  },
-  emptyTitle: { fontSize: 16, fontWeight: '900', color: colors.baytgo },
-  emptyText: {
-    marginTop: 8,
-    fontSize: 13,
-    fontWeight: '600',
-    color: colors.slate500,
-    textAlign: 'center',
-    lineHeight: 19,
-  },
+  infoText: { flex: 1, ...typography.caption, lineHeight: 20, fontWeight: '600', color: colors.baytgo },
+  statsRow: { flexDirection: 'row', gap: spacing.md, marginBottom: spacing.md },
+  sectionTitle: { ...typography.caption, fontFamily: 'PlusJakartaSans_800ExtraBold', color: colors.baytgo, marginBottom: spacing.md },
+  grid: { flexDirection: 'row', flexWrap: 'wrap', gap: spacing.md },
 });

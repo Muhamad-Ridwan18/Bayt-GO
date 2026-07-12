@@ -1,75 +1,131 @@
-import React from 'react';
+import React, { useEffect, useRef } from 'react';
 import {
   View,
   Text,
   StyleSheet,
   Modal,
-  TouchableOpacity,
-  Image,
   Dimensions,
+  FlatList,
   ActivityIndicator,
+  Pressable,
 } from 'react-native';
+import { Image } from 'expo-image';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { Ionicons } from '@expo/vector-icons';
-import AuthenticatedImage from './AuthenticatedImage';
-import { colors } from '../theme/colors';
+import { ChevronLeft, ChevronRight, X } from 'lucide-react-native';
+import { buildChatImageSource } from '../utils/chatImageSource';
+import { PressableScale } from '../ui';
+import { colors, spacing, radius, typography } from '../theme/tokens';
 
-const { width: SCREEN_W } = Dimensions.get('window');
+const { width: SCREEN_W, height: SCREEN_H } = Dimensions.get('window');
+const SLIDE_H = SCREEN_H * 0.72;
 
 function LightboxSlide({ uri, token }) {
-  if (token) {
+  const source = buildChatImageSource(uri, token);
+
+  if (!source) {
     return (
-      <AuthenticatedImage
-        uri={uri}
-        token={token}
-        style={styles.slide}
-        imageStyle={{ resizeMode: 'contain' }}
-      />
+      <View style={styles.slide}>
+        <ActivityIndicator color={colors.white} size="large" />
+      </View>
     );
   }
-  return <Image source={{ uri }} style={styles.slideImage} resizeMode="contain" />;
-}
-
-export default function ImageLightbox({ visible, images, index, title, token, onClose, onChangeIndex }) {
-  if (!visible || !images?.length) return null;
-
-  const current = images[index];
 
   return (
-    <Modal visible={visible} transparent animationType="fade" onRequestClose={onClose}>
+    <View style={styles.slide}>
+      <Image
+        source={source}
+        style={styles.image}
+        contentFit="contain"
+        transition={250}
+        cachePolicy="memory-disk"
+      />
+    </View>
+  );
+}
+
+export default function ImageLightbox({
+  visible,
+  images,
+  index,
+  title,
+  token,
+  onClose,
+  onChangeIndex,
+}) {
+  const listRef = useRef(null);
+
+  useEffect(() => {
+    if (!visible || !images?.length) return;
+    requestAnimationFrame(() => {
+      listRef.current?.scrollToIndex({ index, animated: false });
+    });
+  }, [visible, index, images]);
+
+  if (!visible || !images?.length) return null;
+
+  const goPrev = () => onChangeIndex((index - 1 + images.length) % images.length);
+  const goNext = () => onChangeIndex((index + 1) % images.length);
+
+  return (
+    <Modal
+      visible={visible}
+      transparent
+      animationType="fade"
+      presentationStyle="overFullScreen"
+      statusBarTranslucent
+      onRequestClose={onClose}
+    >
       <View style={styles.backdrop}>
-        <SafeAreaView style={styles.safe}>
+        <Pressable style={StyleSheet.absoluteFill} onPress={onClose} />
+        <SafeAreaView style={styles.safe} pointerEvents="box-none">
           <View style={styles.topBar}>
-            <TouchableOpacity style={styles.iconBtn} onPress={onClose} hitSlop={8}>
-              <Ionicons name="close" size={22} color={colors.white} />
-            </TouchableOpacity>
-            <Text style={styles.title} numberOfLines={1}>{title || 'Preview'}</Text>
+            <PressableScale style={styles.iconBtn} onPress={onClose} hitSlop={8} haptic="light">
+              <X size={22} color={colors.white} strokeWidth={2} />
+            </PressableScale>
+            <View style={styles.titleWrap}>
+              <Text style={styles.title} numberOfLines={1}>{title || 'Foto'}</Text>
+              {images.length > 1 ? (
+                <Text style={styles.counter}>{index + 1} dari {images.length}</Text>
+              ) : (
+                <Text style={styles.hint}>Ketuk di luar gambar untuk tutup</Text>
+              )}
+            </View>
             <View style={styles.iconBtn} />
           </View>
 
-          <View style={styles.body}>
-            {current ? (
-              <LightboxSlide uri={current} token={token} />
-            ) : (
-              <ActivityIndicator color={colors.white} size="large" />
+          <FlatList
+            ref={listRef}
+            data={images}
+            horizontal
+            pagingEnabled
+            showsHorizontalScrollIndicator={false}
+            keyExtractor={(item, i) => `${item}-${i}`}
+            initialScrollIndex={index}
+            getItemLayout={(_, i) => ({ length: SCREEN_W, offset: SCREEN_W * i, index: i })}
+            onMomentumScrollEnd={(event) => {
+              const next = Math.round(event.nativeEvent.contentOffset.x / SCREEN_W);
+              if (next !== index) onChangeIndex(next);
+            }}
+            renderItem={({ item }) => (
+              <View style={styles.page}>
+                <LightboxSlide uri={item} token={token} />
+              </View>
             )}
-          </View>
+          />
 
           {images.length > 1 ? (
             <View style={styles.footer}>
-              <TouchableOpacity
-                style={styles.navBtn}
-                onPress={() => onChangeIndex((index - 1 + images.length) % images.length)}
-              >
-                <Ionicons name="chevron-back" size={22} color={colors.white} />
-              </TouchableOpacity>
-              <Text style={styles.counter}>{index + 1} / {images.length}</Text>
-              <TouchableOpacity
-                style={styles.navBtn}
-                onPress={() => onChangeIndex((index + 1) % images.length)}
-              >
-                <Ionicons name="chevron-forward" size={22} color={colors.white} />
-              </TouchableOpacity>
+              <PressableScale style={styles.navBtn} onPress={goPrev} haptic="light">
+                <ChevronLeft size={22} color={colors.white} strokeWidth={2} />
+              </PressableScale>
+              <View style={styles.dots}>
+                {images.map((uri, i) => (
+                  <View key={`${uri}-${i}`} style={[styles.dot, i === index && styles.dotActive]} />
+                ))}
+              </View>
+              <PressableScale style={styles.navBtn} onPress={goNext} haptic="light">
+                <ChevronRight size={22} color={colors.white} strokeWidth={2} />
+              </PressableScale>
             </View>
           ) : null}
         </SafeAreaView>
@@ -79,41 +135,58 @@ export default function ImageLightbox({ visible, images, index, title, token, on
 }
 
 const styles = StyleSheet.create({
-  backdrop: { flex: 1, backgroundColor: 'rgba(15,23,42,0.94)' },
+  backdrop: { flex: 1, backgroundColor: 'rgba(2,6,23,0.96)' },
   safe: { flex: 1 },
   topBar: {
     flexDirection: 'row',
     alignItems: 'center',
-    paddingHorizontal: 16,
-    paddingVertical: 10,
-    gap: 10,
+    paddingHorizontal: spacing.lg,
+    paddingVertical: spacing.sm,
+    gap: spacing.sm,
+    zIndex: 2,
   },
   iconBtn: {
     width: 40,
     height: 40,
-    borderRadius: 20,
+    borderRadius: radius.full,
     backgroundColor: 'rgba(255,255,255,0.12)',
     alignItems: 'center',
     justifyContent: 'center',
   },
-  title: { flex: 1, fontSize: 15, fontWeight: '800', color: colors.white, textAlign: 'center' },
-  body: { flex: 1, justifyContent: 'center', alignItems: 'center' },
-  slide: { width: SCREEN_W, height: SCREEN_W * 0.85 },
-  slideImage: { width: SCREEN_W, height: SCREEN_W * 0.85 },
+  titleWrap: { flex: 1, alignItems: 'center' },
+  title: { ...typography.caption, fontWeight: '800', color: colors.white },
+  counter: { marginTop: 2, ...typography.small, color: 'rgba(255,255,255,0.7)', fontWeight: '600' },
+  hint: { marginTop: 2, ...typography.small, color: 'rgba(255,255,255,0.55)', fontWeight: '500' },
+  page: { width: SCREEN_W, justifyContent: 'center', alignItems: 'center' },
+  slide: {
+    width: SCREEN_W,
+    height: SLIDE_H,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  image: { width: SCREEN_W, height: SLIDE_H },
   footer: {
     flexDirection: 'row',
     alignItems: 'center',
-    justifyContent: 'center',
-    gap: 24,
-    paddingVertical: 16,
+    justifyContent: 'space-between',
+    paddingHorizontal: spacing['2xl'],
+    paddingBottom: spacing.lg,
+    paddingTop: spacing.sm,
   },
   navBtn: {
     width: 44,
     height: 44,
-    borderRadius: 22,
+    borderRadius: radius.full,
     backgroundColor: 'rgba(255,255,255,0.12)',
     alignItems: 'center',
     justifyContent: 'center',
   },
-  counter: { fontSize: 14, fontWeight: '700', color: 'rgba(255,255,255,0.8)' },
+  dots: { flexDirection: 'row', gap: spacing.xs, alignItems: 'center' },
+  dot: {
+    width: 6,
+    height: 6,
+    borderRadius: 3,
+    backgroundColor: 'rgba(255,255,255,0.28)',
+  },
+  dotActive: { width: 18, backgroundColor: colors.white },
 });

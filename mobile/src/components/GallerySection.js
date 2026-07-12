@@ -1,6 +1,7 @@
 import React from 'react';
-import { View, Text, StyleSheet, ScrollView, Image, Dimensions } from 'react-native';
-import { colors } from '../theme/colors';
+import { View, Text, StyleSheet, ScrollView, Dimensions } from 'react-native';
+import AppImage from '../ui/AppImage';
+import { colors, spacing, radius, typography } from '../theme/tokens';
 import { resolveMediaUrl } from '../utils/mediaUrl';
 
 const IMG_W = Dimensions.get('window').width * 0.48;
@@ -18,7 +19,7 @@ function GalleryRow({ images }) {
     >
       {images.map((img) => (
         <View key={img.id} style={styles.imageWrap}>
-          <Image source={{ uri: resolveMediaUrl(img.url) }} style={styles.image} />
+          <AppImage uri={resolveMediaUrl(img.url)} style={styles.image} rounded={radius.sm} />
         </View>
       ))}
     </ScrollView>
@@ -47,38 +48,38 @@ export default function GallerySection({ images = [] }) {
 
 const styles = StyleSheet.create({
   section: {
-    marginHorizontal: -20,
-    marginBottom: 24,
+    marginHorizontal: -spacing.xl,
+    marginBottom: spacing['2xl'],
     backgroundColor: colors.baytgoDark,
-    paddingVertical: 28,
+    paddingVertical: spacing['3xl'] - 4,
   },
-  header: { alignItems: 'center', paddingHorizontal: 20, marginBottom: 20 },
+  header: { alignItems: 'center', paddingHorizontal: spacing.xl, marginBottom: spacing.xl },
   kicker: {
-    fontSize: 11,
-    fontWeight: '800',
+    ...typography.label,
     letterSpacing: 2,
     textTransform: 'uppercase',
     color: colors.gold,
-    marginBottom: 8,
+    marginBottom: spacing.sm,
   },
   title: {
+    ...typography.title,
     fontSize: 22,
     fontWeight: '900',
     color: colors.white,
     textAlign: 'center',
   },
   divider: {
-    marginTop: 14,
+    marginTop: spacing.md + 2,
     width: 40,
     height: 2,
     borderRadius: 1,
     backgroundColor: colors.gold + '99',
   },
-  rowContent: { paddingHorizontal: 16, gap: 10, paddingBottom: 10 },
+  rowContent: { paddingHorizontal: spacing.lg, gap: spacing.sm + 2, paddingBottom: spacing.sm + 2 },
   imageWrap: {
     width: IMG_W,
     height: IMG_H,
-    borderRadius: 14,
+    borderRadius: radius.sm,
     overflow: 'hidden',
     borderWidth: 1,
     borderColor: 'rgba(255,255,255,0.12)',

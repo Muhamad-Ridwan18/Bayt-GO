@@ -1,20 +1,12 @@
 import React, { useState } from 'react';
-import {
-  View,
-  Text,
-  StyleSheet,
-  ScrollView,
-  TouchableOpacity,
-  ActivityIndicator,
-  Alert,
-  TextInput,
-} from 'react-native';
-import { LinearGradient } from 'expo-linear-gradient';
+import { View, Text, StyleSheet, ScrollView, TextInput } from 'react-native';
 import ScreenHeader from '../components/ScreenHeader';
 import AuthInput from '../components/AuthInput';
 import { submitRefundRequest } from '../api/bookings';
 import { useAuth } from '../context/AuthContext';
-import { colors } from '../theme/colors';
+import { Button, Card, InlineAlert } from '../ui';
+import { notifySuccessThen } from '../utils/feedback';
+import { colors, layout, radius, spacing, typography } from '../theme/tokens';
 
 export default function BookingRefundScreen({ navigation, route }) {
   const { token } = useAuth();
@@ -42,9 +34,12 @@ export default function BookingRefundScreen({ navigation, route }) {
         refund_account_number: accountNumber.trim(),
         customer_note: note.trim() || null,
       });
-      Alert.alert('Berhasil', 'Permintaan refund berhasil diajukan.', [
-        { text: 'OK', onPress: () => navigation.navigate('BookingDetail', { bookingId }) },
-      ]);
+      notifySuccessThen(
+        navigation,
+        'Permintaan refund berhasil diajukan.',
+        'BookingDetail',
+        { bookingId },
+      );
     } catch (err) {
       setError(err.message || 'Gagal mengajukan refund');
     } finally {
@@ -61,7 +56,7 @@ export default function BookingRefundScreen({ navigation, route }) {
           Isi rekening tujuan refund. Permintaan akan diproses oleh tim Bayt-GO sesuai kebijakan.
         </Text>
 
-        {error ? <Text style={styles.error}>{error}</Text> : null}
+        {error ? <InlineAlert variant="error">{error}</InlineAlert> : null}
 
         <AuthInput label="Nama bank" icon="business-outline" value={bankName} onChangeText={setBankName} placeholder="Contoh: BCA" />
         <AuthInput label="Nama pemilik rekening" icon="person-outline" value={accountHolder} onChangeText={setAccountHolder} placeholder="Sesuai buku tabungan" />
@@ -73,45 +68,32 @@ export default function BookingRefundScreen({ navigation, route }) {
           value={note}
           onChangeText={setNote}
           placeholder="Alasan atau informasi tambahan..."
-          placeholderTextColor={colors.slate400}
+          placeholderTextColor={colors.textMuted}
           multiline
           maxLength={2000}
           textAlignVertical="top"
         />
 
-        <TouchableOpacity style={styles.submitBtn} onPress={handleSubmit} disabled={loading} activeOpacity={0.9}>
-          <LinearGradient colors={[colors.baytgo, colors.baytgoDark]} style={styles.submitGradient}>
-            {loading ? (
-              <ActivityIndicator color={colors.white} />
-            ) : (
-              <Text style={styles.submitText}>Kirim Permintaan Refund</Text>
-            )}
-          </LinearGradient>
-        </TouchableOpacity>
+        <Button label="Kirim Permintaan Refund" onPress={handleSubmit} loading={loading} />
       </ScrollView>
     </View>
   );
 }
 
 const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: colors.canvas },
-  scroll: { padding: 16, paddingBottom: 32 },
-  intro: { fontSize: 14, lineHeight: 21, color: colors.slate600, fontWeight: '500', marginBottom: 16 },
-  error: { marginBottom: 12, fontSize: 13, color: '#DC2626', fontWeight: '600' },
-  label: { fontSize: 12, fontWeight: '800', color: colors.slate600, marginBottom: 8 },
+  container: { flex: 1, backgroundColor: colors.background },
+  scroll: { padding: layout.screenPadding, paddingBottom: spacing['3xl'] },
+  intro: { ...typography.caption, lineHeight: 22, color: colors.textSecondary, marginBottom: spacing.lg },
+  label: { ...typography.label, color: colors.textSecondary, marginBottom: spacing.sm },
   textarea: {
     minHeight: 100,
-    backgroundColor: colors.white,
-    borderRadius: 16,
+    backgroundColor: colors.card,
+    borderRadius: radius.sm,
     borderWidth: 1,
-    borderColor: colors.slate100,
-    padding: 14,
-    fontSize: 14,
-    fontWeight: '500',
-    color: colors.slate900,
-    marginBottom: 20,
+    borderColor: colors.border,
+    padding: spacing.lg,
+    ...typography.caption,
+    color: colors.textPrimary,
+    marginBottom: spacing.xl,
   },
-  submitBtn: { borderRadius: 16, overflow: 'hidden' },
-  submitGradient: { paddingVertical: 16, alignItems: 'center' },
-  submitText: { color: colors.white, fontSize: 15, fontWeight: '800' },
 });

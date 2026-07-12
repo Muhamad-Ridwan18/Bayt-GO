@@ -43,6 +43,11 @@ class WhatsAppNotifySettings
                 'group' => 'booking',
                 'default' => true,
             ],
+            'customer_booking_submitted' => [
+                'label' => 'admin.whatsapp_notify.toggles.customer_booking_submitted',
+                'group' => 'booking',
+                'default' => true,
+            ],
             'customer_booking_approved' => [
                 'label' => 'admin.whatsapp_notify.toggles.customer_booking_approved',
                 'group' => 'booking',

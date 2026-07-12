@@ -4,30 +4,43 @@ import {
   Text,
   StyleSheet,
   FlatList,
-  TouchableOpacity,
   Dimensions,
-  StatusBar,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
+import { StatusBar } from 'expo-status-bar';
 import { LinearGradient } from 'expo-linear-gradient';
-import { Ionicons } from '@expo/vector-icons';
+import {
+  ArrowRight,
+  Calendar,
+  ChevronRight,
+  CircleCheck,
+  ShieldCheck,
+  Users,
+} from 'lucide-react-native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import AppLogo from '../components/AppLogo';
 import { useBrand } from '../context/BrandContext';
-import { colors } from '../theme/colors';
+import Button from '../ui/Button';
+import PressableScale from '../ui/PressableScale';
+import { colors, gradients, layout, radius, shadows, spacing, typography } from '../theme/tokens';
 import { ONBOARDING_KEY, ONBOARDING_SLIDES } from '../constants/onboarding';
 
 const { width } = Dimensions.get('window');
 
+const SLIDE_ICONS = {
+  calendar: Calendar,
+  'shield-checkmark': ShieldCheck,
+  people: Users,
+};
+
 function Slide({ item }) {
+  const Icon = SLIDE_ICONS[item.icon] || Calendar;
+
   return (
     <View style={[styles.slide, { width }]}>
       <View style={styles.iconWrap}>
-        <LinearGradient
-          colors={[colors.baytgo, '#15332b']}
-          style={styles.iconGradient}
-        >
-          <Ionicons name={item.icon} size={40} color={colors.goldLight} />
+        <LinearGradient colors={gradients.primary} style={styles.iconGradient}>
+          <Icon size={40} color={colors.goldLight} strokeWidth={1.8} />
         </LinearGradient>
       </View>
 
@@ -39,7 +52,7 @@ function Slide({ item }) {
         <View style={styles.badgeRow}>
           {item.badges.map((badge) => (
             <View key={badge} style={styles.badge}>
-              <Ionicons name="checkmark-circle" size={14} color={colors.emerald600} />
+              <CircleCheck size={14} color={colors.success} strokeWidth={2.5} />
               <Text style={styles.badgeText}>{badge}</Text>
             </View>
           ))}
@@ -68,11 +81,9 @@ export default function OnboardingScreen({ navigation }) {
     listRef.current?.scrollToIndex({ index: index + 1, animated: true });
   };
 
-  const skip = () => finish();
-
   return (
     <View style={styles.container}>
-      <StatusBar barStyle="dark-content" />
+      <StatusBar style="dark" />
       <LinearGradient
         colors={[colors.canvas, colors.canvasSoft, colors.white]}
         style={StyleSheet.absoluteFill}
@@ -82,9 +93,9 @@ export default function OnboardingScreen({ navigation }) {
         <View style={styles.topBar}>
           <AppLogo url={logoUrl} name={appName} size={36} showName />
           {!isLast && (
-            <TouchableOpacity onPress={skip} hitSlop={12}>
+            <PressableScale onPress={finish} haptic="light">
               <Text style={styles.skipText}>Lewati</Text>
-            </TouchableOpacity>
+            </PressableScale>
           )}
         </View>
 
@@ -114,21 +125,17 @@ export default function OnboardingScreen({ navigation }) {
             ))}
           </View>
 
-          <TouchableOpacity style={styles.primaryBtn} onPress={goNext} activeOpacity={0.9}>
-            <LinearGradient
-              colors={[colors.baytgo, colors.baytgoDark]}
-              start={{ x: 0, y: 0 }}
-              end={{ x: 1, y: 1 }}
-              style={styles.primaryGradient}
-            >
-              <Text style={styles.primaryText}>{isLast ? 'Mulai Sekarang' : 'Lanjut'}</Text>
-              <Ionicons
-                name={isLast ? 'arrow-forward' : 'chevron-forward'}
-                size={20}
-                color={colors.white}
-              />
-            </LinearGradient>
-          </TouchableOpacity>
+          <Button
+            label={isLast ? 'Mulai Sekarang' : 'Lanjut'}
+            onPress={goNext}
+            icon={
+              isLast ? (
+                <ArrowRight size={20} color={colors.white} strokeWidth={2.2} />
+              ) : (
+                <ChevronRight size={20} color={colors.white} strokeWidth={2.2} />
+              )
+            }
+          />
         </View>
       </SafeAreaView>
     </View>
@@ -142,93 +149,63 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
-    paddingHorizontal: 24,
-    paddingTop: 8,
-    paddingBottom: 12,
+    paddingHorizontal: layout.screenPadding,
+    paddingTop: spacing.sm,
+    paddingBottom: spacing.md,
   },
-  logoRow: { flexDirection: 'row', alignItems: 'center', gap: 10 },
-  logoMark: {
-    width: 36,
-    height: 36,
-    borderRadius: 12,
-    backgroundColor: colors.baytgo,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  logoMarkText: { color: colors.gold, fontSize: 18, fontWeight: '900' },
-  logoText: { fontSize: 20, fontWeight: '800', color: colors.baytgo, letterSpacing: -0.5 },
-  skipText: { fontSize: 14, fontWeight: '700', color: colors.slate500 },
+  skipText: { ...typography.caption, fontFamily: 'PlusJakartaSans_700Bold', color: colors.textSecondary },
   list: { flex: 1 },
   slide: {
     flex: 1,
-    paddingHorizontal: 28,
-    paddingTop: 24,
+    paddingHorizontal: spacing['2xl'],
+    paddingTop: spacing['2xl'],
     justifyContent: 'center',
   },
-  iconWrap: { marginBottom: 28 },
+  iconWrap: { marginBottom: spacing['2xl'] },
   iconGradient: {
     width: 88,
     height: 88,
-    borderRadius: 28,
+    borderRadius: radius.lg,
     alignItems: 'center',
     justifyContent: 'center',
-    shadowColor: colors.baytgo,
-    shadowOffset: { width: 0, height: 8 },
-    shadowOpacity: 0.25,
-    shadowRadius: 16,
-    elevation: 8,
+    ...shadows.lg,
   },
   kicker: {
-    fontSize: 11,
-    fontWeight: '800',
-    letterSpacing: 1.2,
+    ...typography.label,
     textTransform: 'uppercase',
-    color: colors.emerald600,
-    marginBottom: 12,
+    color: colors.success,
+    marginBottom: spacing.md,
   },
   title: {
-    fontSize: 32,
-    fontWeight: '900',
-    lineHeight: 38,
+    ...typography.hero,
     color: colors.baytgo,
     letterSpacing: -0.5,
-    marginBottom: 16,
+    marginBottom: spacing.lg,
   },
   description: {
-    fontSize: 16,
-    lineHeight: 24,
-    color: colors.slate600,
-    fontWeight: '500',
+    ...typography.body,
+    color: colors.textSecondary,
     maxWidth: 320,
   },
-  badgeRow: { marginTop: 24, gap: 10 },
+  badgeRow: { marginTop: spacing['2xl'], gap: spacing.sm },
   badge: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 8,
-    backgroundColor: colors.emerald50,
+    gap: spacing.sm,
+    backgroundColor: colors.successLight,
     alignSelf: 'flex-start',
-    paddingHorizontal: 14,
-    paddingVertical: 8,
-    borderRadius: 999,
+    paddingHorizontal: spacing.lg,
+    paddingVertical: spacing.sm,
+    borderRadius: radius.full,
   },
-  badgeText: { fontSize: 13, fontWeight: '700', color: colors.baytgo },
-  footer: { paddingHorizontal: 24, paddingBottom: 16, gap: 20 },
-  dots: { flexDirection: 'row', justifyContent: 'center', gap: 8 },
+  badgeText: { ...typography.caption, fontFamily: 'PlusJakartaSans_700Bold', color: colors.baytgo },
+  footer: { paddingHorizontal: layout.screenPadding, paddingBottom: spacing.lg, gap: spacing.xl },
+  dots: { flexDirection: 'row', justifyContent: 'center', gap: spacing.sm },
   dot: {
     width: 8,
     height: 8,
     borderRadius: 4,
-    backgroundColor: colors.slate200,
+    backgroundColor: colors.border,
   },
   dotActive: { width: 28, backgroundColor: colors.baytgo },
-  primaryBtn: { borderRadius: 18, overflow: 'hidden' },
-  primaryGradient: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
-    gap: 8,
-    paddingVertical: 18,
-  },
-  primaryText: { color: colors.white, fontSize: 16, fontWeight: '800' },
 });

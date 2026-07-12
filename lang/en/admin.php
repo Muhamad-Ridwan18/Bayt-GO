@@ -385,6 +385,7 @@ return [
             'booking' => 'New booking → muthowif',
             'payment' => 'Payment completed → muthowif',
             'customer_payment_settled' => 'Payment completed → pilgrim',
+            'customer_booking_submitted' => 'New booking → pilgrim',
             'customer_booking_approved' => 'Booking approved → pilgrim',
             'customer_booking_rejected_jadwal_full' => 'Rejected (schedule full) → pilgrim',
             'refund_transfer_proof' => 'Refund transfer proof → pilgrim',

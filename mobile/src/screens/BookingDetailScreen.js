@@ -1,100 +1,48 @@
-import React, { useCallback, useState } from 'react';
-import {
-  View,
-  Text,
-  StyleSheet,
-  ScrollView,
-  Image,
-  TouchableOpacity,
-  ActivityIndicator,
-  RefreshControl,
-  Alert,
-} from 'react-native';
+import React, { useCallback, useMemo, useState } from 'react';
+import { StyleSheet, Text, View, ScrollView, RefreshControl, Alert } from 'react-native';
 import { useFocusEffect } from '@react-navigation/native';
+import {
+  Wallet, CheckCircle, Star, FileText, MessageCircle, Banknote, Calendar, XCircle, CheckCheck,
+} from 'lucide-react-native';
 import { LinearGradient } from 'expo-linear-gradient';
-import { Ionicons } from '@expo/vector-icons';
 import ScreenHeader from '../components/ScreenHeader';
 import BookingDocumentGallery from '../components/BookingDocumentGallery';
 import { fetchBooking, cancelBooking, requestSupportCompletion } from '../api/bookings';
 import { selectEmergencyReplacement } from '../api/emergency';
 import { useAuth } from '../context/AuthContext';
 import { useUserBookingRealtime } from '../hooks/useUserBookingRealtime';
-import { colors } from '../theme/colors';
+import { useHideTabBarOnFocus } from '../hooks/useHideTabBarOnFocus';
+import Button from '../ui/Button';
+import ErrorState from '../ui/ErrorState';
+import PressableScale from '../ui/PressableScale';
+import { SkeletonList } from '../ui/Skeleton';
+import StickyFooter from '../ui/StickyFooter';
+import { notifySuccess } from '../utils/feedback';
+import BookingEmergencySection from '../features/booking/BookingEmergencySection';
+import BookingSection from '../features/booking/BookingSection';
+import PendingBanner from '../features/booking/PendingBanner';
+import {
+  BookingActionList,
+  BookingDetailHero,
+  BookingProgressBar,
+  HistoryItemCard,
+  ReviewCard,
+  TripSummaryGrid,
+} from '../features/booking/BookingDetailParts';
+import { colors, gradients, layout, radius, spacing, typography } from '../theme/tokens';
 import { formatIdr } from '../utils/format';
 import { resolveMediaUrl } from '../utils/mediaUrl';
 import {
-  bookingStatusMeta,
-  paymentStatusMeta,
-  serviceTypeLabel,
-  formatDateRange,
-  needsPayment,
-  canCancelBooking,
-  canCompleteBooking,
-  canReviewBooking,
-  canViewInvoice,
-  canRequestRefund,
-  canRequestReschedule,
-  hasPendingReschedule,
-  canRequestSupportCompletion,
-  hasSupportCompletionPending,
-  changeRequestStatusLabel,
-  billingNights,
+  bookingStatusMeta, paymentStatusMeta, formatDateRange,
+  needsPayment, canCancelBooking, canCompleteBooking, canReviewBooking, canViewInvoice,
+  canRequestRefund, canRequestReschedule, hasPendingReschedule, canRequestSupportCompletion,
+  hasSupportCompletionPending, changeRequestStatusLabel, billingNights, canOpenBookingChat,
 } from '../utils/bookingLabels';
-import {
-  CustomerPricingBreakdown,
-  customerPayableAmount,
-} from '../components/BookingPricingBreakdown';
-
-function InfoRow({ label, value }) {
-  return (
-    <View style={styles.infoRow}>
-      <Text style={styles.infoLabel}>{label}</Text>
-      <Text style={styles.infoValue}>{value}</Text>
-    </View>
-  );
-}
-
-function ActionBtn({ icon, label, onPress, variant = 'outline', danger }) {
-  const isPrimary = variant === 'primary';
-  return (
-    <TouchableOpacity
-      style={[
-        styles.actionBtn,
-        isPrimary && styles.actionPrimary,
-        danger && styles.actionDanger,
-      ]}
-      onPress={onPress}
-      activeOpacity={0.9}
-    >
-      <Ionicons
-        name={icon}
-        size={18}
-        color={isPrimary ? colors.white : danger ? '#B91C1C' : colors.baytgo}
-      />
-      <Text style={[styles.actionText, isPrimary && styles.actionTextPrimary, danger && styles.actionTextDanger]}>
-        {label}
-      </Text>
-    </TouchableOpacity>
-  );
-}
-
-function canOpenChat(booking) {
-  if (!booking || booking.payment_status !== 'paid') return false;
-  return ['confirmed', 'in_progress', 'completed'].includes(booking.status);
-}
-
-function StatusPill({ label, color }) {
-  return (
-    <View style={[styles.pill, { backgroundColor: color + '18' }]}>
-      <Text style={[styles.pillText, { color }]}>{label}</Text>
-    </View>
-  );
-}
+import { CustomerPricingBreakdown, customerPayableAmount } from '../components/BookingPricingBreakdown';
 
 export default function BookingDetailScreen({ navigation, route }) {
   const { token, user } = useAuth();
   const { bookingId } = route.params;
-
   const [booking, setBooking] = useState(null);
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
@@ -105,7 +53,6 @@ export default function BookingDetailScreen({ navigation, route }) {
   const load = useCallback(async (refresh = false) => {
     if (refresh) setRefreshing(true);
     else setLoading(true);
-
     try {
       const data = await fetchBooking(token, bookingId);
       setBooking(data);
@@ -118,56 +65,82 @@ export default function BookingDetailScreen({ navigation, route }) {
     }
   }, [token, bookingId]);
 
-  useFocusEffect(
-    useCallback(() => {
-      load();
-    }, [load]),
-  );
+  useFocusEffect(useCallback(() => { load(); }, [load]));
+  useHideTabBarOnFocus(navigation);
 
   useUserBookingRealtime({
-    token,
-    userId: user?.id,
+    token, userId: user?.id,
     onEvent: (payload) => {
-      if (String(payload?.booking_id) === String(bookingId)) {
-        load(true);
-      }
+      if (String(payload?.booking_id) === String(bookingId)) load(true);
     },
   });
 
+  const stickyAction = useMemo(() => {
+    if (!booking) return null;
+
+    const unpaid = needsPayment(booking);
+    const payable = customerPayableAmount(booking.pricing, booking.total_amount);
+
+    if (unpaid) {
+      return {
+        label: 'Bayar sekarang',
+        icon: <Wallet size={18} color={colors.white} strokeWidth={2} />,
+        onPress: () => navigation.navigate('BookingPayment', {
+          bookingId: booking.id,
+          bookingCode: booking.booking_code,
+        }),
+        gradient: true,
+        priceLabel: 'Total bayar',
+        priceValue: payable,
+      };
+    }
+    if (canCompleteBooking(booking)) {
+      return {
+        label: 'Selesaikan layanan',
+        icon: <CheckCircle size={18} color={colors.white} strokeWidth={2} />,
+        onPress: () => navigation.navigate('BookingRating', { bookingId: booking.id, mode: 'complete' }),
+      };
+    }
+    if (canReviewBooking(booking) && !booking.review) {
+      return {
+        label: 'Beri ulasan',
+        variant: 'secondary',
+        icon: <Star size={18} color={colors.baytgo} strokeWidth={2} />,
+        onPress: () => navigation.navigate('BookingRating', { bookingId: booking.id, mode: 'review' }),
+      };
+    }
+    return null;
+  }, [booking, navigation]);
+
   const handleSelectReplacement = (offer) => {
     const name = offer.muthowif?.name || 'Muthowif';
-    Alert.alert(
-      'Pilih muthowif pengganti?',
-      `Layanan akan dilanjutkan dengan ${name}.`,
-      [
-        { text: 'Batal', style: 'cancel' },
-        {
-          text: 'Pilih',
-          onPress: async () => {
-            try {
-              await selectEmergencyReplacement(token, bookingId, offer.id);
-              Alert.alert('Berhasil', 'Muthowif pengganti telah dipilih.');
-              load(true);
-            } catch (err) {
-              Alert.alert('Gagal', err.message || 'Tidak dapat memilih pengganti');
-            }
-          },
+    Alert.alert('Pilih muthowif pengganti?', `Layanan akan dilanjutkan dengan ${name}.`, [
+      { text: 'Batal', style: 'cancel' },
+      {
+        text: 'Pilih',
+        onPress: async () => {
+          try {
+            await selectEmergencyReplacement(token, bookingId, offer.id);
+            notifySuccess('Muthowif pengganti telah dipilih.');
+            load(true);
+          } catch (err) {
+            Alert.alert('Gagal', err.message || 'Tidak dapat memilih pengganti');
+          }
         },
-      ],
-    );
+      },
+    ]);
   };
 
-  const handleCancel = () => {
+  const handleCancel = useCallback(() => {
     Alert.alert('Batalkan pesanan?', 'Pesanan yang dibatalkan tidak dapat dipulihkan.', [
       { text: 'Tidak', style: 'cancel' },
       {
-        text: 'Ya, batalkan',
-        style: 'destructive',
+        text: 'Ya, batalkan', style: 'destructive',
         onPress: async () => {
           setCancelling(true);
           try {
             await cancelBooking(token, bookingId);
-            Alert.alert('Dibatalkan', 'Pesanan berhasil dibatalkan.');
+            notifySuccess('Pesanan berhasil dibatalkan.');
             load(true);
           } catch (err) {
             Alert.alert('Gagal', err.message || 'Tidak dapat membatalkan pesanan');
@@ -177,7 +150,7 @@ export default function BookingDetailScreen({ navigation, route }) {
         },
       },
     ]);
-  };
+  }, [token, bookingId, load]);
 
   const handleRequestSupportCompletion = () => {
     Alert.alert(
@@ -191,7 +164,7 @@ export default function BookingDetailScreen({ navigation, route }) {
             setRequestingCompletion(true);
             try {
               await requestSupportCompletion(token, bookingId);
-              Alert.alert('Berhasil', 'Permintaan penyelesaian telah dikirim ke muthowif.');
+              notifySuccess('Permintaan penyelesaian dikirim ke muthowif.');
               load(true);
             } catch (err) {
               Alert.alert('Gagal', err.message || 'Tidak dapat mengirim permintaan');
@@ -204,11 +177,82 @@ export default function BookingDetailScreen({ navigation, route }) {
     );
   };
 
+  const openChat = useCallback((muthowifName) => {
+    if (!booking) return;
+    navigation.getParent()?.navigate('ChatTab', {
+      screen: 'ChatRoom',
+      params: { bookingId: booking.id, bookingCode: booking.booking_code, otherName: muthowifName },
+    });
+  }, [booking, navigation]);
+
+  const quickActions = useMemo(() => {
+    if (!booking) return [];
+
+    const muthowifName = booking.muthowif_profile?.user?.name || 'Muthowif';
+    const actions = [];
+
+    if (canViewInvoice(booking)) {
+      actions.push({
+        key: 'invoice',
+        label: 'Lihat invoice',
+        hint: 'Bukti pembayaran resmi',
+        icon: FileText,
+        onPress: () => navigation.navigate('BookingInvoice', { bookingId: booking.id }),
+      });
+    }
+    if (canOpenBookingChat(booking)) {
+      actions.push({
+        key: 'chat',
+        label: 'Chat dengan muthowif',
+        hint: 'Diskusi terkait pesanan',
+        icon: MessageCircle,
+        tone: 'success',
+        onPress: () => openChat(muthowifName),
+      });
+    }
+    if (canRequestRefund(booking)) {
+      actions.push({
+        key: 'refund',
+        label: 'Ajukan refund',
+        hint: 'Permintaan pengembalian dana',
+        icon: Banknote,
+        tone: 'warning',
+        onPress: () => navigation.navigate('BookingRefund', { bookingId: booking.id }),
+      });
+    }
+    if (canRequestReschedule(booking)) {
+      actions.push({
+        key: 'reschedule',
+        label: 'Ajukan reschedule',
+        hint: 'Ubah tanggal perjalanan',
+        icon: Calendar,
+        onPress: () => navigation.navigate('BookingReschedule', {
+          bookingId: booking.id,
+          startsOn: booking.starts_on,
+          endsOn: booking.ends_on,
+        }),
+      });
+    }
+    if (canCancelBooking(booking)) {
+      actions.push({
+        key: 'cancel',
+        label: cancelling ? 'Membatalkan pesanan...' : 'Batalkan pesanan',
+        hint: 'Pesanan tidak dapat dipulihkan',
+        icon: XCircle,
+        tone: 'danger',
+        disabled: cancelling,
+        onPress: handleCancel,
+      });
+    }
+
+    return actions;
+  }, [booking, cancelling, navigation, openChat, handleCancel]);
+
   if (loading && !refreshing) {
     return (
       <View style={styles.container}>
         <ScreenHeader title="Detail Pesanan" onBack={() => navigation.goBack()} />
-        <ActivityIndicator color={colors.baytgo} style={styles.loader} />
+        <SkeletonList count={3} style={styles.skeleton} />
       </View>
     );
   }
@@ -217,12 +261,7 @@ export default function BookingDetailScreen({ navigation, route }) {
     return (
       <View style={styles.container}>
         <ScreenHeader title="Detail Pesanan" onBack={() => navigation.goBack()} />
-        <View style={styles.empty}>
-          <Text style={styles.emptyText}>{error || 'Pesanan tidak ditemukan'}</Text>
-          <TouchableOpacity onPress={() => load()}>
-            <Text style={styles.retry}>Coba lagi</Text>
-          </TouchableOpacity>
-        </View>
+        <ErrorState description={error || 'Pesanan tidak ditemukan'} onRetry={() => load()} />
       </View>
     );
   }
@@ -231,460 +270,165 @@ export default function BookingDetailScreen({ navigation, route }) {
   const muthowifName = muthowif?.user?.name || 'Muthowif';
   const bookingMeta = bookingStatusMeta(booking.status);
   const paymentMeta = paymentStatusMeta(booking.payment_status);
-  const unpaid = needsPayment(booking);
-  const showChat = canOpenChat(booking);
   const nights = billingNights(booking.starts_on, booking.ends_on);
   const emergency = booking.emergency || {};
-  const emergencyReport = emergency.report;
-  const replacementOffers = emergency.replacement_offers || [];
   const showEmergencyZone = booking.status === 'confirmed' && booking.payment_status === 'paid';
+  const feeHint = booking.pricing?.base > 0 && booking.pricing?.platform_fee > 0
+    ? `Termasuk biaya platform ${booking.pricing.platform_fee_percent || 7.5}%`
+    : null;
 
   return (
     <View style={styles.container}>
-      <ScreenHeader title={booking.booking_code} onBack={() => navigation.goBack()} />
+      <ScreenHeader title="Detail Pesanan" onBack={() => navigation.goBack()} />
 
       <ScrollView
-        contentContainerStyle={styles.scroll}
-        refreshControl={
-          <RefreshControl refreshing={refreshing} onRefresh={() => load(true)} tintColor={colors.baytgo} />
-        }
+        contentContainerStyle={[styles.scroll, stickyAction && styles.scrollWithFooter]}
+        refreshControl={<RefreshControl refreshing={refreshing} onRefresh={() => load(true)} tintColor={colors.baytgo} />}
+        showsVerticalScrollIndicator={false}
       >
-        <View style={styles.heroCard}>
-          {muthowif?.avatar ? (
-            <Image source={{ uri: resolveMediaUrl(muthowif.avatar) }} style={styles.avatar} />
-          ) : null}
-          <Text style={styles.muthowifName}>{muthowifName}</Text>
-          <View style={styles.pillRow}>
-            <StatusPill label={bookingMeta.label} color={bookingMeta.color} />
-            <StatusPill label={paymentMeta.label} color={paymentMeta.color} />
+        <BookingDetailHero
+          bookingCode={booking.booking_code}
+          muthowifName={muthowifName}
+          avatarUri={resolveMediaUrl(muthowif?.avatar)}
+          bookingMeta={bookingMeta}
+          paymentMeta={paymentMeta}
+          amount={customerPayableAmount(booking.pricing, booking.total_amount)}
+          feeHint={feeHint}
+          onPressMuthowif={canOpenBookingChat(booking) ? () => openChat(muthowifName) : null}
+        />
+
+        <BookingProgressBar status={booking.status} />
+
+        {hasPendingReschedule(booking) ? (
+          <View style={styles.pendingBanner}>
+            <PendingBanner text="Permintaan reschedule sedang diproses" />
           </View>
-          <Text style={styles.total}>
-            {formatIdr(customerPayableAmount(booking.pricing, booking.total_amount))}
-          </Text>
-          {booking.pricing?.base > 0 && booking.pricing?.platform_fee > 0 ? (
-            <Text style={styles.totalHint}>
-              Termasuk biaya platform {booking.pricing.platform_fee_percent || 7.5}%
-            </Text>
-          ) : null}
-        </View>
-
-        <View style={styles.section}>
-          <Text style={styles.sectionTitle}>Perjalanan</Text>
-          <InfoRow label="Tanggal" value={formatDateRange(booking.starts_on, booking.ends_on)} />
-          <InfoRow label="Durasi" value={`${nights} hari`} />
-          <InfoRow label="Layanan" value={serviceTypeLabel(booking.service_type)} />
-          <InfoRow label="Jumlah jamaah" value={String(booking.pilgrim_count)} />
-          {booking.with_same_hotel ? <InfoRow label="Hotel sama" value="Ya" /> : null}
-          {booking.with_transport ? <InfoRow label="Transport" value="Ya" /> : null}
-        </View>
-
-        {(booking.documents || []).length > 0 ? (
-          <BookingDocumentGallery
-            token={token}
-            bookingId={bookingId}
-            documents={booking.documents}
-            title="Dokumen Anda"
-          />
         ) : null}
 
-        <View style={styles.section}>
-          <Text style={styles.sectionTitle}>Rincian Biaya</Text>
+        <TripSummaryGrid booking={booking} nights={nights} />
+
+        <BookingActionList actions={quickActions} />
+
+        {(booking.documents || []).length > 0 ? (
+          <BookingDocumentGallery token={token} bookingId={bookingId} documents={booking.documents} title="Dokumen Anda" />
+        ) : null}
+
+        <BookingSection title="Rincian biaya">
           <CustomerPricingBreakdown pricing={booking.pricing} />
-        </View>
+        </BookingSection>
 
         {booking.paid_at ? (
-          <View style={styles.section}>
-            <Text style={styles.sectionTitle}>Pembayaran</Text>
-            <InfoRow label="Dibayar pada" value={new Date(booking.paid_at).toLocaleString('id-ID')} />
-          </View>
+          <BookingSection title="Pembayaran">
+            <Text style={styles.paidText}>
+              Dibayar pada {new Date(booking.paid_at).toLocaleString('id-ID')}
+            </Text>
+          </BookingSection>
         ) : null}
 
         {(booking.refund_requests?.length > 0 || booking.reschedule_requests?.length > 0) ? (
-          <View style={styles.section}>
-            <Text style={styles.sectionTitle}>Riwayat Perubahan</Text>
+          <BookingSection title="Riwayat perubahan">
             {booking.refund_requests?.map((req) => (
-              <View key={req.id} style={styles.historyItem}>
-                <Text style={styles.historyTitle}>Refund — {changeRequestStatusLabel(req.status)}</Text>
-                {req.reason ? <Text style={styles.historyNote}>{req.reason}</Text> : null}
-                {req.created_at ? (
-                  <Text style={styles.historyDate}>{new Date(req.created_at).toLocaleString('id-ID')}</Text>
-                ) : null}
-              </View>
+              <HistoryItemCard
+                key={req.id}
+                title={`Refund — ${changeRequestStatusLabel(req.status)}`}
+                lines={req.reason ? [req.reason] : []}
+                date={req.created_at ? new Date(req.created_at).toLocaleString('id-ID') : null}
+              />
             ))}
             {booking.reschedule_requests?.map((req) => (
-              <View key={req.id} style={styles.historyItem}>
-                <Text style={styles.historyTitle}>
-                  Reschedule — {changeRequestStatusLabel(req.status)}
-                </Text>
-                <Text style={styles.historyNote}>{formatDateRange(req.starts_on, req.ends_on)}</Text>
-                {req.reason ? <Text style={styles.historyNote}>{req.reason}</Text> : null}
-              </View>
+              <HistoryItemCard
+                key={req.id}
+                title={`Reschedule — ${changeRequestStatusLabel(req.status)}`}
+                lines={[
+                  formatDateRange(req.starts_on, req.ends_on),
+                  ...(req.reason ? [req.reason] : []),
+                ]}
+              />
             ))}
-          </View>
+          </BookingSection>
         ) : null}
 
         {booking.review ? (
-          <View style={styles.section}>
-            <View style={styles.reviewHeader}>
-              <Text style={styles.sectionTitle}>Ulasan Anda</Text>
-              {canReviewBooking(booking) ? (
-                <TouchableOpacity
-                  onPress={() => navigation.navigate('BookingRating', {
-                    bookingId: booking.id,
-                    mode: 'review',
-                    initialRating: booking.review.rating,
-                    initialComment: booking.review.comment || '',
-                  })}
-                >
-                  <Text style={styles.editLink}>Edit</Text>
-                </TouchableOpacity>
-              ) : null}
-            </View>
-            <View style={styles.reviewRow}>
-              {Array.from({ length: 5 }).map((_, i) => (
-                <Ionicons
-                  key={i}
-                  name={i < booking.review.rating ? 'star' : 'star-outline'}
-                  size={16}
-                  color="#F59E0B"
-                />
-              ))}
-            </View>
-            {booking.review.comment ? (
-              <Text style={styles.reviewComment}>{booking.review.comment}</Text>
-            ) : null}
-          </View>
+          <ReviewCard
+            review={booking.review}
+            onEdit={canReviewBooking(booking) ? () => navigation.navigate('BookingRating', {
+              bookingId: booking.id,
+              mode: 'review',
+              initialRating: booking.review.rating,
+              initialComment: booking.review.comment || '',
+            }) : null}
+          />
         ) : null}
 
         {showEmergencyZone ? (
-          <View style={[styles.section, styles.emergencySection]}>
-            <View style={styles.emergencyHeader}>
-              <Ionicons name="warning" size={20} color="#B91C1C" />
-              <Text style={styles.emergencyTitle}>Insiden Darurat</Text>
-            </View>
-
-            {emergency.has_replacement ? (
-              <View style={styles.emergencySuccess}>
-                <Text style={styles.emergencySuccessTitle}>Pengganti muthowif aktif</Text>
-                <Text style={styles.emergencySuccessText}>
-                  Layanan dilanjutkan dengan {muthowifName}.
-                </Text>
-              </View>
-            ) : emergencyReport ? (
-              <>
-                <Text style={styles.emergencyStatus}>
-                  {emergencyReport.case_type_label} · {emergencyReport.status_label}
-                </Text>
-                {emergencyReport.description ? (
-                  <Text style={styles.emergencyDesc}>{emergencyReport.description}</Text>
-                ) : null}
-
-                {['submitted', 'under_review'].includes(emergencyReport.status) ? (
-                  <Text style={styles.emergencyHint}>Tim Bayt-GO sedang meninjau laporan Anda.</Text>
-                ) : null}
-
-                {emergencyReport.status === 'verified' && replacementOffers.length === 0 ? (
-                  <Text style={styles.emergencyHint}>Menunggu muthowif pengganti tersedia.</Text>
-                ) : null}
-
-                {replacementOffers.length > 0 ? (
-                  <View style={styles.candidateList}>
-                    <Text style={styles.candidateHeading}>Pilih muthowif pengganti</Text>
-                    {replacementOffers.map((offer) => (
-                      <View key={offer.id} style={styles.candidateCard}>
-                        <View style={styles.candidateRow}>
-                          {offer.muthowif?.avatar ? (
-                            <Image source={{ uri: resolveMediaUrl(offer.muthowif.avatar) }} style={styles.candidateAvatar} />
-                          ) : null}
-                          <View style={styles.candidateMeta}>
-                            <Text style={styles.candidateName}>{offer.muthowif?.name}</Text>
-                            {offer.muthowif?.rating ? (
-                              <Text style={styles.candidateRating}>★ {offer.muthowif.rating} ({offer.muthowif.reviews_count || 0})</Text>
-                            ) : null}
-                          </View>
-                        </View>
-                        <TouchableOpacity
-                          style={styles.candidateBtn}
-                          onPress={() => handleSelectReplacement(offer)}
-                        >
-                          <Text style={styles.candidateBtnText}>Pilih muthowif ini</Text>
-                        </TouchableOpacity>
-                      </View>
-                    ))}
-                  </View>
-                ) : null}
-              </>
-            ) : booking.can_report_emergency ? (
-              <>
-                <Text style={styles.emergencyHint}>
-                  Laporkan jika muthowif tidak dapat dihubungi, meninggalkan tugas, atau melanggar kesepakatan.
-                </Text>
-                <TouchableOpacity
-                  style={styles.emergencyBtn}
-                  onPress={() => navigation.navigate('BookingEmergencyReport', {
-                    bookingId: booking.id,
-                    caseTypes: emergency.case_types || [],
-                  })}
-                >
-                  <Text style={styles.emergencyBtnText}>Lapor Insiden Darurat</Text>
-                </TouchableOpacity>
-              </>
-            ) : null}
-          </View>
+          <BookingEmergencySection
+            booking={booking}
+            emergency={emergency}
+            muthowifName={muthowifName}
+            onReport={() => navigation.navigate('BookingEmergencyReport', {
+              bookingId: booking.id, caseTypes: emergency.case_types || [],
+            })}
+            onSelectReplacement={handleSelectReplacement}
+          />
         ) : null}
 
         {booking.is_support && booking.payment_status === 'paid' && booking.status === 'in_progress' ? (
-          <View style={[styles.section, styles.supportSection]}>
-            <Text style={styles.sectionTitle}>Penyelesaian layanan pendukung</Text>
+          <BookingSection title="Penyelesaian layanan pendukung" variant="success">
             <Text style={styles.supportIntro}>
               Setelah layanan selesai, kirim permintaan agar muthowif mengonfirmasi penyelesaian.
             </Text>
             {hasSupportCompletionPending(booking) ? (
-              <View style={styles.pendingBanner}>
-                <Ionicons name="time-outline" size={16} color="#B45309" />
-                <Text style={styles.pendingText}>Menunggu konfirmasi muthowif</Text>
-              </View>
+              <PendingBanner text="Menunggu konfirmasi muthowif" />
             ) : canRequestSupportCompletion(booking) ? (
-              <ActionBtn
-                icon="checkmark-done-outline"
+              <Button
                 label={requestingCompletion ? 'Mengirim...' : 'Minta penyelesaian layanan'}
-                variant="primary"
+                icon={<CheckCheck size={18} color={colors.white} strokeWidth={2} />}
                 onPress={handleRequestSupportCompletion}
+                loading={requestingCompletion}
               />
             ) : null}
-          </View>
+          </BookingSection>
         ) : null}
-
-        <View style={styles.actions}>
-          {unpaid ? (
-            <TouchableOpacity style={styles.payBtn} onPress={() => navigation.navigate('BookingPayment', { bookingId: booking.id, bookingCode: booking.booking_code })} activeOpacity={0.9}>
-              <LinearGradient colors={[colors.baytgo, colors.baytgoDark]} style={styles.payGradient}>
-                <Ionicons name="wallet-outline" size={18} color={colors.white} />
-                <Text style={styles.payText}>Bayar sekarang</Text>
-              </LinearGradient>
-            </TouchableOpacity>
-          ) : null}
-
-          {canCompleteBooking(booking) ? (
-            <ActionBtn
-              icon="checkmark-circle-outline"
-              label="Selesaikan layanan"
-              variant="primary"
-              onPress={() => navigation.navigate('BookingRating', { bookingId: booking.id, mode: 'complete' })}
-            />
-          ) : null}
-
-          {canReviewBooking(booking) && !booking.review ? (
-            <ActionBtn
-              icon="star-outline"
-              label="Beri ulasan"
-              onPress={() => navigation.navigate('BookingRating', { bookingId: booking.id, mode: 'review' })}
-            />
-          ) : null}
-
-          {canViewInvoice(booking) ? (
-            <ActionBtn
-              icon="document-text-outline"
-              label="Lihat invoice"
-              onPress={() => navigation.navigate('BookingInvoice', { bookingId: booking.id })}
-            />
-          ) : null}
-
-          {showChat ? (
-            <ActionBtn
-              icon="chatbubbles-outline"
-              label="Chat dengan muthowif"
-              onPress={() => {
-                navigation.getParent()?.navigate('ChatTab', {
-                  screen: 'ChatRoom',
-                  params: {
-                    bookingId: booking.id,
-                    bookingCode: booking.booking_code,
-                    otherName: muthowifName,
-                  },
-                });
-              }}
-            />
-          ) : null}
-
-          {canRequestRefund(booking) ? (
-            <ActionBtn
-              icon="cash-outline"
-              label="Ajukan refund"
-              onPress={() => navigation.navigate('BookingRefund', { bookingId: booking.id })}
-            />
-          ) : null}
-
-          {canRequestReschedule(booking) ? (
-            <ActionBtn
-              icon="calendar-outline"
-              label="Ajukan reschedule"
-              onPress={() => navigation.navigate('BookingReschedule', {
-                bookingId: booking.id,
-                startsOn: booking.starts_on,
-                endsOn: booking.ends_on,
-              })}
-            />
-          ) : null}
-
-          {hasPendingReschedule(booking) ? (
-            <View style={styles.pendingBanner}>
-              <Ionicons name="time-outline" size={16} color="#B45309" />
-              <Text style={styles.pendingText}>Permintaan reschedule sedang diproses</Text>
-            </View>
-          ) : null}
-
-          {canCancelBooking(booking) ? (
-            <ActionBtn
-              icon="close-circle-outline"
-              label={cancelling ? 'Membatalkan...' : 'Batalkan pesanan'}
-              danger
-              onPress={handleCancel}
-            />
-          ) : null}
-        </View>
       </ScrollView>
+
+      {stickyAction ? (
+        <StickyFooter
+          priceLabel={stickyAction.priceLabel}
+          priceValue={stickyAction.priceValue != null ? formatIdr(stickyAction.priceValue) : undefined}
+        >
+          {stickyAction.gradient ? (
+            <PressableScale onPress={stickyAction.onPress} haptic="medium" style={styles.stickyPress}>
+              <LinearGradient colors={gradients.gold} style={styles.stickyGradient}>
+                {stickyAction.icon}
+                <Text style={styles.stickyText}>{stickyAction.label}</Text>
+              </LinearGradient>
+            </PressableScale>
+          ) : (
+            <Button
+              label={stickyAction.label}
+              icon={stickyAction.icon}
+              variant={stickyAction.variant || 'primary'}
+              onPress={stickyAction.onPress}
+            />
+          )}
+        </StickyFooter>
+      ) : null}
     </View>
   );
 }
 
 const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: colors.canvas },
-  scroll: { padding: 16, paddingBottom: 32 },
-  loader: { marginTop: 40 },
-  empty: { padding: 24, alignItems: 'center' },
-  emptyText: { fontSize: 14, color: colors.slate500, fontWeight: '600', textAlign: 'center' },
-  retry: { marginTop: 10, fontSize: 14, fontWeight: '800', color: colors.baytgo },
-  heroCard: {
-    backgroundColor: colors.white,
-    borderRadius: 20,
-    padding: 20,
-    alignItems: 'center',
-    borderWidth: 1,
-    borderColor: colors.slate100,
-    marginBottom: 12,
+  container: { flex: 1, backgroundColor: colors.background },
+  scroll: { padding: layout.screenPadding, paddingBottom: spacing['4xl'] },
+  scrollWithFooter: { paddingBottom: 120 },
+  skeleton: { padding: layout.screenPadding },
+  pendingBanner: { marginBottom: spacing.md },
+  paidText: { ...typography.caption, color: colors.textSecondary, fontWeight: '600' },
+  supportIntro: { ...typography.caption, color: colors.textSecondary, lineHeight: 20, marginBottom: spacing.md },
+  stickyPress: { borderRadius: radius.sm, overflow: 'hidden' },
+  stickyGradient: {
+    flexDirection: 'row', alignItems: 'center', justifyContent: 'center',
+    gap: spacing.sm, paddingVertical: spacing.lg, minHeight: layout.minTouch,
   },
-  avatar: { width: 72, height: 72, borderRadius: 20, backgroundColor: colors.slate100 },
-  muthowifName: { marginTop: 12, fontSize: 20, fontWeight: '900', color: colors.baytgo, textAlign: 'center' },
-  pillRow: { flexDirection: 'row', flexWrap: 'wrap', gap: 8, marginTop: 12, justifyContent: 'center' },
-  pill: { borderRadius: 999, paddingHorizontal: 10, paddingVertical: 5 },
-  pillText: { fontSize: 11, fontWeight: '800' },
-  total: { marginTop: 14, fontSize: 22, fontWeight: '900', color: colors.slate900 },
-  totalHint: { marginTop: 4, fontSize: 11, fontWeight: '600', color: colors.slate500 },
-  section: {
-    backgroundColor: colors.white,
-    borderRadius: 18,
-    padding: 16,
-    marginBottom: 12,
-    borderWidth: 1,
-    borderColor: colors.slate100,
-  },
-  sectionTitle: { fontSize: 15, fontWeight: '900', color: colors.baytgo, marginBottom: 12 },
-  supportSection: { borderColor: '#A7F3D0', backgroundColor: '#F0FDF4' },
-  supportIntro: { fontSize: 13, lineHeight: 20, color: colors.slate600, fontWeight: '500', marginBottom: 12 },
-  infoRow: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    gap: 12,
-    paddingVertical: 8,
-    borderBottomWidth: 1,
-    borderBottomColor: colors.slate100,
-  },
-  infoLabel: { fontSize: 13, fontWeight: '600', color: colors.slate500 },
-  infoValue: { flex: 1, fontSize: 13, fontWeight: '800', color: colors.slate900, textAlign: 'right' },
-  historyItem: {
-    backgroundColor: colors.slate100,
-    borderRadius: 12,
-    padding: 12,
-    marginBottom: 8,
-  },
-  historyTitle: { fontSize: 13, fontWeight: '800', color: colors.slate900 },
-  historyNote: { marginTop: 4, fontSize: 12, color: colors.slate600, fontWeight: '500' },
-  historyDate: { marginTop: 4, fontSize: 11, color: colors.slate400, fontWeight: '600' },
-  reviewHeader: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 4 },
-  editLink: { fontSize: 13, fontWeight: '800', color: colors.baytgo },
-  reviewRow: { flexDirection: 'row', gap: 4 },
-  reviewComment: { marginTop: 10, fontSize: 14, lineHeight: 20, color: colors.slate600, fontWeight: '500' },
-  actions: { gap: 10, marginTop: 4 },
-  actionBtn: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
-    gap: 8,
-    backgroundColor: colors.white,
-    borderRadius: 16,
-    paddingVertical: 14,
-    borderWidth: 1,
-    borderColor: colors.slate100,
-  },
-  actionPrimary: { backgroundColor: colors.emerald600, borderColor: colors.emerald600 },
-  actionDanger: { backgroundColor: '#FEF2F2', borderColor: '#FECACA' },
-  actionText: { fontSize: 14, fontWeight: '800', color: colors.baytgo },
-  actionTextPrimary: { color: colors.white },
-  actionTextDanger: { color: '#B91C1C' },
-  pendingBanner: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 8,
-    backgroundColor: '#FFFBEB',
-    borderRadius: 12,
-    padding: 12,
-    borderWidth: 1,
-    borderColor: '#FDE68A',
-  },
-  pendingText: { flex: 1, fontSize: 12, fontWeight: '700', color: '#92400E' },
-  payBtn: { borderRadius: 16, overflow: 'hidden' },
-  payGradient: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
-    gap: 8,
-    paddingVertical: 16,
-  },
-  payText: { color: colors.white, fontSize: 15, fontWeight: '800' },
-  emergencySection: { borderColor: '#FECACA', backgroundColor: '#FFFBFB' },
-  emergencyHeader: { flexDirection: 'row', alignItems: 'center', gap: 8, marginBottom: 10 },
-  emergencyTitle: { fontSize: 15, fontWeight: '900', color: '#991B1B' },
-  emergencyStatus: { fontSize: 13, fontWeight: '800', color: '#92400E' },
-  emergencyDesc: { marginTop: 8, fontSize: 13, lineHeight: 20, color: colors.slate700, fontWeight: '500' },
-  emergencyHint: { marginTop: 10, fontSize: 12, lineHeight: 18, color: colors.slate600, fontWeight: '600' },
-  emergencyBtn: {
-    marginTop: 12,
-    backgroundColor: '#B91C1C',
-    borderRadius: 14,
-    paddingVertical: 14,
-    alignItems: 'center',
-  },
-  emergencyBtnText: { color: colors.white, fontSize: 14, fontWeight: '800' },
-  emergencySuccess: {
-    backgroundColor: colors.emerald50,
-    borderRadius: 12,
-    padding: 12,
-    borderWidth: 1,
-    borderColor: '#A7F3D0',
-  },
-  emergencySuccessTitle: { fontSize: 13, fontWeight: '800', color: colors.emerald600 },
-  emergencySuccessText: { marginTop: 4, fontSize: 12, color: colors.slate700, fontWeight: '600' },
-  candidateList: { marginTop: 14, gap: 10 },
-  candidateHeading: { fontSize: 13, fontWeight: '800', color: colors.slate900 },
-  candidateCard: {
-    backgroundColor: colors.white,
-    borderRadius: 14,
-    padding: 12,
-    borderWidth: 1,
-    borderColor: '#A7F3D0',
-  },
-  candidateRow: { flexDirection: 'row', gap: 10, alignItems: 'center' },
-  candidateAvatar: { width: 48, height: 48, borderRadius: 14, backgroundColor: colors.slate100 },
-  candidateMeta: { flex: 1 },
-  candidateName: { fontSize: 14, fontWeight: '800', color: colors.slate900 },
-  candidateRating: { marginTop: 2, fontSize: 12, fontWeight: '600', color: '#92400E' },
-  candidateBtn: {
-    marginTop: 10,
-    backgroundColor: colors.emerald600,
-    borderRadius: 12,
-    paddingVertical: 12,
-    alignItems: 'center',
-  },
-  candidateBtnText: { color: colors.white, fontSize: 13, fontWeight: '800' },
+  stickyText: { ...typography.caption, fontFamily: 'PlusJakartaSans_700Bold', color: colors.white },
 });

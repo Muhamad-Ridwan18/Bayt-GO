@@ -8,12 +8,13 @@ import LoginScreen from '../screens/LoginScreen';
 import RegisterScreen from '../screens/RegisterScreen';
 import ForgotPasswordScreen from '../screens/ForgotPasswordScreen';
 import CompanyRegistrationPendingScreen from '../screens/CompanyRegistrationPendingScreen';
+import SuccessScreen from '../screens/SuccessScreen';
 import MainTabNavigator from './MainTabNavigator';
 import { ONBOARDING_KEY } from '../constants/onboarding';
 import { useAuth } from '../context/AuthContext';
 import { navigationRef, flushPendingChatNavigation } from './rootNavigation';
 import { useNotificationNavigation } from '../notifications/useNotificationNavigation';
-import { colors } from '../theme/colors';
+import { colors } from '../theme/tokens';
 
 const Stack = createNativeStackNavigator();
 
@@ -73,6 +74,11 @@ function RootNavigator() {
         name="CompanyRegistrationPending"
         component={CompanyRegistrationPendingScreen}
         options={{ animation: 'slide_from_bottom', presentation: 'modal' }}
+      />
+      <Stack.Screen
+        name="Success"
+        component={SuccessScreen}
+        options={{ animation: 'fade', gestureEnabled: false }}
       />
     </Stack.Navigator>
   );

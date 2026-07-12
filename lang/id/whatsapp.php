@@ -127,6 +127,24 @@ return [
         ],
     ],
     'customer' => [
+        'submitted' => [
+            'headline' => '*:app* — permintaan pesanan diterima',
+            'body' => 'Permintaan pendampingan Anda dengan *:muthowif* sudah kami terima.',
+            'booking_code' => '*Kode pesanan:* :code',
+            'service_dates' => '*Tanggal layanan:* :start - :end',
+            'service' => '*Layanan:* :service',
+            'status' => '*Status:* Menunggu persetujuan muthowif',
+            'view_detail' => '*Pantau status di:*',
+        ],
+        'support_submitted' => [
+            'headline' => '*:app* — permintaan layanan pendukung diterima',
+            'body' => 'Permintaan layanan pendukung Anda dengan *:muthowif* sudah kami terima.',
+            'booking_code' => '*Kode pesanan:* :code',
+            'package' => '*Paket:* :package',
+            'starts_at' => '*Jadwal mulai:* :datetime',
+            'status' => '*Status:* Menunggu persetujuan muthowif',
+            'view_detail' => '*Pantau status di:*',
+        ],
         'approved' => [
             'headline' => '*:app* — pesanan disetujui',
             'body' => 'Pesanan Anda dengan *:muthowif* sudah disetujui.',

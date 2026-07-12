@@ -1,7 +1,5 @@
 import React from 'react';
-import { Platform } from 'react-native';
 import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
-import { Ionicons } from '@expo/vector-icons';
 import DashboardStack from './DashboardStack';
 import BookingsStack from './BookingsStack';
 import MuthowifBookingsStack from './MuthowifBookingsStack';
@@ -9,24 +7,11 @@ import WalletStack from './WalletStack';
 import ChatStack from './ChatStack';
 import SupportStack from './SupportStack';
 import ProfileStack from './ProfileStack';
+import CustomTabBar from './CustomTabBar';
 import { useChatInbox } from '../context/ChatInboxContext';
 import { useAuth } from '../context/AuthContext';
-import { colors } from '../theme/colors';
 
 const Tab = createBottomTabNavigator();
-
-function tabIcon(routeName, focused) {
-  const icons = {
-    HomeTab: focused ? 'search' : 'search-outline',
-    BookingsTab: focused ? 'receipt' : 'receipt-outline',
-    MuthowifBookingsTab: focused ? 'clipboard' : 'clipboard-outline',
-    WalletTab: focused ? 'wallet' : 'wallet-outline',
-    ChatTab: focused ? 'chatbubbles' : 'chatbubbles-outline',
-    SupportTab: focused ? 'help-buoy' : 'help-buoy-outline',
-    ProfileTab: focused ? 'person' : 'person-outline',
-  };
-  return icons[routeName] || 'ellipse-outline';
-}
 
 export default function MainTabNavigator() {
   const { unreadTotal } = useChatInbox();
@@ -36,25 +21,14 @@ export default function MainTabNavigator() {
 
   return (
     <Tab.Navigator
-      screenOptions={({ route }) => ({
+      tabBar={(props) => <CustomTabBar {...props} />}
+      screenOptions={{
         headerShown: false,
-        tabBarActiveTintColor: colors.baytgo,
-        tabBarInactiveTintColor: colors.slate400,
-        tabBarStyle: {
-          backgroundColor: colors.white,
-          borderTopColor: colors.slate100,
-          height: Platform.OS === 'ios' ? 88 : 64,
-          paddingBottom: Platform.OS === 'ios' ? 28 : 10,
-          paddingTop: 8,
+        tabBarHideOnKeyboard: true,
+        sceneStyle: {
+          backgroundColor: '#F8FAFC',
         },
-        tabBarLabelStyle: {
-          fontSize: 11,
-          fontWeight: '700',
-        },
-        tabBarIcon: ({ color, size, focused }) => (
-          <Ionicons name={tabIcon(route.name, focused)} size={size} color={color} />
-        ),
-      })}
+      }}
     >
       <Tab.Screen name="HomeTab" component={DashboardStack} options={{ tabBarLabel: 'Telusuri' }} />
 

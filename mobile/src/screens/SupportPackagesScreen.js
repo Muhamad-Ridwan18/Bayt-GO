@@ -1,22 +1,15 @@
 import React, { useCallback, useState } from 'react';
 import {
-  View,
-  Text,
-  StyleSheet,
-  ScrollView,
-  ActivityIndicator,
-  RefreshControl,
-  TouchableOpacity,
-  TextInput,
-  Alert,
-  Switch,
+  View, Text, StyleSheet, ScrollView, RefreshControl, TextInput, Alert, Switch,
 } from 'react-native';
 import { useFocusEffect } from '@react-navigation/native';
-import { Ionicons } from '@expo/vector-icons';
+import { CirclePlus, Trash2 } from 'lucide-react-native';
 import TabPageHeader from '../components/TabPageHeader';
 import { fetchSupportPackages, updateSupportPackages } from '../api/supportPackages';
 import { useAuth } from '../context/AuthContext';
-import { colors } from '../theme/colors';
+import { Button, Card, FilterChip, PressableScale, SkeletonList } from '../ui';
+import { colors, layout, radius, spacing, typography } from '../theme/tokens';
+import { notifyError, notifySuccess } from '../utils/feedback';
 
 function emptyPackage(categories) {
   return {
@@ -33,41 +26,40 @@ function emptyPackage(categories) {
 
 function PackageRow({ item, categories, onChange, onRemove }) {
   return (
-    <View style={styles.card}>
+    <Card style={styles.card} padding={spacing.lg} elevated={false}>
       <View style={styles.cardHeader}>
         <Text style={styles.cardTitle}>{item.name || 'Paket baru'}</Text>
-        <TouchableOpacity onPress={onRemove} hitSlop={8}>
-          <Ionicons name="trash-outline" size={18} color="#B91C1C" />
-        </TouchableOpacity>
+        <PressableScale onPress={onRemove} haptic="light">
+          <Trash2 size={18} color={colors.error} strokeWidth={2} />
+        </PressableScale>
       </View>
 
       <Text style={styles.label}>Nama paket</Text>
-      <TextInput style={styles.input} value={item.name} onChangeText={(v) => onChange({ ...item, name: v })} />
+      <TextInput style={styles.input} value={item.name} onChangeText={(v) => onChange({ ...item, name: v })} placeholderTextColor={colors.textMuted} />
 
       <Text style={styles.label}>Kategori</Text>
       <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.chips}>
         {categories.map((cat) => (
-          <TouchableOpacity
+          <FilterChip
             key={cat.value}
-            style={[styles.chip, item.category === cat.value && styles.chipActive]}
+            label={cat.label}
+            active={item.category === cat.value}
             onPress={() => onChange({ ...item, category: cat.value })}
-          >
-            <Text style={[styles.chipText, item.category === cat.value && styles.chipTextActive]}>{cat.label}</Text>
-          </TouchableOpacity>
+          />
         ))}
       </ScrollView>
 
       <Text style={styles.label}>Harga (Rp)</Text>
-      <TextInput style={styles.input} keyboardType="numeric" value={item.price} onChangeText={(v) => onChange({ ...item, price: v })} />
+      <TextInput style={styles.input} keyboardType="numeric" value={item.price} onChangeText={(v) => onChange({ ...item, price: v })} placeholderTextColor={colors.textMuted} />
 
       <View style={styles.row2}>
         <View style={styles.half}>
           <Text style={styles.label}>Min jamaah</Text>
-          <TextInput style={styles.input} keyboardType="number-pad" value={item.min_pilgrims} onChangeText={(v) => onChange({ ...item, min_pilgrims: v })} />
+          <TextInput style={styles.input} keyboardType="number-pad" value={item.min_pilgrims} onChangeText={(v) => onChange({ ...item, min_pilgrims: v })} placeholderTextColor={colors.textMuted} />
         </View>
         <View style={styles.half}>
           <Text style={styles.label}>Max jamaah</Text>
-          <TextInput style={styles.input} keyboardType="number-pad" value={item.max_pilgrims} onChangeText={(v) => onChange({ ...item, max_pilgrims: v })} />
+          <TextInput style={styles.input} keyboardType="number-pad" value={item.max_pilgrims} onChangeText={(v) => onChange({ ...item, max_pilgrims: v })} placeholderTextColor={colors.textMuted} />
         </View>
       </View>
 
@@ -77,17 +69,14 @@ function PackageRow({ item, categories, onChange, onRemove }) {
         value={item.description}
         onChangeText={(v) => onChange({ ...item, description: v })}
         multiline
+        placeholderTextColor={colors.textMuted}
       />
 
       <View style={styles.switchRow}>
         <Text style={styles.switchLabel}>Aktif</Text>
-        <Switch
-          value={item.is_active}
-          onValueChange={(v) => onChange({ ...item, is_active: v })}
-          trackColor={{ true: colors.baytgo }}
-        />
+        <Switch value={item.is_active} onValueChange={(v) => onChange({ ...item, is_active: v })} trackColor={{ true: colors.baytgo }} />
       </View>
-    </View>
+    </Card>
   );
 }
 
@@ -122,11 +111,7 @@ export default function SupportPackagesScreen() {
     }
   }, [token]);
 
-  useFocusEffect(
-    useCallback(() => {
-      load();
-    }, [load]),
-  );
+  useFocusEffect(useCallback(() => { load(); }, [load]));
 
   const handleSave = async () => {
     setSaving(true);
@@ -142,10 +127,10 @@ export default function SupportPackagesScreen() {
         is_active: !!p.is_active,
       }));
       await updateSupportPackages(token, payload);
-      Alert.alert('Berhasil', 'Paket layanan pendukung disimpan.');
+      notifySuccess('Paket layanan pendukung disimpan.');
       await load(true);
     } catch (err) {
-      Alert.alert('Gagal', err.message || 'Tidak dapat menyimpan');
+      notifyError(err.message || 'Tidak dapat menyimpan');
     } finally {
       setSaving(false);
     }
@@ -156,7 +141,7 @@ export default function SupportPackagesScreen() {
       <TabPageHeader title="Layanan pendukung" subtitle="Kelola paket layanan Anda" />
 
       {loading && !refreshing ? (
-        <ActivityIndicator color={colors.baytgo} style={styles.loader} />
+        <SkeletonList count={3} style={styles.skeleton} />
       ) : (
         <ScrollView
           contentContainerStyle={styles.scroll}
@@ -172,17 +157,16 @@ export default function SupportPackagesScreen() {
             />
           ))}
 
-          <TouchableOpacity
-            style={styles.addBtn}
+          <PressableScale
             onPress={() => setPackages((prev) => [...prev, emptyPackage(categories)])}
+            haptic="light"
+            style={styles.addBtn}
           >
-            <Ionicons name="add-circle-outline" size={20} color={colors.baytgo} />
+            <CirclePlus size={20} color={colors.baytgo} strokeWidth={2} />
             <Text style={styles.addBtnText}>Tambah paket</Text>
-          </TouchableOpacity>
+          </PressableScale>
 
-          <TouchableOpacity style={[styles.saveBtn, saving && styles.saveBtnDisabled]} onPress={handleSave} disabled={saving}>
-            <Text style={styles.saveBtnText}>{saving ? 'Menyimpan…' : 'Simpan semua paket'}</Text>
-          </TouchableOpacity>
+          <Button label="Simpan semua paket" onPress={handleSave} loading={saving} />
         </ScrollView>
       )}
     </View>
@@ -190,56 +174,30 @@ export default function SupportPackagesScreen() {
 }
 
 const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: colors.canvas },
-  scroll: { paddingHorizontal: 20, paddingBottom: 32 },
-  loader: { marginTop: 40 },
-  card: {
-    backgroundColor: colors.white,
-    borderRadius: 16,
-    padding: 16,
-    marginBottom: 12,
-    borderWidth: 1,
-    borderColor: colors.slate100,
-  },
-  cardHeader: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 10 },
-  cardTitle: { fontSize: 15, fontWeight: '900', color: colors.baytgo },
-  label: { fontSize: 11, fontWeight: '700', color: colors.slate500, marginBottom: 6, marginTop: 4 },
+  container: { flex: 1, backgroundColor: colors.background },
+  skeleton: { paddingHorizontal: layout.screenPadding, paddingTop: spacing.lg },
+  scroll: { paddingHorizontal: layout.screenPadding, paddingBottom: spacing['3xl'] },
+  card: { marginBottom: spacing.md },
+  cardHeader: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: spacing.md },
+  cardTitle: { ...typography.caption, fontFamily: 'PlusJakartaSans_800ExtraBold', color: colors.baytgo },
+  label: { ...typography.label, color: colors.textSecondary, marginBottom: 6, marginTop: spacing.xs },
   input: {
-    backgroundColor: colors.canvas,
-    borderRadius: 12,
-    paddingHorizontal: 14,
-    paddingVertical: 12,
-    marginBottom: 8,
-    fontSize: 14,
-    fontWeight: '600',
+    backgroundColor: colors.background,
+    borderRadius: radius.sm,
+    paddingHorizontal: spacing.lg,
+    paddingVertical: spacing.md,
+    marginBottom: spacing.sm,
+    ...typography.caption,
     borderWidth: 1,
-    borderColor: colors.slate100,
+    borderColor: colors.border,
+    color: colors.textPrimary,
   },
   textarea: { minHeight: 72, textAlignVertical: 'top' },
-  chips: { gap: 8, marginBottom: 8 },
-  chip: {
-    borderRadius: 999,
-    paddingHorizontal: 12,
-    paddingVertical: 8,
-    backgroundColor: colors.canvas,
-    borderWidth: 1,
-    borderColor: colors.slate100,
-  },
-  chipActive: { backgroundColor: colors.emerald50, borderColor: colors.baytgo },
-  chipText: { fontSize: 11, fontWeight: '700', color: colors.slate600 },
-  chipTextActive: { color: colors.baytgo },
-  row2: { flexDirection: 'row', gap: 10 },
+  chips: { gap: spacing.sm, marginBottom: spacing.sm },
+  row2: { flexDirection: 'row', gap: spacing.md },
   half: { flex: 1 },
-  switchRow: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginTop: 4 },
-  switchLabel: { fontSize: 13, fontWeight: '700', color: colors.slate700 },
-  addBtn: { flexDirection: 'row', alignItems: 'center', gap: 8, marginVertical: 12 },
-  addBtnText: { fontSize: 14, fontWeight: '800', color: colors.baytgo },
-  saveBtn: {
-    backgroundColor: colors.baytgo,
-    borderRadius: 14,
-    paddingVertical: 14,
-    alignItems: 'center',
-  },
-  saveBtnDisabled: { opacity: 0.6 },
-  saveBtnText: { color: colors.white, fontWeight: '800', fontSize: 14 },
+  switchRow: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginTop: spacing.xs },
+  switchLabel: { ...typography.caption, fontFamily: 'PlusJakartaSans_700Bold', color: colors.slate700 },
+  addBtn: { flexDirection: 'row', alignItems: 'center', gap: spacing.sm, marginVertical: spacing.md },
+  addBtnText: { ...typography.caption, fontFamily: 'PlusJakartaSans_800ExtraBold', color: colors.baytgo },
 });

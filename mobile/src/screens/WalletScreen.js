@@ -1,53 +1,35 @@
 import React, { useCallback, useState } from 'react';
 import {
-  View,
-  Text,
-  StyleSheet,
-  ScrollView,
-  ActivityIndicator,
-  RefreshControl,
-  TouchableOpacity,
-  TextInput,
   Alert,
+  RefreshControl,
+  ScrollView,
+  StyleSheet,
+  Text,
+  TextInput,
+  View,
 } from 'react-native';
 import { useFocusEffect } from '@react-navigation/native';
+import { LinearGradient } from 'expo-linear-gradient';
+import { Wallet } from 'lucide-react-native';
 import TabPageHeader from '../components/TabPageHeader';
+import WalletLedgerRow from '../components/WalletLedgerRow';
 import { fetchWallet, submitWithdrawal } from '../api/wallet';
 import { useAuth } from '../context/AuthContext';
-import { colors } from '../theme/colors';
+import Button from '../ui/Button';
+import Card from '../ui/Card';
+import EmptyState from '../ui/EmptyState';
+import ErrorState from '../ui/ErrorState';
+import FilterChip from '../ui/FilterChip';
+import { SkeletonList } from '../ui/Skeleton';
+import { colors, gradients, layout, radius, spacing, typography } from '../theme/tokens';
 import { formatIdr } from '../utils/format';
-
-const LEDGER_LABELS = {
-  booking_credit: 'Kredit booking',
-  referral_reward: 'Reward referral',
-  withdraw_debit: 'Penarikan',
-  withdraw_refund: 'Refund penarikan',
-  refund_completed: 'Refund selesai',
-};
-
-function LedgerRow({ entry }) {
-  const signed = Number(entry.signed_amount) || 0;
-  const positive = signed >= 0;
-  const label = LEDGER_LABELS[entry.kind] || entry.kind;
-
-  return (
-    <View style={styles.ledgerRow}>
-      <View style={styles.ledgerMeta}>
-        <Text style={styles.ledgerKind}>{label}</Text>
-        <Text style={styles.ledgerTime}>{entry.at}</Text>
-        {entry.booking_code ? <Text style={styles.ledgerCode}>{entry.booking_code}</Text> : null}
-      </View>
-      <Text style={[styles.ledgerAmount, positive ? styles.amountPlus : styles.amountMinus]}>
-        {positive ? '+' : '−'} {formatIdr(Math.abs(signed))}
-      </Text>
-    </View>
-  );
-}
+import { notifyError, notifySuccess } from '../utils/feedback';
 
 export default function WalletScreen() {
   const { token } = useAuth();
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
+  const [error, setError] = useState(null);
   const [balance, setBalance] = useState(0);
   const [ledger, setLedger] = useState([]);
   const [bankOptions, setBankOptions] = useState({});
@@ -68,8 +50,13 @@ export default function WalletScreen() {
       setBalance(Number(data.balance) || 0);
       setLedger(data.ledger || []);
       setBankOptions(data.bank_options || {});
+      setError(null);
     } catch (err) {
-      Alert.alert('Gagal', err.message || 'Tidak dapat memuat dompet');
+      setError(err.message || 'Tidak dapat memuat dompet');
+      if (!refresh) {
+        setBalance(0);
+        setLedger([]);
+      }
     } finally {
       setLoading(false);
       setRefreshing(false);
@@ -104,187 +91,223 @@ export default function WalletScreen() {
         beneficiary_account: beneficiaryAccount.trim(),
         notes: notes.trim() || null,
       });
-      Alert.alert('Berhasil', 'Permintaan withdraw diajukan.');
+      notifySuccess('Permintaan withdraw diajukan.');
       setShowForm(false);
       setAmount('');
       setNotes('');
       await load(true);
     } catch (err) {
-      Alert.alert('Gagal', err.message || 'Tidak dapat mengajukan withdraw');
+      notifyError(err.message || 'Tidak dapat mengajukan withdraw');
     } finally {
       setSubmitting(false);
     }
   };
 
+  if (loading && !refreshing) {
+    return (
+      <View style={styles.container}>
+        <TabPageHeader title="Dompet" subtitle="Saldo & riwayat mutasi" />
+        <SkeletonList count={3} style={styles.skeleton} />
+      </View>
+    );
+  }
+
+  if (error && ledger.length === 0 && balance === 0) {
+    return (
+      <View style={styles.container}>
+        <TabPageHeader title="Dompet" subtitle="Saldo & riwayat mutasi" />
+        <ErrorState description={error} onRetry={() => load()} />
+      </View>
+    );
+  }
+
   return (
     <View style={styles.container}>
       <TabPageHeader title="Dompet" subtitle="Saldo & riwayat mutasi" />
 
-      {loading && !refreshing ? (
-        <ActivityIndicator color={colors.baytgo} style={styles.loader} />
-      ) : (
-        <ScrollView
-          contentContainerStyle={styles.scroll}
-          refreshControl={
-            <RefreshControl refreshing={refreshing} onRefresh={() => load(true)} tintColor={colors.baytgo} />
-          }
-        >
-          <View style={styles.balanceCard}>
-            <Text style={styles.balanceLabel}>Saldo tersedia</Text>
-            <Text style={styles.balanceValue}>{formatIdr(balance)}</Text>
-            <TouchableOpacity style={styles.withdrawBtn} onPress={() => setShowForm((v) => !v)}>
-              <Text style={styles.withdrawBtnText}>{showForm ? 'Tutup formulir' : 'Tarik saldo'}</Text>
-            </TouchableOpacity>
-          </View>
-
-          {showForm ? (
-            <View style={styles.formCard}>
-              <Text style={styles.formTitle}>Ajukan penarikan</Text>
-              <TextInput
-                style={styles.input}
-                placeholder="Jumlah (Rp)"
-                keyboardType="numeric"
-                value={amount}
-                onChangeText={setAmount}
-              />
-              <TextInput
-                style={styles.input}
-                placeholder="Nama penerima"
-                value={beneficiaryName}
-                onChangeText={setBeneficiaryName}
-              />
-              <Text style={styles.fieldLabel}>Bank</Text>
-              <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.bankRow}>
-                {bankKeys.map((key) => (
-                  <TouchableOpacity
-                    key={key}
-                    style={[styles.bankChip, beneficiaryBank === key && styles.bankChipActive]}
-                    onPress={() => setBeneficiaryBank(key)}
-                  >
-                    <Text style={[styles.bankChipText, beneficiaryBank === key && styles.bankChipTextActive]}>
-                      {key}
-                    </Text>
-                  </TouchableOpacity>
-                ))}
-              </ScrollView>
-              <TextInput
-                style={styles.input}
-                placeholder="Nomor rekening"
-                keyboardType="number-pad"
-                value={beneficiaryAccount}
-                onChangeText={setBeneficiaryAccount}
-              />
-              <TextInput
-                style={styles.input}
-                placeholder="Catatan (opsional)"
-                value={notes}
-                onChangeText={setNotes}
-              />
-              <TouchableOpacity
-                style={[styles.submitBtn, submitting && styles.submitBtnDisabled]}
-                onPress={handleWithdraw}
-                disabled={submitting}
-              >
-                <Text style={styles.submitBtnText}>{submitting ? 'Mengirim…' : 'Ajukan withdraw'}</Text>
-              </TouchableOpacity>
+      <ScrollView
+        contentContainerStyle={styles.scroll}
+        showsVerticalScrollIndicator={false}
+        refreshControl={
+          <RefreshControl
+            refreshing={refreshing}
+            onRefresh={() => load(true)}
+            tintColor={colors.baytgo}
+          />
+        }
+      >
+        <LinearGradient colors={gradients.primary} style={styles.balanceCard}>
+          <View style={styles.balanceTop}>
+            <View>
+              <Text style={styles.balanceLabel}>Saldo tersedia</Text>
+              <Text style={styles.balanceValue}>{formatIdr(balance)}</Text>
             </View>
-          ) : null}
+            <View style={styles.balanceIcon}>
+              <Wallet size={28} color={colors.gold} strokeWidth={2} />
+            </View>
+          </View>
+          <Button
+            label={showForm ? 'Tutup formulir' : 'Tarik saldo'}
+            variant="secondary"
+            size="sm"
+            fullWidth={false}
+            onPress={() => setShowForm((v) => !v)}
+          />
+        </LinearGradient>
 
-          <Text style={styles.sectionTitle}>Riwayat mutasi</Text>
-          {ledger.length === 0 ? (
-            <Text style={styles.muted}>Belum ada mutasi.</Text>
-          ) : (
-            ledger.map((entry, idx) => <LedgerRow key={`${entry.at}-${idx}`} entry={entry} />)
-          )}
-        </ScrollView>
-      )}
+        {showForm ? (
+          <Card style={styles.formCard} padding={spacing.lg} elevated>
+            <Text style={styles.formTitle}>Ajukan penarikan</Text>
+            <TextInput
+              style={styles.input}
+              placeholder="Jumlah (Rp)"
+              placeholderTextColor={colors.textMuted}
+              keyboardType="numeric"
+              value={amount}
+              onChangeText={setAmount}
+            />
+            <TextInput
+              style={styles.input}
+              placeholder="Nama penerima"
+              placeholderTextColor={colors.textMuted}
+              value={beneficiaryName}
+              onChangeText={setBeneficiaryName}
+            />
+            <Text style={styles.fieldLabel}>Bank</Text>
+            <ScrollView
+              horizontal
+              showsHorizontalScrollIndicator={false}
+              contentContainerStyle={styles.bankRow}
+            >
+              {bankKeys.map((key) => (
+                <FilterChip
+                  key={key}
+                  label={key}
+                  active={beneficiaryBank === key}
+                  onPress={() => setBeneficiaryBank(key)}
+                />
+              ))}
+            </ScrollView>
+            <TextInput
+              style={styles.input}
+              placeholder="Nomor rekening"
+              placeholderTextColor={colors.textMuted}
+              keyboardType="number-pad"
+              value={beneficiaryAccount}
+              onChangeText={setBeneficiaryAccount}
+            />
+            <TextInput
+              style={styles.input}
+              placeholder="Catatan (opsional)"
+              placeholderTextColor={colors.textMuted}
+              value={notes}
+              onChangeText={setNotes}
+            />
+            <Button
+              label="Ajukan withdraw"
+              onPress={handleWithdraw}
+              loading={submitting}
+              disabled={submitting}
+            />
+          </Card>
+        ) : null}
+
+        <Text style={styles.sectionTitle}>Riwayat mutasi</Text>
+        {ledger.length === 0 ? (
+          <EmptyState
+            variant="default"
+            title="Belum ada mutasi"
+            description="Riwayat kredit dan penarikan akan muncul di sini."
+          />
+        ) : (
+          ledger.map((entry, idx) => (
+            <WalletLedgerRow key={`${entry.at}-${idx}`} entry={entry} />
+          ))
+        )}
+      </ScrollView>
     </View>
   );
 }
 
 const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: colors.canvas },
-  scroll: { paddingHorizontal: 20, paddingBottom: 32 },
-  loader: { marginTop: 40 },
+  container: {
+    flex: 1,
+    backgroundColor: colors.background,
+  },
+  skeleton: {
+    paddingHorizontal: layout.screenPadding,
+    paddingTop: spacing.lg,
+  },
+  scroll: {
+    paddingHorizontal: layout.screenPadding,
+    paddingBottom: spacing.lg,
+  },
   balanceCard: {
-    backgroundColor: colors.baytgo,
-    borderRadius: 20,
-    padding: 20,
-    marginBottom: 16,
+    borderRadius: radius.md,
+    padding: spacing.xl,
+    marginBottom: spacing.lg,
   },
-  balanceLabel: { fontSize: 12, fontWeight: '700', color: colors.goldLight, textTransform: 'uppercase' },
-  balanceValue: { marginTop: 8, fontSize: 28, fontWeight: '900', color: colors.white },
-  withdrawBtn: {
-    marginTop: 16,
-    alignSelf: 'flex-start',
-    backgroundColor: colors.white,
-    borderRadius: 12,
-    paddingHorizontal: 16,
-    paddingVertical: 10,
-  },
-  withdrawBtnText: { fontSize: 13, fontWeight: '800', color: colors.baytgo },
-  formCard: {
-    backgroundColor: colors.white,
-    borderRadius: 18,
-    padding: 16,
-    marginBottom: 16,
-    borderWidth: 1,
-    borderColor: colors.slate100,
-  },
-  formTitle: { fontSize: 16, fontWeight: '900', color: colors.baytgo, marginBottom: 12 },
-  fieldLabel: { fontSize: 12, fontWeight: '700', color: colors.slate500, marginBottom: 8 },
-  input: {
-    backgroundColor: colors.canvas,
-    borderRadius: 12,
-    paddingHorizontal: 14,
-    paddingVertical: 12,
-    marginBottom: 10,
-    fontSize: 14,
-    fontWeight: '600',
-    color: colors.slate900,
-    borderWidth: 1,
-    borderColor: colors.slate100,
-  },
-  bankRow: { marginBottom: 10 },
-  bankChip: {
-    borderRadius: 999,
-    paddingHorizontal: 12,
-    paddingVertical: 8,
-    marginRight: 8,
-    backgroundColor: colors.canvas,
-    borderWidth: 1,
-    borderColor: colors.slate200,
-  },
-  bankChipActive: { backgroundColor: colors.baytgo, borderColor: colors.baytgo },
-  bankChipText: { fontSize: 12, fontWeight: '800', color: colors.slate600 },
-  bankChipTextActive: { color: colors.white },
-  submitBtn: {
-    marginTop: 4,
-    backgroundColor: colors.baytgo,
-    borderRadius: 14,
-    paddingVertical: 14,
-    alignItems: 'center',
-  },
-  submitBtnDisabled: { opacity: 0.6 },
-  submitBtnText: { color: colors.white, fontWeight: '800', fontSize: 14 },
-  sectionTitle: { fontSize: 18, fontWeight: '900', color: colors.baytgo, marginBottom: 12 },
-  muted: { fontSize: 14, color: colors.slate500, fontWeight: '600' },
-  ledgerRow: {
+  balanceTop: {
     flexDirection: 'row',
     justifyContent: 'space-between',
-    gap: 12,
-    backgroundColor: colors.white,
-    borderRadius: 14,
-    padding: 14,
-    marginBottom: 8,
-    borderWidth: 1,
-    borderColor: colors.slate100,
+    alignItems: 'flex-start',
+    marginBottom: spacing.lg,
   },
-  ledgerMeta: { flex: 1 },
-  ledgerKind: { fontSize: 13, fontWeight: '800', color: colors.slate900 },
-  ledgerTime: { marginTop: 4, fontSize: 11, color: colors.slate500, fontWeight: '600' },
-  ledgerCode: { marginTop: 2, fontSize: 11, color: colors.baytgo, fontWeight: '700' },
-  ledgerAmount: { fontSize: 13, fontWeight: '900' },
-  amountPlus: { color: colors.emerald600 },
-  amountMinus: { color: '#B91C1C' },
+  balanceLabel: {
+    ...typography.small,
+    color: colors.goldLight,
+    textTransform: 'uppercase',
+    letterSpacing: 0.6,
+  },
+  balanceValue: {
+    ...typography.hero,
+    fontSize: 28,
+    lineHeight: 36,
+    color: colors.white,
+    marginTop: spacing.sm,
+  },
+  balanceIcon: {
+    width: 52,
+    height: 52,
+    borderRadius: radius.sm,
+    backgroundColor: `${colors.white}30`,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  formCard: {
+    borderRadius: radius.md,
+    marginBottom: spacing.lg,
+  },
+  formTitle: {
+    ...typography.subtitle,
+    color: colors.baytgo,
+    marginBottom: spacing.lg,
+  },
+  fieldLabel: {
+    ...typography.small,
+    color: colors.textSecondary,
+    marginBottom: spacing.sm,
+  },
+  input: {
+    backgroundColor: colors.surface,
+    borderRadius: radius.sm,
+    paddingHorizontal: spacing.lg,
+    paddingVertical: spacing.md,
+    marginBottom: spacing.md,
+    ...typography.caption,
+    color: colors.textPrimary,
+    borderWidth: 1,
+    borderColor: colors.border,
+    minHeight: layout.minTouch,
+  },
+  bankRow: {
+    gap: spacing.sm,
+    paddingRight: spacing.lg,
+    marginBottom: spacing.md,
+  },
+  sectionTitle: {
+    ...typography.subtitle,
+    color: colors.baytgo,
+    marginBottom: spacing.lg,
+  },
 });

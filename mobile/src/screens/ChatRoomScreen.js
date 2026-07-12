@@ -1,26 +1,27 @@
-import React, { useCallback, useEffect, useRef, useState } from 'react';
+import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import {
-  View,
-  Text,
-  StyleSheet,
-  FlatList,
-  TextInput,
-  TouchableOpacity,
-  ActivityIndicator,
-  KeyboardAvoidingView,
-  Platform,
-  Alert,
+  View, Text, StyleSheet, TextInput, ActivityIndicator,
+  KeyboardAvoidingView, Platform, Alert,
 } from 'react-native';
 import { useFocusEffect } from '@react-navigation/native';
 import * as ImagePicker from 'expo-image-picker';
-import { Ionicons } from '@expo/vector-icons';
+import { Lock, Image as ImageIcon, Send } from 'lucide-react-native';
+import { LinearGradient } from 'expo-linear-gradient';
 import ScreenHeader from '../components/ScreenHeader';
 import ChatMessageBubble from '../components/ChatMessageBubble';
+import ImageLightbox from '../components/ImageLightbox';
 import { fetchChatMessages, sendChatMessage } from '../api/chat';
 import { useAuth } from '../context/AuthContext';
 import { useChatInbox } from '../context/ChatInboxContext';
 import { useBookingChatRealtime } from '../hooks/useBookingChatRealtime';
-import { colors } from '../theme/colors';
+import Card from '../ui/Card';
+import EmptyState from '../ui/EmptyState';
+import ErrorState from '../ui/ErrorState';
+import PressableScale from '../ui/PressableScale';
+import { SkeletonList } from '../ui/Skeleton';
+import MessageList from '../ui/MessageList';
+import SingleImagePreview from '../ui/SingleImagePreview';
+import { colors, gradients, layout, radius, spacing, typography } from '../theme/tokens';
 
 export default function ChatRoomScreen({ navigation, route }) {
   const { token } = useAuth();
@@ -35,6 +36,7 @@ export default function ChatRoomScreen({ navigation, route }) {
   const [pendingImage, setPendingImage] = useState(null);
   const [error, setError] = useState(null);
   const [liveConnected, setLiveConnected] = useState(false);
+  const [lightbox, setLightbox] = useState({ visible: false, images: [], index: 0, auth: true });
 
   const listRef = useRef(null);
   const pollRef = useRef(null);
@@ -83,16 +85,9 @@ export default function ChatRoomScreen({ navigation, route }) {
   }, [token, bookingId, mergeMessages]);
 
   useBookingChatRealtime({
-    token,
-    bookingId,
-    onConnected: () => {
-      liveRef.current = true;
-      setLiveConnected(true);
-    },
-    onError: () => {
-      liveRef.current = false;
-      setLiveConnected(false);
-    },
+    token, bookingId,
+    onConnected: () => { liveRef.current = true; setLiveConnected(true); },
+    onError: () => { liveRef.current = false; setLiveConnected(false); },
     onEvent: (payload) => {
       const action = payload?.action || 'message';
       if (action === 'read') {
@@ -108,12 +103,8 @@ export default function ChatRoomScreen({ navigation, route }) {
       setActiveBookingId(bookingId);
       clearUnreadForBooking(bookingId);
       loadInitial();
-      pollRef.current = setInterval(() => {
-        if (!liveRef.current) pollNew();
-      }, 5000);
-      safetyPollRef.current = setInterval(() => {
-        if (liveRef.current) pollNew();
-      }, 60000);
+      pollRef.current = setInterval(() => { if (!liveRef.current) pollNew(); }, 5000);
+      safetyPollRef.current = setInterval(() => { if (liveRef.current) pollNew(); }, 60000);
       return () => {
         setActiveBookingId(null);
         clearInterval(pollRef.current);
@@ -134,13 +125,8 @@ export default function ChatRoomScreen({ navigation, route }) {
       Alert.alert('Izin diperlukan', 'Izinkan akses galeri untuk mengirim gambar.');
       return;
     }
-    const result = await ImagePicker.launchImageLibraryAsync({
-      mediaTypes: ['images'],
-      quality: 0.8,
-    });
-    if (!result.canceled && result.assets[0]) {
-      setPendingImage(result.assets[0]);
-    }
+    const result = await ImagePicker.launchImageLibraryAsync({ mediaTypes: ['images'], quality: 0.8 });
+    if (!result.canceled && result.assets[0]) setPendingImage(result.assets[0]);
   };
 
   const handleSend = async () => {
@@ -155,9 +141,7 @@ export default function ChatRoomScreen({ navigation, route }) {
     try {
       const data = await sendChatMessage(token, bookingId, {
         body,
-        image: pendingImage
-          ? { uri: pendingImage.uri, name: 'chat.jpg', mimeType: 'image/jpeg' }
-          : null,
+        image: pendingImage ? { uri: pendingImage.uri, name: 'chat.jpg', mimeType: 'image/jpeg' } : null,
       });
       if (data.message) mergeMessages([data.message]);
       if (typeof data.chat_open === 'boolean') setChatOpen(data.chat_open);
@@ -171,7 +155,34 @@ export default function ChatRoomScreen({ navigation, route }) {
   };
 
   const title = otherName || 'Chat';
-  const subtitle = bookingCode || bookingId;
+  const subtitle = liveConnected ? `${bookingCode || bookingId} · Live` : (bookingCode || bookingId);
+  const canSend = chatOpen && !sending && (text.trim().length > 0 || pendingImage);
+
+  const chatImages = useMemo(
+    () => messages.filter((m) => m.image_url).map((m) => m.image_url),
+    [messages],
+  );
+
+  const openLightbox = useCallback((uri, { images = chatImages, auth = true } = {}) => {
+    const list = images?.length ? images : [uri];
+    const index = Math.max(0, list.indexOf(uri));
+    setLightbox({ visible: true, images: list, index, auth });
+  }, [chatImages]);
+
+  const closeLightbox = useCallback(() => {
+    setLightbox((prev) => ({ ...prev, visible: false }));
+  }, []);
+
+  const renderMessage = useCallback(
+    ({ item }) => (
+      <ChatMessageBubble
+        message={item}
+        token={token}
+        onImagePress={(uri) => openLightbox(uri)}
+      />
+    ),
+    [token, openLightbox],
+  );
 
   return (
     <KeyboardAvoidingView
@@ -179,144 +190,142 @@ export default function ChatRoomScreen({ navigation, route }) {
       behavior={Platform.OS === 'ios' ? 'padding' : undefined}
       keyboardVerticalOffset={Platform.OS === 'ios' ? 8 : 0}
     >
-      <ScreenHeader
-        title={title}
-        subtitle={liveConnected ? `${subtitle} · Live` : subtitle}
-        onBack={() => navigation.goBack()}
-      />
+      <ScreenHeader title={title} subtitle={subtitle} onBack={() => navigation.goBack()} />
 
       {!chatOpen ? (
         <View style={styles.closedBanner}>
-          <Ionicons name="lock-closed-outline" size={16} color={colors.baytgo} />
+          <Lock size={16} color={colors.baytgo} strokeWidth={2} />
           <Text style={styles.closedText}>Chat ditutup untuk booking ini.</Text>
         </View>
       ) : null}
 
       {loading ? (
-        <ActivityIndicator color={colors.baytgo} style={styles.loader} />
+        <SkeletonList count={4} style={styles.skeleton} />
       ) : error ? (
-        <View style={styles.errorBox}>
-          <Text style={styles.errorText}>{error}</Text>
-          <TouchableOpacity onPress={loadInitial}>
-            <Text style={styles.retry}>Coba lagi</Text>
-          </TouchableOpacity>
-        </View>
+        <ErrorState description={error} onRetry={loadInitial} />
       ) : (
-        <FlatList
+        <MessageList
           ref={listRef}
           data={messages}
           keyExtractor={(item) => String(item.id)}
-          renderItem={({ item }) => <ChatMessageBubble message={item} token={token} />}
+          renderItem={renderMessage}
+          estimatedItemSize={88}
           contentContainerStyle={styles.list}
-          onContentSizeChange={() => listRef.current?.scrollToEnd({ animated: false })}
-          ListEmptyComponent={
-            <Text style={styles.empty}>Belum ada pesan. Mulai percakapan dengan {otherName || 'lawans bicara'}.</Text>
-          }
+          ListEmptyComponent={(
+            <EmptyState
+              variant="chat"
+              title="Belum ada pesan"
+              description={`Mulai percakapan dengan ${otherName || 'lawans bicara'}.`}
+            />
+          )}
         />
       )}
 
-      <View style={styles.composer}>
+      <Card style={styles.composer} padding={spacing.md} elevated={false}>
         {pendingImage ? (
-          <View style={styles.pendingRow}>
-            <Text style={styles.pendingText}>Gambar siap dikirim</Text>
-            <TouchableOpacity onPress={() => setPendingImage(null)}>
-              <Text style={styles.pendingClear}>Hapus</Text>
-            </TouchableOpacity>
-          </View>
+          <SingleImagePreview
+            uri={pendingImage.uri}
+            onRemove={() => setPendingImage(null)}
+            onPress={() => openLightbox(pendingImage.uri, { images: [pendingImage.uri], auth: false })}
+            size={92}
+            style={styles.pendingPreview}
+          />
         ) : null}
+        {sending ? <Text style={styles.sendingHint}>Mengirim pesan…</Text> : null}
         <View style={styles.inputRow}>
-          <TouchableOpacity style={styles.attachBtn} onPress={pickImage} disabled={!chatOpen || sending}>
-            <Ionicons name="image-outline" size={22} color={chatOpen ? colors.baytgo : colors.slate400} />
-          </TouchableOpacity>
+          <PressableScale
+            onPress={pickImage}
+            disabled={!chatOpen || sending}
+            haptic="light"
+            style={[styles.attachBtn, (!chatOpen || sending) && styles.attachBtnDisabled]}
+          >
+            <ImageIcon size={20} color={chatOpen ? colors.baytgo : colors.textMuted} strokeWidth={2} />
+          </PressableScale>
           <TextInput
             style={styles.input}
             value={text}
             onChangeText={setText}
             placeholder={chatOpen ? 'Tulis pesan…' : 'Chat ditutup'}
-            placeholderTextColor={colors.slate400}
+            placeholderTextColor={colors.textMuted}
             editable={chatOpen && !sending}
             multiline
             maxLength={4000}
           />
-          <TouchableOpacity
-            style={[styles.sendBtn, (!chatOpen || sending) && styles.sendBtnDisabled]}
+          <PressableScale
             onPress={handleSend}
-            disabled={!chatOpen || sending}
+            disabled={!canSend}
+            haptic="medium"
+            style={styles.sendWrap}
           >
-            {sending ? (
-              <ActivityIndicator size="small" color={colors.white} />
+            {canSend ? (
+              <LinearGradient colors={gradients.primarySoft} style={styles.sendBtn}>
+                {sending ? (
+                  <ActivityIndicator size="small" color={colors.white} />
+                ) : (
+                  <Send size={18} color={colors.white} strokeWidth={2} />
+                )}
+              </LinearGradient>
             ) : (
-              <Ionicons name="send" size={18} color={colors.white} />
+              <View style={[styles.sendBtn, styles.sendBtnDisabled]}>
+                {sending ? (
+                  <ActivityIndicator size="small" color={colors.textMuted} />
+                ) : (
+                  <Send size={18} color={colors.textMuted} strokeWidth={2} />
+                )}
+              </View>
             )}
-          </TouchableOpacity>
+          </PressableScale>
         </View>
-      </View>
+      </Card>
+
+      <ImageLightbox
+        visible={lightbox.visible}
+        images={lightbox.images}
+        index={lightbox.index}
+        token={lightbox.auth ? token : null}
+        title={title}
+        onClose={closeLightbox}
+        onChangeIndex={(next) => setLightbox((prev) => ({
+          ...prev,
+          index: typeof next === 'function' ? next(prev.index) : next,
+        }))}
+      />
     </KeyboardAvoidingView>
   );
 }
 
 const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: colors.canvas },
+  container: { flex: 1, backgroundColor: colors.background },
   closedBanner: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 8,
-    backgroundColor: colors.emerald50,
-    paddingHorizontal: 16,
-    paddingVertical: 10,
+    flexDirection: 'row', alignItems: 'center', gap: spacing.sm,
+    backgroundColor: colors.successLight, paddingHorizontal: layout.screenPadding, paddingVertical: spacing.md,
   },
-  closedText: { fontSize: 12, fontWeight: '700', color: colors.baytgo },
-  loader: { marginTop: 40 },
-  errorBox: { padding: 24, alignItems: 'center' },
-  errorText: { fontSize: 14, color: colors.slate500, fontWeight: '600', textAlign: 'center' },
-  retry: { marginTop: 10, fontSize: 14, fontWeight: '800', color: colors.baytgo },
-  list: { padding: 16, paddingBottom: 8, flexGrow: 1 },
-  empty: { textAlign: 'center', color: colors.slate500, fontSize: 14, fontWeight: '600', marginTop: 40, lineHeight: 20 },
+  closedText: { ...typography.small, color: colors.baytgo },
+  skeleton: { padding: layout.screenPadding, flex: 1 },
+  list: { padding: layout.screenPadding, paddingBottom: spacing.sm, flexGrow: 1 },
   composer: {
     borderTopWidth: 1,
-    borderTopColor: colors.slate100,
-    backgroundColor: colors.white,
-    paddingHorizontal: 12,
-    paddingTop: 8,
-    paddingBottom: Platform.OS === 'ios' ? 24 : 12,
+    borderTopColor: colors.border,
+    borderRadius: 0,
+    paddingBottom: Platform.OS === 'ios' ? spacing['2xl'] : spacing.md,
   },
-  pendingRow: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    marginBottom: 8,
-    paddingHorizontal: 4,
-  },
-  pendingText: { fontSize: 12, fontWeight: '600', color: colors.slate600 },
-  pendingClear: { fontSize: 12, fontWeight: '800', color: colors.baytgo },
-  inputRow: { flexDirection: 'row', alignItems: 'flex-end', gap: 8 },
+  pendingPreview: { marginBottom: spacing.sm },
+  sendingHint: { ...typography.small, color: colors.textMuted, marginBottom: spacing.sm, fontWeight: '600' },
+  inputRow: { flexDirection: 'row', alignItems: 'flex-end', gap: spacing.sm },
   attachBtn: {
-    width: 40,
-    height: 40,
-    borderRadius: 12,
-    alignItems: 'center',
-    justifyContent: 'center',
-    backgroundColor: colors.canvas,
+    width: 44, height: 44, borderRadius: radius.sm,
+    alignItems: 'center', justifyContent: 'center', backgroundColor: colors.surface,
   },
+  attachBtnDisabled: { opacity: 0.5 },
   input: {
-    flex: 1,
-    minHeight: 40,
-    maxHeight: 120,
-    borderRadius: 14,
-    paddingHorizontal: 14,
-    paddingVertical: 10,
-    backgroundColor: colors.canvas,
-    fontSize: 14,
-    fontWeight: '500',
-    color: colors.slate900,
+    flex: 1, minHeight: 44, maxHeight: 120, borderRadius: radius.sm,
+    paddingHorizontal: spacing.lg, paddingVertical: spacing.md,
+    backgroundColor: colors.surface, ...typography.caption, color: colors.textPrimary,
   },
+  sendWrap: { borderRadius: radius.sm, overflow: 'hidden' },
   sendBtn: {
-    width: 44,
-    height: 44,
-    borderRadius: 14,
-    backgroundColor: colors.baytgo,
-    alignItems: 'center',
-    justifyContent: 'center',
+    width: 44, height: 44, borderRadius: radius.sm,
+    alignItems: 'center', justifyContent: 'center',
   },
-  sendBtnDisabled: { opacity: 0.5 },
+  sendBtnDisabled: { backgroundColor: colors.surface },
 });

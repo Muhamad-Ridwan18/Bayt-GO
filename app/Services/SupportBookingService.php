@@ -7,6 +7,7 @@ use App\Enums\MuthowifServiceType;
 use App\Enums\PaymentStatus;
 use App\Jobs\NotifyCustomerOfSupportCompletionApproved;
 use App\Jobs\NotifyMuthowifOfSupportCompletionRequested;
+use App\Jobs\NotifyCustomerOfBookingSubmitted;
 use App\Jobs\NotifyMuthowifOfNewBooking;
 use App\Models\MuthowifBooking;
 use App\Models\MuthowifProfile;
@@ -96,6 +97,7 @@ class SupportBookingService
     public function dispatchCreated(MuthowifBooking $booking): void
     {
         NotifyMuthowifOfNewBooking::dispatchAfterResponse((string) $booking->getKey());
+        NotifyCustomerOfBookingSubmitted::dispatchAfterResponse((string) $booking->getKey());
         CustomerBookingBroadcast::afterResponse($booking);
     }
 

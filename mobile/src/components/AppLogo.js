@@ -1,7 +1,7 @@
 import React from 'react';
 import { View, Text, StyleSheet, Image } from 'react-native';
 import { resolveMediaUrl } from '../utils/mediaUrl';
-import { colors } from '../theme/colors';
+import { colors, spacing, typography } from '../theme/tokens';
 
 const FALLBACK_LOGO = require('../../assets/logo.png');
 
@@ -29,9 +29,9 @@ export default function AppLogo({ url, name = 'BaytGo', size = 36, showName = fa
 }
 
 const styles = StyleSheet.create({
-  row: { flexDirection: 'row', alignItems: 'center', gap: 10 },
+  row: { flexDirection: 'row', alignItems: 'center', gap: spacing.sm + 2 },
   name: {
-    fontSize: 20,
+    ...typography.subtitle,
     fontWeight: '800',
     color: colors.baytgo,
     letterSpacing: -0.5,

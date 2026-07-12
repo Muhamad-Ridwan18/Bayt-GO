@@ -1,35 +1,22 @@
 import React, { useCallback, useState } from 'react';
-import {
-  View,
-  Text,
-  StyleSheet,
-  ScrollView,
-  ActivityIndicator,
-  TouchableOpacity,
-  Share,
-} from 'react-native';
+import { StyleSheet, View, ScrollView, Share } from 'react-native';
 import { useFocusEffect } from '@react-navigation/native';
-import { Ionicons } from '@expo/vector-icons';
+import { Share2 } from 'lucide-react-native';
 import ScreenHeader from '../components/ScreenHeader';
 import { fetchInvoice } from '../api/bookings';
 import { useAuth } from '../context/AuthContext';
-import { colors } from '../theme/colors';
+import Button from '../ui/Button';
+import ErrorState from '../ui/ErrorState';
+import PressableScale from '../ui/PressableScale';
+import { SkeletonList } from '../ui/Skeleton';
+import { InvoiceDocument } from '../features/booking/BookingInvoiceParts';
+import { colors, layout, radius, spacing } from '../theme/tokens';
 import { formatIdr } from '../utils/format';
-import { formatDateRange, serviceTypeLabel } from '../utils/bookingLabels';
-
-function Row({ label, value, bold }) {
-  return (
-    <View style={styles.row}>
-      <Text style={styles.rowLabel}>{label}</Text>
-      <Text style={[styles.rowValue, bold && styles.rowBold]}>{value}</Text>
-    </View>
-  );
-}
+import { formatDateRange } from '../utils/bookingLabels';
 
 export default function BookingInvoiceScreen({ navigation, route }) {
   const { token } = useAuth();
   const { bookingId } = route.params;
-
   const [invoice, setInvoice] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
@@ -47,11 +34,7 @@ export default function BookingInvoiceScreen({ navigation, route }) {
     }
   }, [token, bookingId]);
 
-  useFocusEffect(
-    useCallback(() => {
-      load();
-    }, [load]),
-  );
+  useFocusEffect(useCallback(() => { load(); }, [load]));
 
   const handleShare = async () => {
     if (!invoice) return;
@@ -66,7 +49,7 @@ export default function BookingInvoiceScreen({ navigation, route }) {
     try {
       await Share.share({ message: lines.join('\n') });
     } catch {
-      // user dismissed
+      // dismissed
     }
   };
 
@@ -74,7 +57,7 @@ export default function BookingInvoiceScreen({ navigation, route }) {
     return (
       <View style={styles.container}>
         <ScreenHeader title="Invoice" onBack={() => navigation.goBack()} />
-        <ActivityIndicator color={colors.baytgo} style={styles.loader} />
+        <SkeletonList count={3} style={styles.skeleton} />
       </View>
     );
   }
@@ -83,108 +66,50 @@ export default function BookingInvoiceScreen({ navigation, route }) {
     return (
       <View style={styles.container}>
         <ScreenHeader title="Invoice" onBack={() => navigation.goBack()} />
-        <View style={styles.empty}>
-          <Text style={styles.emptyText}>{error || 'Invoice tidak tersedia'}</Text>
-          <TouchableOpacity onPress={load}>
-            <Text style={styles.retry}>Coba lagi</Text>
-          </TouchableOpacity>
-        </View>
+        <ErrorState description={error || 'Invoice tidak tersedia'} onRetry={load} />
       </View>
     );
   }
-
-  const paidAt = invoice.paid_at
-    ? new Date(invoice.paid_at).toLocaleString('id-ID')
-    : '—';
 
   return (
     <View style={styles.container}>
       <ScreenHeader
         title="Invoice"
+        subtitle={invoice.booking_code}
         onBack={() => navigation.goBack()}
         rightAction={(
-          <TouchableOpacity onPress={handleShare} hitSlop={8}>
-            <Ionicons name="share-outline" size={22} color={colors.baytgo} />
-          </TouchableOpacity>
+          <PressableScale onPress={handleShare} haptic="light" style={styles.shareBtn}>
+            <Share2 size={20} color={colors.baytgo} strokeWidth={2} />
+          </PressableScale>
         )}
       />
 
-      <ScrollView contentContainerStyle={styles.scroll}>
-        <View style={styles.card}>
-          <Text style={styles.code}>{invoice.booking_code}</Text>
-          <Text style={styles.paidAt}>Dibayar: {paidAt}</Text>
-        </View>
+      <ScrollView contentContainerStyle={styles.scroll} showsVerticalScrollIndicator={false}>
+        <InvoiceDocument invoice={invoice} />
 
-        <View style={styles.section}>
-          <Text style={styles.sectionTitle}>Pelanggan</Text>
-          <Row label="Nama" value={invoice.customer?.name || '—'} />
-          <Row label="Email" value={invoice.customer?.email || '—'} />
-          <Row label="Telepon" value={invoice.customer?.phone || '—'} />
+        <View style={styles.shareCta}>
+          <Button
+            label="Bagikan invoice"
+            icon={<Share2 size={18} color={colors.white} strokeWidth={2} />}
+            onPress={handleShare}
+          />
         </View>
-
-        <View style={styles.section}>
-          <Text style={styles.sectionTitle}>Layanan</Text>
-          <Row label="Muthowif" value={invoice.muthowif?.name || '—'} />
-          <Row label="Periode" value={formatDateRange(invoice.service_period?.starts_on, invoice.service_period?.ends_on)} />
-          <Row label="Jamaah" value={String(invoice.pilgrim_count || '—')} />
-          <Row label="Tipe" value={serviceTypeLabel(invoice.service_type)} />
-        </View>
-
-        <View style={styles.section}>
-          <Text style={styles.sectionTitle}>Rincian Biaya</Text>
-          <Row label="Biaya layanan" value={formatIdr(invoice.amounts?.base || 0)} />
-          <Row label="Biaya platform" value={formatIdr(invoice.amounts?.platform_fee || 0)} />
-          <Row label="Total dibayar" value={formatIdr(invoice.amounts?.total || 0)} bold />
-        </View>
-
-        {invoice.payment ? (
-          <View style={styles.section}>
-            <Text style={styles.sectionTitle}>Pembayaran</Text>
-            <Row label="Order ID" value={invoice.payment.order_id || '—'} />
-            <Row label="Metode" value={invoice.payment.payment_type || '—'} />
-          </View>
-        ) : null}
       </ScrollView>
     </View>
   );
 }
 
 const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: colors.canvas },
-  scroll: { padding: 16, paddingBottom: 32 },
-  loader: { marginTop: 40 },
-  empty: { padding: 24, alignItems: 'center' },
-  emptyText: { fontSize: 14, color: colors.slate500, fontWeight: '600', textAlign: 'center' },
-  retry: { marginTop: 10, fontSize: 14, fontWeight: '800', color: colors.baytgo },
-  card: {
-    backgroundColor: colors.white,
-    borderRadius: 20,
-    padding: 20,
+  container: { flex: 1, backgroundColor: colors.background },
+  scroll: { padding: layout.screenPadding, paddingBottom: spacing['4xl'] },
+  skeleton: { padding: layout.screenPadding },
+  shareBtn: {
+    width: 44,
+    height: 44,
     alignItems: 'center',
-    marginBottom: 12,
-    borderWidth: 1,
-    borderColor: colors.slate100,
+    justifyContent: 'center',
+    borderRadius: radius.sm,
+    backgroundColor: colors.baytgoLight,
   },
-  code: { fontSize: 20, fontWeight: '900', color: colors.baytgo },
-  paidAt: { marginTop: 6, fontSize: 12, color: colors.slate500, fontWeight: '600' },
-  section: {
-    backgroundColor: colors.white,
-    borderRadius: 18,
-    padding: 16,
-    marginBottom: 12,
-    borderWidth: 1,
-    borderColor: colors.slate100,
-  },
-  sectionTitle: { fontSize: 14, fontWeight: '900', color: colors.baytgo, marginBottom: 10 },
-  row: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    gap: 12,
-    paddingVertical: 8,
-    borderBottomWidth: 1,
-    borderBottomColor: colors.slate100,
-  },
-  rowLabel: { fontSize: 13, fontWeight: '600', color: colors.slate500 },
-  rowValue: { flex: 1, fontSize: 13, fontWeight: '700', color: colors.slate900, textAlign: 'right' },
-  rowBold: { fontWeight: '900', color: colors.baytgo, fontSize: 15 },
+  shareCta: { marginTop: spacing.lg },
 });

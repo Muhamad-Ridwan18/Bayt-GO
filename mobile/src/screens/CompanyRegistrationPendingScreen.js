@@ -1,9 +1,10 @@
 import React from 'react';
-import { View, Text, StyleSheet, TouchableOpacity } from 'react-native';
-import { LinearGradient } from 'expo-linear-gradient';
-import { Ionicons } from '@expo/vector-icons';
+import { View, Text, StyleSheet } from 'react-native';
+import { Clock } from 'lucide-react-native';
 import AuthScreenShell from '../components/AuthScreenShell';
-import { colors } from '../theme/colors';
+import Button from '../ui/Button';
+import Card from '../ui/Card';
+import { colors, spacing, typography } from '../theme/tokens';
 
 export default function CompanyRegistrationPendingScreen({ navigation, route }) {
   const message =
@@ -11,66 +12,50 @@ export default function CompanyRegistrationPendingScreen({ navigation, route }) 
     'Pendaftaran perusahaan Anda sedang ditinjau admin. Anda akan dapat masuk setelah akun disetujui.';
 
   return (
-    <AuthScreenShell title="Menunggu persetujuan" subtitle="Akun perusahaan Anda dalam proses verifikasi.">
-      <View style={styles.card}>
+    <AuthScreenShell
+      title="Menunggu persetujuan"
+      subtitle="Akun perusahaan Anda dalam proses verifikasi."
+      onBack={() => navigation.replace('Login')}
+    >
+      <Card style={styles.card} padding={spacing.xl} elevated={false} variant="flat">
         <View style={styles.iconWrap}>
-          <Ionicons name="time-outline" size={36} color={colors.baytgo} />
+          <Clock size={36} color={colors.baytgo} strokeWidth={2} />
         </View>
         <Text style={styles.message}>{message}</Text>
         <Text style={styles.hint}>
           Tim admin akan memverifikasi data perusahaan Anda. Setelah disetujui, gunakan email dan password yang
           didaftarkan untuk masuk.
         </Text>
-      </View>
+      </Card>
 
-      <TouchableOpacity
-        style={styles.primaryBtn}
-        onPress={() => navigation.replace('Login')}
-        activeOpacity={0.9}
-      >
-        <LinearGradient colors={[colors.baytgo, colors.baytgoDark]} style={styles.primaryGradient}>
-          <Text style={styles.primaryText}>Ke halaman masuk</Text>
-        </LinearGradient>
-      </TouchableOpacity>
+      <Button label="Ke halaman masuk" onPress={() => navigation.replace('Login')} />
     </AuthScreenShell>
   );
 }
 
 const styles = StyleSheet.create({
-  card: {
-    backgroundColor: colors.white,
-    borderRadius: 16,
-    padding: 20,
-    marginBottom: 20,
-    borderWidth: 1,
-    borderColor: colors.slate100,
-    alignItems: 'center',
-  },
+  card: { alignItems: 'center', marginBottom: spacing.xl },
   iconWrap: {
     width: 72,
     height: 72,
     borderRadius: 36,
-    backgroundColor: '#ECFDF5',
+    backgroundColor: colors.primaryLight,
     alignItems: 'center',
     justifyContent: 'center',
-    marginBottom: 16,
+    marginBottom: spacing.lg,
   },
   message: {
-    fontSize: 15,
+    ...typography.caption,
     lineHeight: 22,
-    fontWeight: '700',
-    color: colors.slate900,
+    fontFamily: 'PlusJakartaSans_700Bold',
+    color: colors.textPrimary,
     textAlign: 'center',
   },
   hint: {
-    marginTop: 12,
-    fontSize: 13,
+    marginTop: spacing.md,
+    ...typography.caption,
     lineHeight: 20,
-    color: colors.slate500,
-    fontWeight: '600',
+    color: colors.textSecondary,
     textAlign: 'center',
   },
-  primaryBtn: { borderRadius: 16, overflow: 'hidden' },
-  primaryGradient: { paddingVertical: 16, alignItems: 'center' },
-  primaryText: { color: colors.white, fontSize: 16, fontWeight: '800' },
 });

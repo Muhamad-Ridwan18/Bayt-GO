@@ -1,12 +1,14 @@
 import React, { useState } from 'react';
-import { View, Text, StyleSheet, TouchableOpacity, ActivityIndicator, Alert } from 'react-native';
-import { LinearGradient } from 'expo-linear-gradient';
+import { Text, StyleSheet } from 'react-native';
+import { KeyRound, Lock } from 'lucide-react-native';
 import AuthScreenShell from '../components/AuthScreenShell';
 import AuthInput from '../components/AuthInput';
+import Button from '../ui/Button';
 import PhoneInternationalInput from '../components/PhoneInternationalInput';
 import { sendPasswordResetOtp, resetPassword } from '../api/auth';
 import { DEFAULT_PHONE_COUNTRY, buildFullPhone } from '../utils/phoneCountries';
-import { colors } from '../theme/colors';
+import { colors, radius, spacing, typography } from '../theme/tokens';
+import { navigateToSuccess } from '../navigation/rootNavigation';
 
 export default function ForgotPasswordScreen({ navigation }) {
   const [step, setStep] = useState('phone');
@@ -69,9 +71,12 @@ export default function ForgotPasswordScreen({ navigation }) {
         password,
         passwordConfirmation,
       });
-      Alert.alert('Berhasil', data.message || 'Password berhasil direset.', [
-        { text: 'Masuk', onPress: () => navigation.replace('Login') },
-      ]);
+      navigateToSuccess(navigation, {
+        title: 'Password berhasil direset',
+        description: data.message || 'Silakan masuk dengan password baru Anda.',
+        primaryLabel: 'Masuk',
+        primaryTarget: { replace: true, name: 'Login' },
+      });
     } catch (err) {
       setError(err.message || 'Gagal reset password');
     } finally {
@@ -87,14 +92,10 @@ export default function ForgotPasswordScreen({ navigation }) {
         onBack={() => setStep('phone')}
       >
         {error ? <Text style={styles.bannerError}>{error}</Text> : null}
-        <AuthInput label="Kode OTP" icon="key-outline" value={otp} onChangeText={setOtp} keyboardType="number-pad" maxLength={6} />
-        <AuthInput label="Password baru" icon="lock-closed-outline" value={password} onChangeText={setPassword} secureTextEntry />
-        <AuthInput label="Konfirmasi password" icon="lock-closed-outline" value={passwordConfirmation} onChangeText={setPasswordConfirmation} secureTextEntry />
-        <TouchableOpacity style={styles.primaryBtn} onPress={handleReset} disabled={loading}>
-          <LinearGradient colors={[colors.baytgo, colors.baytgoDark]} style={styles.primaryGradient}>
-            {loading ? <ActivityIndicator color={colors.white} /> : <Text style={styles.primaryText}>Simpan password baru</Text>}
-          </LinearGradient>
-        </TouchableOpacity>
+        <AuthInput label="Kode OTP" icon={KeyRound} value={otp} onChangeText={setOtp} keyboardType="number-pad" maxLength={6} />
+        <AuthInput label="Password baru" icon={Lock} value={password} onChangeText={setPassword} secureTextEntry />
+        <AuthInput label="Konfirmasi password" icon={Lock} value={passwordConfirmation} onChangeText={setPasswordConfirmation} secureTextEntry />
+        <Button label="Simpan password baru" onPress={handleReset} loading={loading} />
       </AuthScreenShell>
     );
   }
@@ -113,26 +114,19 @@ export default function ForgotPasswordScreen({ navigation }) {
         countryIso={phoneCountryIso}
         onChange={handlePhoneChange}
       />
-      <TouchableOpacity style={styles.primaryBtn} onPress={handleSendOtp} disabled={loading}>
-        <LinearGradient colors={[colors.baytgo, colors.baytgoDark]} style={styles.primaryGradient}>
-          {loading ? <ActivityIndicator color={colors.white} /> : <Text style={styles.primaryText}>Kirim kode reset</Text>}
-        </LinearGradient>
-      </TouchableOpacity>
+      <Button label="Kirim kode reset" onPress={handleSendOtp} loading={loading} />
     </AuthScreenShell>
   );
 }
 
 const styles = StyleSheet.create({
   bannerError: {
-    backgroundColor: '#FEF2F2',
-    color: '#B91C1C',
-    padding: 12,
-    borderRadius: 14,
-    marginBottom: 16,
-    fontSize: 13,
-    fontWeight: '600',
+    backgroundColor: colors.errorLight,
+    color: colors.error,
+    padding: spacing.md,
+    borderRadius: radius.sm,
+    marginBottom: spacing.lg,
+    ...typography.caption,
+    fontFamily: 'PlusJakartaSans_600SemiBold',
   },
-  primaryBtn: { borderRadius: 16, overflow: 'hidden', marginTop: 8 },
-  primaryGradient: { paddingVertical: 16, alignItems: 'center' },
-  primaryText: { color: colors.white, fontSize: 16, fontWeight: '800' },
 });

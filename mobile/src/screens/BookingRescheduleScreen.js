@@ -1,20 +1,13 @@
 import React, { useMemo, useState } from 'react';
-import {
-  View,
-  Text,
-  StyleSheet,
-  ScrollView,
-  TouchableOpacity,
-  ActivityIndicator,
-  Alert,
-  TextInput,
-} from 'react-native';
-import { LinearGradient } from 'expo-linear-gradient';
+import { View, Text, StyleSheet, ScrollView, TextInput } from 'react-native';
+import { Calendar } from 'lucide-react-native';
 import ScreenHeader from '../components/ScreenHeader';
 import DatePickerField, { parseIsoDate, toIsoDate } from '../components/DatePickerField';
 import { submitRescheduleRequest } from '../api/bookings';
 import { useAuth } from '../context/AuthContext';
-import { colors } from '../theme/colors';
+import { Button, Card, InlineAlert } from '../ui';
+import { notifySuccessThen } from '../utils/feedback';
+import { colors, layout, radius, spacing, typography } from '../theme/tokens';
 import { billingNights, formatDateRange } from '../utils/bookingLabels';
 
 function addDays(isoDate, days) {
@@ -55,9 +48,12 @@ export default function BookingRescheduleScreen({ navigation, route }) {
         ends_on: newEnd,
         reschedule_note: note.trim() || null,
       });
-      Alert.alert('Berhasil', 'Permintaan reschedule berhasil diajukan.', [
-        { text: 'OK', onPress: () => navigation.navigate('BookingDetail', { bookingId }) },
-      ]);
+      notifySuccessThen(
+        navigation,
+        'Permintaan reschedule berhasil diajukan.',
+        'BookingDetail',
+        { bookingId },
+      );
     } catch (err) {
       setError(err.message || 'Gagal mengajukan reschedule');
     } finally {
@@ -70,17 +66,20 @@ export default function BookingRescheduleScreen({ navigation, route }) {
       <ScreenHeader title="Ajukan Reschedule" onBack={() => navigation.goBack()} />
 
       <ScrollView contentContainerStyle={styles.scroll} keyboardShouldPersistTaps="handled">
-        <View style={styles.infoCard}>
-          <Text style={styles.infoLabel}>Jadwal saat ini</Text>
+        <Card padding={spacing.lg} elevated={false}>
+          <View style={styles.infoHeader}>
+            <Calendar size={16} color={colors.baytgo} strokeWidth={2} />
+            <Text style={styles.infoLabel}>Jadwal saat ini</Text>
+          </View>
           <Text style={styles.infoValue}>{formatDateRange(startsOn, endsOn)}</Text>
           <Text style={styles.infoHint}>{nights} hari — durasi harus sama setelah reschedule</Text>
-        </View>
+        </Card>
 
         <Text style={styles.intro}>
           Pilih tanggal mulai baru. Tanggal selesai dihitung otomatis ({nights} hari).
         </Text>
 
-        {error ? <Text style={styles.error}>{error}</Text> : null}
+        {error ? <InlineAlert variant="error">{error}</InlineAlert> : null}
 
         <DatePickerField
           label="Tanggal mulai baru"
@@ -91,10 +90,10 @@ export default function BookingRescheduleScreen({ navigation, route }) {
         />
 
         {newStart ? (
-          <View style={styles.preview}>
+          <Card style={styles.preview} padding={spacing.md} elevated={false}>
             <Text style={styles.previewLabel}>Jadwal baru</Text>
             <Text style={styles.previewValue}>{formatDateRange(newStart, newEnd)}</Text>
-          </View>
+          </Card>
         ) : null}
 
         <Text style={styles.label}>Catatan (opsional)</Text>
@@ -103,66 +102,39 @@ export default function BookingRescheduleScreen({ navigation, route }) {
           value={note}
           onChangeText={setNote}
           placeholder="Alasan reschedule..."
-          placeholderTextColor={colors.slate400}
+          placeholderTextColor={colors.textMuted}
           multiline
           maxLength={2000}
           textAlignVertical="top"
         />
 
-        <TouchableOpacity style={styles.submitBtn} onPress={handleSubmit} disabled={loading} activeOpacity={0.9}>
-          <LinearGradient colors={[colors.baytgo, colors.baytgoDark]} style={styles.submitGradient}>
-            {loading ? (
-              <ActivityIndicator color={colors.white} />
-            ) : (
-              <Text style={styles.submitText}>Kirim Permintaan Reschedule</Text>
-            )}
-          </LinearGradient>
-        </TouchableOpacity>
+        <Button label="Kirim Permintaan Reschedule" onPress={handleSubmit} loading={loading} />
       </ScrollView>
     </View>
   );
 }
 
 const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: colors.canvas },
-  scroll: { padding: 16, paddingBottom: 32 },
-  infoCard: {
-    backgroundColor: colors.white,
-    borderRadius: 16,
-    padding: 16,
-    marginBottom: 16,
-    borderWidth: 1,
-    borderColor: colors.slate100,
-  },
-  infoLabel: { fontSize: 11, fontWeight: '800', color: colors.slate500, textTransform: 'uppercase' },
-  infoValue: { marginTop: 6, fontSize: 16, fontWeight: '800', color: colors.baytgo },
-  infoHint: { marginTop: 4, fontSize: 12, color: colors.slate500, fontWeight: '600' },
-  intro: { fontSize: 14, lineHeight: 21, color: colors.slate600, fontWeight: '500', marginBottom: 12 },
-  error: { marginBottom: 12, fontSize: 13, color: '#DC2626', fontWeight: '600' },
-  preview: {
-    backgroundColor: colors.emerald50,
-    borderRadius: 14,
-    padding: 12,
-    marginBottom: 16,
-    borderWidth: 1,
-    borderColor: '#A7F3D0',
-  },
-  previewLabel: { fontSize: 11, fontWeight: '700', color: colors.emerald600 },
-  previewValue: { marginTop: 4, fontSize: 14, fontWeight: '800', color: colors.baytgo },
-  label: { fontSize: 12, fontWeight: '800', color: colors.slate600, marginBottom: 8 },
+  container: { flex: 1, backgroundColor: colors.background },
+  scroll: { padding: layout.screenPadding, paddingBottom: spacing['3xl'] },
+  infoHeader: { flexDirection: 'row', alignItems: 'center', gap: spacing.sm },
+  infoLabel: { ...typography.label, color: colors.textSecondary },
+  infoValue: { marginTop: spacing.sm, ...typography.caption, fontFamily: 'PlusJakartaSans_800ExtraBold', color: colors.baytgo },
+  infoHint: { marginTop: spacing.xs, ...typography.small, color: colors.textSecondary, fontWeight: '500' },
+  intro: { ...typography.caption, lineHeight: 22, color: colors.textSecondary, marginVertical: spacing.lg },
+  preview: { backgroundColor: colors.successLight, borderColor: '#A7F3D0', marginBottom: spacing.lg },
+  previewLabel: { ...typography.label, color: colors.success },
+  previewValue: { marginTop: spacing.xs, ...typography.caption, fontFamily: 'PlusJakartaSans_800ExtraBold', color: colors.baytgo },
+  label: { ...typography.label, color: colors.textSecondary, marginBottom: spacing.sm },
   textarea: {
     minHeight: 100,
-    backgroundColor: colors.white,
-    borderRadius: 16,
+    backgroundColor: colors.card,
+    borderRadius: radius.sm,
     borderWidth: 1,
-    borderColor: colors.slate100,
-    padding: 14,
-    fontSize: 14,
-    fontWeight: '500',
-    color: colors.slate900,
-    marginBottom: 20,
+    borderColor: colors.border,
+    padding: spacing.lg,
+    ...typography.caption,
+    color: colors.textPrimary,
+    marginBottom: spacing.xl,
   },
-  submitBtn: { borderRadius: 16, overflow: 'hidden' },
-  submitGradient: { paddingVertical: 16, alignItems: 'center' },
-  submitText: { color: colors.white, fontSize: 15, fontWeight: '800' },
 });

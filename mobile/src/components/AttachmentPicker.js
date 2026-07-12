@@ -1,9 +1,10 @@
 import React from 'react';
-import { View, Text, StyleSheet, TouchableOpacity, ScrollView } from 'react-native';
-import { Ionicons } from '@expo/vector-icons';
+import { View, Text, StyleSheet } from 'react-native';
+import { FileText, Image as ImageIcon } from 'lucide-react-native';
 import * as ImagePicker from 'expo-image-picker';
 import * as DocumentPicker from 'expo-document-picker';
-import { colors } from '../theme/colors';
+import { PressableScale, UploadPreviewStrip } from '../ui';
+import { colors, spacing, radius, typography } from '../theme/tokens';
 
 async function pickAttachments(existing = []) {
   const remaining = Math.max(0, 5 - existing.length);
@@ -72,63 +73,37 @@ export default function AttachmentPicker({ label, hint, files, onChange, disable
       {hint ? <Text style={styles.hint}>{hint}</Text> : null}
 
       <View style={styles.actions}>
-        <TouchableOpacity style={styles.btn} onPress={addImages} disabled={disabled || files.length >= 5}>
-          <Ionicons name="image-outline" size={18} color={colors.baytgo} />
+        <PressableScale style={styles.btn} onPress={addImages} disabled={disabled || files.length >= 5} haptic="light">
+          <ImageIcon size={18} color={colors.baytgo} strokeWidth={2} />
           <Text style={styles.btnText}>Foto</Text>
-        </TouchableOpacity>
-        <TouchableOpacity style={styles.btn} onPress={addPdf} disabled={disabled || files.length >= 5}>
-          <Ionicons name="document-outline" size={18} color={colors.baytgo} />
+        </PressableScale>
+        <PressableScale style={styles.btn} onPress={addPdf} disabled={disabled || files.length >= 5} haptic="light">
+          <FileText size={18} color={colors.baytgo} strokeWidth={2} />
           <Text style={styles.btnText}>PDF</Text>
-        </TouchableOpacity>
+        </PressableScale>
       </View>
 
-      {files.length > 0 ? (
-        <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.fileList}>
-          {files.map((file, index) => (
-            <View key={`${file.uri}-${index}`} style={styles.chip}>
-              <Text style={styles.chipText} numberOfLines={1}>
-                {file.name || file.fileName || `Lampiran ${index + 1}`}
-              </Text>
-              <TouchableOpacity onPress={() => removeAt(index)} hitSlop={8}>
-                <Ionicons name="close-circle" size={18} color={colors.slate400} />
-              </TouchableOpacity>
-            </View>
-          ))}
-        </ScrollView>
-      ) : null}
+      <UploadPreviewStrip files={files} onRemove={removeAt} style={styles.previewStrip} />
     </View>
   );
 }
 
 const styles = StyleSheet.create({
-  wrap: { marginBottom: 16 },
-  label: { fontSize: 12, fontWeight: '800', color: colors.slate600, marginBottom: 6 },
-  hint: { fontSize: 11, fontWeight: '600', color: colors.slate500, marginBottom: 8 },
-  actions: { flexDirection: 'row', gap: 8 },
+  wrap: { marginBottom: spacing.lg },
+  label: { ...typography.caption, fontWeight: '800', color: colors.slate600, marginBottom: spacing.sm - 2 },
+  hint: { ...typography.small, fontWeight: '600', color: colors.textSecondary, marginBottom: spacing.sm },
+  actions: { flexDirection: 'row', gap: spacing.sm },
   btn: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 6,
+    gap: spacing.sm - 2,
     backgroundColor: colors.white,
-    borderRadius: 12,
-    paddingHorizontal: 12,
-    paddingVertical: 10,
+    borderRadius: radius.sm,
+    paddingHorizontal: spacing.md,
+    paddingVertical: spacing.sm + 2,
     borderWidth: 1,
-    borderColor: colors.slate100,
+    borderColor: colors.surface,
   },
-  btnText: { fontSize: 13, fontWeight: '700', color: colors.baytgo },
-  fileList: { gap: 8, marginTop: 10 },
-  chip: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 6,
-    maxWidth: 180,
-    backgroundColor: colors.canvas,
-    borderRadius: 10,
-    paddingHorizontal: 10,
-    paddingVertical: 8,
-    borderWidth: 1,
-    borderColor: colors.slate100,
-  },
-  chipText: { flex: 1, fontSize: 11, fontWeight: '600', color: colors.slate700 },
+  btnText: { ...typography.caption, fontWeight: '700', color: colors.baytgo },
+  previewStrip: { marginTop: spacing.sm },
 });

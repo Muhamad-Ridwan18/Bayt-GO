@@ -1,19 +1,12 @@
 import React, { useEffect, useState } from 'react';
-import {
-  View,
-  Text,
-  StyleSheet,
-  TouchableOpacity,
-  ActivityIndicator,
-  Alert,
-  ScrollView,
-} from 'react-native';
-import { LinearGradient } from 'expo-linear-gradient';
+import { View, Text, StyleSheet, ScrollView, ActivityIndicator } from 'react-native';
 import AuthInput from '../components/AuthInput';
 import ScreenHeader from '../components/ScreenHeader';
 import { fetchProfile, sendVerificationEmail, updateProfile } from '../api/profile';
 import { useAuth } from '../context/AuthContext';
-import { colors } from '../theme/colors';
+import { Button, Card, PressableScale } from '../ui';
+import { notifyError, notifySuccess, notifySuccessThen } from '../utils/feedback';
+import { colors, layout, radius, spacing, typography } from '../theme/tokens';
 
 export default function EditProfileScreen({ navigation, route }) {
   const { token, user, updateLocalUser } = useAuth();
@@ -58,15 +51,10 @@ export default function EditProfileScreen({ navigation, route }) {
         phone: phone.trim(),
       });
       if (data.user) {
-        await updateLocalUser({
-          name: data.user.name,
-          email: data.user.email,
-        });
+        await updateLocalUser({ name: data.user.name, email: data.user.email });
         setEmailVerifiedAt(data.user.email_verified_at || null);
       }
-      Alert.alert('Berhasil', 'Profil berhasil diperbarui.', [
-        { text: 'OK', onPress: () => navigation.goBack() },
-      ]);
+      notifySuccessThen(navigation, 'Profil berhasil diperbarui.', () => navigation.goBack());
     } catch (err) {
       setError(err.message || 'Gagal menyimpan profil');
     } finally {
@@ -78,9 +66,9 @@ export default function EditProfileScreen({ navigation, route }) {
     setSendingVerification(true);
     try {
       const data = await sendVerificationEmail(token);
-      Alert.alert('Berhasil', data.message || 'Link verifikasi telah dikirim.');
+      notifySuccess(data.message || 'Link verifikasi telah dikirim.');
     } catch (err) {
-      Alert.alert('Gagal', err.message || 'Tidak dapat mengirim verifikasi');
+      notifyError(err.message || 'Tidak dapat mengirim verifikasi');
     } finally {
       setSendingVerification(false);
     }
@@ -93,114 +81,66 @@ export default function EditProfileScreen({ navigation, route }) {
       <ScreenHeader title="Edit Profil" onBack={() => navigation.goBack()} />
 
       <ScrollView contentContainerStyle={styles.form} keyboardShouldPersistTaps="handled">
-        {error ? <Text style={styles.error}>{error}</Text> : null}
+        {error ? (
+          <Card style={styles.errorCard} padding={spacing.md} elevated={false}>
+            <Text style={styles.errorText}>{error}</Text>
+          </Card>
+        ) : null}
 
-        <AuthInput
-          label="Nama"
-          icon="person-outline"
-          value={name}
-          onChangeText={setName}
-          placeholder="Nama lengkap"
-        />
-        <AuthInput
-          label="Email"
-          icon="mail-outline"
-          value={email}
-          onChangeText={setEmail}
-          placeholder="nama@email.com"
-          keyboardType="email-address"
-          autoCapitalize="none"
-        />
+        <AuthInput label="Nama" icon="person-outline" value={name} onChangeText={setName} placeholder="Nama lengkap" />
+        <AuthInput label="Email" icon="mail-outline" value={email} onChangeText={setEmail} placeholder="nama@email.com" keyboardType="email-address" autoCapitalize="none" />
+
         {isEmailUnverified ? (
-          <View style={styles.verifyBox}>
+          <Card style={styles.verifyBox} padding={spacing.md} elevated={false}>
             <Text style={styles.verifyText}>Email belum terverifikasi.</Text>
-            <TouchableOpacity onPress={handleResendVerification} disabled={sendingVerification}>
+            <PressableScale onPress={handleResendVerification} disabled={sendingVerification} haptic="light">
               {sendingVerification ? (
                 <ActivityIndicator color={colors.baytgo} size="small" />
               ) : (
                 <Text style={styles.verifyLink}>Kirim ulang verifikasi</Text>
               )}
-            </TouchableOpacity>
-          </View>
+            </PressableScale>
+          </Card>
         ) : null}
-        <AuthInput
-          label="Nomor WhatsApp"
-          icon="call-outline"
-          value={phone}
-          onChangeText={setPhone}
-          placeholder="08xxxxxxxxxx"
-          keyboardType="phone-pad"
-        />
 
-        <TouchableOpacity style={styles.saveBtn} onPress={handleSave} disabled={loading} activeOpacity={0.9}>
-          <LinearGradient colors={[colors.baytgo, colors.baytgoDark]} style={styles.saveGradient}>
-            {loading ? (
-              <ActivityIndicator color={colors.white} />
-            ) : (
-              <Text style={styles.saveText}>Simpan</Text>
-            )}
-          </LinearGradient>
-        </TouchableOpacity>
+        <AuthInput label="Nomor WhatsApp" icon="call-outline" value={phone} onChangeText={setPhone} placeholder="08xxxxxxxxxx" keyboardType="phone-pad" />
 
-        <View style={styles.dangerSection}>
+        <Button label="Simpan" onPress={handleSave} loading={loading} style={styles.saveBtn} />
+
+        <Card style={styles.dangerSection} padding={spacing.lg} elevated={false}>
           <Text style={styles.dangerTitle}>Zona berbahaya</Text>
           <Text style={styles.dangerHint}>Hapus akun secara permanen beserta data terkait.</Text>
-          <TouchableOpacity
-            style={styles.dangerBtn}
-            onPress={() => navigation.navigate('DeleteAccount')}
-          >
-            <Text style={styles.dangerBtnText}>Hapus akun</Text>
-          </TouchableOpacity>
-        </View>
+          <PressableScale onPress={() => navigation.navigate('DeleteAccount')} haptic="medium">
+            <View style={styles.dangerBtn}>
+              <Text style={styles.dangerBtnText}>Hapus akun</Text>
+            </View>
+          </PressableScale>
+        </Card>
       </ScrollView>
     </View>
   );
 }
 
 const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: colors.canvas },
-  form: { padding: 20, paddingBottom: 32 },
-  error: {
-    backgroundColor: '#FEF2F2',
-    color: '#B91C1C',
-    padding: 12,
-    borderRadius: 12,
-    fontSize: 13,
-    fontWeight: '600',
-    marginBottom: 16,
-  },
-  verifyBox: {
-    marginTop: -6,
-    marginBottom: 14,
-    padding: 12,
-    borderRadius: 12,
-    backgroundColor: '#FFFBEB',
-    borderWidth: 1,
-    borderColor: '#FDE68A',
-  },
-  verifyText: { fontSize: 13, color: '#92400E', fontWeight: '600' },
-  verifyLink: { marginTop: 6, fontSize: 13, color: colors.baytgo, fontWeight: '800' },
-  saveBtn: { borderRadius: 16, overflow: 'hidden', marginTop: 8 },
-  saveGradient: { paddingVertical: 16, alignItems: 'center' },
-  saveText: { color: colors.white, fontSize: 16, fontWeight: '800' },
-  dangerSection: {
-    marginTop: 32,
-    padding: 16,
-    borderRadius: 16,
-    borderWidth: 1,
-    borderColor: '#FECACA',
-    backgroundColor: '#FFFBFB',
-  },
-  dangerTitle: { fontSize: 15, fontWeight: '900', color: '#991B1B' },
-  dangerHint: { marginTop: 6, fontSize: 13, lineHeight: 20, color: colors.slate600, fontWeight: '500' },
+  container: { flex: 1, backgroundColor: colors.background },
+  form: { padding: layout.screenPadding, paddingBottom: spacing['3xl'] },
+  errorCard: { backgroundColor: colors.errorLight, borderColor: '#FECACA', marginBottom: spacing.lg },
+  errorText: { ...typography.caption, color: colors.error, fontWeight: '600' },
+  verifyBox: { marginTop: -spacing.sm, marginBottom: spacing.md, backgroundColor: colors.warningLight, borderColor: '#FDE68A' },
+  verifyText: { ...typography.caption, color: '#92400E', fontWeight: '600' },
+  verifyLink: { marginTop: spacing.sm, ...typography.caption, color: colors.baytgo, fontFamily: 'PlusJakartaSans_800ExtraBold' },
+  saveBtn: { marginTop: spacing.sm },
+  dangerSection: { marginTop: spacing['3xl'], borderColor: '#FECACA', backgroundColor: '#FFFBFB' },
+  dangerTitle: { ...typography.caption, fontFamily: 'PlusJakartaSans_800ExtraBold', color: '#991B1B' },
+  dangerHint: { marginTop: spacing.sm, ...typography.caption, lineHeight: 20, color: colors.textSecondary, fontWeight: '500' },
   dangerBtn: {
-    marginTop: 14,
-    paddingVertical: 12,
-    borderRadius: 12,
+    marginTop: spacing.md,
+    paddingVertical: spacing.md,
+    borderRadius: radius.sm,
     borderWidth: 1,
     borderColor: '#FCA5A5',
     alignItems: 'center',
-    backgroundColor: colors.white,
+    backgroundColor: colors.card,
   },
-  dangerBtnText: { fontSize: 14, fontWeight: '800', color: '#B91C1C' },
+  dangerBtnText: { ...typography.caption, fontFamily: 'PlusJakartaSans_800ExtraBold', color: colors.error },
 });

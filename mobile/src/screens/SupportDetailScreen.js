@@ -1,80 +1,18 @@
 import React, { useCallback, useEffect, useRef, useState } from 'react';
 import {
-  View,
-  Text,
-  StyleSheet,
-  FlatList,
-  TextInput,
-  TouchableOpacity,
-  ActivityIndicator,
-  KeyboardAvoidingView,
-  Platform,
-  Alert,
-  Image,
-  Linking,
+  View, Text, StyleSheet, TextInput, Alert,
+  KeyboardAvoidingView, Platform,
 } from 'react-native';
 import { useFocusEffect } from '@react-navigation/native';
-import { Ionicons } from '@expo/vector-icons';
+import { Lock, Send } from 'lucide-react-native';
 import ScreenHeader from '../components/ScreenHeader';
 import { fetchSupportTicket, replySupportTicket } from '../api/support';
 import AttachmentPicker from '../components/AttachmentPicker';
 import { useAuth } from '../context/AuthContext';
-import { colors } from '../theme/colors';
-
-function formatTime(iso) {
-  if (!iso) return '';
-  try {
-    const d = new Date(iso);
-    return d.toLocaleDateString('id-ID', {
-      day: 'numeric',
-      month: 'short',
-      hour: '2-digit',
-      minute: '2-digit',
-    });
-  } catch {
-    return '';
-  }
-}
-
-function MessageBubble({ message }) {
-  const isStaff = message.is_staff;
-  const attachments = message.attachments || [];
-
-  return (
-    <View style={[styles.msgRow, isStaff ? styles.msgRowStaff : styles.msgRowMe]}>
-      <View style={[styles.bubble, isStaff ? styles.bubbleStaff : styles.bubbleMe]}>
-        <Text style={[styles.author, isStaff ? styles.authorStaff : styles.authorMe]}>
-          {isStaff ? message.author_name || 'Tim Bayt-GO' : 'Anda'}
-        </Text>
-        <Text style={[styles.msgBody, isStaff ? styles.msgBodyStaff : styles.msgBodyMe]}>
-          {message.body}
-        </Text>
-        {attachments.length > 0 ? (
-          <View style={styles.attachments}>
-            {attachments.map((att, index) => (
-              <TouchableOpacity
-                key={`${att.url}-${index}`}
-                style={styles.attachmentChip}
-                onPress={() => att.url && Linking.openURL(att.url)}
-              >
-                {att.is_image ? (
-                  <Image source={{ uri: att.url }} style={styles.attachmentImage} />
-                ) : (
-                  <Text style={styles.attachmentName} numberOfLines={1}>
-                    {att.original_name || 'Lampiran'}
-                  </Text>
-                )}
-              </TouchableOpacity>
-            ))}
-          </View>
-        ) : null}
-        <Text style={[styles.msgTime, isStaff ? styles.msgTimeStaff : styles.msgTimeMe]}>
-          {formatTime(message.created_at)}
-        </Text>
-      </View>
-    </View>
-  );
-}
+import { Card, EmptyState, ErrorState, PressableScale, SkeletonList } from '../ui';
+import MessageList from '../ui/MessageList';
+import { MessageBubble, TicketInfoCard } from '../features/support/SupportDetailParts';
+import { colors, layout, radius, spacing, typography } from '../theme/tokens';
 
 export default function SupportDetailScreen({ navigation, route }) {
   const { token } = useAuth();
@@ -106,11 +44,7 @@ export default function SupportDetailScreen({ navigation, route }) {
     }
   }, [token, ticketId]);
 
-  useFocusEffect(
-    useCallback(() => {
-      load();
-    }, [load]),
-  );
+  useFocusEffect(useCallback(() => { load(); }, [load]));
 
   useEffect(() => {
     if (messages.length > 0) {
@@ -135,9 +69,17 @@ export default function SupportDetailScreen({ navigation, route }) {
     }
   };
 
-  const subtitle = ticket
-    ? `${ticket.status_label} · ${ticket.category_label}`
-    : '';
+  const subtitle = ticket ? `${ticket.status_label} · ${ticket.category_label}` : '';
+
+  const renderMessage = useCallback(
+    ({ item }) => <MessageBubble message={item} />,
+    [],
+  );
+
+  const listHeader = useCallback(
+    () => <TicketInfoCard ticket={ticket} />,
+    [ticket],
+  );
 
   return (
     <KeyboardAvoidingView
@@ -152,45 +94,27 @@ export default function SupportDetailScreen({ navigation, route }) {
       />
 
       {!canReply && ticket ? (
-        <View style={styles.closedBanner}>
-          <Ionicons name="lock-closed-outline" size={16} color={colors.baytgo} />
+        <Card style={styles.closedBanner} padding={spacing.md} elevated={false}>
+          <Lock size={16} color={colors.baytgo} strokeWidth={2} />
           <Text style={styles.closedText}>Tiket ini tidak dapat dibalas lagi.</Text>
-        </View>
+        </Card>
       ) : null}
 
       {loading ? (
-        <ActivityIndicator color={colors.baytgo} style={styles.loader} />
+        <SkeletonList count={3} style={styles.skeleton} />
       ) : error ? (
-        <View style={styles.errorBox}>
-          <Text style={styles.errorText}>{error}</Text>
-          <TouchableOpacity onPress={load}>
-            <Text style={styles.retry}>Coba lagi</Text>
-          </TouchableOpacity>
-        </View>
+        <ErrorState description={error} onRetry={load} />
       ) : (
-        <FlatList
+        <MessageList
           ref={listRef}
           data={messages}
           keyExtractor={(item) => String(item.id)}
-          renderItem={({ item }) => <MessageBubble message={item} />}
+          renderItem={renderMessage}
+          estimatedItemSize={96}
           contentContainerStyle={styles.list}
-          onContentSizeChange={() => listRef.current?.scrollToEnd({ animated: false })}
-          ListHeaderComponent={
-            ticket ? (
-              <View style={styles.infoCard}>
-                <View style={styles.infoRow}>
-                  <Text style={styles.infoLabel}>Prioritas</Text>
-                  <Text style={styles.infoValue}>{ticket.priority_label}</Text>
-                </View>
-                <View style={styles.infoRow}>
-                  <Text style={styles.infoLabel}>Status</Text>
-                  <Text style={styles.infoValue}>{ticket.status_label}</Text>
-                </View>
-              </View>
-            ) : null
-          }
+          ListHeaderComponent={listHeader}
           ListEmptyComponent={
-            <Text style={styles.empty}>Belum ada pesan pada tiket ini.</Text>
+            <EmptyState variant="chat" title="Belum ada pesan" description="Belum ada pesan pada tiket ini." />
           }
         />
       )}
@@ -209,22 +133,19 @@ export default function SupportDetailScreen({ navigation, route }) {
               value={text}
               onChangeText={setText}
               placeholder="Tulis balasan…"
-              placeholderTextColor={colors.slate400}
+              placeholderTextColor={colors.textMuted}
               editable={!sending}
               multiline
               maxLength={12000}
             />
-            <TouchableOpacity
-              style={[styles.sendBtn, sending && styles.sendBtnDisabled]}
+            <PressableScale
               onPress={handleReply}
               disabled={sending}
+              haptic="medium"
+              style={[styles.sendBtn, sending && styles.sendBtnDisabled]}
             >
-              {sending ? (
-                <ActivityIndicator size="small" color={colors.white} />
-              ) : (
-                <Ionicons name="send" size={18} color={colors.white} />
-              )}
-            </TouchableOpacity>
+              <Send size={18} color={colors.white} strokeWidth={2} />
+            </PressableScale>
           </View>
         </View>
       ) : null}
@@ -233,78 +154,44 @@ export default function SupportDetailScreen({ navigation, route }) {
 }
 
 const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: colors.canvas },
+  container: { flex: 1, backgroundColor: colors.background },
   closedBanner: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 8,
-    backgroundColor: colors.emerald50,
-    paddingHorizontal: 16,
-    paddingVertical: 10,
+    gap: spacing.sm,
+    backgroundColor: colors.successLight,
+    borderRadius: 0,
+    borderWidth: 0,
+    borderBottomWidth: 1,
+    borderBottomColor: colors.border,
   },
-  closedText: { fontSize: 12, fontWeight: '700', color: colors.baytgo },
-  loader: { marginTop: 40 },
-  errorBox: { padding: 24, alignItems: 'center' },
-  errorText: { fontSize: 14, color: colors.slate500, fontWeight: '600', textAlign: 'center' },
-  retry: { marginTop: 10, fontSize: 14, fontWeight: '800', color: colors.baytgo },
-  list: { padding: 16, paddingBottom: 8, flexGrow: 1 },
-  infoCard: {
-    backgroundColor: colors.white,
-    borderRadius: 16,
-    padding: 14,
-    marginBottom: 16,
-    borderWidth: 1,
-    borderColor: colors.slate100,
-    gap: 8,
-  },
-  infoRow: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' },
-  infoLabel: { fontSize: 12, fontWeight: '700', color: colors.slate500 },
-  infoValue: { fontSize: 13, fontWeight: '800', color: colors.baytgo },
-  empty: { textAlign: 'center', color: colors.slate500, fontSize: 14, fontWeight: '600', marginTop: 40, lineHeight: 20 },
-  msgRow: { marginBottom: 10, flexDirection: 'row' },
-  msgRowMe: { justifyContent: 'flex-end' },
-  msgRowStaff: { justifyContent: 'flex-start' },
-  bubble: { maxWidth: '85%', borderRadius: 18, padding: 12 },
-  bubbleMe: { backgroundColor: colors.baytgo, borderBottomRightRadius: 4 },
-  bubbleStaff: { backgroundColor: colors.white, borderWidth: 1, borderColor: colors.slate100, borderBottomLeftRadius: 4 },
-  author: { fontSize: 11, fontWeight: '800', marginBottom: 6 },
-  authorMe: { color: 'rgba(255,255,255,0.85)' },
-  authorStaff: { color: colors.baytgo },
-  msgBody: { fontSize: 14, lineHeight: 20, fontWeight: '500' },
-  msgBodyMe: { color: colors.white },
-  msgBodyStaff: { color: colors.slate900 },
-  msgTime: { marginTop: 6, fontSize: 10, fontWeight: '600' },
-  msgTimeMe: { color: 'rgba(255,255,255,0.75)', textAlign: 'right' },
-  msgTimeStaff: { color: colors.slate400 },
-  attachments: { marginTop: 8, gap: 8 },
-  attachmentChip: { borderRadius: 10, overflow: 'hidden' },
-  attachmentImage: { width: 120, height: 90, borderRadius: 10 },
-  attachmentName: { fontSize: 11, fontWeight: '700', color: colors.baytgo, maxWidth: 160 },
+  closedText: { ...typography.small, color: colors.baytgo, fontWeight: '700' },
+  skeleton: { padding: layout.screenPadding, paddingTop: spacing.lg },
+  list: { padding: layout.screenPadding, paddingBottom: spacing.sm, flexGrow: 1 },
   composer: {
     borderTopWidth: 1,
-    borderTopColor: colors.slate100,
-    backgroundColor: colors.white,
-    paddingHorizontal: 12,
-    paddingTop: 8,
-    paddingBottom: Platform.OS === 'ios' ? 24 : 12,
+    borderTopColor: colors.border,
+    backgroundColor: colors.card,
+    paddingHorizontal: spacing.md,
+    paddingTop: spacing.sm,
+    paddingBottom: Platform.OS === 'ios' ? spacing['2xl'] : spacing.md,
   },
-  inputRow: { flexDirection: 'row', alignItems: 'flex-end', gap: 8 },
+  inputRow: { flexDirection: 'row', alignItems: 'flex-end', gap: spacing.sm },
   input: {
     flex: 1,
     minHeight: 40,
     maxHeight: 120,
-    borderRadius: 14,
-    paddingHorizontal: 14,
-    paddingVertical: 10,
-    backgroundColor: colors.canvas,
-    fontSize: 14,
-    fontWeight: '500',
-    color: colors.slate900,
+    borderRadius: radius.sm,
+    paddingHorizontal: spacing.lg,
+    paddingVertical: spacing.md,
+    backgroundColor: colors.background,
+    ...typography.caption,
+    color: colors.textPrimary,
   },
   sendBtn: {
     width: 44,
     height: 44,
-    borderRadius: 14,
+    borderRadius: radius.sm,
     backgroundColor: colors.baytgo,
     alignItems: 'center',
     justifyContent: 'center',

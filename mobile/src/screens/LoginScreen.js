@@ -1,11 +1,13 @@
 import React, { useState } from 'react';
-import { View, Text, StyleSheet, TouchableOpacity, ActivityIndicator, Alert } from 'react-native';
-import { LinearGradient } from 'expo-linear-gradient';
+import { View, Text, StyleSheet } from 'react-native';
+import { Mail, Lock } from 'lucide-react-native';
 import AuthScreenShell from '../components/AuthScreenShell';
 import AuthInput from '../components/AuthInput';
+import Button from '../ui/Button';
+import PressableScale from '../ui/PressableScale';
 import { useAuth } from '../context/AuthContext';
 import { resetRoot } from '../navigation/rootNavigation';
-import { colors } from '../theme/colors';
+import { colors, radius, spacing, typography } from '../theme/tokens';
 
 export default function LoginScreen({ navigation }) {
   const { login } = useAuth();
@@ -42,7 +44,7 @@ export default function LoginScreen({ navigation }) {
 
       <AuthInput
         label="Email"
-        icon="mail-outline"
+        icon={Mail}
         value={email}
         onChangeText={setEmail}
         placeholder="nama@email.com"
@@ -52,37 +54,28 @@ export default function LoginScreen({ navigation }) {
       />
       <AuthInput
         label="Password"
-        icon="lock-closed-outline"
+        icon={Lock}
         value={password}
         onChangeText={setPassword}
         placeholder="Password Anda"
         secureTextEntry
       />
 
-      <TouchableOpacity style={styles.forgotBtn} onPress={() => navigation.navigate('ForgotPassword')}>
-        <Text style={styles.forgotText}>Lupa password?</Text>
-      </TouchableOpacity>
-
-      <TouchableOpacity
-        style={styles.primaryBtn}
-        onPress={handleLogin}
-        disabled={loading}
-        activeOpacity={0.9}
+      <PressableScale
+        onPress={() => navigation.navigate('ForgotPassword')}
+        haptic="light"
+        style={styles.forgotBtn}
       >
-        <LinearGradient colors={[colors.baytgo, colors.baytgoDark]} style={styles.primaryGradient}>
-          {loading ? (
-            <ActivityIndicator color={colors.white} />
-          ) : (
-            <Text style={styles.primaryText}>Masuk</Text>
-          )}
-        </LinearGradient>
-      </TouchableOpacity>
+        <Text style={styles.forgotText}>Lupa password?</Text>
+      </PressableScale>
+
+      <Button label="Masuk" onPress={handleLogin} loading={loading} />
 
       <View style={styles.footerRow}>
         <Text style={styles.footerText}>Belum punya akun? </Text>
-        <TouchableOpacity onPress={() => navigation.replace('Register')}>
+        <PressableScale onPress={() => navigation.replace('Register')} haptic="light">
           <Text style={styles.footerLink}>Daftar</Text>
-        </TouchableOpacity>
+        </PressableScale>
       </View>
     </AuthScreenShell>
   );
@@ -90,20 +83,17 @@ export default function LoginScreen({ navigation }) {
 
 const styles = StyleSheet.create({
   bannerError: {
-    backgroundColor: '#FEF2F2',
-    color: '#B91C1C',
-    padding: 12,
-    borderRadius: 14,
-    marginBottom: 16,
-    fontSize: 13,
-    fontWeight: '600',
+    backgroundColor: colors.errorLight,
+    color: colors.error,
+    padding: spacing.md,
+    borderRadius: radius.sm,
+    marginBottom: spacing.lg,
+    ...typography.caption,
+    fontFamily: 'PlusJakartaSans_600SemiBold',
   },
-  primaryBtn: { borderRadius: 16, overflow: 'hidden', marginTop: 8 },
-  primaryGradient: { paddingVertical: 16, alignItems: 'center' },
-  primaryText: { color: colors.white, fontSize: 16, fontWeight: '800' },
-  forgotBtn: { alignSelf: 'flex-end', marginTop: 8, marginBottom: 4 },
-  forgotText: { fontSize: 13, fontWeight: '800', color: colors.baytgo },
-  footerRow: { flexDirection: 'row', justifyContent: 'center', marginTop: 24 },
-  footerText: { fontSize: 14, color: colors.slate500, fontWeight: '600' },
-  footerLink: { fontSize: 14, color: colors.baytgo, fontWeight: '800' },
+  forgotBtn: { alignSelf: 'flex-end', marginTop: spacing.sm, marginBottom: spacing.xs },
+  forgotText: { ...typography.caption, fontFamily: 'PlusJakartaSans_700Bold', color: colors.baytgo },
+  footerRow: { flexDirection: 'row', justifyContent: 'center', marginTop: spacing['2xl'] },
+  footerText: { ...typography.caption, color: colors.textSecondary },
+  footerLink: { ...typography.caption, fontFamily: 'PlusJakartaSans_700Bold', color: colors.baytgo },
 });
