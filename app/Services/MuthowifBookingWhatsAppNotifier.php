@@ -7,6 +7,7 @@ use App\Jobs\SendWhatsAppTextJob;
 use App\Models\BookingRefundRequest;
 use App\Models\BookingRescheduleRequest;
 use App\Models\MuthowifBooking;
+use App\Models\MuthowifProfile;
 use App\Models\MuthowifWithdrawal;
 use App\Support\BookingInvoiceUrl;
 use App\Support\IndonesianNumber;
@@ -32,7 +33,7 @@ class MuthowifBookingWhatsAppNotifier
             return;
         }
 
-        $fonnteDial = $this->resolveFonnteDial($profile->phone, $profile->id, $booking->id);
+        $fonnteDial = $this->resolveMuthowifDial($profile, (string) $booking->id);
         if ($fonnteDial === null) {
             return;
         }
@@ -125,7 +126,7 @@ class MuthowifBookingWhatsAppNotifier
             return;
         }
 
-        $fonnteDial = $this->resolveFonnteDial($profile->phone, $profile->id, $booking->id);
+        $fonnteDial = $this->resolveMuthowifDial($profile, (string) $booking->id);
         if ($fonnteDial === null) {
             return;
         }
@@ -625,7 +626,7 @@ class MuthowifBookingWhatsAppNotifier
             return;
         }
 
-        $fonnteDial = $this->resolveFonnteDial($profile->phone, $profile->id, $booking->id);
+        $fonnteDial = $this->resolveMuthowifDial($profile, (string) $booking->id);
         if ($fonnteDial === null) {
             return;
         }
@@ -945,7 +946,7 @@ class MuthowifBookingWhatsAppNotifier
             return;
         }
 
-        $fonnteDial = $this->resolveFonnteDial($profile->phone, $profile->id, (string) $withdrawal->getKey());
+        $fonnteDial = $this->resolveMuthowifDial($profile, (string) $withdrawal->getKey());
         if ($fonnteDial === null) {
             return;
         }
@@ -990,7 +991,7 @@ class MuthowifBookingWhatsAppNotifier
             return;
         }
 
-        $fonnteDial = $this->resolveFonnteDial($profile->phone, $profile->id, $booking->id);
+        $fonnteDial = $this->resolveMuthowifDial($profile, (string) $booking->id);
         if ($fonnteDial === null) {
             return;
         }
@@ -1125,6 +1126,24 @@ class MuthowifBookingWhatsAppNotifier
         } finally {
             app()->setLocale($previous);
         }
+    }
+
+    /**
+     * @return array{target: string, country_calling_code: string}|null
+     */
+    private function resolveMuthowifDial(MuthowifProfile $profile, string $contextId): ?array
+    {
+        $phone = $profile->whatsAppPhone();
+        if ($phone === null) {
+            Log::warning('WhatsApp notify skipped: nomor muthowif kosong atau tidak valid.', [
+                'muthowif_profile_id' => $profile->id,
+                'booking_id' => $contextId,
+            ]);
+
+            return null;
+        }
+
+        return $this->resolveFonnteDial($phone, (string) $profile->id, $contextId);
     }
 
     /**
