@@ -96,8 +96,8 @@ class SupportBookingService
 
     public function dispatchCreated(MuthowifBooking $booking): void
     {
-        NotifyMuthowifOfNewBooking::dispatchAfterResponse((string) $booking->getKey());
-        NotifyCustomerOfBookingSubmitted::dispatchAfterResponse((string) $booking->getKey());
+        NotifyMuthowifOfNewBooking::dispatch((string) $booking->getKey());
+        NotifyCustomerOfBookingSubmitted::dispatch((string) $booking->getKey());
         CustomerBookingBroadcast::afterResponse($booking);
     }
 

@@ -218,8 +218,8 @@ class BookingApiController extends Controller
                 return $booking->fresh();
             });
 
-            NotifyMuthowifOfNewBooking::dispatchAfterResponse((string) $booking->getKey());
-            NotifyCustomerOfBookingSubmitted::dispatchAfterResponse((string) $booking->getKey());
+            NotifyMuthowifOfNewBooking::dispatch((string) $booking->getKey());
+            NotifyCustomerOfBookingSubmitted::dispatch((string) $booking->getKey());
 
             return response()->json([
                 'message' => 'Pemesanan berhasil dibuat',

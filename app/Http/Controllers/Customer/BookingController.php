@@ -748,8 +748,8 @@ class BookingController extends Controller
             throw $e;
         }
 
-        NotifyMuthowifOfNewBooking::dispatchAfterResponse((string) $booking->getKey());
-        NotifyCustomerOfBookingSubmitted::dispatchAfterResponse((string) $booking->getKey());
+        NotifyMuthowifOfNewBooking::dispatch((string) $booking->getKey());
+        NotifyCustomerOfBookingSubmitted::dispatch((string) $booking->getKey());
         $this->forgetCustomerBookingStatusCounts((string) $request->user()->getKey());
         CustomerBookingBroadcast::afterResponse($booking);
 
