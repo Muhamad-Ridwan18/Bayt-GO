@@ -68,6 +68,86 @@ export function ToggleRow({ label, value, onValueChange }) {
   );
 }
 
+function AddonChoiceOption({ label, selected, onPress }) {
+  return (
+    <PressableScale onPress={onPress} haptic="light" style={styles.choiceOptionWrap}>
+      <Card
+        style={[styles.choiceOption, selected && styles.choiceOptionActive]}
+        padding={spacing.md}
+        elevated={false}
+      >
+        <View style={[styles.choiceRadio, selected && styles.choiceRadioActive]}>
+          {selected ? <View style={styles.choiceRadioDot} /> : null}
+        </View>
+        <Text style={[styles.choiceOptionText, selected && styles.choiceOptionTextActive]}>{label}</Text>
+      </Card>
+    </PressableScale>
+  );
+}
+
+export function AddonChoiceGroup({ question, value, options, onChange }) {
+  return (
+    <View style={styles.choiceGroup}>
+      <Text style={styles.choiceQuestion}>{question}</Text>
+      <View style={styles.choiceRow}>
+        {options.map((option) => (
+          <AddonChoiceOption
+            key={option.value}
+            label={option.label}
+            selected={value === option.value}
+            onPress={() => onChange(option.value)}
+          />
+        ))}
+      </View>
+    </View>
+  );
+}
+
+export function BookingAddonChoices({
+  canHotel,
+  canTransport,
+  hotelPricePerDay,
+  transportPriceFlat,
+  withSameHotel,
+  withTransport,
+  onHotelChange,
+  onTransportChange,
+}) {
+  if (!canHotel && !canTransport) return null;
+
+  const hotelAmount = formatIdr(hotelPricePerDay).replace(/^Rp\s?/, '');
+
+  return (
+    <View style={styles.addonChoices}>
+      {canHotel ? (
+        <AddonChoiceGroup
+          question="Apakah Anda menyediakan hotel untuk Muthowif?"
+          value={withSameHotel ? 'no' : 'yes'}
+          onChange={(next) => onHotelChange(next === 'no')}
+          options={[
+            { value: 'yes', label: 'Ya' },
+            { value: 'no', label: `Tidak (+Rp ${hotelAmount}/hari)` },
+          ]}
+        />
+      ) : null}
+      {canTransport ? (
+        <AddonChoiceGroup
+          question="Gunakan layanan penyambutan Muthowif?"
+          value={withTransport ? 'yes' : 'no'}
+          onChange={(next) => onTransportChange(next === 'yes')}
+          options={[
+            {
+              value: 'yes',
+              label: `Ya (+${formatIdr(transportPriceFlat)} biaya perjalanan Muthowif)`,
+            },
+            { value: 'no', label: 'Tidak (Bertemu langsung di hotel)' },
+          ]}
+        />
+      ) : null}
+    </View>
+  );
+}
+
 export function AddOnToggle({ addon, value, onValueChange }) {
   return (
     <ToggleRow
@@ -170,6 +250,42 @@ const styles = StyleSheet.create({
   hint: { marginTop: spacing.sm, ...typography.small, color: colors.textSecondary, fontWeight: '500' },
   switchRow: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginTop: spacing.md },
   switchLabel: { flex: 1, ...typography.caption, fontFamily: 'PlusJakartaSans_700Bold', color: colors.slate700, paddingRight: spacing.md },
+  addonChoices: { marginTop: spacing.md, gap: spacing.lg },
+  choiceGroup: { gap: spacing.sm },
+  choiceQuestion: {
+    ...typography.caption,
+    fontFamily: 'PlusJakartaSans_700Bold',
+    color: colors.slate800,
+    lineHeight: 20,
+  },
+  choiceRow: { gap: spacing.sm },
+  choiceOptionWrap: { width: '100%' },
+  choiceOption: {
+    flexDirection: 'row',
+    alignItems: 'flex-start',
+    gap: spacing.md,
+    borderColor: colors.border,
+  },
+  choiceOptionActive: { borderColor: colors.baytgo, backgroundColor: colors.successLight },
+  choiceRadio: {
+    width: 18,
+    height: 18,
+    borderRadius: 9,
+    borderWidth: 2,
+    borderColor: colors.border,
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginTop: 2,
+  },
+  choiceRadioActive: { borderColor: colors.baytgo },
+  choiceRadioDot: {
+    width: 8,
+    height: 8,
+    borderRadius: 4,
+    backgroundColor: colors.baytgo,
+  },
+  choiceOptionText: { flex: 1, ...typography.small, color: colors.textSecondary, lineHeight: 18 },
+  choiceOptionTextActive: { color: colors.baytgo, fontFamily: 'PlusJakartaSans_700Bold' },
   addOnRow: { flexDirection: 'row', justifyContent: 'space-between', marginBottom: spacing.sm, borderColor: colors.border },
   addOnRowActive: { borderColor: colors.baytgo, backgroundColor: colors.successLight },
   addOnName: { ...typography.caption, fontFamily: 'PlusJakartaSans_700Bold', color: colors.slate800 },

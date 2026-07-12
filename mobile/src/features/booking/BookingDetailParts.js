@@ -2,7 +2,7 @@ import React from 'react';
 import { StyleSheet, Text, View } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import {
-  Bed, Bus, Calendar, CheckCircle2, ChevronRight, Clock, MapPin, MessageCircle, Star, Users,
+  Bed, Bus, Calendar, CheckCircle2, ChevronRight, Clock, MapPin, MessageCircle, Star, Users, XCircle,
 } from 'lucide-react-native';
 import AppImage from '../../ui/AppImage';
 import Card from '../../ui/Card';
@@ -10,7 +10,7 @@ import PressableScale from '../../ui/PressableScale';
 import StatusPill from './StatusPill';
 import { colors, gradients, layout, radius, shadows, spacing, typography } from '../../theme/tokens';
 import { formatIdr } from '../../utils/format';
-import { formatDateRange, serviceTypeLabel } from '../../utils/bookingLabels';
+import { formatDateRange, serviceTypeLabel, muthowifRejectionKindLabel } from '../../utils/bookingLabels';
 
 const STEPS = [
   { key: 'pending', label: 'Menunggu' },
@@ -107,6 +107,43 @@ export function BookingProgressBar({ status }) {
       </View>
       <View style={styles.progressTrack}>
         <View style={[styles.progressFill, { width: `${Math.max(12, (active / (STEPS.length - 1)) * 100)}%` }]} />
+      </View>
+    </Card>
+  );
+}
+
+export function BookingCancellationAlert({ booking, muthowifName }) {
+  const isJadwalFull = booking.muthowif_rejection_kind === 'jadwal_full';
+  const kindLabel = muthowifRejectionKindLabel(
+    booking.muthowif_rejection_kind,
+    booking.muthowif_rejection_kind_label,
+  );
+
+  return (
+    <Card style={styles.cancellationCard} padding={spacing.lg} elevated={false}>
+      <View style={styles.cancellationHead}>
+        <View style={styles.cancellationIcon}>
+          <XCircle size={18} color={colors.error} strokeWidth={2} />
+        </View>
+        <View style={styles.cancellationCopy}>
+          <Text style={styles.cancellationTitle}>
+            {isJadwalFull ? 'Jadwal muthowif penuh' : 'Pesanan ditolak muthowif'}
+          </Text>
+          <Text style={styles.cancellationBody}>
+            {isJadwalFull
+              ? `Mohon maaf — ${muthowifName} tidak dapat menerima pesanan ini karena jadwal pada tanggal tersebut sudah penuh.`
+              : `Pesanan ini ditolak oleh ${muthowifName}.`}
+          </Text>
+          {kindLabel && kindLabel !== '—' ? (
+            <Text style={styles.cancellationKind}>Alasan: {kindLabel}</Text>
+          ) : null}
+          {booking.muthowif_rejection_note ? (
+            <View style={styles.cancellationNoteBox}>
+              <Text style={styles.cancellationNoteLabel}>Catatan muthowif</Text>
+              <Text style={styles.cancellationNote}>{booking.muthowif_rejection_note}</Text>
+            </View>
+          ) : null}
+        </View>
       </View>
     </Card>
   );
@@ -268,6 +305,30 @@ const styles = StyleSheet.create({
   heroFeeHint: { marginTop: spacing.xs, ...typography.small, color: 'rgba(255,255,255,0.72)', fontWeight: '500' },
   progressCard: { marginBottom: spacing.md },
   progressCancelled: { ...typography.caption, color: colors.error, fontFamily: 'PlusJakartaSans_700Bold', textAlign: 'center' },
+  cancellationCard: { marginBottom: spacing.md, borderColor: '#FECACA', backgroundColor: colors.errorLight },
+  cancellationHead: { flexDirection: 'row', alignItems: 'flex-start', gap: spacing.md },
+  cancellationIcon: {
+    width: 34,
+    height: 34,
+    borderRadius: radius.full,
+    backgroundColor: '#FEE2E2',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  cancellationCopy: { flex: 1 },
+  cancellationTitle: { ...typography.caption, fontFamily: 'PlusJakartaSans_800ExtraBold', color: '#991B1B' },
+  cancellationBody: { marginTop: spacing.xs, ...typography.small, color: '#7F1D1D', lineHeight: 18 },
+  cancellationKind: { marginTop: spacing.sm, ...typography.small, fontFamily: 'PlusJakartaSans_700Bold', color: '#991B1B' },
+  cancellationNoteBox: {
+    marginTop: spacing.md,
+    borderRadius: radius.sm,
+    borderWidth: 1,
+    borderColor: '#FECACA',
+    backgroundColor: 'rgba(255,255,255,0.75)',
+    padding: spacing.md,
+  },
+  cancellationNoteLabel: { ...typography.label, color: '#991B1B', textTransform: 'uppercase' },
+  cancellationNote: { marginTop: spacing.xs, ...typography.small, color: '#7F1D1D', lineHeight: 18 },
   progressRow: { flexDirection: 'row', justifyContent: 'space-between', gap: spacing.xs },
   progressStep: { flex: 1, alignItems: 'center' },
   progressDot: {

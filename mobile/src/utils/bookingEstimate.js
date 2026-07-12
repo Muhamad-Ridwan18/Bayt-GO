@@ -55,13 +55,13 @@ export function estimateBookingPricing({
   if (withSameHotel && hotelPerDay > 0) {
     const amount = round2(nights * hotelPerDay);
     if (amount > 0) {
-      lines.push({ key: 'same_hotel', label: 'Hotel sama', amount });
+      lines.push({ key: 'same_hotel', label: 'Akomodasi Muthowif (hotel)', amount });
     }
   }
 
   const transportFlat = Number(service.transport_price_flat || 0);
   if (withTransport && transportFlat > 0) {
-    lines.push({ key: 'transport', label: 'Transport', amount: round2(transportFlat) });
+    lines.push({ key: 'transport', label: 'Layanan penyambutan Muthowif', amount: round2(transportFlat) });
   }
 
   const base = round2(lines.reduce((sum, line) => sum + line.amount, 0));

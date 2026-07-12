@@ -7,10 +7,9 @@ import { createBooking } from '../api/bookings';
 import { useAuth } from '../context/AuthContext';
 import { Button, Card } from '../ui';
 import {
-  AddOnToggle, BookingEstimateCard, FormError, PilgrimCounter, SectionTitle, ServiceOption, StepBadges, ToggleRow,
+  AddOnToggle, BookingAddonChoices, BookingEstimateCard, FormError, PilgrimCounter, SectionTitle, ServiceOption, StepBadges,
 } from '../features/booking/BookingFormParts';
 import { colors, layout, spacing, typography } from '../theme/tokens';
-import { formatIdr } from '../utils/format';
 import { estimateBookingPricing } from '../utils/bookingEstimate';
 import { navigateToSuccess } from '../navigation/rootNavigation';
 
@@ -206,21 +205,16 @@ export default function BookingFormScreen({ navigation, route }) {
             <SectionTitle>Jumlah jamaah</SectionTitle>
             <PilgrimCounter value={pilgrimCount} minPax={minPax} maxPax={maxPax} onChange={setPilgrimCount} />
 
-            {canHotel ? (
-              <ToggleRow
-                label={`Hotel sama (+${formatIdr(activeService.same_hotel_price_per_day)}/hari)`}
-                value={withSameHotel}
-                onValueChange={setWithSameHotel}
-              />
-            ) : null}
-
-            {canTransport ? (
-              <ToggleRow
-                label={`Transport (+${formatIdr(activeService.transport_price_flat)})`}
-                value={withTransport}
-                onValueChange={setWithTransport}
-              />
-            ) : null}
+            <BookingAddonChoices
+              canHotel={canHotel}
+              canTransport={canTransport}
+              hotelPricePerDay={activeService?.same_hotel_price_per_day || 0}
+              transportPriceFlat={activeService?.transport_price_flat || 0}
+              withSameHotel={withSameHotel}
+              withTransport={withTransport}
+              onHotelChange={setWithSameHotel}
+              onTransportChange={setWithTransport}
+            />
 
             {addOns.length > 0 ? (
               <>

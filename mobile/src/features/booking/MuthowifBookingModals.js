@@ -1,14 +1,15 @@
 import React from 'react';
 import { Modal, StyleSheet, Text, TextInput, View } from 'react-native';
+import FilterSheet from '../../ui/FilterSheet';
 import Button from '../../ui/Button';
 import PressableScale from '../../ui/PressableScale';
 import { colors, radius, spacing, typography } from '../../theme/tokens';
 
 const REJECTION_OPTIONS = [
-  { value: 'jadwal_full', label: 'Jadwal penuh' },
-  { value: 'illness', label: 'Sakit' },
+  { value: 'jadwal_full', label: 'Jadwal muthowif penuh' },
+  { value: 'illness', label: 'Sakit / berhalangan' },
   { value: 'force_majeure', label: 'Force majeure' },
-  { value: 'other', label: 'Lainnya' },
+  { value: 'other', label: 'Alasan lain' },
 ];
 
 export { REJECTION_OPTIONS };
@@ -23,41 +24,43 @@ export function RejectBookingModal({
   onSubmit,
 }) {
   return (
-    <Modal visible={visible} transparent animationType="fade" onRequestClose={onClose}>
-      <View style={styles.backdrop}>
-        <View style={styles.card}>
-          <Text style={styles.title}>Tolak booking</Text>
-          <Text style={styles.label}>Alasan penolakan</Text>
-          <View style={styles.chipRow}>
-            {REJECTION_OPTIONS.map((opt) => (
-              <PressableScale
-                key={opt.value}
-                onPress={() => onChangeKind(opt.value)}
-                style={[styles.chip, rejectKind === opt.value && styles.chipActive]}
-              >
-                <Text style={[styles.chipText, rejectKind === opt.value && styles.chipTextActive]}>
-                  {opt.label}
-                </Text>
-              </PressableScale>
-            ))}
-          </View>
-          <Text style={styles.label}>Catatan (opsional)</Text>
-          <TextInput
-            style={styles.input}
-            value={rejectNote}
-            onChangeText={onChangeNote}
-            placeholder="Jelaskan alasan penolakan kepada jamaah"
-            placeholderTextColor={colors.textMuted}
-            multiline
-            maxLength={2000}
-          />
-          <View style={styles.actions}>
-            <View style={styles.actionBtn}><Button label="Batal" onPress={onClose} variant="secondary" fullWidth={false} /></View>
-            <View style={styles.actionBtn}><Button label="Tolak booking" onPress={onSubmit} variant="danger" fullWidth={false} /></View>
-          </View>
-        </View>
+    <FilterSheet
+      visible={visible}
+      onClose={onClose}
+      title="Tolak booking"
+      subtitle="Pilih alasan penolakan sebelum mengirim ke jamaah"
+      footer={(
+        <>
+          <Button label="Tolak booking" onPress={onSubmit} variant="danger" />
+          <Button label="Batal" onPress={onClose} variant="secondary" />
+        </>
+      )}
+    >
+      <Text style={styles.label}>Alasan penolakan</Text>
+      <View style={styles.chipRow}>
+        {REJECTION_OPTIONS.map((opt) => (
+          <PressableScale
+            key={opt.value}
+            onPress={() => onChangeKind(opt.value)}
+            style={[styles.chip, rejectKind === opt.value && styles.chipActive]}
+          >
+            <Text style={[styles.chipText, rejectKind === opt.value && styles.chipTextActive]}>
+              {opt.label}
+            </Text>
+          </PressableScale>
+        ))}
       </View>
-    </Modal>
+      <Text style={styles.label}>Catatan untuk jamaah (opsional)</Text>
+      <TextInput
+        style={styles.input}
+        value={rejectNote}
+        onChangeText={onChangeNote}
+        placeholder="Jelaskan alasan penolakan kepada jamaah"
+        placeholderTextColor={colors.textMuted}
+        multiline
+        maxLength={2000}
+      />
+    </FilterSheet>
   );
 }
 
@@ -114,10 +117,11 @@ const styles = StyleSheet.create({
   },
   title: { ...typography.subtitle, color: colors.baytgo },
   label: {
-    marginTop: spacing.lg,
+    marginTop: spacing.md,
     marginBottom: spacing.sm,
     ...typography.small,
     color: colors.textSecondary,
+    fontFamily: 'PlusJakartaSans_700Bold',
   },
   chipRow: { flexDirection: 'row', flexWrap: 'wrap', gap: spacing.sm },
   chip: {
@@ -130,9 +134,9 @@ const styles = StyleSheet.create({
   },
   chipActive: { backgroundColor: colors.baytgo, borderColor: colors.baytgo },
   chipText: { ...typography.small, color: colors.textSecondary },
-  chipTextActive: { color: colors.white },
+  chipTextActive: { color: colors.white, fontFamily: 'PlusJakartaSans_700Bold' },
   input: {
-    minHeight: 88,
+    minHeight: 96,
     borderRadius: radius.sm,
     borderWidth: 1,
     borderColor: colors.border,

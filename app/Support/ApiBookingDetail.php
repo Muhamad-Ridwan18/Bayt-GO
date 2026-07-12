@@ -181,6 +181,9 @@ final class ApiBookingDetail
             'documents' => self::documents($booking),
             'is_support' => $booking->isSupport(),
             'completion_requested_at' => $booking->completion_requested_at?->toIso8601String(),
+            'muthowif_rejection_kind' => $booking->muthowif_rejection_kind?->value,
+            'muthowif_rejection_kind_label' => $booking->muthowif_rejection_kind?->label(),
+            'muthowif_rejection_note' => $booking->muthowif_rejection_note,
         ];
 
         if ($forMuthowif) {

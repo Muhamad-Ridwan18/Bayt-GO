@@ -1,5 +1,5 @@
 import React, { useCallback, useState } from 'react';
-import { StyleSheet, Text, View, ScrollView, RefreshControl, Alert, ActivityIndicator } from 'react-native';
+import { StyleSheet, Text, View, ScrollView, RefreshControl, Alert } from 'react-native';
 import { useFocusEffect } from '@react-navigation/native';
 import {
   User, Briefcase, Calendar, Clock, Users, Bed, Car, CheckCircle, XCircle, MessagesSquare,
@@ -12,9 +12,11 @@ import {
   approveReschedule, rejectReschedule, approveSupportCompletion, rejectSupportCompletion,
 } from '../api/muthowifBookings';
 import { useAuth } from '../context/AuthContext';
+import { useHideTabBarOnFocus } from '../hooks/useHideTabBarOnFocus';
 import Button from '../ui/Button';
 import Card from '../ui/Card';
 import ErrorState from '../ui/ErrorState';
+import StickyFooter from '../ui/StickyFooter';
 import { SkeletonList } from '../ui/Skeleton';
 import BookingSection from '../features/booking/BookingSection';
 import StatusPill from '../features/booking/StatusPill';
@@ -86,6 +88,7 @@ export default function MuthowifBookingDetailScreen({ navigation, route }) {
   }, [token, bookingId]);
 
   useFocusEffect(useCallback(() => { load(); }, [load]));
+  useHideTabBarOnFocus(navigation);
 
   const handleConfirm = () => {
     Alert.alert('Setujui booking?', 'Jamaah akan diminta membayar setelah disetujui.', [
@@ -109,6 +112,10 @@ export default function MuthowifBookingDetailScreen({ navigation, route }) {
   };
 
   const submitReject = async () => {
+    if (!rejectKind) {
+      notifyError('Pilih alasan penolakan.');
+      return;
+    }
     setRejectModalOpen(false);
     setActing(true);
     try {
@@ -212,6 +219,7 @@ export default function MuthowifBookingDetailScreen({ navigation, route }) {
   const pendingReschedule = (booking.reschedule_requests || []).find((r) => r.status === 'pending');
   const showSupportCompletion = booking.is_support && booking.completion_requested_at && booking.status !== 'completed';
   const nights = billingNights(booking.starts_on, booking.ends_on);
+  const isPendingDecision = booking.status === 'pending';
 
   return (
     <View style={styles.container}>
@@ -222,7 +230,7 @@ export default function MuthowifBookingDetailScreen({ navigation, route }) {
       />
 
       <ScrollView
-        contentContainerStyle={styles.scroll}
+        contentContainerStyle={[styles.scroll, isPendingDecision && styles.scrollWithFooter]}
         showsVerticalScrollIndicator={false}
         refreshControl={
           <RefreshControl refreshing={refreshing} onRefresh={() => { setRefreshing(true); load(true); }} tintColor={colors.baytgo} />
@@ -297,14 +305,11 @@ export default function MuthowifBookingDetailScreen({ navigation, route }) {
 
         <BookingDocumentGallery token={token} bookingId={bookingId} documents={booking.documents || []} title="Dokumen jamaah" />
 
-        {booking.status === 'pending' ? (
+        {isPendingDecision ? (
           <BookingSection title="Keputusan booking" style={styles.decisionCard}>
-            <Text style={styles.decisionSub}>Tinjau dokumen jamaah lalu setujui atau tolak permintaan ini.</Text>
-            <Button label="Setujui booking" icon={<CheckCircle size={18} color={colors.white} strokeWidth={2} />}
-              onPress={handleConfirm} disabled={acting} />
-            <Button label="Tolak booking" variant="danger" icon={<XCircle size={18} color={colors.error} strokeWidth={2} />}
-              onPress={() => { setRejectKind(REJECTION_OPTIONS[0].value); setRejectNote(''); setRejectModalOpen(true); }}
-              disabled={acting} />
+            <Text style={styles.decisionSub}>
+              Tinjau dokumen jamaah lalu setujui atau tolak permintaan ini.
+            </Text>
           </BookingSection>
         ) : null}
 
@@ -313,9 +318,32 @@ export default function MuthowifBookingDetailScreen({ navigation, route }) {
             icon={<MessagesSquare size={18} color={colors.baytgo} strokeWidth={2} />}
             onPress={openChat} />
         ) : null}
-
-        {acting ? <ActivityIndicator color={colors.baytgo} style={styles.acting} /> : null}
       </ScrollView>
+
+      {isPendingDecision ? (
+        <StickyFooter>
+          <View style={styles.decisionFooter}>
+            <Button
+              label="Setujui booking"
+              icon={<CheckCircle size={18} color={colors.white} strokeWidth={2} />}
+              onPress={handleConfirm}
+              loading={acting}
+              disabled={acting}
+            />
+            <Button
+              label="Tolak booking"
+              variant="danger"
+              icon={<XCircle size={18} color={colors.error} strokeWidth={2} />}
+              onPress={() => {
+                setRejectKind(REJECTION_OPTIONS[0].value);
+                setRejectNote('');
+                setRejectModalOpen(true);
+              }}
+              disabled={acting}
+            />
+          </View>
+        </StickyFooter>
+      ) : null}
 
       <RejectBookingModal
         visible={rejectModalOpen}
@@ -342,6 +370,7 @@ export default function MuthowifBookingDetailScreen({ navigation, route }) {
 const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: colors.background },
   scroll: { padding: layout.screenPadding, paddingBottom: spacing['4xl'] },
+  scrollWithFooter: { paddingBottom: 168 },
   skeleton: { padding: layout.screenPadding },
   hero: { marginBottom: spacing.md },
   heroTop: { flexDirection: 'row', alignItems: 'center', gap: spacing.lg },
@@ -379,6 +408,6 @@ const styles = StyleSheet.create({
   actionRow: { flexDirection: 'row', gap: spacing.md, marginTop: spacing.md },
   actionBtn: { flex: 1 },
   decisionCard: { borderColor: '#DDD6FE' },
-  decisionSub: { ...typography.small, color: colors.textSecondary, lineHeight: 17, marginBottom: spacing.md },
-  acting: { marginTop: spacing.lg },
+  decisionSub: { ...typography.small, color: colors.textSecondary, lineHeight: 17 },
+  decisionFooter: { width: '100%', gap: spacing.sm },
 });

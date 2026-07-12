@@ -25,6 +25,7 @@ import {
   BookingActionList,
   BookingDetailHero,
   BookingProgressBar,
+  BookingCancellationAlert,
   HistoryItemCard,
   ReviewCard,
   TripSummaryGrid,
@@ -37,6 +38,7 @@ import {
   needsPayment, canCancelBooking, canCompleteBooking, canReviewBooking, canViewInvoice,
   canRequestRefund, canRequestReschedule, hasPendingReschedule, canRequestSupportCompletion,
   hasSupportCompletionPending, changeRequestStatusLabel, billingNights, canOpenBookingChat,
+  hasMuthowifRejectionInfo,
 } from '../utils/bookingLabels';
 import { CustomerPricingBreakdown, customerPayableAmount } from '../components/BookingPricingBreakdown';
 
@@ -298,6 +300,10 @@ export default function BookingDetailScreen({ navigation, route }) {
         />
 
         <BookingProgressBar status={booking.status} />
+
+        {booking.status === 'cancelled' && hasMuthowifRejectionInfo(booking) ? (
+          <BookingCancellationAlert booking={booking} muthowifName={muthowifName} />
+        ) : null}
 
         {hasPendingReschedule(booking) ? (
           <View style={styles.pendingBanner}>

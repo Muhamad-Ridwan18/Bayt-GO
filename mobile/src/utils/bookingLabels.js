@@ -108,7 +108,25 @@ export function canOpenBookingChat(booking) {
   return ['confirmed', 'in_progress', 'completed'].includes(booking.status);
 }
 
-export function changeRequestStatusLabel(status) {
+const REJECTION_KIND_LABELS = {
+  jadwal_full: 'Jadwal muthowif penuh',
+  illness: 'Sakit / berhalangan',
+  force_majeure: 'Force majeure',
+  other: 'Alasan lain',
+};
+
+export function muthowifRejectionKindLabel(kind, apiLabel) {
+  if (apiLabel) return apiLabel;
+  return REJECTION_KIND_LABELS[kind] || kind || '—';
+}
+
+export function hasMuthowifRejectionInfo(booking) {
+  return Boolean(
+    booking?.muthowif_rejection_kind
+    || booking?.muthowif_rejection_kind_label
+    || booking?.muthowif_rejection_note,
+  );
+}
   const map = {
     pending: 'Menunggu',
     approved: 'Disetujui',
