@@ -1,5 +1,5 @@
 import React from 'react';
-import { StyleSheet, Switch, Text, View } from 'react-native';
+import { StyleSheet, Switch, Text, TextInput, View } from 'react-native';
 import { Minus, Plus } from 'lucide-react-native';
 import { Card, PressableScale } from '../../ui';
 import { colors, radius, spacing, typography } from '../../theme/tokens';
@@ -35,6 +35,28 @@ export function StepBadges({ step }) {
 
 export function PilgrimCounter({ value, minPax, maxPax, onChange }) {
   const count = parseInt(value, 10) || minPax;
+
+  const handleChangeText = (text) => {
+    const digits = text.replace(/\D/g, '');
+    if (!digits) {
+      onChange('');
+      return;
+    }
+    const num = parseInt(digits, 10);
+    onChange(String(Math.min(maxPax, num)));
+  };
+
+  const handleBlur = () => {
+    const num = parseInt(value, 10);
+    if (!value || Number.isNaN(num) || num < minPax) {
+      onChange(String(minPax));
+      return;
+    }
+    if (num > maxPax) {
+      onChange(String(maxPax));
+    }
+  };
+
   return (
     <>
       <View style={styles.counterRow}>
@@ -45,7 +67,17 @@ export function PilgrimCounter({ value, minPax, maxPax, onChange }) {
         >
           <Minus size={20} color={colors.baytgo} strokeWidth={2.5} />
         </PressableScale>
-        <Text style={styles.counterValue}>{value}</Text>
+        <TextInput
+          style={styles.counterInput}
+          value={value}
+          onChangeText={handleChangeText}
+          onBlur={handleBlur}
+          keyboardType="number-pad"
+          maxLength={String(maxPax).length}
+          selectTextOnFocus
+          placeholder={String(minPax)}
+          placeholderTextColor={colors.textMuted}
+        />
         <PressableScale
           onPress={() => onChange(String(Math.min(maxPax, count + 1)))}
           haptic="light"
@@ -54,7 +86,7 @@ export function PilgrimCounter({ value, minPax, maxPax, onChange }) {
           <Plus size={20} color={colors.baytgo} strokeWidth={2.5} />
         </PressableScale>
       </View>
-      <Text style={styles.hint}>Min {minPax}, max {maxPax} jamaah</Text>
+      <Text style={styles.hint}>Min {minPax}, max {maxPax} jamaah — bisa ketik langsung</Text>
     </>
   );
 }
@@ -246,7 +278,19 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     borderColor: colors.border,
   },
-  counterValue: { ...typography.title, fontSize: 24, color: colors.textPrimary, minWidth: 40, textAlign: 'center' },
+  counterInput: {
+    minWidth: 72,
+    paddingHorizontal: spacing.md,
+    paddingVertical: spacing.sm,
+    borderRadius: radius.sm,
+    borderWidth: 1,
+    borderColor: colors.border,
+    backgroundColor: colors.card,
+    ...typography.title,
+    fontSize: 24,
+    color: colors.textPrimary,
+    textAlign: 'center',
+  },
   hint: { marginTop: spacing.sm, ...typography.small, color: colors.textSecondary, fontWeight: '500' },
   switchRow: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginTop: spacing.md },
   switchLabel: { flex: 1, ...typography.caption, fontFamily: 'PlusJakartaSans_700Bold', color: colors.slate700, paddingRight: spacing.md },
