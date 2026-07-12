@@ -9,14 +9,13 @@ use App\Enums\MuthowifVerificationStatus;
 use App\Http\Controllers\Controller;
 use App\Jobs\NotifyAdminsOfRefundRequestSubmitted;
 use App\Jobs\NotifyCustomerOfRescheduleSubmitted;
-use App\Jobs\NotifyCustomerOfBookingSubmitted;
-use App\Jobs\NotifyMuthowifOfNewBooking;
 use App\Jobs\NotifyMuthowifOfRescheduleRequest;
 use App\Models\BookingPayment;
 use App\Models\BookingRescheduleRequest;
 use App\Models\BookingReview;
 use App\Models\MuthowifBooking;
 use App\Models\MuthowifProfile;
+use App\Services\BookingNotificationDispatcher;
 use App\Services\BookingCompletionService;
 use App\Services\BookingOrderCodeService;
 use App\Services\BookingPricingService;
@@ -218,8 +217,7 @@ class BookingApiController extends Controller
                 return $booking->fresh();
             });
 
-            NotifyMuthowifOfNewBooking::dispatch((string) $booking->getKey());
-            NotifyCustomerOfBookingSubmitted::dispatch((string) $booking->getKey());
+            app(BookingNotificationDispatcher::class)->dispatchCreated($booking);
 
             return response()->json([
                 'message' => 'Pemesanan berhasil dibuat',

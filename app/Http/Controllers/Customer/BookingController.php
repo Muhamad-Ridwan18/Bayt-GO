@@ -10,8 +10,6 @@ use App\Enums\PaymentStatus;
 use App\Http\Controllers\Controller;
 use App\Jobs\NotifyAdminsOfRefundRequestSubmitted;
 use App\Jobs\NotifyCustomerOfRescheduleSubmitted;
-use App\Jobs\NotifyCustomerOfBookingSubmitted;
-use App\Jobs\NotifyMuthowifOfNewBooking;
 use App\Jobs\NotifyMuthowifOfRescheduleRequest;
 use App\Models\BookingPayment;
 use App\Models\BookingRescheduleRequest;
@@ -23,6 +21,7 @@ use App\Models\MuthowifServiceAddOn;
 use App\Payments\Contracts\SnapPaymentProviderInterface;
 use App\Services\BookingCompletionService;
 use App\Services\BookingDocumentStore;
+use App\Services\BookingNotificationDispatcher;
 use App\Services\BookingOrderCodeService;
 use App\Services\BookingPricingService;
 use App\Services\BookingRefundExecutor;
@@ -748,8 +747,7 @@ class BookingController extends Controller
             throw $e;
         }
 
-        NotifyMuthowifOfNewBooking::dispatch((string) $booking->getKey());
-        NotifyCustomerOfBookingSubmitted::dispatch((string) $booking->getKey());
+        app(BookingNotificationDispatcher::class)->dispatchCreated($booking);
         $this->forgetCustomerBookingStatusCounts((string) $request->user()->getKey());
         CustomerBookingBroadcast::afterResponse($booking);
 
