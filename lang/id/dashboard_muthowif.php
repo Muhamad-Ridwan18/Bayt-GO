@@ -144,4 +144,7 @@ return [
     'weekly_empty_body' => 'Anda memiliki waktu kosong.',
     'qa_chat_title' => 'Chat',
     'calendar_view_monthly' => 'Lihat Bulanan',
+    'work_location_alert_title' => 'Lokasi kerja belum diisi',
+    'work_location_alert_body' => 'Lengkapi lokasi kerja saat ini agar jamaah tahu wilayah tugas Anda di profil publik.',
+    'work_location_alert_cta' => 'Isi lokasi kerja',
 ];

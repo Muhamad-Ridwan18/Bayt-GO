@@ -144,4 +144,7 @@ return [
     'weekly_empty_body' => 'You have free time this week.',
     'qa_chat_title' => 'Chat',
     'calendar_view_monthly' => 'Monthly view',
+    'work_location_alert_title' => 'Work location not set',
+    'work_location_alert_body' => 'Add your current work location so pilgrims know where you are serving on your public profile.',
+    'work_location_alert_cta' => 'Add work location',
 ];

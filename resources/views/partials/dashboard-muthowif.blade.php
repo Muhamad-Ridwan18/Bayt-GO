@@ -121,6 +121,8 @@
 
     $recentActivities = $recentActivities->sortByDesc(fn ($item) => $item['time']?->timestamp ?? 0)->take(6)->values();
 
+    $missingWorkLocation = ! filled(trim((string) ($mp->work_location ?? '')));
+
 @endphp
 
 <div
@@ -128,6 +130,19 @@
     x-data="{ showServicePrompt: {{ $hasServices ? 'false' : 'true' }} }"
     x-init="if (showServicePrompt) { $nextTick(() => { $refs.serviceBtn?.focus(); }); }"
 >
+    @if ($missingWorkLocation)
+        <x-ui.alert type="warning" class="mb-6">
+            <div class="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+                <div>
+                    <p class="font-semibold">{{ __('dashboard_muthowif.work_location_alert_title') }}</p>
+                    <p class="mt-1 text-sm opacity-90">{{ __('dashboard_muthowif.work_location_alert_body') }}</p>
+                </div>
+                <a href="{{ route('profile.edit') }}#public_work_location" class="inline-flex shrink-0 items-center justify-center rounded-xl bg-amber-900/90 px-4 py-2.5 text-sm font-semibold text-white transition hover:bg-amber-950">
+                    {{ __('dashboard_muthowif.work_location_alert_cta') }}
+                </a>
+            </div>
+        </x-ui.alert>
+    @endif
     <div
         x-show="showServicePrompt"
         x-cloak
