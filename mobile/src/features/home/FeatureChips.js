@@ -1,6 +1,6 @@
 import React from 'react';
 import { Dimensions, ScrollView, StyleSheet, Text, View } from 'react-native';
-import { Crown, Heart, User, Users } from 'lucide-react-native';
+import { User, Users } from 'lucide-react-native';
 import { PressableScale } from '../../ui';
 import { colors, layout, radius, spacing, typography } from '../../theme/tokens';
 
@@ -9,7 +9,7 @@ const { width: SCREEN_W } = Dimensions.get('window');
 const SERVICES = [
   {
     id: 'private',
-    title: 'Private Muthowif',
+    title: 'Jamaah Private',
     sub: 'Pendamping eksklusif',
     Icon: User,
     bg: '#ECFDF5',
@@ -17,28 +17,11 @@ const SERVICES = [
   },
   {
     id: 'group',
-    title: 'Group Jamaah',
+    title: 'Jamaah Group',
     sub: 'Untuk rombongan',
     Icon: Users,
     bg: '#EFF6FF',
     color: '#2563EB',
-  },
-  {
-    id: 'vip',
-    title: 'VIP Experience',
-    sub: 'Layanan premium',
-    Icon: Crown,
-    bg: '#FEF9E8',
-    color: '#B8954D',
-  },
-  {
-    id: 'women',
-    title: 'Wanita Only',
-    sub: 'Khusus jamaah wanita',
-    Icon: Heart,
-    bg: '#FDF2F8',
-    color: '#DB2777',
-    badge: 'New',
   },
 ];
 

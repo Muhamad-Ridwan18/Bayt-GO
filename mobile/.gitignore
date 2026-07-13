@@ -35,6 +35,8 @@ yarn-error.*
 
 # dev tunnel binaries (downloaded locally)
 .tools/
+.expo-connect.html
+.expo-tunnel-url
 
 # typescript
 *.tsbuildinfo

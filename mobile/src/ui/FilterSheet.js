@@ -1,4 +1,3 @@
-import React from 'react';
 import {
   Modal,
   Pressable,
@@ -25,32 +24,38 @@ export default function FilterSheet({
 
   return (
     <Modal visible={visible} transparent animationType="slide" onRequestClose={onClose}>
-      <Pressable style={styles.backdrop} onPress={onClose} />
-      <KeyboardAvoidingView
-        behavior={Platform.OS === 'ios' ? 'padding' : undefined}
-        style={styles.keyboard}
-      >
-        <View style={[styles.sheet, { paddingBottom: Math.max(insets.bottom, spacing.lg) }]}>
-          <View style={styles.handle} />
-          <View style={styles.header}>
-            <View style={styles.headerCopy}>
-              <Text style={styles.title}>{title}</Text>
-              {subtitle ? <Text style={styles.subtitle}>{subtitle}</Text> : null}
+      <View style={styles.root}>
+        <Pressable style={styles.backdrop} onPress={onClose} />
+        <KeyboardAvoidingView
+          behavior={Platform.OS === 'ios' ? 'padding' : undefined}
+          style={styles.keyboard}
+        >
+          <View style={[styles.sheet, { paddingBottom: Math.max(insets.bottom, spacing.lg) }]}>
+            <View style={styles.handle} />
+            <View style={styles.header}>
+              <View style={styles.headerCopy}>
+                <Text style={styles.title}>{title}</Text>
+                {subtitle ? <Text style={styles.subtitle}>{subtitle}</Text> : null}
+              </View>
+              <PressableScale onPress={onClose} haptic="light" style={styles.closeBtn}>
+                <X size={20} color={colors.textSecondary} strokeWidth={2} />
+              </PressableScale>
             </View>
-            <PressableScale onPress={onClose} haptic="light" style={styles.closeBtn}>
-              <X size={20} color={colors.textSecondary} strokeWidth={2} />
-            </PressableScale>
+            <View style={styles.body}>{children}</View>
+            {footer ? <View style={styles.footer}>{footer}</View> : null}
           </View>
-          <View style={styles.body}>{children}</View>
-          {footer ? <View style={styles.footer}>{footer}</View> : null}
-        </View>
-      </KeyboardAvoidingView>
+        </KeyboardAvoidingView>
+      </View>
     </Modal>
   );
 }
 
 const styles = StyleSheet.create({
-  backdrop: { flex: 1, backgroundColor: 'rgba(15,23,42,0.45)' },
+  root: { flex: 1, justifyContent: 'flex-end' },
+  backdrop: {
+    ...StyleSheet.absoluteFillObject,
+    backgroundColor: 'rgba(15,23,42,0.45)',
+  },
   keyboard: { justifyContent: 'flex-end' },
   sheet: {
     backgroundColor: colors.card,

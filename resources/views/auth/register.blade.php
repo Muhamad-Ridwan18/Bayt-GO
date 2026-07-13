@@ -347,6 +347,13 @@
             </div>
 
             <div>
+                <x-input-label for="work_location" :value="__('profile_public.work_location')" required />
+                <x-text-input id="work_location" class="block mt-1 w-full border-slate-300" type="text" name="work_location" :value="old('work_location')" maxlength="255" autocomplete="address-level2" :placeholder="__('profile_public.work_location_placeholder')" />
+                <p class="mt-1 text-xs text-slate-500">{{ __('profile_public.work_location_hint') }}</p>
+                <x-input-error :messages="$errors->get('work_location')" class="mt-2" />
+            </div>
+
+            <div>
                 <x-input-label for="nik" value="NIK (16 digit)" required />
                 <x-text-input id="nik" class="block mt-1 w-full border-slate-300" type="text" name="nik" inputmode="numeric" maxlength="16" :value="old('nik')" placeholder="3201xxxxxxxxxxxx" />
                 <x-input-error :messages="$errors->get('nik')" class="mt-2" />

@@ -2,7 +2,14 @@ import React from 'react';
 import { ActivityIndicator, StyleSheet, Text, View } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import PressableScale from './PressableScale';
-import { colors, gradients, radius, spacing, typography } from '../theme/tokens';
+import { colors, gradients, layout, radius, spacing, typography } from '../theme/tokens';
+
+const BUTTON_SHELL = {
+  minHeight: layout.minTouch,
+  paddingVertical: spacing.lg,
+  paddingHorizontal: spacing['2xl'],
+  justifyContent: 'center',
+};
 
 export default function Button({
   label,
@@ -88,20 +95,28 @@ const styles = StyleSheet.create({
     backgroundColor: colors.surface,
     borderWidth: 1,
     borderColor: colors.border,
+    ...BUTTON_SHELL,
   },
-  baseSm: { borderRadius: radius.sm },
+  baseSm: {
+    borderRadius: radius.sm,
+    minHeight: 40,
+    paddingVertical: spacing.md,
+    paddingHorizontal: spacing.lg,
+    justifyContent: 'center',
+  },
   secondary: { backgroundColor: colors.white },
   ghost: { backgroundColor: 'transparent', borderColor: 'transparent' },
   danger: { backgroundColor: colors.errorLight, borderColor: '#FECACA' },
   disabled: { opacity: 0.55 },
   gradient: {
     borderRadius: radius.sm,
-    paddingVertical: spacing.lg,
-    paddingHorizontal: spacing['2xl'],
+    ...BUTTON_SHELL,
   },
   gradientSm: {
+    minHeight: 40,
     paddingVertical: spacing.md,
     paddingHorizontal: spacing.lg,
+    justifyContent: 'center',
   },
   inner: {
     flexDirection: 'row',

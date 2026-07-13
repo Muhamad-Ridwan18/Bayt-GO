@@ -1,6 +1,5 @@
 import React from 'react';
 import { Modal, StyleSheet, Text, TextInput, View } from 'react-native';
-import FilterSheet from '../../ui/FilterSheet';
 import Button from '../../ui/Button';
 import PressableScale from '../../ui/PressableScale';
 import { colors, radius, spacing, typography } from '../../theme/tokens';
@@ -14,28 +13,14 @@ const REJECTION_OPTIONS = [
 
 export { REJECTION_OPTIONS };
 
-export function RejectBookingModal({
-  visible,
+export function RejectBookingForm({
   rejectKind,
   rejectNote,
   onChangeKind,
   onChangeNote,
-  onClose,
-  onSubmit,
 }) {
   return (
-    <FilterSheet
-      visible={visible}
-      onClose={onClose}
-      title="Tolak booking"
-      subtitle="Pilih alasan penolakan sebelum mengirim ke jamaah"
-      footer={(
-        <>
-          <Button label="Tolak booking" onPress={onSubmit} variant="danger" />
-          <Button label="Batal" onPress={onClose} variant="secondary" />
-        </>
-      )}
-    >
+    <View style={styles.rejectForm}>
       <Text style={styles.label}>Alasan penolakan</Text>
       <View style={styles.chipRow}>
         {REJECTION_OPTIONS.map((opt) => (
@@ -60,7 +45,7 @@ export function RejectBookingModal({
         multiline
         maxLength={2000}
       />
-    </FilterSheet>
+    </View>
   );
 }
 
@@ -104,6 +89,7 @@ export function RescheduleDecisionModal({
 }
 
 const styles = StyleSheet.create({
+  rejectForm: { marginTop: spacing.md, gap: spacing.sm },
   backdrop: {
     flex: 1,
     backgroundColor: colors.overlay,
@@ -117,8 +103,8 @@ const styles = StyleSheet.create({
   },
   title: { ...typography.subtitle, color: colors.baytgo },
   label: {
-    marginTop: spacing.md,
-    marginBottom: spacing.sm,
+    marginTop: spacing.sm,
+    marginBottom: spacing.xs,
     ...typography.small,
     color: colors.textSecondary,
     fontFamily: 'PlusJakartaSans_700Bold',

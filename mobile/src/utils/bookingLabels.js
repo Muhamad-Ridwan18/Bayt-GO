@@ -127,6 +127,8 @@ export function hasMuthowifRejectionInfo(booking) {
     || booking?.muthowif_rejection_note,
   );
 }
+
+export function changeRequestStatusLabel(status) {
   const map = {
     pending: 'Menunggu',
     approved: 'Disetujui',

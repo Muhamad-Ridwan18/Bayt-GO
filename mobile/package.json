@@ -44,6 +44,8 @@
   "scripts": {
     "start": "expo start",
     "start:tunnel": "powershell -ExecutionPolicy Bypass -File ./scripts/start-tunnel.ps1",
+    "start:tunnel:ngrok": "powershell -ExecutionPolicy Bypass -File ./scripts/start-tunnel.ps1 -Provider ngrok",
+    "start:tunnel:cloudflare": "powershell -ExecutionPolicy Bypass -File ./scripts/start-tunnel.ps1 -Provider cloudflare",
     "android": "expo start --android",
     "ios": "expo start --ios",
     "web": "expo start --web"

@@ -342,6 +342,7 @@ class RegisteredUserController extends Controller
             'phone' => ['required_if:role,customer', 'required_if:role,muthowif', 'nullable', 'string', 'min:8', 'max:24'],
             'country' => ['nullable', 'string', 'size:2', 'regex:/^[A-Za-z]{2}$/'],
             'address' => ['required_if:role,customer', 'required_if:role,muthowif', 'nullable', 'string', 'max:2000'],
+            'work_location' => ['required_if:role,muthowif', 'nullable', 'string', 'max:255'],
             'ppui_number' => ['required_if:customer_type,company', 'nullable', 'string', 'max:64'],
             'nik' => ['required_if:role,muthowif', 'nullable', 'string', 'size:16', 'regex:/^\d{16}$/'],
             'birth_date' => ['required_if:role,muthowif', 'nullable', 'date', 'before:today', 'after:1900-01-01'],
@@ -441,10 +442,14 @@ class RegisteredUserController extends Controller
                 $code = is_string($codeRaw) ? strtoupper(trim($codeRaw)) : '';
                 $referredById = $code !== '' ? $this->resolveReferredByMuthowifProfileId($code) : null;
 
+                $workLocation = $request->input('work_location');
+                $workLocation = is_string($workLocation) ? trim($workLocation) : null;
+
                 $profile = MuthowifProfile::create([
                     'user_id' => $user->id,
                     'phone' => $request->input('phone'),
                     'address' => $request->input('address'),
+                    'work_location' => filled($workLocation) ? $workLocation : null,
                     'nik' => $request->input('nik'),
                     'birth_date' => $request->input('birth_date'),
                     'passport_number' => $request->input('passport_number'),
@@ -558,10 +563,14 @@ class RegisteredUserController extends Controller
                 $referralNorm = is_string($referralRaw) ? strtoupper(trim($referralRaw)) : '';
                 $referredById = $referralNorm !== '' ? $this->resolveReferredByMuthowifProfileId($referralNorm) : null;
 
+                $workLocation = $input['work_location'] ?? null;
+                $workLocation = is_string($workLocation) ? trim($workLocation) : null;
+
                 $profile = MuthowifProfile::create([
                     'user_id' => $user->id,
                     'phone' => $input['phone'],
                     'address' => $input['address'],
+                    'work_location' => filled($workLocation) ? $workLocation : null,
                     'nik' => $input['nik'],
                     'birth_date' => $input['birth_date'],
                     'passport_number' => $input['passport_number'],

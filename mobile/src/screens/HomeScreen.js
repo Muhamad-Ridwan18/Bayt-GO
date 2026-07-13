@@ -2,7 +2,7 @@ import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import { View, Text, StyleSheet, ScrollView, StatusBar, RefreshControl } from 'react-native';
 import { Image } from 'expo-image';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { Bell, ChevronRight, Headphones, Menu } from 'lucide-react-native';
+import { Bell, ChevronRight, Menu } from 'lucide-react-native';
 import { fetchHomeData } from '../api/home';
 import { fetchCustomerDashboard } from '../api/dashboard';
 import { useAuth } from '../context/AuthContext';
@@ -78,14 +78,6 @@ export default function HomeScreen({ navigation }) {
     id: item.id, startDate: startDate.trim() || undefined, endDate: endDate.trim() || undefined,
   });
 
-  const openSupport = () => {
-    if (!isAuthenticated) {
-      navigateRoot(navigation, 'Login');
-      return;
-    }
-    navigation.getParent()?.navigate('SupportTab', { screen: 'SupportList' });
-  };
-
   const loadData = useCallback(async (isRefresh = false) => {
     if (isRefresh) setRefreshing(true);
     else setLoading(true);
@@ -129,10 +121,6 @@ export default function HomeScreen({ navigation }) {
             <Text style={styles.tagline}>Teman Ibadahmu</Text>
           </View>
           <View style={styles.headerActions}>
-            <PressableScale onPress={openSupport} haptic="light" style={styles.supportBtn}>
-              <Headphones size={14} color={colors.baytgo} strokeWidth={2.2} />
-              <Text style={styles.supportText}>Bantuan 24/7</Text>
-            </PressableScale>
             {isCustomer ? (
               <PressableScale onPress={goBookings} haptic="light" style={styles.iconBtn}>
                 <Bell size={20} color={colors.baytgo} strokeWidth={2} />
@@ -272,23 +260,6 @@ const styles = StyleSheet.create({
   headerBrand: { flex: 1, gap: 2 },
   tagline: { marginLeft: 50, ...typography.small, color: colors.textSecondary, fontStyle: 'italic' },
   headerActions: { flexDirection: 'row', alignItems: 'center', gap: spacing.sm },
-  supportBtn: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: spacing.xs,
-    paddingHorizontal: spacing.sm + 2,
-    paddingVertical: spacing.sm,
-    borderRadius: radius.full,
-    backgroundColor: colors.background,
-    borderWidth: 1,
-    borderColor: colors.border,
-  },
-  supportText: {
-    fontSize: 10,
-    fontWeight: '700',
-    fontFamily: 'PlusJakartaSans_700Bold',
-    color: colors.baytgo,
-  },
   iconBtn: {
     width: 40,
     height: 40,
