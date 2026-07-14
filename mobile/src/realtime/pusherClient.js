@@ -3,6 +3,8 @@ import { API_BASE_URL } from '../config/api';
 let cachedConfig = null;
 let pusherInstance = null;
 let pusherToken = null;
+/** @type {Map<string, number>} */
+const channelSubscriberCounts = new Map();
 
 export async function fetchRealtimeConfig(token) {
   const response = await fetch(`${API_BASE_URL}/realtime/config`, {
@@ -67,6 +69,7 @@ export async function getPusherClient(token) {
   if (pusherInstance) {
     pusherInstance.disconnect();
     pusherInstance = null;
+    channelSubscriberCounts.clear();
   }
 
   const config = await fetchRealtimeConfig(token);
@@ -106,6 +109,7 @@ export async function getPusherClient(token) {
 }
 
 export function disconnectPusher() {
+  channelSubscriberCounts.clear();
   if (!pusherInstance) {
     cachedConfig = null;
     return;
@@ -122,6 +126,7 @@ export async function subscribePrivateChannel(token, channelName, eventName, cal
 
   const fullName = channelName.startsWith('private-') ? channelName : `private-${channelName}`;
   const channel = pusher.subscribe(fullName);
+  channelSubscriberCounts.set(fullName, (channelSubscriberCounts.get(fullName) || 0) + 1);
 
   const handler = (payload) => callback(payload);
   channel.bind(eventName, handler);
@@ -136,11 +141,22 @@ export async function subscribePrivateChannel(token, channelName, eventName, cal
     onConnected();
   }
 
+  let released = false;
   return () => {
+    if (released) return;
+    released = true;
+
     channel.unbind(eventName, handler);
     channel.unbind('pusher:subscription_succeeded', onConnected);
     channel.unbind('pusher:subscription_error', onError);
-    pusher.unsubscribe(fullName);
+
+    const nextCount = (channelSubscriberCounts.get(fullName) || 1) - 1;
+    if (nextCount <= 0) {
+      channelSubscriberCounts.delete(fullName);
+      pusher.unsubscribe(fullName);
+    } else {
+      channelSubscriberCounts.set(fullName, nextCount);
+    }
   };
 }
 

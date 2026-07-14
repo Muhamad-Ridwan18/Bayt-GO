@@ -3,6 +3,7 @@
 namespace App\Events;
 
 use App\Events\Concerns\RescuesBroadcastFailures;
+use App\Models\BookingChatMessage;
 use App\Models\MuthowifBooking;
 use Illuminate\Broadcasting\InteractsWithSockets;
 use Illuminate\Broadcasting\PrivateChannel;
@@ -31,9 +32,18 @@ class BookingChatUpdated implements ShouldBroadcastNow, RescuesBroadcastFailures
      */
     public function broadcastOn(): array
     {
-        return [
+        $channels = [
             new PrivateChannel('booking.chat.'.$this->booking->id),
+            new PrivateChannel('App.Models.User.'.$this->booking->customer_id),
         ];
+
+        $this->booking->loadMissing('muthowifProfile');
+        $muthowifUserId = $this->booking->muthowifProfile?->user_id;
+        if ($muthowifUserId) {
+            $channels[] = new PrivateChannel('App.Models.User.'.$muthowifUserId);
+        }
+
+        return $channels;
     }
 
     /**
@@ -41,11 +51,21 @@ class BookingChatUpdated implements ShouldBroadcastNow, RescuesBroadcastFailures
      */
     public function broadcastWith(): array
     {
+        $preview = null;
+        if ($this->action === 'message' && $this->messageId) {
+            $message = BookingChatMessage::query()->find($this->messageId);
+            if ($message !== null) {
+                $body = trim((string) $message->body);
+                $preview = $body !== '' ? $body : '📷 Gambar';
+            }
+        }
+
         return [
             'booking_id' => (string) $this->booking->getKey(),
             'action' => $this->action,
             'message_id' => $this->messageId,
             'sender_id' => $this->senderId,
+            'preview' => $preview,
         ];
     }
 }

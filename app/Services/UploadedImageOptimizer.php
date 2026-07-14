@@ -30,16 +30,12 @@ final class UploadedImageOptimizer
         string $profileKey = 'default',
     ): string {
         if (! $this->enabled() || ! $this->isOptimizableImage($file)) {
-            $stored = $file->store($directory, $disk);
-
-            return $stored !== false ? $stored : '';
+            return $this->storeRawWithExtension($file, $directory, $disk);
         }
 
         $encoded = $this->encodeUploaded($file, $profileKey);
         if ($encoded === null) {
-            $stored = $file->store($directory, $disk);
-
-            return $stored !== false ? $stored : '';
+            return $this->storeRawWithExtension($file, $directory, $disk);
         }
 
         $extension = (string) config('image-upload.format', 'jpg');
@@ -47,6 +43,42 @@ final class UploadedImageOptimizer
         Storage::disk($disk)->put($path, $encoded);
 
         return $path;
+    }
+
+    /**
+     * Simpan tanpa kompres, selalu dengan ekstensi yang bisa ditebak.
+     * `$file->store()` Laravel memakai hashName(); bila guessExtension() kosong
+     * (sering di upload FormData React Native), path jadi tanpa ekstensi.
+     */
+    private function storeRawWithExtension(UploadedFile $file, string $directory, string $disk): string
+    {
+        $extension = $this->resolveExtension($file);
+        $filename = Str::random(40).($extension !== '' ? '.'.$extension : '');
+        $stored = $file->storeAs(trim($directory, '/'), $filename, $disk);
+
+        return $stored !== false ? $stored : '';
+    }
+
+    private function resolveExtension(UploadedFile $file): string
+    {
+        $guessed = $file->guessExtension() ?: $file->clientExtension();
+        if (is_string($guessed) && trim($guessed) !== '') {
+            return strtolower(trim($guessed));
+        }
+
+        $fromName = pathinfo((string) $file->getClientOriginalName(), PATHINFO_EXTENSION);
+        if (is_string($fromName) && trim($fromName) !== '') {
+            return strtolower(trim($fromName));
+        }
+
+        return match (strtolower((string) $file->getMimeType())) {
+            'image/jpeg', 'image/jpg' => 'jpg',
+            'image/png' => 'png',
+            'image/webp' => 'webp',
+            'image/bmp' => 'bmp',
+            'application/pdf' => 'pdf',
+            default => 'bin',
+        };
     }
 
     /**

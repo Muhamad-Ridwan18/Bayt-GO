@@ -10,19 +10,58 @@ import React, {
 import * as Notifications from 'expo-notifications';
 import { fetchConversations } from '../api/chat';
 import { useAuth } from './AuthContext';
-import { subscribeBookingChat, subscribeUserBookings } from '../realtime/pusherClient';
+import {
+  subscribeBookingChat,
+  subscribePrivateChannel,
+  subscribeUserBookings,
+} from '../realtime/pusherClient';
 
 const ChatInboxContext = createContext(null);
-const MAX_BOOKING_CHANNELS = 10;
+const MAX_BOOKING_CHANNELS = 25;
+const OPTIMISTIC_UNREAD_HOLD_MS = 8000;
 
-function bookingIdsToSubscribe(conversations) {
+function bookingIdsToSubscribe(conversations, activeBookingId) {
   const ids = new Set();
-  conversations
-    .filter((c) => (c.unread_count || 0) > 0)
-    .slice(0, 8)
-    .forEach((c) => ids.add(String(c.booking_id)));
-  conversations.slice(0, 5).forEach((c) => ids.add(String(c.booking_id)));
+  if (activeBookingId) {
+    ids.add(String(activeBookingId));
+  }
+  conversations.forEach((c) => ids.add(String(c.booking_id)));
   return [...ids].slice(0, MAX_BOOKING_CHANNELS);
+}
+
+function mergeConversations(prev, fromApi, activeBookingId) {
+  const prevById = new Map(prev.map((c) => [String(c.booking_id), c]));
+  const now = Date.now();
+
+  return fromApi.map((api) => {
+    const id = String(api.booking_id);
+    const local = prevById.get(id);
+    if (!local) {
+      return api;
+    }
+
+    if (activeBookingId && id === String(activeBookingId)) {
+      return { ...api, unread_count: 0 };
+    }
+
+    const localUnread = Number(local.unread_count) || 0;
+    const apiUnread = Number(api.unread_count) || 0;
+    const localTs = local.last_message_time ? new Date(local.last_message_time).getTime() : 0;
+    const holdOptimistic = localUnread > apiUnread
+      && localTs > 0
+      && (now - localTs) < OPTIMISTIC_UNREAD_HOLD_MS;
+
+    if (holdOptimistic) {
+      return {
+        ...api,
+        unread_count: localUnread,
+        last_message: local.last_message || api.last_message,
+        last_message_time: local.last_message_time || api.last_message_time,
+      };
+    }
+
+    return api;
+  });
 }
 
 export function ChatInboxProvider({ children }) {
@@ -33,8 +72,9 @@ export function ChatInboxProvider({ children }) {
   const [error, setError] = useState(null);
 
   const activeBookingIdRef = useRef(null);
+  const [activeBookingId, setActiveBookingIdState] = useState(null);
   const channelCleanupsRef = useRef(new Map());
-  const userChannelCleanupRef = useRef(null);
+  const userChannelCleanupsRef = useRef([]);
   const refreshTimerRef = useRef(null);
 
   const unreadTotal = useMemo(
@@ -47,7 +87,8 @@ export function ChatInboxProvider({ children }) {
     if (!silent) setLoading(true);
     try {
       const data = await fetchConversations(token);
-      setConversations(data.conversations || []);
+      const fromApi = data.conversations || [];
+      setConversations((prev) => mergeConversations(prev, fromApi, activeBookingIdRef.current));
       setError(null);
     } catch (err) {
       setError(err.message || 'Gagal memuat chat');
@@ -60,15 +101,17 @@ export function ChatInboxProvider({ children }) {
 
   const refreshSilent = useCallback(() => refresh(true), [refresh]);
 
-  const scheduleRefresh = useCallback(() => {
+  const scheduleRefresh = useCallback((delayMs = 1200) => {
     if (refreshTimerRef.current) clearTimeout(refreshTimerRef.current);
     refreshTimerRef.current = setTimeout(() => {
       refreshSilent();
-    }, 400);
+    }, delayMs);
   }, [refreshSilent]);
 
   const setActiveBookingId = useCallback((bookingId) => {
-    activeBookingIdRef.current = bookingId != null ? String(bookingId) : null;
+    const next = bookingId != null ? String(bookingId) : null;
+    activeBookingIdRef.current = next;
+    setActiveBookingIdState(next);
   }, []);
 
   const clearUnreadForBooking = useCallback((bookingId) => {
@@ -79,7 +122,9 @@ export function ChatInboxProvider({ children }) {
   }, []);
 
   const handleChatEvent = useCallback((bookingId, payload = {}) => {
-    const id = String(bookingId);
+    const id = String(bookingId || payload?.booking_id || '');
+    if (!id) return;
+
     const action = payload?.action ?? 'message';
     const senderId = payload?.sender_id;
 
@@ -91,22 +136,28 @@ export function ChatInboxProvider({ children }) {
       return;
     }
 
+    const viewing = activeBookingIdRef.current === id;
+    const preview = typeof payload?.preview === 'string' && payload.preview.trim() !== ''
+      ? payload.preview.trim()
+      : 'Pesan baru';
+
     setConversations((prev) => {
       const idx = prev.findIndex((c) => String(c.booking_id) === id);
       if (idx === -1) {
-        scheduleRefresh();
+        scheduleRefresh(300);
         return prev;
       }
 
       const next = [...prev];
       const conv = { ...next[idx] };
-      const viewing = activeBookingIdRef.current === id;
 
       if (viewing) {
         conv.unread_count = 0;
+        conv.last_message = preview;
+        conv.last_message_time = new Date().toISOString();
       } else {
         conv.unread_count = (Number(conv.unread_count) || 0) + 1;
-        conv.last_message = 'Pesan baru';
+        conv.last_message = preview;
         conv.last_message_time = new Date().toISOString();
       }
 
@@ -114,12 +165,20 @@ export function ChatInboxProvider({ children }) {
       next.unshift(conv);
       return next;
     });
+
+    // Soft sync only — mergeConversations keeps optimistic unread for a few seconds.
+    if (!viewing) {
+      scheduleRefresh(1500);
+    }
   }, [user?.id, scheduleRefresh]);
 
-  const syncBookingChannels = useCallback(async (items) => {
+  const handleChatEventRef = useRef(handleChatEvent);
+  handleChatEventRef.current = handleChatEvent;
+
+  const syncBookingChannels = useCallback(async (items, activeId) => {
     if (!token) return;
 
-    const nextIds = new Set(bookingIdsToSubscribe(items));
+    const nextIds = new Set(bookingIdsToSubscribe(items, activeId));
     const current = channelCleanupsRef.current;
 
     for (const [id, cleanup] of [...current.entries()]) {
@@ -133,34 +192,46 @@ export function ChatInboxProvider({ children }) {
       if (current.has(id)) continue;
       try {
         const cleanup = await subscribeBookingChat(token, id, (payload) => {
-          handleChatEvent(id, payload);
+          handleChatEventRef.current(id, payload);
         });
         current.set(id, cleanup);
       } catch {
-        // polling fallback via manual refresh
+        // user channel covers inbox; booking channel is best-effort
       }
     }
-  }, [token, handleChatEvent]);
+  }, [token]);
 
   useEffect(() => {
     if (!isAuthenticated || !token) {
       setConversations([]);
       channelCleanupsRef.current.forEach((cleanup) => cleanup());
       channelCleanupsRef.current.clear();
-      if (userChannelCleanupRef.current) {
-        userChannelCleanupRef.current();
-        userChannelCleanupRef.current = null;
-      }
+      userChannelCleanupsRef.current.forEach((cleanup) => cleanup());
+      userChannelCleanupsRef.current = [];
       return undefined;
     }
 
     refresh();
 
     if (user?.id) {
+      userChannelCleanupsRef.current = [];
+
       subscribeUserBookings(token, user.id, () => {
-        scheduleRefresh();
+        scheduleRefresh(400);
       }).then((cleanup) => {
-        userChannelCleanupRef.current = cleanup;
+        userChannelCleanupsRef.current.push(cleanup);
+      }).catch(() => {});
+
+      // Inbox should update even if booking.chat.* is not subscribed.
+      subscribePrivateChannel(
+        token,
+        `App.Models.User.${user.id}`,
+        'chat.updated',
+        (payload) => {
+          handleChatEventRef.current(payload?.booking_id, payload);
+        },
+      ).then((cleanup) => {
+        userChannelCleanupsRef.current.push(cleanup);
       }).catch(() => {});
     }
 
@@ -168,23 +239,21 @@ export function ChatInboxProvider({ children }) {
       if (refreshTimerRef.current) clearTimeout(refreshTimerRef.current);
       channelCleanupsRef.current.forEach((cleanup) => cleanup());
       channelCleanupsRef.current.clear();
-      if (userChannelCleanupRef.current) {
-        userChannelCleanupRef.current();
-        userChannelCleanupRef.current = null;
-      }
+      userChannelCleanupsRef.current.forEach((cleanup) => cleanup());
+      userChannelCleanupsRef.current = [];
     };
   }, [isAuthenticated, token, user?.id, refresh, scheduleRefresh]);
 
   useEffect(() => {
     if (!isAuthenticated || !token) return undefined;
-    if (conversations.length === 0) {
+    if (conversations.length === 0 && !activeBookingId) {
       channelCleanupsRef.current.forEach((cleanup) => cleanup());
       channelCleanupsRef.current.clear();
       return undefined;
     }
-    syncBookingChannels(conversations);
+    syncBookingChannels(conversations, activeBookingId);
     return undefined;
-  }, [conversations, isAuthenticated, token, syncBookingChannels]);
+  }, [conversations, activeBookingId, isAuthenticated, token, syncBookingChannels]);
 
   useEffect(() => {
     Notifications.setBadgeCountAsync(unreadTotal).catch(() => {});
@@ -194,7 +263,7 @@ export function ChatInboxProvider({ children }) {
     if (!isAuthenticated) return undefined;
 
     const subscription = Notifications.addNotificationReceivedListener(() => {
-      scheduleRefresh();
+      scheduleRefresh(400);
     });
 
     return () => subscription.remove();
