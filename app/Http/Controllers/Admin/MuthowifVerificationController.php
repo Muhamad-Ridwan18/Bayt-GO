@@ -138,12 +138,22 @@ class MuthowifVerificationController extends Controller
             ->with('status', 'Pendaftaran ditolak.');
     }
 
-    public function notifyRejection(MuthowifProfile $profile): RedirectResponse
+    public function notifyRejection(Request $request, MuthowifProfile $profile): RedirectResponse
     {
         if (! $profile->isRejected()) {
             return redirect()
                 ->route('admin.muthowif.show', $profile)
                 ->with('error', __('admin.muthowif.notify_rejection_only_rejected'));
+        }
+
+        $validated = $request->validate([
+            'rejection_note' => ['nullable', 'string', 'max:5000'],
+        ]);
+
+        $note = trim((string) ($validated['rejection_note'] ?? ''));
+
+        if ($note !== '' && $note !== (string) $profile->rejection_reason) {
+            $profile->update(['rejection_reason' => $note]);
         }
 
         $profile->loadMissing('user');
@@ -163,13 +173,13 @@ class MuthowifVerificationController extends Controller
 
         $appName = config('app.name', 'BaytGo');
         $name = $profile->user->name;
-        $message = "Halo *{$name}*,\n\nPendaftaran muthowif Anda di *{$appName}* telah *ditolak*.";
+        $message = "Halo *{$name}*,\n\nMohon maaf, pendaftaran muthowif Anda di *{$appName}* belum bisa kami setujui karena data atau dokumen yang Anda kirimkan (seperti CV dan dokumen pendukung lainnya) belum sesuai.";
 
-        if (filled($profile->rejection_reason)) {
-            $message .= "\n\n*Alasan:*\n{$profile->rejection_reason}";
+        if ($note !== '') {
+            $message .= "\n\n*Catatan dari tim kami:*\n{$note}";
         }
 
-        $message .= "\n\nSilakan perbaiki data dan mendaftar kembali jika diperlukan.\n\nTerima kasih.";
+        $message .= "\n\nSilakan perbaiki data/dokumen Anda, lalu mendaftar kembali.\n\nTerima kasih atas pengertiannya.";
 
         SendWhatsAppTextJob::dispatchAfterResponse(
             $fonnteDial['target'],

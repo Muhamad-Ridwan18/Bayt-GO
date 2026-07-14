@@ -326,15 +326,21 @@
                     </div>
                     <p class="mb-4 ml-10 text-sm text-slate-500">{{ __('admin.muthowif.notify_rejection_hint') }}</p>
 
-                    @if (filled($profile->rejection_reason))
-                        <div class="mb-5 ml-10 rounded-xl border border-slate-100 bg-slate-50 px-4 py-3">
-                            <p class="mb-1 text-xs font-medium text-slate-400">{{ __('admin.muthowif.rejection_heading') }}</p>
-                            <p class="whitespace-pre-line text-sm text-slate-700">{{ $profile->rejection_reason }}</p>
-                        </div>
-                    @endif
-
-                    <form method="POST" action="{{ route('admin.muthowif.notify_rejection', $profile) }}" class="ml-10">
+                    <form method="POST" action="{{ route('admin.muthowif.notify_rejection', $profile) }}" class="ml-10 space-y-4">
                         @csrf
+
+                        <div>
+                            <label for="rejection_note" class="mb-1.5 block text-sm font-medium text-slate-700">{{ __('admin.muthowif.notify_rejection_note_label') }}</label>
+                            <textarea
+                                id="rejection_note"
+                                name="rejection_note"
+                                rows="4"
+                                placeholder="{{ __('admin.muthowif.notify_rejection_note_placeholder') }}"
+                                class="block w-full rounded-xl border border-slate-200 bg-slate-50 px-4 py-3 text-sm text-slate-900 placeholder-slate-400 shadow-sm transition focus:border-emerald-400 focus:bg-white focus:outline-none focus:ring-2 focus:ring-emerald-100">{{ old('rejection_note', $profile->rejection_reason) }}</textarea>
+                            <x-input-error :messages="$errors->get('rejection_note')" />
+                            <p class="mt-1.5 text-xs text-slate-400">{{ __('admin.muthowif.notify_rejection_note_help') }}</p>
+                        </div>
+
                         <x-submit-button class="rounded-xl bg-emerald-600 px-5 py-2.5 text-sm font-medium text-white shadow-sm transition hover:bg-emerald-700 active:scale-95">
                             <svg class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 19l9 2-9-18-9 18 9-2zm0 0v-8"/></svg>
                             {{ __('admin.muthowif.notify_rejection_submit') }}
