@@ -92,7 +92,7 @@ class MuthowifVerificationController extends Controller
         if ($fonnteDial !== null && WhatsAppNotifySettings::hasToken()) {
             $appName = config('app.name', 'BaytGo');
             $name = $profile->user->name;
-            $message = "Halo *{$name}*,\n\nPendaftaran muthowif Anda di *{$appName}* telah *disetujui*.\n\nAnda sekarang dapat masuk ke akun menggunakan email terdaftar.\nDan menentukan rate card harian mu😉\nhttps://baytgo.id/login\n\nTerima kasih.";
+            $message = "Halo *{$name}*,\n\nPendaftaran muthowif Anda di *{$appName}* telah *disetujui*.\n\nAnda sekarang dapat masuk ke akun menggunakan email terdaftar.\nDan menentukan rate card harian mu😉\nhttps://baytgo.id/login\n\nSilahkan bergabung dengan grup baytgo communication untuk informasi terupdate dari baytgo serta jika ada kendala dari muthowif bisa menginformasikan ke grup\nhttps://chat.whatsapp.com/DjbIrgD1jFaCrdlGeF1V7n\n\nTerima kasih.";
 
             SendWhatsAppTextJob::dispatchAfterResponse(
                 $fonnteDial['target'],
