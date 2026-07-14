@@ -9,7 +9,9 @@ use App\Http\Controllers\Controller;
 use App\Jobs\NotifyAdminsOfMuthowifRegistration;
 use App\Models\MuthowifProfile;
 use App\Models\User;
+use App\Services\MuthowifRejectedReregistration;
 use App\Services\UploadedImageOptimizer;
+use App\Support\MuthowifVerificationBroadcast;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Hash;
@@ -58,7 +60,17 @@ class AuthController extends Controller
     {
         $rules = [
             'name' => ['required', 'string', 'max:255'],
-            'email' => ['required', 'string', 'lowercase', 'email', 'max:255', 'unique:'.User::class],
+            'email' => [
+                'required',
+                'string',
+                'lowercase',
+                'email',
+                'max:255',
+                app(MuthowifRejectedReregistration::class)->emailUniqueRule(
+                    $request->input('role'),
+                    is_string($request->input('email')) ? $request->input('email') : null,
+                ),
+            ],
             'password' => ['required', 'confirmed', Rules\Password::defaults()],
             'role' => ['required', Rule::enum(UserRole::class)->only([UserRole::Customer, UserRole::Muthowif])],
             'customer_type' => ['required_if:role,customer', 'nullable', Rule::enum(CustomerType::class)],
@@ -117,31 +129,53 @@ class AuthController extends Controller
         $storedDir = null;
         $user = null;
         $muthowifProfileId = null;
+        $existingRejected = null;
 
         try {
             DB::beginTransaction();
 
             $role = UserRole::from($request->input('role'));
+            $reregistration = app(MuthowifRejectedReregistration::class);
+            $existingRejected = $role === UserRole::Muthowif
+                ? $reregistration->findByEmail($request->string('email')->toString())
+                : null;
 
-            $user = User::create([
-                'name' => $request->string('name')->toString(),
-                'email' => $request->string('email')->toString(),
-                'password' => Hash::make($request->string('password')->toString()),
-                'role' => $role,
-                'phone' => $role === UserRole::Customer ? $request->string('phone')->toString() : null,
-                'country' => $request->filled('country') ? strtoupper($request->string('country')->toString()) : null,
-                'address' => $role === UserRole::Customer ? $request->string('address')->toString() : null,
-                'customer_type' => $role === UserRole::Customer
-                    ? CustomerType::from($request->string('customer_type')->toString())
-                    : null,
-                'ppui_number' => $role === UserRole::Customer
-                    && $request->string('customer_type')->toString() === CustomerType::Company->value
-                    ? $request->string('ppui_number')->toString()
-                    : null,
-            ]);
+            if ($existingRejected !== null) {
+                $user = $existingRejected;
+                $user->update([
+                    'name' => $request->string('name')->toString(),
+                    'password' => Hash::make($request->string('password')->toString()),
+                    'country' => $request->filled('country') ? strtoupper($request->string('country')->toString()) : null,
+                ]);
+            } else {
+                $user = User::create([
+                    'name' => $request->string('name')->toString(),
+                    'email' => $request->string('email')->toString(),
+                    'password' => Hash::make($request->string('password')->toString()),
+                    'role' => $role,
+                    'phone' => $role === UserRole::Customer ? $request->string('phone')->toString() : null,
+                    'country' => $request->filled('country') ? strtoupper($request->string('country')->toString()) : null,
+                    'address' => $role === UserRole::Customer ? $request->string('address')->toString() : null,
+                    'customer_type' => $role === UserRole::Customer
+                        ? CustomerType::from($request->string('customer_type')->toString())
+                        : null,
+                    'ppui_number' => $role === UserRole::Customer
+                        && $request->string('customer_type')->toString() === CustomerType::Company->value
+                        ? $request->string('ppui_number')->toString()
+                        : null,
+                ]);
+            }
 
             if ($user->isMuthowif()) {
                 $storedDir = 'muthowif_documents/'.$user->id;
+
+                if ($existingRejected !== null) {
+                    $profile = $user->muthowifProfile;
+                    if ($profile === null) {
+                        throw new \RuntimeException('Profil muthowif hilang.');
+                    }
+                    $reregistration->discardStoredDocuments($profile);
+                }
 
                 $optimizer = app(UploadedImageOptimizer::class);
                 $photoPath = $optimizer->store($request->file('photo'), $storedDir, 'local', 'profile');
@@ -155,8 +189,7 @@ class AuthController extends Controller
                 $referralNorm = is_string($referralRaw) ? strtoupper(trim($referralRaw)) : '';
                 $referredById = $referralNorm !== '' ? $this->resolveReferredByMuthowifProfileId($referralNorm) : null;
 
-                $profile = MuthowifProfile::create([
-                    'user_id' => $user->id,
+                $profilePayload = [
                     'phone' => $request->input('phone'),
                     'address' => $request->input('address'),
                     'nik' => $request->input('nik'),
@@ -169,8 +202,18 @@ class AuthController extends Controller
                     'photo_path' => $photoPath,
                     'ktp_image_path' => $ktpPath,
                     'verification_status' => MuthowifVerificationStatus::Pending,
+                    'verified_at' => null,
+                    'rejection_reason' => null,
                     'referred_by_muthowif_profile_id' => $referredById,
-                ]);
+                ];
+
+                if ($existingRejected !== null) {
+                    $profile->update($profilePayload);
+                } else {
+                    $profile = MuthowifProfile::create(array_merge($profilePayload, [
+                        'user_id' => $user->id,
+                    ]));
+                }
                 $muthowifProfileId = (string) $profile->getKey();
 
                 $files = $request->file('supporting_documents', []);
@@ -194,7 +237,7 @@ class AuthController extends Controller
         } catch (Throwable $e) {
             DB::rollBack();
 
-            if ($storedDir !== null) {
+            if ($storedDir !== null && $existingRejected === null) {
                 Storage::disk('local')->deleteDirectory($storedDir);
             }
 
@@ -202,10 +245,20 @@ class AuthController extends Controller
         }
 
         NotifyAdminsOfMuthowifRegistration::afterMuthowifRegistered($muthowifProfileId);
+        if ($muthowifProfileId !== null) {
+            MuthowifVerificationBroadcast::afterResponse($muthowifProfileId);
+        }
 
         if ($user->isCompanyCustomer() && ! $user->is_company_approved) {
             return response()->json([
                 'message' => 'Pendaftaran berhasil. Akun perusahaan Anda sedang menunggu persetujuan admin.',
+            ], 201);
+        }
+
+        if ($user->isMuthowif()) {
+            return response()->json([
+                'message' => 'Pendaftaran berhasil. Dokumen Anda sedang ditinjau oleh admin.',
+                'user' => $this->apiUserPayload($user->fresh()),
             ], 201);
         }
 
