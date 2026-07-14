@@ -315,6 +315,34 @@
                 </div>
             @endif
 
+            {{-- NOTIFY REJECTION VIA WHATSAPP --}}
+            @if ($profile->isRejected())
+                <div class="rounded-2xl border border-amber-100 bg-white p-6 shadow-sm">
+                    <div class="flex items-center gap-2.5 mb-1">
+                        <div class="flex h-8 w-8 items-center justify-center rounded-lg bg-amber-50">
+                            <svg class="h-4 w-4 text-amber-600" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z"/></svg>
+                        </div>
+                        <h2 class="text-base font-semibold text-slate-900">{{ __('admin.muthowif.notify_rejection_heading') }}</h2>
+                    </div>
+                    <p class="mb-4 ml-10 text-sm text-slate-500">{{ __('admin.muthowif.notify_rejection_hint') }}</p>
+
+                    @if (filled($profile->rejection_reason))
+                        <div class="mb-5 ml-10 rounded-xl border border-slate-100 bg-slate-50 px-4 py-3">
+                            <p class="mb-1 text-xs font-medium text-slate-400">{{ __('admin.muthowif.rejection_heading') }}</p>
+                            <p class="whitespace-pre-line text-sm text-slate-700">{{ $profile->rejection_reason }}</p>
+                        </div>
+                    @endif
+
+                    <form method="POST" action="{{ route('admin.muthowif.notify_rejection', $profile) }}" class="ml-10">
+                        @csrf
+                        <x-submit-button class="rounded-xl bg-emerald-600 px-5 py-2.5 text-sm font-medium text-white shadow-sm transition hover:bg-emerald-700 active:scale-95">
+                            <svg class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 19l9 2-9-18-9 18 9-2zm0 0v-8"/></svg>
+                            {{ __('admin.muthowif.notify_rejection_submit') }}
+                        </x-submit-button>
+                    </form>
+                </div>
+            @endif
+
         </x-page-container>
     </div>
 </x-app-layout>

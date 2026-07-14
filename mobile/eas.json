@@ -12,7 +12,17 @@
       }
     },
     "preview": {
-      "distribution": "internal"
+      "distribution": "internal",
+      "android": {
+        "buildType": "apk"
+      },
+      "env": {
+        "EXPO_PUBLIC_API_URL": "https://staging.baytgo.id/api",
+        "EXPO_PUBLIC_WEB_URL": "https://staging.baytgo.id",
+        "EXPO_PUBLIC_REVERB_HOST": "staging.baytgo.id",
+        "EXPO_PUBLIC_REVERB_PORT": "443",
+        "EXPO_PUBLIC_REVERB_SCHEME": "https"
+      }
     },
     "production": {
       "autoIncrement": true

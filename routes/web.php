@@ -356,6 +356,7 @@ Route::middleware('auth')->group(function () {
         Route::get('muthowif/{profile}/documents/{document}', [MuthowifVerificationController::class, 'supportingDocument'])->name('muthowif.document');
         Route::post('muthowif/{profile}/approve', [MuthowifVerificationController::class, 'approve'])->name('muthowif.approve');
         Route::post('muthowif/{profile}/reject', [MuthowifVerificationController::class, 'reject'])->name('muthowif.reject');
+        Route::post('muthowif/{profile}/notify-rejection', [MuthowifVerificationController::class, 'notifyRejection'])->name('muthowif.notify_rejection');
         Route::post('muthowif/{profile}/account-status', [MuthowifVerificationController::class, 'updateAccountStatus'])->name('muthowif.account_status');
         Route::get('muthowif/{profile}', [MuthowifVerificationController::class, 'show'])->name('muthowif.show');
         Route::get('tiket/live-index-fragment', [SupportTicketsController::class, 'indexLiveFragment'])->name('support-tickets.index.live-fragment');

@@ -27,3 +27,7 @@ Thumbs.db
 **/caddy
 frankenphp
 frankenphp-worker.php
+
+# local build / temp artifacts
+/scratch/
+

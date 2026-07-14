@@ -102,7 +102,7 @@ class MuthowifVerificationController extends Controller
             $waFlash = ' Notifikasi WhatsApp sedang dikirim.';
         } elseif ($fonnteDial === null) {
             $waFlash = ' Nomor WhatsApp tidak valid — notifikasi WA dilewati.';
-        } elseif (! filled($token)) {
+        } else {
             $waFlash = ' Token WhatsApp belum diatur — notifikasi WA dilewati.';
         }
 
@@ -136,6 +136,50 @@ class MuthowifVerificationController extends Controller
         return redirect()
             ->route('admin.muthowif.show', $profile)
             ->with('status', 'Pendaftaran ditolak.');
+    }
+
+    public function notifyRejection(MuthowifProfile $profile): RedirectResponse
+    {
+        if (! $profile->isRejected()) {
+            return redirect()
+                ->route('admin.muthowif.show', $profile)
+                ->with('error', __('admin.muthowif.notify_rejection_only_rejected'));
+        }
+
+        $profile->loadMissing('user');
+
+        $fonnteDial = IntlPhone::fonnteDial($profile->phone);
+        if ($fonnteDial === null) {
+            return redirect()
+                ->route('admin.muthowif.show', $profile)
+                ->with('error', __('admin.muthowif.notify_rejection_invalid_phone'));
+        }
+
+        if (! WhatsAppNotifySettings::hasToken()) {
+            return redirect()
+                ->route('admin.muthowif.show', $profile)
+                ->with('error', __('admin.muthowif.notify_rejection_no_token'));
+        }
+
+        $appName = config('app.name', 'BaytGo');
+        $name = $profile->user->name;
+        $message = "Halo *{$name}*,\n\nPendaftaran muthowif Anda di *{$appName}* telah *ditolak*.";
+
+        if (filled($profile->rejection_reason)) {
+            $message .= "\n\n*Alasan:*\n{$profile->rejection_reason}";
+        }
+
+        $message .= "\n\nSilakan perbaiki data dan mendaftar kembali jika diperlukan.\n\nTerima kasih.";
+
+        SendWhatsAppTextJob::dispatchAfterResponse(
+            $fonnteDial['target'],
+            $message,
+            $fonnteDial['country_calling_code'],
+        );
+
+        return redirect()
+            ->route('admin.muthowif.show', $profile)
+            ->with('status', __('admin.muthowif.notify_rejection_sent'));
     }
 
     public function updateAccountStatus(Request $request, MuthowifProfile $profile): RedirectResponse
