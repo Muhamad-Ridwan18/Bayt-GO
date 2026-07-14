@@ -292,7 +292,7 @@
                         </div>
                         <h2 class="text-base font-semibold text-red-700">Tolak Pendaftaran</h2>
                     </div>
-                    <p class="mb-5 ml-10 text-sm text-slate-500">{{ __('admin.muthowif.reject_placeholder_hint', ['default' => 'Berikan alasan penolakan agar muthowif dapat memperbaiki pendaftarannya']) }}</p>
+                    <p class="mb-5 ml-10 text-sm text-slate-500">{{ __('admin.muthowif.reject_placeholder_hint') }}</p>
 
                     <form method="POST" action="{{ route('admin.muthowif.reject', $profile) }}" class="ui-stack-tight">
                         @csrf

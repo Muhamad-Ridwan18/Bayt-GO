@@ -187,6 +187,7 @@ return [
         'approve_registration' => 'Setujui pendaftaran',
         'reject_label' => 'Tolak pendaftaran (opsional: alasan)',
         'reject_placeholder' => 'Alasan penolakan jika perlu',
+        'reject_placeholder_hint' => 'Berikan alasan penolakan agar muthowif dapat memperbaiki pendaftarannya.',
         'reject_submit' => 'Tolak pendaftaran',
         'notify_rejection_heading' => 'Notifikasi WhatsApp penolakan',
         'notify_rejection_hint' => 'Edit catatan di bawah jika perlu, lalu kirim pesan WhatsApp ke muthowif.',

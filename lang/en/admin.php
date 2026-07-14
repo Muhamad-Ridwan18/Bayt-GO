@@ -187,6 +187,7 @@ return [
         'approve_registration' => 'Approve registration',
         'reject_label' => 'Decline registration (optional: reason)',
         'reject_placeholder' => 'Reason if applicable',
+        'reject_placeholder_hint' => 'Provide a rejection reason so the chaperone can fix their registration.',
         'reject_submit' => 'Decline registration',
         'notify_rejection_heading' => 'Rejection WhatsApp notification',
         'notify_rejection_hint' => 'Edit the note below if needed, then send the WhatsApp message to the chaperone.',
