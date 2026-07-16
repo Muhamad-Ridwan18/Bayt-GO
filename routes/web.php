@@ -255,8 +255,12 @@ Route::middleware('auth')->group(function () {
             Route::put('pelayanan/group', [MuthowifServiceController::class, 'updateGroup'])->name('pelayanan.group');
             Route::put('pelayanan/private', [MuthowifServiceController::class, 'updatePrivate'])->name('pelayanan.private');
 
-            Route::get('pelayanan-pendukung', [SupportPackageController::class, 'edit'])->name('pelayanan-pendukung.edit');
-            Route::put('pelayanan-pendukung', [SupportPackageController::class, 'update'])->name('pelayanan-pendukung.update');
+            Route::get('pelayanan-pendukung', [SupportPackageController::class, 'index'])->name('pelayanan-pendukung.index');
+            Route::get('pelayanan-pendukung/create', [SupportPackageController::class, 'create'])->name('pelayanan-pendukung.create');
+            Route::post('pelayanan-pendukung', [SupportPackageController::class, 'store'])->name('pelayanan-pendukung.store');
+            Route::get('pelayanan-pendukung/{supportPackage}/edit', [SupportPackageController::class, 'edit'])->name('pelayanan-pendukung.edit');
+            Route::put('pelayanan-pendukung/{supportPackage}', [SupportPackageController::class, 'update'])->name('pelayanan-pendukung.update');
+            Route::delete('pelayanan-pendukung/{supportPackage}', [SupportPackageController::class, 'destroy'])->name('pelayanan-pendukung.destroy');
 
             Route::get('jadwal', [MuthowifScheduleController::class, 'index'])->name('jadwal.index');
             Route::post('jadwal', [MuthowifScheduleController::class, 'store'])->name('jadwal.store');

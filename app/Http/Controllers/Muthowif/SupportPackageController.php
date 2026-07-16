@@ -2,147 +2,138 @@
 
 namespace App\Http\Controllers\Muthowif;
 
-use App\Http\Controllers\Controller;
 use App\Enums\SupportPackageCategory;
+use App\Http\Controllers\Controller;
 use App\Models\MuthowifSupportPackage;
 use App\Support\IndonesianNumber;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
-use Illuminate\Validation\ValidationException;
+use Illuminate\Validation\Rule;
 use Illuminate\View\View;
 
 class SupportPackageController extends Controller
 {
-    public function edit(Request $request): View
-    {
-        $this->authorize('viewAny', MuthowifSupportPackage::class);
-
-        $profile = $request->user()->muthowifProfile;
-        $packages = $profile->supportPackages()->orderBy('sort_order')->orderBy('name')->get();
-
-        return view('muthowif.pelayanan-pendukung.edit', [
-            'packages' => $packages,
-            'categories' => SupportPackageCategory::ordered(),
-        ]);
-    }
-
-    public function update(Request $request): RedirectResponse
+    public function index(Request $request): View
     {
         $this->authorize('viewAny', MuthowifSupportPackage::class);
 
         $profile = $request->user()->muthowifProfile;
         abort_unless($profile, 403);
 
-        $rows = $this->validatedPackageRows($request);
-        $keptIds = [];
+        $packages = $profile->supportPackages()
+            ->orderBy('sort_order')
+            ->orderBy('name')
+            ->get();
 
-        foreach ($rows as $order => $row) {
-            $isActive = filter_var($row['is_active'] ?? true, FILTER_VALIDATE_BOOL);
-            if (isset($row['id']) && $row['id'] !== '') {
-                $package = $profile->supportPackages()->whereKey($row['id'])->firstOrFail();
-                $this->authorize('update', $package);
-                $package->update([
-                    'name' => $row['name'],
-                    'category' => $row['category'],
-                    'description' => $row['description'],
-                    'price' => $row['price'],
-                    'min_pilgrims' => $row['min_pilgrims'],
-                    'max_pilgrims' => $row['max_pilgrims'],
-                    'is_active' => $isActive,
-                    'sort_order' => $order,
-                ]);
-                $keptIds[] = (string) $package->getKey();
-            } else {
-                $package = $profile->supportPackages()->create([
-                    'name' => $row['name'],
-                    'category' => $row['category'],
-                    'description' => $row['description'],
-                    'price' => $row['price'],
-                    'min_pilgrims' => $row['min_pilgrims'],
-                    'max_pilgrims' => $row['max_pilgrims'],
-                    'is_active' => $isActive,
-                    'sort_order' => $order,
-                ]);
-                $keptIds[] = (string) $package->getKey();
-            }
-        }
+        return view('muthowif.pelayanan-pendukung.index', [
+            'packages' => $packages,
+        ]);
+    }
 
-        $profile->supportPackages()
-            ->whereNotIn('id', $keptIds)
-            ->delete();
+    public function create(): View
+    {
+        $this->authorize('create', MuthowifSupportPackage::class);
+
+        return view('muthowif.pelayanan-pendukung.create', [
+            'categories' => SupportPackageCategory::ordered(),
+        ]);
+    }
+
+    public function store(Request $request): RedirectResponse
+    {
+        $this->authorize('create', MuthowifSupportPackage::class);
+
+        $profile = $request->user()->muthowifProfile;
+        abort_unless($profile, 403);
+
+        $data = $this->validatedPackage($request);
+
+        $profile->supportPackages()->create([
+            ...$data,
+            'sort_order' => $profile->supportPackages()->count() + 1,
+        ]);
 
         return redirect()
-            ->route('muthowif.pelayanan-pendukung.edit')
-            ->with('status', __('layanan_pendukung.flash.packages_saved'));
+            ->route('muthowif.pelayanan-pendukung.index')
+            ->with('status', __('layanan_pendukung.flash.package_created'));
+    }
+
+    public function edit(MuthowifSupportPackage $supportPackage): View
+    {
+        $this->authorize('update', $supportPackage);
+
+        return view('muthowif.pelayanan-pendukung.edit', [
+            'package' => $supportPackage,
+            'categories' => SupportPackageCategory::ordered(),
+        ]);
+    }
+
+    public function update(Request $request, MuthowifSupportPackage $supportPackage): RedirectResponse
+    {
+        $this->authorize('update', $supportPackage);
+
+        $supportPackage->update($this->validatedPackage($request));
+
+        return redirect()
+            ->route('muthowif.pelayanan-pendukung.index')
+            ->with('status', __('layanan_pendukung.flash.package_updated'));
+    }
+
+    public function destroy(MuthowifSupportPackage $supportPackage): RedirectResponse
+    {
+        $this->authorize('delete', $supportPackage);
+
+        $supportPackage->delete();
+
+        return redirect()
+            ->route('muthowif.pelayanan-pendukung.index')
+            ->with('status', __('layanan_pendukung.flash.package_deleted'));
     }
 
     /**
-     * @return list<array{id?: string, name: string, description: ?string, price: string, min_pilgrims: int, max_pilgrims: int, is_active: bool}>
+     * @return array{name: string, category: string, description: ?string, price: string, min_pilgrims: int, max_pilgrims: int, is_active: bool}
      */
-    private function validatedPackageRows(Request $request): array
+    private function validatedPackage(Request $request): array
     {
-        $raw = $request->input('packages', []);
-        if (! is_array($raw)) {
-            return [];
-        }
+        $priceRaw = IndonesianNumber::digitsOnly((string) $request->input('price', ''));
+        $minRaw = IndonesianNumber::digitsOnly((string) $request->input('min_pilgrims', ''));
+        $maxRaw = IndonesianNumber::digitsOnly((string) $request->input('max_pilgrims', ''));
 
-        $clean = [];
-        foreach ($raw as $row) {
-            if (! is_array($row)) {
-                continue;
-            }
-            $clean[] = [
-                'id' => isset($row['id']) ? trim((string) $row['id']) : '',
-                'name' => trim((string) ($row['name'] ?? '')),
-                'category' => trim((string) ($row['category'] ?? '')),
-                'description' => trim((string) ($row['description'] ?? '')),
-                'price' => isset($row['price']) ? IndonesianNumber::digitsOnly((string) $row['price']) : '',
-                'min_pilgrims' => isset($row['min_pilgrims']) ? IndonesianNumber::digitsOnly((string) $row['min_pilgrims']) : '',
-                'max_pilgrims' => isset($row['max_pilgrims']) ? IndonesianNumber::digitsOnly((string) $row['max_pilgrims']) : '',
-                'is_active' => filter_var($row['is_active'] ?? true, FILTER_VALIDATE_BOOL),
-            ];
-        }
+        $request->merge([
+            'price' => $priceRaw,
+            'min_pilgrims' => $minRaw !== '' ? $minRaw : '1',
+            'max_pilgrims' => $maxRaw !== '' ? $maxRaw : ($minRaw !== '' ? $minRaw : '1'),
+            'is_active' => $request->boolean('is_active'),
+        ]);
 
-        $out = [];
-        foreach ($clean as $row) {
-            if ($row['name'] === '' && $row['price'] === '') {
-                continue;
-            }
+        $validated = $request->validate([
+            'name' => ['required', 'string', 'max:255'],
+            'category' => ['required', 'string', Rule::enum(SupportPackageCategory::class)],
+            'description' => ['nullable', 'string', 'max:2000'],
+            'price' => ['required', 'numeric', 'min:0'],
+            'min_pilgrims' => ['required', 'integer', 'min:1'],
+            'max_pilgrims' => ['required', 'integer', 'min:1'],
+            'is_active' => ['sometimes', 'boolean'],
+        ], [
+            'price.required' => __('layanan_pendukung.validation.package_price_invalid'),
+            'price.numeric' => __('layanan_pendukung.validation.package_price_invalid'),
+            'category.*' => __('layanan_pendukung.validation.category_invalid'),
+        ]);
 
-            if ($row['name'] === '' || $row['price'] === '') {
-                throw ValidationException::withMessages([
-                    'packages' => __('layanan_pendukung.validation.package_row_incomplete'),
-                ]);
-            }
+        $min = max(1, (int) $validated['min_pilgrims']);
+        $max = max($min, (int) $validated['max_pilgrims']);
+        $category = $validated['category'] instanceof SupportPackageCategory
+            ? $validated['category']->value
+            : (string) $validated['category'];
 
-            if (! is_numeric($row['price']) || (float) $row['price'] < 0) {
-                throw ValidationException::withMessages([
-                    'packages' => __('layanan_pendukung.validation.package_price_invalid'),
-                ]);
-            }
-
-            $min = max(1, (int) ($row['min_pilgrims'] !== '' ? $row['min_pilgrims'] : 1));
-            $max = max($min, (int) ($row['max_pilgrims'] !== '' ? $row['max_pilgrims'] : $min));
-
-            $category = $row['category'] !== '' ? $row['category'] : SupportPackageCategory::Other->value;
-            if (SupportPackageCategory::tryFrom($category) === null) {
-                throw ValidationException::withMessages([
-                    'packages' => __('layanan_pendukung.validation.category_invalid'),
-                ]);
-            }
-
-            $out[] = [
-                'id' => $row['id'] !== '' ? $row['id'] : null,
-                'name' => $row['name'],
-                'category' => $category,
-                'description' => $row['description'] !== '' ? $row['description'] : null,
-                'price' => (string) $row['price'],
-                'min_pilgrims' => $min,
-                'max_pilgrims' => $max,
-                'is_active' => $row['is_active'],
-            ];
-        }
-
-        return $out;
+        return [
+            'name' => trim((string) $validated['name']),
+            'category' => $category,
+            'description' => filled($validated['description'] ?? null) ? trim((string) $validated['description']) : null,
+            'price' => (string) $validated['price'],
+            'min_pilgrims' => $min,
+            'max_pilgrims' => $max,
+            'is_active' => (bool) ($validated['is_active'] ?? true),
+        ];
     }
 }

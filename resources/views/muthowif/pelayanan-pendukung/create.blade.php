@@ -4,19 +4,18 @@
             <div class="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm sm:p-6">
                 <div class="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
                     <div>
-                        <h1 class="text-xl font-bold text-slate-900">{{ __('layanan_pendukung.edit_title') }}</h1>
-                        <p class="mt-1 text-sm text-slate-600">{{ $package->name }}</p>
+                        <h1 class="text-xl font-bold text-slate-900">{{ __('layanan_pendukung.create_title') }}</h1>
+                        <p class="mt-1 text-sm text-slate-600">{{ __('layanan_pendukung.manage_lead') }}</p>
                     </div>
                     <a href="{{ route('muthowif.pelayanan-pendukung.index') }}" class="text-sm font-semibold text-brand-700 hover:text-brand-800">
                         ← {{ __('layanan_pendukung.back_to_list') }}
                     </a>
                 </div>
 
-                <form method="POST" action="{{ route('muthowif.pelayanan-pendukung.update', $package) }}" class="mt-6 space-y-6">
+                <form method="POST" action="{{ route('muthowif.pelayanan-pendukung.store') }}" class="mt-6 space-y-6">
                     @csrf
-                    @method('PUT')
                     @include('muthowif.pelayanan-pendukung.partials.form', [
-                        'package' => $package,
+                        'package' => null,
                         'categories' => $categories,
                     ])
                     <div class="flex flex-wrap gap-3">
@@ -27,14 +26,6 @@
                             {{ __('layanan_pendukung.cancel') }}
                         </a>
                     </div>
-                </form>
-
-                <form method="POST" action="{{ route('muthowif.pelayanan-pendukung.destroy', $package) }}" class="mt-6 border-t border-slate-100 pt-6" onsubmit="return confirm(@json(__('layanan_pendukung.delete_confirm')));">
-                    @csrf
-                    @method('DELETE')
-                    <button type="submit" class="inline-flex rounded-xl border border-red-200 px-4 py-2.5 text-sm font-semibold text-red-700 hover:bg-red-50">
-                        {{ __('layanan_pendukung.delete_package') }}
-                    </button>
                 </form>
             </div>
         </x-page-container>
