@@ -2,24 +2,6 @@
     use App\Enums\MuthowifServiceType;
     use App\Support\IndonesianNumber;
 
-    $packageFeatures = function ($service): array {
-        if (! $service) {
-            return [];
-        }
-        $items = [__('marketplace.show.feature_guidance')];
-        if (($service->same_hotel_price_per_day ?? null) !== null && (float) $service->same_hotel_price_per_day > 0) {
-            $items[] = __('marketplace.show.feature_hotel');
-        }
-        if (($service->transport_price_flat ?? null) !== null && (float) $service->transport_price_flat > 0) {
-            $items[] = __('marketplace.show.feature_transport');
-        }
-        if (filled($service->description)) {
-            $items[] = __('marketplace.show.feature_description');
-        }
-
-        return $items;
-    };
-
     $groupBookUrl = $group ? route('layanan.book', array_merge(['publicProfile' => $profile], $bookQueryParams, ['service_type' => 'group'])) : null;
     $privateBookUrl = $private ? route('layanan.book', array_merge(['publicProfile' => $profile], $bookQueryParams, ['service_type' => 'private'])) : null;
 @endphp
@@ -38,7 +20,6 @@
 
         <div class="ui-section-body grid gap-5 lg:grid-cols-2">
             @if ($group)
-                @php $groupFeatures = $packageFeatures($group); @endphp
                 <article class="flex flex-col overflow-hidden rounded-2xl border-2 border-brand-200 bg-gradient-to-b from-brand-50/80 to-white shadow-sm">
                     <div class="border-b border-brand-100/80 bg-brand-700 px-5 py-3">
                         <p class="text-xs font-bold uppercase tracking-wider text-white/90">{{ MuthowifServiceType::Group->label() }}</p>
@@ -54,20 +35,11 @@
                         @if ($group->min_pilgrims && $group->max_pilgrims)
                             <p class="mt-1 text-sm text-slate-600">{{ __('marketplace.show.pilgrim_range', ['min' => $group->min_pilgrims, 'max' => $group->max_pilgrims]) }}</p>
                         @endif
-                        <ul class="mt-4 flex-1 space-y-2">
-                            @foreach ($groupFeatures as $feature)
-                                <li class="flex items-start gap-2 text-sm text-slate-700">
-                                    <svg class="mt-0.5 h-4 w-4 shrink-0 text-brand-600" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true"><path fill-rule="evenodd" d="M16.704 4.153a.75.75 0 01.143 1.052l-8 10.5a.75.75 0 01-1.127.075l-4.5-4.5a.75.75 0 011.06-1.06l3.894 3.893 7.48-9.817a.75.75 0 011.05-.143z" clip-rule="evenodd" /></svg>
-                                    {{ $feature }}
-                                </li>
-                            @endforeach
-                        </ul>
                     </div>
                 </article>
             @endif
 
             @if ($private)
-                @php $privateFeatures = $packageFeatures($private); @endphp
                 <article class="flex flex-col overflow-hidden rounded-2xl border-2 border-gold/40 bg-gradient-to-b from-amber-50/90 to-white shadow-sm">
                     <div class="border-b border-gold/30 bg-gold px-5 py-3">
                         <p class="text-xs font-bold uppercase tracking-wider text-white">{{ MuthowifServiceType::PrivateJamaah->label() }}</p>
@@ -83,14 +55,6 @@
                         @if ($private->min_pilgrims && $private->max_pilgrims)
                             <p class="mt-1 text-sm text-slate-600">{{ __('marketplace.show.pilgrim_range', ['min' => $private->min_pilgrims, 'max' => $private->max_pilgrims]) }}</p>
                         @endif
-                        <ul class="mt-4 flex-1 space-y-2">
-                            @foreach ($privateFeatures as $feature)
-                                <li class="flex items-start gap-2 text-sm text-slate-700">
-                                    <svg class="mt-0.5 h-4 w-4 shrink-0 text-gold" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true"><path fill-rule="evenodd" d="M16.704 4.153a.75.75 0 01.143 1.052l-8 10.5a.75.75 0 01-1.127.075l-4.5-4.5a.75.75 0 011.06-1.06l3.894 3.893 7.48-9.817a.75.75 0 011.05-.143z" clip-rule="evenodd" /></svg>
-                                    {{ $feature }}
-                                </li>
-                            @endforeach
-                        </ul>
                     </div>
                 </article>
             @endif
