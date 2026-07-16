@@ -80,6 +80,7 @@ return [
             'starts_at' => '*Mulai:* :datetime',
             'pilgrim_count' => '*Jumlah jemaah:* :count',
             'status' => '*Status:* Menunggu persetujuan Anda',
+            'completion_code_reminder' => '*Penting:* Saat layanan selesai, minta kode verifikasi 6 digit dari jamaah lalu masukkan di panel untuk menutup pesanan.',
             'open_panel' => '*Buka panel:*',
         ],
         'support_payment_settled' => [
@@ -89,7 +90,8 @@ return [
             'package' => '*Paket:* :package',
             'starts_at' => '*Jadwal mulai:* :datetime',
             'status' => '*Status:* Siap dimulai sesuai jadwal.',
-            'open' => '*Buka panel pesanan:*',
+            'completion_code_reminder' => '*Penting:* Ketika layanan selesai, jangan lupa minta kode verifikasi 6 digit dari jamaah, lalu masukkan di detail pesanan untuk menutup layanan.',
+            'open' => '*Buka detail pesanan:*',
         ],
         'support_completion_requested' => [
             'headline' => '*:app* — jamaah tandai selesai',
@@ -180,6 +182,8 @@ return [
             'starts_at' => '*Jadwal mulai:* :datetime',
             'amount' => '*Total dibayar:* Rp :amount',
             'status' => '*Status:* Lunas — layanan siap dimulai sesuai jadwal.',
+            'completion_code_line' => '*Kode verifikasi penyelesaian:* :code',
+            'completion_code_hint' => 'Tunjukkan kode ini kepada muthowif saat layanan selesai agar pesanan dapat ditutup.',
             'view_detail' => '*Detail pesanan:*',
             'invoice_link' => '*Invoice (buka link):* :url',
         ],

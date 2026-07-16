@@ -6,7 +6,6 @@ use App\Enums\BookingStatus;
 use App\Enums\MuthowifServiceType;
 use App\Enums\PaymentStatus;
 use App\Jobs\NotifyCustomerOfSupportCompletionApproved;
-use App\Jobs\NotifyCustomerOfSupportCompletionCode;
 use App\Models\MuthowifBooking;
 use App\Models\MuthowifProfile;
 use App\Models\MuthowifSupportPackage;
@@ -111,7 +110,7 @@ class SupportBookingService
      *
      * @throws ValidationException
      */
-    public function issueCompletionCode(MuthowifBooking $booking, bool $forceResend = false): void
+    public function issueCompletionCode(MuthowifBooking $booking, bool $forceResend = false, bool $notify = true): void
     {
         if (! $booking->isSupport() || ! $booking->isPaid()) {
             throw ValidationException::withMessages([
@@ -148,7 +147,10 @@ class SupportBookingService
         Cache::forget($this->verifyAttemptsKey($bookingId));
         Cache::put($this->sendCooldownKey($bookingId), true, now()->addSeconds(self::SEND_COOLDOWN_SECONDS));
 
-        NotifyCustomerOfSupportCompletionCode::dispatchAfterResponse($bookingId, $code);
+        if ($notify) {
+            app(MuthowifBookingWhatsAppNotifier::class)
+                ->notifyCustomerSupportCompletionCode($booking->fresh(), $code);
+        }
     }
 
     /**
@@ -169,7 +171,7 @@ class SupportBookingService
         }
 
         try {
-            $this->issueCompletionCode($booking->fresh(), false);
+            $this->issueCompletionCode($booking->fresh(), false, false);
         } catch (ValidationException) {
             // ignore cooldown / race during payment hooks
         }

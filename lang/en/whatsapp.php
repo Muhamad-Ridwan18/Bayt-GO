@@ -80,6 +80,7 @@ return [
             'starts_at' => '*Starts:* :datetime',
             'pilgrim_count' => '*Party size:* :count',
             'status' => '*Status:* Awaiting your approval',
+            'completion_code_reminder' => '*Important:* When the service is done, ask the pilgrim for their 6-digit verification code and enter it in the panel to close the booking.',
             'open_panel' => '*Open panel:*',
         ],
         'support_payment_settled' => [
@@ -89,7 +90,8 @@ return [
             'package' => '*Package:* :package',
             'starts_at' => '*Start time:* :datetime',
             'status' => '*Status:* Ready to start on schedule.',
-            'open' => '*Open bookings:*',
+            'completion_code_reminder' => '*Important:* When the service is finished, don\'t forget to ask the pilgrim for their 6-digit verification code, then enter it on the booking detail page to close the service.',
+            'open' => '*Open booking detail:*',
         ],
         'support_completion_requested' => [
             'headline' => '*:app* — pilgrim marked complete',
@@ -180,6 +182,8 @@ return [
             'starts_at' => '*Start time:* :datetime',
             'amount' => '*Amount paid:* Rp :amount',
             'status' => '*Status:* Paid — service will start as scheduled.',
+            'completion_code_line' => '*Completion verification code:* :code',
+            'completion_code_hint' => 'Show this code to your muthowif when the service is finished so the booking can be closed.',
             'view_detail' => '*Booking details:*',
             'invoice_link' => '*Invoice (open link):* :url',
         ],

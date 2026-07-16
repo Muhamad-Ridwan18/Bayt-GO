@@ -64,6 +64,8 @@ class MuthowifBookingWhatsAppNotifier
                 $lines[] = '';
                 $lines[] = __('whatsapp.muthowif.support_new_booking.status', [], $locale);
                 $lines[] = '';
+                $lines[] = __('whatsapp.muthowif.support_new_booking.completion_code_reminder', [], $locale);
+                $lines[] = '';
                 $lines[] = __('whatsapp.muthowif.support_new_booking.open_panel', [], $locale);
                 $lines[] = $url;
 
@@ -139,10 +141,13 @@ class MuthowifBookingWhatsAppNotifier
             $url = route('muthowif.bookings.index');
 
             if ($booking->isSupport()) {
+                $url = route('muthowif.bookings.show', $booking);
                 $lines = [
                     __('whatsapp.muthowif.support_payment_settled.headline', ['app' => $appName], $locale),
                     '',
                     __('whatsapp.muthowif.support_payment_settled.body', ['customer' => $customerName], $locale),
+                    '',
+                    __('whatsapp.muthowif.support_payment_settled.completion_code_reminder', [], $locale),
                     '',
                 ];
 
@@ -246,6 +251,13 @@ class MuthowifBookingWhatsAppNotifier
                 $lines[] = __('whatsapp.customer.support_payment_settled.starts_at', ['datetime' => $this->supportStartsAtFormatted($booking)], $locale);
                 $lines[] = __('whatsapp.customer.support_payment_settled.amount', ['amount' => $amountFmt], $locale);
                 $lines[] = __('whatsapp.customer.support_payment_settled.status', [], $locale);
+
+                if (filled($booking->completion_code)) {
+                    $lines[] = '';
+                    $lines[] = __('whatsapp.customer.support_payment_settled.completion_code_line', ['code' => $booking->completion_code], $locale);
+                    $lines[] = __('whatsapp.customer.support_payment_settled.completion_code_hint', [], $locale);
+                }
+
                 $lines[] = '';
                 $lines[] = __('whatsapp.customer.support_payment_settled.view_detail', [], $locale);
                 $lines[] = $detailUrl;

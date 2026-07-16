@@ -26,10 +26,11 @@ class NotifyCustomerOfPaidBooking implements ShouldQueue
             return;
         }
 
-        $notifier->notifyCustomerPaymentSettled($booking);
-
         if ($booking->isSupport()) {
-            $support->issueCompletionCodeAfterPayment($booking->fresh());
+            $support->issueCompletionCodeAfterPayment($booking);
+            $booking = $booking->fresh();
         }
+
+        $notifier->notifyCustomerPaymentSettled($booking);
     }
 }
