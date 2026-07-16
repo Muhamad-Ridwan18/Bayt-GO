@@ -6,6 +6,7 @@ use App\Enums\BookingStatus;
 use App\Enums\MuthowifServiceType;
 use App\Enums\PaymentStatus;
 use App\Jobs\NotifyCustomerOfSupportCompletionApproved;
+use App\Jobs\NotifyCustomerOfSupportCompletionRejected;
 use App\Jobs\NotifyMuthowifOfSupportCompletionRequested;
 use App\Models\MuthowifBooking;
 use App\Models\MuthowifProfile;
@@ -34,7 +35,9 @@ class SupportBookingService
             ]);
         }
 
-        [$min, $max] = $package->pilgrimBounds();
+        $bounds = $package->pilgrimBounds();
+        $min = $bounds['min'];
+        $max = $bounds['max'];
         if ($pilgrimCount < $min || $pilgrimCount > $max) {
             throw ValidationException::withMessages([
                 'pilgrim_count' => [__('bookings.validation.pilgrim_count_between', ['min' => $min, 'max' => $max])],
@@ -126,6 +129,8 @@ class SupportBookingService
             'completion_requested_at' => null,
             'completion_requested_by' => null,
         ]);
+
+        NotifyCustomerOfSupportCompletionRejected::dispatchAfterResponse((string) $booking->getKey());
     }
 
     /**

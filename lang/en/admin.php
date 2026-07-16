@@ -410,6 +410,7 @@ return [
             'emergency_selection' => 'Replacement selection result → muthowif',
             'support_completion_requested' => 'Support marked complete (pilgrim) → muthowif',
             'support_completion_approved' => 'Support completion confirmed → pilgrim',
+            'support_completion_rejected' => 'Support completion rejected → pilgrim',
         ],
     ],
     'whatsapp_broadcast' => [

@@ -410,6 +410,7 @@ return [
             'emergency_selection' => 'Hasil pemilihan pengganti → muthowif',
             'support_completion_requested' => 'Layanan pendukung selesai (jamaah) → muthowif',
             'support_completion_approved' => 'Konfirmasi selesai layanan pendukung → jamaah',
+            'support_completion_rejected' => 'Tolak selesai layanan pendukung → jamaah',
         ],
     ],
     'whatsapp_broadcast' => [

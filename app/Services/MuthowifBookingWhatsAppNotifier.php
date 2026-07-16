@@ -512,10 +512,37 @@ class MuthowifBookingWhatsAppNotifier
 
         $this->withLocale($locale, function () use ($booking, $fonnteDial, $locale): void {
             $muthowifName = $booking->muthowifProfile?->user?->name ?? __('whatsapp.fallback_muthowif', [], $locale);
-            $start = $booking->starts_on->format('d/m/Y');
-            $end = $booking->ends_on->format('d/m/Y');
             $appName = config('app.name', 'BaytGo');
             $url = route('bookings.show', $booking);
+
+            if ($booking->isSupport()) {
+                $lines = [
+                    __('whatsapp.customer.support_rejected_jadwal_full.headline', ['app' => $appName], $locale),
+                    '',
+                    __('whatsapp.customer.support_rejected_jadwal_full.body', ['muthowif' => $muthowifName], $locale),
+                    '',
+                ];
+
+                if (filled($booking->booking_code)) {
+                    $lines[] = __('whatsapp.customer.support_rejected_jadwal_full.booking_code', ['code' => $booking->booking_code], $locale);
+                    $lines[] = '';
+                }
+
+                $lines[] = __('whatsapp.customer.support_rejected_jadwal_full.package', ['package' => $this->supportPackageLabel($booking, $locale)], $locale);
+                $lines[] = __('whatsapp.customer.support_rejected_jadwal_full.starts_at', ['datetime' => $this->supportStartsAtFormatted($booking)], $locale);
+                $lines[] = '';
+                $lines[] = __('whatsapp.customer.support_rejected_jadwal_full.hint', [], $locale);
+                $lines[] = '';
+                $lines[] = __('whatsapp.customer.support_rejected_jadwal_full.view_detail', [], $locale);
+                $lines[] = $url;
+
+                $this->sendToTarget($fonnteDial, implode("\n", $lines), $booking->id);
+
+                return;
+            }
+
+            $start = $booking->starts_on->format('d/m/Y');
+            $end = $booking->ends_on->format('d/m/Y');
 
             $lines = [
                 __('whatsapp.customer.rejected_jadwal_full.headline', ['app' => $appName], $locale),
@@ -571,11 +598,53 @@ class MuthowifBookingWhatsAppNotifier
 
         $this->withLocale($locale, function () use ($booking, $fonnteDial, $locale): void {
             $muthowifName = $booking->muthowifProfile?->user?->name ?? __('whatsapp.fallback_muthowif', [], $locale);
-            $start = $booking->starts_on->format('d/m/Y');
-            $end = $booking->ends_on->format('d/m/Y');
             $appName = config('app.name', 'BaytGo');
             $url = route('bookings.show', $booking);
             $kind = $booking->muthowif_rejection_kind;
+
+            if ($booking->isSupport()) {
+                $lines = [
+                    __('whatsapp.customer.support_rejected.headline', ['app' => $appName], $locale),
+                    '',
+                    $kind === null
+                        ? __('whatsapp.customer.support_rejected.body_confirmed_cancelled', ['muthowif' => $muthowifName], $locale)
+                        : __('whatsapp.customer.support_rejected.body', ['muthowif' => $muthowifName], $locale),
+                    '',
+                ];
+
+                if ($kind !== null) {
+                    $lines[] = __('whatsapp.customer.support_rejected.reason', ['reason' => $kind->label()], $locale);
+                    $lines[] = '';
+                }
+
+                if (filled($booking->booking_code)) {
+                    $lines[] = __('whatsapp.customer.support_rejected.booking_code', ['code' => $booking->booking_code], $locale);
+                    $lines[] = '';
+                }
+
+                $lines[] = __('whatsapp.customer.support_rejected.package', ['package' => $this->supportPackageLabel($booking, $locale)], $locale);
+                $lines[] = __('whatsapp.customer.support_rejected.starts_at', ['datetime' => $this->supportStartsAtFormatted($booking)], $locale);
+                $lines[] = '';
+                $lines[] = __('whatsapp.customer.support_rejected.hint', [], $locale);
+
+                $note = $booking->muthowif_rejection_note;
+                if (filled($note)) {
+                    $lines[] = '';
+                    $lines[] = __('whatsapp.customer.support_rejected.note_heading', [], $locale);
+                    $lines[] = $note;
+                }
+
+                $lines[] = '';
+                $lines[] = __('whatsapp.customer.support_rejected.view_detail', [], $locale);
+                $lines[] = $url;
+
+                $this->sendToTarget($fonnteDial, implode("\n", $lines), $booking->id);
+
+                return;
+            }
+
+            $start = $booking->starts_on->format('d/m/Y');
+            $end = $booking->ends_on->format('d/m/Y');
 
             $lines = [
                 __('whatsapp.customer.rejected.headline', ['app' => $appName], $locale),
@@ -1079,6 +1148,67 @@ class MuthowifBookingWhatsAppNotifier
             $lines[] = __('whatsapp.customer.support_completed.package', ['package' => $this->supportPackageLabel($booking, $locale)], $locale);
             $lines[] = '';
             $lines[] = __('whatsapp.customer.support_completed.view_detail', [], $locale);
+            $lines[] = $url;
+
+            $this->sendToTarget($fonnteDial, implode("\n", $lines), $booking->id);
+        });
+    }
+
+    /**
+     * Muthowif menolak permintaan selesai — layanan tetap berjalan, beri tahu jamaah.
+     */
+    public function notifyCustomerSupportCompletionRejected(MuthowifBooking $booking): void
+    {
+        if (! WhatsAppNotifySettings::enabled('support_completion_rejected')) {
+            return;
+        }
+
+        if (! WhatsAppNotifySettings::hasToken()) {
+            Log::debug('WhatsApp support completion rejected skipped: token gateway kosong.');
+
+            return;
+        }
+
+        $booking->loadMissing(['customer', 'muthowifProfile.user', 'supportPackage']);
+        $customer = $booking->customer;
+        if ($customer === null) {
+            return;
+        }
+
+        $fonnteDial = IntlPhone::fonnteDial($customer->phone);
+        if ($fonnteDial === null) {
+            Log::warning('WhatsApp support completion rejected skipped: nomor customer kosong atau tidak valid.', [
+                'customer_id' => $customer->id,
+                'booking_id' => $booking->id,
+            ]);
+
+            return;
+        }
+
+        $locale = $this->localeForUser($customer->locale);
+
+        $this->withLocale($locale, function () use ($booking, $fonnteDial, $locale): void {
+            $muthowifName = $booking->muthowifProfile?->user?->name ?? __('whatsapp.fallback_muthowif', [], $locale);
+            $appName = config('app.name', 'BaytGo');
+            $url = route('bookings.show', $booking);
+
+            $lines = [
+                __('whatsapp.customer.support_completion_rejected.headline', ['app' => $appName], $locale),
+                '',
+                __('whatsapp.customer.support_completion_rejected.body', ['muthowif' => $muthowifName], $locale),
+                '',
+            ];
+
+            if (filled($booking->booking_code)) {
+                $lines[] = __('whatsapp.customer.support_completion_rejected.booking_code', ['code' => $booking->booking_code], $locale);
+                $lines[] = '';
+            }
+
+            $lines[] = __('whatsapp.customer.support_completion_rejected.package', ['package' => $this->supportPackageLabel($booking, $locale)], $locale);
+            $lines[] = '';
+            $lines[] = __('whatsapp.customer.support_completion_rejected.hint', [], $locale);
+            $lines[] = '';
+            $lines[] = __('whatsapp.customer.support_completion_rejected.view_detail', [], $locale);
             $lines[] = $url;
 
             $this->sendToTarget($fonnteDial, implode("\n", $lines), $booking->id);

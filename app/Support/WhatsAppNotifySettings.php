@@ -118,6 +118,11 @@ class WhatsAppNotifySettings
                 'group' => 'support',
                 'default' => true,
             ],
+            'support_completion_rejected' => [
+                'label' => 'admin.whatsapp_notify.toggles.support_completion_rejected',
+                'group' => 'support',
+                'default' => true,
+            ],
         ];
     }
 
