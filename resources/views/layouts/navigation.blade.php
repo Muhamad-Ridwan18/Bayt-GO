@@ -79,9 +79,9 @@
                         <x-nav-link :href="route('layanan.index')" :active="request()->routeIs('layanan.*')">
                             {{ __('nav.find_muthowif') }}
                         </x-nav-link>
-                        {{-- <x-nav-link :href="route('layanan-pendukung.index')" :active="request()->routeIs('layanan-pendukung.*')">
+                        <x-nav-link :href="route('layanan-pendukung.index')" :active="request()->routeIs('layanan-pendukung.*')">
                             {{ __('layanan_pendukung.page_title') }}
-                        </x-nav-link> --}}
+                        </x-nav-link>
                         <x-nav-link :href="route('bookings.index')" :active="request()->routeIs('bookings.*')">
                             {{ __('nav.my_bookings') }}
                         </x-nav-link>
@@ -139,9 +139,9 @@
                         <x-nav-link :href="route('muthowif.pelayanan.edit')" :active="request()->routeIs('muthowif.pelayanan.*')">
                             {{ __('nav.services') }}
                         </x-nav-link>
-                        {{-- <x-nav-link :href="route('muthowif.pelayanan-pendukung.index')" :active="request()->routeIs('muthowif.pelayanan-pendukung.*')">
+                        <x-nav-link :href="route('muthowif.pelayanan-pendukung.index')" :active="request()->routeIs('muthowif.pelayanan-pendukung.*')">
                             {{ __('layanan_pendukung.page_title') }}
-                        </x-nav-link> --}}
+                        </x-nav-link>
                         <x-nav-link :href="route('muthowif.jadwal.index')" :active="request()->routeIs('muthowif.jadwal.*')">
                             {{ __('nav.day_off') }}
                         </x-nav-link>
@@ -257,9 +257,9 @@
                 <x-responsive-nav-link :href="route('layanan.index')" :active="request()->routeIs('layanan.*')">
                     {{ __('nav.find_muthowif') }}
                 </x-responsive-nav-link>
-                {{-- <x-responsive-nav-link :href="route('layanan-pendukung.index')" :active="request()->routeIs('layanan-pendukung.*')">
+                <x-responsive-nav-link :href="route('layanan-pendukung.index')" :active="request()->routeIs('layanan-pendukung.*')">
                     {{ __('layanan_pendukung.page_title') }}
-                </x-responsive-nav-link> --}}
+                </x-responsive-nav-link>
                 <x-responsive-nav-link :href="route('bookings.index')" :active="request()->routeIs('bookings.*')">
                     {{ __('nav.my_bookings') }}
                 </x-responsive-nav-link>
@@ -317,9 +317,9 @@
                 <x-responsive-nav-link :href="route('muthowif.pelayanan.edit')" :active="request()->routeIs('muthowif.pelayanan.*')">
                     {{ __('nav.services') }}
                 </x-responsive-nav-link>
-                {{-- <x-responsive-nav-link :href="route('muthowif.pelayanan-pendukung.index')" :active="request()->routeIs('muthowif.pelayanan-pendukung.*')">
+                <x-responsive-nav-link :href="route('muthowif.pelayanan-pendukung.index')" :active="request()->routeIs('muthowif.pelayanan-pendukung.*')">
                     {{ __('layanan_pendukung.page_title') }}
-                </x-responsive-nav-link> --}}
+                </x-responsive-nav-link>
                 <x-responsive-nav-link :href="route('muthowif.jadwal.index')" :active="request()->routeIs('muthowif.jadwal.*')">
                     {{ __('nav.day_off') }}
                 </x-responsive-nav-link>
