@@ -62,9 +62,7 @@ class MuthowifBookingPolicy
     public function completeSupportWithCode(User $user, MuthowifBooking $booking): bool
     {
         return $this->muthowifOwns($user, $booking)
-            && $booking->isSupport()
-            && $booking->status === BookingStatus::InProgress
-            && $booking->isPaid();
+            && $booking->canCompleteSupportWithCode();
     }
 
     public function resendSupportCompletionCode(User $user, MuthowifBooking $booking): bool

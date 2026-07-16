@@ -163,6 +163,14 @@ class MuthowifBooking extends Model
         return filled($this->completion_code_hash);
     }
 
+    public function canCompleteSupportWithCode(): bool
+    {
+        return $this->isSupport()
+            && $this->isPaid()
+            && in_array($this->status, [BookingStatus::Confirmed, BookingStatus::InProgress], true)
+            && $this->hasCompletionCode();
+    }
+
     public function review(): HasOne
     {
         return $this->hasOne(BookingReview::class, 'muthowif_booking_id');

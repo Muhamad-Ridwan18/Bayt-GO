@@ -83,8 +83,9 @@ export function canCompleteSupportWithCode(booking) {
     return booking.can_complete_support_with_code;
   }
   return booking?.is_support
-    && booking?.status === 'in_progress'
-    && booking?.payment_status === 'paid';
+    && ['confirmed', 'in_progress'].includes(booking?.status)
+    && booking?.payment_status === 'paid'
+    && Boolean(booking?.has_completion_code ?? booking?.completion_code);
 }
 
 export function canReviewBooking(booking) {

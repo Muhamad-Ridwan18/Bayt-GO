@@ -12,7 +12,7 @@
         <p class="mt-1 text-xs text-slate-600">{{ __('muthowif.booking_show.actions_pending_hint') }}</p>
         @include('muthowif.bookings.partials.pending-booking-actions', ['booking' => $b, 'variant' => 'inline'])
     </section>
-@elseif ($b->isSupport() && $st === BookingStatus::InProgress && $b->isPaid())
+@elseif ($b->canCompleteSupportWithCode())
     <section class="rounded-2xl border border-brand-200 bg-brand-50 p-5 shadow-sm sm:p-6">
         <h2 class="text-sm font-bold text-brand-950">{{ __('layanan_pendukung.muthowif_completion_heading') }}</h2>
         <p class="mt-1 text-xs text-brand-900/80">{{ __('layanan_pendukung.muthowif_completion_intro') }}</p>

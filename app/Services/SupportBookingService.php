@@ -185,8 +185,8 @@ class SupportBookingService
     public function completeWithCode(MuthowifBooking $booking, string $code, string $muthowifUserId): array
     {
         if (! $booking->isSupport()
-            || $booking->status !== BookingStatus::InProgress
             || ! $booking->isPaid()
+            || ! in_array($booking->status, [BookingStatus::Confirmed, BookingStatus::InProgress], true)
             || blank($booking->completion_code_hash)) {
             throw ValidationException::withMessages([
                 'code' => [__('layanan_pendukung.validation.cannot_complete_with_code')],

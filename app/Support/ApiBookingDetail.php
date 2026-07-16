@@ -196,9 +196,7 @@ final class ApiBookingDetail
                 'email' => $booking->customer->email,
                 'phone' => $booking->customer->phone,
             ] : null;
-            $data['can_complete_support_with_code'] = $booking->isSupport()
-                && $booking->status === \App\Enums\BookingStatus::InProgress
-                && $booking->isPaid();
+            $data['can_complete_support_with_code'] = $booking->canCompleteSupportWithCode();
         } else {
             if ($booking->isSupport() && $booking->hasCompletionCode()) {
                 $data['completion_code'] = $booking->completion_code;
