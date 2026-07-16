@@ -23,7 +23,7 @@
             @auth
                 @include('layouts.navigation')
             @else
-                <x-marketing-public-header active="layanan" />
+                <x-marketing-public-header :active="request()->routeIs('layanan-pendukung.*') ? 'layanan_pendukung' : 'layanan'" />
             @endauth
 
             <main @class([
