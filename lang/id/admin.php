@@ -408,9 +408,10 @@ return [
             'emergency_candidate' => 'Calon muthowif pengganti → jamaah',
             'emergency_offer' => 'Tawaran pengganti insiden → muthowif',
             'emergency_selection' => 'Hasil pemilihan pengganti → muthowif',
-            'support_completion_requested' => 'Layanan pendukung selesai (jamaah) → muthowif',
+            'support_completion_code' => 'Kode verifikasi penyelesaian layanan pendukung → jamaah',
+            'support_completion_requested' => 'Layanan pendukung selesai (jamaah) → muthowif (legacy)',
             'support_completion_approved' => 'Konfirmasi selesai layanan pendukung → jamaah',
-            'support_completion_rejected' => 'Tolak selesai layanan pendukung → jamaah',
+            'support_completion_rejected' => 'Tolak selesai layanan pendukung → jamaah (legacy)',
         ],
     ],
     'whatsapp_broadcast' => [

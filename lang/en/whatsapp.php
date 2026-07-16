@@ -190,6 +190,15 @@ return [
             'package' => '*Package:* :package',
             'view_detail' => '*View booking:*',
         ],
+        'support_completion_code' => [
+            'headline' => '*:app* — completion verification code',
+            'body' => 'Payment for your support service with *:muthowif* was received. Show this code to the muthowif when the activity is done.',
+            'code_line' => '*Verification code:* :code',
+            'booking_code' => '*Booking code:* :code',
+            'package' => '*Package:* :package',
+            'hint' => 'Do not share this code except with the muthowif serving you.',
+            'view_detail' => '*View booking:*',
+        ],
         'support_completion_rejected' => [
             'headline' => '*:app* — completion request declined',
             'body' => '*:muthowif* says the support service is not finished yet.',

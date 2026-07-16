@@ -69,18 +69,22 @@ export function canCompleteBooking(booking) {
   return !booking?.is_support && booking?.status === 'confirmed' && booking?.payment_status === 'paid';
 }
 
-export function canRequestSupportCompletion(booking) {
-  if (booking?.can_request_support_completion !== undefined) {
-    return booking.can_request_support_completion;
+export function canResendSupportCompletionCode(booking) {
+  if (booking?.can_resend_support_completion_code !== undefined) {
+    return booking.can_resend_support_completion_code;
+  }
+  return booking?.is_support
+    && ['confirmed', 'in_progress'].includes(booking?.status)
+    && booking?.payment_status === 'paid';
+}
+
+export function canCompleteSupportWithCode(booking) {
+  if (booking?.can_complete_support_with_code !== undefined) {
+    return booking.can_complete_support_with_code;
   }
   return booking?.is_support
     && booking?.status === 'in_progress'
-    && booking?.payment_status === 'paid'
-    && !booking?.completion_requested_at;
-}
-
-export function hasSupportCompletionPending(booking) {
-  return booking?.is_support && booking?.completion_requested_at && booking?.status !== 'completed';
+    && booking?.payment_status === 'paid';
 }
 
 export function canReviewBooking(booking) {

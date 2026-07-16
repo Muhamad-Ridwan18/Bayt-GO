@@ -42,11 +42,7 @@
             <p class="mt-3 text-sm leading-relaxed text-slate-600">{{ __('bookings.show.status_confirmed_body') }}</p>
         @elseif ($st === BookingStatus::InProgress)
             <p class="mt-3 text-sm leading-relaxed text-slate-600">
-                @if ($b->hasCompletionRequested())
-                    {{ __('layanan_pendukung.completion_waiting') }}
-                @else
-                    {{ __('layanan_pendukung.starts_at_hint') }}
-                @endif
+                {{ __('layanan_pendukung.completion_intro') }}
             </p>
         @elseif ($st === BookingStatus::Completed)
             <p class="mt-3 text-sm leading-relaxed text-slate-600">{{ __('bookings.show.status_completed_body') }}</p>

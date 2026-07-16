@@ -408,9 +408,10 @@ return [
             'emergency_candidate' => 'Replacement candidate → pilgrim',
             'emergency_offer' => 'Replacement offer → muthowif',
             'emergency_selection' => 'Replacement selection result → muthowif',
-            'support_completion_requested' => 'Support marked complete (pilgrim) → muthowif',
+            'support_completion_code' => 'Support completion verification code → pilgrim',
+            'support_completion_requested' => 'Support marked complete (pilgrim) → muthowif (legacy)',
             'support_completion_approved' => 'Support completion confirmed → pilgrim',
-            'support_completion_rejected' => 'Support completion rejected → pilgrim',
+            'support_completion_rejected' => 'Support completion rejected → pilgrim (legacy)',
         ],
     ],
     'whatsapp_broadcast' => [

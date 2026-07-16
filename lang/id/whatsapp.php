@@ -190,6 +190,15 @@ return [
             'package' => '*Paket:* :package',
             'view_detail' => '*Lihat detail pesanan:*',
         ],
+        'support_completion_code' => [
+            'headline' => '*:app* — kode verifikasi penyelesaian',
+            'body' => 'Pembayaran layanan pendukung dengan *:muthowif* sudah diterima. Tunjukkan kode berikut kepada muthowif saat kegiatan selesai.',
+            'code_line' => '*Kode verifikasi:* :code',
+            'booking_code' => '*Kode pesanan:* :code',
+            'package' => '*Paket:* :package',
+            'hint' => 'Jangan bagikan kode ini kecuali kepada muthowif yang melayani Anda.',
+            'view_detail' => '*Lihat detail pesanan:*',
+        ],
         'support_completion_rejected' => [
             'headline' => '*:app* — permintaan selesai ditolak',
             'body' => 'Muthowif *:muthowif* menilai layanan pendukung belum selesai.',

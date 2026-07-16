@@ -57,6 +57,9 @@ class MuthowifBooking extends Model
         'completion_requested_by',
         'completed_at',
         'completed_by',
+        'completion_code_hash',
+        'completion_code',
+        'completion_code_sent_at',
         'muthowif_rejection_kind',
         'muthowif_rejection_note',
     ];
@@ -85,6 +88,7 @@ class MuthowifBooking extends Model
             'package_price_snapshot' => 'decimal:2',
             'completion_requested_at' => 'datetime',
             'completed_at' => 'datetime',
+            'completion_code_sent_at' => 'datetime',
         ];
     }
 
@@ -152,6 +156,11 @@ class MuthowifBooking extends Model
     public function hasCompletionRequested(): bool
     {
         return $this->completion_requested_at !== null;
+    }
+
+    public function hasCompletionCode(): bool
+    {
+        return filled($this->completion_code_hash);
     }
 
     public function review(): HasOne

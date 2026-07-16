@@ -116,31 +116,43 @@
                         @php
                             $st = $booking->status;
                             $cardStyle = $statusCardStyles[$st->value] ?? $statusCardStyles[BookingStatus::Pending->value];
-                            $nights = $booking->billingNightsInclusive();
-                            $daily = (float) ($booking->daily_price_snapshot ?? 0.0);
-                            $serviceSubtotal = (float) ($nights * $daily);
 
-                            $addonLines = collect();
-                            if ($booking->service_type === MuthowifServiceType::PrivateJamaah) {
-                                if (! empty($booking->add_ons_snapshot)) {
-                                    $addonLines = collect($booking->add_ons_snapshot)->map(fn ($a) => (object) $a);
-                                } elseif (! empty($booking->selected_add_on_ids)) {
-                                    foreach ($booking->selected_add_on_ids as $aid) {
-                                        if (isset($addonsById[$aid])) {
-                                            $addonLines->push($addonsById[$aid]);
+                            if ($booking->isSupport()) {
+                                $nights = 0;
+                                $daily = 0.0;
+                                $serviceSubtotal = (float) ($booking->package_price_snapshot ?? $booking->resolvedAmountDue());
+                                $addonLines = collect();
+                                $addonsSum = 0.0;
+                                $sameHotelLine = 0.0;
+                                $transportLine = 0.0;
+                                $totalDue = $serviceSubtotal;
+                            } else {
+                                $nights = $booking->billingNightsInclusive();
+                                $daily = (float) ($booking->daily_price_snapshot ?? 0.0);
+                                $serviceSubtotal = (float) ($nights * $daily);
+
+                                $addonLines = collect();
+                                if ($booking->service_type === MuthowifServiceType::PrivateJamaah) {
+                                    if (! empty($booking->add_ons_snapshot)) {
+                                        $addonLines = collect($booking->add_ons_snapshot)->map(fn ($a) => (object) $a);
+                                    } elseif (! empty($booking->selected_add_on_ids)) {
+                                        foreach ($booking->selected_add_on_ids as $aid) {
+                                            if (isset($addonsById[$aid])) {
+                                                $addonLines->push($addonsById[$aid]);
+                                            }
                                         }
                                     }
                                 }
+                                $addonsSum = $addonLines->sum(fn ($a) => (float) $a->price);
+
+                                $sameHotelPrice = (float) ($booking->same_hotel_price_snapshot ?? 0.0);
+                                $sameHotelLine = $booking->with_same_hotel ? ($nights * $sameHotelPrice) : 0.0;
+
+                                $transportPrice = (float) ($booking->transport_price_snapshot ?? 0.0);
+                                $transportLine = $booking->with_transport ? $transportPrice : 0.0;
+
+                                $totalDue = (float) ($serviceSubtotal + $addonsSum + $sameHotelLine + $transportLine);
                             }
-                            $addonsSum = $addonLines->sum(fn ($a) => (float) $a->price);
-
-                            $sameHotelPrice = (float) ($booking->same_hotel_price_snapshot ?? 0.0);
-                            $sameHotelLine = $booking->with_same_hotel ? ($nights * $sameHotelPrice) : 0.0;
-
-                            $transportPrice = (float) ($booking->transport_price_snapshot ?? 0.0);
-                            $transportLine = $booking->with_transport ? $transportPrice : 0.0;
-
-                            $totalDue = (float) ($serviceSubtotal + $addonsSum + $sameHotelLine + $transportLine);
                             $isCompany = $booking->customer?->isCompanyCustomer() ?? false;
                             $split = \App\Support\PlatformFee::split($totalDue, $isCompany);
                             $customerGross = (float) ($split['customer_gross'] ?? $totalDue);

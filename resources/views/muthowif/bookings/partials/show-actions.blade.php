@@ -12,24 +12,42 @@
         <p class="mt-1 text-xs text-slate-600">{{ __('muthowif.booking_show.actions_pending_hint') }}</p>
         @include('muthowif.bookings.partials.pending-booking-actions', ['booking' => $b, 'variant' => 'inline'])
     </section>
-@elseif ($st === BookingStatus::InProgress && $b->hasCompletionRequested())
+@elseif ($b->isSupport() && $st === BookingStatus::InProgress && $b->isPaid())
     <section class="rounded-2xl border border-brand-200 bg-brand-50 p-5 shadow-sm sm:p-6">
         <h2 class="text-sm font-bold text-brand-950">{{ __('layanan_pendukung.muthowif_completion_heading') }}</h2>
         <p class="mt-1 text-xs text-brand-900/80">{{ __('layanan_pendukung.muthowif_completion_intro') }}</p>
-        <div class="mt-4 flex flex-col gap-2 sm:flex-row">
-            <form method="POST" action="{{ route('muthowif.bookings.support-completion.approve', $b) }}">
-                @csrf
-                <x-submit-button class="h-9 w-full rounded-lg bg-emerald-600 px-3.5 text-xs font-semibold text-white transition hover:bg-emerald-700 sm:w-auto">
-                    {{ __('layanan_pendukung.muthowif_completion_approve') }}
-                </x-submit-button>
-            </form>
-            <form method="POST" action="{{ route('muthowif.bookings.support-completion.reject', $b) }}" onsubmit="return confirm(@json(__('layanan_pendukung.muthowif_completion_reject_confirm')));">
-                @csrf
-                <x-submit-button class="h-9 w-full rounded-lg border border-slate-200 bg-white px-3.5 text-xs font-semibold text-slate-800 transition hover:bg-slate-50 sm:w-auto">
-                    {{ __('layanan_pendukung.muthowif_completion_reject') }}
-                </x-submit-button>
-            </form>
-        </div>
+
+        <form method="POST" action="{{ route('muthowif.bookings.support-completion.code', $b) }}" class="mt-4 space-y-3">
+            @csrf
+            <div>
+                <label for="support_completion_code" class="mb-1.5 block text-xs font-medium text-brand-950">{{ __('layanan_pendukung.muthowif_completion_code_label') }}</label>
+                <input
+                    id="support_completion_code"
+                    type="text"
+                    name="code"
+                    inputmode="numeric"
+                    autocomplete="one-time-code"
+                    maxlength="12"
+                    required
+                    value="{{ old('code') }}"
+                    class="w-full rounded-lg border-brand-200 text-sm tracking-widest shadow-sm focus:border-brand-500 focus:ring-brand-500"
+                    placeholder="000000"
+                >
+                @error('code')
+                    <p class="mt-1 text-xs text-red-700">{{ $message }}</p>
+                @enderror
+            </div>
+            <x-submit-button class="h-9 w-full rounded-lg bg-emerald-600 px-3.5 text-xs font-semibold text-white transition hover:bg-emerald-700 sm:w-auto">
+                {{ __('layanan_pendukung.muthowif_completion_submit') }}
+            </x-submit-button>
+        </form>
+
+        <form method="POST" action="{{ route('muthowif.bookings.support-completion.resend-code', $b) }}" class="mt-3">
+            @csrf
+            <button type="submit" class="text-xs font-semibold text-brand-800 underline-offset-2 hover:underline">
+                {{ __('layanan_pendukung.muthowif_completion_resend') }}
+            </button>
+        </form>
     </section>
 @elseif ($st === BookingStatus::Confirmed && $b->payment_status === PaymentStatus::Pending)
     <section class="rounded-2xl border border-amber-200 bg-amber-50 p-5 shadow-sm sm:p-6">

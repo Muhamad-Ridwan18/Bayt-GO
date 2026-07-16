@@ -335,13 +335,21 @@ class MuthowifBookingController extends Controller
         return response()->json(['message' => 'Pengajuan reschedule ditolak.']);
     }
 
-    public function approveSupportCompletion(Request $request, $id): JsonResponse
+    public function completeSupportWithCode(Request $request, $id): JsonResponse
     {
         $user = $request->user();
         $booking = MuthowifBooking::where('muthowif_profile_id', $user->muthowifProfile->id)->findOrFail($id);
-        $this->authorize('approveSupportCompletion', $booking);
+        $this->authorize('completeSupportWithCode', $booking);
 
-        $result = app(\App\Services\SupportBookingService::class)->approveCompletion($booking, (string) $user->id);
+        $validated = $request->validate([
+            'code' => ['required', 'string', 'max:12'],
+        ]);
+
+        $result = app(\App\Services\SupportBookingService::class)->completeWithCode(
+            $booking,
+            $validated['code'],
+            (string) $user->id,
+        );
         if (! ($result['completed'] ?? false)) {
             return response()->json(['message' => $result['error'] ?? __('layanan_pendukung.flash.completion_approve_failed')], 422);
         }
@@ -351,14 +359,14 @@ class MuthowifBookingController extends Controller
         return response()->json(['message' => __('layanan_pendukung.flash.completion_approved')]);
     }
 
-    public function rejectSupportCompletion(Request $request, $id): JsonResponse
+    public function resendSupportCompletionCode(Request $request, $id): JsonResponse
     {
         $user = $request->user();
         $booking = MuthowifBooking::where('muthowif_profile_id', $user->muthowifProfile->id)->findOrFail($id);
-        $this->authorize('rejectSupportCompletion', $booking);
+        $this->authorize('resendSupportCompletionCode', $booking);
 
-        app(\App\Services\SupportBookingService::class)->rejectCompletionRequest($booking);
+        app(\App\Services\SupportBookingService::class)->issueCompletionCode($booking, true);
 
-        return response()->json(['message' => __('layanan_pendukung.flash.completion_rejected')]);
+        return response()->json(['message' => __('layanan_pendukung.flash.completion_code_sent')]);
     }
 }

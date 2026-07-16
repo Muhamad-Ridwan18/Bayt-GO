@@ -15,7 +15,9 @@ final class ApiBookingDetail
     {
         $booking->loadMissing(['customer']);
 
-        $base = (float) $booking->resolvedAmountDue();
+        $base = $booking->isSupport()
+            ? (float) ($booking->package_price_snapshot ?? $booking->computeTotalAmount())
+            : (float) $booking->resolvedAmountDue();
         $isCompany = $booking->customer?->isCompanyCustomer() ?? false;
         $split = PlatformFee::split($base, $isCompany);
         $lines = self::pricingLines($booking);
@@ -180,7 +182,8 @@ final class ApiBookingDetail
             ])->values()->all(),
             'documents' => self::documents($booking),
             'is_support' => $booking->isSupport(),
-            'completion_requested_at' => $booking->completion_requested_at?->toIso8601String(),
+            'has_completion_code' => $booking->hasCompletionCode(),
+            'completion_code_sent_at' => $booking->completion_code_sent_at?->toIso8601String(),
             'muthowif_rejection_kind' => $booking->muthowif_rejection_kind?->value,
             'muthowif_rejection_kind_label' => $booking->muthowif_rejection_kind?->label(),
             'muthowif_rejection_note' => $booking->muthowif_rejection_note,
@@ -193,7 +196,13 @@ final class ApiBookingDetail
                 'email' => $booking->customer->email,
                 'phone' => $booking->customer->phone,
             ] : null;
+            $data['can_complete_support_with_code'] = $booking->isSupport()
+                && $booking->status === \App\Enums\BookingStatus::InProgress
+                && $booking->isPaid();
         } else {
+            if ($booking->isSupport() && $booking->hasCompletionCode()) {
+                $data['completion_code'] = $booking->completion_code;
+            }
             $data['muthowif_profile'] = $profile ? [
                 'id' => $profile->id,
                 'avatar' => ApiMediaUrl::muthowifAvatar($profile),

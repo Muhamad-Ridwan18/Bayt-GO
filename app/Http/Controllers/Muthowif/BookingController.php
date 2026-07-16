@@ -477,28 +477,38 @@ class BookingController extends Controller
         bool $loadReferralFromPayments,
     ): array {
         $booking->loadMissing(['muthowifProfile.services']);
-        $service = $booking->muthowifProfile?->services->firstWhere('type', $booking->service_type);
         $nights = $booking->billingNightsInclusive();
-        $daily = (float) ($booking->daily_price_snapshot ?? ($service ? $service->daily_price : 0.0));
-        $serviceSubtotal = (float) ($nights * $daily);
 
-        $addonLines = collect();
-        if (! empty($booking->add_ons_snapshot)) {
-            $addonLines = collect($booking->add_ons_snapshot)->map(fn ($a) => (object) $a);
-        } elseif (! empty($booking->selected_add_on_ids)) {
-            foreach ($booking->selected_add_on_ids as $aid) {
-                if (isset($addonsById[$aid])) {
-                    $addonLines->push($addonsById[$aid]);
+        if ($booking->isSupport()) {
+            $daily = 0.0;
+            $serviceSubtotal = (float) ($booking->package_price_snapshot ?? $booking->resolvedAmountDue());
+            $addonLines = collect();
+            $sameHotelLine = 0.0;
+            $transportLine = 0.0;
+            $totalGross = $serviceSubtotal;
+        } else {
+            $service = $booking->muthowifProfile?->services->firstWhere('type', $booking->service_type);
+            $daily = (float) ($booking->daily_price_snapshot ?? ($service ? $service->daily_price : 0.0));
+            $serviceSubtotal = (float) ($nights * $daily);
+
+            $addonLines = collect();
+            if (! empty($booking->add_ons_snapshot)) {
+                $addonLines = collect($booking->add_ons_snapshot)->map(fn ($a) => (object) $a);
+            } elseif (! empty($booking->selected_add_on_ids)) {
+                foreach ($booking->selected_add_on_ids as $aid) {
+                    if (isset($addonsById[$aid])) {
+                        $addonLines->push($addonsById[$aid]);
+                    }
                 }
             }
-        }
 
-        $addonsSum = $addonLines->sum(fn ($a) => (float) $a->price);
-        $sameHotelPrice = (float) ($booking->same_hotel_price_snapshot ?? ($service ? $service->same_hotel_price_per_day : 0.0));
-        $sameHotelLine = $booking->with_same_hotel ? ($nights * $sameHotelPrice) : 0.0;
-        $transportPrice = (float) ($booking->transport_price_snapshot ?? ($service ? (float) $service->transport_price_flat : 0.0));
-        $transportLine = $booking->with_transport ? $transportPrice : 0.0;
-        $totalGross = (float) ($serviceSubtotal + $addonsSum + $sameHotelLine + $transportLine);
+            $addonsSum = $addonLines->sum(fn ($a) => (float) $a->price);
+            $sameHotelPrice = (float) ($booking->same_hotel_price_snapshot ?? ($service ? $service->same_hotel_price_per_day : 0.0));
+            $sameHotelLine = $booking->with_same_hotel ? ($nights * $sameHotelPrice) : 0.0;
+            $transportPrice = (float) ($booking->transport_price_snapshot ?? ($service ? (float) $service->transport_price_flat : 0.0));
+            $transportLine = $booking->with_transport ? $transportPrice : 0.0;
+            $totalGross = (float) ($serviceSubtotal + $addonsSum + $sameHotelLine + $transportLine);
+        }
         $split = PlatformFee::split($totalGross);
         $muthowifNet = (float) ($split['muthowif_net'] ?? 0.0);
         $muthowifFee = (float) ($split['muthowif_fee'] ?? 0.0);
@@ -590,11 +600,15 @@ class BookingController extends Controller
         )->all();
     }
 
-    public function approveSupportCompletion(Request $request, MuthowifBooking $booking, SupportBookingService $support): RedirectResponse
+    public function completeSupportWithCode(Request $request, MuthowifBooking $booking, SupportBookingService $support): RedirectResponse
     {
-        $this->authorize('approveSupportCompletion', $booking);
+        $this->authorize('completeSupportWithCode', $booking);
 
-        $result = $support->approveCompletion($booking, (string) $request->user()->id);
+        $validated = $request->validate([
+            'code' => ['required', 'string', 'max:12'],
+        ]);
+
+        $result = $support->completeWithCode($booking, $validated['code'], (string) $request->user()->id);
 
         if (! $result['completed']) {
             return redirect()
@@ -610,18 +624,14 @@ class BookingController extends Controller
             ->with('status', __('layanan_pendukung.flash.completion_approved'));
     }
 
-    public function rejectSupportCompletion(Request $request, MuthowifBooking $booking, SupportBookingService $support): RedirectResponse
+    public function resendSupportCompletionCode(Request $request, MuthowifBooking $booking, SupportBookingService $support): RedirectResponse
     {
-        $this->authorize('rejectSupportCompletion', $booking);
+        $this->authorize('resendSupportCompletionCode', $booking);
 
-        $validated = $request->validate([
-            'rejection_note' => ['nullable', 'string', 'max:2000'],
-        ]);
-
-        $support->rejectCompletionRequest($booking);
+        $support->issueCompletionCode($booking, true);
 
         return redirect()
             ->route('muthowif.bookings.show', $booking)
-            ->with('status', __('layanan_pendukung.flash.completion_rejected'));
+            ->with('status', __('layanan_pendukung.flash.completion_code_sent'));
     }
 }

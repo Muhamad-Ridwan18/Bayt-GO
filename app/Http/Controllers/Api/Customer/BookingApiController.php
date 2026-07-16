@@ -66,7 +66,7 @@ class BookingApiController extends Controller
 
         $data = ApiBookingDetail::format($booking);
         $data['can_report_emergency'] = $request->user()->can('reportEmergency', $booking);
-        $data['can_request_support_completion'] = $request->user()->can('requestSupportCompletion', $booking);
+        $data['can_resend_support_completion_code'] = $request->user()->can('resendSupportCompletionCode', $booking);
         $data['emergency'] = ApiEmergencyDetail::for($booking);
 
         return response()->json($data);
@@ -694,22 +694,22 @@ class BookingApiController extends Controller
         ]);
     }
 
-    public function requestSupportCompletion(
+    public function resendSupportCompletionCode(
         Request $request,
         MuthowifBooking $booking,
         SupportBookingService $support,
     ): JsonResponse {
-        $this->authorize('requestSupportCompletion', $booking);
+        $this->authorize('resendSupportCompletionCode', $booking);
 
         if ($booking->customer_id !== $request->user()->id) {
             return response()->json(['message' => 'Unauthorized'], 403);
         }
 
-        $support->requestCompletion($booking, (string) $request->user()->id);
+        $support->issueCompletionCode($booking, true);
         CustomerBookingBroadcast::afterResponse($booking->fresh());
 
         return response()->json([
-            'message' => __('layanan_pendukung.flash.completion_requested'),
+            'message' => __('layanan_pendukung.flash.completion_code_sent'),
             'booking' => ApiBookingDetail::format($booking->fresh()),
         ]);
     }

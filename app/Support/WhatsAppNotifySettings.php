@@ -108,10 +108,15 @@ class WhatsAppNotifySettings
                 'group' => 'emergency',
                 'default' => true,
             ],
+            'support_completion_code' => [
+                'label' => 'admin.whatsapp_notify.toggles.support_completion_code',
+                'group' => 'support',
+                'default' => true,
+            ],
             'support_completion_requested' => [
                 'label' => 'admin.whatsapp_notify.toggles.support_completion_requested',
                 'group' => 'support',
-                'default' => true,
+                'default' => false,
             ],
             'support_completion_approved' => [
                 'label' => 'admin.whatsapp_notify.toggles.support_completion_approved',
@@ -121,7 +126,7 @@ class WhatsAppNotifySettings
             'support_completion_rejected' => [
                 'label' => 'admin.whatsapp_notify.toggles.support_completion_rejected',
                 'group' => 'support',
-                'default' => true,
+                'default' => false,
             ],
         ];
     }

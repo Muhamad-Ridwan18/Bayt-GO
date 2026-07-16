@@ -221,7 +221,7 @@ Route::middleware('auth')->group(function () {
         Route::post('documents/temp', [CustomerBookingController::class, 'uploadTempDocument'])->name('documents.temp');
         Route::post('/', [CustomerBookingController::class, 'store'])->name('store');
         Route::post('support', [SupportBookingController::class, 'store'])->name('support.store');
-        Route::post('{booking}/support-selesai', [SupportBookingController::class, 'requestCompletion'])->name('support.request-completion');
+        Route::post('{booking}/support-kode-ulang', [SupportBookingController::class, 'resendCompletionCode'])->name('support.resend-completion-code');
         Route::get('{booking}/live-state', [CustomerBookingController::class, 'showLiveState'])->name('show.live-state');
         Route::get('{booking}/fragment', [CustomerBookingController::class, 'showLiveFragment'])->name('show.fragment');
         Route::get('{booking}/pembayaran', [CustomerBookingController::class, 'payment'])->name('payment');
@@ -287,8 +287,8 @@ Route::middleware('auth')->group(function () {
                 ->name('bookings.documents.show');
             Route::get('bookings/{booking}', [MuthowifBookingController::class, 'show'])->name('bookings.show');
             Route::post('bookings/{booking}/confirm', [MuthowifBookingController::class, 'confirm'])->name('bookings.confirm');
-            Route::post('bookings/{booking}/support-selesai-setujui', [MuthowifBookingController::class, 'approveSupportCompletion'])->name('bookings.support-completion.approve');
-            Route::post('bookings/{booking}/support-selesai-tolak', [MuthowifBookingController::class, 'rejectSupportCompletion'])->name('bookings.support-completion.reject');
+            Route::post('bookings/{booking}/support-selesai-kode', [MuthowifBookingController::class, 'completeSupportWithCode'])->name('bookings.support-completion.code');
+            Route::post('bookings/{booking}/support-kode-ulang', [MuthowifBookingController::class, 'resendSupportCompletionCode'])->name('bookings.support-completion.resend-code');
             Route::post('bookings/{booking}/cancel', [MuthowifBookingController::class, 'cancel'])->name('bookings.cancel');
             Route::post('bookings/{booking}/reschedule-requests/{rescheduleRequest}/approve', [MuthowifBookingController::class, 'approveReschedule'])->name('bookings.reschedule_requests.approve');
             Route::post('bookings/{booking}/reschedule-requests/{rescheduleRequest}/reject', [MuthowifBookingController::class, 'rejectReschedule'])->name('bookings.reschedule_requests.reject');

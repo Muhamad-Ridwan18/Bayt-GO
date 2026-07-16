@@ -1046,6 +1046,69 @@ class MuthowifBookingWhatsAppNotifier
     }
 
     /**
+     * Kirim kode verifikasi penyelesaian layanan pendukung ke jamaah.
+     */
+    public function notifyCustomerSupportCompletionCode(MuthowifBooking $booking, string $code): void
+    {
+        if (! WhatsAppNotifySettings::enabled('support_completion_code')) {
+            return;
+        }
+
+        if (! WhatsAppNotifySettings::hasToken()) {
+            Log::debug('WhatsApp support completion code skipped: FONNTE_TOKEN kosong.');
+
+            return;
+        }
+
+        $booking->loadMissing(['customer', 'muthowifProfile.user', 'supportPackage']);
+        $customer = $booking->customer;
+        if ($customer === null) {
+            return;
+        }
+
+        $fonnteDial = IntlPhone::fonnteDial($customer->phone);
+        if ($fonnteDial === null) {
+            Log::warning('WhatsApp support completion code skipped: nomor customer kosong atau tidak valid.', [
+                'customer_id' => $customer->id,
+                'booking_id' => $booking->id,
+            ]);
+
+            return;
+        }
+
+        $locale = $this->localeForUser($customer->locale);
+
+        $this->withLocale($locale, function () use ($booking, $fonnteDial, $locale, $code): void {
+            $muthowifName = $booking->muthowifProfile?->user?->name ?? __('whatsapp.fallback_muthowif', [], $locale);
+            $appName = config('app.name', 'BaytGo');
+            $url = route('bookings.show', $booking);
+
+            $lines = [
+                __('whatsapp.customer.support_completion_code.headline', ['app' => $appName], $locale),
+                '',
+                __('whatsapp.customer.support_completion_code.body', ['muthowif' => $muthowifName], $locale),
+                '',
+                __('whatsapp.customer.support_completion_code.code_line', ['code' => $code], $locale),
+                '',
+            ];
+
+            if (filled($booking->booking_code)) {
+                $lines[] = __('whatsapp.customer.support_completion_code.booking_code', ['code' => $booking->booking_code], $locale);
+                $lines[] = '';
+            }
+
+            $lines[] = __('whatsapp.customer.support_completion_code.package', ['package' => $this->supportPackageLabel($booking, $locale)], $locale);
+            $lines[] = '';
+            $lines[] = __('whatsapp.customer.support_completion_code.hint', [], $locale);
+            $lines[] = '';
+            $lines[] = __('whatsapp.customer.support_completion_code.view_detail', [], $locale);
+            $lines[] = $url;
+
+            $this->sendToTarget($fonnteDial, implode("\n", $lines), $booking->id);
+        });
+    }
+
+    /**
      * Jamaah menandai layanan pendukung selesai — minta konfirmasi muthowif.
      */
     public function notifyMuthowifSupportCompletionRequested(MuthowifBooking $booking): void

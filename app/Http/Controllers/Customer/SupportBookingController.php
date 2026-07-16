@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\Customer;
 
 use App\Http\Controllers\Controller;
+use App\Models\MuthowifBooking;
 use App\Models\MuthowifSupportPackage;
 use App\Services\SupportBookingService;
 use Carbon\Carbon;
@@ -15,7 +16,7 @@ class SupportBookingController extends Controller
 {
     public function store(Request $request, SupportBookingService $support): RedirectResponse
     {
-        $this->authorize('create', \App\Models\MuthowifBooking::class);
+        $this->authorize('create', MuthowifBooking::class);
 
         $validated = $request->validate([
             'support_package_id' => ['required', 'uuid', 'exists:muthowif_support_packages,id'],
@@ -51,14 +52,14 @@ class SupportBookingController extends Controller
             ->with('status', __('layanan_pendukung.flash.booking_submitted'));
     }
 
-    public function requestCompletion(Request $request, \App\Models\MuthowifBooking $booking, SupportBookingService $support): RedirectResponse
+    public function resendCompletionCode(Request $request, MuthowifBooking $booking, SupportBookingService $support): RedirectResponse
     {
-        $this->authorize('requestSupportCompletion', $booking);
+        $this->authorize('resendSupportCompletionCode', $booking);
 
-        $support->requestCompletion($booking, (string) $request->user()->id);
+        $support->issueCompletionCode($booking, true);
 
         return redirect()
             ->route('bookings.show', $booking)
-            ->with('status', __('layanan_pendukung.flash.completion_requested'));
+            ->with('status', __('layanan_pendukung.flash.completion_code_sent'));
     }
 }
