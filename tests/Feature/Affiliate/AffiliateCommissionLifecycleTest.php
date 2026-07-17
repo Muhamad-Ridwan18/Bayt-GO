@@ -9,6 +9,7 @@ use App\Enums\PaymentStatus;
 use App\Enums\UserRole;
 use App\Models\Affiliate;
 use App\Models\AffiliateCommission;
+use App\Models\BookingChatMessage;
 use App\Models\BookingPayment;
 use App\Models\MuthowifBooking;
 use App\Models\MuthowifProfile;
@@ -115,6 +116,11 @@ class AffiliateCommissionLifecycleTest extends TestCase
     {
         [$affiliate, $booking, $payment] = $this->makeAttributedPaidBooking();
         app(AffiliateCommissionService::class)->createPendingFromSettledPayment($payment);
+        $chat = BookingChatMessage::query()->create([
+            'muthowif_booking_id' => $booking->id,
+            'user_id' => $booking->customer_id,
+            'body' => 'Pesan yang harus di-soft delete setelah selesai.',
+        ]);
 
         $result = app(BookingCompletionService::class)->complete($booking, 5, null);
 
@@ -126,6 +132,11 @@ class AffiliateCommissionLifecycleTest extends TestCase
             'affiliate_id' => $affiliate->id,
             'idempotency_key' => 'commission-credit:'.$commission->id,
         ]);
+        $this->assertSoftDeleted('booking_chat_messages', [
+            'id' => $chat->id,
+        ]);
+        $this->assertSame(0, BookingChatMessage::query()->where('muthowif_booking_id', $booking->id)->count());
+        $this->assertNotNull($booking->fresh()->completed_at);
     }
 
     public function test_void_pending_commission_on_refund_path(): void

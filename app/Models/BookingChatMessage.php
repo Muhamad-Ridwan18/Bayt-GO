@@ -6,11 +6,13 @@ use Illuminate\Database\Eloquent\Attributes\Fillable;
 use Illuminate\Database\Eloquent\Concerns\HasUuids;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Database\Eloquent\SoftDeletes;
 
 #[Fillable(['muthowif_booking_id', 'user_id', 'body', 'image_path', 'read_at'])]
 class BookingChatMessage extends Model
 {
     use HasUuids;
+    use SoftDeletes;
 
     protected function casts(): array
     {
