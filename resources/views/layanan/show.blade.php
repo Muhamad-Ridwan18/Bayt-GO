@@ -135,6 +135,11 @@
             'bookQueryParams' => $bookQueryParams,
         ])
 
+        @include('layanan.partials.profile-show-addons', [
+            'group' => $group,
+            'private' => $private,
+        ])
+
         @include('layanan.partials.profile-show-reviews', [
             'profile' => $profile,
             'reviewsCount' => $reviewsCount,
@@ -149,11 +154,6 @@
                 </span>
             </summary>
             <div class="ui-stack-compact border-t border-slate-100 px-5 py-5">
-                @include('layanan.partials.profile-show-addons', [
-                    'group' => $group,
-                    'private' => $private,
-                ])
-
                 @include('layanan.partials.profile-show-bottom', [
                     'profile' => $profile,
                     'group' => $group,
