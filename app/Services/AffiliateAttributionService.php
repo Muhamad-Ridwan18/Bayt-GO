@@ -53,12 +53,6 @@ class AffiliateAttributionService
             ]);
         }
 
-        if ((string) $affiliate->user_id === (string) $customerId) {
-            throw ValidationException::withMessages([
-                'affiliate_code' => ['Anda tidak dapat menggunakan kode affiliate sendiri.'],
-            ]);
-        }
-
         $base = round($booking->resolvedAmountDue(), 2);
 
         return $this->snapshotFromResolvedAffiliate($affiliate, $base, $isCompanyCustomer);

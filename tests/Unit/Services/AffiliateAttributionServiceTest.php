@@ -11,7 +11,6 @@ use App\Models\User;
 use App\Services\AffiliateAttributionService;
 use App\Services\AffiliateRegistrationService;
 use Illuminate\Foundation\Testing\RefreshDatabase;
-use Illuminate\Validation\ValidationException;
 use Tests\TestCase;
 
 class AffiliateAttributionServiceTest extends TestCase
@@ -58,12 +57,12 @@ class AffiliateAttributionServiceTest extends TestCase
         $this->assertSame(10000.0, $snapshot['affiliate_commission_amount']);
     }
 
-    public function test_self_referral_is_rejected(): void
+    public function test_self_referral_is_allowed(): void
     {
         $this->seedFeeAndRate();
 
         $user = User::factory()->create(['role' => UserRole::Customer]);
-        Affiliate::query()->create([
+        $affiliate = Affiliate::query()->create([
             'user_id' => $user->id,
             'code' => 'SELF01',
             'status' => AffiliateStatus::Active,
@@ -71,13 +70,14 @@ class AffiliateAttributionServiceTest extends TestCase
             'activated_at' => now(),
         ]);
 
-        $this->expectException(ValidationException::class);
-
-        app(AffiliateAttributionService::class)->snapshotForBooking(
+        $snapshot = app(AffiliateAttributionService::class)->snapshotForBooking(
             new MuthowifBooking(['package_price_snapshot' => 500000, 'service_type' => 'support']),
             'SELF01',
             (string) $user->id,
         );
+
+        $this->assertSame((string) $affiliate->id, $snapshot['affiliate_id']);
+        $this->assertSame(5000.0, $snapshot['affiliate_commission_amount']);
     }
 
     public function test_rate_change_does_not_affect_existing_snapshot_values(): void
