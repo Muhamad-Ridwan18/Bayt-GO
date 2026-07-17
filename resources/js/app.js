@@ -1529,6 +1529,7 @@ document.addEventListener('alpine:init', () => {
         realtimeEnabled: config.realtimeEnabled ?? false,
         channelName: 'admin.service-monitor',
         refreshing: false,
+        lastUpdatedLabel: config.lastUpdatedLabel ?? '',
 
         init() {
             if (!this.realtimeEnabled) {
@@ -1574,6 +1575,14 @@ document.addEventListener('alpine:init', () => {
                 }
                 root.innerHTML = html;
                 Alpine.initTree(root);
+                this.lastUpdatedLabel = new Date().toLocaleString('id-ID', {
+                    day: '2-digit',
+                    month: 'short',
+                    year: 'numeric',
+                    hour: '2-digit',
+                    minute: '2-digit',
+                    second: '2-digit',
+                });
             } catch (err) {
                 console.error(err);
             } finally {

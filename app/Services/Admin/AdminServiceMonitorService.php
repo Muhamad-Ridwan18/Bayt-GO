@@ -4,6 +4,7 @@ namespace App\Services\Admin;
 
 use App\Enums\BookingStatus;
 use App\Enums\PaymentStatus;
+use App\Models\BookingPayment;
 use App\Models\MuthowifBooking;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Http\Request;
@@ -32,8 +33,38 @@ final class AdminServiceMonitorService
 
         return [
             'counts' => $this->counts(),
+            'stats' => $this->stats(),
             'bookings' => $bookings,
             'filter' => $filter,
+        ];
+    }
+
+    /**
+     * @return array{completed_today: int, completed_yesterday: int, escrow_held: float}
+     */
+    public function stats(): array
+    {
+        $completedToday = (int) MuthowifBooking::query()
+            ->where('status', BookingStatus::Completed)
+            ->whereDate('completed_at', now()->toDateString())
+            ->count();
+
+        $completedYesterday = (int) MuthowifBooking::query()
+            ->where('status', BookingStatus::Completed)
+            ->whereDate('completed_at', now()->subDay()->toDateString())
+            ->count();
+
+        $escrowHeld = (float) BookingPayment::query()
+            ->join('muthowif_bookings as b', 'b.id', '=', 'booking_payments.muthowif_booking_id')
+            ->whereIn('booking_payments.status', ['settlement', 'capture'])
+            ->whereNull('booking_payments.wallet_credited_at')
+            ->where('b.payment_status', PaymentStatus::Paid->value)
+            ->sum('booking_payments.gross_amount');
+
+        return [
+            'completed_today' => $completedToday,
+            'completed_yesterday' => $completedYesterday,
+            'escrow_held' => $escrowHeld,
         ];
     }
 
@@ -123,6 +154,35 @@ final class AdminServiceMonitorService
         }
 
         return 'in_service';
+    }
+
+    /**
+     * @return array{current: int, total: int, pct: int}|null
+     */
+    public function serviceProgress(MuthowifBooking $booking): ?array
+    {
+        $start = $booking->starts_on?->copy()->startOfDay();
+        $end = $booking->ends_on?->copy()->startOfDay();
+        if ($start === null || $end === null) {
+            return null;
+        }
+
+        $total = (int) $start->diffInDays($end) + 1;
+        $today = now()->startOfDay();
+
+        if ($today->lt($start)) {
+            $current = 0;
+        } elseif ($today->gt($end)) {
+            $current = $total;
+        } else {
+            $current = (int) $start->diffInDays($today) + 1;
+        }
+
+        return [
+            'current' => $current,
+            'total' => $total,
+            'pct' => (int) round(($current / max(1, $total)) * 100),
+        ];
     }
 
     public function serviceDayLabel(MuthowifBooking $booking): ?string
