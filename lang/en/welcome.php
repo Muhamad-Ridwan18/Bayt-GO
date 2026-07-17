@@ -12,8 +12,33 @@ return [
     'nav_mobile_aria' => 'Mobile menu',
 
     'hero_title' => 'Booking a muthowif as easy as booking a hotel',
+    'hero_title_lead' => 'Booking a muthowif as easy as',
+    'hero_title_accent' => 'booking a hotel.',
     'hero_sub' => 'Pick dates, check availability, and book a muthowif in real-time with transparent pricing.',
     'hero_kicker' => 'Trusted umrah companion marketplace',
+
+    'stat_cards' => [
+        ['value' => '1,200+', 'label' => 'Verified Muthowif', 'sub' => 'Professional & experienced'],
+        ['value' => '8,500+', 'label' => 'Successful Bookings', 'sub' => 'Trusted by pilgrims worldwide'],
+        ['value' => '4.9/5', 'label' => 'Average Rating', 'sub' => 'From thousands of reviews'],
+        ['value' => '98%', 'label' => 'Pilgrim Satisfaction', 'sub' => 'Safe & trusted service'],
+    ],
+
+    'work_title' => 'How BaytGo works',
+    'work_sub' => 'Three easy steps to find your best ibadah companion.',
+    'work_steps' => [
+        ['title' => 'Search & Pick Muthowif', 'desc' => 'Choose dates, language, and the muthowif that fits your needs.'],
+        ['title' => 'Instant Booking', 'desc' => 'Book easily and get instant confirmation.'],
+        ['title' => 'Guaranteed Service', 'desc' => 'Your muthowif is ready to accompany your ibadah journey.'],
+    ],
+
+    'jamaah_title' => 'What pilgrims say',
+    'jamaah_see_all' => 'See all reviews',
+
+    'final_cta_title' => 'Ready to find the best muthowif for your umrah journey?',
+    'final_cta_sub' => 'Thousands of pilgrims have experienced the best with trusted muthowif on BaytGo.',
+    'final_cta_button' => 'Find a Muthowif Now',
+    'final_cta_join' => 'Join 10,000+ other pilgrims',
 
     'badge_1' => 'Transparent pricing',
     'badge_2' => 'Flexible schedule',

@@ -12,8 +12,33 @@ return [
     'nav_mobile_aria' => 'Menu mobile',
 
     'hero_title' => 'Pesan Muthowif semudah pesan hotel',
+    'hero_title_lead' => 'Pesan Muthowif semudah',
+    'hero_title_accent' => 'pesan hotel.',
     'hero_sub' => 'Pilih tanggal, lihat ketersediaan, dan pesan muthowif secara real-time dengan harga transparan.',
     'hero_kicker' => 'Marketplace Pendamping Umrah Terpercaya',
+
+    'stat_cards' => [
+        ['value' => '1.200+', 'label' => 'Muthowif Terverifikasi', 'sub' => 'Profesional & berpengalaman'],
+        ['value' => '8.500+', 'label' => 'Booking Berhasil', 'sub' => 'Dipercaya jamaah berbagai negara'],
+        ['value' => '4.9/5', 'label' => 'Rating Rata-rata', 'sub' => 'Dari ribuan ulasan jamaah'],
+        ['value' => '98%', 'label' => 'Kepuasan Jamaah', 'sub' => 'Layanan aman & terpercaya'],
+    ],
+
+    'work_title' => 'Cara kerja BaytGo',
+    'work_sub' => 'Tiga langkah mudah menemukan pendamping ibadah terbaik.',
+    'work_steps' => [
+        ['title' => 'Cari & Pilih Muthowif', 'desc' => 'Pilih tanggal, bahasa, dan muthowif yang sesuai kebutuhan Anda.'],
+        ['title' => 'Booking Instan', 'desc' => 'Lakukan booking dengan mudah dan dapatkan konfirmasi instan.'],
+        ['title' => 'Layanan Terjamin', 'desc' => 'Muthowif siap mendampingi perjalanan ibadah Anda.'],
+    ],
+
+    'jamaah_title' => 'Apa kata jamaah?',
+    'jamaah_see_all' => 'Lihat semua ulasan',
+
+    'final_cta_title' => 'Siap menemukan muthowif terbaik untuk perjalanan umrah Anda?',
+    'final_cta_sub' => 'Ribuan jamaah telah merasakan pengalaman terbaik bersama muthowif terpercaya di BaytGo.',
+    'final_cta_button' => 'Cari Muthowif Sekarang',
+    'final_cta_join' => 'Bergabung dengan 10.000+ jamaah lainnya',
 
     'badge_1' => 'Harga transparan',
     'badge_2' => 'Jadwal fleksibel',
