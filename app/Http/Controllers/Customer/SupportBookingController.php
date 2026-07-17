@@ -22,6 +22,7 @@ class SupportBookingController extends Controller
             'support_package_id' => ['required', 'uuid', 'exists:muthowif_support_packages,id'],
             'starts_at' => ['required', 'date'],
             'pilgrim_count' => ['required', 'integer', 'min:1', 'max:500'],
+            'affiliate_code' => ['nullable', 'string', 'max:32'],
         ]);
 
         $package = MuthowifSupportPackage::query()

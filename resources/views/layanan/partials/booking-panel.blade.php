@@ -291,6 +291,24 @@
                             @error('pilgrim_count')
                                 <p class="text-xs text-red-600">{{ $message }}</p>
                             @enderror
+
+                            <div>
+                                <label for="affiliate_code_{{ $profile->id }}" class="text-sm font-semibold text-slate-800">Kode Affiliate (opsional)</label>
+                                <input
+                                    id="affiliate_code_{{ $profile->id }}"
+                                    type="text"
+                                    name="affiliate_code"
+                                    value="{{ old('affiliate_code') }}"
+                                    maxlength="32"
+                                    autocomplete="off"
+                                    placeholder="Contoh: RIDWAN"
+                                    class="mt-1 block w-full rounded-xl border-slate-300 font-mono uppercase text-sm shadow-sm focus:border-brand-500 focus:ring-brand-500"
+                                >
+                                <p class="mt-1 text-xs text-slate-500">Masukkan kode affiliate jika Anda datang dari referral.</p>
+                                @error('affiliate_code')
+                                    <p class="mt-1 text-xs text-red-600">{{ $message }}</p>
+                                @enderror
+                            </div>
                         </section>
 
                         <section class="ui-stack-compact lg:hidden">

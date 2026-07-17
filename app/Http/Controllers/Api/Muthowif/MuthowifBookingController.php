@@ -189,6 +189,8 @@ class MuthowifBookingController extends Controller
             'muthowif_rejection_note' => $note,
         ]);
 
+        app(\App\Services\AffiliateCommissionService::class)->voidForBooking($booking, 'cancelled_by_muthowif');
+
         NotifyCustomerOfBookingRejectedJadwalFull::dispatchAfterResponse((string) $booking->getKey());
 
         CustomerBookingBroadcast::afterResponse($booking);

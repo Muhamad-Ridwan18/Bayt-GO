@@ -2,8 +2,10 @@
 
 namespace App\Support;
 
+use App\Enums\AffiliateCommissionStatus;
 use App\Enums\BookingChangeRequestStatus;
 use App\Enums\PaymentStatus;
+use App\Models\AffiliateCommission;
 use App\Models\BookingPayment;
 use App\Models\BookingRefundRequest;
 use Carbon\CarbonInterface;
@@ -19,6 +21,8 @@ final class AdminFinanceSummary
         \Illuminate\Support\Facades\Cache::forget('admin_platform_fees_payments');
         \Illuminate\Support\Facades\Cache::forget('admin_platform_fees_refunds');
         \Illuminate\Support\Facades\Cache::forget('admin_total_platform_fees');
+        \Illuminate\Support\Facades\Cache::forget('admin_affiliate_commissions');
+        \Illuminate\Support\Facades\Cache::forget('admin_net_platform_fees');
         \Illuminate\Support\Facades\Cache::forget('admin_gross_volume_excluding_refunded');
         \Illuminate\Support\Facades\Cache::forget('admin_finance_timeline_groups');
     }
@@ -55,6 +59,25 @@ final class AdminFinanceSummary
     {
         return (float) \Illuminate\Support\Facades\Cache::remember('admin_total_platform_fees', 86400, function () {
             return self::platformFeesFromPayments() + self::platformFeesFromRefunds();
+        });
+    }
+
+    public static function affiliateCommissionsPaidOrPending(): float
+    {
+        return (float) \Illuminate\Support\Facades\Cache::remember('admin_affiliate_commissions', 86400, function () {
+            return (float) AffiliateCommission::query()
+                ->whereIn('status', [
+                    AffiliateCommissionStatus::Pending->value,
+                    AffiliateCommissionStatus::Available->value,
+                ])
+                ->sum('commission_amount');
+        });
+    }
+
+    public static function netPlatformFees(): float
+    {
+        return (float) \Illuminate\Support\Facades\Cache::remember('admin_net_platform_fees', 86400, function () {
+            return max(0, self::totalPlatformFees() - self::affiliateCommissionsPaidOrPending());
         });
     }
 

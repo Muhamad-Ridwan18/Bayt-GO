@@ -90,6 +90,7 @@ class BookingApiController extends Controller
             'add_on_ids.*' => ['uuid'],
             'with_same_hotel' => ['sometimes', 'boolean'],
             'with_transport' => ['sometimes', 'boolean'],
+            'affiliate_code' => ['nullable', 'string', 'max:32'],
             'ticket_outbound' => ['required', 'file', 'mimes:pdf,jpeg,jpg,png', 'max:10240'],
             'ticket_return' => ['required', 'file', 'mimes:pdf,jpeg,jpg,png', 'max:10240'],
             'passport' => ['required', 'file', 'mimes:pdf,jpeg,jpg,png', 'max:10240'],
@@ -174,7 +175,7 @@ class BookingApiController extends Controller
                 $bookingCode = app(BookingOrderCodeService::class)->allocateNextWithinTransaction();
                 $pricingService = app(BookingPricingService::class);
 
-                $booking = MuthowifBooking::query()->create(array_merge([
+                $attributes = array_merge([
                     'booking_code' => $bookingCode,
                     'muthowif_profile_id' => $profile->id,
                     'customer_id' => $request->user()->id,
@@ -194,7 +195,16 @@ class BookingApiController extends Controller
                     'with_transport' => $withTransport,
                     'starts_on' => $start->toDateString(),
                     'ends_on' => $end->toDateString(),
-                ]))));
+                ])));
+
+                $affiliateSnapshot = app(\App\Services\AffiliateAttributionService::class)->snapshotForBooking(
+                    new MuthowifBooking($attributes),
+                    $validated['affiliate_code'] ?? null,
+                    (string) $request->user()->id,
+                    $request->user()->isCompanyCustomer(),
+                );
+
+                $booking = MuthowifBooking::query()->create(array_merge($attributes, $affiliateSnapshot));
 
                 $dir = 'booking-documents/'.$booking->getKey();
                 $optimizer = app(UploadedImageOptimizer::class);
@@ -225,6 +235,8 @@ class BookingApiController extends Controller
                 'booking_code' => $booking->booking_code,
             ], 201);
 
+        } catch (ValidationException $e) {
+            return response()->json(['message' => 'Validasi gagal', 'errors' => $e->errors()], 422);
         } catch (\Exception $e) {
             return response()->json(['message' => $e->getMessage()], 400);
         }
@@ -727,6 +739,7 @@ class BookingApiController extends Controller
                 'muthowif_rejection_kind' => null,
                 'muthowif_rejection_note' => null,
             ]);
+            app(\App\Services\AffiliateCommissionService::class)->voidForBooking($booking, 'cancelled_by_customer');
         });
 
         CustomerBookingBroadcast::afterResponse($booking->fresh());

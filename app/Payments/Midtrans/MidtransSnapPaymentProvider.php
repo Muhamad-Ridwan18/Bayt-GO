@@ -173,6 +173,8 @@ class MidtransSnapPaymentProvider implements SnapPaymentProviderInterface
                 $payment->settled_at = now();
                 $payment->save();
 
+                app(\App\Services\AffiliateCommissionService::class)->createPendingFromSettledPayment($payment);
+
                 return true;
             });
         } catch (RuntimeException $e) {

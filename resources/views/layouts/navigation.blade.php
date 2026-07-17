@@ -39,6 +39,7 @@
             'admin.users.*',
             'admin.muthowif.*',
             'admin.referrals.*',
+            'admin.affiliates.*',
             'admin.support-tickets.*',
             'admin.service_monitor.*',
             'admin.moota_webhooks.*',
@@ -89,6 +90,9 @@
                     @if (Auth::user()->isCustomer() || Auth::user()->isMuthowif())
                         <x-nav-link :href="route('support.index')" :active="request()->routeIs('support.*')">
                             {{ __('nav.support_tickets') }}
+                        </x-nav-link>
+                        <x-nav-link :href="route('affiliate.index')" :active="request()->routeIs('affiliate.*')">
+                            Affiliate
                         </x-nav-link>
                     @endif
                     @if (Auth::user()->isAdmin())
@@ -267,6 +271,9 @@
             @if (Auth::user()->isCustomer() || Auth::user()->isMuthowif())
                 <x-responsive-nav-link :href="route('support.index')" :active="request()->routeIs('support.*')">
                     {{ __('nav.support_tickets') }}
+                </x-responsive-nav-link>
+                <x-responsive-nav-link :href="route('affiliate.index')" :active="request()->routeIs('affiliate.*')">
+                    Affiliate
                 </x-responsive-nav-link>
             @endif
             @if (Auth::user()->isAdmin())

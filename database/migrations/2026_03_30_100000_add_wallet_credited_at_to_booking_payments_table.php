@@ -15,11 +15,13 @@ return new class extends Migration
 
         // Backfill: data yang sudah settlement/capture sebelumnya sudah terlanjur mengkredit
         // saldo di versi kode lama. Tandai supaya saat "selesaikan layanan" tidak double kredit.
+        $nowFn = DB::getDriverName() === 'sqlite' ? "COALESCE(settled_at, datetime('now'))" : 'COALESCE(settled_at, NOW())';
+
         DB::table('booking_payments')
             ->whereIn('status', ['settlement', 'capture'])
             ->whereNull('wallet_credited_at')
             ->update([
-                'wallet_credited_at' => DB::raw('COALESCE(settled_at, NOW())'),
+                'wallet_credited_at' => DB::raw($nowFn),
             ]);
     }
 

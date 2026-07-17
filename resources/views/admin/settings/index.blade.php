@@ -113,6 +113,18 @@
                         </a>
                     </li>
                     <li>
+                        <a href="{{ route('admin.affiliates.index') }}" class="flex items-center gap-4 py-4 transition hover:bg-slate-50/80">
+                            <span class="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-amber-100 text-amber-800" aria-hidden="true">
+                                <svg class="h-5 w-5" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M2.25 18 9 11.25l4.306 4.306a11.95 11.95 0 0 1 5.814-5.518l2.74-1.22m0 0-5.94-2.281m5.94 2.28-2.28 5.941" /></svg>
+                            </span>
+                            <div class="min-w-0 flex-1">
+                                <p class="font-semibold text-slate-900">Affiliate</p>
+                                <p class="text-xs text-slate-500">Kelola affiliate, komisi, rekening, dan withdraw.</p>
+                            </div>
+                            <svg class="h-5 w-5 shrink-0 text-slate-400" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" d="m8.25 4.5 7.5 7.5-7.5 7.5" /></svg>
+                        </a>
+                    </li>
+                    <li>
                         <a href="{{ route('admin.support-tickets.index') }}" class="flex items-center gap-4 py-4 transition hover:bg-slate-50/80">
                             <span class="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-amber-100 text-amber-800" aria-hidden="true">
                                 <svg class="h-5 w-5" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M7.5 8.25h9m-9 3H12m-9.75 1.51c0 1.6 1.123 2.994 2.707 3.227 1.129.166 2.27.293 3.423.379.35.016.69.059 1.02.12l2.218-2.217a.75.75 0 01.579-.24h1.515a2.25 2.25 0 002.25-2.25V6a2.25 2.25 0 00-2.25-2.25H6A2.25 2.25 0 003.75 6v6.75a2.25 2.25 0 002.25 2.25z" /></svg>

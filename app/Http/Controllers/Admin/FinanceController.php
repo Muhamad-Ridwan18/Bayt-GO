@@ -26,7 +26,8 @@ class FinanceController extends Controller
          *   INNER JOIN muthowif_bookings b ON b.id = bp.muthowif_booking_id
          *   WHERE bp.status IN ('settlement','capture');
          */
-        $totalPlatformFees = AdminFinanceSummary::totalPlatformFees();
+        $totalPlatformFees = AdminFinanceSummary::netPlatformFees();
+        $affiliateCommissions = AdminFinanceSummary::affiliateCommissionsPaidOrPending();
         $totalVolume = AdminFinanceSummary::grossVolumeExcludingRefundedBookings();
 
         $historySince = now()->subMonths((int) config('admin.finance.history_months', 24))->startOfDay();
@@ -52,6 +53,7 @@ class FinanceController extends Controller
         return view('admin.finance.index', [
             'history' => $history,
             'totalPlatformFees' => $totalPlatformFees,
+            'affiliateCommissions' => $affiliateCommissions,
             'totalVolume' => $totalVolume,
         ]);
     }

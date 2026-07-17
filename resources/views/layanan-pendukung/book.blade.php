@@ -44,6 +44,14 @@
                         <x-input-error class="mt-2" :messages="$errors->get('pilgrim_count')" />
                     </div>
 
+                    <div>
+                        <x-input-label for="affiliate_code" value="Kode Affiliate (opsional)" />
+                        <x-text-input id="affiliate_code" name="affiliate_code" type="text" class="mt-1 block w-full border-slate-300 font-mono uppercase"
+                                      :value="old('affiliate_code')" maxlength="32" autocomplete="off" placeholder="Contoh: RIDWAN" />
+                        <p class="mt-1 text-xs text-slate-500">Masukkan kode affiliate jika Anda datang dari referral.</p>
+                        <x-input-error class="mt-2" :messages="$errors->get('affiliate_code')" />
+                    </div>
+
                     <x-input-error :messages="$errors->get('support_package_id')" />
 
                     <x-submit-button class="w-full rounded-xl bg-baytgo px-5 py-3 text-sm font-semibold text-white shadow-md hover:bg-baytgo-800">

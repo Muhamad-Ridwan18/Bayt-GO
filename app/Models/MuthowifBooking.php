@@ -29,6 +29,11 @@ class MuthowifBooking extends Model
         'emergency_overlay_status',
         'emergency_replacement_at',
         'customer_id',
+        'affiliate_id',
+        'affiliate_code_snapshot',
+        'affiliate_rate_snapshot',
+        'affiliate_base_amount_snapshot',
+        'affiliate_commission_amount',
         'service_type',
         'support_package_id',
         'pilgrim_count',
@@ -80,6 +85,9 @@ class MuthowifBooking extends Model
             'with_transport' => 'boolean',
             'payment_status' => PaymentStatus::class,
             'total_amount' => 'decimal:2',
+            'affiliate_rate_snapshot' => 'decimal:6',
+            'affiliate_base_amount_snapshot' => 'decimal:2',
+            'affiliate_commission_amount' => 'decimal:2',
             'paid_at' => 'datetime',
             'daily_price_snapshot' => 'decimal:2',
             'same_hotel_price_snapshot' => 'decimal:2',
@@ -131,6 +139,16 @@ class MuthowifBooking extends Model
     public function customer(): BelongsTo
     {
         return $this->belongsTo(User::class, 'customer_id');
+    }
+
+    public function affiliate(): BelongsTo
+    {
+        return $this->belongsTo(Affiliate::class);
+    }
+
+    public function affiliateCommission(): HasOne
+    {
+        return $this->hasOne(AffiliateCommission::class, 'muthowif_booking_id');
     }
 
     public function supportPackage(): BelongsTo

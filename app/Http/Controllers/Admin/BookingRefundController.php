@@ -98,6 +98,8 @@ class BookingRefundController extends Controller
                     'payment_status' => PaymentStatus::Refunded,
                 ]);
 
+                app(\App\Services\AffiliateCommissionService::class)->voidForBooking($booking, 'refund_completed');
+
                 $feeMu = (int) $refund->refund_fee_muthowif;
                 if ($feeMu > 0) {
                     $muthowifProfile = MuthowifProfile::query()

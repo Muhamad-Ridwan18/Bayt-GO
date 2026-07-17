@@ -19,6 +19,10 @@ Broadcast::channel('admin.withdrawals', function ($user) {
     return $user->isAdmin();
 });
 
+Broadcast::channel('admin.affiliate-withdrawals', function ($user) {
+    return $user->isAdmin();
+});
+
 Broadcast::channel('admin.support-tickets', function ($user) {
     return $user->isAdmin();
 });

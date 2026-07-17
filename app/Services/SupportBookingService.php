@@ -82,7 +82,7 @@ class SupportBookingService
 
             $bookingCode = $this->orderCodes->allocateNextWithinTransaction();
 
-            return MuthowifBooking::query()->create([
+            $attributes = [
                 'booking_code' => $bookingCode,
                 'muthowif_profile_id' => $lockedProfile->id,
                 'customer_id' => $request->user()->id,
@@ -95,7 +95,16 @@ class SupportBookingService
                 'status' => BookingStatus::Pending,
                 'package_price_snapshot' => (string) $package->price,
                 'package_name_snapshot' => $package->name,
-            ]);
+            ];
+
+            $affiliateSnapshot = app(AffiliateAttributionService::class)->snapshotForBooking(
+                new MuthowifBooking($attributes),
+                $request->input('affiliate_code'),
+                (string) $request->user()->id,
+                $request->user()->isCompanyCustomer(),
+            );
+
+            return MuthowifBooking::query()->create(array_merge($attributes, $affiliateSnapshot));
         });
     }
 

@@ -39,6 +39,13 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::get('/customer/dashboard', [\App\Http\Controllers\Api\Customer\DashboardController::class, 'index']);
     Route::get('/muthowif/dashboard', [\App\Http\Controllers\Api\Muthowif\DashboardController::class, 'index']);
 
+    Route::get('/affiliate', [\App\Http\Controllers\Api\Affiliate\AffiliateApiController::class, 'show']);
+    Route::post('/affiliate/register', [\App\Http\Controllers\Api\Affiliate\AffiliateApiController::class, 'register']);
+    Route::get('/affiliate/dashboard', [\App\Http\Controllers\Api\Affiliate\AffiliateApiController::class, 'dashboard']);
+    Route::post('/affiliate/bank-accounts', [\App\Http\Controllers\Api\Affiliate\AffiliateApiController::class, 'storeBankAccount']);
+    Route::delete('/affiliate/bank-accounts/{id}', [\App\Http\Controllers\Api\Affiliate\AffiliateApiController::class, 'destroyBankAccount']);
+    Route::post('/affiliate/withdrawals', [\App\Http\Controllers\Api\Affiliate\AffiliateApiController::class, 'storeWithdrawal']);
+
     // Customer Bookings
     Route::get('/customer/bookings', [\App\Http\Controllers\Api\Customer\BookingApiController::class, 'index']);
     Route::get('/customer/bookings/{booking}', [\App\Http\Controllers\Api\Customer\BookingApiController::class, 'show']);

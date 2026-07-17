@@ -19,6 +19,10 @@ use App\Http\Controllers\Admin\UserManagementController;
 use App\Http\Controllers\Admin\WhatsAppBroadcastController;
 use App\Http\Controllers\Admin\WhatsAppNotifySettingsController;
 use App\Http\Controllers\Admin\WithdrawalsController;
+use App\Http\Controllers\Admin\AffiliateAdminController;
+use App\Http\Controllers\Affiliate\AffiliateDashboardController;
+use App\Http\Controllers\Affiliate\AffiliateBankAccountController;
+use App\Http\Controllers\Affiliate\AffiliateWithdrawController;
 use App\Http\Controllers\BookingChatController;
 use App\Http\Controllers\Customer\BookingController as CustomerBookingController;
 use App\Http\Controllers\Customer\SupportBookingController;
@@ -205,6 +209,14 @@ Route::middleware('auth')->group(function () {
 
     Route::get('/chat/conversations', [GlobalChatController::class, 'index'])->name('chat.conversations');
 
+    Route::prefix('affiliate')->name('affiliate.')->group(function () {
+        Route::get('/', [AffiliateDashboardController::class, 'index'])->name('index');
+        Route::post('/daftar', [AffiliateDashboardController::class, 'register'])->name('register');
+        Route::post('/rekening', [AffiliateBankAccountController::class, 'store'])->name('bank-accounts.store');
+        Route::delete('/rekening/{bankAccount}', [AffiliateBankAccountController::class, 'destroy'])->name('bank-accounts.destroy');
+        Route::post('/withdraw', [AffiliateWithdrawController::class, 'store'])->name('withdrawals.store');
+    });
+
     Route::middleware(['reporter'])->prefix('support')->name('support.')->group(function () {
         Route::get('live-index-fragment', [SupportTicketController::class, 'indexLiveFragment'])->name('index.live-fragment');
         Route::get('/', [SupportTicketController::class, 'index'])->name('index');
@@ -353,6 +365,18 @@ Route::middleware('auth')->group(function () {
         Route::post('withdrawals/{withdrawal}/gagal-transfer', [WithdrawalsController::class, 'markTransferFailed'])->name('withdrawals.mark_transfer_failed');
         Route::get('referral', [MuthowifReferralMonitorController::class, 'index'])->name('referrals.index');
         Route::get('referral/{profile}', [MuthowifReferralMonitorController::class, 'show'])->name('referrals.show');
+        Route::get('affiliate', [AffiliateAdminController::class, 'index'])->name('affiliates.index');
+        Route::get('affiliate/pengaturan', [AffiliateAdminController::class, 'settingsEdit'])->name('affiliates.settings.edit');
+        Route::post('affiliate/pengaturan', [AffiliateAdminController::class, 'settingsUpdate'])->name('affiliates.settings.update');
+        Route::get('affiliate/withdraw', [AffiliateAdminController::class, 'withdrawalsIndex'])->name('affiliates.withdrawals.index');
+        Route::post('affiliate/withdraw/{withdrawal}/approve', [AffiliateAdminController::class, 'approveWithdrawal'])->name('affiliates.withdrawals.approve');
+        Route::post('affiliate/withdraw/{withdrawal}/reject', [AffiliateAdminController::class, 'rejectWithdrawal'])->name('affiliates.withdrawals.reject');
+        Route::post('affiliate/withdraw/{withdrawal}/paid', [AffiliateAdminController::class, 'markWithdrawalPaid'])->name('affiliates.withdrawals.paid');
+        Route::post('affiliate/withdraw/{withdrawal}/failed', [AffiliateAdminController::class, 'markWithdrawalFailed'])->name('affiliates.withdrawals.failed');
+        Route::get('affiliate/{affiliate}', [AffiliateAdminController::class, 'show'])->name('affiliates.show');
+        Route::post('affiliate/{affiliate}/toggle', [AffiliateAdminController::class, 'toggleStatus'])->name('affiliates.toggle');
+        Route::post('affiliate/rekening/{bankAccount}/verify', [AffiliateAdminController::class, 'verifyBank'])->name('affiliates.banks.verify');
+        Route::post('affiliate/rekening/{bankAccount}/reject', [AffiliateAdminController::class, 'rejectBank'])->name('affiliates.banks.reject');
         Route::get('muthowif/live-index-fragment', [MuthowifVerificationController::class, 'indexLiveFragment'])->name('muthowif.index.live-fragment');
         Route::get('muthowif', [MuthowifVerificationController::class, 'index'])->name('muthowif.index');
         Route::get('muthowif/{profile}/photo', [MuthowifVerificationController::class, 'photo'])->name('muthowif.photo');

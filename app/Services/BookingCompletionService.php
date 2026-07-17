@@ -13,6 +13,7 @@ class BookingCompletionService
 {
     public function __construct(
         private readonly BookingWalletCreditingService $walletCrediting,
+        private readonly AffiliateCommissionService $affiliateCommissions,
     ) {}
 
     /**
@@ -75,6 +76,8 @@ class BookingCompletionService
                         $error = $result['error'];
                     }
                 }
+
+                $this->affiliateCommissions->markAvailableOnCompletion($booking);
 
                 $booking->status = BookingStatus::Completed;
                 $booking->save();

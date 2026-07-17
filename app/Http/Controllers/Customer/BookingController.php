@@ -603,6 +603,7 @@ class BookingController extends Controller
             'add_on_ids.*' => ['uuid'],
             'with_same_hotel' => ['sometimes', 'boolean'],
             'with_transport' => ['sometimes', 'boolean'],
+            'affiliate_code' => ['nullable', 'string', 'max:32'],
         ], $documentStore->validationRules($request));
 
         $validator = Validator::make($request->all(), $rules, [
@@ -718,7 +719,7 @@ class BookingController extends Controller
 
             $pricingService = app(BookingPricingService::class);
 
-            return MuthowifBooking::query()->create(array_merge([
+            $attributes = array_merge([
                 'booking_code' => $bookingCode,
                 'muthowif_profile_id' => $profile->id,
                 'customer_id' => $request->user()->id,
@@ -734,7 +735,20 @@ class BookingController extends Controller
                 'muthowif_profile_id' => $profile->id,
                 'service_type' => $serviceType,
                 'selected_add_on_ids' => $selectedAddOnIds,
-            ]))));
+                'with_same_hotel' => $withSameHotel,
+                'with_transport' => $withTransport,
+                'starts_on' => $start->toDateString(),
+                'ends_on' => $end->toDateString(),
+            ])));
+
+            $affiliateSnapshot = app(\App\Services\AffiliateAttributionService::class)->snapshotForBooking(
+                new MuthowifBooking($attributes),
+                $validated['affiliate_code'] ?? null,
+                (string) $request->user()->id,
+                $request->user()->isCompanyCustomer(),
+            );
+
+            return MuthowifBooking::query()->create(array_merge($attributes, $affiliateSnapshot));
         });
 
         try {
@@ -937,6 +951,7 @@ class BookingController extends Controller
                 'muthowif_rejection_kind' => null,
                 'muthowif_rejection_note' => null,
             ]);
+            app(\App\Services\AffiliateCommissionService::class)->voidForBooking($booking, 'cancelled_by_customer');
         });
 
         $this->forgetCustomerBookingStatusCounts((string) $request->user()->getKey());
