@@ -49,6 +49,10 @@ class AffiliateDashboardController extends Controller
                 ->where('affiliate_id', $affiliate->id)
                 ->where('status', AffiliateCommissionStatus::Available)
                 ->count(),
+            'pending_count' => (int) AffiliateCommission::query()
+                ->where('affiliate_id', $affiliate->id)
+                ->where('status', AffiliateCommissionStatus::Pending)
+                ->count(),
             'total_withdraw' => (float) AffiliateWithdrawal::query()
                 ->where('affiliate_id', $affiliate->id)
                 ->where('status', AffiliateWithdrawalStatus::Paid)
@@ -56,6 +60,8 @@ class AffiliateDashboardController extends Controller
             'rate' => AffiliateSettings::getRate(),
             'min_withdraw' => AffiliateSettings::getMinWithdraw(),
         ];
+
+        $chart = $this->dailySeries($affiliate, 30);
 
         $commissions = AffiliateCommission::query()
             ->with('booking')
@@ -78,12 +84,59 @@ class AffiliateDashboardController extends Controller
         return view('affiliate.dashboard', [
             'affiliate' => $affiliate,
             'stats' => $stats,
+            'chart' => $chart,
             'commissions' => $commissions,
             'withdrawals' => $withdrawals,
             'ledger' => $ledger,
             'bankAccounts' => $bankAccounts,
             'shareUrl' => url('/?ref='.$affiliate->code),
         ]);
+    }
+
+    /**
+     * Seri harian N hari terakhir: nominal komisi & jumlah booking beratribusi.
+     *
+     * @return array{labels: list<string>, amounts: list<int>, counts: list<int>, total_amount: int, total_count: int}
+     */
+    private function dailySeries(Affiliate $affiliate, int $daysBack): array
+    {
+        $start = now()->subDays($daysBack - 1)->startOfDay();
+
+        $rows = AffiliateCommission::query()
+            ->where('affiliate_id', $affiliate->id)
+            ->whereIn('status', [
+                AffiliateCommissionStatus::Pending->value,
+                AffiliateCommissionStatus::Available->value,
+            ])
+            ->where('created_at', '>=', $start)
+            ->get(['created_at', 'commission_amount'])
+            ->groupBy(fn ($c) => $c->created_at->toDateString());
+
+        $labels = [];
+        $amounts = [];
+        $counts = [];
+        $totalAmount = 0;
+        $totalCount = 0;
+
+        for ($d = $start->copy(); $d->lte(now()); $d->addDay()) {
+            $key = $d->toDateString();
+            $labels[] = $d->translatedFormat('d M');
+            $group = $rows->get($key);
+            $amount = (int) round((float) ($group?->sum(fn ($c) => (float) $c->commission_amount) ?? 0));
+            $count = (int) ($group?->count() ?? 0);
+            $amounts[] = $amount;
+            $counts[] = $count;
+            $totalAmount += $amount;
+            $totalCount += $count;
+        }
+
+        return [
+            'labels' => $labels,
+            'amounts' => $amounts,
+            'counts' => $counts,
+            'total_amount' => $totalAmount,
+            'total_count' => $totalCount,
+        ];
     }
 
     public function register(Request $request, AffiliateRegistrationService $registration): RedirectResponse
