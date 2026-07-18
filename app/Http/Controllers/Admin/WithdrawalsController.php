@@ -2,8 +2,10 @@
 
 namespace App\Http\Controllers\Admin;
 
+use App\Enums\AffiliateWithdrawalStatus;
 use App\Http\Controllers\Controller;
 use App\Jobs\NotifyMuthowifOfWithdrawalTransferProof;
+use App\Models\AffiliateWithdrawal;
 use App\Models\MuthowifProfile;
 use App\Models\MuthowifWithdrawal;
 use App\Services\UploadedImageOptimizer;
@@ -18,8 +20,41 @@ use Throwable;
 
 class WithdrawalsController extends Controller
 {
-    public function index(): View
+    public function index(Request $request): View
     {
+        $tab = $request->query('tab') === 'affiliate' ? 'affiliate' : 'muthowif';
+
+        $affiliatePendingCount = (int) AffiliateWithdrawal::query()
+            ->whereIn('status', [
+                AffiliateWithdrawalStatus::Requested->value,
+                AffiliateWithdrawalStatus::Approved->value,
+            ])
+            ->count();
+
+        if ($tab === 'affiliate') {
+            $affiliateWithdrawals = AffiliateWithdrawal::query()
+                ->with(['affiliate.user'])
+                ->orderByDesc('requested_at')
+                ->paginate(20)
+                ->withQueryString();
+
+            $affiliatePendingAgg = AffiliateWithdrawal::query()
+                ->whereIn('status', [
+                    AffiliateWithdrawalStatus::Requested->value,
+                    AffiliateWithdrawalStatus::Approved->value,
+                ])
+                ->selectRaw('COUNT(*) as pending_count, COALESCE(SUM(amount), 0) as pending_amount')
+                ->first();
+
+            return view('admin.withdrawals.index', [
+                'tab' => $tab,
+                'affiliateWithdrawals' => $affiliateWithdrawals,
+                'affiliatePendingCount' => $affiliatePendingCount,
+                'pendingCount' => (int) ($affiliatePendingAgg->pending_count ?? 0),
+                'pendingAmount' => (float) ($affiliatePendingAgg->pending_amount ?? 0),
+            ]);
+        }
+
         $withdrawals = MuthowifWithdrawal::query()
             ->with([
                 'muthowifProfile' => static function ($q): void {
@@ -27,7 +62,8 @@ class WithdrawalsController extends Controller
                 },
             ])
             ->orderByDesc('requested_at')
-            ->paginate(20);
+            ->paginate(20)
+            ->withQueryString();
 
         $pendingAgg = MuthowifWithdrawal::query()
             ->where('status', 'pending_approval')
@@ -35,7 +71,9 @@ class WithdrawalsController extends Controller
             ->first();
 
         return view('admin.withdrawals.index', [
+            'tab' => $tab,
             'withdrawals' => $withdrawals,
+            'affiliatePendingCount' => $affiliatePendingCount,
             'pendingCount' => (int) ($pendingAgg->pending_count ?? 0),
             'pendingAmount' => (float) ($pendingAgg->pending_amount ?? 0),
         ]);

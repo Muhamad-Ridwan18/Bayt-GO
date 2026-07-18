@@ -135,21 +135,18 @@ class AffiliateAdminController extends Controller
         return back()->with('status', 'Pengaturan affiliate disimpan. Berlaku untuk booking baru.');
     }
 
-    public function withdrawalsIndex(): View
+    public function withdrawalsIndex(): RedirectResponse
     {
-        $withdrawals = AffiliateWithdrawal::query()
-            ->with(['affiliate.user'])
-            ->orderByDesc('requested_at')
-            ->paginate(20);
-
-        return view('admin.affiliates.withdrawals', compact('withdrawals'));
+        return redirect()->route('admin.withdrawals.index', ['tab' => 'affiliate']);
     }
 
     public function approveWithdrawal(AffiliateWithdrawal $withdrawal, AffiliateWalletService $wallet, Request $request): RedirectResponse
     {
         $wallet->approve($withdrawal, $request->user());
 
-        return back()->with('status', 'Withdraw disetujui.');
+        return redirect()
+            ->route('admin.withdrawals.index', ['tab' => 'affiliate'])
+            ->with('status', 'Withdraw disetujui.');
     }
 
     public function rejectWithdrawal(AffiliateWithdrawal $withdrawal, AffiliateWalletService $wallet, Request $request): RedirectResponse
@@ -157,7 +154,9 @@ class AffiliateAdminController extends Controller
         $validated = $request->validate(['reason' => ['nullable', 'string', 'max:1000']]);
         $wallet->reject($withdrawal, $request->user(), $validated['reason'] ?? null);
 
-        return back()->with('status', 'Withdraw ditolak, saldo dikembalikan.');
+        return redirect()
+            ->route('admin.withdrawals.index', ['tab' => 'affiliate'])
+            ->with('status', 'Withdraw ditolak, saldo dikembalikan.');
     }
 
     public function markWithdrawalPaid(AffiliateWithdrawal $withdrawal, AffiliateWalletService $wallet, Request $request): RedirectResponse
@@ -169,7 +168,9 @@ class AffiliateAdminController extends Controller
         $path = $request->file('transfer_proof')->store('affiliate-withdrawals/proofs', 'public');
         $wallet->markPaid($withdrawal, $request->user(), $path);
 
-        return back()->with('status', 'Withdraw ditandai dibayar.');
+        return redirect()
+            ->route('admin.withdrawals.index', ['tab' => 'affiliate'])
+            ->with('status', 'Withdraw ditandai dibayar.');
     }
 
     public function markWithdrawalFailed(AffiliateWithdrawal $withdrawal, AffiliateWalletService $wallet, Request $request): RedirectResponse
@@ -177,6 +178,8 @@ class AffiliateAdminController extends Controller
         $validated = $request->validate(['reason' => ['nullable', 'string', 'max:1000']]);
         $wallet->markFailed($withdrawal, $request->user(), $validated['reason'] ?? null);
 
-        return back()->with('status', 'Withdraw ditandai gagal, saldo dikembalikan.');
+        return redirect()
+            ->route('admin.withdrawals.index', ['tab' => 'affiliate'])
+            ->with('status', 'Withdraw ditandai gagal, saldo dikembalikan.');
     }
 }
