@@ -2,6 +2,9 @@
 
 namespace App\Console\Commands;
 
+use App\Models\Affiliate;
+use App\Models\AffiliateWalletTransaction;
+use App\Models\AffiliateWithdrawal;
 use App\Models\MuthowifBooking;
 use App\Models\MuthowifProfile;
 use App\Models\MuthowifWithdrawal;
@@ -13,8 +16,9 @@ use Throwable;
 /**
  * Hapus seluruh booking & transaksi terkait untuk reset lingkungan pengujian.
  *
- * Menghapus: muthowif_bookings (+ cascade: pembayaran, refund, reschedule, chat, review),
- * muthowif_withdrawals, dan mengenolkan wallet_balance semua profil muthowif.
+ * Menghapus: muthowif_bookings (+ cascade: pembayaran, refund, reschedule, chat, review, affiliate commissions),
+ * muthowif_withdrawals, affiliate_withdrawals, affiliate_wallet_transactions,
+ * dan mengenolkan wallet_balance muthowif + available_balance affiliate.
  */
 class ResetBookingsAndFinanceForTesting extends Command
 {
@@ -22,7 +26,7 @@ class ResetBookingsAndFinanceForTesting extends Command
                             {--force : Lewati konfirmasi interaktif}
                             {--with-files : Hapus folder bukti refund & withdraw di disk public}';
 
-    protected $description = 'Hapus semua booking, pembayaran, refund, withdraw, dan reset saldo wallet muthowif (untuk testing)';
+    protected $description = 'Hapus semua booking, pembayaran, refund, withdraw, dan reset saldo wallet muthowif + affiliate (untuk testing)';
 
     public function handle(): int
     {
@@ -39,7 +43,7 @@ class ResetBookingsAndFinanceForTesting extends Command
         }
 
         if (! $this->option('force') && ! $this->confirm(
-            'Ini akan menghapus SEMUA muthowif_bookings (beserta pembayaran, refund, reschedule, chat, review), SEMUA muthowif_withdrawals, dan mengenolkan wallet semua muthowif. Lanjutkan?',
+            'Ini akan menghapus SEMUA booking/pembayaran/refund/withdraw (muthowif + affiliate), ledger wallet affiliate, dan mengenolkan saldo wallet muthowif + affiliate. Lanjutkan?',
             false
         )) {
             $this->info('Dibatalkan.');
@@ -49,18 +53,29 @@ class ResetBookingsAndFinanceForTesting extends Command
 
         $bookingCount = MuthowifBooking::query()->count();
         $withdrawCount = MuthowifWithdrawal::query()->count();
+        $affiliateWithdrawCount = AffiliateWithdrawal::query()->count();
         $profileCount = MuthowifProfile::query()->count();
+        $affiliateCount = Affiliate::query()->count();
 
         try {
             DB::transaction(function (): void {
+                $deletedAffiliateWithdrawals = AffiliateWithdrawal::query()->delete();
+                $this->line("Affiliate withdraw dihapus: {$deletedAffiliateWithdrawals}");
+
+                $deletedAffiliateLedger = AffiliateWalletTransaction::query()->delete();
+                $this->line("Affiliate wallet ledger dihapus: {$deletedAffiliateLedger}");
+
                 $deletedWithdrawals = MuthowifWithdrawal::query()->delete();
-                $this->line("Withdraw dihapus: {$deletedWithdrawals}");
+                $this->line("Muthowif withdraw dihapus: {$deletedWithdrawals}");
 
                 $deletedBookings = MuthowifBooking::query()->delete();
                 $this->line("Booking dihapus: {$deletedBookings}");
 
-                $updated = MuthowifProfile::query()->update(['wallet_balance' => 0]);
-                $this->line("Profil muthowif diset saldo 0: {$updated} baris");
+                $updatedProfiles = MuthowifProfile::query()->update(['wallet_balance' => 0]);
+                $this->line("Wallet muthowif diset 0: {$updatedProfiles} baris");
+
+                $updatedAffiliates = Affiliate::query()->update(['available_balance' => 0]);
+                $this->line("Wallet affiliate diset 0: {$updatedAffiliates} baris");
             });
         } catch (Throwable $e) {
             $this->error('Gagal: '.$e->getMessage());
@@ -79,7 +94,13 @@ class ResetBookingsAndFinanceForTesting extends Command
             }
         }
 
-        $this->info('Selesai. (Sebelum: booking ~'.$bookingCount.', withdraw ~'.$withdrawCount.', profil ~'.$profileCount.')');
+        $this->info(
+            'Selesai. (Sebelum: booking ~'.$bookingCount
+            .', muthowif withdraw ~'.$withdrawCount
+            .', affiliate withdraw ~'.$affiliateWithdrawCount
+            .', profil ~'.$profileCount
+            .', affiliate ~'.$affiliateCount.')'
+        );
 
         return self::SUCCESS;
     }
