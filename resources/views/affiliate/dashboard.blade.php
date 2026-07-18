@@ -351,13 +351,15 @@
                             <x-input-label for="account_number" value="Nomor rekening" />
                             <x-text-input id="account_number" name="account_number" class="mt-1 block w-full" :value="old('account_number')" required />
                         </div>
-                        <label class="inline-flex items-center gap-2 text-sm text-slate-700">
+                        <label class="flex items-center gap-2 text-sm text-slate-700">
                             <input type="checkbox" name="is_primary" value="1" class="rounded border-slate-300"> Jadikan primary
                         </label>
                         <x-input-error :messages="$errors->get('bank_code')" />
                         <x-input-error :messages="$errors->get('account_holder')" />
                         <x-input-error :messages="$errors->get('account_number')" />
-                        <x-submit-button>Tambah rekening</x-submit-button>
+                        <x-submit-button class="inline-flex w-full items-center justify-center rounded-xl bg-emerald-700 px-4 py-2.5 text-sm font-semibold text-white shadow-sm transition hover:bg-emerald-800">
+                            Tambah rekening
+                        </x-submit-button>
                     </form>
                 </section>
 
