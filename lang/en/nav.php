@@ -31,6 +31,6 @@ return [
     'lang_id' => 'Indonesian',
     'lang_ar' => 'Arabic',
     'portfolio' => 'Portfolio',
-    'manage_menu' => 'Manage',
+    'manage_menu' => 'Manage services',
     'affiliate' => 'Affiliate',
 ];
