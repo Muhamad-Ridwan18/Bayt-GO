@@ -31,4 +31,6 @@ return [
     'lang_id' => 'Bahasa Indonesia',
     'lang_ar' => 'Arab',
     'portfolio' => 'Portofolio',
+    'manage_menu' => 'Kelola',
+    'affiliate' => 'Affiliate',
 ];

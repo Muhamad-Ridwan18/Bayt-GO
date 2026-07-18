@@ -91,8 +91,14 @@
                         <x-nav-link :href="route('support.index')" :active="request()->routeIs('support.*')">
                             {{ __('nav.support_tickets') }}
                         </x-nav-link>
+                    @endif
+                    @if (Auth::user()->isCustomer())
                         <x-nav-link :href="route('affiliate.index')" :active="request()->routeIs('affiliate.*')">
-                            Affiliate
+                            {{ __('nav.affiliate') }}
+                        </x-nav-link>
+                    @elseif (Auth::user()->isMuthowif() && ! Auth::user()->isVerifiedMuthowif())
+                        <x-nav-link :href="route('affiliate.index')" :active="request()->routeIs('affiliate.*')">
+                            {{ __('nav.affiliate') }}
                         </x-nav-link>
                     @endif
                     @if (Auth::user()->isAdmin())
@@ -140,12 +146,69 @@
                         </x-nav-link>
                     @endif
                     @if (Auth::user()->isVerifiedMuthowif())
-                        <x-nav-link :href="route('muthowif.pelayanan.edit')" :active="request()->routeIs('muthowif.pelayanan.*')">
-                            {{ __('nav.services') }}
-                        </x-nav-link>
-                        <x-nav-link :href="route('muthowif.pelayanan-pendukung.index')" :active="request()->routeIs('muthowif.pelayanan-pendukung.*')">
-                            {{ __('layanan_pendukung.page_title') }}
-                        </x-nav-link>
+                        @php
+                            $muthowifManageActive = request()->routeIs([
+                                'muthowif.pelayanan.*',
+                                'muthowif.pelayanan-pendukung.*',
+                                'muthowif.bookings.*',
+                                'affiliate.*',
+                            ]);
+                        @endphp
+                        <div class="inline-flex items-center self-stretch">
+                            <x-dropdown align="left" width="w-56">
+                                <x-slot name="trigger">
+                                    <button type="button" @class([
+                                        'inline-flex items-center gap-1.5 border-b-2 px-1 pt-1 text-sm font-medium leading-5 transition duration-150 ease-in-out focus:outline-none',
+                                        'border-gold text-slate-900 focus:border-gold-muted' => $muthowifManageActive,
+                                        'border-transparent text-slate-500 hover:border-slate-300 hover:text-slate-700 focus:border-slate-300 focus:text-slate-700' => ! $muthowifManageActive,
+                                    ])>
+                                        <span>{{ __('nav.manage_menu') }}</span>
+                                        <span
+                                            x-data="muthowifPendingBookingsBadge({
+                                                userId: @js(auth()->id()),
+                                                countUrl: @js(route('muthowif.bookings.pending-incoming-count')),
+                                                initialCount: @js($muthowifPendingIncomingCount),
+                                            })"
+                                            x-show="count > 0"
+                                            x-cloak
+                                            class="inline-flex min-h-[1.125rem] min-w-[1.125rem] items-center justify-center rounded-full bg-red-600 px-1 text-[10px] font-bold leading-none text-white shadow-sm"
+                                            x-bind:aria-label="count > 0 ? '{{ __('nav.booking_requests') }}: ' + displayLabel : null"
+                                            x-text="displayLabel"
+                                        ></span>
+                                        <svg class="h-4 w-4 fill-current" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" aria-hidden="true">
+                                            <path fill-rule="evenodd" d="M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z" clip-rule="evenodd" />
+                                        </svg>
+                                    </button>
+                                </x-slot>
+                                <x-slot name="content">
+                                    <x-dropdown-link :href="route('muthowif.pelayanan.edit')">
+                                        {{ __('nav.services') }}
+                                    </x-dropdown-link>
+                                    <x-dropdown-link :href="route('muthowif.pelayanan-pendukung.index')">
+                                        {{ __('layanan_pendukung.page_title') }}
+                                    </x-dropdown-link>
+                                    <x-dropdown-link :href="route('muthowif.bookings.index')">
+                                        <span class="inline-flex w-full items-center justify-between gap-2">
+                                            <span>{{ __('nav.booking_requests') }}</span>
+                                            <span
+                                                x-data="muthowifPendingBookingsBadge({
+                                                    userId: @js(auth()->id()),
+                                                    countUrl: @js(route('muthowif.bookings.pending-incoming-count')),
+                                                    initialCount: @js($muthowifPendingIncomingCount),
+                                                })"
+                                                x-show="count > 0"
+                                                x-cloak
+                                                class="inline-flex min-h-[1.125rem] min-w-[1.125rem] items-center justify-center rounded-full bg-red-600 px-1 text-[10px] font-bold leading-none text-white shadow-sm"
+                                                x-text="displayLabel"
+                                            ></span>
+                                        </span>
+                                    </x-dropdown-link>
+                                    <x-dropdown-link :href="route('affiliate.index')">
+                                        {{ __('nav.affiliate') }}
+                                    </x-dropdown-link>
+                                </x-slot>
+                            </x-dropdown>
+                        </div>
                         <x-nav-link :href="route('muthowif.jadwal.index')" :active="request()->routeIs('muthowif.jadwal.*')">
                             {{ __('nav.day_off') }}
                         </x-nav-link>
@@ -166,23 +229,6 @@
                                     x-cloak
                                     class="inline-flex min-h-[1.125rem] min-w-[1.125rem] items-center justify-center rounded-full bg-amber-600 px-1 text-[10px] font-bold leading-none text-white shadow-sm"
                                     x-bind:aria-label="count > 0 ? '{{ __('nav.emergency_offers') }}: ' + displayLabel : null"
-                                    x-text="displayLabel"
-                                ></span>
-                            </span>
-                        </x-nav-link>
-                        <x-nav-link :href="route('muthowif.bookings.index')" :active="request()->routeIs('muthowif.bookings.*')">
-                            <span class="inline-flex items-center gap-2">
-                                {{ __('nav.booking_requests') }}
-                                <span
-                                    x-data="muthowifPendingBookingsBadge({
-                                        userId: @js(auth()->id()),
-                                        countUrl: @js(route('muthowif.bookings.pending-incoming-count')),
-                                        initialCount: @js($muthowifPendingIncomingCount),
-                                    })"
-                                    x-show="count > 0"
-                                    x-cloak
-                                    class="inline-flex min-h-[1.125rem] min-w-[1.125rem] items-center justify-center rounded-full bg-red-600 px-1 text-[10px] font-bold leading-none text-white shadow-sm"
-                                    x-bind:aria-label="count > 0 ? '{{ __('nav.booking_requests') }}: ' + displayLabel : null"
                                     x-text="displayLabel"
                                 ></span>
                             </span>
@@ -272,8 +318,14 @@
                 <x-responsive-nav-link :href="route('support.index')" :active="request()->routeIs('support.*')">
                     {{ __('nav.support_tickets') }}
                 </x-responsive-nav-link>
+            @endif
+            @if (Auth::user()->isCustomer())
                 <x-responsive-nav-link :href="route('affiliate.index')" :active="request()->routeIs('affiliate.*')">
-                    Affiliate
+                    {{ __('nav.affiliate') }}
+                </x-responsive-nav-link>
+            @elseif (Auth::user()->isMuthowif() && ! Auth::user()->isVerifiedMuthowif())
+                <x-responsive-nav-link :href="route('affiliate.index')" :active="request()->routeIs('affiliate.*')">
+                    {{ __('nav.affiliate') }}
                 </x-responsive-nav-link>
             @endif
             @if (Auth::user()->isAdmin())
@@ -321,12 +373,70 @@
                 </x-responsive-nav-link>
             @endif
             @if (Auth::user()->isVerifiedMuthowif())
-                <x-responsive-nav-link :href="route('muthowif.pelayanan.edit')" :active="request()->routeIs('muthowif.pelayanan.*')">
-                    {{ __('nav.services') }}
-                </x-responsive-nav-link>
-                <x-responsive-nav-link :href="route('muthowif.pelayanan-pendukung.index')" :active="request()->routeIs('muthowif.pelayanan-pendukung.*')">
-                    {{ __('layanan_pendukung.page_title') }}
-                </x-responsive-nav-link>
+                @php
+                    $muthowifManageActiveMobile = request()->routeIs([
+                        'muthowif.pelayanan.*',
+                        'muthowif.pelayanan-pendukung.*',
+                        'muthowif.bookings.*',
+                        'affiliate.*',
+                    ]);
+                @endphp
+                <div class="space-y-1" x-data="{ manageOpen: @js($muthowifManageActiveMobile) }">
+                    <button
+                        type="button"
+                        @click="manageOpen = ! manageOpen"
+                        @class([
+                            'flex w-full items-center justify-between gap-2 border-l-4 py-2 pe-4 ps-3 text-start text-base font-medium transition duration-150 ease-in-out focus:outline-none',
+                            'border-gold bg-gold-light/30 text-baytgo focus:bg-gold-light/40' => $muthowifManageActiveMobile,
+                            'border-transparent text-slate-600 hover:border-slate-300 hover:bg-slate-50 hover:text-slate-800' => ! $muthowifManageActiveMobile,
+                        ])
+                    >
+                        <span class="inline-flex items-center gap-2">
+                            {{ __('nav.manage_menu') }}
+                            <span
+                                x-data="muthowifPendingBookingsBadge({
+                                    userId: @js(auth()->id()),
+                                    countUrl: @js(route('muthowif.bookings.pending-incoming-count')),
+                                    initialCount: @js($muthowifPendingIncomingCount),
+                                })"
+                                x-show="count > 0"
+                                x-cloak
+                                class="inline-flex min-h-[1.125rem] min-w-[1.125rem] items-center justify-center rounded-full bg-red-600 px-1 text-[10px] font-bold leading-none text-white shadow-sm"
+                                x-text="displayLabel"
+                            ></span>
+                        </span>
+                        <svg class="h-4 w-4 shrink-0 transition" :class="{ 'rotate-180': manageOpen }" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true">
+                            <path fill-rule="evenodd" d="M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z" clip-rule="evenodd" />
+                        </svg>
+                    </button>
+                    <div x-show="manageOpen" x-cloak class="space-y-1 border-l border-slate-200 ms-3">
+                        <x-responsive-nav-link :href="route('muthowif.pelayanan.edit')" :active="request()->routeIs('muthowif.pelayanan.*')">
+                            {{ __('nav.services') }}
+                        </x-responsive-nav-link>
+                        <x-responsive-nav-link :href="route('muthowif.pelayanan-pendukung.index')" :active="request()->routeIs('muthowif.pelayanan-pendukung.*')">
+                            {{ __('layanan_pendukung.page_title') }}
+                        </x-responsive-nav-link>
+                        <x-responsive-nav-link :href="route('muthowif.bookings.index')" :active="request()->routeIs('muthowif.bookings.*')">
+                            <span class="inline-flex items-center gap-2">
+                                {{ __('nav.booking_requests') }}
+                                <span
+                                    x-data="muthowifPendingBookingsBadge({
+                                        userId: @js(auth()->id()),
+                                        countUrl: @js(route('muthowif.bookings.pending-incoming-count')),
+                                        initialCount: @js($muthowifPendingIncomingCount),
+                                    })"
+                                    x-show="count > 0"
+                                    x-cloak
+                                    class="inline-flex min-h-[1.125rem] min-w-[1.125rem] items-center justify-center rounded-full bg-red-600 px-1 text-[10px] font-bold leading-none text-white shadow-sm"
+                                    x-text="displayLabel"
+                                ></span>
+                            </span>
+                        </x-responsive-nav-link>
+                        <x-responsive-nav-link :href="route('affiliate.index')" :active="request()->routeIs('affiliate.*')">
+                            {{ __('nav.affiliate') }}
+                        </x-responsive-nav-link>
+                    </div>
+                </div>
                 <x-responsive-nav-link :href="route('muthowif.jadwal.index')" :active="request()->routeIs('muthowif.jadwal.*')">
                     {{ __('nav.day_off') }}
                 </x-responsive-nav-link>
@@ -346,23 +456,6 @@
                             x-show="count > 0"
                             x-cloak
                             class="inline-flex min-h-[1.125rem] min-w-[1.125rem] items-center justify-center rounded-full bg-amber-600 px-1 text-[10px] font-bold leading-none text-white shadow-sm"
-                            x-text="displayLabel"
-                        ></span>
-                    </span>
-                </x-responsive-nav-link>
-                <x-responsive-nav-link :href="route('muthowif.bookings.index')" :active="request()->routeIs('muthowif.bookings.*')">
-                    <span class="inline-flex items-center gap-2">
-                        {{ __('nav.booking_requests') }}
-                        <span
-                            x-data="muthowifPendingBookingsBadge({
-                                userId: @js(auth()->id()),
-                                countUrl: @js(route('muthowif.bookings.pending-incoming-count')),
-                                initialCount: @js($muthowifPendingIncomingCount),
-                            })"
-                            x-show="count > 0"
-                            x-cloak
-                            class="inline-flex min-h-[1.125rem] min-w-[1.125rem] items-center justify-center rounded-full bg-red-600 px-1 text-[10px] font-bold leading-none text-white shadow-sm"
-                            x-bind:aria-label="count > 0 ? '{{ __('nav.booking_requests') }}: ' + displayLabel : null"
                             x-text="displayLabel"
                         ></span>
                     </span>
