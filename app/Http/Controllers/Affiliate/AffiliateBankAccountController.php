@@ -35,10 +35,11 @@ class AffiliateBankAccountController extends Controller
             'account_holder' => trim($validated['account_holder']),
             'account_number' => trim($validated['account_number']),
             'is_primary' => $request->boolean('is_primary') || $affiliate->bankAccounts()->count() === 0,
-            'verification_status' => AffiliateBankVerificationStatus::Pending,
+            'verification_status' => AffiliateBankVerificationStatus::Verified,
+            'verified_at' => now(),
         ]);
 
-        return back()->with('status', 'Rekening ditambahkan dan menunggu verifikasi admin.');
+        return back()->with('status', 'Rekening berhasil ditambahkan.');
     }
 
     public function destroy(Request $request, AffiliateBankAccount $bankAccount): RedirectResponse

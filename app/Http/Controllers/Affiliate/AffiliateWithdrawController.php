@@ -2,7 +2,6 @@
 
 namespace App\Http\Controllers\Affiliate;
 
-use App\Enums\AffiliateBankVerificationStatus;
 use App\Events\AffiliateWithdrawalRequested;
 use App\Http\Controllers\Controller;
 use App\Models\AffiliateBankAccount;
@@ -29,12 +28,11 @@ class AffiliateWithdrawController extends Controller
         $bank = AffiliateBankAccount::query()
             ->whereKey($validated['bank_account_id'])
             ->where('affiliate_id', $affiliate->id)
-            ->where('verification_status', AffiliateBankVerificationStatus::Verified)
             ->first();
 
         if ($bank === null) {
             throw ValidationException::withMessages([
-                'bank_account_id' => ['Pilih rekening yang sudah diverifikasi.'],
+                'bank_account_id' => ['Pilih rekening yang valid.'],
             ]);
         }
 

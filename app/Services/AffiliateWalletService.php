@@ -2,7 +2,6 @@
 
 namespace App\Services;
 
-use App\Enums\AffiliateBankVerificationStatus;
 use App\Enums\AffiliateWalletTransactionType;
 use App\Enums\AffiliateWithdrawalStatus;
 use App\Models\Affiliate;
@@ -76,12 +75,6 @@ class AffiliateWalletService
             if ((string) $bank->affiliate_id !== (string) $locked->id) {
                 throw ValidationException::withMessages([
                     'bank_account_id' => ['Rekening tidak milik affiliate ini.'],
-                ]);
-            }
-
-            if ($bank->verification_status !== AffiliateBankVerificationStatus::Verified) {
-                throw ValidationException::withMessages([
-                    'bank_account_id' => ['Rekening belum diverifikasi admin.'],
                 ]);
             }
 

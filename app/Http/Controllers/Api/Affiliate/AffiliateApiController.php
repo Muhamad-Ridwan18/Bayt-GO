@@ -146,7 +146,8 @@ class AffiliateApiController extends Controller
             'account_holder' => trim($validated['account_holder']),
             'account_number' => trim($validated['account_number']),
             'is_primary' => $request->boolean('is_primary') || $affiliate->bankAccounts()->count() === 0,
-            'verification_status' => AffiliateBankVerificationStatus::Pending,
+            'verification_status' => AffiliateBankVerificationStatus::Verified,
+            'verified_at' => now(),
         ]);
 
         return response()->json(['message' => 'Rekening ditambahkan', 'bank_account' => $bank], 201);
@@ -177,12 +178,11 @@ class AffiliateApiController extends Controller
         $bank = AffiliateBankAccount::query()
             ->whereKey($validated['bank_account_id'])
             ->where('affiliate_id', $affiliate->id)
-            ->where('verification_status', AffiliateBankVerificationStatus::Verified)
             ->first();
 
         if ($bank === null) {
             throw ValidationException::withMessages([
-                'bank_account_id' => ['Pilih rekening yang sudah diverifikasi.'],
+                'bank_account_id' => ['Pilih rekening yang valid.'],
             ]);
         }
 

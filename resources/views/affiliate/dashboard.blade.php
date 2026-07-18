@@ -43,8 +43,7 @@
         AffiliateWithdrawalStatus::Rejected, AffiliateWithdrawalStatus::Failed => 'bg-red-50 text-red-700 ring-red-200/70',
     };
 
-    $verifiedBanks = $bankAccounts->where('verification_status', AffiliateBankVerificationStatus::Verified);
-    $primaryBank = $verifiedBanks->firstWhere('is_primary', true) ?? $verifiedBanks->first() ?? $bankAccounts->first();
+    $primaryBank = $bankAccounts->firstWhere('is_primary', true) ?? $bankAccounts->first();
 @endphp
 <x-app-layout>
     <div class="ui-page-y">
@@ -295,13 +294,13 @@
                                         <p class="mt-0.5 text-xs text-slate-500">Atas nama <span class="font-semibold text-slate-700">{{ $primaryBank->account_holder }}</span></p>
                                     </div>
                                 </div>
-                                @if ($primaryBank->verification_status === AffiliateBankVerificationStatus::Verified)
+                                @if ($primaryBank->verification_status === AffiliateBankVerificationStatus::Verified || $primaryBank->verification_status === AffiliateBankVerificationStatus::Pending)
                                     <span class="inline-flex items-center gap-1 rounded-full bg-emerald-50 px-2.5 py-1 text-[11px] font-semibold text-emerald-800 ring-1 ring-emerald-200/70">
                                         <svg class="h-3 w-3" fill="none" viewBox="0 0 24 24" stroke-width="2.5" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="m4.5 12.75 6 6 9-13.5" /></svg>
-                                        Terverifikasi
+                                        Siap dipakai
                                     </span>
                                 @else
-                                    <span class="inline-flex items-center rounded-full bg-amber-50 px-2.5 py-1 text-[11px] font-semibold text-amber-800 ring-1 ring-amber-200/70">{{ $primaryBank->verification_status->label() }}</span>
+                                    <span class="inline-flex items-center rounded-full bg-red-50 px-2.5 py-1 text-[11px] font-semibold text-red-800 ring-1 ring-red-200/70">{{ $primaryBank->verification_status->label() }}</span>
                                 @endif
                             </div>
                         </div>
@@ -315,8 +314,10 @@
                                     <div class="min-w-0">
                                         <p class="truncate font-semibold text-slate-800">{{ $bank->bank_name }} · **** {{ substr((string) $bank->account_number, -4) }}</p>
                                         <p class="text-xs text-slate-500">
-                                            {{ $bank->account_holder }} ·
-                                            <span class="{{ $bank->verification_status === AffiliateBankVerificationStatus::Verified ? 'text-emerald-700' : 'text-amber-700' }}">{{ $bank->verification_status->label() }}</span>
+                                            {{ $bank->account_holder }}
+                                            @if ($bank->is_primary)
+                                                · <span class="text-emerald-700">Primary</span>
+                                            @endif
                                         </p>
                                     </div>
                                     <form method="POST" action="{{ route('affiliate.bank-accounts.destroy', $bank) }}" onsubmit="return confirm('Hapus rekening ini?')">
@@ -330,7 +331,7 @@
                     @endif
 
                     @if ($bankAccounts->isEmpty())
-                        <p class="mt-4 rounded-xl bg-amber-50 px-3 py-2.5 text-xs text-amber-900 ring-1 ring-amber-200/70">Tambahkan rekening dan tunggu verifikasi admin sebelum bisa withdraw.</p>
+                        <p class="mt-4 rounded-xl bg-slate-50 px-3 py-2.5 text-xs text-slate-700 ring-1 ring-slate-200/70">Tambahkan rekening untuk menarik saldo komisi.</p>
                     @endif
 
                     <form method="POST" action="{{ route('affiliate.bank-accounts.store') }}" class="mt-4 space-y-3 border-t border-slate-100 pt-4" x-show="addBank" x-cloak>
@@ -393,10 +394,10 @@
                             <x-input-error :messages="$errors->get('amount')" />
                         </div>
                         <div>
-                            <x-input-label for="bank_account_id" value="Rekening terverifikasi" />
+                            <x-input-label for="bank_account_id" value="Rekening tujuan" />
                             <select id="bank_account_id" name="bank_account_id" required class="mt-1 w-full rounded-xl border-slate-300 text-sm">
                                 <option value="">Pilih rekening</option>
-                                @foreach ($verifiedBanks as $bank)
+                                @foreach ($bankAccounts as $bank)
                                     <option value="{{ $bank->id }}">{{ $bank->bank_name }} · **** {{ substr((string) $bank->account_number, -4) }}</option>
                                 @endforeach
                             </select>
