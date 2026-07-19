@@ -179,6 +179,7 @@ Route::get('/dashboard', function () {
         'activeCampaigns' => $welcomeData['activeCampaigns'],
         'featuredMuthowifs' => $welcomeData['featuredMuthowifs'],
         'latestArticles' => $welcomeData['latestArticles'],
+        'galleryImages' => $welcomeData['galleryImages'],
     ]);
 })->middleware(['auth'])->name('dashboard');
 
@@ -210,6 +211,7 @@ Route::middleware('auth')->group(function () {
         ->name('profile.public.document');
     Route::delete('/profile', [ProfileController::class, 'destroy'])->name('profile.destroy');
 
+    Route::get('/chat', [GlobalChatController::class, 'page'])->name('chat.index');
     Route::get('/chat/conversations', [GlobalChatController::class, 'index'])->name('chat.conversations');
 
     Route::prefix('affiliate')->name('affiliate.')->group(function () {

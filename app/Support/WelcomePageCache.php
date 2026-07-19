@@ -159,7 +159,12 @@ final class WelcomePageCache
         $galleryImages = self::orderedModels(
             $galleryIds,
             MuthowifPortfolioImage::query()
-                ->select('id', 'path')
+                ->select('id', 'path', 'muthowif_portfolio_id')
+                ->with([
+                    'portfolio:id,muthowif_profile_id,title',
+                    'portfolio.muthowifProfile:id,slug,user_id',
+                    'portfolio.muthowifProfile.user:id,name',
+                ])
                 ->whereIn((new MuthowifPortfolioImage)->getQualifiedKeyName(), $galleryIds)
                 ->get(),
         );

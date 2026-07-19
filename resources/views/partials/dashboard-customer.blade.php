@@ -53,6 +53,11 @@
 
     $activeCampaigns = $activeCampaigns ?? collect();
 
+    $galleryImages = $galleryImages ?? collect();
+    if ($galleryImages->isEmpty()) {
+        $galleryImages = \App\Support\WelcomePageCache::data()['galleryImages'] ?? collect();
+    }
+
     $contactWaRaw = (string) (config('app.contact_whatsapp') ?: config('app.contact_phone'));
     $contactDigits = preg_replace('/\D+/', '', $contactWaRaw) ?? '';
     $contactWaLink = $contactDigits !== '' ? 'https://wa.me/'.$contactDigits : null;

@@ -259,7 +259,7 @@
     }
 
     .customer-mobile-nav .ui-chat-fab-wrap {
-        @apply bottom-24 lg:bottom-6;
+        @apply bottom-32 right-3 lg:bottom-6 lg:right-4;
     }
 }
 

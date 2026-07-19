@@ -513,8 +513,10 @@ document.addEventListener('alpine:init', () => {
         userId: config.userId,
         locale: config.locale,
         labels: config.labels,
+        pageMode: !!config.pageMode,
+        openBookingId: config.openBookingId ?? null,
         
-        isPanelExpanded: false,
+        isPanelExpanded: !!config.pageMode,
         view: 'list', // 'list' | 'chat'
         
         conversations: [],
@@ -797,7 +799,7 @@ document.addEventListener('alpine:init', () => {
                     conv.last_message_time = last.created_at || conv.last_message_time;
                 }
 
-                if (this.isPanelExpanded && this.view === 'chat') {
+                if ((this.pageMode || this.isPanelExpanded) && this.view === 'chat') {
                     this.scrollToLatest({ force: true });
                 }
             } catch (e) {
@@ -870,7 +872,7 @@ document.addEventListener('alpine:init', () => {
                 const conv = this.conversations.find((c) => String(c.id) === String(this.activeConversation.id));
                 if (conv) conv.unread_count = data.unread_for_me ?? 0;
 
-                if (this.isPanelExpanded && this.view === 'chat') {
+                if ((this.pageMode || this.isPanelExpanded) && this.view === 'chat') {
                     this.scrollToLatest({ force: hasNewMessage });
                 }
 
@@ -938,6 +940,27 @@ document.addEventListener('alpine:init', () => {
         
         init() {
             this.debouncedListRefresh = debounce(() => void this.loadList(), 1200);
+
+            if (!this.pageMode) {
+                return;
+            }
+
+            this.isPanelExpanded = true;
+
+            const boot = () => {
+                if (this.openBookingId) {
+                    void this.openBookingById(this.openBookingId);
+                }
+            };
+
+            void ensureEcho().then((ok) => {
+                if (ok) {
+                    this.connectRealtime();
+                } else {
+                    void this.loadList();
+                }
+                boot();
+            });
         },
 
         destroy() {

@@ -15,10 +15,6 @@
     $stats = $catalogStats ?? ['packages' => 0, 'muthowifs' => 0, 'avg_rating' => 0];
     $hasSearch = (bool) ($hasSearch ?? false);
     $startsAtInput = $startsAtInput ?? '';
-    $allQuery = array_filter([
-        'starts_at' => $startsAtInput !== '' ? $startsAtInput : null,
-        'q' => ($searchQuery ?? '') !== '' ? $searchQuery : null,
-    ]);
     $defaultStartsAt = $startsAtInput !== ''
         ? $startsAtInput
         : now()->addDay()->setTime(9, 0)->format('Y-m-d\TH:i');
@@ -33,7 +29,7 @@
             <div class="pointer-events-none absolute inset-0 z-[1] bg-gradient-to-b from-welcomeCanvas via-welcomeCanvas/95 to-welcomeCanvas/60 sm:hidden" aria-hidden="true"></div>
             <div class="pointer-events-none absolute inset-0 z-[1] hidden bg-gradient-to-r from-welcomeCanvas from-[30%] via-welcomeCanvas/96 via-[58%] to-welcomeCanvas/15 sm:block lg:from-[34%] lg:via-[60%] lg:to-transparent" aria-hidden="true"></div>
 
-            <div class="relative z-10 mx-auto max-w-6xl px-4 pt-8 sm:px-6 sm:pt-10 lg:pt-12">
+            <div class="relative z-10 mx-auto w-full px-4 pt-8 sm:px-6 sm:pt-10 lg:px-8 lg:pt-12 xl:px-10">
                 <div class="flex flex-col gap-8 lg:flex-row lg:items-end lg:justify-between">
                     <div class="max-w-2xl">
                         <p class="text-xs font-bold uppercase tracking-wider text-baytgo">{{ __('layanan_pendukung.hero_kicker') }}</p>
@@ -105,40 +101,10 @@
                     </div>
                     <p class="text-xs text-slate-600">{{ __('layanan_pendukung.starts_at_catalog_hint') }}</p>
                 </form>
-
-                @if ($hasSearch)
-                    <div class="mt-6 grid grid-cols-2 gap-2 sm:grid-cols-3 sm:gap-3 lg:grid-cols-5">
-                        @foreach ($categories as $cat)
-                            @php
-                                $tileQuery = array_filter([
-                                    'starts_at' => $startsAtInput !== '' ? $startsAtInput : null,
-                                    'q' => ($searchQuery ?? '') !== '' ? $searchQuery : null,
-                                    'category' => $cat->value,
-                                ]);
-                                $tileActive = ($activeCategory ?? null) === $cat;
-                            @endphp
-                            <a href="{{ route('layanan-pendukung.index', $tileQuery) }}"
-                               @class([
-                                   'group flex flex-col items-center gap-2 rounded-2xl border px-3 py-3.5 text-center transition sm:py-4',
-                                   $tileActive
-                                       ? 'border-baytgo bg-baytgo text-white shadow-md shadow-baytgo/20'
-                                       : 'border-white/80 bg-white/90 text-slate-700 shadow-sm ring-1 ring-slate-100/80 hover:border-baytgo/30 hover:bg-white',
-                               ])>
-                                <span @class([
-                                    'flex h-10 w-10 items-center justify-center rounded-xl transition',
-                                    $tileActive ? 'bg-white/15 text-white' : 'bg-emerald-50 text-baytgo group-hover:bg-emerald-100',
-                                ]) aria-hidden="true">
-                                    @include('layanan-pendukung.partials.category-icon', ['category' => $cat])
-                                </span>
-                                <span class="text-[11px] font-bold leading-tight sm:text-xs">{{ __('layanan_pendukung.quick.'.$cat->value) }}</span>
-                            </a>
-                        @endforeach
-                    </div>
-                @endif
             </div>
         </section>
 
-        <div class="relative mx-auto max-w-6xl space-y-6 px-4 py-8 sm:px-6 sm:py-10">
+        <div class="relative mx-auto w-full space-y-6 px-4 py-8 sm:px-6 sm:py-10 lg:px-8 xl:px-10">
             @if (session('error'))
                 <div class="rounded-2xl border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-900" role="alert">
                     {{ session('error') }}
@@ -159,41 +125,11 @@
                         <svg class="h-4 w-4 shrink-0 text-emerald-700" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true"><path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm.75-13a.75.75 0 00-1.5 0v5c0 .414.336.75.75.75h4a.75.75 0 000-1.5h-3.25V5z" clip-rule="evenodd" /></svg>
                         <span class="font-semibold">{{ __('layanan_pendukung.slot_label', ['datetime' => $startsAt->timezone(config('app.timezone'))->translatedFormat('d M Y, H:i')]) }}</span>
                         <span class="text-emerald-800/80">· {{ __('layanan_pendukung.slot_availability_note') }}</span>
+                        @if ($activeCategory)
+                            <span class="text-emerald-800/80">· {{ $activeCategory->label() }}</span>
+                        @endif
                     </div>
                 @endif
-
-                <div>
-                    <p class="text-xs font-semibold uppercase tracking-wide text-slate-500">{{ __('layanan_pendukung.category_filter') }}</p>
-                    <div class="mt-2.5 flex flex-wrap gap-2">
-                        <a href="{{ route('layanan-pendukung.index', $allQuery) }}"
-                           @class([
-                               'inline-flex rounded-full px-3.5 py-1.5 text-xs font-semibold ring-1 transition',
-                               ($activeCategory ?? null) === null
-                                   ? 'bg-baytgo text-white ring-baytgo'
-                                   : 'bg-white text-slate-700 ring-slate-200 hover:bg-slate-50',
-                           ])>
-                            {{ __('layanan_pendukung.category_all') }}
-                        </a>
-                        @foreach ($categories as $cat)
-                            @php
-                                $catQuery = array_filter([
-                                    'starts_at' => $startsAtInput !== '' ? $startsAtInput : null,
-                                    'q' => ($searchQuery ?? '') !== '' ? $searchQuery : null,
-                                    'category' => $cat->value,
-                                ]);
-                            @endphp
-                            <a href="{{ route('layanan-pendukung.index', $catQuery) }}"
-                               @class([
-                                   'inline-flex rounded-full px-3.5 py-1.5 text-xs font-semibold ring-1 transition',
-                                   ($activeCategory ?? null) === $cat
-                                       ? 'bg-baytgo text-white ring-baytgo'
-                                       : 'bg-white text-slate-700 ring-slate-200 hover:bg-slate-50',
-                               ])>
-                                {{ $cat->label() }}
-                            </a>
-                        @endforeach
-                    </div>
-                </div>
 
                 @if ($packages->isEmpty())
                     <div class="rounded-3xl border border-dashed border-slate-300 bg-white p-12 text-center shadow-sm">

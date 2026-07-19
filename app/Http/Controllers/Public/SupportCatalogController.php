@@ -75,7 +75,10 @@ class SupportCatalogController extends Controller
                             ]);
                     },
                 ])
-                ->when($category !== null, fn ($query) => $query->where('category', $category->value))
+                ->when(
+                    $category !== null,
+                    fn ($query) => $query->where('category', $category),
+                )
                 ->when($q !== '', function ($query) use ($q): void {
                     $query->where(function ($inner) use ($q): void {
                         $inner->where('name', 'like', '%'.$q.'%')

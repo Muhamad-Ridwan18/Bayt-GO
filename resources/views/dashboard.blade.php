@@ -4,22 +4,23 @@
         $adminDash = Auth::user()->isAdmin();
         $muthowifDash = Auth::user()->isVerifiedMuthowif();
     @endphp
-    <div class="relative min-h-[calc(100vh-4rem)] {{ $customerDashBg ? 'overflow-x-hidden bg-gradient-to-b from-welcomeCanvas via-white to-slate-50/80' : ($muthowifDash || $adminDash ? 'overflow-x-hidden bg-slate-50' : 'overflow-hidden bg-gradient-to-b from-slate-100 via-slate-50 to-white') }} @if ($muthowifDash) !pt-0 !pb-0 @endif">
+    <div class="relative min-h-[calc(100vh-4rem)] {{ $customerDashBg ? 'bg-gradient-to-b from-welcomeCanvas via-white to-slate-50/80' : ($muthowifDash || $adminDash ? 'overflow-x-hidden bg-slate-50' : 'overflow-hidden bg-gradient-to-b from-slate-100 via-slate-50 to-white') }} @if ($muthowifDash) !pt-0 !pb-0 @endif">
         @unless ($customerDashBg || $adminDash || $muthowifDash)
             <div class="pointer-events-none absolute inset-0 bg-[radial-gradient(ellipse_80%_50%_at_50%_-20%,rgba(120,53,15,0.08),transparent)]"></div>
             <div class="pointer-events-none absolute right-0 top-24 h-72 w-72 rounded-full bg-brand-400/5 blur-3xl"></div>
             <div class="pointer-events-none absolute -left-20 bottom-0 h-64 w-64 rounded-full bg-violet-400/5 blur-3xl"></div>
         @endunless
 
+        @if (Auth::user()->isCustomer())
+            @include('partials.dashboard-customer')
+        @else
         <x-page-container class="ui-stack-tight relative">
 
-            @unless($adminDash || $customerDashBg)
+            @unless($adminDash)
                 <x-campaign-carousel :campaigns="$activeCampaigns ?? collect()" />
             @endunless
 
-            @if (Auth::user()->isCustomer())
-                @include('partials.dashboard-customer')
-            @elseif (Auth::user()->isVerifiedMuthowif())
+            @if (Auth::user()->isVerifiedMuthowif())
                 @include('partials.dashboard-muthowif')
             @elseif (Auth::user()->isAdmin())
                 @include('partials.dashboard-admin')
@@ -75,9 +76,10 @@
             @endif
 
 
-            @unless (Auth::user()->isAdmin() || Auth::user()->isVerifiedMuthowif() || Auth::user()->isCustomer())
+            @unless (Auth::user()->isAdmin() || Auth::user()->isVerifiedMuthowif())
                 @include('partials.dashboard-next-profile-row')
             @endunless
         </x-page-container>
+        @endif
     </div>
 </x-app-layout>

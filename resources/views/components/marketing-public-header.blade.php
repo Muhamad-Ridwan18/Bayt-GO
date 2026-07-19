@@ -22,6 +22,7 @@
             <a href="{{ route('articles.index') }}" class="{{ $linkBase }} {{ $active === 'articles' ? $activeClass : $inactive }}">{{ __('nav.articles') }}</a>
             <a href="{{ $homeUrl }}#cara-kerja" class="{{ $linkBase }} {{ $inactive }}">{{ __('welcome.nav_how') }}</a>
             <a href="{{ $homeUrl }}#faq" class="{{ $linkBase }} {{ $inactive }}">{{ __('welcome.nav_faq') }}</a>
+            <a href="{{ $homeUrl }}#tentang" class="{{ $linkBase }} {{ $inactive }}">{{ __('welcome.nav_about') }}</a>
         </nav>
 
         <div class="relative z-10 flex shrink-0 items-center gap-2">
@@ -31,7 +32,7 @@
                     <a href="{{ route('dashboard') }}" class="inline-flex rounded-xl border border-slate-200 px-3 py-2 text-sm font-semibold text-slate-700 transition hover:border-baytgo hover:text-baytgo">{{ __('nav.home') }}</a>
                 @else
                     @if (Route::has('login'))
-                        <a href="{{ route('login') }}" class="inline-flex rounded-xl px-3 py-2 text-sm font-semibold text-slate-700 transition hover:text-baytgo">{{ __('layanan.guest_header_login') }}</a>
+                        <a href="{{ route('login') }}" class="inline-flex rounded-xl bg-baytgo px-4 py-2 text-sm font-semibold text-white shadow-sm transition hover:bg-baytgo-800">{{ __('welcome.nav_login_register') }}</a>
                     @endif
                 @endauth
             </div>
@@ -62,6 +63,7 @@
             <a href="{{ route('articles.index') }}" @click="open = false" class="block rounded-lg px-3 py-2.5 text-sm font-semibold {{ $active === 'articles' ? 'bg-baytgo/8 text-baytgo' : 'text-slate-700 hover:bg-slate-50' }}">{{ __('nav.articles') }}</a>
             <a href="{{ $homeUrl }}#cara-kerja" @click="open = false" class="block rounded-lg px-3 py-2.5 text-sm font-semibold text-slate-700 hover:bg-slate-50">{{ __('welcome.nav_how') }}</a>
             <a href="{{ $homeUrl }}#faq" @click="open = false" class="block rounded-lg px-3 py-2.5 text-sm font-semibold text-slate-700 hover:bg-slate-50">{{ __('welcome.nav_faq') }}</a>
+            <a href="{{ $homeUrl }}#tentang" @click="open = false" class="block rounded-lg px-3 py-2.5 text-sm font-semibold text-slate-700 hover:bg-slate-50">{{ __('welcome.nav_about') }}</a>
         </x-page-container>
         <x-page-container class="border-t border-slate-100 py-4">
             <p class="text-[11px] font-semibold uppercase tracking-wide text-slate-500">{{ __('nav.language') }}</p>
@@ -74,7 +76,7 @@
                 <a href="{{ route('dashboard') }}" class="inline-flex flex-1 min-w-[8rem] items-center justify-center rounded-xl border border-slate-200 px-3 py-2.5 text-sm font-semibold text-slate-700 transition hover:border-baytgo hover:text-baytgo">{{ __('nav.home') }}</a>
             @else
                 @if (Route::has('login'))
-                    <a href="{{ route('login') }}" class="inline-flex flex-1 min-w-[8rem] items-center justify-center rounded-xl border border-slate-200 px-3 py-2.5 text-sm font-semibold text-slate-700 transition hover:text-baytgo">{{ __('layanan.guest_header_login') }}</a>
+                    <a href="{{ route('login') }}" class="inline-flex flex-1 min-w-[8rem] items-center justify-center rounded-xl bg-baytgo px-3 py-2.5 text-sm font-semibold text-white transition hover:bg-baytgo-800">{{ __('welcome.nav_login_register') }}</a>
                 @endif
             @endauth
         </x-page-container>

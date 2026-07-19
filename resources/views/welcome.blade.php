@@ -62,82 +62,25 @@
         <link href="https://fonts.bunny.net/css?family=inter:400,500,600,700&family=plus-jakarta-sans:400,500,600,700&display=swap" rel="stylesheet">
         @vite(['resources/css/app.css', 'resources/js/app.js'])
     </head>
-    <body class="font-welcome antialiased text-slate-800 bg-gradient-to-b from-welcomeCanvas via-white to-slate-50/80 min-h-screen selection:bg-gold-light selection:text-baytgo-950">
+    <body class="font-welcome antialiased text-slate-800 bg-slate-50/80 min-h-screen selection:bg-gold-light selection:text-baytgo-950">
         <div class="min-h-screen flex flex-col">
             <x-marketing-public-header active="welcome" />
 
             <main class="flex-1">
-                <x-page-container class="ui-stack-tight relative py-6 sm:py-8">
-                    @include('partials.home-app-feed', [
-                        'homeHeroName' => Auth::check() ? Auth::user()->name : null,
-                        'homeHelpHref' => $homeHelpHref,
-                        'homeGuideCards' => [],
-                        'welcomeHeroBg' => $welcomeHeroBg,
-                        'featuredMuthowifs' => $featuredMuthowifs,
-                        'latestArticles' => $latestArticles,
-                        'activeCampaigns' => $activeCampaigns,
-                    ])
-
-                    <section class="mt-10 scroll-mt-24" id="cara-kerja" aria-labelledby="welcome-work-heading">
-                        <div class="mb-5 text-center sm:mb-6">
-                            <h2 id="welcome-work-heading" class="text-lg font-bold text-baytgo sm:text-xl">{{ __('welcome.work_title') }}</h2>
-                            <p class="mt-1.5 text-sm text-slate-600">{{ __('welcome.work_sub') }}</p>
-                        </div>
-                        <div class="grid gap-3 sm:grid-cols-3 sm:gap-4">
-                            @foreach (__('welcome.work_steps') as $i => $step)
-                                <article class="rounded-2xl border border-slate-100 bg-white p-4 shadow-sm ring-1 ring-slate-100/80 sm:p-5">
-                                    <span class="inline-flex h-8 w-8 items-center justify-center rounded-xl bg-emerald-50 text-sm font-bold text-emerald-700">{{ $i + 1 }}</span>
-                                    <h3 class="mt-3 text-sm font-bold text-slate-900">{{ $step['title'] }}</h3>
-                                    <p class="mt-1.5 text-xs leading-relaxed text-slate-600">{{ $step['desc'] }}</p>
-                                </article>
-                            @endforeach
-                        </div>
-                    </section>
-
-                    <section class="mt-10 scroll-mt-24" id="faq" aria-labelledby="welcome-faq-heading">
-                        <h2 id="welcome-faq-heading" class="mb-5 text-lg font-bold text-baytgo sm:text-xl">{{ __('welcome.faq_title') }}</h2>
-                        <dl class="space-y-3">
-                            @foreach (array_slice(__('welcome.faq_items'), 0, 4) as $item)
-                                <div class="rounded-2xl border border-slate-100 bg-white p-4 shadow-sm ring-1 ring-slate-100/80 sm:p-5">
-                                    <dt class="text-sm font-semibold text-slate-900">{{ $item['q'] }}</dt>
-                                    <dd class="mt-1.5 text-xs leading-relaxed text-slate-600 sm:text-sm">{{ $item['a'] }}</dd>
-                                </div>
-                            @endforeach
-                        </dl>
-                    </section>
-
-                    <section class="mt-10 mb-4 scroll-mt-24" id="tentang">
-                        <div class="relative overflow-hidden rounded-3xl bg-baytgo p-5 text-white shadow-lg sm:p-6">
-                            <div class="relative max-w-xl">
-                                <h2 class="text-lg font-bold sm:text-xl">{{ __('welcome.final_cta_title') }}</h2>
-                                <p class="mt-2 text-sm text-white/85">{{ __('welcome.final_cta_sub') }}</p>
-                                <a href="{{ route('layanan.index') }}" class="mt-4 inline-flex items-center gap-1.5 rounded-xl bg-gold px-4 py-2.5 text-sm font-bold text-baytgo-950 shadow transition hover:bg-gold-muted">
-                                    {{ __('welcome.final_cta_button') }}
-                                    <svg class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke-width="2.2" stroke="currentColor" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" d="M8.25 4.5 15.75 12l-7.5 7.5"/></svg>
-                                </a>
-                            </div>
-                        </div>
-                    </section>
-                    <div id="harga" class="sr-only" aria-hidden="true"></div>
-                </x-page-container>
+                @include('partials.home-app-feed', [
+                    'homeHeroName' => Auth::check() ? Auth::user()->name : null,
+                    'homeHelpHref' => $homeHelpHref,
+                    'homeGuideCards' => [],
+                    'welcomeHeroBg' => $welcomeHeroBg,
+                    'featuredMuthowifs' => $featuredMuthowifs,
+                    'latestArticles' => $latestArticles,
+                    'activeCampaigns' => $activeCampaigns,
+                    'galleryImages' => $galleryImages ?? collect(),
+                    'showLandingChrome' => true,
+                ])
             </main>
 
-            <footer class="mt-auto border-t border-slate-200 bg-white">
-                <x-page-container class="flex flex-col gap-4 py-8 text-sm text-slate-500 sm:flex-row sm:items-center sm:justify-between">
-                    <div class="flex flex-col items-center gap-2 sm:flex-row sm:items-start sm:gap-4">
-                        <span>&copy; {{ date('Y') }} {{ config('app.name') }}</span>
-                        <a href="{{ route('terms') }}" class="text-xs font-semibold text-baytgo hover:text-baytgo-800">{{ __('terms.footer_link') }}</a>
-                    </div>
-                    <div class="flex flex-col items-center gap-1 sm:items-end">
-                        <span class="text-xs text-slate-400">{{ __('welcome.footer_tagline') }}</span>
-                        @if ($contactLink)
-                            <a href="{{ $contactLink }}" target="_blank" rel="noopener noreferrer" class="text-xs font-medium text-baytgo hover:text-baytgo-800">
-                                {{ __('marketplace.footer_contact', ['contact' => $contactRaw]) }}
-                            </a>
-                        @endif
-                    </div>
-                </x-page-container>
-            </footer>
+            @include('partials.site-footer')
         </div>
     </body>
 </html>

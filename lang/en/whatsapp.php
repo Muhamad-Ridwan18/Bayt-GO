@@ -237,7 +237,7 @@ return [
             'body' => 'We’re sorry — *:muthowif* declined your request because their schedule is fully booked for those dates.',
             'booking_code' => '*Booking code:* :code',
             'service_dates' => '*Requested dates:* :start - :end',
-            'hint' => 'In the app you’ll see recommendations for other muthowifs from the same network (if any) with an open slot for your dates.',
+            'hint' => 'In the app you’ll see recommendations for other muthowifs from the same network (if any) with availability for your dates.',
             'view_detail' => '*Details & recommendations:*',
         ],
         'rejected' => [
@@ -247,7 +247,7 @@ return [
             'reason' => '*Reason:* :reason',
             'booking_code' => '*Booking code:* :code',
             'service_dates' => '*Service dates:* :start - :end',
-            'hint' => 'In the app you will see other muthowif recommendations (referral network or top ratings) with an open slot for your dates.',
+            'hint' => 'In the app you will see other muthowif recommendations (referral network or top ratings) with availability for your dates.',
             'note_heading' => '*Guide note:*',
             'view_detail' => '*Booking details & recommendations:*',
         ],

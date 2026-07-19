@@ -209,7 +209,7 @@ return [
         'kicker' => 'Perjalanan Anda',
         'title' => 'Ringkasan pesanan',
         'summary_title' => 'Ringkasan pesanan',
-        'slot_status' => 'Status slot',
+        'slot_status' => 'Status ketersediaan',
         'travel_period' => 'Periode perjalanan',
         'package_label' => 'Paket',
         'total_pilgrims' => 'Total jemaah',

@@ -66,7 +66,7 @@ return [
             'bullets' => [
                 'Rescheduling is subject to availability of alternative dates.',
                 'The assigned Muthowif cannot be changed.',
-                'Only date changes are possible if slots are available.',
+                'Only date changes are possible if availability is open.',
                 'Requests outside the timeframe may not be accepted.',
             ],
         ],

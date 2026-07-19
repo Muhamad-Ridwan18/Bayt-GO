@@ -50,7 +50,7 @@
             <div class="pointer-events-none absolute inset-0 z-[1] bg-gradient-to-b from-welcomeCanvas via-welcomeCanvas/95 to-welcomeCanvas/55 sm:hidden" aria-hidden="true"></div>
             <div class="pointer-events-none absolute inset-0 z-[1] hidden bg-gradient-to-r from-welcomeCanvas from-[28%] via-welcomeCanvas/96 via-[55%] to-welcomeCanvas/10 sm:block lg:from-[32%] lg:via-[58%] lg:to-transparent" aria-hidden="true"></div>
 
-            <div class="relative z-10 mx-auto max-w-6xl px-4 pt-8 sm:px-6 sm:pt-10 lg:pt-12">
+            <div class="relative z-10 mx-auto w-full px-4 pt-8 sm:px-6 sm:pt-10 lg:px-8 lg:pt-12 xl:px-10">
                 <p class="text-xs font-bold uppercase tracking-wider text-baytgo">{{ __('layanan.hero_kicker') }}</p>
                 <h1 class="mt-2 max-w-2xl text-2xl font-bold tracking-tight text-slate-900 sm:text-3xl lg:text-4xl">{{ __('layanan.hero_title') }}</h1>
                 <p class="mt-3 max-w-xl text-base leading-relaxed text-slate-700 sm:text-lg">{{ __('layanan.hero_lead') }}</p>
@@ -76,7 +76,7 @@
                 </ul>
             </div>
 
-            <div class="relative z-20 mx-auto mt-8 max-w-6xl px-4 sm:mt-10 sm:px-6" id="marketplace-search">
+            <div class="relative z-20 mx-auto mt-8 w-full px-4 sm:mt-10 sm:px-6 lg:px-8 xl:px-10" id="marketplace-search">
                 <div class="overflow-hidden rounded-2xl border border-slate-200/90 bg-white shadow-[0_20px_50px_-12px_rgba(15,42,37,0.18)] ring-1 ring-slate-100/90 sm:rounded-3xl">
                     @include('layanan.partials.date-search-form', [
                         'startDate' => $startDate,
@@ -89,7 +89,7 @@
             </div>
         </section>
 
-        <div class="relative mx-auto max-w-6xl ui-stack px-4 py-8 sm:px-6 sm:py-10">
+        <div class="relative mx-auto w-full ui-stack px-4 py-8 sm:px-6 sm:py-10 lg:px-8 xl:px-10">
             @if ($dateErrors?->isNotEmpty())
                 <div class="flex gap-3 rounded-2xl border border-red-200 bg-red-50/90 px-4 py-4 text-sm text-red-900 shadow-sm ring-1 ring-red-100/80" role="alert">
                     <ul class="list-inside list-disc space-y-1">

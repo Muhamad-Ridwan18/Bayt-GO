@@ -271,6 +271,11 @@ function travelDateRangePickerFactory(config) {
             this.committedEnd = this.draftEnd ? new Date(this.draftEnd) : new Date(this.draftStart);
             this.syncHiddenInputs();
             this.closeModal(false);
+
+            this.$dispatch('travel-dates-applied', {
+                start: toIso(this.committedStart),
+                end: toIso(this.committedEnd ?? this.committedStart),
+            });
         },
 
         clearSelection() {
