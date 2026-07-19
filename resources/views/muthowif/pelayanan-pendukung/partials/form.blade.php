@@ -5,7 +5,11 @@
 ])
 
 @php
+    use App\Enums\SupportPackageCategory;
+
     $categoryValue = old('category', $package?->category?->value ?? ($prefillCategory?->value ?? 'other'));
+    $categoryEnum = SupportPackageCategory::tryFrom((string) $categoryValue);
+    $categoryLocked = $package !== null || $prefillCategory !== null;
     $isActive = old('is_active', $package?->is_active ?? true);
     if ($isActive === '0' || $isActive === 0 || $isActive === false) {
         $isActive = false;
@@ -20,11 +24,18 @@
         <div class="mt-4 space-y-4">
             <div>
                 <x-input-label for="category" :value="__('layanan_pendukung.category')" />
-                <select id="category" name="category" required class="mt-1.5 block w-full rounded-xl border-slate-300 bg-white text-sm shadow-sm focus:border-baytgo focus:ring-baytgo">
-                    @foreach ($categories as $cat)
-                        <option value="{{ $cat->value }}" @selected($categoryValue === $cat->value)>{{ $cat->label() }}</option>
-                    @endforeach
-                </select>
+                @if ($categoryLocked)
+                    <input type="hidden" name="category" value="{{ $categoryValue }}">
+                    <div id="category" class="mt-1.5 block w-full rounded-xl border border-slate-200 bg-slate-100 px-3 py-2.5 text-sm font-medium text-slate-700">
+                        {{ $categoryEnum?->label() ?? $categoryValue }}
+                    </div>
+                @else
+                    <select id="category" name="category" required class="mt-1.5 block w-full rounded-xl border-slate-300 bg-white text-sm shadow-sm focus:border-baytgo focus:ring-baytgo">
+                        @foreach ($categories as $cat)
+                            <option value="{{ $cat->value }}" @selected($categoryValue === $cat->value)>{{ $cat->label() }}</option>
+                        @endforeach
+                    </select>
+                @endif
                 <x-input-error class="mt-2" :messages="$errors->get('category')" />
             </div>
 

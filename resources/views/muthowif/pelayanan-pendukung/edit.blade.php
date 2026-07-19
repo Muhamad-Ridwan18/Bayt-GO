@@ -31,6 +31,7 @@
                             @include('muthowif.pelayanan-pendukung.partials.form', [
                                 'package' => $package,
                                 'categories' => $categories,
+                                'prefillCategory' => $package->category,
                             ])
                             <div class="flex flex-wrap gap-3 border-t border-slate-100 pt-5">
                                 <x-submit-button class="rounded-xl bg-baytgo px-5 py-2.5 text-sm font-semibold text-white shadow-sm shadow-baytgo/20 hover:bg-baytgo-800">
