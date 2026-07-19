@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use App\Enums\AffiliateCommissionStatus;
 use App\Enums\AffiliateStatus;
 use Illuminate\Database\Eloquent\Concerns\HasUuids;
 use Illuminate\Database\Eloquent\Model;
@@ -64,5 +65,18 @@ class Affiliate extends Model
     public function isActive(): bool
     {
         return $this->status === AffiliateStatus::Active;
+    }
+
+    /**
+     * Total base transaksi booking beratribusi (pending + available). Void tidak dihitung.
+     */
+    public function attributedVolume(): float
+    {
+        return round((float) $this->commissions()
+            ->whereIn('status', [
+                AffiliateCommissionStatus::Pending->value,
+                AffiliateCommissionStatus::Available->value,
+            ])
+            ->sum('transaction_base_amount_snapshot'), 2);
     }
 }

@@ -158,7 +158,7 @@ class MuthowifProfile extends Model
     }
 
     /**
-     * Statistik untuk kartu marketplace (rating & jumlah ulasan).
+     * Statistik untuk kartu marketplace (rating & jumlah ulasan/booking).
      *
      * @param  \Illuminate\Database\Eloquent\Builder<MuthowifProfile>  $query
      * @return \Illuminate\Database\Eloquent\Builder<MuthowifProfile>
@@ -167,14 +167,17 @@ class MuthowifProfile extends Model
     {
         return $query
             ->withCount([
-                'bookings as confirmed_bookings_count' => static fn ($q) => $q->where('status', BookingStatus::Confirmed),
+                'bookings as confirmed_bookings_count' => static fn ($q) => $q->whereIn('status', [
+                    BookingStatus::Confirmed,
+                    BookingStatus::Completed,
+                ]),
                 'bookingReviews',
             ])
             ->withAvg('bookingReviews as average_rating', 'rating');
     }
 
     /**
-     * Urutan: muthowif berulasan dulu (rating tertinggi), sisanya by verified_at.
+     * Urutan populer: rating → jumlah booking → daftar paling awal ke BaytGo.
      * Wajib dipanggil setelah {@see scopeWithMarketplaceStats}.
      *
      * @param  \Illuminate\Database\Eloquent\Builder<MuthowifProfile>  $query
@@ -183,9 +186,9 @@ class MuthowifProfile extends Model
     public function scopeOrderByMarketplaceRanking($query)
     {
         return $query
-            ->orderByRaw('CASE WHEN COALESCE(booking_reviews_count, 0) > 0 THEN 1 ELSE 0 END DESC')
-            ->orderByDesc('average_rating')
-            ->orderByDesc('verified_at');
+            ->orderByRaw('COALESCE(average_rating, 0) DESC')
+            ->orderByDesc('confirmed_bookings_count')
+            ->orderBy('created_at');
     }
 
     protected function casts(): array

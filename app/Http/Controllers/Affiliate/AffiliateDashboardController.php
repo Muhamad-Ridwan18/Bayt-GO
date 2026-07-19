@@ -29,6 +29,9 @@ class AffiliateDashboardController extends Controller
 
         $this->authorize('view', $affiliate);
 
+        $volume = $affiliate->attributedVolume();
+        $level = AffiliateSettings::resolveLevel($volume);
+
         $stats = [
             'available_balance' => (float) $affiliate->available_balance,
             'pending_commission' => (float) AffiliateCommission::query()
@@ -57,7 +60,12 @@ class AffiliateDashboardController extends Controller
                 ->where('affiliate_id', $affiliate->id)
                 ->where('status', AffiliateWithdrawalStatus::Paid)
                 ->sum('amount'),
-            'rate' => AffiliateSettings::getRate(),
+            'volume' => $volume,
+            'level' => $level['level'],
+            'level_label' => $level['label'],
+            'rate' => $level['rate'],
+            'next_min' => $level['next_min'],
+            'tiers' => AffiliateSettings::getTiers(),
             'min_withdraw' => AffiliateSettings::getMinWithdraw(),
         ];
 

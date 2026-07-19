@@ -34,6 +34,7 @@ class AffiliateApiController extends Controller
         if ($affiliate === null) {
             return response()->json([
                 'registered' => false,
+                'tiers' => AffiliateSettings::getTiers(),
                 'default_rate' => AffiliateSettings::getRate(),
                 'min_withdraw' => AffiliateSettings::getMinWithdraw(),
             ]);
@@ -75,6 +76,8 @@ class AffiliateApiController extends Controller
     public function dashboard(Request $request): JsonResponse
     {
         $affiliate = $this->requireAffiliate($request);
+        $volume = $affiliate->attributedVolume();
+        $level = AffiliateSettings::resolveLevel($volume);
 
         return response()->json([
             'affiliate' => $this->affiliatePayload($affiliate),
@@ -100,7 +103,12 @@ class AffiliateApiController extends Controller
                     ->where('affiliate_id', $affiliate->id)
                     ->where('status', AffiliateWithdrawalStatus::Paid)
                     ->sum('amount'),
-                'rate' => AffiliateSettings::getRate(),
+                'volume' => $volume,
+                'level' => $level['level'],
+                'level_label' => $level['label'],
+                'rate' => $level['rate'],
+                'next_min' => $level['next_min'],
+                'tiers' => AffiliateSettings::getTiers(),
                 'min_withdraw' => AffiliateSettings::getMinWithdraw(),
             ],
             'share_url' => url('/?ref='.$affiliate->code),
@@ -217,6 +225,9 @@ class AffiliateApiController extends Controller
     /** @return array<string, mixed> */
     private function affiliatePayload(Affiliate $affiliate): array
     {
+        $volume = $affiliate->attributedVolume();
+        $level = AffiliateSettings::resolveLevel($volume);
+
         return [
             'id' => $affiliate->id,
             'code' => $affiliate->code,
@@ -224,6 +235,12 @@ class AffiliateApiController extends Controller
             'available_balance' => (float) $affiliate->available_balance,
             'activated_at' => $affiliate->activated_at?->toIso8601String(),
             'share_url' => url('/?ref='.$affiliate->code),
+            'volume' => $volume,
+            'level' => $level['level'],
+            'level_label' => $level['label'],
+            'rate' => $level['rate'],
+            'next_min' => $level['next_min'],
+            'tiers' => AffiliateSettings::getTiers(),
         ];
     }
 }

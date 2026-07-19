@@ -79,7 +79,7 @@ class AffiliateAttributionService
         }
 
         $base = round($baseAmount, 2);
-        $rate = AffiliateSettings::getRate();
+        $rate = AffiliateSettings::getRateForVolume($affiliate->attributedVolume());
         $commission = round($base * $rate, 2);
         $platformFeeTotal = PlatformFee::split($base, $isCompanyCustomer)['platform_fee_total'];
 

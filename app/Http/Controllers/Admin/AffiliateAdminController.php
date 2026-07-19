@@ -44,7 +44,7 @@ class AffiliateAdminController extends Controller
             'pending_withdraw' => (int) AffiliateWithdrawal::query()
                 ->whereIn('status', [AffiliateWithdrawalStatus::Requested->value, AffiliateWithdrawalStatus::Approved->value])
                 ->count(),
-            'rate' => AffiliateSettings::getRate(),
+            'tiers' => AffiliateSettings::getTiers(),
             'min_withdraw' => AffiliateSettings::getMinWithdraw(),
         ];
 
@@ -109,7 +109,7 @@ class AffiliateAdminController extends Controller
     public function settingsEdit(): View
     {
         return view('admin.affiliates.settings', [
-            'rate' => AffiliateSettings::getRate(),
+            'tiers' => AffiliateSettings::getTiers(),
             'minWithdraw' => AffiliateSettings::getMinWithdraw(),
             'platformFeeTotalRate' => PlatformFee::getTotalRate(),
         ]);
@@ -118,18 +118,37 @@ class AffiliateAdminController extends Controller
     public function settingsUpdate(Request $request): RedirectResponse
     {
         $validated = $request->validate([
-            'rate_percent' => ['required', 'numeric', 'min:0.01', 'max:50'],
+            'tiers' => ['required', 'array', 'min:3', 'max:3'],
+            'tiers.*.min' => ['required', 'numeric', 'min:0'],
+            'tiers.*.rate_percent' => ['required', 'numeric', 'min:0.01', 'max:50'],
             'min_withdraw' => ['required', 'numeric', 'min:1000'],
         ]);
 
-        $rate = round(((float) $validated['rate_percent']) / 100, 6);
-        if ($rate > PlatformFee::getTotalRate()) {
-            throw ValidationException::withMessages([
-                'rate_percent' => ['Rate affiliate tidak boleh melebihi total platform fee.'],
-            ]);
+        $tiers = [];
+        $platformMax = PlatformFee::getTotalRate();
+        $prevMin = -1.0;
+
+        foreach (array_values($validated['tiers']) as $i => $row) {
+            $min = $i === 0 ? 0.0 : round((float) $row['min'], 2);
+            $rate = round(((float) $row['rate_percent']) / 100, 6);
+
+            if ($rate > $platformMax) {
+                throw ValidationException::withMessages([
+                    "tiers.$i.rate_percent" => ['Rate affiliate tidak boleh melebihi total platform fee.'],
+                ]);
+            }
+
+            if ($i > 0 && $min <= $prevMin) {
+                throw ValidationException::withMessages([
+                    "tiers.$i.min" => ['Omzet minimal level harus lebih besar dari level sebelumnya.'],
+                ]);
+            }
+
+            $tiers[] = ['min' => $min, 'rate' => $rate];
+            $prevMin = $min;
         }
 
-        AffiliateSettings::putRate($rate);
+        AffiliateSettings::putTiers($tiers);
         AffiliateSettings::putMinWithdraw((float) $validated['min_withdraw']);
 
         return back()->with('status', 'Pengaturan affiliate disimpan. Berlaku untuk booking baru.');

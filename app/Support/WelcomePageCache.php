@@ -14,10 +14,10 @@ use Illuminate\Support\Facades\Cache;
 
 final class WelcomePageCache
 {
-    public const KEY = 'welcome:page_data:v2';
+    public const KEY = 'welcome:page_data:v3';
 
     /** @deprecated Bust legacy entries that cached serialized Eloquent collections. */
-    private const LEGACY_KEY = 'welcome:page_data:v1';
+    private const LEGACY_KEY = 'welcome:page_data:v2';
 
     public static function forget(): void
     {

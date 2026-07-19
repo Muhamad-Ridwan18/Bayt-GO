@@ -134,6 +134,47 @@
                 </div>
             </div>
 
+            {{-- ── Level & progress ─────────────────────────────────────── --}}
+            @php
+                $levelProgress = null;
+                if ($stats['next_min'] !== null && $stats['next_min'] > 0) {
+                    $levelProgress = min(100, max(0, ($stats['volume'] / $stats['next_min']) * 100));
+                }
+            @endphp
+            <div class="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm sm:p-6">
+                <div class="flex flex-wrap items-start justify-between gap-4">
+                    <div>
+                        <p class="text-[11px] font-semibold uppercase tracking-wide text-slate-500">Level Affiliate</p>
+                        <p class="mt-1 text-2xl font-bold text-slate-900">{{ $stats['level_label'] }} · {{ rtrim(rtrim(number_format($stats['rate'] * 100, 2, '.', ''), '0'), '.') }}%</p>
+                        <p class="mt-1 text-sm text-slate-600">Total omzet beratribusi: <span class="font-semibold tabular-nums text-slate-800">Rp {{ $fmt($stats['volume']) }}</span></p>
+                    </div>
+                    <div class="flex flex-wrap gap-2">
+                        @foreach ($stats['tiers'] as $tier)
+                            <span @class([
+                                'inline-flex items-center rounded-full px-3 py-1 text-xs font-semibold ring-1',
+                                'bg-emerald-50 text-emerald-800 ring-emerald-200' => $tier['level'] === $stats['level'],
+                                'bg-slate-50 text-slate-600 ring-slate-200' => $tier['level'] !== $stats['level'],
+                            ])>
+                                L{{ $tier['level'] }} {{ rtrim(rtrim(number_format($tier['rate'] * 100, 2, '.', ''), '0'), '.') }}%
+                            </span>
+                        @endforeach
+                    </div>
+                </div>
+                @if ($stats['next_min'] !== null)
+                    <div class="mt-4">
+                        <div class="mb-1.5 flex justify-between text-xs text-slate-500">
+                            <span>Progress ke Level {{ $stats['level'] + 1 }}</span>
+                            <span class="tabular-nums">Rp {{ $fmt($stats['volume']) }} / Rp {{ $fmt($stats['next_min']) }}</span>
+                        </div>
+                        <div class="h-2.5 overflow-hidden rounded-full bg-slate-100">
+                            <div class="h-full rounded-full bg-emerald-500 transition-all" style="width: {{ number_format($levelProgress ?? 0, 2, '.', '') }}%"></div>
+                        </div>
+                    </div>
+                @else
+                    <p class="mt-3 text-sm font-medium text-emerald-700">Anda sudah di level tertinggi.</p>
+                @endif
+            </div>
+
             {{-- ── Kartu statistik ──────────────────────────────────────── --}}
             <div class="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
                 <div class="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
@@ -259,7 +300,7 @@
                         </li>
                     </ul>
                     <p class="mt-4 rounded-xl bg-slate-50 px-3 py-2.5 text-[11px] leading-relaxed text-slate-500 ring-1 ring-slate-100">
-                        Status akun: <span class="font-semibold text-slate-700">{{ $affiliate->status->label() }}</span>. Komisi mengikuti pengaturan yang berlaku saat booking dibuat.
+                        Status akun: <span class="font-semibold text-slate-700">{{ $affiliate->status->label() }}</span>. Komisi mengikuti level omzet Anda saat booking dibuat (saat ini {{ $stats['level_label'] }}, {{ rtrim(rtrim(number_format($stats['rate'] * 100, 2, '.', ''), '0'), '.') }}%).
                     </p>
                 </section>
             </div>

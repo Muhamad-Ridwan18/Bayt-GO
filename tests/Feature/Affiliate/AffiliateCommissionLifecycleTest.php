@@ -17,6 +17,7 @@ use App\Models\SiteSetting;
 use App\Models\User;
 use App\Services\AffiliateCommissionService;
 use App\Services\BookingCompletionService;
+use App\Support\AffiliateSettings;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Str;
 use Tests\TestCase;
@@ -28,7 +29,11 @@ class AffiliateCommissionLifecycleTest extends TestCase
     private function seedSettings(): void
     {
         SiteSetting::putValue('platform_fee_rate', '0.075');
-        SiteSetting::putValue('affiliate_commission_rate', '0.01');
+        AffiliateSettings::putTiers([
+            ['min' => 0, 'rate' => 0.01],
+            ['min' => 250_000_000, 'rate' => 0.015],
+            ['min' => 500_000_000, 'rate' => 0.02],
+        ]);
     }
 
     /** @return array{0: Affiliate, 1: MuthowifBooking, 2: BookingPayment} */
