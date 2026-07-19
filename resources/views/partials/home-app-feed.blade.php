@@ -27,41 +27,48 @@
     </section>
 
     <section class="mb-6" aria-label="{{ __('dashboard.customer_hero_sub') }}">
-        <div class="grid grid-cols-3 gap-3 sm:grid-cols-5 sm:gap-4">
-            <a href="{{ route('layanan.index') }}" class="group relative flex flex-col items-center rounded-2xl border border-slate-100 bg-white p-3.5 text-center shadow-sm ring-1 ring-slate-100/80 transition hover:-translate-y-0.5 hover:border-emerald-200 hover:shadow-md sm:p-4">
-                <span class="absolute -top-2 left-1/2 z-10 -translate-x-1/2 rounded-full bg-gold px-2 py-0.5 text-[9px] font-bold uppercase tracking-wide text-baytgo-950 shadow-sm">{{ __('dashboard.customer_cat_utama') }}</span>
-                <span class="flex h-12 w-12 items-center justify-center rounded-2xl bg-emerald-50 text-emerald-700 ring-1 ring-emerald-100 sm:h-14 sm:w-14">
-                    <svg class="h-6 w-6 sm:h-7 sm:w-7" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.6" stroke="currentColor" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" d="M12 6.042A8.967 8.967 0 006 3.75c-1.052 0-2.062.18-3 .512v14.25A8.987 8.987 0 016 18c2.305 0 4.408.867 6 2.292m0-14.25a8.966 8.966 0 016-2.292c1.052 0 2.062.18 3 .512v14.25A8.987 8.987 0 0018 18a8.967 8.967 0 00-6 2.292m0-14.25v14.25"/></svg>
+        <div class="grid grid-cols-3 gap-x-2 gap-y-5 sm:grid-cols-5 sm:gap-x-4 sm:gap-y-6">
+            {{-- Umroh utama: emerald --}}
+            <a href="{{ route('layanan.index') }}" class="group flex flex-col items-center text-center">
+                <span class="relative">
+                    <span class="absolute -top-2 left-1/2 z-10 -translate-x-1/2 whitespace-nowrap rounded-full bg-gold px-1.5 py-0.5 text-[8px] font-bold uppercase tracking-wide text-baytgo-950 shadow-sm sm:text-[9px]">{{ __('dashboard.customer_cat_utama') }}</span>
+                    <span class="flex h-14 w-14 items-center justify-center rounded-full bg-[#0F766E] text-white shadow-sm transition group-hover:scale-105 group-hover:shadow-md sm:h-16 sm:w-16">
+                        <svg class="h-7 w-7 sm:h-8 sm:w-8" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.7" stroke="currentColor" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" d="M12 6.042A8.967 8.967 0 006 3.75c-1.052 0-2.062.18-3 .512v14.25A8.987 8.987 0 016 18c2.305 0 4.408.867 6 2.292m0-14.25a8.966 8.966 0 016-2.292c1.052 0 2.062.18 3 .512v14.25A8.987 8.987 0 0018 18a8.967 8.967 0 00-6 2.292m0-14.25v14.25"/></svg>
+                    </span>
                 </span>
-                <span class="mt-2.5 text-[11px] font-semibold leading-snug text-slate-800 sm:text-xs">{{ __('dashboard.customer_cat_umroh') }}</span>
+                <span class="mt-2.5 max-w-[5.5rem] text-[11px] font-medium leading-snug text-slate-800 sm:max-w-none sm:text-xs">{{ __('dashboard.customer_cat_umroh') }}</span>
             </a>
 
-            <a href="{{ route('layanan-pendukung.index', ['category' => 'mobility']) }}" class="group flex flex-col items-center rounded-2xl border border-slate-100 bg-white p-3.5 text-center shadow-sm ring-1 ring-slate-100/80 transition hover:-translate-y-0.5 hover:border-emerald-200 hover:shadow-md sm:p-4">
-                <span class="flex h-12 w-12 items-center justify-center rounded-2xl bg-teal-50 text-teal-700 ring-1 ring-teal-100 sm:h-14 sm:w-14">
-                    <svg class="h-6 w-6 sm:h-7 sm:w-7" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.6" stroke="currentColor" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" d="M15.75 6a3.75 3.75 0 11-7.5 0 3.75 3.75 0 017.5 0zM4.501 20.118a7.5 7.5 0 0114.998 0"/><circle cx="8" cy="18" r="2.25"/><path stroke-linecap="round" stroke-linejoin="round" d="M10.25 18H15a3 3 0 003-3v-2.25"/></svg>
+            {{-- Kursi roda: sky blue --}}
+            <a href="{{ route('layanan-pendukung.index', ['category' => 'mobility']) }}" class="group flex flex-col items-center text-center">
+                <span class="flex h-14 w-14 items-center justify-center rounded-full bg-[#0EA5E9] text-white shadow-sm transition group-hover:scale-105 group-hover:shadow-md sm:h-16 sm:w-16">
+                    <svg class="h-7 w-7 sm:h-8 sm:w-8" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.7" stroke="currentColor" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" d="M15.75 6a3.75 3.75 0 11-7.5 0 3.75 3.75 0 017.5 0zM4.501 20.118a7.5 7.5 0 0114.998 0"/><circle cx="8" cy="18" r="2.25"/><path stroke-linecap="round" stroke-linejoin="round" d="M10.25 18H15a3 3 0 003-3v-2.25"/></svg>
                 </span>
-                <span class="mt-2.5 text-[11px] font-semibold leading-snug text-slate-800 sm:text-xs">{{ __('dashboard.customer_cat_wheelchair') }}</span>
+                <span class="mt-2.5 max-w-[5.5rem] text-[11px] font-medium leading-snug text-slate-800 sm:max-w-none sm:text-xs">{{ __('dashboard.customer_cat_wheelchair') }}</span>
             </a>
 
-            <a href="{{ route('layanan-pendukung.index', ['category' => 'umrah']) }}" class="group flex flex-col items-center rounded-2xl border border-slate-100 bg-white p-3.5 text-center shadow-sm ring-1 ring-slate-100/80 transition hover:-translate-y-0.5 hover:border-emerald-200 hover:shadow-md sm:p-4">
-                <span class="flex h-12 w-12 items-center justify-center rounded-2xl bg-emerald-50 text-emerald-700 ring-1 ring-emerald-100 sm:h-14 sm:w-14">
-                    <svg class="h-6 w-6 sm:h-7 sm:w-7" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.6" stroke="currentColor" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" d="M12 3v3m0 12v3M4.5 9.75h15M6 9.75V18a1.5 1.5 0 001.5 1.5h9A1.5 1.5 0 0018 18V9.75M9 6.75h6"/></svg>
+            {{-- Sholat: indigo --}}
+            <a href="{{ route('layanan-pendukung.index', ['category' => 'umrah']) }}" class="group flex flex-col items-center text-center">
+                <span class="flex h-14 w-14 items-center justify-center rounded-full bg-[#4F46E5] text-white shadow-sm transition group-hover:scale-105 group-hover:shadow-md sm:h-16 sm:w-16">
+                    <svg class="h-7 w-7 sm:h-8 sm:w-8" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.7" stroke="currentColor" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" d="M12 3v3m0 12v3M4.5 9.75h15M6 9.75V18a1.5 1.5 0 001.5 1.5h9A1.5 1.5 0 0018 18V9.75M9 6.75h6"/></svg>
                 </span>
-                <span class="mt-2.5 text-[11px] font-semibold leading-snug text-slate-800 sm:text-xs">{{ __('dashboard.customer_cat_prayer') }}</span>
+                <span class="mt-2.5 max-w-[5.5rem] text-[11px] font-medium leading-snug text-slate-800 sm:max-w-none sm:text-xs">{{ __('dashboard.customer_cat_prayer') }}</span>
             </a>
 
-            <a href="{{ route('layanan-pendukung.index', ['category' => 'other']) }}" class="group flex flex-col items-center rounded-2xl border border-slate-100 bg-white p-3.5 text-center shadow-sm ring-1 ring-slate-100/80 transition hover:-translate-y-0.5 hover:border-amber-200 hover:shadow-md sm:p-4">
-                <span class="flex h-12 w-12 items-center justify-center rounded-2xl bg-amber-50 text-amber-700 ring-1 ring-amber-100 sm:h-14 sm:w-14">
-                    <svg class="h-6 w-6 sm:h-7 sm:w-7" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.6" stroke="currentColor" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" d="M6.827 6.175A2.31 2.31 0 015.186 7.23c-.38.054-.757.112-1.134.175C2.999 7.58 2.25 8.507 2.25 9.574V18a2.25 2.25 0 002.25 2.25h15A2.25 2.25 0 0021.75 18V9.574c0-1.067-.75-1.994-1.802-2.169a47.865 47.865 0 00-1.134-.175 2.31 2.31 0 01-1.64-1.055l-.822-1.316a2.192 2.192 0 00-1.736-1.039 48.774 48.774 0 00-5.232 0 2.192 2.192 0 00-1.736 1.039l-.821 1.316z"/><path stroke-linecap="round" stroke-linejoin="round" d="M16.5 12.75a4.5 4.5 0 11-9 0 4.5 4.5 0 019 0z"/></svg>
+            {{-- Photo: coral --}}
+            <a href="{{ route('layanan-pendukung.index', ['category' => 'other']) }}" class="group flex flex-col items-center text-center">
+                <span class="flex h-14 w-14 items-center justify-center rounded-full bg-[#F43F5E] text-white shadow-sm transition group-hover:scale-105 group-hover:shadow-md sm:h-16 sm:w-16">
+                    <svg class="h-7 w-7 sm:h-8 sm:w-8" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.7" stroke="currentColor" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" d="M6.827 6.175A2.31 2.31 0 015.186 7.23c-.38.054-.757.112-1.134.175C2.999 7.58 2.25 8.507 2.25 9.574V18a2.25 2.25 0 002.25 2.25h15A2.25 2.25 0 0021.75 18V9.574c0-1.067-.75-1.994-1.802-2.169a47.865 47.865 0 00-1.134-.175 2.31 2.31 0 01-1.64-1.055l-.822-1.316a2.192 2.192 0 00-1.736-1.039 48.774 48.774 0 00-5.232 0 2.192 2.192 0 00-1.736 1.039l-.821 1.316z"/><path stroke-linecap="round" stroke-linejoin="round" d="M16.5 12.75a4.5 4.5 0 11-9 0 4.5 4.5 0 019 0z"/></svg>
                 </span>
-                <span class="mt-2.5 text-[11px] font-semibold leading-snug text-slate-800 sm:text-xs">{{ __('dashboard.customer_cat_photo') }}</span>
+                <span class="mt-2.5 max-w-[5.5rem] text-[11px] font-medium leading-snug text-slate-800 sm:max-w-none sm:text-xs">{{ __('dashboard.customer_cat_photo') }}</span>
             </a>
 
-            <a href="{{ route('layanan-pendukung.index', ['category' => 'ziarah']) }}" class="group col-span-1 flex flex-col items-center rounded-2xl border border-slate-100 bg-white p-3.5 text-center shadow-sm ring-1 ring-slate-100/80 transition hover:-translate-y-0.5 hover:border-emerald-200 hover:shadow-md sm:col-auto sm:p-4">
-                <span class="flex h-12 w-12 items-center justify-center rounded-2xl bg-emerald-50 text-emerald-700 ring-1 ring-emerald-100 sm:h-14 sm:w-14">
-                    <svg class="h-6 w-6 sm:h-7 sm:w-7" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.6" stroke="currentColor" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" d="M12 21v-8.25M15.75 21v-8.25M8.25 21v-8.25M3 9l9-6 9 6m-1.5 12V10.332A48.36 48.36 0 0012 9.75c-2.551 0-5.056.2-7.5.582V21"/></svg>
+            {{-- Raudho: orange --}}
+            <a href="{{ route('layanan-pendukung.index', ['category' => 'ziarah']) }}" class="group flex flex-col items-center text-center">
+                <span class="flex h-14 w-14 items-center justify-center rounded-full bg-[#F97316] text-white shadow-sm transition group-hover:scale-105 group-hover:shadow-md sm:h-16 sm:w-16">
+                    <svg class="h-7 w-7 sm:h-8 sm:w-8" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.7" stroke="currentColor" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" d="M12 21v-8.25M15.75 21v-8.25M8.25 21v-8.25M3 9l9-6 9 6m-1.5 12V10.332A48.36 48.36 0 0012 9.75c-2.551 0-5.056.2-7.5.582V21"/></svg>
                 </span>
-                <span class="mt-2.5 text-[11px] font-semibold leading-snug text-slate-800 sm:text-xs">{{ __('dashboard.customer_cat_raudho') }}</span>
+                <span class="mt-2.5 max-w-[5.5rem] text-[11px] font-medium leading-snug text-slate-800 sm:max-w-none sm:text-xs">{{ __('dashboard.customer_cat_raudho') }}</span>
             </a>
         </div>
     </section>
