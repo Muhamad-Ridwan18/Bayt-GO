@@ -1,10 +1,11 @@
 @props([
     'package' => null,
     'categories',
+    'prefillCategory' => null,
 ])
 
 @php
-    $categoryValue = old('category', $package?->category?->value ?? 'other');
+    $categoryValue = old('category', $package?->category?->value ?? ($prefillCategory?->value ?? 'other'));
     $isActive = old('is_active', $package?->is_active ?? true);
     if ($isActive === '0' || $isActive === 0 || $isActive === false) {
         $isActive = false;

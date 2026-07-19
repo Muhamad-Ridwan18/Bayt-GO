@@ -15,7 +15,7 @@
                             <p class="mt-2 max-w-xl text-sm leading-relaxed text-emerald-50/90">{{ __('layanan_pendukung.manage_lead') }}</p>
                         </div>
                     </div>
-                    <a href="{{ route('muthowif.pelayanan-pendukung.index') }}" class="inline-flex shrink-0 items-center gap-2 self-start rounded-xl border border-white/20 bg-white/10 px-4 py-2.5 text-sm font-semibold text-white backdrop-blur-sm transition hover:bg-white/20">
+                    <a href="{{ ($prefillCategory ?? null) ? route('muthowif.pelayanan-pendukung.index', ['category' => $prefillCategory->value]) : route('muthowif.pelayanan-pendukung.index') }}" class="inline-flex shrink-0 items-center gap-2 self-start rounded-xl border border-white/20 bg-white/10 px-4 py-2.5 text-sm font-semibold text-white backdrop-blur-sm transition hover:bg-white/20">
                         ← {{ __('layanan_pendukung.back_to_list') }}
                     </a>
                 </div>
@@ -30,12 +30,13 @@
                             @include('muthowif.pelayanan-pendukung.partials.form', [
                                 'package' => null,
                                 'categories' => $categories,
+                                'prefillCategory' => $prefillCategory ?? null,
                             ])
                             <div class="flex flex-wrap gap-3 border-t border-slate-100 pt-5">
                                 <x-submit-button class="rounded-xl bg-baytgo px-5 py-2.5 text-sm font-semibold text-white shadow-sm shadow-baytgo/20 hover:bg-baytgo-800">
                                     {{ __('layanan_pendukung.save_package') }}
                                 </x-submit-button>
-                                <a href="{{ route('muthowif.pelayanan-pendukung.index') }}" class="inline-flex items-center rounded-xl border border-slate-200 px-4 py-2.5 text-sm font-semibold text-slate-700 transition hover:bg-slate-50">
+                                <a href="{{ ($prefillCategory ?? null) ? route('muthowif.pelayanan-pendukung.index', ['category' => $prefillCategory->value]) : route('muthowif.pelayanan-pendukung.index') }}" class="inline-flex items-center rounded-xl border border-slate-200 px-4 py-2.5 text-sm font-semibold text-slate-700 transition hover:bg-slate-50">
                                     {{ __('layanan_pendukung.cancel') }}
                                 </a>
                             </div>

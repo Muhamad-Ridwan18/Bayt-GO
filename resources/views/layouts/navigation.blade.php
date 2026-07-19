@@ -148,6 +148,7 @@
                     @if (Auth::user()->isVerifiedMuthowif())
                         @php
                             $muthowifManageActive = request()->routeIs([
+                                'muthowif.kelola-layanan',
                                 'muthowif.pelayanan.*',
                                 'muthowif.pelayanan-pendukung.*',
                                 'muthowif.bookings.*',
@@ -181,11 +182,8 @@
                                     </button>
                                 </x-slot>
                                 <x-slot name="content">
-                                    <x-dropdown-link :href="route('muthowif.pelayanan.edit')">
-                                        {{ __('nav.services') }}
-                                    </x-dropdown-link>
-                                    <x-dropdown-link :href="route('muthowif.pelayanan-pendukung.index')">
-                                        {{ __('layanan_pendukung.page_title') }}
+                                    <x-dropdown-link :href="route('muthowif.kelola-layanan')">
+                                        {{ __('nav.manage_services') }}
                                     </x-dropdown-link>
                                     <x-dropdown-link :href="route('muthowif.bookings.index')">
                                         <span class="inline-flex w-full items-center justify-between gap-2">
@@ -375,6 +373,7 @@
             @if (Auth::user()->isVerifiedMuthowif())
                 @php
                     $muthowifManageActiveMobile = request()->routeIs([
+                        'muthowif.kelola-layanan',
                         'muthowif.pelayanan.*',
                         'muthowif.pelayanan-pendukung.*',
                         'muthowif.bookings.*',
@@ -410,11 +409,8 @@
                         </svg>
                     </button>
                     <div x-show="manageOpen" x-cloak class="space-y-1 border-l border-slate-200 ms-3">
-                        <x-responsive-nav-link :href="route('muthowif.pelayanan.edit')" :active="request()->routeIs('muthowif.pelayanan.*')">
-                            {{ __('nav.services') }}
-                        </x-responsive-nav-link>
-                        <x-responsive-nav-link :href="route('muthowif.pelayanan-pendukung.index')" :active="request()->routeIs('muthowif.pelayanan-pendukung.*')">
-                            {{ __('layanan_pendukung.page_title') }}
+                        <x-responsive-nav-link :href="route('muthowif.kelola-layanan')" :active="request()->routeIs(['muthowif.kelola-layanan', 'muthowif.pelayanan.*', 'muthowif.pelayanan-pendukung.*'])">
+                            {{ __('nav.manage_services') }}
                         </x-responsive-nav-link>
                         <x-responsive-nav-link :href="route('muthowif.bookings.index')" :active="request()->routeIs('muthowif.bookings.*')">
                             <span class="inline-flex items-center gap-2">

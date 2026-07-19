@@ -174,7 +174,7 @@
                     <p class="text-xs text-slate-500">Anda bisa mengatur layanan group dan private secara terpisah di halaman layanan.</p>
                 </div>
                 <a
-                    href="{{ route('muthowif.pelayanan.edit') }}"
+                    href="{{ route('muthowif.kelola-layanan') }}"
                     x-ref="serviceBtn"
                     class="inline-flex items-center justify-center rounded-2xl bg-baytgo px-5 py-3 text-sm font-semibold text-white shadow-lg shadow-baytgo/15 transition hover:bg-baytgo-800"
                 >

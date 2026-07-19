@@ -27,6 +27,7 @@
 
     <x-ui.app-page>
         <x-page-container class="ui-stack-compact">
+            <a href="{{ route('muthowif.kelola-layanan') }}" class="inline-flex text-sm font-semibold text-baytgo hover:text-baytgo-800">← {{ __('nav.manage_services') }}</a>
             <div x-data="{ activeTab: 'group' }" class="space-y-5">
                 <div class="rounded-2xl border border-slate-200 bg-white p-3 shadow-sm">
                     <div class="grid grid-cols-2 gap-2">

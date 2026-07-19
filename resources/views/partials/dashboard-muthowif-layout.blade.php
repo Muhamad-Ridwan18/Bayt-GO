@@ -79,11 +79,11 @@
                     </span>
                     <span class="text-xs font-semibold text-slate-700">{{ __('dashboard_muthowif.qa_schedule_title') }}</span>
                 </a>
-                <a href="{{ route('muthowif.pelayanan.edit') }}" class="flex min-w-[4.25rem] flex-col items-center gap-2 text-center">
+                <a href="{{ route('muthowif.kelola-layanan') }}" class="flex min-w-[4.25rem] flex-col items-center gap-2 text-center">
                     <span class="flex h-14 w-14 items-center justify-center rounded-full border border-slate-200 bg-slate-50 text-red-700 shadow-sm">
                         <svg class="h-6 w-6" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.75" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M21 11.25v8.25a2.25 2.25 0 01-2.25 2.25H5.25a2.25 2.25 0 01-2.25-2.25v-8.25M12 4.875A2.25 2.25 0 1014.25 7.5H9.75A2.25 2.25 0 1012 4.875zM8.25 10.125V7.875a3.375 3.375 0 116.75 0v2.25" /></svg>
                     </span>
-                    <span class="text-xs font-semibold text-slate-700">{{ __('nav.services') }}</span>
+                    <span class="text-xs font-semibold text-slate-700">{{ __('nav.manage_services') }}</span>
                 </a>
                 <a href="{{ route('muthowif.emergency-offers.index') }}" class="flex min-w-[4.25rem] flex-col items-center gap-2 text-center">
                     <span class="relative flex h-14 w-14 items-center justify-center rounded-full border border-slate-200 bg-slate-50 text-orange-700 shadow-sm">

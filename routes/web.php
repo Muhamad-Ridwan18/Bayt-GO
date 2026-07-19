@@ -35,6 +35,7 @@ use App\Http\Controllers\Muthowif\EmergencyOfferController;
 use App\Http\Controllers\Muthowif\MuthowifDashboardCalendarController;
 use App\Http\Controllers\Muthowif\MuthowifPortfolioController;
 use App\Http\Controllers\Muthowif\MuthowifScheduleController;
+use App\Http\Controllers\Muthowif\KelolaLayananController;
 use App\Http\Controllers\Muthowif\MuthowifServiceController;
 use App\Http\Controllers\Muthowif\SupportPackageController;
 use App\Http\Controllers\Muthowif\WithdrawController as MuthowifWithdrawController;
@@ -265,6 +266,7 @@ Route::middleware('auth')->group(function () {
         ->prefix('muthowif')
         ->name('muthowif.')
         ->group(function () {
+            Route::get('kelola-layanan', KelolaLayananController::class)->name('kelola-layanan');
             Route::get('pelayanan', [MuthowifServiceController::class, 'edit'])->name('pelayanan.edit');
             Route::put('pelayanan/group', [MuthowifServiceController::class, 'updateGroup'])->name('pelayanan.group');
             Route::put('pelayanan/private', [MuthowifServiceController::class, 'updatePrivate'])->name('pelayanan.private');

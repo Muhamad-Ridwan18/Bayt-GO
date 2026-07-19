@@ -14,6 +14,17 @@
     };
 
     $activeCount = $packages->where('is_active', true)->count();
+    $categoryFilter = $categoryFilter ?? null;
+    $createUrl = $categoryFilter
+        ? route('muthowif.pelayanan-pendukung.create', ['category' => $categoryFilter->value])
+        : route('muthowif.pelayanan-pendukung.create');
+    $hubTitle = match ($categoryFilter) {
+        SupportPackageCategory::Mobility => __('nav.manage_svc_wheelchair'),
+        SupportPackageCategory::Umrah => __('nav.manage_svc_prayer'),
+        SupportPackageCategory::Other => __('nav.manage_svc_photo'),
+        SupportPackageCategory::Ziarah => __('nav.manage_svc_raudhah'),
+        default => __('layanan_pendukung.list_title'),
+    };
 @endphp
 
 <x-app-layout>
@@ -29,9 +40,10 @@
                             <svg class="h-6 w-6 text-emerald-200" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M21 8.25c0-2.485-2.099-4.5-4.688-4.5-1.935 0-3.597 1.126-4.312 2.733-.715-1.607-2.377-2.733-4.313-2.733C5.1 3.75 3 5.765 3 8.25c0 7.22 9 12 9 12s9-4.78 9-12z" /></svg>
                         </span>
                         <div class="min-w-0">
-                            <p class="text-[11px] font-semibold uppercase tracking-wider text-emerald-100/90">{{ __('layanan_pendukung.page_title') }}</p>
-                            <h1 class="mt-1 text-xl font-bold tracking-tight text-white sm:text-2xl">{{ __('layanan_pendukung.list_title') }}</h1>
+                            <p class="text-[11px] font-semibold uppercase tracking-wider text-emerald-100/90">{{ __('nav.manage_services') }}</p>
+                            <h1 class="mt-1 text-xl font-bold tracking-tight text-white sm:text-2xl">{{ $hubTitle }}</h1>
                             <p class="mt-2 max-w-xl text-sm leading-relaxed text-emerald-50/90">{{ __('layanan_pendukung.manage_lead') }}</p>
+                            <a href="{{ route('muthowif.kelola-layanan') }}" class="mt-3 inline-flex text-xs font-semibold text-emerald-100/90 underline decoration-emerald-200/40 underline-offset-2 hover:text-white">← {{ __('nav.manage_services') }}</a>
                             @if ($packages->isNotEmpty())
                                 <dl class="mt-4 flex flex-wrap gap-3">
                                     <div class="rounded-xl border border-white/15 bg-white/10 px-3 py-2 backdrop-blur-sm">
@@ -46,7 +58,7 @@
                             @endif
                         </div>
                     </div>
-                    <a href="{{ route('muthowif.pelayanan-pendukung.create') }}" class="inline-flex shrink-0 items-center gap-2 self-start rounded-xl bg-white px-4 py-2.5 text-sm font-semibold text-baytgo shadow-sm transition hover:bg-emerald-50">
+                    <a href="{{ $createUrl }}" class="inline-flex shrink-0 items-center gap-2 self-start rounded-xl bg-white px-4 py-2.5 text-sm font-semibold text-baytgo shadow-sm transition hover:bg-emerald-50">
                         <svg class="h-4 w-4" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true"><path d="M10.75 4.75a.75.75 0 00-1.5 0v4.5h-4.5a.75.75 0 000 1.5h4.5v4.5a.75.75 0 001.5 0v-4.5h4.5a.75.75 0 000-1.5h-4.5v-4.5z" /></svg>
                         {{ __('layanan_pendukung.add_package') }}
                     </a>
@@ -66,7 +78,7 @@
                     </span>
                     <p class="mt-4 text-lg font-bold text-slate-900">{{ __('layanan_pendukung.list_empty') }}</p>
                     <p class="mx-auto mt-2 max-w-md text-sm text-slate-600">{{ __('layanan_pendukung.list_empty_lead') }}</p>
-                    <a href="{{ route('muthowif.pelayanan-pendukung.create') }}" class="mt-5 inline-flex items-center gap-2 rounded-xl bg-baytgo px-5 py-2.5 text-sm font-semibold text-white shadow-sm hover:bg-baytgo-800">
+                    <a href="{{ $createUrl }}" class="mt-5 inline-flex items-center gap-2 rounded-xl bg-baytgo px-5 py-2.5 text-sm font-semibold text-white shadow-sm hover:bg-baytgo-800">
                         <svg class="h-4 w-4" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true"><path d="M10.75 4.75a.75.75 0 00-1.5 0v4.5h-4.5a.75.75 0 000 1.5h4.5v4.5a.75.75 0 001.5 0v-4.5h4.5a.75.75 0 000-1.5h-4.5v-4.5z" /></svg>
                         {{ __('layanan_pendukung.add_package') }}
                     </a>
