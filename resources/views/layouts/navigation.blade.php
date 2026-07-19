@@ -77,12 +77,6 @@
                         {{ __('nav.home') }}
                     </x-nav-link>
                     @if (Auth::user()->isCustomer())
-                        <x-nav-link :href="route('layanan.index')" :active="request()->routeIs('layanan.*')">
-                            {{ __('nav.find_muthowif') }}
-                        </x-nav-link>
-                        <x-nav-link :href="route('layanan-pendukung.index')" :active="request()->routeIs('layanan-pendukung.*')">
-                            {{ __('layanan_pendukung.page_title') }}
-                        </x-nav-link>
                         <x-nav-link :href="route('bookings.index')" :active="request()->routeIs('bookings.*')">
                             {{ __('nav.my_bookings') }}
                         </x-nav-link>
@@ -302,12 +296,6 @@
                 {{ __('nav.home') }}
             </x-responsive-nav-link>
             @if (Auth::user()->isCustomer())
-                <x-responsive-nav-link :href="route('layanan.index')" :active="request()->routeIs('layanan.*')">
-                    {{ __('nav.find_muthowif') }}
-                </x-responsive-nav-link>
-                <x-responsive-nav-link :href="route('layanan-pendukung.index')" :active="request()->routeIs('layanan-pendukung.*')">
-                    {{ __('layanan_pendukung.page_title') }}
-                </x-responsive-nav-link>
                 <x-responsive-nav-link :href="route('bookings.index')" :active="request()->routeIs('bookings.*')">
                     {{ __('nav.my_bookings') }}
                 </x-responsive-nav-link>
