@@ -13,7 +13,7 @@
 
         <x-page-container class="ui-stack-tight relative">
 
-            @unless($adminDash)
+            @unless($adminDash || $customerDashBg)
                 <x-campaign-carousel :campaigns="$activeCampaigns ?? collect()" />
             @endunless
 

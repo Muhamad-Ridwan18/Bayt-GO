@@ -22,7 +22,7 @@
         @vite(['resources/css/app.css', 'resources/js/app.js'])
         @stack('styles')
     </head>
-    <body class="font-sans antialiased">
+    <body class="font-sans antialiased @auth{{ Auth::user()->isCustomer() ? 'customer-mobile-nav' : '' }}@endauth">
         <div class="min-h-screen bg-slate-50">
             @include('layouts.navigation')
 
@@ -36,10 +36,11 @@
             @endif
 
             <!-- Page Content -->
-            <main class="ui-app-main">
+            <main class="ui-app-main @auth{{ Auth::user()->isCustomer() ? 'pb-24 lg:pb-0' : '' }}@endauth">
                 {{ $slot }}
             </main>
         </div>
+        <x-customer-bottom-nav />
         <x-ui.toast-stack />
         @auth
             @include('partials.global-chat')

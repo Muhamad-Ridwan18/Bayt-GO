@@ -176,6 +176,8 @@ Route::get('/dashboard', function () {
 
     return view('dashboard', [
         'activeCampaigns' => $welcomeData['activeCampaigns'],
+        'featuredMuthowifs' => $welcomeData['featuredMuthowifs'],
+        'latestArticles' => $welcomeData['latestArticles'],
     ]);
 })->middleware(['auth'])->name('dashboard');
 

@@ -41,7 +41,17 @@
     $reviewsGivenCount = $dashStats['reviewsGivenCount'];
     $nextBooking = $dashStats['nextBooking'];
 
-    $featuredMuthowifs = \App\Support\WelcomePageCache::data()['featuredMuthowifs']->take(8);
+    $featuredMuthowifs = ($featuredMuthowifs ?? collect())->take(8);
+    if ($featuredMuthowifs->isEmpty()) {
+        $featuredMuthowifs = \App\Support\WelcomePageCache::data()['featuredMuthowifs']->take(8);
+    }
+
+    $latestArticles = $latestArticles ?? collect();
+    if ($latestArticles->isEmpty()) {
+        $latestArticles = \App\Support\WelcomePageCache::data()['latestArticles'] ?? collect();
+    }
+
+    $activeCampaigns = $activeCampaigns ?? collect();
 
     $contactWaRaw = (string) (config('app.contact_whatsapp') ?: config('app.contact_phone'));
     $contactDigits = preg_replace('/\D+/', '', $contactWaRaw) ?? '';
