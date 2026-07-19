@@ -82,11 +82,11 @@
                         <p class="text-[11px] font-bold uppercase tracking-widest text-emerald-300">Affiliate Dashboard</p>
                         <h1 class="mt-1.5 text-2xl font-bold sm:text-3xl">Halo, {{ $firstName }}!</h1>
                         <p class="mt-2 text-sm leading-relaxed text-emerald-100/80">
-                            Ajak lebih banyak jamaah dan dapatkan komisi {{ rtrim(rtrim(number_format($stats['rate'] * 100, 2), '0'), '.') }}% dari setiap booking yang berhasil.
+                            Ajak lebih banyak jamaah dan dapatkan komisi dari setiap booking yang berhasil.
                         </p>
                     </div>
 
-                    <div class="lg:col-span-3">
+                    <div class="lg:col-span-4">
                         <p class="text-xs font-semibold text-emerald-200">Kode Affiliate Anda</p>
                         <button
                             type="button"
@@ -102,13 +102,7 @@
                         <p class="mt-1 h-4 text-[11px] text-emerald-300" x-show="copied === 'code'" x-cloak>Kode tersalin!</p>
                     </div>
 
-                    <div class="lg:col-span-2">
-                        <p class="text-xs font-semibold text-emerald-200">Komisi Anda</p>
-                        <p class="mt-2 text-3xl font-bold">{{ rtrim(rtrim(number_format($stats['rate'] * 100, 2), '0'), '.') }}%</p>
-                        <p class="mt-0.5 text-[11px] text-emerald-100/70">setiap booking berhasil</p>
-                    </div>
-
-                    <div class="lg:col-span-3">
+                    <div class="lg:col-span-4">
                         <p class="text-xs font-semibold text-emerald-200">Referral Link Anda</p>
                         <div class="mt-2 flex items-center gap-2">
                             <input type="text" readonly value="{{ $shareUrl }}" class="min-w-0 flex-1 truncate rounded-xl border-0 bg-white/10 px-3 py-2.5 text-xs text-emerald-50 ring-1 ring-white/15 focus:ring-white/30">
@@ -265,7 +259,7 @@
                         </li>
                     </ul>
                     <p class="mt-4 rounded-xl bg-slate-50 px-3 py-2.5 text-[11px] leading-relaxed text-slate-500 ring-1 ring-slate-100">
-                        Status akun: <span class="font-semibold text-slate-700">{{ $affiliate->status->label() }}</span> · Rate {{ rtrim(rtrim(number_format($stats['rate'] * 100, 2), '0'), '.') }}% mengikuti pengaturan berlaku saat booking dibuat.
+                        Status akun: <span class="font-semibold text-slate-700">{{ $affiliate->status->label() }}</span>. Komisi mengikuti pengaturan yang berlaku saat booking dibuat.
                     </p>
                 </section>
             </div>
@@ -426,7 +420,6 @@
                             <tr>
                                 <th class="px-4 py-3">Booking</th>
                                 <th class="px-4 py-3">Tanggal</th>
-                                <th class="px-4 py-3 text-right">Rate</th>
                                 <th class="px-4 py-3 text-right">Nominal</th>
                                 <th class="px-4 py-3">Status</th>
                             </tr>
@@ -436,14 +429,13 @@
                                 <tr class="hover:bg-slate-50/70">
                                     <td class="px-4 py-3 font-mono text-xs font-semibold text-slate-900">{{ $commission->booking?->booking_code ?? '—' }}</td>
                                     <td class="px-4 py-3 whitespace-nowrap text-slate-600">{{ $commission->created_at?->timezone(config('app.timezone'))->format('d M Y') }}</td>
-                                    <td class="px-4 py-3 text-right tabular-nums text-slate-600">{{ rtrim(rtrim(number_format((float) $commission->commission_rate_snapshot * 100, 2), '0'), '.') }}%</td>
                                     <td class="px-4 py-3 text-right font-semibold tabular-nums text-emerald-700">Rp {{ $fmt((float) $commission->commission_amount) }}</td>
                                     <td class="px-4 py-3">
                                         <span class="inline-flex rounded-full px-2.5 py-0.5 text-xs font-semibold ring-1 {{ $commissionBadge($commission->status) }}">{{ $commission->status->label() }}</span>
                                     </td>
                                 </tr>
                             @empty
-                                <tr><td colspan="5" class="px-4 py-10 text-center text-slate-500">Belum ada komisi. Bagikan kode Anda untuk mulai mendapatkan komisi.</td></tr>
+                                <tr><td colspan="4" class="px-4 py-10 text-center text-slate-500">Belum ada komisi. Bagikan kode Anda untuk mulai mendapatkan komisi.</td></tr>
                             @endforelse
                         </tbody>
                     </table>
