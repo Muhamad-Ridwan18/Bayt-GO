@@ -66,8 +66,8 @@
                                 title="{{ __('bookings.show.copy_code') }}"
                                 onclick="navigator.clipboard?.writeText(document.getElementById('booking-code-value')?.textContent?.trim() || '')"
                             >
-                                <svg class="h-4 w-4" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true">
-                                    <path d="M7 3.5A1.5 1.5 0 018.5 2h3.879a1.5 1.5 0 011.06.44l3.122 3.12A1.5 1.5 0 0117 6.622V12.5a1.5 1.5 0 01-1.5 1.5h-1v-3.879a1.5 1.5 0 00-.44-1.06L10.939 5.44A1.5 1.5 0 009.879 5H7v11.5A1.5 1.5 0 005.5 17.5h-2A1.5 1.5 0 012 16V4.5A1.5 1.5 0 013.5 3h2.879A1.5 1.5 0 017 3.5z" />
+                                <svg class="h-4 w-4" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.75" stroke="currentColor" aria-hidden="true">
+                                    <path stroke-linecap="round" stroke-linejoin="round" d="M16.5 8.25V6a2.25 2.25 0 0 0-2.25-2.25H6A2.25 2.25 0 0 0 3.75 6v8.25A2.25 2.25 0 0 0 6 16.5h2.25m8.25-8.25H18A2.25 2.25 0 0 1 20.25 10.5v8.25A2.25 2.25 0 0 1 18 21h-8.25A2.25 2.25 0 0 1 7.5 18.75V16.5m8.25-8.25H12a2.25 2.25 0 0 0-2.25 2.25v8.25" />
                                 </svg>
                             </button>
                         </div>

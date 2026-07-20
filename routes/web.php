@@ -27,6 +27,7 @@ use App\Http\Controllers\BookingChatController;
 use App\Http\Controllers\Customer\BookingController as CustomerBookingController;
 use App\Http\Controllers\Customer\SupportBookingController;
 use App\Http\Controllers\Customer\BookingEmergencyController as CustomerBookingEmergencyController;
+use App\Http\Controllers\DashboardController;
 use App\Http\Controllers\GlobalChatController;
 use App\Http\Controllers\LocaleController;
 use App\Http\Controllers\MootaWebhookController;
@@ -175,16 +176,9 @@ Route::get('/perusahaan/daftar/menunggu', function () {
     return view('auth.company-registration-pending', ['pendingId' => $pendingId]);
 })->name('company.registration.pending');
 
-Route::get('/dashboard', function () {
-    $welcomeData = \App\Support\WelcomePageCache::data();
-
-    return view('dashboard', [
-        'activeCampaigns' => $welcomeData['activeCampaigns'],
-        'featuredMuthowifs' => $welcomeData['featuredMuthowifs'],
-        'latestArticles' => $welcomeData['latestArticles'],
-        'galleryImages' => $welcomeData['galleryImages'],
-    ]);
-})->middleware(['auth'])->name('dashboard');
+Route::get('/dashboard', DashboardController::class)
+    ->middleware(['auth'])
+    ->name('dashboard');
 
 Route::get('/dashboard/muthowif-calendar', MuthowifDashboardCalendarController::class)
     ->middleware(['auth'])

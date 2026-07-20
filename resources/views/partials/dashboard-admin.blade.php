@@ -1,144 +1,3 @@
-@php
-    use App\Enums\BookingChangeRequestStatus;
-    use App\Enums\MuthowifVerificationStatus;
-    use App\Models\BookingPayment;
-    use App\Models\BookingRefundRequest;
-    use App\Models\MuthowifBooking;
-    use App\Models\MuthowifProfile;
-    use App\Support\AdminFinanceSummary;
-    use App\Support\IndonesianNumber;
-    use Illuminate\Support\Carbon;
-
-    $fmt = fn (float|int $n) => IndonesianNumber::formatThousands((string) (int) round((float) $n));
-    $short = function (float $v): string {
-        if ($v >= 1000000) {
-            return rtrim(rtrim(number_format($v / 1000000, 1, ',', '.'), '0'), ',').'jt';
-        }
-        if ($v >= 1000) {
-            return rtrim(rtrim(number_format($v / 1000, 1, ',', '.'), '0'), ',').'rb';
-        }
-
-        return (string) (int) $v;
-    };
-
-    $now = Carbon::now();
-    $thisMonthStart = $now->copy()->startOfMonth();
-    $lastMonthStart = $now->copy()->subMonth()->startOfMonth();
-    $lastMonthEnd = $now->copy()->subMonth()->endOfMonth();
-
-    $platformFeePrev = AdminFinanceSummary::platformFeePaymentsSumBetween($lastMonthStart, $lastMonthEnd);
-    $platformFeeThis = AdminFinanceSummary::platformFeePaymentsSumBetween($thisMonthStart, $now);
-    $grossThisMonth = AdminFinanceSummary::grossVolumeBetween($thisMonthStart, $now);
-    $grossPrevMonth = AdminFinanceSummary::grossVolumeBetween($lastMonthStart, $lastMonthEnd);
-
-    $settledThisMonth = BookingPayment::query()
-        ->whereIn('status', ['settlement', 'capture'])
-        ->whereNotNull('settled_at')
-        ->whereBetween('settled_at', [$thisMonthStart, $now->copy()->endOfDay()])
-        ->count();
-    $settledLastMonth = BookingPayment::query()
-        ->whereIn('status', ['settlement', 'capture'])
-        ->whereNotNull('settled_at')
-        ->whereBetween('settled_at', [$lastMonthStart, $lastMonthEnd->copy()->endOfDay()])
-        ->count();
-
-    $totalBookings = (int) MuthowifBooking::query()->count();
-    $bookingsThisMonth = (int) MuthowifBooking::query()->where('created_at', '>=', $thisMonthStart)->count();
-    $bookingsLastMonth = (int) MuthowifBooking::query()
-        ->whereBetween('created_at', [$lastMonthStart, $lastMonthEnd->copy()->endOfDay()])
-        ->count();
-
-    $activeMuthowif = (int) MuthowifProfile::query()
-        ->where('verification_status', MuthowifVerificationStatus::Approved)
-        ->count();
-
-    $pendingWithdrawCount = (int) \App\Models\MuthowifWithdrawal::query()
-        ->where('status', 'pending_approval')
-        ->count();
-    $pendingRefundCount = (int) BookingRefundRequest::query()
-        ->where('status', BookingChangeRequestStatus::Pending)
-        ->count();
-    $pendingMuthowifCount = (int) MuthowifProfile::query()
-        ->where('verification_status', MuthowifVerificationStatus::Pending)
-        ->count();
-    $pendingTotal = $pendingMuthowifCount + $pendingWithdrawCount + $pendingRefundCount;
-
-    $todayStart = $now->copy()->startOfDay();
-    $newBookingsToday = (int) MuthowifBooking::query()->where('created_at', '>=', $todayStart)->count();
-    $settlementsToday = (int) BookingPayment::query()
-        ->whereIn('status', ['settlement', 'capture'])
-        ->whereNotNull('settled_at')
-        ->where('settled_at', '>=', $todayStart)
-        ->count();
-    $refundsToday = (int) BookingRefundRequest::query()
-        ->where('status', BookingChangeRequestStatus::Approved)
-        ->whereNotNull('decided_at')
-        ->where('decided_at', '>=', $todayStart)
-        ->count();
-
-    $chart = AdminFinanceSummary::chartDailySeriesForMonth($now);
-
-    $recentPayments = BookingPayment::query()
-        ->whereIn('status', ['settlement', 'capture'])
-        ->orderByDesc('settled_at')
-        ->limit(8)
-        ->with(['muthowifBooking:id,booking_code'])
-        ->get(['id', 'order_id', 'gross_amount', 'status', 'settled_at', 'muthowif_booking_id']);
-
-    $momPct = function (float $cur, float $prev): ?int {
-        if ($prev <= 0 && $cur <= 0) {
-            return null;
-        }
-        if ($prev <= 0) {
-            return $cur > 0 ? 100 : 0;
-        }
-
-        return (int) round(100 * ($cur - $prev) / $prev);
-    };
-
-    $pctPlatform = $momPct($platformFeeThis, $platformFeePrev);
-    $pctGross = $momPct((float) $grossThisMonth, (float) $grossPrevMonth);
-    $pctSettled = $momPct((float) $settledThisMonth, (float) $settledLastMonth);
-    $pctBookings = $momPct((float) $bookingsThisMonth, (float) $bookingsLastMonth);
-
-    $netChart = max(0, $chart['total_gross'] - $chart['total_refunds']);
-
-    $maxY = max(1, ...$chart['gross'], ...$chart['refunds']);
-    $chartW = 100;
-    $chartH = 44;
-    $n = max(1, count($chart['gross']));
-    $linePoints = function (array $series) use ($chartW, $chartH, $maxY): string {
-        $pts = [];
-        $count = count($series);
-        if ($count === 0) {
-            return '0,'.$chartH;
-        }
-        if ($count === 1) {
-            $y = $chartH - ((int) $series[0] / $maxY) * $chartH;
-
-            return '0,'.round($y, 2).' '.$chartW.','.round($y, 2);
-        }
-        foreach ($series as $i => $v) {
-            $x = ($i / ($count - 1)) * $chartW;
-            $y = $chartH - (((int) $v) / $maxY) * ($chartH - 2);
-            $pts[] = round($x, 2).','.round($y, 2);
-        }
-
-        return implode(' ', $pts);
-    };
-    $grossPoly = $linePoints($chart['gross']);
-    $refundPoly = $linePoints($chart['refunds']);
-
-    // Label sumbu X: maksimal ~7 tick
-    $xTicks = [];
-    $step = max(1, (int) ceil($n / 7));
-    foreach ($chart['days'] as $i => $day) {
-        if ($i % $step === 0) {
-            $xTicks[] = Carbon::parse($day)->translatedFormat('j M');
-        }
-    }
-@endphp
-
 <div class="pb-10 sm:pb-12">
     <x-page-container class="ui-stack pt-6 sm:pt-8">
 
@@ -147,39 +6,39 @@
             @foreach ([
                 [
                     'label' => __('dashboard.stat_platform_fee'),
-                    'value' => 'Rp '.$fmt($platformFeeThis),
-                    'pct' => $pctPlatform,
+                    'value' => 'Rp '.$page->formatMoney($page->platformFeeThis),
+                    'pct' => $page->pctPlatform,
                     'icon_bg' => 'bg-emerald-50 text-emerald-600 ring-emerald-100',
                     'icon' => 'M12 6v12m-3-2.818.879.659c1.171.879 3.07.879 4.242 0 1.172-.879 1.172-2.303 0-3.182C13.536 12.219 12.768 12 12 12c-.725 0-1.45-.22-2.003-.659-1.106-.879-1.106-2.303 0-3.182s2.9-.879 4.006 0l.415.33M21 12a9 9 0 1 1-18 0 9 9 0 0 1 18 0Z',
                     'caption' => null,
                 ],
                 [
                     'label' => __('dashboard.stat_gross_volume'),
-                    'value' => 'Rp '.$fmt($grossThisMonth),
-                    'pct' => $pctGross,
+                    'value' => 'Rp '.$page->formatMoney($page->grossThisMonth),
+                    'pct' => $page->pctGross,
                     'icon_bg' => 'bg-violet-50 text-violet-600 ring-violet-100',
                     'icon' => 'M3 13.125C3 12.504 3.504 12 4.125 12h2.25c.621 0 1.125.504 1.125 1.125v6.75C7.5 20.496 6.996 21 6.375 21h-2.25A1.125 1.125 0 0 1 3 19.875v-6.75ZM9.75 8.625c0-.621.504-1.125 1.125-1.125h2.25c.621 0 1.125.504 1.125 1.125v11.25c0 .621-.504 1.125-1.125 1.125h-2.25a1.125 1.125 0 0 1-1.125-1.125V8.625ZM16.5 4.125c0-.621.504-1.125 1.125-1.125h2.25C20.496 3 21 3.504 21 4.125v15.75c0 .621-.504 1.125-1.125 1.125h-2.25a1.125 1.125 0 0 1-1.125-1.125V4.125Z',
                     'caption' => null,
                 ],
                 [
                     'label' => __('dashboard.stat_settlements_period'),
-                    'value' => (string) $settledThisMonth,
-                    'pct' => $pctSettled,
+                    'value' => (string) $page->settledThisMonth,
+                    'pct' => $page->pctSettled,
                     'icon_bg' => 'bg-amber-50 text-amber-600 ring-amber-100',
                     'icon' => 'M6.75 3v2.25M17.25 3v2.25M3 18.75V7.5a2.25 2.25 0 0 1 2.25-2.25h13.5A2.25 2.25 0 0 1 21 7.5v11.25m-18 0A2.25 2.25 0 0 0 5.25 21h13.5A2.25 2.25 0 0 0 21 18.75m-18 0v-7.5A2.25 2.25 0 0 1 5.25 9h13.5A2.25 2.25 0 0 1 21 11.25v7.5',
                     'caption' => null,
                 ],
                 [
                     'label' => __('dashboard.stat_total_bookings'),
-                    'value' => (string) $totalBookings,
-                    'pct' => $pctBookings,
+                    'value' => (string) $page->totalBookings,
+                    'pct' => $page->pctBookings,
                     'icon_bg' => 'bg-sky-50 text-sky-600 ring-sky-100',
                     'icon' => 'M2.25 3h1.386c.51 0 .955.343 1.087.835l.383 1.437M7.5 14.25a3 3 0 0 0-3 3h15.75m-12.75-3h11.218c1.121-2.3 2.1-4.684 2.924-7.138a60.114 60.114 0 0 0-16.536-1.84M7.5 14.25 5.106 5.272M6 20.25a.75.75 0 1 1-1.5 0 .75.75 0 0 1 1.5 0Zm12.75 0a.75.75 0 1 1-1.5 0 .75.75 0 0 1 1.5 0Z',
                     'caption' => null,
                 ],
                 [
                     'label' => __('dashboard.stat_active_muthowif'),
-                    'value' => (string) $activeMuthowif,
+                    'value' => (string) $page->activeMuthowif,
                     'pct' => null,
                     'icon_bg' => 'bg-teal-50 text-teal-600 ring-teal-100',
                     'icon' => 'M15.75 6a3.75 3.75 0 1 1-7.5 0 3.75 3.75 0 0 1 7.5 0ZM4.501 20.118a7.5 7.5 0 0 1 14.998 0A17.933 17.933 0 0 1 12 21.75c-2.676 0-5.216-.584-7.499-1.632Z',
@@ -216,7 +75,7 @@
                     <div class="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
                         <div>
                             <h2 class="text-base font-bold text-slate-900">{{ __('dashboard.txn_overview_title') }}</h2>
-                            <p class="mt-0.5 text-xs text-slate-500">{{ $chart['month_label'] }}</p>
+                            <p class="mt-0.5 text-xs text-slate-500">{{ $page->chart['month_label'] }}</p>
                         </div>
                         <div class="flex flex-wrap gap-2">
                             <span class="inline-flex items-center rounded-lg border border-slate-200 bg-slate-50 px-3 py-1 text-xs font-semibold text-slate-700">{{ __('dashboard.txn_period_this_month') }}</span>
@@ -228,15 +87,15 @@
                         <div class="min-w-0">
                             <div class="flex gap-2">
                                 <div class="flex w-10 shrink-0 flex-col justify-between pb-5 text-right text-[10px] tabular-nums text-slate-400">
-                                    <span>{{ $short((float) $maxY) }}</span>
-                                    <span>{{ $short($maxY * 0.75) }}</span>
-                                    <span>{{ $short($maxY * 0.5) }}</span>
-                                    <span>{{ $short($maxY * 0.25) }}</span>
+                                    <span>{{ $page->formatShort((float) $page->maxY) }}</span>
+                                    <span>{{ $page->formatShort($page->maxY * 0.75) }}</span>
+                                    <span>{{ $page->formatShort($page->maxY * 0.5) }}</span>
+                                    <span>{{ $page->formatShort($page->maxY * 0.25) }}</span>
                                     <span>0</span>
                                 </div>
                                 <div class="min-w-0 flex-1">
                                     <div class="relative aspect-[21/9] w-full min-h-[10rem] sm:min-h-[11rem]">
-                                        <svg class="h-full w-full" viewBox="0 0 {{ $chartW }} {{ $chartH }}" preserveAspectRatio="none" aria-hidden="true">
+                                        <svg class="h-full w-full" viewBox="0 0 {{ $page->chartW }} {{ $page->chartH }}" preserveAspectRatio="none" aria-hidden="true">
                                             <defs>
                                                 <linearGradient id="adminGrossFill" x1="0" y1="0" x2="0" y2="1">
                                                     <stop offset="0%" stop-color="rgb(16 185 129)" stop-opacity="0.22" />
@@ -244,16 +103,16 @@
                                                 </linearGradient>
                                             </defs>
                                             @for ($i = 0; $i <= 3; $i++)
-                                                <line x1="0" y1="{{ round($chartH * $i / 4, 2) }}" x2="{{ $chartW }}" y2="{{ round($chartH * $i / 4, 2) }}" stroke="rgb(241 245 249)" stroke-width="0.3" />
+                                                <line x1="0" y1="{{ round($page->chartH * $i / 4, 2) }}" x2="{{ $page->chartW }}" y2="{{ round($page->chartH * $i / 4, 2) }}" stroke="rgb(241 245 249)" stroke-width="0.3" />
                                             @endfor
-                                            <line x1="0" y1="{{ $chartH }}" x2="{{ $chartW }}" y2="{{ $chartH }}" stroke="rgb(245 158 11)" stroke-width="0.35" />
-                                            <polygon points="0,{{ $chartH }} {{ $grossPoly }} {{ $chartW }},{{ $chartH }}" fill="url(#adminGrossFill)" />
-                                            <polyline fill="none" stroke="rgb(16 185 129)" stroke-width="1" stroke-linecap="round" stroke-linejoin="round" vector-effect="non-scaling-stroke" points="{{ $grossPoly }}" />
-                                            <polyline fill="none" stroke="rgb(245 158 11)" stroke-width="1" stroke-linecap="round" stroke-linejoin="round" vector-effect="non-scaling-stroke" points="{{ $refundPoly }}" />
+                                            <line x1="0" y1="{{ $page->chartH }}" x2="{{ $page->chartW }}" y2="{{ $page->chartH }}" stroke="rgb(245 158 11)" stroke-width="0.35" />
+                                            <polygon points="0,{{ $page->chartH }} {{ $page->grossPoly }} {{ $page->chartW }},{{ $page->chartH }}" fill="url(#adminGrossFill)" />
+                                            <polyline fill="none" stroke="rgb(16 185 129)" stroke-width="1" stroke-linecap="round" stroke-linejoin="round" vector-effect="non-scaling-stroke" points="{{ $page->grossPoly }}" />
+                                            <polyline fill="none" stroke="rgb(245 158 11)" stroke-width="1" stroke-linecap="round" stroke-linejoin="round" vector-effect="non-scaling-stroke" points="{{ $page->refundPoly }}" />
                                         </svg>
                                     </div>
                                     <div class="mt-1.5 flex justify-between text-[10px] text-slate-400">
-                                        @foreach ($xTicks as $tick)
+                                        @foreach ($page->xTicks as $tick)
                                             <span>{{ $tick }}</span>
                                         @endforeach
                                     </div>
@@ -267,16 +126,16 @@
                         <div class="space-y-4 rounded-2xl border border-slate-100 bg-slate-50/80 p-4">
                             <div>
                                 <p class="text-[11px] font-bold uppercase tracking-wide text-slate-500">{{ __('dashboard.txn_chart_gross') }}</p>
-                                <p class="mt-1 text-lg font-bold tabular-nums text-slate-900">Rp {{ $fmt($chart['total_gross']) }}</p>
+                                <p class="mt-1 text-lg font-bold tabular-nums text-slate-900">Rp {{ $page->formatMoney($page->chart['total_gross']) }}</p>
                                 <p class="mt-0.5 text-xs text-emerald-600">{{ __('dashboard.txn_in_month') }}</p>
                             </div>
                             <div>
                                 <p class="text-[11px] font-bold uppercase tracking-wide text-slate-500">{{ __('dashboard.txn_chart_refunds') }}</p>
-                                <p class="mt-1 text-lg font-bold tabular-nums text-slate-900">Rp {{ $fmt($chart['total_refunds']) }}</p>
+                                <p class="mt-1 text-lg font-bold tabular-nums text-slate-900">Rp {{ $page->formatMoney($page->chart['total_refunds']) }}</p>
                             </div>
                             <div class="border-t border-slate-200/80 pt-4">
                                 <p class="text-[11px] font-bold uppercase tracking-wide text-slate-500">{{ __('dashboard.txn_chart_net') }}</p>
-                                <p class="mt-1 text-lg font-bold tabular-nums text-brand-800">Rp {{ $fmt($netChart) }}</p>
+                                <p class="mt-1 text-lg font-bold tabular-nums text-brand-800">Rp {{ $page->formatMoney($page->netChart) }}</p>
                             </div>
                         </div>
                     </div>
@@ -288,7 +147,7 @@
                         <h2 class="text-base font-bold text-slate-900">{{ __('dashboard.recent_txn_title') }}</h2>
                         <a href="{{ route('admin.finance.index') }}" class="text-sm font-semibold text-brand-700 hover:text-brand-800">{{ __('dashboard.view_all') }}</a>
                     </div>
-                    @if ($recentPayments->isEmpty())
+                    @if ($page->recentPayments->isEmpty())
                         <div class="flex flex-col items-center justify-center gap-3 px-6 py-14 text-center">
                             <span class="flex h-14 w-14 items-center justify-center rounded-2xl bg-slate-100 text-slate-400 ring-1 ring-slate-200/80" aria-hidden="true">
                                 <svg class="h-7 w-7" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M19.5 14.25v-2.625a3.375 3.375 0 0 0-3.375-3.375h-1.5A1.125 1.125 0 0 1 13.5 7.125v-1.5a3.375 3.375 0 0 0-3.375-3.375H8.25m0 12.75h7.5m-7.5 3H12M10.5 2.25H5.625c-.621 0-1.125.504-1.125 1.125v17.25c0 .621.504 1.125 1.125 1.125h12.75c.621 0 1.125-.504 1.125-1.125V11.25a9 9 0 0 0-9-9Z" /></svg>
@@ -310,14 +169,14 @@
                                     </tr>
                                 </thead>
                                 <tbody class="divide-y divide-slate-100">
-                                    @foreach ($recentPayments as $p)
+                                    @foreach ($page->recentPayments as $p)
                                         <tr class="hover:bg-slate-50/80">
                                             <td class="whitespace-nowrap px-4 py-3 font-mono text-xs text-slate-600">{{ \Illuminate\Support\Str::limit((string) $p->id, 8, '…') }}</td>
                                             <td class="px-4 py-3">
                                                 <span class="inline-flex rounded-full bg-emerald-50 px-2 py-0.5 text-xs font-semibold text-emerald-900 ring-1 ring-emerald-200/80">{{ __('admin.finance.txn_types.order') }}</span>
                                             </td>
                                             <td class="max-w-[10rem] truncate px-4 py-3 font-mono text-xs font-semibold text-slate-800" title="{{ $p->order_id }}">{{ $p->muthowifBooking?->booking_code ?? $p->order_id ?? '—' }}</td>
-                                            <td class="whitespace-nowrap px-4 py-3 text-right font-semibold tabular-nums text-slate-900">Rp {{ $fmt($p->gross_amount) }}</td>
+                                            <td class="whitespace-nowrap px-4 py-3 text-right font-semibold tabular-nums text-slate-900">Rp {{ $page->formatMoney($p->gross_amount) }}</td>
                                             <td class="whitespace-nowrap px-4 py-3">
                                                 <span class="inline-flex rounded-full bg-emerald-50 px-2 py-0.5 text-xs font-semibold capitalize text-emerald-800 ring-1 ring-emerald-200/70">{{ $p->status }}</span>
                                             </td>
@@ -357,13 +216,13 @@
                         <a href="{{ route('admin.refunds.index') }}" class="group relative flex flex-col items-center gap-2 rounded-2xl border border-slate-200 bg-white px-3 py-4 text-center shadow-sm transition hover:border-amber-200 hover:shadow-md">
                             <span class="relative flex h-10 w-10 items-center justify-center rounded-xl bg-amber-50 text-amber-700 ring-1 ring-amber-100" aria-hidden="true">
                                 <svg class="h-5 w-5" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M7.5 21 3 16.5m0 0L7.5 12M3 16.5h13.5m0-13.5L21 7.5m0 0L16.5 12M21 7.5H7.5" /></svg>
-                                @if ($pendingRefundCount > 0)
-                                    <span class="absolute -right-1 -top-1 flex h-4 min-w-[1rem] items-center justify-center rounded-full bg-amber-500 px-1 text-[10px] font-bold text-white">{{ $pendingRefundCount > 9 ? '9+' : $pendingRefundCount }}</span>
+                                @if ($page->pendingRefundCount > 0)
+                                    <span class="absolute -right-1 -top-1 flex h-4 min-w-[1rem] items-center justify-center rounded-full bg-amber-500 px-1 text-[10px] font-bold text-white">{{ $page->pendingRefundCount > 9 ? '9+' : $page->pendingRefundCount }}</span>
                                 @endif
                             </span>
                             <span class="text-xs font-semibold text-slate-900">{{ __('dashboard.refund') }}</span>
                         </a>
-                        <a x-data="adminWithdrawalsBadgeLive({{ $pendingWithdrawCount }})" href="{{ route('admin.withdrawals.index') }}" class="group relative flex flex-col items-center gap-2 rounded-2xl border border-slate-200 bg-white px-3 py-4 text-center shadow-sm transition hover:border-sky-200 hover:shadow-md">
+                        <a x-data="adminWithdrawalsBadgeLive({{ $page->pendingWithdrawCount }})" href="{{ route('admin.withdrawals.index') }}" class="group relative flex flex-col items-center gap-2 rounded-2xl border border-slate-200 bg-white px-3 py-4 text-center shadow-sm transition hover:border-sky-200 hover:shadow-md">
                             <span class="relative flex h-10 w-10 items-center justify-center rounded-xl bg-sky-50 text-sky-700 ring-1 ring-sky-100" aria-hidden="true">
                                 <svg class="h-5 w-5" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M2.25 8.25h19.5M2.25 9h19.5m-16.5 5.25h6m-6 2.25h3m-3.75 3h15a2.25 2.25 0 0 0 2.25-2.25V6.75A2.25 2.25 0 0 0 19.5 4.5h-15a2.25 2.25 0 0 0-2.25 2.25v10.5A2.25 2.25 0 0 0 4.5 19.5Z" /></svg>
                                 <template x-if="count > 0">
@@ -375,8 +234,8 @@
                         <a href="{{ route('admin.muthowif.index') }}" class="group relative flex flex-col items-center gap-2 rounded-2xl border border-slate-200 bg-white px-3 py-4 text-center shadow-sm transition hover:border-violet-200 hover:shadow-md">
                             <span class="relative flex h-10 w-10 items-center justify-center rounded-xl bg-violet-50 text-violet-700 ring-1 ring-violet-100" aria-hidden="true">
                                 <svg class="h-5 w-5" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M9 12.75 11.25 15 15 9.75m-3-7.036A11.959 11.959 0 0 1 3.598 6 11.99 11.99 0 0 0 3 9.749c0 5.592 3.824 10.29 9 11.623 5.176-1.332 9-6.03 9-11.622 0-1.31-.21-2.571-.598-3.751h-.152c-3.196 0-6.1-1.248-8.25-3.285Z" /></svg>
-                                @if ($pendingMuthowifCount > 0)
-                                    <span class="absolute -right-1 -top-1 flex h-4 min-w-[1rem] items-center justify-center rounded-full bg-violet-600 px-1 text-[10px] font-bold text-white">{{ $pendingMuthowifCount > 9 ? '9+' : $pendingMuthowifCount }}</span>
+                                @if ($page->pendingMuthowifCount > 0)
+                                    <span class="absolute -right-1 -top-1 flex h-4 min-w-[1rem] items-center justify-center rounded-full bg-violet-600 px-1 text-[10px] font-bold text-white">{{ $page->pendingMuthowifCount > 9 ? '9+' : $page->pendingMuthowifCount }}</span>
                                 @endif
                             </span>
                             <span class="text-xs font-semibold text-slate-900">{{ __('dashboard.verify') }}</span>
@@ -431,43 +290,43 @@
                     <h2 class="text-base font-bold text-slate-900">{{ __('dashboard.pending_actions_title') }}</h2>
                     <p class="mt-1 text-sm text-slate-600">{{ __('dashboard.pending_actions_sub') }}</p>
                     <div class="mt-4 space-y-2.5">
-                        @if ($pendingMuthowifCount > 0)
+                        @if ($page->pendingMuthowifCount > 0)
                             <a href="{{ route('admin.muthowif.index', ['status' => 'pending']) }}" class="group flex items-center gap-3 rounded-2xl bg-violet-50 px-4 py-3 ring-1 ring-violet-100 transition hover:bg-violet-100">
                                 <span class="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-white text-violet-700 ring-1 ring-violet-200/70">
                                     <svg class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke-width="1.8" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M16.5 10.5V6.75a4.5 4.5 0 1 0-9 0v3.75m-.75 11.25h10.5a2.25 2.25 0 0 0 2.25-2.25v-6.75a2.25 2.25 0 0 0-2.25-2.25H6.75a2.25 2.25 0 0 0-2.25 2.25v6.75a2.25 2.25 0 0 0 2.25 2.25Z" /></svg>
                                 </span>
                                 <span class="min-w-0 flex-1">
-                                    <span class="block text-sm font-semibold text-violet-950">{{ __('dashboard.pending_admin_notifications_muthowif', ['count' => $pendingMuthowifCount]) }}</span>
+                                    <span class="block text-sm font-semibold text-violet-950">{{ __('dashboard.pending_admin_notifications_muthowif', ['count' => $page->pendingMuthowifCount]) }}</span>
                                     <span class="block text-xs text-violet-700/80">{{ __('dashboard.pending_waiting_review') }}</span>
                                 </span>
                                 <svg class="h-4 w-4 shrink-0 text-violet-600 transition group-hover:translate-x-0.5" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="m8.25 4.5 7.5 7.5-7.5 7.5" /></svg>
                             </a>
                         @endif
-                        @if ($pendingWithdrawCount > 0)
+                        @if ($page->pendingWithdrawCount > 0)
                             <a href="{{ route('admin.withdrawals.index') }}" class="group flex items-center gap-3 rounded-2xl bg-sky-50 px-4 py-3 ring-1 ring-sky-100 transition hover:bg-sky-100">
                                 <span class="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-white text-sky-700 ring-1 ring-sky-200/70">
                                     <svg class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke-width="1.8" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M2.25 8.25h19.5M2.25 9h19.5m-16.5 5.25h6m-6 2.25h3m-3.75 3h15a2.25 2.25 0 0 0 2.25-2.25V6.75A2.25 2.25 0 0 0 19.5 4.5h-15a2.25 2.25 0 0 0-2.25 2.25v10.5A2.25 2.25 0 0 0 4.5 19.5Z" /></svg>
                                 </span>
                                 <span class="min-w-0 flex-1">
-                                    <span class="block text-sm font-semibold text-sky-950">{{ __('dashboard.pending_admin_notifications_withdraw', ['count' => $pendingWithdrawCount]) }}</span>
+                                    <span class="block text-sm font-semibold text-sky-950">{{ __('dashboard.pending_admin_notifications_withdraw', ['count' => $page->pendingWithdrawCount]) }}</span>
                                     <span class="block text-xs text-sky-700/80">{{ __('dashboard.pending_waiting_review') }}</span>
                                 </span>
                                 <svg class="h-4 w-4 shrink-0 text-sky-600 transition group-hover:translate-x-0.5" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="m8.25 4.5 7.5 7.5-7.5 7.5" /></svg>
                             </a>
                         @endif
-                        @if ($pendingRefundCount > 0)
+                        @if ($page->pendingRefundCount > 0)
                             <a href="{{ route('admin.refunds.index') }}" class="group flex items-center gap-3 rounded-2xl bg-amber-50 px-4 py-3 ring-1 ring-amber-100 transition hover:bg-amber-100">
                                 <span class="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-white text-amber-700 ring-1 ring-amber-200/70">
                                     <svg class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke-width="1.8" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M7.5 21 3 16.5m0 0L7.5 12M3 16.5h13.5m0-13.5L21 7.5m0 0L16.5 12M21 7.5H7.5" /></svg>
                                 </span>
                                 <span class="min-w-0 flex-1">
-                                    <span class="block text-sm font-semibold text-amber-950">{{ __('dashboard.pending_admin_notifications_refund', ['count' => $pendingRefundCount]) }}</span>
+                                    <span class="block text-sm font-semibold text-amber-950">{{ __('dashboard.pending_admin_notifications_refund', ['count' => $page->pendingRefundCount]) }}</span>
                                     <span class="block text-xs text-amber-700/80">{{ __('dashboard.pending_waiting_review') }}</span>
                                 </span>
                                 <svg class="h-4 w-4 shrink-0 text-amber-600 transition group-hover:translate-x-0.5" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="m8.25 4.5 7.5 7.5-7.5 7.5" /></svg>
                             </a>
                         @endif
-                        @if ($pendingTotal === 0)
+                        @if ($page->pendingTotal === 0)
                             <div class="flex items-center gap-3 rounded-2xl bg-emerald-50 px-4 py-3 ring-1 ring-emerald-100">
                                 <span class="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-white text-emerald-600 ring-1 ring-emerald-200/70">
                                     <svg class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke-width="2.2" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="m4.5 12.75 6 6 9-13.5" /></svg>
@@ -510,7 +369,7 @@
                         <p class="mt-1.5 text-sm text-slate-600">{{ __('dashboard.system_status_ok') }}</p>
                         <p class="mt-3 inline-flex items-center gap-1.5 rounded-lg bg-emerald-50 px-2.5 py-1 text-[11px] font-medium text-emerald-800 ring-1 ring-emerald-100">
                             <span class="h-1.5 w-1.5 rounded-full bg-emerald-500"></span>
-                            {{ __('dashboard.system_last_updated') }}: {{ $now->timezone(config('app.timezone'))->translatedFormat('d M Y, H:i') }} {{ config('app.timezone') === 'Asia/Jakarta' ? 'WIB' : '' }}
+                            {{ __('dashboard.system_last_updated') }}: {{ $page->now->timezone(config('app.timezone'))->translatedFormat('d M Y, H:i') }} {{ config('app.timezone') === 'Asia/Jakarta' ? 'WIB' : '' }}
                         </p>
                     </div>
                 </div>
@@ -526,15 +385,15 @@
                         <dl class="mt-3 space-y-2 text-sm">
                             <div class="flex items-center justify-between gap-2">
                                 <dt class="inline-flex items-center gap-2 text-slate-600"><span class="h-2 w-2 rounded-full bg-blue-500"></span>{{ __('dashboard.today_new_orders') }}</dt>
-                                <dd class="font-bold tabular-nums text-slate-900">{{ $newBookingsToday }}</dd>
+                                <dd class="font-bold tabular-nums text-slate-900">{{ $page->newBookingsToday }}</dd>
                             </div>
                             <div class="flex items-center justify-between gap-2">
                                 <dt class="inline-flex items-center gap-2 text-slate-600"><span class="h-2 w-2 rounded-full bg-emerald-500"></span>{{ __('dashboard.today_settlements') }}</dt>
-                                <dd class="font-bold tabular-nums text-slate-900">{{ $settlementsToday }}</dd>
+                                <dd class="font-bold tabular-nums text-slate-900">{{ $page->settlementsToday }}</dd>
                             </div>
                             <div class="flex items-center justify-between gap-2">
                                 <dt class="inline-flex items-center gap-2 text-slate-600"><span class="h-2 w-2 rounded-full bg-amber-500"></span>{{ __('dashboard.today_refunds') }}</dt>
-                                <dd class="font-bold tabular-nums text-slate-900">{{ $refundsToday }}</dd>
+                                <dd class="font-bold tabular-nums text-slate-900">{{ $page->refundsToday }}</dd>
                             </div>
                         </dl>
                     </div>

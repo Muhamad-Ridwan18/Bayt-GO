@@ -142,10 +142,13 @@ class MuthowifDirectoryController extends Controller
         $bookingIntent = $this->bookingIntentForProfile($request, $publicProfile, $startDate, $endDate);
 
         return view('layanan.book', [
-            'profile' => $publicProfile,
-            'startDate' => $startDate,
-            'endDate' => $endDate,
-            'bookingIntent' => $bookingIntent,
+            'page' => \App\ViewModels\Layanan\LayananBookPageData::make(
+                $request,
+                $publicProfile,
+                $bookingIntent,
+                $startDate,
+                $endDate,
+            ),
         ]);
     }
 

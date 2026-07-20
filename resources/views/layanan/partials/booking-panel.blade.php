@@ -1,70 +1,8 @@
 @php
     use App\Enums\MuthowifServiceType;
     use App\Support\IndonesianNumber;
-    use Carbon\Carbon;
 
-    $intent = $bookingIntent;
-    $rangeLabel = null;
-    $tripRangeDisplay = null;
-    if ($intent['start'] && $intent['end']) {
-        try {
-            $rangeLabel = Carbon::parse($intent['start'])->format('d/m/Y').' – '.Carbon::parse($intent['end'])->format('d/m/Y');
-            $tripRangeDisplay = Carbon::parse($intent['start'])->translatedFormat('d M Y').' – '.Carbon::parse($intent['end'])->translatedFormat('d M Y');
-        } catch (\Throwable) {
-            $rangeLabel = null;
-            $tripRangeDisplay = null;
-        }
-    }
-
-    $pilgrimBounds = static function ($service): array {
-        if (! $service) {
-            return ['min' => 1, 'max' => 50];
-        }
-        $min = $service->min_pilgrims !== null ? (int) $service->min_pilgrims : 1;
-        $max = $service->max_pilgrims !== null ? (int) $service->max_pilgrims : 50;
-        $min = max(1, $min);
-        if ($max < $min) {
-            $max = $min;
-        }
-
-        return ['min' => $min, 'max' => $max];
-    };
-
-    $gBounds = $pilgrimBounds($group ?? null);
-    $pBounds = $pilgrimBounds($private ?? null);
-
-    $hintSvcRaw = request()->query('service_type');
-    $hintSvc = is_string($hintSvcRaw) ? $hintSvcRaw : '';
-    $serviceFromQuery = in_array($hintSvc, ['group', 'private'], true) ? $hintSvc : null;
-    if ($serviceFromQuery === 'group' && $group) {
-        $defaultService = 'group';
-    } elseif ($serviceFromQuery === 'private' && $private) {
-        $defaultService = 'private';
-    } else {
-        $defaultService = $group ? 'group' : 'private';
-    }
-    $selectedService = old('service_type', $defaultService);
-
-    $boundsForSelected = $selectedService === 'private' ? $pBounds : $gBounds;
-    $pilgrimRaw = request()->query('pilgrim_count');
-    $pilgrimFromQuery = is_numeric($pilgrimRaw) ? (int) $pilgrimRaw : null;
-    if ($pilgrimFromQuery !== null) {
-        $pilgrimFromQuery = max($boundsForSelected['min'], min($boundsForSelected['max'], $pilgrimFromQuery));
-    }
-    $defaultPilgrim = old('pilgrim_count', $pilgrimFromQuery ?? (($selectedService === 'private') ? $pBounds['min'] : $gBounds['min']));
-
-    $oldWithSameHotel = old('with_same_hotel', false);
-    $oldWithTransport = old('with_transport', false);
-    $oldAddOnIds = collect(old('add_on_ids', []))->map(fn ($id) => (string) $id)->all();
-    $docErrorFields = ['ticket_outbound', 'ticket_return', 'passport', 'itinerary', 'visa'];
-    $initialBookingStep = $errors->hasAny($docErrorFields) ? 2 : 1;
-    $profileUrl = $profileUrl ?? route('layanan.show', $profile);
-    $tripRangeLabel = $rangeLabel ?? ($searchRangeLabel ?? null);
-    $changeDatesUrl = $indexedUrl ?? route('layanan.index', array_filter([
-        'start_date' => $startDate !== '' ? $startDate : null,
-        'end_date' => $endDate !== '' ? $endDate : null,
-    ], fn ($v) => filled($v)));
-    $canSubmit = $canSubmit ?? false;
+    $intent = $page->intent;
 @endphp
 
 <section id="booking-panel" class="ui-checkout-shell touch-manipulation overflow-hidden">
@@ -106,8 +44,8 @@
         <div class="ui-panel-body">
             <x-ui.alert type="warning">
                 {!! __('marketplace.panel.jadwal_tidak_tersedia_html', [
-                    'range' => $rangeLabel,
-                    'link' => '<a href="'.e(route('layanan.index', array_filter(['start_date' => $startDate, 'end_date' => $endDate ?? null]))).'" class="font-semibold underline">'.e(__('layanan.booking_panel_link')).'</a>',
+                    'range' => $page->rangeLabel,
+                    'link' => '<a href="'.e(route('layanan.index', array_filter(['start_date' => $intent['start'], 'end_date' => $intent['end']]))).'" class="font-semibold underline">'.e(__('layanan.booking_panel_link')).'</a>',
                 ]) !!}
             </x-ui.alert>
         </div>
@@ -118,58 +56,10 @@
         </div>
             @else
                 {{-- Jangan pakai @json di dalam x-data="..." — tanda kutip JSON memutus atribut HTML dan merusak Alpine. --}}
-                @php
-                    $docFieldState = static function (string $field) {
-                        $path = old("temp_{$field}_path", session("temp_{$field}_path"));
-                        $name = old("temp_{$field}_name", session("temp_{$field}_name"));
-
-                        return [
-                            'path' => is_string($path) && $path !== '' ? $path : '',
-                            'name' => is_string($name) && $name !== '' ? $name : '',
-                            'uploading' => false,
-                            'error' => '',
-                        ];
-                    };
-
-                    $bookingFormConfig = [
-                        'initialStep' => $initialBookingStep,
-                        'serviceType' => $selectedService,
-                        'pilgrimCount' => (int) $defaultPilgrim,
-                        'bounds' => [
-                            'group' => ['min' => (int) $gBounds['min'], 'max' => (int) $gBounds['max']],
-                            'private' => ['min' => (int) $pBounds['min'], 'max' => (int) $pBounds['max']],
-                        ],
-                        'labels' => [
-                            'group' => __('marketplace.panel.group_label'),
-                            'private' => __('marketplace.panel.private_label'),
-                            'people' => __('common.people'),
-                            'docsCount' => __('marketplace.panel.review_docs_count'),
-                        ],
-                        'tempUploadUrl' => route('bookings.documents.temp'),
-                        'docs' => [
-                            'ticket_outbound' => $docFieldState('ticket_outbound'),
-                            'ticket_return' => $docFieldState('ticket_return'),
-                            'passport' => $docFieldState('passport'),
-                            'itinerary' => $docFieldState('itinerary'),
-                            'visa' => $docFieldState('visa'),
-                        ],
-                        'docLabels' => [
-                            'docUploading' => __('marketplace.panel.doc_uploading'),
-                            'docUploaded' => __('marketplace.panel.doc_uploaded'),
-                        ],
-                        'messages' => [
-                            'serviceRequired' => __('marketplace.panel.step_service_required'),
-                            'uploadPending' => __('marketplace.panel.step_upload_pending'),
-                            'docRequired' => __('marketplace.panel.step_doc_required'),
-                            'docUploadFailed' => __('marketplace.panel.doc_upload_failed'),
-                            'docUploadTimeout' => __('marketplace.panel.doc_upload_timeout'),
-                        ],
-                    ];
-                @endphp
                 <div class="lg:grid lg:grid-cols-[minmax(0,1fr)_20rem] lg:items-start xl:grid-cols-[minmax(0,1fr)_22rem]">
                     <div
                         class="min-w-0"
-                        x-data="bookingForm(@js($bookingFormConfig))"
+                        x-data="bookingForm(@js($page->bookingFormConfig))"
                         @keydown.escape.window="if (tcOpen) tcOpen = false"
                     >
                     <x-ui.booking-stepper />
@@ -196,7 +86,7 @@
                         </div>
 
                         <div id="booking-step-1" x-show="step === 1" class="ui-stack-compact scroll-mt-20 ui-booking-step-panel">
-                        @if ($tripRangeDisplay)
+                        @if ($page->tripRangeDisplay)
                             <section class="ui-booking-section-card">
                                 <div class="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
                                     <div class="flex items-center gap-3">
@@ -205,10 +95,10 @@
                                         </span>
                                         <div>
                                             <p class="text-xs font-bold uppercase tracking-wide text-slate-500">{{ __('marketplace.panel.stay_period') }}</p>
-                                            <p class="mt-0.5 text-sm font-bold tabular-nums text-slate-900">{{ $tripRangeDisplay }}</p>
+                                            <p class="mt-0.5 text-sm font-bold tabular-nums text-slate-900">{{ $page->tripRangeDisplay }}</p>
                                         </div>
                                     </div>
-                                    <a href="{{ $changeDatesUrl }}" class="ui-btn-secondary shrink-0 px-4 py-2 text-xs">
+                                    <a href="{{ $page->changeDatesUrl }}" class="ui-btn-secondary shrink-0 px-4 py-2 text-xs">
                                         <svg class="h-4 w-4" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true"><path fill-rule="evenodd" d="M5.75 2a.75.75 0 01.75.75V4h7V2.75a.75.75 0 011.5 0V4h.25A2.75 2.75 0 0118 6.75v8.5A2.75 2.75 0 0115.25 18H4.75A2.75 2.75 0 012 15.25v-8.5A2.75 2.75 0 014.75 4H5V2.75A.75.75 0 015.75 2zm-1 5.5c-.69 0-1.25.56-1.25 1.25v6.5c0 .69.56 1.25 1.25 1.25h10.5c.69 0 1.25-.56 1.25-1.25v-6.5c0-.69-.56-1.25-1.25-1.25H4.75z" clip-rule="evenodd" /></svg>
                                         {{ __('marketplace.panel.change_dates') }}
                                     </a>
@@ -228,7 +118,7 @@
                                         <label class="ui-booking-package-card ui-booking-package-card--group">
                                             <input type="radio" name="service_type" value="group" class="sr-only peer"
                                                    x-model="serviceType"
-                                                   @checked($selectedService === 'group')>
+                                                   @checked($page->selectedService === 'group')>
                                             <span class="flex flex-col gap-1 pr-8">
                                                 <span class="inline-flex w-fit rounded-lg bg-brand-100 px-2 py-0.5 text-[10px] font-bold uppercase tracking-wide text-brand-800">{{ MuthowifServiceType::Group->label() }}</span>
                                                 <span class="text-base font-bold text-slate-900">{{ __('marketplace.panel.group_label') }}</span>
@@ -245,7 +135,7 @@
                                         <label class="ui-booking-package-card ui-booking-package-card--private">
                                             <input type="radio" name="service_type" value="private" class="sr-only peer"
                                                    x-model="serviceType"
-                                                   @checked($selectedService === 'private')>
+                                                   @checked($page->selectedService === 'private')>
                                             <span class="flex flex-col gap-1 pr-8">
                                                 <span class="inline-flex w-fit rounded-lg bg-amber-100 px-2 py-0.5 text-[10px] font-bold uppercase tracking-wide text-amber-900">{{ MuthowifServiceType::PrivateJamaah->label() }}</span>
                                                 <span class="text-base font-bold text-slate-900">{{ __('marketplace.panel.private_label') }}</span>
@@ -316,7 +206,7 @@
                             <div class="grid grid-cols-2 gap-3 lg:grid-cols-4">
                                 <div class="ui-booking-review-chip">
                                     <p class="text-[10px] font-semibold uppercase tracking-wide text-slate-500">{{ __('marketplace.panel.stay_period') }}</p>
-                                    <p class="mt-1 text-xs font-bold leading-snug tabular-nums text-slate-900">{{ $tripRangeDisplay ?? '—' }}</p>
+                                    <p class="mt-1 text-xs font-bold leading-snug tabular-nums text-slate-900">{{ $page->tripRangeDisplay ?? '—' }}</p>
                                 </div>
                                 <div class="ui-booking-review-chip">
                                     <p class="text-[10px] font-semibold uppercase tracking-wide text-slate-500">{{ __('marketplace.panel.choose_package') }}</p>
@@ -353,8 +243,8 @@
                                                 'transportAvailable' => $groupTransportAvailable,
                                                 'hotelPricePerDay' => (int) ($group->same_hotel_price_per_day ?? 0),
                                                 'transportPriceFlat' => (int) ($group->transport_price_flat ?? 0),
-                                                'oldWithSameHotel' => $oldWithSameHotel,
-                                                'oldWithTransport' => $oldWithTransport,
+                                                'oldWithSameHotel' => $page->oldWithSameHotel,
+                                                'oldWithTransport' => $page->oldWithTransport,
                                                 'accent' => 'brand',
                                                 'idSuffix' => 'group',
                                             ])
@@ -376,7 +266,7 @@
                                                     <label class="flex cursor-pointer items-start gap-3">
                                                         <input type="checkbox" name="add_on_ids[]" value="{{ $addon->id }}"
                                                             class="mt-1 size-4 rounded border-slate-300 text-amber-600 shadow-sm focus:ring-amber-500"
-                                                            @checked(in_array((string) $addon->id, $oldAddOnIds, true))>
+                                                            @checked(in_array((string) $addon->id, $page->oldAddOnIds, true))>
                                                         <span class="text-sm leading-relaxed text-slate-700">
                                                             {{ $addon->name }}
                                                             <span class="font-semibold text-amber-800">(+Rp {{ IndonesianNumber::formatThousands((string) (int) $addon->price) }})</span>
@@ -392,8 +282,8 @@
                                                 'transportAvailable' => $privateTransportAvailable,
                                                 'hotelPricePerDay' => (int) ($private->same_hotel_price_per_day ?? 0),
                                                 'transportPriceFlat' => (int) ($private->transport_price_flat ?? 0),
-                                                'oldWithSameHotel' => $oldWithSameHotel,
-                                                'oldWithTransport' => $oldWithTransport,
+                                                'oldWithSameHotel' => $page->oldWithSameHotel,
+                                                'oldWithTransport' => $page->oldWithTransport,
                                                 'accent' => 'amber',
                                                 'idSuffix' => 'private',
                                             ])
@@ -538,7 +428,7 @@
                             <div class="grid grid-cols-2 gap-3 lg:grid-cols-4">
                                 <div class="ui-booking-review-chip">
                                     <p class="text-[10px] font-semibold uppercase tracking-wide text-slate-500">{{ __('marketplace.panel.stay_period') }}</p>
-                                    <p class="mt-1 text-xs font-bold tabular-nums text-slate-900">{{ $tripRangeDisplay ?? $rangeLabel }}</p>
+                                    <p class="mt-1 text-xs font-bold tabular-nums text-slate-900">{{ $page->tripRangeDisplay ?? $page->rangeLabel }}</p>
                                 </div>
                                 <div class="ui-booking-review-chip">
                                     <p class="text-[10px] font-semibold uppercase tracking-wide text-slate-500">{{ __('marketplace.panel.choose_package') }}</p>
@@ -621,8 +511,8 @@
                     <div class="hidden border-l border-slate-100 bg-slate-50/40 px-5 py-6 lg:block" x-data="bookingSummaryAside()">
                         @include('layanan.partials.booking-trip-aside', [
                             'profile' => $profile,
-                            'tripRangeLabel' => $tripRangeDisplay ?? $tripRangeLabel,
-                            'canSubmit' => $canSubmit,
+                            'tripRangeLabel' => $page->tripRangeDisplay ?? $page->tripRangeLabel,
+                            'canSubmit' => $page->canSubmit,
                             'group' => $group,
                             'private' => $private,
                         ])

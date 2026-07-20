@@ -37,6 +37,7 @@ use App\Support\EmergencyBookingViewData;
 use App\Support\MuthowifReferralReward;
 use App\Support\PaymentFlowLog;
 use App\Support\PlatformFee;
+use App\ViewModels\Booking\BookingPaymentPageData;
 use Carbon\Carbon;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
@@ -281,14 +282,19 @@ class BookingController extends Controller
                 ]);
             }
 
+            $methods = BookingSnapPaymentCatalog::webMethodsExpanded();
+            $mootaBankAccountIds = $this->mootaBankAccountIdsForPaymentView();
+            $mootaPaymentRows = $this->mootaPaymentRowsForPaymentView();
+
             return view('bookings.payment', [
                 'booking' => $booking,
                 'payment' => $payment->fresh(),
                 'selectedMethod' => $selectedMethod,
-                'methods' => BookingSnapPaymentCatalog::webMethodsExpanded(),
-                'mootaBankAccountIds' => $this->mootaBankAccountIdsForPaymentView(),
-                'mootaPaymentRows' => $this->mootaPaymentRowsForPaymentView(),
+                'methods' => $methods,
+                'mootaBankAccountIds' => $mootaBankAccountIds,
+                'mootaPaymentRows' => $mootaPaymentRows,
                 'instructions' => null,
+                'page' => BookingPaymentPageData::make($booking, $selectedMethod, $methods, $mootaBankAccountIds, $mootaPaymentRows, null),
             ]);
         }
 
@@ -311,14 +317,19 @@ class BookingController extends Controller
                         'method' => $selectedMethod,
                     ]);
 
+                    $methods = BookingSnapPaymentCatalog::webMethodsExpanded();
+                    $mootaBankAccountIds = $this->mootaBankAccountIdsForPaymentView();
+                    $mootaPaymentRows = $this->mootaPaymentRowsForPaymentView();
+
                     return view('bookings.payment', [
                         'booking' => $booking,
                         'payment' => $existingPending->fresh(),
                         'selectedMethod' => $selectedMethod,
-                        'methods' => BookingSnapPaymentCatalog::webMethodsExpanded(),
-                        'mootaBankAccountIds' => $this->mootaBankAccountIdsForPaymentView(),
-                        'mootaPaymentRows' => $this->mootaPaymentRowsForPaymentView(),
+                        'methods' => $methods,
+                        'mootaBankAccountIds' => $mootaBankAccountIds,
+                        'mootaPaymentRows' => $mootaPaymentRows,
                         'instructions' => $reuseInstructions,
+                        'page' => BookingPaymentPageData::make($booking, $selectedMethod, $methods, $mootaBankAccountIds, $mootaPaymentRows, $reuseInstructions),
                     ]);
                 }
             }
@@ -439,14 +450,20 @@ class BookingController extends Controller
             'method' => $selectedMethod,
         ]);
 
+        $methods = BookingSnapPaymentCatalog::webMethodsExpanded();
+        $mootaBankAccountIds = $this->mootaBankAccountIdsForPaymentView();
+        $mootaPaymentRows = $this->mootaPaymentRowsForPaymentView();
+        $instructions = $session?->instructions;
+
         return view('bookings.payment', [
             'booking' => $booking,
             'payment' => $payment->fresh(),
             'selectedMethod' => $selectedMethod,
-            'methods' => BookingSnapPaymentCatalog::webMethodsExpanded(),
-            'mootaBankAccountIds' => $this->mootaBankAccountIdsForPaymentView(),
-            'mootaPaymentRows' => $this->mootaPaymentRowsForPaymentView(),
-            'instructions' => $session?->instructions,
+            'methods' => $methods,
+            'mootaBankAccountIds' => $mootaBankAccountIds,
+            'mootaPaymentRows' => $mootaPaymentRows,
+            'instructions' => $instructions,
+            'page' => BookingPaymentPageData::make($booking, $selectedMethod, $methods, $mootaBankAccountIds, $mootaPaymentRows, $instructions),
         ]);
     }
 

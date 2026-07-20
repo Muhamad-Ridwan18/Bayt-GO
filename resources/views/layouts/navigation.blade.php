@@ -1,53 +1,4 @@
-@php
-    use App\Enums\BookingStatus;
-    use App\Enums\MuthowifVerificationStatus;
-    use App\Models\MuthowifBooking;
-    use App\Models\MuthowifProfile;
-    use App\Support\AdminEmergencyReportCounts;
-    use App\Support\MuthowifEmergencyOfferCounts;
-
-    $contactRaw = (string) (config('app.contact_whatsapp') ?: config('app.contact_phone'));
-    $contactDigits = preg_replace('/\D+/', '', $contactRaw ?? '') ?? '';
-    $contactLink = $contactDigits !== '' ? 'https://wa.me/'.$contactDigits : null;
-
-    $muthowifPendingIncomingCount = 0;
-    $muthowifPendingEmergencyOfferCount = 0;
-    if (Auth::check() && Auth::user()->isVerifiedMuthowif()) {
-        $mpNav = Auth::user()->muthowifProfile;
-        if ($mpNav) {
-            $muthowifPendingIncomingCount = MuthowifBooking::query()
-                ->where('muthowif_profile_id', $mpNav->id)
-                ->where('status', BookingStatus::Pending)
-                ->count();
-        }
-        $muthowifPendingEmergencyOfferCount = MuthowifEmergencyOfferCounts::pendingOfferedCountForUser(Auth::user());
-    }
-
-    $adminHubActive = false;
-    $adminPendingMuthowifCount = 0;
-    $adminOpenEmergencyReportCount = 0;
-    if (Auth::check() && Auth::user()->isAdmin()) {
-        $adminOpenEmergencyReportCount = AdminEmergencyReportCounts::openCount();
-        $adminPendingMuthowifCount = MuthowifProfile::query()
-            ->where('verification_status', MuthowifVerificationStatus::Pending)
-            ->count();
-
-        $adminHubActive = request()->routeIs([
-            'admin.settings.index',
-            'admin.site-appearance.*',
-            'admin.articles.*',
-            'admin.users.*',
-            'admin.muthowif.*',
-            'admin.referrals.*',
-            'admin.affiliates.*',
-            'admin.support-tickets.*',
-            'admin.service_monitor.*',
-            'admin.moota_webhooks.*',
-            'admin.whatsapp-broadcast.*',
-            'log-viewer.*',
-        ]);
-    }
-@endphp
+{{-- Badge counts from App\View\Composers\NavigationComposer --}}
 
 <nav x-data="{ open: false }" class="relative z-[90] border-b border-slate-200/80 bg-white shadow-sm" @resize.window="if (window.innerWidth >= 1024) open = false">
     <!-- Primary Navigation Menu -->
@@ -56,16 +7,7 @@
             <div class="flex min-w-0 flex-1 items-center lg:flex-initial lg:gap-0">
                 <!-- Logo -->
                 <div class="flex shrink-0 items-center">
-                    @php
-                        if (Auth::user()->isAdmin()) {
-                            $logoHref = route('dashboard');
-                        } elseif (Auth::user()->isMuthowif()) {
-                            $logoHref = route('dashboard');
-                        } else {
-                            $logoHref = route('dashboard');
-                        }
-                    @endphp
-                    <a href="{{ $logoHref }}" class="flex min-w-0 items-center gap-2">
+                    <a href="{{ route('dashboard') }}" class="flex min-w-0 items-center gap-2">
                         <x-site-logo variant="nav" />
                         <span class="hidden text-lg font-bold tracking-tight text-baytgo sm:inline">Bayt<span class="text-gold-muted">Go</span></span>
                     </a>
@@ -140,15 +82,6 @@
                         </x-nav-link>
                     @endif
                     @if (Auth::user()->isVerifiedMuthowif())
-                        @php
-                            $muthowifManageActive = request()->routeIs([
-                                'muthowif.kelola-layanan',
-                                'muthowif.pelayanan.*',
-                                'muthowif.pelayanan-pendukung.*',
-                                'muthowif.bookings.*',
-                                'affiliate.*',
-                            ]);
-                        @endphp
                         <div class="inline-flex items-center self-stretch">
                             <x-dropdown align="left" width="w-56">
                                 <x-slot name="trigger">
@@ -359,23 +292,14 @@
                 </x-responsive-nav-link>
             @endif
             @if (Auth::user()->isVerifiedMuthowif())
-                @php
-                    $muthowifManageActiveMobile = request()->routeIs([
-                        'muthowif.kelola-layanan',
-                        'muthowif.pelayanan.*',
-                        'muthowif.pelayanan-pendukung.*',
-                        'muthowif.bookings.*',
-                        'affiliate.*',
-                    ]);
-                @endphp
-                <div class="space-y-1" x-data="{ manageOpen: @js($muthowifManageActiveMobile) }">
+                <div class="space-y-1" x-data="{ manageOpen: @js($muthowifManageActive) }">
                     <button
                         type="button"
                         @click="manageOpen = ! manageOpen"
                         @class([
                             'flex w-full items-center justify-between gap-2 border-l-4 py-2 pe-4 ps-3 text-start text-base font-medium transition duration-150 ease-in-out focus:outline-none',
-                            'border-gold bg-gold-light/30 text-baytgo focus:bg-gold-light/40' => $muthowifManageActiveMobile,
-                            'border-transparent text-slate-600 hover:border-slate-300 hover:bg-slate-50 hover:text-slate-800' => ! $muthowifManageActiveMobile,
+                            'border-gold bg-gold-light/30 text-baytgo focus:bg-gold-light/40' => $muthowifManageActive,
+                            'border-transparent text-slate-600 hover:border-slate-300 hover:bg-slate-50 hover:text-slate-800' => ! $muthowifManageActive,
                         ])
                     >
                         <span class="inline-flex items-center gap-2">

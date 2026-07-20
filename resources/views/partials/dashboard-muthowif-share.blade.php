@@ -1,9 +1,3 @@
-@php
-    /** @var \App\Models\MuthowifProfile $mp */
-    $userInitial = mb_strtoupper(mb_substr(Auth::user()->name, 0, 1));
-    $profileUrl = route('layanan.show', $mp);
-@endphp
-
 <div
     x-data="{ copied: false, copiedCode: false }"
     class="overflow-hidden rounded-2xl border border-slate-200/80 bg-white shadow-sm"
