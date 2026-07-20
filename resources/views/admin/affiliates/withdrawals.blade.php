@@ -31,7 +31,15 @@
                                     <p class="text-xs text-slate-500 font-mono">{{ $w->affiliate?->code }}</p>
                                 </td>
                                 <td class="px-4 py-3 tabular-nums">Rp {{ IndonesianNumber::formatThousands((string) (int) $w->amount) }}</td>
-                                <td class="px-4 py-3">{{ $w->beneficiary_bank }} · {{ $w->beneficiary_account }}<br><span class="text-xs text-slate-500">{{ $w->beneficiary_name }}</span></td>
+                                <td class="px-4 py-3">
+                                    <div class="flex items-start gap-2.5">
+                                        <x-bank-logo :code="$w->beneficiary_bank" size="sm" class="mt-0.5" />
+                                        <div>
+                                            <p>{{ $w->beneficiary_bank }} · {{ $w->beneficiary_account }}</p>
+                                            <span class="text-xs text-slate-500">{{ $w->beneficiary_name }}</span>
+                                        </div>
+                                    </div>
+                                </td>
                                 <td class="px-4 py-3">{{ $w->status->label() }}</td>
                                 <td class="px-4 py-3 space-y-2">
                                     @if ($w->status === AffiliateWithdrawalStatus::Requested)

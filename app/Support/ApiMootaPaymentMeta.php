@@ -104,6 +104,8 @@ final class ApiMootaPaymentMeta
                 'account_number' => $accountNumber !== '' ? $accountNumber : null,
                 'bank_account_ref' => $accountId !== '' ? self::maskAccountRef($accountId) : null,
                 'description' => $description !== '' ? $description : null,
+                'logo_url' => is_array($labelRow) ? ($labelRow['logo_url'] ?? null) : null,
+                'bank_type' => is_array($labelRow) ? ($labelRow['bank_type'] ?? null) : null,
             ], static fn ($v) => $v !== null && $v !== '');
         }
 

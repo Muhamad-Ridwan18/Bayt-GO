@@ -26,9 +26,12 @@
                 <ul class="mt-4 divide-y divide-slate-100">
                     @forelse ($affiliate->bankAccounts as $bank)
                         <li class="flex flex-wrap items-center justify-between gap-3 py-3 text-sm">
-                            <div>
-                                <p class="font-semibold">{{ $bank->bank_name }} · {{ $bank->account_number }}</p>
-                                <p class="text-slate-600">{{ $bank->account_holder }} · {{ $bank->verification_status->label() }}</p>
+                            <div class="flex items-start gap-3">
+                                <x-bank-logo :code="$bank->bank_code" size="md" />
+                                <div>
+                                    <p class="font-semibold">{{ $bank->bank_name }} · {{ $bank->account_number }}</p>
+                                    <p class="text-slate-600">{{ $bank->account_holder }} · {{ $bank->verification_status->label() }}</p>
+                                </div>
                             </div>
                             <div class="flex gap-2">
                                 @if ($bank->verification_status !== AffiliateBankVerificationStatus::Verified)

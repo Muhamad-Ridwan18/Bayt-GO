@@ -1,4 +1,5 @@
 @php
+    use App\Support\AffiliateBankOptions;
     use App\Support\BookingSnapPaymentCatalog;
     use App\Support\IndonesianNumber;
     use Carbon\Carbon;
@@ -29,6 +30,9 @@
     $customerTotal = (float) ($split['customer_gross'] ?? 0.0);
     $fmt = fn (float $n) => IndonesianNumber::formatThousands((string) (int) round($n));
 
+    $bankLogo = static fn (string $code): string => AffiliateBankOptions::logoUrl($code)
+        ?? asset('images/payments/bank_transfer_moota.svg');
+
     $methodGroups = [
         'bank' => [
             'title' => __('bookings.payment.groups.bank.title'),
@@ -53,7 +57,7 @@
             'id' => 'va_bca',
             'group' => 'bank',
             'name' => __('bookings.payment.method_va_bca.name'),
-            'logo_path' => asset('images/payments/va_bca.svg'),
+            'logo_path' => $bankLogo('BCA'),
             'description' => __('bookings.payment.method_va_bca.description'),
             'enabled' => in_array('va_bca', $methods, true),
         ],
@@ -61,7 +65,7 @@
             'id' => 'va_bni',
             'group' => 'bank',
             'name' => __('bookings.payment.method_va_bni.name'),
-            'logo_path' => asset('images/payments/va_bni.svg'),
+            'logo_path' => $bankLogo('BNI'),
             'description' => __('bookings.payment.method_va_bni.description'),
             'enabled' => in_array('va_bni', $methods, true),
         ],
@@ -69,7 +73,7 @@
             'id' => 'va_bri',
             'group' => 'bank',
             'name' => __('bookings.payment.method_va_bri.name'),
-            'logo_path' => asset('images/payments/va_bri.svg'),
+            'logo_path' => $bankLogo('BRI'),
             'description' => __('bookings.payment.method_va_bri.description'),
             'enabled' => in_array('va_bri', $methods, true),
         ],
@@ -77,7 +81,7 @@
             'id' => 'va_permata',
             'group' => 'bank',
             'name' => __('bookings.payment.method_va_permata.name'),
-            'logo_path' => asset('images/payments/va_permata.svg'),
+            'logo_path' => $bankLogo('Permata'),
             'description' => __('bookings.payment.method_va_permata.description'),
             'enabled' => in_array('va_permata', $methods, true),
         ],
@@ -85,7 +89,7 @@
             'id' => 'va_mandiri_bill',
             'group' => 'bank',
             'name' => __('bookings.payment.method_va_mandiri_bill.name'),
-            'logo_path' => asset('images/payments/va_mandiri_bill.svg'),
+            'logo_path' => $bankLogo('Mandiri'),
             'description' => __('bookings.payment.method_va_mandiri_bill.description'),
             'enabled' => in_array('va_mandiri_bill', $methods, true),
         ],
@@ -155,10 +159,16 @@
                 if (isset($mootaPaymentRows[$mi])) {
                     $row['name'] = $mootaPaymentRows[$mi]['name'];
                     $row['description'] = $mootaPaymentRows[$mi]['description'];
+                    if (! empty($mootaPaymentRows[$mi]['logo_url'])) {
+                        $row['logo_path'] = $mootaPaymentRows[$mi]['logo_url'];
+                    }
                 }
             } elseif (($row['id'] ?? '') === 'bank_transfer_moota' && isset($mootaPaymentRows[0])) {
                 $row['name'] = $mootaPaymentRows[0]['name'];
                 $row['description'] = $mootaPaymentRows[0]['description'];
+                if (! empty($mootaPaymentRows[0]['logo_url'])) {
+                    $row['logo_path'] = $mootaPaymentRows[0]['logo_url'];
+                }
             }
 
             return $row;
@@ -321,7 +331,7 @@
                                                     @foreach ($groupMethods as $method)
                                                         <label class="group/m flex min-h-[4.25rem] cursor-pointer touch-manipulation items-center justify-between gap-3 rounded-xl border px-4 py-3 transition active:scale-[0.99] {{ $selectedMethod === $method['id'] ? 'border-brand-400 bg-gradient-to-br from-brand-50 to-white ring-2 ring-brand-200/60' : 'border-slate-200 bg-white hover:border-slate-300 hover:bg-slate-50/80' }}">
                                                             <span class="flex min-w-0 items-center gap-3">
-                                                                <img src="{{ $method['logo_path'] }}" alt="" class="h-10 w-16 shrink-0 rounded-lg border border-slate-200/80 bg-white object-contain p-1" width="64" height="40">
+                                                                <img src="{{ $method['logo_path'] }}" alt="{{ $method['name'] }}" class="h-11 w-16 shrink-0 rounded-xl border border-slate-200/80 bg-white object-contain p-1.5 shadow-sm" width="64" height="44">
                                                                 <span class="min-w-0">
                                                                     <span class="block text-sm font-semibold text-slate-900">{{ $method['name'] }}</span>
                                                                     @if (trim((string) ($method['description'] ?? '')) !== '')
@@ -339,12 +349,16 @@
                                             <summary class="flex cursor-pointer list-none items-center justify-between gap-3 rounded-2xl px-4 py-3.5 text-left transition hover:bg-slate-50/90 [&::-webkit-details-marker]:hidden">
                                                 <span class="flex min-w-0 items-center gap-3">
                                                     @if ($groupId === 'bank')
-                                                        <span class="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-slate-100 text-slate-700 ring-1 ring-slate-200/80" aria-hidden="true">
-                                                            <svg class="h-5 w-5" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M2.25 18h19.5M2.25 9h19.5M2.25 4.5h19.5M9 4.5V18M15 4.5V18" /></svg>
+                                                        <span class="flex shrink-0 items-center -space-x-1.5" aria-hidden="true">
+                                                            @foreach (array_slice($groupMethods, 0, 4) as $previewMethod)
+                                                                <img src="{{ $previewMethod['logo_path'] }}" alt="" class="h-8 w-8 rounded-lg border border-white bg-white object-contain p-0.5 ring-1 ring-slate-200/80 shadow-sm">
+                                                            @endforeach
                                                         </span>
                                                     @elseif ($groupId === 'moota')
-                                                        <span class="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-teal-50 text-teal-800 ring-1 ring-teal-200/70" aria-hidden="true">
-                                                            <svg class="h-5 w-5" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M2.25 18h19.5M2.25 9h19.5M2.25 4.5h19.5M9 4.5V18M15 4.5V18" /></svg>
+                                                        <span class="flex shrink-0 items-center -space-x-1.5" aria-hidden="true">
+                                                            @foreach (array_slice($groupMethods, 0, 3) as $previewMethod)
+                                                                <img src="{{ $previewMethod['logo_path'] }}" alt="" class="h-8 w-8 rounded-lg border border-white bg-white object-contain p-0.5 ring-1 ring-slate-200/80 shadow-sm">
+                                                            @endforeach
                                                         </span>
                                                     @elseif ($groupId === 'ewallet')
                                                         <span class="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-amber-50 text-amber-800 ring-1 ring-amber-200/70" aria-hidden="true">
@@ -372,7 +386,7 @@
                                                     @foreach ($groupMethods as $method)
                                                         <label class="group/m flex min-h-[4.25rem] cursor-pointer touch-manipulation items-center justify-between gap-3 rounded-xl border px-4 py-3 transition active:scale-[0.99] {{ $selectedMethod === $method['id'] ? 'border-brand-400 bg-gradient-to-br from-brand-50 to-white ring-2 ring-brand-200/60' : 'border-slate-200 bg-white hover:border-slate-300 hover:bg-slate-50/80' }}">
                                                             <span class="flex min-w-0 items-center gap-3">
-                                                                <img src="{{ $method['logo_path'] }}" alt="" class="h-10 w-16 shrink-0 rounded-lg border border-slate-200/80 bg-white object-contain p-1" width="64" height="40">
+                                                                <img src="{{ $method['logo_path'] }}" alt="{{ $method['name'] }}" class="h-11 w-16 shrink-0 rounded-xl border border-slate-200/80 bg-white object-contain p-1.5 shadow-sm" width="64" height="44">
                                                                 <span class="min-w-0">
                                                                     <span class="block text-sm font-semibold text-slate-900">{{ $method['name'] }}</span>
                                                                     @if (trim((string) ($method['description'] ?? '')) !== '')
@@ -400,16 +414,26 @@
                     </section>
 
                     @if ($selectedMethod !== '' && is_array($instructions))
+                        @php
+                            $selectedMethodUi = collect($methodsUi)->firstWhere('id', $selectedMethod);
+                            $selectedLogo = is_array($selectedMethodUi) ? ($selectedMethodUi['logo_path'] ?? null) : null;
+                        @endphp
                         <section class="relative overflow-hidden rounded-2xl border border-emerald-200/80 bg-gradient-to-br from-emerald-50/95 via-white to-amber-50/30 p-5 shadow-lg shadow-emerald-900/5 ring-1 ring-emerald-100/70 sm:p-6">
                             <div class="pointer-events-none absolute -right-12 top-0 h-40 w-40 rounded-full bg-emerald-300/20 blur-3xl" aria-hidden="true"></div>
                             <div class="relative flex flex-wrap items-start justify-between gap-3">
                                 <div class="flex items-start gap-3">
-                                    <span class="flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl bg-emerald-600 text-white shadow-lg shadow-emerald-600/25">
-                                        <svg class="h-6 w-6" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" d="M9 12.75L11.25 15 15 9.75M21 12c0 1.268-.63 2.39-1.593 3.068a3.745 3.745 0 01-1.043 3.296 3.745 3.745 0 01-3.296 1.043A3.745 3.745 0 0112 21c-1.268 0-2.39-.63-3.068-1.593a3.746 3.746 0 01-3.296-1.043 3.745 3.745 0 01-1.043-3.296A3.745 3.745 0 013 12c0-1.268.63-2.39 1.593-3.068a3.745 3.745 0 011.043-3.296 3.746 3.746 0 013.296-1.043A3.746 3.746 0 0112 3c1.268 0 2.39.63 3.068 1.593a3.746 3.746 0 013.296 1.043 3.746 3.746 0 011.043 3.296A3.745 3.745 0 0121 12z" /></svg>
-                                    </span>
+                                    @if ($selectedLogo)
+                                        <span class="flex h-12 w-16 shrink-0 items-center justify-center overflow-hidden rounded-2xl border border-emerald-100 bg-white p-1.5 shadow-sm">
+                                            <img src="{{ $selectedLogo }}" alt="" class="h-full w-full object-contain">
+                                        </span>
+                                    @else
+                                        <span class="flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl bg-emerald-600 text-white shadow-lg shadow-emerald-600/25">
+                                            <svg class="h-6 w-6" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" d="M9 12.75L11.25 15 15 9.75M21 12c0 1.268-.63 2.39-1.593 3.068a3.745 3.745 0 01-1.043 3.296 3.745 3.745 0 01-3.296 1.043A3.745 3.745 0 0112 21c-1.268 0-2.39-.63-3.068-1.593a3.746 3.746 0 01-3.296-1.043 3.745 3.745 0 01-1.043-3.296A3.745 3.745 0 013 12c0-1.268.63-2.39 1.593-3.068a3.745 3.745 0 011.043-3.296 3.746 3.746 0 013.296-1.043A3.746 3.746 0 0112 3c1.268 0 2.39.63 3.068 1.593a3.746 3.746 0 013.296 1.043 3.746 3.746 0 011.043 3.296A3.745 3.745 0 0121 12z" /></svg>
+                                        </span>
+                                    @endif
                                     <div>
                                         <p class="text-xs font-bold uppercase tracking-wide text-emerald-900">{{ __('bookings.payment.instructions_heading') }}</p>
-                                        <p class="mt-0.5 font-mono text-sm font-semibold text-slate-800">{{ strtoupper(str_replace('_', ' ', $selectedMethod)) }}</p>
+                                        <p class="mt-0.5 text-sm font-semibold text-slate-800">{{ is_array($selectedMethodUi) ? ($selectedMethodUi['name'] ?? strtoupper(str_replace('_', ' ', $selectedMethod))) : strtoupper(str_replace('_', ' ', $selectedMethod)) }}</p>
                                     </div>
                                 </div>
                                 <span class="inline-flex items-center rounded-full bg-amber-100 px-3 py-1 text-[10px] font-bold uppercase tracking-wide text-amber-950 ring-1 ring-amber-200/80">{{ __('bookings.payment.status_pending') }}</span>

@@ -2,6 +2,7 @@
 
 namespace App\Services\Moota;
 
+use App\Support\AffiliateBankOptions;
 use App\Support\PaymentFlowLog;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Http;
@@ -340,7 +341,7 @@ final class MootaApiClient
 
     /**
      * @param  list<string>  $orderedAccountIds  Urutan sama dengan .env / UI (__0, __1, …).
-     * @return array<int, array{name: string, description: string}>
+     * @return array<int, array{name: string, description: string, bank_type?: string, logo_url?: string|null}>
      */
     public function paymentLabelsForOrderedAccountIds(array $orderedAccountIds): array
     {
@@ -376,9 +377,14 @@ final class MootaApiClient
                 $lines[] = __('bookings.payment.moota_account_number_line', ['account' => $account]);
             }
 
+            $bankCode = AffiliateBankOptions::resolveCodeFromHint((string) ($row['bank_type'] ?? ''))
+                ?? AffiliateBankOptions::resolveCodeFromHint($name);
+
             $out[$i] = [
                 'name' => $name,
                 'description' => implode("\n", $lines),
+                'bank_type' => (string) ($row['bank_type'] ?? ''),
+                'logo_url' => $bankCode !== null ? AffiliateBankOptions::logoUrl($bankCode) : null,
             ];
         }
 

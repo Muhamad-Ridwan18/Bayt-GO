@@ -1,5 +1,5 @@
 import React from 'react';
-import { StyleSheet, Text, View } from 'react-native';
+import { Image, StyleSheet, Text, View } from 'react-native';
 import {
   FlaskConical, ShieldCheck, CreditCard, Building2, Circle, CircleDot,
 } from 'lucide-react-native';
@@ -64,12 +64,17 @@ export function MethodCard({ item, selected, environment, onPress }) {
   const isSandbox = environment?.is_sandbox;
   const Icon = guessMethodIcon(item.id || item.bank_name);
   const RadioIcon = selected ? CircleDot : Circle;
+  const logoUrl = item.logo_url || null;
 
   return (
     <PressableScale onPress={onPress} haptic="light">
-      <Card style={[styles.methodCard, selected && styles.methodCardActive]} padding={spacing.lg}>
-        <View style={[styles.methodIcon, selected && styles.methodIconActive]}>
-          <Icon size={20} color={selected ? colors.white : colors.baytgo} strokeWidth={2} />
+    <Card style={[styles.methodCard, selected && styles.methodCardActive]} padding={spacing.lg}>
+        <View style={[styles.methodIcon, selected && styles.methodIconActive, logoUrl && styles.methodIconLogo]}>
+          {logoUrl ? (
+            <Image source={{ uri: logoUrl }} style={styles.methodLogo} resizeMode="contain" />
+          ) : (
+            <Icon size={20} color={selected ? colors.white : colors.baytgo} strokeWidth={2} />
+          )}
         </View>
         <View style={styles.methodBody}>
           <View style={styles.methodTitleRow}>
@@ -143,6 +148,8 @@ const styles = StyleSheet.create({
     backgroundColor: colors.baytgoLight, alignItems: 'center', justifyContent: 'center',
   },
   methodIconActive: { backgroundColor: colors.baytgo },
+  methodIconLogo: { backgroundColor: colors.white, borderWidth: 1, borderColor: colors.border, overflow: 'hidden' },
+  methodLogo: { width: 36, height: 36 },
   methodBody: { flex: 1 },
   methodTitleRow: { flexDirection: 'row', alignItems: 'center', gap: spacing.sm, flexWrap: 'wrap' },
   methodLabel: { ...typography.caption, fontFamily: 'PlusJakartaSans_700Bold', color: colors.textPrimary },

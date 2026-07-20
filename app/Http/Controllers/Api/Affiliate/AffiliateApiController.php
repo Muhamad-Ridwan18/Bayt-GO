@@ -132,6 +132,7 @@ class AffiliateApiController extends Controller
                 ->get(),
             'bank_accounts' => $affiliate->bankAccounts()->orderByDesc('is_primary')->get(),
             'bank_options' => AffiliateBankOptions::all(),
+            'banks' => AffiliateBankOptions::optionsWithLogos(),
         ]);
     }
 

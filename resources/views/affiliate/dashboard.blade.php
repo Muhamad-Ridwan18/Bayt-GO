@@ -305,9 +305,7 @@
                     @if ($primaryBank)
                         <div class="mt-4 rounded-2xl border border-slate-200 bg-slate-50/80 p-4">
                             <div class="flex items-start gap-3">
-                                <span class="flex h-11 w-11 items-center justify-center rounded-xl bg-emerald-50 text-emerald-700 ring-1 ring-emerald-100">
-                                    <svg class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke-width="1.6" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M2.25 18.75a60.07 60.07 0 0 1 15.797 2.101c.727.198 1.453-.342 1.453-1.096V18.75M3.75 4.5v.75A.75.75 0 0 1 3 6h-.75m0 0v-.375c0-.621.504-1.125 1.125-1.125H20.25M2.25 6v9m18-10.5v.75c0 .414.336.75.75.75h.75m-1.5-1.5h.375c.621 0 1.125.504 1.125 1.125v9.75c0 .621-.504 1.125-1.125 1.125h-.375m1.5-1.5H21a.75.75 0 0 0-.75.75v.75m0 0H3.75m0 0h-.375a1.125 1.125 0 0 1-1.125-1.125V15m1.5 1.5v-.75A.75.75 0 0 0 3 15h-.75M15 10.5a3 3 0 1 1-6 0 3 3 0 0 1 6 0Z" /></svg>
-                                </span>
+                                <x-bank-logo :code="$primaryBank->bank_code" size="lg" />
                                 <div class="min-w-0">
                                     <p class="font-bold text-slate-900">{{ $primaryBank->bank_name }}</p>
                                     <p class="font-mono text-sm tracking-wide text-slate-600">**** {{ substr((string) $primaryBank->account_number, -4) }}</p>
@@ -324,7 +322,10 @@
                             @foreach ($bankAccounts as $bank)
                                 @continue($primaryBank && $bank->is($primaryBank))
                                 <li class="flex items-center justify-between gap-2 py-2 text-sm">
-                                    <span class="truncate text-slate-700">{{ $bank->bank_name }} · **** {{ substr((string) $bank->account_number, -4) }}</span>
+                                    <div class="flex min-w-0 items-center gap-2.5">
+                                        <x-bank-logo :code="$bank->bank_code" size="sm" />
+                                        <span class="truncate text-slate-700">{{ $bank->bank_name }} · **** {{ substr((string) $bank->account_number, -4) }}</span>
+                                    </div>
                                     <form method="POST" action="{{ route('affiliate.bank-accounts.destroy', $bank) }}" onsubmit="return confirm('Hapus rekening ini?')">
                                         @csrf
                                         @method('DELETE')
@@ -335,15 +336,24 @@
                         </ul>
                     @endif
 
-                    <form method="POST" action="{{ route('affiliate.bank-accounts.store') }}" class="mt-4 space-y-3 border-t border-slate-100 pt-4" x-show="addBank" x-cloak>
+                    <form method="POST" action="{{ route('affiliate.bank-accounts.store') }}" class="mt-4 space-y-3 border-t border-slate-100 pt-4" x-show="addBank" x-cloak x-data="{ bankCode: @js(old('bank_code', 'BCA')) }">
                         @csrf
                         <div>
                             <x-input-label for="bank_code" value="Bank" />
-                            <select id="bank_code" name="bank_code" required class="mt-1 w-full rounded-xl border-slate-300 text-sm">
-                                @foreach (AffiliateBankOptions::all() as $code => $label)
-                                    <option value="{{ $code }}" @selected(old('bank_code') === $code)>{{ $label }}</option>
-                                @endforeach
-                            </select>
+                            <div class="mt-1 flex items-center gap-2">
+                                <div class="shrink-0">
+                                    @foreach (AffiliateBankOptions::all() as $code => $label)
+                                        <span x-show="bankCode === @js($code)" x-cloak>
+                                            <x-bank-logo :code="$code" size="md" />
+                                        </span>
+                                    @endforeach
+                                </div>
+                                <select id="bank_code" name="bank_code" required x-model="bankCode" class="w-full rounded-xl border-slate-300 text-sm">
+                                    @foreach (AffiliateBankOptions::all() as $code => $label)
+                                        <option value="{{ $code }}" @selected(old('bank_code') === $code)>{{ $label }}</option>
+                                    @endforeach
+                                </select>
+                            </div>
                         </div>
                         <div>
                             <x-input-label for="account_holder" value="Nama pemilik" />
@@ -385,6 +395,16 @@
                                 @endforeach
                             </select>
                             <x-input-error :messages="$errors->get('bank_account_id')" />
+                            @if ($bankAccounts->isNotEmpty())
+                                <div class="mt-2 flex flex-wrap gap-2">
+                                    @foreach ($bankAccounts as $bank)
+                                        <div class="inline-flex items-center gap-1.5 rounded-lg bg-slate-50 px-2 py-1 text-[11px] text-slate-600 ring-1 ring-slate-200">
+                                            <x-bank-logo :code="$bank->bank_code" size="xs" />
+                                            {{ $bank->bank_name }}
+                                        </div>
+                                    @endforeach
+                                </div>
+                            @endif
                         </div>
                         <div>
                             <x-input-label for="notes" value="Catatan (opsional)" />
@@ -461,7 +481,12 @@
                                     <tr>
                                         <td class="whitespace-nowrap px-4 py-3 text-slate-600">{{ $withdrawal->requested_at?->timezone(config('app.timezone'))->format('d M Y H:i') }}</td>
                                         <td class="px-4 py-3 text-right font-semibold tabular-nums text-slate-900">Rp{{ $fmt((float) $withdrawal->amount) }}</td>
-                                        <td class="px-4 py-3 text-slate-600">{{ $withdrawal->beneficiary_bank }} · **** {{ substr((string) $withdrawal->beneficiary_account, -4) }}</td>
+                                        <td class="px-4 py-3 text-slate-600">
+                                            <div class="flex items-center gap-2">
+                                                <x-bank-logo :code="$withdrawal->beneficiary_bank" size="sm" />
+                                                <span>{{ $withdrawal->beneficiary_bank }} · **** {{ substr((string) $withdrawal->beneficiary_account, -4) }}</span>
+                                            </div>
+                                        </td>
                                         <td class="px-4 py-3">
                                             <span class="inline-flex rounded-full px-2.5 py-0.5 text-xs font-semibold ring-1 {{ $withdrawalBadge($withdrawal->status) }}">{{ $withdrawal->status->label() }}</span>
                                         </td>

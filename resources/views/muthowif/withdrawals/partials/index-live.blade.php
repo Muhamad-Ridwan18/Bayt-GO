@@ -31,7 +31,12 @@
                         <td class="px-4 py-3 font-medium text-slate-900 whitespace-nowrap">
                             Rp {{ \App\Support\IndonesianNumber::formatThousands((string) (int) round((float) $w->amount)) }}
                         </td>
-                        <td class="px-4 py-3 text-slate-800 whitespace-nowrap">{{ $w->beneficiary_bank }} • {{ $w->beneficiary_account }}</td>
+                        <td class="px-4 py-3 text-slate-800 whitespace-nowrap">
+                            <div class="inline-flex items-center gap-2">
+                                <x-bank-logo :code="$w->beneficiary_bank" size="xs" />
+                                <span>{{ $w->beneficiary_bank }} • {{ $w->beneficiary_account }}</span>
+                            </div>
+                        </td>
                         <td class="px-4 py-3 whitespace-nowrap">
                             @php
                                 $tagClass = match ($w->status) {
