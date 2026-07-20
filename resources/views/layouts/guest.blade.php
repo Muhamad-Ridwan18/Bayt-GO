@@ -64,7 +64,7 @@
 
                 <main class="relative flex flex-1 flex-col justify-center px-4 pb-10 sm:px-6 lg:px-10 lg:pb-12 xl:px-12">
                     <div class="mx-auto w-full {{ $formMaxClass }} lg:mx-0 lg:max-w-none">
-                        <div class="rounded-[1.75rem] border border-slate-200/80 bg-white p-6 shadow-[0_18px_48px_-24px_rgba(26,61,52,0.28)] sm:p-8 {{ $isWide ? 'sm:p-9' : 'sm:p-10' }}">
+                        <div class="auth-panel rounded-[1.75rem] border border-slate-200/80 bg-white p-6 shadow-[0_18px_48px_-24px_rgba(26,61,52,0.28)] sm:p-8 {{ $isWide ? 'sm:p-9' : 'sm:p-10' }}">
                             {{ $slot }}
                         </div>
 

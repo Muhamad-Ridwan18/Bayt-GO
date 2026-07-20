@@ -2,6 +2,7 @@ import './bootstrap';
 
 import { initFormSubmitLock } from './form-submit-lock';
 import { registerDateRangePicker } from './date-range-picker';
+import { registerRegisterForm } from './register-form';
 import { registerWhatsappBroadcastAdmin } from './whatsapp-broadcast-admin';
 import Alpine from 'alpinejs';
 
@@ -26,6 +27,7 @@ import {
 } from './reverb-live';
 
 document.addEventListener('alpine:init', () => {
+    registerRegisterForm(Alpine);
     registerWhatsappBroadcastAdmin(Alpine);
 
     Alpine.store('toasts', {
