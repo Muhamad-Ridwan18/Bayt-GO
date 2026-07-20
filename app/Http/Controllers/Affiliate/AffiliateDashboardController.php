@@ -6,6 +6,7 @@ use App\Enums\AffiliateCommissionStatus;
 use App\Enums\AffiliateWithdrawalStatus;
 use App\Http\Controllers\Controller;
 use App\Models\Affiliate;
+use App\Models\AffiliateClick;
 use App\Models\AffiliateCommission;
 use App\Models\AffiliateWalletTransaction;
 use App\Models\AffiliateWithdrawal;
@@ -31,6 +32,18 @@ class AffiliateDashboardController extends Controller
 
         $volume = $affiliate->attributedVolume();
         $level = AffiliateSettings::resolveLevel($volume);
+        $currentMin = (float) $level['min'];
+        $nextMin = $level['next_min'];
+        $levelProgress = 100.0;
+        $remainingToNext = null;
+
+        if ($nextMin !== null && (float) $nextMin > $currentMin) {
+            $span = (float) $nextMin - $currentMin;
+            $levelProgress = min(100.0, max(0.0, (($volume - $currentMin) / $span) * 100));
+            $remainingToNext = max(0.0, (float) $nextMin - $volume);
+        }
+
+        $mom = $this->monthOverMonth($affiliate);
 
         $stats = [
             'available_balance' => (float) $affiliate->available_balance,
@@ -65,10 +78,13 @@ class AffiliateDashboardController extends Controller
             'level' => $level['level'],
             'level_label' => $level['label'],
             'rate' => $level['rate'],
-            'min' => $level['min'],
-            'next_min' => $level['next_min'],
+            'min' => $currentMin,
+            'next_min' => $nextMin,
+            'level_progress' => $levelProgress,
+            'remaining_to_next' => $remainingToNext,
             'tiers' => AffiliateSettings::getTiers(),
             'min_withdraw' => AffiliateSettings::getMinWithdraw(),
+            'mom' => $mom,
         ];
 
         $chart = $this->dailySeries($affiliate, 30);
@@ -77,7 +93,7 @@ class AffiliateDashboardController extends Controller
             ->with('booking')
             ->where('affiliate_id', $affiliate->id)
             ->orderByDesc('created_at')
-            ->paginate(10, ['*'], 'commission_page');
+            ->paginate(8, ['*'], 'commission_page');
 
         $withdrawals = AffiliateWithdrawal::query()
             ->where('affiliate_id', $affiliate->id)
@@ -99,14 +115,103 @@ class AffiliateDashboardController extends Controller
             'withdrawals' => $withdrawals,
             'ledger' => $ledger,
             'bankAccounts' => $bankAccounts,
-            'shareUrl' => url('/?ref='.$affiliate->code),
+            'shareUrl' => url('/r/'.$affiliate->code),
+            'shareUrlDisplay' => parse_url(url('/r/'.$affiliate->code), PHP_URL_HOST).'/r/'.$affiliate->code,
         ]);
     }
 
     /**
-     * Seri harian N hari terakhir: nominal komisi & jumlah booking beratribusi.
-     *
-     * @return array{labels: list<string>, amounts: list<int>, counts: list<int>, total_amount: int, total_count: int}
+     * @return array{
+     *     commission_delta: float,
+     *     clicks_delta_pct: float,
+     *     balance_delta: float,
+     *     pending_delta: float,
+     *     booking_delta: int,
+     *     withdraw_delta: float,
+     *     commission_this_month: float
+     * }
+     */
+    private function monthOverMonth(Affiliate $affiliate): array
+    {
+        $thisStart = now()->startOfMonth();
+        $lastStart = now()->subMonthNoOverflow()->startOfMonth();
+        $lastEnd = (clone $thisStart)->subSecond();
+
+        $commissionThis = (float) AffiliateCommission::query()
+            ->where('affiliate_id', $affiliate->id)
+            ->whereIn('status', [AffiliateCommissionStatus::Pending->value, AffiliateCommissionStatus::Available->value])
+            ->where('created_at', '>=', $thisStart)
+            ->sum('commission_amount');
+
+        $commissionLast = (float) AffiliateCommission::query()
+            ->where('affiliate_id', $affiliate->id)
+            ->whereIn('status', [AffiliateCommissionStatus::Pending->value, AffiliateCommissionStatus::Available->value])
+            ->whereBetween('created_at', [$lastStart, $lastEnd])
+            ->sum('commission_amount');
+
+        $clicksThis = (int) AffiliateClick::query()
+            ->where('affiliate_id', $affiliate->id)
+            ->where('created_at', '>=', $thisStart)
+            ->count();
+
+        $clicksLast = (int) AffiliateClick::query()
+            ->where('affiliate_id', $affiliate->id)
+            ->whereBetween('created_at', [$lastStart, $lastEnd])
+            ->count();
+
+        $bookingThis = (int) AffiliateCommission::query()
+            ->where('affiliate_id', $affiliate->id)
+            ->where('status', AffiliateCommissionStatus::Available)
+            ->where('available_at', '>=', $thisStart)
+            ->count();
+
+        $bookingLast = (int) AffiliateCommission::query()
+            ->where('affiliate_id', $affiliate->id)
+            ->where('status', AffiliateCommissionStatus::Available)
+            ->whereBetween('available_at', [$lastStart, $lastEnd])
+            ->count();
+
+        $withdrawThis = (float) AffiliateWithdrawal::query()
+            ->where('affiliate_id', $affiliate->id)
+            ->where('status', AffiliateWithdrawalStatus::Paid)
+            ->where('paid_at', '>=', $thisStart)
+            ->sum('amount');
+
+        $withdrawLast = (float) AffiliateWithdrawal::query()
+            ->where('affiliate_id', $affiliate->id)
+            ->where('status', AffiliateWithdrawalStatus::Paid)
+            ->whereBetween('paid_at', [$lastStart, $lastEnd])
+            ->sum('amount');
+
+        $pendingThis = (float) AffiliateCommission::query()
+            ->where('affiliate_id', $affiliate->id)
+            ->where('status', AffiliateCommissionStatus::Pending)
+            ->where('pending_at', '>=', $thisStart)
+            ->sum('commission_amount');
+
+        $pendingLast = (float) AffiliateCommission::query()
+            ->where('affiliate_id', $affiliate->id)
+            ->where('status', AffiliateCommissionStatus::Pending)
+            ->whereBetween('pending_at', [$lastStart, $lastEnd])
+            ->sum('commission_amount');
+
+        $clicksDeltaPct = $clicksLast > 0
+            ? (($clicksThis - $clicksLast) / $clicksLast) * 100
+            : ($clicksThis > 0 ? 100.0 : 0.0);
+
+        return [
+            'commission_delta' => round($commissionThis - $commissionLast, 2),
+            'clicks_delta_pct' => round($clicksDeltaPct, 1),
+            'balance_delta' => round($commissionThis - $commissionLast, 2),
+            'pending_delta' => round($pendingThis - $pendingLast, 2),
+            'booking_delta' => $bookingThis - $bookingLast,
+            'withdraw_delta' => round($withdrawThis - $withdrawLast, 2),
+            'commission_this_month' => $commissionThis,
+        ];
+    }
+
+    /**
+     * @return array{labels: list<string>, amounts: list<int>, counts: list<int>, total_amount: int, total_count: int, max_amount: int}
      */
     private function dailySeries(Affiliate $affiliate, int $daysBack): array
     {
@@ -146,6 +251,7 @@ class AffiliateDashboardController extends Controller
             'counts' => $counts,
             'total_amount' => $totalAmount,
             'total_count' => $totalCount,
+            'max_amount' => max(1, ...$amounts),
         ];
     }
 

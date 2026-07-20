@@ -113,7 +113,7 @@ class AffiliateApiController extends Controller
                 'tiers' => AffiliateSettings::getTiers(),
                 'min_withdraw' => AffiliateSettings::getMinWithdraw(),
             ],
-            'share_url' => url('/?ref='.$affiliate->code),
+            'share_url' => url('/r/'.$affiliate->code),
             'commissions' => AffiliateCommission::query()
                 ->with('booking:id,booking_code')
                 ->where('affiliate_id', $affiliate->id)
@@ -236,7 +236,7 @@ class AffiliateApiController extends Controller
             'status' => $affiliate->status->value,
             'available_balance' => (float) $affiliate->available_balance,
             'activated_at' => $affiliate->activated_at?->toIso8601String(),
-            'share_url' => url('/?ref='.$affiliate->code),
+            'share_url' => url('/r/'.$affiliate->code),
             'volume' => $volume,
             'level' => $level['level'],
             'level_label' => $level['label'],
