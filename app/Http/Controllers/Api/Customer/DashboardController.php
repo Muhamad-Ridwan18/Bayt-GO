@@ -43,7 +43,7 @@ class DashboardController extends Controller
         $topMuthowifs = \App\Models\MuthowifProfile::with(['user', 'services'])
             ->withMarketplaceStats()
             ->where('verification_status', \App\Enums\MuthowifVerificationStatus::Approved)
-            ->inRandomOrder()
+            ->orderByMarketplaceRanking()
             ->take(5)
             ->get()
             ->map(fn ($profile) => ApiMuthowifCard::fromProfile($profile));

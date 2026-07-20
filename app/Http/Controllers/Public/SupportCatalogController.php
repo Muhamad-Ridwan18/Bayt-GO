@@ -5,6 +5,7 @@ namespace App\Http\Controllers\Public;
 use App\Enums\BookingStatus;
 use App\Enums\SupportPackageCategory;
 use App\Http\Controllers\Controller;
+use App\Models\MuthowifProfile;
 use App\Models\MuthowifSupportPackage;
 use Carbon\Carbon;
 use Illuminate\Database\Eloquent\Builder;
@@ -85,9 +86,12 @@ class SupportCatalogController extends Controller
                             ->orWhere('description', 'like', '%'.$q.'%')
                             ->orWhereHas('muthowifProfile.user', fn ($u) => $u->where('name', 'like', '%'.$q.'%'));
                     });
-                })
-                ->orderBy('sort_order')
-                ->orderBy('name')
+                });
+
+            $packages = MuthowifProfile::orderRelatedByMarketplaceRanking(
+                $packages,
+                'muthowif_support_packages.muthowif_profile_id',
+            )
                 ->paginate(12)
                 ->withQueryString();
         }

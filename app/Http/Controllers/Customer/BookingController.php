@@ -743,7 +743,7 @@ class BookingController extends Controller
 
             $affiliateSnapshot = app(\App\Services\AffiliateAttributionService::class)->snapshotForBooking(
                 new MuthowifBooking($attributes),
-                $validated['affiliate_code'] ?? null,
+                \App\Support\AffiliateReferralCapture::resolveForBooking($request, $validated['affiliate_code'] ?? null),
                 (string) $request->user()->id,
                 $request->user()->isCompanyCustomer(),
             );
@@ -759,6 +759,11 @@ class BookingController extends Controller
             $booking->delete();
 
             throw $e;
+        }
+
+        if ($booking->affiliate_id !== null) {
+            app(\App\Services\AffiliateReferralService::class)->markConverted($booking, $request);
+            app(\App\Services\AffiliateNotifier::class)->referralBooked($booking);
         }
 
         app(BookingNotificationDispatcher::class)->dispatchCreated($booking);

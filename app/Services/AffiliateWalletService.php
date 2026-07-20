@@ -136,6 +136,8 @@ class AffiliateWalletService
             $locked->processed_by = $admin->id;
             $locked->save();
 
+            app(AffiliateNotifier::class)->withdrawalApproved($locked);
+
             return $locked;
         });
     }
@@ -194,6 +196,8 @@ class AffiliateWalletService
                 $locked->transfer_proof_path = $transferProofPath;
             }
             $locked->save();
+
+            app(AffiliateNotifier::class)->withdrawalPaid($locked);
 
             return $locked;
         });

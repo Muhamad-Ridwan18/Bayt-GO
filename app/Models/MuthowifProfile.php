@@ -191,6 +191,33 @@ class MuthowifProfile extends Model
             ->orderBy('created_at');
     }
 
+    /**
+     * Urutan ranking lewat FK ke muthowif_profiles (mis. katalog paket).
+     *
+     * @param  \Illuminate\Database\Eloquent\Builder<\Illuminate\Database\Eloquent\Model>  $query
+     * @return \Illuminate\Database\Eloquent\Builder<\Illuminate\Database\Eloquent\Model>
+     */
+    public static function orderRelatedByMarketplaceRanking($query, string $profileIdColumn)
+    {
+        $confirmed = BookingStatus::Confirmed->value;
+        $completed = BookingStatus::Completed->value;
+
+        return $query
+            ->orderByRaw(
+                "COALESCE((SELECT AVG(rating) FROM booking_reviews WHERE muthowif_profile_id = {$profileIdColumn}), 0) DESC"
+            )
+            ->orderByRaw(
+                "(SELECT COUNT(*) FROM muthowif_bookings WHERE muthowif_profile_id = {$profileIdColumn} AND status IN (?, ?)) DESC",
+                [$confirmed, $completed]
+            )
+            ->orderBy(
+                static::query()
+                    ->select('created_at')
+                    ->whereColumn('muthowif_profiles.id', $profileIdColumn)
+                    ->limit(1)
+            );
+    }
+
     protected function casts(): array
     {
         return [

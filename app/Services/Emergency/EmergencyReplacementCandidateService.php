@@ -6,7 +6,6 @@ use App\Enums\BookingStatus;
 use App\Models\MuthowifBooking;
 use App\Models\MuthowifProfile;
 use App\Models\MuthowifService;
-use App\Models\User;
 use Carbon\CarbonInterface;
 use Illuminate\Support\Collection;
 
@@ -31,14 +30,10 @@ final class EmergencyReplacementCandidateService
             ->with(['user', 'services'])
             ->approved()
             ->hasPublishedServices()
+            ->withMarketplaceStats()
             ->whereKeyNot($excludeAll)
             ->whereHas('services', fn ($q) => $q->where('type', $booking->service_type->value))
-            ->orderBy(
-                User::query()
-                    ->select('name')
-                    ->whereColumn('users.id', 'muthowif_profiles.user_id')
-                    ->limit(1)
-            )
+            ->orderByMarketplaceRanking()
             ->limit(500)
             ->get()
             ->filter(fn (MuthowifProfile $p) => $this->profileMatchesBooking($booking, $p))

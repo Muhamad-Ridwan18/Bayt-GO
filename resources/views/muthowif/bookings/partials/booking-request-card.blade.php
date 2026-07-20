@@ -49,10 +49,6 @@
     $muthowifNetIdr = (float) ($priceSplit['muthowif_net'] ?? 0.0);
     $muthowifFeeIdr = (float) ($priceSplit['muthowif_fee'] ?? 0.0);
 
-    $totalBillIdr = (float) $booking->resolvedAmountDue();
-    $paidIdr = $booking->payment_status === PaymentStatus::Paid ? $totalBillIdr : 0.0;
-    $remainingIdr = max(0.0, $totalBillIdr - $paidIdr);
-
     $documentCount = collect([
         $booking->ticket_outbound_path,
         $booking->ticket_return_path,
@@ -75,20 +71,6 @@
         BookingStatus::Completed => 'bg-emerald-500',
         BookingStatus::Cancelled => 'bg-red-400',
         default => 'bg-slate-400',
-    };
-
-    $paymentPillClass = match (true) {
-        $st === BookingStatus::Confirmed && $booking->payment_status === PaymentStatus::Paid => 'bg-emerald-100 text-emerald-900 ring-emerald-200/90',
-        $st === BookingStatus::Confirmed && $booking->payment_status === PaymentStatus::Pending => 'bg-orange-100 text-orange-900 ring-orange-200/90',
-        $booking->payment_status === PaymentStatus::RefundPending => 'bg-amber-100 text-amber-900 ring-amber-200/90',
-        $booking->payment_status === PaymentStatus::Refunded => 'bg-red-100 text-red-800 ring-red-200/80',
-        default => 'bg-slate-100 text-slate-700 ring-slate-200/80',
-    };
-
-    $paymentPillLabel = match (true) {
-        $st === BookingStatus::Confirmed && $booking->payment_status === PaymentStatus::Pending => __('muthowif.bookings.waiting_payment'),
-        $st === BookingStatus::Confirmed => $booking->payment_status->label(),
-        default => $booking->payment_status->label(),
     };
 
     $customer = $booking->customer;
@@ -170,22 +152,6 @@
                     </div>
                 </button>
 
-                {{-- Ringkasan pembayaran (saat dibuka) --}}
-                <div class="grid w-full grid-cols-3 gap-2 sm:max-w-md xl:flex-1" x-show="open" x-cloak>
-                    <div class="rounded-lg border border-slate-200 bg-slate-50/80 px-2.5 py-2 text-center sm:px-3">
-                        <p class="text-[10px] font-medium uppercase tracking-wide text-slate-500">{{ __('muthowif.bookings.total_bill') }}</p>
-                        <p class="mt-0.5 text-sm font-bold tabular-nums text-slate-900 sm:text-base">Rp {{ IndonesianNumber::formatThousands((string) (int) round($totalBillIdr)) }}</p>
-                    </div>
-                    <div class="rounded-lg border border-emerald-100 bg-emerald-50/80 px-2.5 py-2 text-center sm:px-3">
-                        <p class="text-[10px] font-medium uppercase tracking-wide text-emerald-800/80">{{ __('muthowif.bookings.paid') }}</p>
-                        <p class="mt-0.5 text-sm font-bold tabular-nums text-emerald-700 sm:text-base">Rp {{ IndonesianNumber::formatThousands((string) (int) round($paidIdr)) }}</p>
-                    </div>
-                    <div class="rounded-lg border border-red-100 bg-red-50/90 px-2.5 py-2 text-center sm:px-3">
-                        <p class="text-[10px] font-medium uppercase tracking-wide text-red-800/80">{{ __('muthowif.bookings.remaining_balance') }}</p>
-                        <p class="mt-0.5 text-sm font-bold tabular-nums text-red-700 sm:text-base">Rp {{ IndonesianNumber::formatThousands((string) (int) round($remainingIdr)) }}</p>
-                    </div>
-                </div>
-
                 {{-- Pendapatan bersih (saat ditutup) --}}
                 <div class="flex shrink-0 flex-col items-end gap-1 sm:min-w-[9rem] xl:items-center xl:text-center" x-show="!open">
                     <p class="text-[11px] font-medium uppercase tracking-wide text-slate-500">{{ __('muthowif.bookings.net_earning_short') }}</p>
@@ -243,7 +209,7 @@
                 x-cloak
                 class="border-t border-slate-100"
             >
-                <div class="grid gap-4 p-4 sm:p-5 lg:grid-cols-3 lg:items-stretch lg:gap-5">
+                <div class="grid gap-4 p-4 sm:p-5 lg:grid-cols-2 lg:items-stretch lg:gap-5">
                     {{-- Rincian Layanan --}}
                     <div class="flex h-full flex-col overflow-hidden rounded-xl border border-slate-200/90 bg-white shadow-sm ring-1 ring-slate-100/80">
                         <div class="flex items-center gap-2 border-b border-slate-100 px-4 py-3">
@@ -319,46 +285,6 @@
                                 <svg class="h-3.5 w-3.5" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true"><path fill-rule="evenodd" d="M3 10a.75.75 0 01.75-.75h10.638L10.23 5.29a.75.75 0 111.04-1.08l5.5 5.25a.75.75 0 010 1.08l-5.5 5.25a.75.75 0 11-1.04-1.08l4.158-3.96H3.75A.75.75 0 013 10z" clip-rule="evenodd" /></svg>
                             </button>
                         @endif
-                        </div>
-                    </div>
-
-                    {{-- Pembayaran --}}
-                    <div class="flex h-full flex-col overflow-hidden rounded-xl border border-slate-200/90 bg-white shadow-sm ring-1 ring-slate-100/80">
-                        <div class="flex items-center gap-2 border-b border-slate-100 px-4 py-3">
-                            <span class="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-brand-50 text-brand-700">
-                                <svg class="h-4 w-4" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true"><path d="M8.25 7.5a2.25 2.25 0 114.5 0 2.25 2.25 0 01-4.5 0zM12 13.5a2.25 2.25 0 100-4.5 2.25 2.25 0 000 4.5z" /><path fill-rule="evenodd" d="M5.978 2.856a1.5 1.5 0 00-1.342.662l-3 4.5A1.5 1.5 0 002.5 9.5v5A1.5 1.5 0 004 16h12a1.5 1.5 0 001.5-1.5v-5a1.5 1.5 0 00-.136-.982l-3-4.5a1.5 1.5 0 00-1.342-.662H5.978z" clip-rule="evenodd" /></svg>
-                            </span>
-                            <h3 class="text-sm font-bold text-slate-900">{{ __('muthowif.bookings.payment_info_heading') }}</h3>
-                            @if ($st === BookingStatus::Confirmed || in_array($booking->payment_status, [PaymentStatus::RefundPending, PaymentStatus::Refunded], true))
-                                <span class="ml-auto inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-semibold ring-1 {{ $paymentPillClass }}">
-                                    {{ $paymentPillLabel }}
-                                </span>
-                            @endif
-                        </div>
-                        <div class="flex flex-1 flex-col p-4">
-                        <dl class="space-y-3 text-sm">
-                            <div class="flex justify-between gap-2">
-                                <dt class="text-slate-600">{{ __('muthowif.bookings.total_bill') }}</dt>
-                                <dd class="font-semibold tabular-nums text-slate-900">Rp {{ IndonesianNumber::formatThousands((string) (int) round($totalBillIdr)) }}</dd>
-                            </div>
-                            <div class="flex justify-between gap-2">
-                                <dt class="text-slate-600">{{ __('muthowif.bookings.paid') }}</dt>
-                                <dd class="font-semibold tabular-nums text-emerald-700">Rp {{ IndonesianNumber::formatThousands((string) (int) round($paidIdr)) }}</dd>
-                            </div>
-                            <div class="flex justify-between gap-2 rounded-lg border border-red-100 bg-red-50/80 px-3 py-2.5">
-                                <dt class="font-semibold text-red-800">{{ __('muthowif.bookings.unpaid_bill') }}</dt>
-                                <dd class="font-bold tabular-nums text-red-700">Rp {{ IndonesianNumber::formatThousands((string) (int) round($remainingIdr)) }}</dd>
-                            </div>
-                        </dl>
-                        @if ($st === BookingStatus::Pending)
-                            <div class="mt-4 flex gap-2 rounded-lg border border-amber-100 bg-amber-50/90 px-3 py-2.5 text-xs leading-relaxed text-amber-950">
-                                <svg class="mt-0.5 h-4 w-4 shrink-0 text-amber-600" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true"><path fill-rule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a.75.75 0 000 1.5h.253a.25.25 0 01.244.304l-.459 2.066A1.75 1.75 0 0010.747 15H11a.75.75 0 000-1.5h-.253a.25.25 0 01-.244-.304l.459-2.066A1.75 1.75 0 009.253 9H9z" clip-rule="evenodd" /></svg>
-                                <p>{{ __('muthowif.bookings.payment_info_hint') }}</p>
-                            </div>
-                        @endif
-                        <a href="{{ route('muthowif.bookings.show', $booking) }}" class="mt-auto pt-3 text-xs font-semibold text-brand-700 hover:text-brand-800">
-                            {{ __('muthowif.bookings.view_payment_details') }}
-                        </a>
                         </div>
                     </div>
                 </div>

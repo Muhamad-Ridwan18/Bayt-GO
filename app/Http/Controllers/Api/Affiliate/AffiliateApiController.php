@@ -103,10 +103,12 @@ class AffiliateApiController extends Controller
                     ->where('affiliate_id', $affiliate->id)
                     ->where('status', AffiliateWithdrawalStatus::Paid)
                     ->sum('amount'),
+                'total_clicks' => (int) $affiliate->clicks()->count(),
                 'volume' => $volume,
                 'level' => $level['level'],
                 'level_label' => $level['label'],
                 'rate' => $level['rate'],
+                'min' => $level['min'],
                 'next_min' => $level['next_min'],
                 'tiers' => AffiliateSettings::getTiers(),
                 'min_withdraw' => AffiliateSettings::getMinWithdraw(),

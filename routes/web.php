@@ -136,6 +136,9 @@ Route::get('/sitemap-{type}-{page}.xml', [SeoLandingController::class, 'sitemapP
     ->name('seo.sitemap.page');
 
 Route::get('/', WelcomeController::class)->name('welcome');
+Route::get('/r/{code}', fn (string $code) => redirect()->route('welcome'))
+    ->where('code', '[A-Za-z0-9]{3,32}')
+    ->name('affiliate.landing');
 
 /** Hanya local: beberapa panel uji hanya bisa POST ke root URL tunnel (tanpa path). */
 if (app()->environment('local')) {

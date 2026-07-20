@@ -99,7 +99,7 @@ class SupportBookingService
 
             $affiliateSnapshot = app(AffiliateAttributionService::class)->snapshotForBooking(
                 new MuthowifBooking($attributes),
-                $request->input('affiliate_code'),
+                \App\Support\AffiliateReferralCapture::resolveForBooking($request, $request->input('affiliate_code')),
                 (string) $request->user()->id,
                 $request->user()->isCompanyCustomer(),
             );
@@ -110,6 +110,11 @@ class SupportBookingService
 
     public function dispatchCreated(MuthowifBooking $booking): void
     {
+        if ($booking->affiliate_id !== null) {
+            app(AffiliateReferralService::class)->markConverted($booking);
+            app(AffiliateNotifier::class)->referralBooked($booking);
+        }
+
         app(BookingNotificationDispatcher::class)->dispatchCreated($booking);
         CustomerBookingBroadcast::afterResponse($booking);
     }

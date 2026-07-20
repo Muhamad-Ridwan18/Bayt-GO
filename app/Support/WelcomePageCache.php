@@ -75,7 +75,8 @@ final class WelcomePageCache
         $latestServices = MuthowifProfile::query()
             ->approved()
             ->with('user:id,name')
-            ->orderByDesc('updated_at')
+            ->withMarketplaceStats()
+            ->orderByMarketplaceRanking()
             ->limit(4)
             ->get();
 

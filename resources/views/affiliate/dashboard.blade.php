@@ -136,47 +136,128 @@
 
             {{-- ── Level & progress ─────────────────────────────────────── --}}
             @php
-                $levelProgress = null;
-                if ($stats['next_min'] !== null && $stats['next_min'] > 0) {
-                    $levelProgress = min(100, max(0, ($stats['volume'] / $stats['next_min']) * 100));
+                $currentMin = (float) ($stats['min'] ?? 0);
+                $nextMin = $stats['next_min'];
+                $volume = (float) $stats['volume'];
+                $levelProgress = 100.0;
+                $remainingToNext = null;
+
+                if ($nextMin !== null && (float) $nextMin > $currentMin) {
+                    $span = (float) $nextMin - $currentMin;
+                    $levelProgress = min(100, max(0, (($volume - $currentMin) / $span) * 100));
+                    $remainingToNext = max(0, (float) $nextMin - $volume);
                 }
+
+                $ratePct = rtrim(rtrim(number_format($stats['rate'] * 100, 2, '.', ''), '0'), '.');
             @endphp
-            <div class="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm sm:p-6">
+            <div class="rounded-2xl border border-emerald-200/80 bg-gradient-to-br from-white via-emerald-50/40 to-teal-50/30 p-5 shadow-sm sm:p-6">
                 <div class="flex flex-wrap items-start justify-between gap-4">
                     <div>
-                        <p class="text-[11px] font-semibold uppercase tracking-wide text-slate-500">Level Affiliate</p>
-                        <p class="mt-1 text-2xl font-bold text-slate-900">{{ $stats['level_label'] }} · {{ rtrim(rtrim(number_format($stats['rate'] * 100, 2, '.', ''), '0'), '.') }}%</p>
-                        <p class="mt-1 text-sm text-slate-600">Total omzet beratribusi: <span class="font-semibold tabular-nums text-slate-800">Rp {{ $fmt($stats['volume']) }}</span></p>
+                        <p class="text-[11px] font-semibold uppercase tracking-wide text-emerald-700">Level Affiliate</p>
+                        <p class="mt-1 text-2xl font-bold text-slate-900">
+                            {{ $stats['level_label'] }}
+                            <span class="text-emerald-700">· {{ $ratePct }}%</span>
+                        </p>
+                        <p class="mt-1 text-sm text-slate-600">
+                            Omzet beratribusi:
+                            <span class="font-semibold tabular-nums text-slate-800">Rp {{ $fmt($volume) }}</span>
+                        </p>
                     </div>
-                    <div class="flex flex-wrap gap-2">
-                        @foreach ($stats['tiers'] as $tier)
-                            <span @class([
-                                'inline-flex items-center rounded-full px-3 py-1 text-xs font-semibold ring-1',
-                                'bg-emerald-50 text-emerald-800 ring-emerald-200' => $tier['level'] === $stats['level'],
-                                'bg-slate-50 text-slate-600 ring-slate-200' => $tier['level'] !== $stats['level'],
-                            ])>
-                                L{{ $tier['level'] }} {{ rtrim(rtrim(number_format($tier['rate'] * 100, 2, '.', ''), '0'), '.') }}%
-                            </span>
+                    <div class="rounded-xl bg-white/80 px-4 py-2.5 text-center ring-1 ring-emerald-100">
+                        <p class="text-[10px] font-semibold uppercase tracking-wide text-slate-500">Komisi saat ini</p>
+                        <p class="mt-0.5 text-lg font-bold tabular-nums text-emerald-700">{{ $ratePct }}%</p>
+                    </div>
+                </div>
+
+                {{-- Step level --}}
+                <div class="mt-5">
+                    <div class="flex items-center justify-between gap-2">
+                        @foreach ($stats['tiers'] as $i => $tier)
+                            @php
+                                $reached = $stats['level'] >= $tier['level'];
+                                $isCurrent = $stats['level'] === $tier['level'];
+                                $tierRate = rtrim(rtrim(number_format($tier['rate'] * 100, 2, '.', ''), '0'), '.');
+                            @endphp
+                            <div class="flex min-w-0 flex-1 flex-col items-center gap-1.5">
+                                <div @class([
+                                    'flex h-9 w-9 items-center justify-center rounded-full text-sm font-bold ring-2 transition',
+                                    'bg-emerald-600 text-white ring-emerald-600' => $reached && ! $isCurrent,
+                                    'bg-emerald-600 text-white ring-emerald-300 ring-offset-2' => $isCurrent,
+                                    'bg-white text-slate-400 ring-slate-200' => ! $reached,
+                                ])>
+                                    {{ $tier['level'] }}
+                                </div>
+                                <p @class([
+                                    'text-center text-[11px] font-semibold',
+                                    'text-emerald-800' => $isCurrent,
+                                    'text-slate-700' => $reached && ! $isCurrent,
+                                    'text-slate-400' => ! $reached,
+                                ])>
+                                    Level {{ $tier['level'] }}
+                                </p>
+                                <p class="text-center text-[10px] tabular-nums text-slate-500">{{ $tierRate }}%</p>
+                                @if ($tier['min'] > 0)
+                                    <p class="text-center text-[10px] tabular-nums text-slate-400">≥ Rp {{ $fmt($tier['min']) }}</p>
+                                @else
+                                    <p class="text-center text-[10px] text-slate-400">Mulai</p>
+                                @endif
+                            </div>
+                            @if ($i < count($stats['tiers']) - 1)
+                                <div @class([
+                                    'mb-8 h-1 flex-1 rounded-full',
+                                    'bg-emerald-500' => $stats['level'] > $tier['level'],
+                                    'bg-slate-200' => $stats['level'] <= $tier['level'],
+                                ])></div>
+                            @endif
                         @endforeach
                     </div>
                 </div>
-                @if ($stats['next_min'] !== null)
-                    <div class="mt-4">
-                        <div class="mb-1.5 flex justify-between text-xs text-slate-500">
-                            <span>Progress ke Level {{ $stats['level'] + 1 }}</span>
-                            <span class="tabular-nums">Rp {{ $fmt($stats['volume']) }} / Rp {{ $fmt($stats['next_min']) }}</span>
+
+                {{-- Progress bar ke level berikutnya --}}
+                @if ($nextMin !== null)
+                    <div class="mt-5 rounded-xl bg-white/70 p-4 ring-1 ring-emerald-100">
+                        <div class="mb-2 flex flex-wrap items-end justify-between gap-2 text-xs">
+                            <div>
+                                <p class="font-semibold text-slate-700">Progress ke Level {{ $stats['level'] + 1 }}</p>
+                                <p class="mt-0.5 text-slate-500">
+                                    Butuh
+                                    <span class="font-semibold tabular-nums text-slate-700">Rp {{ $fmt($remainingToNext ?? 0) }}</span>
+                                    lagi
+                                </p>
+                            </div>
+                            <p class="tabular-nums font-semibold text-emerald-700">{{ number_format($levelProgress, 0) }}%</p>
                         </div>
-                        <div class="h-2.5 overflow-hidden rounded-full bg-slate-100">
-                            <div class="h-full rounded-full bg-emerald-500 transition-all" style="width: {{ number_format($levelProgress ?? 0, 2, '.', '') }}%"></div>
+                        <div class="h-3 overflow-hidden rounded-full bg-slate-100">
+                            <div
+                                class="h-full rounded-full bg-gradient-to-r from-emerald-500 to-teal-500 transition-all"
+                                style="width: {{ number_format($levelProgress, 2, '.', '') }}%"
+                            ></div>
+                        </div>
+                        <div class="mt-1.5 flex justify-between text-[10px] tabular-nums text-slate-400">
+                            <span>Rp {{ $fmt($currentMin) }}</span>
+                            <span>Rp {{ $fmt($volume) }}</span>
+                            <span>Rp {{ $fmt($nextMin) }}</span>
                         </div>
                     </div>
                 @else
-                    <p class="mt-3 text-sm font-medium text-emerald-700">Anda sudah di level tertinggi.</p>
+                    <div class="mt-5 rounded-xl bg-emerald-600/10 px-4 py-3 text-sm font-medium text-emerald-800 ring-1 ring-emerald-200">
+                        Anda sudah di level tertinggi. Rate komisi maksimal aktif.
+                    </div>
                 @endif
             </div>
 
             {{-- ── Kartu statistik ──────────────────────────────────────── --}}
-            <div class="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
+            <div class="grid gap-4 sm:grid-cols-2 xl:grid-cols-5">
+                <div class="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
+                    <div class="flex items-center justify-between gap-3">
+                        <p class="text-[11px] font-semibold uppercase tracking-wide text-slate-500">Total Klik</p>
+                        <span class="flex h-10 w-10 items-center justify-center rounded-full bg-sky-50 text-sky-600 ring-1 ring-sky-100">
+                            <svg class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke-width="1.6" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M15.042 21.672 13.684 16.6m0 0-2.51 2.225.569-9.47 5.227 7.917-3.286-.672Zm-7.518-.267A8.25 8.25 0 1 1 20.25 10.5M8.288 14.212A5.25 5.25 0 1 1 17.25 10.5" /></svg>
+                        </span>
+                    </div>
+                    <p class="mt-1 text-2xl font-bold tabular-nums text-slate-900">{{ $stats['total_clicks'] }}</p>
+                    <p class="mt-1 text-[11px] text-slate-400">Kunjungan lewat link referral</p>
+                </div>
                 <div class="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
                     <div class="flex items-center justify-between gap-3">
                         <p class="text-[11px] font-semibold uppercase tracking-wide text-slate-500">Saldo Tersedia</p>

@@ -298,7 +298,7 @@
                                     id="affiliate_code_{{ $profile->id }}"
                                     type="text"
                                     name="affiliate_code"
-                                    value="{{ old('affiliate_code') }}"
+                                    value="{{ old('affiliate_code', \App\Support\AffiliateReferralCapture::code()) }}"
                                     maxlength="32"
                                     autocomplete="off"
                                     placeholder="Contoh: RIDWAN"

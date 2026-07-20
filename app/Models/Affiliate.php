@@ -62,6 +62,11 @@ class Affiliate extends Model
         return $this->hasMany(MuthowifBooking::class, 'affiliate_id');
     }
 
+    public function clicks(): HasMany
+    {
+        return $this->hasMany(AffiliateClick::class);
+    }
+
     public function isActive(): bool
     {
         return $this->status === AffiliateStatus::Active;

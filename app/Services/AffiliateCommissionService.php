@@ -120,6 +120,8 @@ class AffiliateCommissionService
             $commission->available_at = now();
             $commission->save();
 
+            app(AffiliateNotifier::class)->commissionAvailable($commission);
+
             return $commission;
         });
     }

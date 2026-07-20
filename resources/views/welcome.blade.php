@@ -53,10 +53,10 @@
             ];
             $homeDesc = "Temukan Muthowif terbaik dan jasa tour guide ibadah Umroh & Haji terpercaya di Bayt-GO. Bandingkan rating, ulasan, harga, dan pesan langsung asisten ibadah terverifikasi Anda secara mudah.";
         @endphp
-        <x-seo-meta
-            title="Jasa Tour Guide Ibadah Umroh & Haji | Muthowif Terpercaya"
-            :description="$homeDesc"
-            :schema="$homeSchema"
+        <x-seo-meta 
+            title="Jasa Tour Guide Ibadah Umroh & Haji | Muthowif Terpercaya" 
+            :description="$homeDesc" 
+            :schema="$homeSchema" 
         />
         <link rel="preconnect" href="https://fonts.bunny.net">
         <link href="https://fonts.bunny.net/css?family=inter:400,500,600,700&family=plus-jakarta-sans:400,500,600,700&display=swap" rel="stylesheet">
