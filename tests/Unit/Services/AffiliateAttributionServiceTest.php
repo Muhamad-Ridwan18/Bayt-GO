@@ -66,6 +66,49 @@ class AffiliateAttributionServiceTest extends TestCase
         $this->assertSame(10000.0, $snapshot['affiliate_commission_amount']);
     }
 
+    public function test_snapshot_base_includes_hotel_transport_and_addons(): void
+    {
+        $this->seedFeeAndTiers();
+
+        $affiliateUser = User::factory()->create(['role' => UserRole::Customer]);
+        $customer = User::factory()->create(['role' => UserRole::Customer]);
+
+        Affiliate::query()->create([
+            'user_id' => $affiliateUser->id,
+            'code' => 'FULL01',
+            'status' => AffiliateStatus::Active,
+            'available_balance' => 0,
+            'activated_at' => now(),
+        ]);
+
+        // Even if total_amount is wrong/incomplete, affiliate base must use full components.
+        $booking = new MuthowifBooking([
+            'customer_id' => $customer->id,
+            'service_type' => 'private',
+            'starts_on' => '2026-08-01',
+            'ends_on' => '2026-08-03',
+            'daily_price_snapshot' => 1_000_000,
+            'same_hotel_price_snapshot' => 200_000,
+            'transport_price_snapshot' => 150_000,
+            'with_same_hotel' => true,
+            'with_transport' => true,
+            'add_ons_snapshot' => [
+                ['id' => '1', 'name' => 'Kursi roda', 'price' => 50_000],
+            ],
+            'total_amount' => 1_000_000,
+        ]);
+
+        $snapshot = app(AffiliateAttributionService::class)->snapshotForBooking(
+            $booking,
+            'FULL01',
+            (string) $customer->id,
+        );
+
+        // 3 nights * 1jt + addon 50rb + hotel 3*200rb + transport 150rb = 3_800_000
+        $this->assertSame(3_800_000.0, $snapshot['affiliate_base_amount_snapshot']);
+        $this->assertSame(38_000.0, $snapshot['affiliate_commission_amount']);
+    }
+
     public function test_self_referral_is_allowed(): void
     {
         $this->seedFeeAndTiers();

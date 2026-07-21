@@ -95,6 +95,7 @@ class SupportBookingService
                 'status' => BookingStatus::Pending,
                 'package_price_snapshot' => (string) $package->price,
                 'package_name_snapshot' => $package->name,
+                'total_amount' => (float) $package->price,
             ];
 
             $affiliateSnapshot = app(AffiliateAttributionService::class)->snapshotForBooking(

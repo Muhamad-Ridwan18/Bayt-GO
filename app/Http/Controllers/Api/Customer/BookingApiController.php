@@ -197,6 +197,9 @@ class BookingApiController extends Controller
                     'ends_on' => $end->toDateString(),
                 ])));
 
+                $draft = new MuthowifBooking($attributes);
+                $attributes['total_amount'] = $pricingService->calculateBaseFromComponents($draft);
+
                 $affiliateSnapshot = app(\App\Services\AffiliateAttributionService::class)->snapshotForBooking(
                     new MuthowifBooking($attributes),
                     \App\Support\AffiliateReferralCapture::resolveForBooking($request, $validated['affiliate_code'] ?? null),

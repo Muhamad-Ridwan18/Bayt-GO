@@ -53,7 +53,7 @@ class AffiliateAttributionService
             ]);
         }
 
-        $base = round($booking->resolvedAmountDue(), 2);
+        $base = round(app(BookingPricingService::class)->calculateBaseFromComponents($booking), 2);
 
         return $this->snapshotFromResolvedAffiliate($affiliate, $base, $isCompanyCustomer);
     }
