@@ -10,10 +10,7 @@
         })"
     >
         <div x-ref="liveRoot">
-            @include('muthowif.bookings.partials.index-live', [
-                'bookings' => $bookings,
-                'addonsById' => $addonsById,
-            ])
+            @include('muthowif.bookings.partials.index-live', ['page' => $page])
         </div>
     </div>
 </x-app-layout>

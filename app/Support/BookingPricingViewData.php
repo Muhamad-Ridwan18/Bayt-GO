@@ -90,4 +90,71 @@ final class BookingPricingViewData
             'packageName' => null,
         ];
     }
+
+    /**
+     * @param  array<string, mixed>|Collection<string, mixed>  $addonsById
+     * @return array{
+     *   nights: int,
+     *   daily: float,
+     *   serviceSubtotal: float,
+     *   addonLines: Collection,
+     *   sameHotelLine: float,
+     *   transportLine: float,
+     *   muthowifFee: float,
+     *   muthowifNet: float
+     * }
+     */
+    public static function forMuthowif(MuthowifBooking $booking, array|Collection $addonsById = []): array
+    {
+        if ($addonsById instanceof Collection) {
+            $addonsById = $addonsById->all();
+        }
+
+        $nights = $booking->billingNightsInclusive();
+
+        if ($booking->isSupport()) {
+            $serviceSubtotal = (float) ($booking->package_price_snapshot ?? $booking->resolvedAmountDue());
+            $addonLines = collect();
+            $sameHotelLine = 0.0;
+            $transportLine = 0.0;
+            $totalGross = $serviceSubtotal;
+            $daily = 0.0;
+        } else {
+            $service = $booking->muthowifProfile?->services->firstWhere('type', $booking->service_type);
+            $daily = (float) ($booking->daily_price_snapshot ?? ($service ? $service->daily_price : 0.0));
+            $serviceSubtotal = (float) ($nights * $daily);
+
+            $addonLines = collect();
+            if ($booking->service_type === MuthowifServiceType::PrivateJamaah) {
+                if (! empty($booking->add_ons_snapshot)) {
+                    $addonLines = collect($booking->add_ons_snapshot)->map(fn ($a) => (object) $a);
+                } elseif (! empty($booking->selected_add_on_ids)) {
+                    foreach ($booking->selected_add_on_ids as $aid) {
+                        if (isset($addonsById[$aid])) {
+                            $addonLines->push($addonsById[$aid]);
+                        }
+                    }
+                }
+            }
+
+            $sameHotelPrice = (float) ($booking->same_hotel_price_snapshot ?? ($service ? $service->same_hotel_price_per_day : 0.0));
+            $sameHotelLine = $booking->with_same_hotel ? ($nights * $sameHotelPrice) : 0.0;
+            $transportPrice = (float) ($booking->transport_price_snapshot ?? ($service ? (float) $service->transport_price_flat : 0.0));
+            $transportLine = $booking->with_transport ? $transportPrice : 0.0;
+            $totalGross = (float) ($serviceSubtotal + $addonLines->sum(fn ($a) => (float) $a->price) + $sameHotelLine + $transportLine);
+        }
+
+        $split = PlatformFee::split($totalGross);
+
+        return [
+            'nights' => $nights,
+            'daily' => $daily,
+            'serviceSubtotal' => $serviceSubtotal,
+            'addonLines' => $addonLines,
+            'sameHotelLine' => $sameHotelLine,
+            'transportLine' => $transportLine,
+            'muthowifFee' => (float) ($split['muthowif_fee'] ?? 0.0),
+            'muthowifNet' => (float) ($split['muthowif_net'] ?? 0.0),
+        ];
+    }
 }

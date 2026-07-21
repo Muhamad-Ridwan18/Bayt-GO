@@ -148,6 +148,32 @@ class LayananAndBookingShowSmokeTest extends TestCase
         $response->assertSee('Ustadz Smoke Test', false);
     }
 
+    public function test_muthowif_booking_index_renders(): void
+    {
+        ['profile' => $profile, 'customer' => $customer] = $this->approvedMarketplaceProfile();
+        $muthowif = $profile->user;
+
+        MuthowifBooking::query()->create([
+            'booking_code' => 'BG-MUTH-1',
+            'muthowif_profile_id' => $profile->id,
+            'customer_id' => $customer->id,
+            'service_type' => MuthowifServiceType::PrivateJamaah,
+            'pilgrim_count' => 2,
+            'starts_on' => now()->addWeek()->toDateString(),
+            'ends_on' => now()->addWeeks(2)->toDateString(),
+            'status' => BookingStatus::Pending,
+            'payment_status' => PaymentStatus::Pending,
+            'daily_price_snapshot' => 750000,
+            'total_amount' => 1_500_000,
+        ]);
+
+        $response = $this->actingAs($muthowif)->get(route('muthowif.bookings.index'));
+
+        $response->assertOk();
+        $response->assertSee('BG-MUTH-1', false);
+        $response->assertSee($customer->name, false);
+    }
+
     public function test_customer_booking_show_and_fragment_render(): void
     {
         ['profile' => $profile, 'customer' => $customer] = $this->approvedMarketplaceProfile();

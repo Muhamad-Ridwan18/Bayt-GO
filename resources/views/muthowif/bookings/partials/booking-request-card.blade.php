@@ -1,83 +1,9 @@
 @php
-    use App\Enums\BookingStatus;
-    use App\Enums\MuthowifServiceType;
-    use App\Enums\PaymentStatus;
     use App\Support\IndonesianNumber;
-    use App\Support\PlatformFee;
-    use Carbon\Carbon;
 
+    /** @var \App\ViewModels\Booking\MuthowifBookingIndexCardData $card */
+    $booking = $card->booking;
     $st = $booking->status;
-    $isSupport = $booking->isSupport();
-    $nights = $booking->billingNightsInclusive();
-    $service = $booking->muthowifProfile?->services?->firstWhere('type', $booking->service_type);
-
-    if ($isSupport) {
-        $daily = 0.0;
-        $serviceSubtotal = (float) ($booking->package_price_snapshot ?? $booking->resolvedAmountDue());
-        $addonLines = collect();
-        $addonsSum = 0.0;
-        $sameHotelLine = 0.0;
-        $transportLine = 0.0;
-        $totalGross = $serviceSubtotal;
-    } else {
-        $daily = (float) ($booking->daily_price_snapshot ?? ($service ? $service->daily_price : 0.0));
-        $serviceSubtotal = (float) ($nights * $daily);
-
-        $addonLines = collect();
-        if ($booking->service_type === MuthowifServiceType::PrivateJamaah) {
-            if (! empty($booking->add_ons_snapshot)) {
-                $addonLines = collect($booking->add_ons_snapshot)->map(fn ($a) => (object) $a);
-            } elseif (! empty($booking->selected_add_on_ids)) {
-                foreach ($booking->selected_add_on_ids as $aid) {
-                    if (isset($addonsById[$aid])) {
-                        $addonLines->push($addonsById[$aid]);
-                    }
-                }
-            }
-        }
-        $addonsSum = $addonLines->sum(fn ($a) => (float) $a->price);
-
-        $sameHotelPrice = (float) ($booking->same_hotel_price_snapshot ?? ($service ? $service->same_hotel_price_per_day : 0.0));
-        $sameHotelLine = $booking->with_same_hotel ? ($nights * $sameHotelPrice) : 0.0;
-
-        $transportPrice = (float) ($booking->transport_price_snapshot ?? ($service ? (float) $service->transport_price_flat : 0.0));
-        $transportLine = $booking->with_transport ? $transportPrice : 0.0;
-
-        $totalGross = (float) ($serviceSubtotal + $addonsSum + $sameHotelLine + $transportLine);
-    }
-    $priceSplit = PlatformFee::split($totalGross);
-    $muthowifNetIdr = (float) ($priceSplit['muthowif_net'] ?? 0.0);
-    $muthowifFeeIdr = (float) ($priceSplit['muthowif_fee'] ?? 0.0);
-
-    $documentCount = collect([
-        $booking->ticket_outbound_path,
-        $booking->ticket_return_path,
-        $booking->passport_path,
-        $booking->itinerary_path,
-        $booking->visa_path,
-    ])->filter(fn ($p) => filled($p))->count();
-    $hasDocuments = $documentCount > 0;
-
-    $badgeClass = match ($st) {
-        BookingStatus::Pending => 'bg-amber-100 text-amber-900 ring-amber-200/90',
-        BookingStatus::Confirmed => 'bg-emerald-100 text-emerald-900 ring-emerald-200/90',
-        BookingStatus::Completed => 'bg-slate-100 text-slate-800 ring-slate-200/90',
-        BookingStatus::Cancelled => 'bg-red-100 text-red-800 ring-red-200/80',
-        default => 'bg-slate-100 text-slate-700 ring-slate-200/80',
-    };
-    $accentClass = match ($st) {
-        BookingStatus::Pending => 'bg-amber-500',
-        BookingStatus::Confirmed => $booking->payment_status === PaymentStatus::Paid ? 'bg-emerald-500' : 'bg-amber-500',
-        BookingStatus::Completed => 'bg-emerald-500',
-        BookingStatus::Cancelled => 'bg-red-400',
-        default => 'bg-slate-400',
-    };
-
-    $customer = $booking->customer;
-    $isCompany = $customer?->isCompanyCustomer() ?? false;
-    $canCancelUnpaid = $st === BookingStatus::Confirmed && $booking->payment_status === PaymentStatus::Pending;
-    $platformPct = rtrim(rtrim(number_format(PlatformFee::getRate() * 100, 1, ',', ''), '0'), ',');
-    $rejectNoteOld = (string) old('muthowif_rejection_note', '');
 @endphp
 
 <li
@@ -86,8 +12,8 @@
         open: false,
         showBreakdown: true,
         showAllDocs: false,
-        rejectNote: @js($rejectNoteOld),
-        rejectNoteLen: @js(strlen($rejectNoteOld)),
+        rejectNote: @js($card->rejectNoteOld),
+        rejectNoteLen: @js(strlen($card->rejectNoteOld)),
         docModalOpen: false,
         docTitle: '',
         docPreviewUrl: '',
@@ -117,7 +43,7 @@
                 >
                     <div class="flex min-w-0 flex-1 items-start gap-3">
                         <span class="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-slate-100 text-slate-600 ring-1 ring-slate-200/80" aria-hidden="true">
-                            @if ($isCompany)
+                            @if ($card->isCompany)
                                 <svg class="h-5 w-5" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor">
                                     <path fill-rule="evenodd" d="M4.16 3.5a1.25 1.25 0 011.24-1.07l.04-.01h8.32c.62 0 1.17.37 1.4.94l2.24 5.54a1.25 1.25 0 01-1.2 1.72H4.16a1.25 1.25 0 01-1.24-1.44l.04-.18 1.2-5.5zM6 8.75a.75.75 0 00-1.5 0v4.5a.75.75 0 001.5 0v-4.5zm4.25 0a.75.75 0 00-1.5 0v4.5a.75.75 0 001.5 0v-4.5zm4.25 0a.75.75 0 00-1.5 0v4.5a.75.75 0 001.5 0v-4.5z" clip-rule="evenodd" />
                                 </svg>
@@ -129,8 +55,8 @@
                         </span>
                         <div class="min-w-0 flex-1">
                             <div class="flex flex-wrap items-center gap-2">
-                                <p class="truncate text-base font-semibold text-slate-900">{{ $customer?->name ?? '—' }}</p>
-                                <span class="inline-flex shrink-0 items-center rounded-full px-2.5 py-0.5 text-xs font-semibold ring-1 {{ $badgeClass }}">
+                                <p class="truncate text-base font-semibold text-slate-900">{{ $card->customerName }}</p>
+                                <span class="inline-flex shrink-0 items-center rounded-full px-2.5 py-0.5 text-xs font-semibold ring-1 {{ $card->badgeClass }}">
                                     {{ $st->label() }}
                                 </span>
                             </div>
@@ -140,7 +66,7 @@
                             <div class="mt-2 flex flex-wrap gap-x-4 gap-y-1.5 text-xs text-slate-600">
                                 <span class="inline-flex items-center gap-1">
                                     <svg class="h-3.5 w-3.5 text-slate-400" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true"><path fill-rule="evenodd" d="M5.75 2a.75.75 0 01.75.75V4h7V2.75a.75.75 0 011.5 0V4h.25A2.75 2.75 0 0118 6.75v8.5A2.75 2.75 0 0115.25 18H4.75A2.75 2.75 0 012 15.25v-8.5A2.75 2.75 0 014.75 4H5V2.75A.75.75 0 015.75 2zm-1 5.5c-.69 0-1.25.56-1.25 1.25v6.5c0 .69.56 1.25 1.25 1.25h10.5c.69 0 1.25-.56 1.25-1.25v-6.5c0-.69-.56-1.25-1.25-1.25H4.75z" clip-rule="evenodd" /></svg>
-                                    {{ Carbon::parse($booking->starts_on)->format('d/m/Y') }} – {{ Carbon::parse($booking->ends_on)->format('d/m/Y') }}
+                                    {{ $card->dateRangeLabel }}
                                 </span>
                                 <span class="inline-flex items-center gap-1">
                                     <svg class="h-3.5 w-3.5 text-slate-400" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true"><path d="M10 8a3 3 0 100-6 3 3 0 000 6zM3.465 14.493a1.23 1.23 0 00.41 1.412A9.957 9.957 0 0010 18c2.31 0 4.438-.784 6.131-2.1.43-.333.604-.903.408-1.41a7.002 7.002 0 00-13.254-.005z" /></svg>
@@ -152,10 +78,9 @@
                     </div>
                 </button>
 
-                {{-- Pendapatan bersih (saat ditutup) --}}
                 <div class="flex shrink-0 flex-col items-end gap-1 sm:min-w-[9rem] xl:items-center xl:text-center" x-show="!open">
                     <p class="text-[11px] font-medium uppercase tracking-wide text-slate-500">{{ __('muthowif.bookings.net_earning_short') }}</p>
-                    <p class="text-xl font-bold tabular-nums text-emerald-700 sm:text-2xl">Rp {{ IndonesianNumber::formatThousands((string) (int) round($muthowifNetIdr)) }}</p>
+                    <p class="text-xl font-bold tabular-nums text-emerald-700 sm:text-2xl">Rp {{ $card->muthowifNetFormatted }}</p>
                 </div>
 
                 <div class="flex shrink-0 items-center gap-2 self-end xl:self-center">
@@ -176,7 +101,7 @@
                             <svg class="h-4 w-4 text-slate-500" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true"><path d="M3.505 2.365A41.369 41.369 0 0110 2c2.89 0 5.66.7 8.03 1.96a.75.75 0 01.47.69v9.02a.75.75 0 01-.94.72C16.2 13.35 13.18 12.5 10 12.5c-3.18 0-6.2.85-8.56 2.27a.75.75 0 01-.94-.72V3.055a.75.75 0 01.47-.69zM10 4c-2.3 0-4.5.47-6.53 1.33v7.34C5.5 11.53 7.7 11 10 11s4.5.53 6.53 1.67V5.33C14.5 4.47 12.3 4 10 4z" /></svg>
                             {{ __('muthowif.bookings.send_message_btn') }}
                         </button>
-                        @if ($canCancelUnpaid)
+                        @if ($card->canCancelUnpaid)
                             <form method="POST" action="{{ route('muthowif.bookings.cancel', $booking) }}" class="inline" onsubmit="return confirm(@json(__('muthowif.bookings.cancel_unpaid_confirm')));" @click.stop>
                                 @csrf
                                 <x-submit-button class="rounded-lg border border-red-200 bg-white px-3 py-2 text-sm font-semibold text-red-700 transition hover:bg-red-50">
@@ -197,7 +122,6 @@
                 </div>
             </div>
 
-            {{-- Expanded panel --}}
             <div
                 x-show="open"
                 x-transition:enter="transition ease-out duration-200"
@@ -210,7 +134,6 @@
                 class="border-t border-slate-100"
             >
                 <div class="grid gap-4 p-4 sm:p-5 lg:grid-cols-2 lg:items-stretch lg:gap-5">
-                    {{-- Rincian Layanan --}}
                     <div class="flex h-full flex-col overflow-hidden rounded-xl border border-slate-200/90 bg-white shadow-sm ring-1 ring-slate-100/80">
                         <div class="flex items-center gap-2 border-b border-slate-100 px-4 py-3">
                             <span class="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-brand-50 text-brand-700">
@@ -222,29 +145,29 @@
                         <div x-show="showBreakdown" class="space-y-0 divide-y divide-slate-100 text-sm">
                             <div class="flex justify-between gap-2 py-2">
                                 <span class="text-slate-600">{{ __('muthowif.booking_show.subtotal_service') }}</span>
-                                <span class="font-medium tabular-nums text-slate-900">Rp {{ IndonesianNumber::formatThousands((string) (int) round($serviceSubtotal)) }}</span>
+                                <span class="font-medium tabular-nums text-slate-900">Rp {{ IndonesianNumber::formatThousands((string) (int) round($card->serviceSubtotal)) }}</span>
                             </div>
-                            @foreach ($addonLines as $ad)
+                            @foreach ($card->addonLines as $ad)
                                 <div class="flex justify-between gap-2 py-2">
                                     <span class="text-slate-600">{{ $ad->name }}</span>
                                     <span class="font-medium tabular-nums text-slate-900">Rp {{ IndonesianNumber::formatThousands((string) (int) round((float) $ad->price)) }}</span>
                                 </div>
                             @endforeach
-                            @if ($sameHotelLine > 0)
+                            @if ($card->sameHotelLine > 0)
                                 <div class="flex justify-between gap-2 py-2">
-                                    <span class="text-slate-600">{{ __('bookings.show.same_hotel_label', ['nights' => $nights, 'days' => __('common.days')]) }}</span>
-                                    <span class="font-medium tabular-nums text-slate-900">Rp {{ IndonesianNumber::formatThousands((string) (int) round($sameHotelLine)) }}</span>
+                                    <span class="text-slate-600">{{ __('bookings.show.same_hotel_label', ['nights' => $card->nights, 'days' => __('common.days')]) }}</span>
+                                    <span class="font-medium tabular-nums text-slate-900">Rp {{ IndonesianNumber::formatThousands((string) (int) round($card->sameHotelLine)) }}</span>
                                 </div>
                             @endif
-                            @if ($transportLine > 0)
+                            @if ($card->transportLine > 0)
                                 <div class="flex justify-between gap-2 py-2">
                                     <span class="text-slate-600">{{ __('bookings.show.transport_label') }}</span>
-                                    <span class="font-medium tabular-nums text-slate-900">Rp {{ IndonesianNumber::formatThousands((string) (int) round($transportLine)) }}</span>
+                                    <span class="font-medium tabular-nums text-slate-900">Rp {{ IndonesianNumber::formatThousands((string) (int) round($card->transportLine)) }}</span>
                                 </div>
                             @endif
                             <div class="flex justify-between gap-2 py-2">
-                                <span class="text-red-600">{{ __('muthowif.bookings.platform_fee_pct_label', ['pct' => $platformPct]) }}</span>
-                                <span class="font-medium tabular-nums text-red-600">- Rp {{ IndonesianNumber::formatThousands((string) (int) round($muthowifFeeIdr)) }}</span>
+                                <span class="text-red-600">{{ __('muthowif.bookings.platform_fee_pct_label', ['pct' => $card->platformPct]) }}</span>
+                                <span class="font-medium tabular-nums text-red-600">- Rp {{ IndonesianNumber::formatThousands((string) (int) round($card->muthowifFee)) }}</span>
                             </div>
                         </div>
                         <button type="button" class="mt-3 text-left text-xs font-semibold text-brand-700 hover:text-brand-800" @click="showBreakdown = !showBreakdown">
@@ -253,11 +176,10 @@
                         </div>
                         <div class="border-t border-emerald-100 bg-emerald-50/90 px-4 py-3">
                             <p class="text-[11px] font-medium text-emerald-800/90">{{ __('muthowif.bookings.estimated_net_earning') }}</p>
-                            <p class="mt-0.5 text-lg font-bold tabular-nums text-emerald-700">Rp {{ IndonesianNumber::formatThousands((string) (int) round($muthowifNetIdr)) }}</p>
+                            <p class="mt-0.5 text-lg font-bold tabular-nums text-emerald-700">Rp {{ $card->muthowifNetFormatted }}</p>
                         </div>
                     </div>
 
-                    {{-- Dokumen --}}
                     <div class="flex h-full flex-col overflow-hidden rounded-xl border border-slate-200/90 bg-white shadow-sm ring-1 ring-slate-100/80">
                         <div class="flex items-center gap-2 border-b border-slate-100 px-4 py-3">
                             <span class="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-brand-50 text-brand-700">
@@ -267,7 +189,7 @@
                         </div>
                         <div class="flex flex-1 flex-col p-4">
                         <div class="min-h-[4rem] flex-1">
-                            @if ($hasDocuments)
+                            @if ($card->hasDocuments)
                                 @include('bookings.partials.booking-documents', [
                                     'booking' => $booking,
                                     'routeName' => 'muthowif.bookings.documents.show',
@@ -279,9 +201,9 @@
                                 <p class="text-sm text-slate-500">{{ __('muthowif.bookings.no_documents') }}</p>
                             @endif
                         </div>
-                        @if ($hasDocuments && $documentCount > 3)
+                        @if ($card->hasDocuments && $card->documentCount > 3)
                             <button type="button" class="mt-auto inline-flex items-center gap-1 pt-3 text-xs font-semibold text-brand-700 hover:text-brand-800" @click="showAllDocs = !showAllDocs">
-                                <span x-text="showAllDocs ? @js(__('muthowif.bookings.hide_documents')) : @js(__('muthowif.bookings.view_all_documents_count', ['count' => $documentCount]))"></span>
+                                <span x-text="showAllDocs ? @js(__('muthowif.bookings.hide_documents')) : @js(__('muthowif.bookings.view_all_documents_count', ['count' => $card->documentCount]))"></span>
                                 <svg class="h-3.5 w-3.5" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true"><path fill-rule="evenodd" d="M3 10a.75.75 0 01.75-.75h10.638L10.23 5.29a.75.75 0 111.04-1.08l5.5 5.25a.75.75 0 010 1.08l-5.5 5.25a.75.75 0 11-1.04-1.08l4.158-3.96H3.75A.75.75 0 013 10z" clip-rule="evenodd" /></svg>
                             </button>
                         @endif
@@ -289,7 +211,6 @@
                     </div>
                 </div>
 
-                {{-- Mobile actions --}}
                 <div class="flex flex-col gap-3 border-t border-slate-100 px-4 py-4 sm:hidden">
                     <div class="flex flex-wrap gap-2">
                         <a href="{{ route('muthowif.bookings.show', $booking) }}" class="inline-flex flex-1 items-center justify-center gap-1.5 rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm font-semibold text-slate-800">
@@ -301,9 +222,9 @@
                     </div>
                 </div>
 
-                @if ($st === BookingStatus::Pending)
+                @if ($card->isPending)
                     @include('muthowif.bookings.partials.pending-booking-actions', ['booking' => $booking, 'variant' => 'card'])
-                @elseif (($booking->pending_reschedule_requests_count ?? 0) > 0)
+                @elseif ($card->hasPendingReschedule)
                     <div class="border-t border-slate-100 px-4 py-3 sm:px-5">
                         <a href="{{ route('muthowif.bookings.show', $booking) }}" class="inline-flex items-center gap-2 rounded-full bg-amber-50 px-3 py-1.5 text-xs font-semibold text-amber-950 ring-1 ring-amber-200/90">
                             {{ __('muthowif.bookings.reschedule_badge') }}
