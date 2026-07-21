@@ -14,15 +14,11 @@
         <x-home.gallery :page="$page" />
 
         @if ($page->showLandingChrome)
-            <x-home.how-it-works :page="$page" />
-            <x-home.trust-band />
-        @endif
-
-        <x-home.articles :page="$page" />
-
-        @if ($page->showLandingChrome)
-            <x-home.faq :page="$page" />
-            <x-home.cta :page="$page" />
+            <x-home.landing-chrome :page="$page">
+                <x-home.articles :page="$page" />
+            </x-home.landing-chrome>
+        @else
+            <x-home.articles :page="$page" />
         @endif
     </div>
 </div>

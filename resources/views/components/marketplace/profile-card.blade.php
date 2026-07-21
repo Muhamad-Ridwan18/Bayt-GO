@@ -4,17 +4,10 @@
 ])
 
 @php
-    use App\Enums\MuthowifServiceType;
-
-    $profile->loadMissing(['user', 'services']);
-    $group = $profile->services->firstWhere('type', MuthowifServiceType::Group);
-    $private = $profile->services->firstWhere('type', MuthowifServiceType::PrivateJamaah);
+    $card = \App\ViewModels\Layanan\MarketplaceProfileCardData::fromProfile($profile, $listQueryString);
 @endphp
 
 @include('layanan.partials.muthowif-card', [
-    'profile' => $profile,
-    'group' => $group,
-    'private' => $private,
-    'listQueryString' => $listQueryString,
+    'card' => $card,
     'as' => 'div',
 ])

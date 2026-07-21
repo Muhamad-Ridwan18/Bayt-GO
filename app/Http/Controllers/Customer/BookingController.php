@@ -38,6 +38,8 @@ use App\Support\MuthowifReferralReward;
 use App\Support\PaymentFlowLog;
 use App\Support\PlatformFee;
 use App\ViewModels\Booking\BookingPaymentPageData;
+use App\ViewModels\Booking\BookingShowPageData;
+use App\ViewModels\Booking\CustomerBookingIndexPageData;
 use Carbon\Carbon;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
@@ -64,16 +66,16 @@ class BookingController extends Controller
         $this->authorize('viewAny', MuthowifBooking::class);
 
         $bookings = $this->customerBookingsIndexQuery($request)->paginate(15);
-
         $addonsById = $this->addOnsKeyById($bookings);
-
-        $bookingStatusCounts = $this->customerBookingStatusCounts($request->user()->getKey());
+        $statusFilter = $this->resolveBookingStatusFilter($request);
 
         return view('bookings.index', [
-            'bookings' => $bookings,
-            'addonsById' => $addonsById,
-            'bookingStatusCounts' => $bookingStatusCounts,
-            'statusFilter' => $this->resolveBookingStatusFilter($request),
+            'page' => CustomerBookingIndexPageData::make(
+                $bookings,
+                $addonsById,
+                $this->customerBookingStatusCounts($request->user()->getKey()),
+                $statusFilter,
+            ),
         ]);
     }
 
@@ -82,16 +84,16 @@ class BookingController extends Controller
         $this->authorize('viewAny', MuthowifBooking::class);
 
         $bookings = $this->customerBookingsIndexQuery($request)->paginate(15);
-
         $addonsById = $this->addOnsKeyById($bookings);
-
-        $bookingStatusCounts = $this->customerBookingStatusCounts($request->user()->getKey());
+        $statusFilter = $this->resolveBookingStatusFilter($request);
 
         return view('bookings.partials.index-body', [
-            'bookings' => $bookings,
-            'addonsById' => $addonsById,
-            'bookingStatusCounts' => $bookingStatusCounts,
-            'statusFilter' => $this->resolveBookingStatusFilter($request),
+            'page' => CustomerBookingIndexPageData::make(
+                $bookings,
+                $addonsById,
+                $this->customerBookingStatusCounts($request->user()->getKey()),
+                $statusFilter,
+            ),
         ]);
     }
 
@@ -104,6 +106,7 @@ class BookingController extends Controller
         }
 
         $booking->load([
+            'customer',
             'muthowifProfile.user',
             'muthowifProfile.services.addOns',
             'supportPackage',
@@ -114,17 +117,23 @@ class BookingController extends Controller
         $addonsById = $this->addOnsKeyByIdForBooking($booking);
 
         $alternatives = $this->customerCancellationAlternatives($booking);
+        $emergency = EmergencyBookingViewData::for($booking);
 
-        return view('bookings.show', array_merge([
-            'booking' => $booking,
-            'addonsById' => $addonsById,
-            'refundEligibilityError' => BookingPostPayRules::canRequestRefund($booking),
-            'rescheduleEligibilityError' => BookingPostPayRules::canRequestReschedule($booking),
-            'refundPreview' => $this->refundPreviewForBooking($booking),
-            'referralNetworkAlternatives' => $alternatives['profiles'],
-            'customerRecommendationSource' => $alternatives['source'],
-            'showReferralNetworkPanel' => $alternatives['show_panel'],
-        ], EmergencyBookingViewData::for($booking)));
+        return view('bookings.show', [
+            'page' => BookingShowPageData::make(
+                $request,
+                $booking,
+                $addonsById,
+                BookingPostPayRules::canRequestRefund($booking),
+                BookingPostPayRules::canRequestReschedule($booking),
+                $this->refundPreviewForBooking($booking),
+                $alternatives['profiles'],
+                $alternatives['source'],
+                $alternatives['show_panel'],
+                $emergency['activeEmergencyReport'] ?? null,
+                $emergency['selectableEmergencyOffers'] ?? collect(),
+            ),
+        ]);
     }
 
     public function showLiveState(Request $request, MuthowifBooking $booking): JsonResponse
@@ -146,8 +155,10 @@ class BookingController extends Controller
         $this->authorize('view', $booking);
 
         $booking->load([
+            'customer',
             'muthowifProfile.user',
             'muthowifProfile.services.addOns',
+            'supportPackage',
             'review',
             'refundRequests' => fn ($q) => $q->orderByDesc('created_at'),
             'rescheduleRequests' => fn ($q) => $q->orderByDesc('created_at'),
@@ -155,17 +166,23 @@ class BookingController extends Controller
         $addonsById = $this->addOnsKeyByIdForBooking($booking);
 
         $alternatives = $this->customerCancellationAlternatives($booking);
+        $emergency = EmergencyBookingViewData::for($booking);
 
-        return view('bookings.partials.show-body', array_merge([
-            'booking' => $booking,
-            'addonsById' => $addonsById,
-            'refundEligibilityError' => BookingPostPayRules::canRequestRefund($booking),
-            'rescheduleEligibilityError' => BookingPostPayRules::canRequestReschedule($booking),
-            'refundPreview' => $this->refundPreviewForBooking($booking),
-            'referralNetworkAlternatives' => $alternatives['profiles'],
-            'customerRecommendationSource' => $alternatives['source'],
-            'showReferralNetworkPanel' => $alternatives['show_panel'],
-        ], EmergencyBookingViewData::for($booking)));
+        return view('bookings.partials.show-body', [
+            'page' => BookingShowPageData::make(
+                $request,
+                $booking,
+                $addonsById,
+                BookingPostPayRules::canRequestRefund($booking),
+                BookingPostPayRules::canRequestReschedule($booking),
+                $this->refundPreviewForBooking($booking),
+                $alternatives['profiles'],
+                $alternatives['source'],
+                $alternatives['show_panel'],
+                $emergency['activeEmergencyReport'] ?? null,
+                $emergency['selectableEmergencyOffers'] ?? collect(),
+            ),
+        ]);
     }
 
     public function requestRefund(Request $request, MuthowifBooking $booking): View
@@ -199,6 +216,7 @@ class BookingController extends Controller
     public function payment(Request $request, MuthowifBooking $booking, SnapPaymentProviderInterface $provider): View|RedirectResponse
     {
         $this->authorize('pay', $booking);
+        $booking->loadMissing(['customer', 'muthowifProfile.user']);
 
         PaymentFlowLog::info('web.payment.enter', [
             'booking_id' => $booking->getKey(),
@@ -1157,7 +1175,7 @@ class BookingController extends Controller
     {
         $query = $request->user()
             ->customerBookings()
-            ->with(['muthowifProfile.user', 'review'])
+            ->with(['customer', 'muthowifProfile.user', 'review'])
             ->orderByDesc('starts_on')
             ->orderByDesc('created_at');
 

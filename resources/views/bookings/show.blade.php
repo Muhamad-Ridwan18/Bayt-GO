@@ -1,21 +1,7 @@
-@php
-    $b = $booking;
-@endphp
 <x-app-layout>
     <div
         class="min-h-[calc(100vh-4rem)] bg-slate-100/80"
-        x-data="customerBookingLive({
-            userId: @js(auth()->id()),
-            bookingId: @js($b->getKey()),
-            liveMode: 'customer_show',
-            fragmentUrl: @js(route('bookings.show.fragment', $b)),
-            liveStateUrl: @js(route('bookings.show.live-state', $b)),
-            showUrl: @js(route('bookings.show', $b)),
-            paymentStatusUrl: @js(route('bookings.payment.status', $b)),
-            initialStatus: @js($b->status->value),
-            initialPaymentStatus: @js($b->payment_status->value),
-            paymentReturnPending: @js(\App\Support\BookingPaymentReturn::isAwaitingGatewayConfirmation(request()) && ! $b->isPaid()),
-        })"
+        x-data="customerBookingLive(@js($page->liveAlpineConfig()))"
     >
         <x-page-container class="ui-page-y-compact pb-16">
             <a href="{{ route('bookings.index') }}" class="mb-5 inline-flex items-center gap-2 text-sm font-semibold text-brand-700 transition hover:text-brand-800 sm:mb-6">
@@ -29,18 +15,7 @@
                 x-ref="liveGrid"
                 class="grid grid-cols-1 gap-6 lg:grid-cols-[minmax(0,1fr)_minmax(280px,360px)] lg:items-start lg:gap-8"
             >
-                @include('bookings.partials.show-body', [
-                    'booking' => $booking,
-                    'addonsById' => $addonsById,
-                    'refundEligibilityError' => $refundEligibilityError,
-                    'rescheduleEligibilityError' => $rescheduleEligibilityError,
-                    'refundPreview' => $refundPreview,
-                    'referralNetworkAlternatives' => $referralNetworkAlternatives,
-                    'customerRecommendationSource' => $customerRecommendationSource ?? null,
-                    'showReferralNetworkPanel' => $showReferralNetworkPanel,
-                    'activeEmergencyReport' => $activeEmergencyReport ?? null,
-                    'selectableEmergencyOffers' => $selectableEmergencyOffers ?? collect(),
-                ])
+                @include('bookings.partials.show-body', ['page' => $page])
             </div>
         </x-page-container>
     </div>

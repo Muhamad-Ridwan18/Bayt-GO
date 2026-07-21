@@ -31,6 +31,8 @@ final class BookingPaymentPageData
         public readonly string $paymentDriver,
         public readonly string $tripDateRangeLabel,
         public readonly ?string $expiryFormatted,
+        public readonly string $muthowifName,
+        public readonly string $bookingCode,
     ) {}
 
     /**
@@ -243,6 +245,8 @@ final class BookingPaymentPageData
             paymentDriver: BookingSnapPaymentCatalog::driver(),
             tripDateRangeLabel: $tripDateRangeLabel,
             expiryFormatted: $expiryFormatted,
+            muthowifName: (string) ($booking->muthowifProfile?->user?->name ?? '—'),
+            bookingCode: (string) ($booking->booking_code ?? ''),
         );
     }
 

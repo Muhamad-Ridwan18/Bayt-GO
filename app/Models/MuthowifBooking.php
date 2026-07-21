@@ -253,6 +253,12 @@ class MuthowifBooking extends Model
 
     public function pendingRefundRequest(): ?BookingRefundRequest
     {
+        if ($this->relationLoaded('refundRequests')) {
+            return $this->refundRequests->first(
+                static fn (BookingRefundRequest $request): bool => $request->status === BookingChangeRequestStatus::Pending
+            );
+        }
+
         return $this->refundRequests()
             ->where('status', BookingChangeRequestStatus::Pending)
             ->first();
@@ -260,6 +266,12 @@ class MuthowifBooking extends Model
 
     public function pendingRescheduleRequest(): ?BookingRescheduleRequest
     {
+        if ($this->relationLoaded('rescheduleRequests')) {
+            return $this->rescheduleRequests->first(
+                static fn (BookingRescheduleRequest $request): bool => $request->status === BookingChangeRequestStatus::Pending
+            );
+        }
+
         return $this->rescheduleRequests()
             ->where('status', BookingChangeRequestStatus::Pending)
             ->first();

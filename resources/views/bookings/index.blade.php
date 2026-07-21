@@ -16,11 +16,7 @@
         </div>
 
         <div x-ref="liveRoot">
-            @include('bookings.partials.index-body', [
-                'bookings' => $bookings,
-                'addonsById' => $addonsById,
-                'bookingStatusCounts' => $bookingStatusCounts,
-            ])
+            @include('bookings.partials.index-body', ['page' => $page])
         </div>
     </div>
 </x-app-layout>

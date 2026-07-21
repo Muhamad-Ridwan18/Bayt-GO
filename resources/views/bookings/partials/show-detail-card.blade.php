@@ -1,23 +1,8 @@
 @php
     use App\Enums\BookingStatus;
-    use App\Enums\PaymentStatus;
-    use Carbon\Carbon;
 
-    $b = $booking;
+    $b = $page->booking;
     $st = $b->status;
-    $nights = $b->billingNightsInclusive();
-    $sleepNights = max(0, $nights - 1);
-    $dateLocale = app()->getLocale() === 'id' ? 'id-ID' : 'en-GB';
-    $fmtDate = fn ($d) => Carbon::parse($d)->locale($dateLocale)->translatedFormat('d M Y');
-
-    $statusBadge = match ($st) {
-        BookingStatus::Cancelled => 'bg-red-50 text-red-800 ring-red-200/90',
-        BookingStatus::Confirmed => 'bg-emerald-50 text-emerald-900 ring-emerald-200/80',
-        BookingStatus::InProgress => 'bg-sky-50 text-sky-900 ring-sky-200/80',
-        BookingStatus::Completed => 'bg-brand-50 text-brand-900 ring-brand-200/80',
-        BookingStatus::Pending => 'bg-amber-50 text-amber-950 ring-amber-200/80',
-        default => 'bg-slate-100 text-slate-800 ring-slate-200/80',
-    };
 @endphp
 
 <x-ui.card class="overflow-hidden p-0">
@@ -38,12 +23,12 @@
             <div class="flex min-w-0 flex-1 gap-4">
                 <img
                     src="{{ $b->muthowifProfile->photoUrl() }}"
-                    alt="{{ __('bookings.index.photo_alt', ['name' => $b->muthowifProfile->user->name]) }}"
+                    alt="{{ __('bookings.index.photo_alt', ['name' => $page->muthowifName]) }}"
                     class="h-16 w-16 shrink-0 rounded-full object-cover ring-2 ring-white shadow-md sm:h-[4.5rem] sm:w-[4.5rem]"
                     loading="lazy"
                 >
                 <div class="min-w-0 flex-1">
-                    <p class="text-lg font-bold text-slate-900">{{ $b->muthowifProfile->user->name }}</p>
+                    <p class="text-lg font-bold text-slate-900">{{ $page->muthowifName }}</p>
                     <a
                         href="{{ route('layanan.show', $b->muthowifProfile) }}"
                         class="mt-0.5 inline-flex items-center gap-1 text-sm font-semibold text-brand-700 hover:text-brand-800"
@@ -74,7 +59,7 @@
                     @endif
 
                     <div class="mt-2">
-                        <span class="inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-semibold ring-1 {{ $statusBadge }}">
+                        <span class="inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-semibold ring-1 {{ $page->statusBadgeClass }}">
                             {{ $st->label() }}
                         </span>
                     </div>
@@ -92,12 +77,12 @@
                         <p class="mt-0.5 text-xs text-slate-600">{{ __('layanan_pendukung.starts_at_hint') }}</p>
                     @else
                         <p class="mt-1 text-sm font-semibold tabular-nums text-slate-900">
-                            {{ $fmtDate($b->starts_on) }}
+                            {{ $page->formatDate($b->starts_on) }}
                             <span class="font-normal text-slate-400">–</span>
-                            {{ $fmtDate($b->ends_on) }}
+                            {{ $page->formatDate($b->ends_on) }}
                         </p>
                         <p class="mt-0.5 text-xs text-slate-600">
-                            ({{ __('bookings.show.period_duration_line', ['days' => $nights, 'nights' => $sleepNights]) }})
+                            ({{ __('bookings.show.period_duration_line', ['days' => $page->nights, 'nights' => $page->sleepNights]) }})
                         </p>
                     @endif
                 </div>

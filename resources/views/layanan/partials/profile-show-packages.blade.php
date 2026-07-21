@@ -2,8 +2,9 @@
     use App\Enums\MuthowifServiceType;
     use App\Support\IndonesianNumber;
 
-    $groupBookUrl = $group ? route('layanan.book', array_merge(['publicProfile' => $profile], $bookQueryParams, ['service_type' => 'group'])) : null;
-    $privateBookUrl = $private ? route('layanan.book', array_merge(['publicProfile' => $profile], $bookQueryParams, ['service_type' => 'private'])) : null;
+    $profile = $page->profile;
+    $group = $page->group;
+    $private = $page->private;
 @endphp
 
 <x-ui.card pad="lg" class="block">

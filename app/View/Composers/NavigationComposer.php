@@ -22,6 +22,7 @@ final class NavigationComposer
         $adminHubActive = false;
 
         $user = Auth::user();
+        $user?->loadMissing('muthowifProfile');
 
         if ($user?->isVerifiedMuthowif()) {
             $mpNav = $user->muthowifProfile;

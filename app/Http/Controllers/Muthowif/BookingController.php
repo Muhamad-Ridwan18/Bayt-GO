@@ -570,7 +570,7 @@ class BookingController extends Controller
     {
         $query = MuthowifBooking::query()
             ->where('muthowif_profile_id', $profile->id)
-            ->with(['customer'])
+            ->with(['customer', 'muthowifProfile.services'])
             ->withCount([
                 'rescheduleRequests as pending_reschedule_requests_count' => fn ($q) => $q->where('status', BookingChangeRequestStatus::Pending),
             ])

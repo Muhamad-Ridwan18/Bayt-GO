@@ -62,10 +62,10 @@
                                 </div>
                             </div>
                             <dl class="mt-4 space-y-3 text-sm">
-                                @if (filled($booking->booking_code))
+                                @if (filled($page->bookingCode))
                                     <div class="flex justify-between gap-3 border-b border-slate-100 pb-3">
                                         <dt class="text-slate-500">{{ __('bookings.show.booking_code') }}</dt>
-                                        <dd class="text-right font-mono text-xs font-semibold text-slate-800">{{ $booking->booking_code }}</dd>
+                                        <dd class="text-right font-mono text-xs font-semibold text-slate-800">{{ $page->bookingCode }}</dd>
                                     </div>
                                 @endif
                                 <div class="flex justify-between gap-3">
@@ -74,7 +74,7 @@
                                 </div>
                                 <div class="flex justify-between gap-3">
                                     <dt class="text-slate-500">{{ __('bookings.show.muthowif') }}</dt>
-                                    <dd class="text-right font-medium text-slate-900">{{ $booking->muthowifProfile->user->name ?? '—' }}</dd>
+                                    <dd class="text-right font-medium text-slate-900">{{ $page->muthowifName }}</dd>
                                 </div>
                                 <div class="flex justify-between gap-3">
                                     <dt class="text-slate-500">{{ __('bookings.show.period') }}</dt>

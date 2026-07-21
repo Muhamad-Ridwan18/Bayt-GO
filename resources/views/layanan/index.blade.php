@@ -1,51 +1,12 @@
 @php
-    use App\Enums\MuthowifServiceType;
-
-    $listQuery = array_filter([
-        'start_date' => $startDate ?? null,
-        'end_date' => $endDate ?? null,
-        'q' => $searchQuery !== '' ? $searchQuery : null,
-    ]);
-    $listQueryString = http_build_query($listQuery);
-
-    $welcomeHeroBg = null;
-    foreach (['webp', 'png', 'jpg', 'jpeg'] as $ext) {
-        if (file_exists(public_path('images/bg-welcome.'.$ext))) {
-            $welcomeHeroBg = asset('images/bg-welcome.'.$ext);
-            break;
-        }
-    }
-    if ($welcomeHeroBg === null && is_dir(public_path('images/bg-welcome'))) {
-        $entries = array_diff(scandir(public_path('images/bg-welcome')) ?: [], ['.', '..']);
-        sort($entries, SORT_NATURAL | SORT_FLAG_CASE);
-        foreach ($entries as $name) {
-            if (preg_match('/\.(jpe?g|png|webp)$/i', $name)) {
-                $welcomeHeroBg = asset('images/bg-welcome/'.$name);
-                break;
-            }
-        }
-    }
-    if ($welcomeHeroBg === null) {
-        $welcomeHeroBg = file_exists(public_path('images/welcome-hero.jpg'))
-            ? asset('images/welcome-hero.jpg')
-            : 'https://images.unsplash.com/photo-1519817914152-22d216bb9170?q=85&w=2160&auto=format&fit=crop';
-    }
-
-    $seoTitle = __('layanan.page_title').' | Jasa Tour Guide Umroh & Haji Terpercaya';
-    if (filled($searchQuery ?? '')) {
-        $seoTitle = "Cari Jasa Tour Guide Umroh/Haji '".e($searchQuery)."' — Muthowif Terverifikasi";
-    }
-    $seoDesc = 'Temukan dan sewa jasa Muthowif profesional terverifikasi serta asisten tour guide ibadah Umroh & Haji terbaik di Bayt-GO. Bandingkan tarif harian, rating, dan ulasan.';
-
-    $hasActiveFilters = filled($startDate ?? '') || filled($searchQuery ?? '');
+    /** @var \App\ViewModels\Layanan\LayananIndexPageData $page */
 @endphp
 
-<x-marketplace-layout :title="$seoTitle" :meta-description="$seoDesc" :full-bleed="true">
+<x-marketplace-layout :title="$page->seoTitle" :meta-description="$page->seoDesc" :full-bleed="true">
     <div class="relative min-w-0 overflow-x-hidden">
-        {{-- Hero full-bleed + form mengambang --}}
         <section class="relative left-1/2 mb-0 w-screen max-w-[100vw] -translate-x-1/2 overflow-hidden bg-welcomeCanvas pb-10 sm:pb-12">
             <div class="pointer-events-none absolute inset-0 z-0" aria-hidden="true">
-                <img src="{{ $welcomeHeroBg }}" alt="" class="h-full w-full min-h-[16rem] object-cover object-[74%_30%] sm:min-h-[18rem] lg:min-h-[20rem]" loading="eager" decoding="async" />
+                <img src="{{ $page->heroBgUrl }}" alt="" class="h-full w-full min-h-[16rem] object-cover object-[74%_30%] sm:min-h-[18rem] lg:min-h-[20rem]" loading="eager" decoding="async" />
             </div>
             <div class="pointer-events-none absolute inset-0 z-[1] bg-gradient-to-b from-welcomeCanvas via-welcomeCanvas/95 to-welcomeCanvas/55 sm:hidden" aria-hidden="true"></div>
             <div class="pointer-events-none absolute inset-0 z-[1] hidden bg-gradient-to-r from-welcomeCanvas from-[28%] via-welcomeCanvas/96 via-[55%] to-welcomeCanvas/10 sm:block lg:from-[32%] lg:via-[58%] lg:to-transparent" aria-hidden="true"></div>
@@ -79,9 +40,9 @@
             <div class="relative z-20 mx-auto mt-8 w-full px-4 sm:mt-10 sm:px-6 lg:px-8 xl:px-10" id="marketplace-search">
                 <div class="overflow-hidden rounded-2xl border border-slate-200/90 bg-white shadow-[0_20px_50px_-12px_rgba(15,42,37,0.18)] ring-1 ring-slate-100/90 sm:rounded-3xl">
                     @include('layanan.partials.date-search-form', [
-                        'startDate' => $startDate,
-                        'endDate' => $endDate,
-                        'searchQuery' => $searchQuery,
+                        'startDate' => $page->startDate,
+                        'endDate' => $page->endDate,
+                        'searchQuery' => $page->searchQuery,
                         'showHeaderBanner' => false,
                         'marketplaceMode' => true,
                     ])
@@ -90,17 +51,17 @@
         </section>
 
         <div class="relative mx-auto w-full ui-stack px-4 py-8 sm:px-6 sm:py-10 lg:px-8 xl:px-10">
-            @if ($dateErrors?->isNotEmpty())
+            @if ($page->dateErrors?->isNotEmpty())
                 <div class="flex gap-3 rounded-2xl border border-red-200 bg-red-50/90 px-4 py-4 text-sm text-red-900 shadow-sm ring-1 ring-red-100/80" role="alert">
                     <ul class="list-inside list-disc space-y-1">
-                        @foreach ($dateErrors->all() as $message)
+                        @foreach ($page->dateErrors->all() as $message)
                             <li>{{ $message }}</li>
                         @endforeach
                     </ul>
                 </div>
             @endif
 
-            @if (! $hasDateSearch)
+            @if (! $page->hasDateSearch)
                 <div class="rounded-3xl border-2 border-dashed border-baytgo/30 bg-gradient-to-br from-emerald-50/50 via-white to-white p-10 text-center">
                     <div class="mx-auto flex h-14 w-14 items-center justify-center rounded-2xl bg-white text-baytgo shadow-md ring-1 ring-emerald-100">
                         <svg class="h-7 w-7" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M6.75 3v2.25M17.25 3v2.25M3 18.75V7.5a2.25 2.25 0 012.25-2.25h13.5A2.25 2.25 0 0121 7.5v11.25m-18 0A2.25 2.25 0 005.25 21h13.5a2.25 2.25 0 002.25-2.25m-18 0v-7.5A2.25 2.25 0 015.25 9h13.5a2.25 2.25 0 012.25 2.25v7.5" /></svg>
@@ -109,28 +70,28 @@
                     <p class="mx-auto mt-2 max-w-md text-sm text-slate-600">{{ __('layanan.empty_state_sub') }}</p>
                 </div>
             @else
-                @if ($dateErrors === null || $dateErrors->isEmpty())
-                    @if (filled($rangeLabel))
+                @if ($page->dateErrors === null || $page->dateErrors->isEmpty())
+                    @if (filled($page->rangeLabel))
                         <div class="flex flex-col gap-4 rounded-2xl border border-slate-200/90 bg-white px-4 py-4 shadow-sm ring-1 ring-slate-100/90 sm:flex-row sm:items-center sm:justify-between sm:px-5">
                             <div class="min-w-0">
                                 <p class="flex flex-wrap items-center gap-2 text-sm font-semibold text-slate-900">
                                     <span class="inline-flex h-9 w-9 items-center justify-center rounded-lg bg-emerald-50 text-baytgo">
                                         <svg class="h-5 w-5" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M5.75 2a.75.75 0 01.75.75V4h7V2.75a.75.75 0 011.5 0V4h.25A2.75 2.75 0 0118 6.75v8.5A2.75 2.75 0 0115.25 18H4.75A2.75 2.75 0 012 15.25v-8.5A2.75 2.75 0 014.75 4H5V2.75A.75.75 0 015.75 2zm-1 5.5c-.69 0-1.25.56-1.25 1.25v6.5c0 .69.56 1.25 1.25 1.25h10.5c.69 0 1.25-.56 1.25-1.25v-6.5c0-.69-.56-1.25-1.25-1.25H4.75z" clip-rule="evenodd" /></svg>
                                     </span>
-                                    @if ($profiles->total() > 0)
-                                        {{ __('layanan.results_count', ['count' => $profiles->total()]) }}
+                                    @if ($page->profiles->total() > 0)
+                                        {{ __('layanan.results_count', ['count' => $page->profiles->total()]) }}
                                     @else
                                         {{ __('layanan.companions_ready', ['count' => 0]) }}
                                     @endif
-                                    <span class="font-normal text-slate-500">{{ __('layanan.results_for_range', ['range' => $rangeLabel]) }}</span>
+                                    <span class="font-normal text-slate-500">{{ __('layanan.results_for_range', ['range' => $page->rangeLabel]) }}</span>
                                 </p>
                                 <div class="mt-3 flex flex-wrap items-center gap-2">
-                                    <span class="inline-flex items-center rounded-full bg-slate-100 px-2.5 py-1 text-xs font-medium text-slate-700">{{ $rangeLabel }}</span>
-                                    @if (filled($searchQuery))
-                                        <span class="inline-flex items-center rounded-full bg-slate-100 px-2.5 py-1 text-xs font-medium text-slate-700">{{ $searchQuery }}</span>
+                                    <span class="inline-flex items-center rounded-full bg-slate-100 px-2.5 py-1 text-xs font-medium text-slate-700">{{ $page->rangeLabel }}</span>
+                                    @if (filled($page->searchQuery))
+                                        <span class="inline-flex items-center rounded-full bg-slate-100 px-2.5 py-1 text-xs font-medium text-slate-700">{{ $page->searchQuery }}</span>
                                     @endif
                                     <span class="inline-flex items-center rounded-full bg-emerald-50 px-2.5 py-1 text-xs font-medium text-emerald-900 ring-1 ring-emerald-100">{{ __('layanan.filter_active_verified') }}</span>
-                                    @if ($hasActiveFilters)
+                                    @if ($page->hasActiveFilters)
                                         <a href="{{ route('layanan.index') }}" class="text-xs font-semibold text-baytgo hover:text-baytgo-800">{{ __('layanan.filter_clear_all') }}</a>
                                     @endif
                                 </div>
@@ -142,7 +103,7 @@
                         </div>
                     @endif
 
-                    @if ($profiles->isEmpty())
+                    @if ($page->profiles->isEmpty())
                         <div class="rounded-3xl border border-dashed border-slate-300 bg-white p-12 text-center shadow-sm">
                             <p class="text-lg font-bold text-slate-900">{{ __('layanan.no_results_title') }}</p>
                             <p class="mx-auto mt-2 max-w-md text-sm text-slate-600">{{ __('layanan.no_results_sub') }}</p>
@@ -150,23 +111,13 @@
                         </div>
                     @else
                         <ul class="grid grid-cols-1 gap-5 sm:grid-cols-2 lg:grid-cols-3 lg:gap-6">
-                            @foreach ($profiles as $profile)
-                                @php
-                                    $group = $profile->services->firstWhere('type', MuthowifServiceType::Group);
-                                    $private = $profile->services->firstWhere('type', MuthowifServiceType::PrivateJamaah);
-                                @endphp
-                                @include('layanan.partials.muthowif-card', [
-                                    'profile' => $profile,
-                                    'group' => $group,
-                                    'private' => $private,
-                                    'listQueryString' => $listQueryString,
-                                    'rangeLabel' => $rangeLabel,
-                                ])
+                            @foreach ($page->profileCards as $card)
+                                @include('layanan.partials.muthowif-card', ['card' => $card])
                             @endforeach
                         </ul>
 
                         <div class="flex justify-center pt-4">
-                            {{ $profiles->links() }}
+                            {{ $page->profiles->links() }}
                         </div>
                     @endif
                 @endif

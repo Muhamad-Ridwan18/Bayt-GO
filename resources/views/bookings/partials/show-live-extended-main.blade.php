@@ -1,10 +1,9 @@
 @php
     use App\Enums\BookingStatus;
-    use App\Support\BookingPaymentReturn;
-    use App\Support\BookingSnapPaymentCatalog;
 
-    $b = $booking;
+    $b = $page->booking;
     $st = $b->status;
+    $review = $b->review;
 @endphp
 
 @include('bookings.partials.booking-documents', [
@@ -13,7 +12,7 @@
     'variant' => 'cards',
 ])
 
-@if (in_array($st, [BookingStatus::Confirmed, BookingStatus::InProgress, BookingStatus::Completed], true) || ($st === BookingStatus::Cancelled && $b->paid_at))
+@if ($page->showsPaymentSection)
     <div class="overflow-hidden rounded-2xl border border-slate-200/90 bg-white shadow-sm ring-1 ring-slate-100/80">
         <div class="border-b border-slate-100 bg-gradient-to-r from-slate-50 to-white px-6 py-4 sm:px-8">
             <h2 class="flex items-center gap-2 text-base font-bold text-slate-900">
@@ -28,21 +27,21 @@
         </div>
         <div class="p-6 sm:p-8">
             <dl class="space-y-3 rounded-2xl bg-slate-50/80 p-4 text-sm ring-1 ring-slate-100 sm:p-5">
-                @if ($isSupport ?? false)
+                @if ($page->isSupport)
                     <div class="flex justify-between gap-4">
                         <dt class="text-slate-600">{{ __('layanan_pendukung.package_detail') }}</dt>
-                        <dd class="font-medium text-slate-900">{{ $packageName ?? '—' }}</dd>
+                        <dd class="font-medium text-slate-900">{{ $page->packageName ?? '—' }}</dd>
                     </div>
                     <div class="flex justify-between gap-4 border-t border-slate-200/80 pt-3">
                         <dt class="text-slate-600">{{ __('layanan_pendukung.price_label') }}</dt>
-                        <dd class="font-medium tabular-nums text-slate-900">Rp {{ $fmt($baseSubtotal) }}</dd>
+                        <dd class="font-medium tabular-nums text-slate-900">Rp {{ $page->formatMoney($page->baseSubtotal) }}</dd>
                     </div>
                 @else
                 <div class="flex justify-between gap-4">
                     <dt class="text-slate-600">{{ __('bookings.show.rate_per_day') }}</dt>
                     <dd class="font-medium tabular-nums text-slate-900">
-                        @if ($daily !== null)
-                            Rp {{ $fmt($daily) }}
+                        @if ($page->daily !== null)
+                            Rp {{ $page->formatMoney($page->daily) }}
                         @else
                             —
                         @endif
@@ -50,50 +49,49 @@
                 </div>
                 <div class="flex justify-between gap-4">
                     <dt class="text-slate-600">{{ __('bookings.show.day_count') }}</dt>
-                    <dd class="font-medium text-slate-900">{{ __('bookings.show.days_count', ['count' => $nights]) }}</dd>
+                    <dd class="font-medium text-slate-900">{{ __('bookings.show.days_count', ['count' => $page->nights]) }}</dd>
                 </div>
                 <div class="flex justify-between gap-4 border-t border-slate-200/80 pt-3">
                     <dt class="text-slate-600">{{ __('bookings.show.subtotal_service') }}</dt>
-                    <dd class="font-medium tabular-nums text-slate-900">Rp {{ $fmt($baseSubtotal) }}</dd>
+                    <dd class="font-medium tabular-nums text-slate-900">Rp {{ $page->formatMoney($page->baseSubtotal) }}</dd>
                 </div>
-                @if ($addonLines->isNotEmpty())
-                    @foreach ($addonLines as $ad)
+                @if ($page->addonLines->isNotEmpty())
+                    @foreach ($page->addonLines as $ad)
                         <div class="flex justify-between gap-4">
                             <dt class="text-slate-600">+ {{ $ad->name }}</dt>
-                            <dd class="font-medium tabular-nums text-slate-900">Rp {{ $fmt((float) $ad->price) }}</dd>
+                            <dd class="font-medium tabular-nums text-slate-900">Rp {{ $page->formatMoney((float) $ad->price) }}</dd>
                         </div>
                     @endforeach
                 @endif
-                @if ($sameHotelLine > 0)
+                @if ($page->sameHotelLine > 0)
                     <div class="flex justify-between gap-4">
-                        <dt class="text-slate-600">{{ __('bookings.show.same_hotel_label', ['nights' => $nights, 'days' => __('common.days')]) }}</dt>
-                        <dd class="font-medium tabular-nums text-slate-900">Rp {{ $fmt($sameHotelLine) }}</dd>
+                        <dt class="text-slate-600">{{ __('bookings.show.same_hotel_label', ['nights' => $page->nights, 'days' => __('common.days')]) }}</dt>
+                        <dd class="font-medium tabular-nums text-slate-900">Rp {{ $page->formatMoney($page->sameHotelLine) }}</dd>
                     </div>
                 @endif
-                @if ($transportLine > 0)
+                @if ($page->transportLine > 0)
                     <div class="flex justify-between gap-4">
                         <dt class="text-slate-600">{{ __('bookings.show.transport_label') }}</dt>
-                        <dd class="font-medium tabular-nums text-slate-900">Rp {{ $fmt($transportLine) }}</dd>
+                        <dd class="font-medium tabular-nums text-slate-900">Rp {{ $page->formatMoney($page->transportLine) }}</dd>
                     </div>
                 @endif
                 @endif
-                @if ($customerPlatformFee > 0)
+                @if ($page->customerPlatformFee > 0)
                     <div class="flex justify-between gap-4 border-t border-slate-200/80 pt-3">
                         <dt class="text-slate-600">{{ __('bookings.show.platform_fee') }}</dt>
-                        <dd class="font-medium tabular-nums text-slate-900">Rp {{ $fmt($customerPlatformFee) }}</dd>
+                        <dd class="font-medium tabular-nums text-slate-900">Rp {{ $page->formatMoney($page->customerPlatformFee) }}</dd>
                     </div>
                 @endif
                 <div class="flex justify-between gap-4 border-t border-slate-200 pt-3 text-base">
                     <dt class="font-semibold text-slate-900">{{ __('bookings.show.total_customer') }}</dt>
-                    <dd class="font-bold tabular-nums text-brand-700">Rp {{ $fmt($customerTotal) }}</dd>
+                    <dd class="font-bold tabular-nums text-brand-700">Rp {{ $page->formatMoney($page->customerTotal) }}</dd>
                 </div>
             </dl>
 
             @if ($b->isAwaitingPayment())
-                @php $paymentReturnPending = BookingPaymentReturn::isAwaitingGatewayConfirmation(request()); @endphp
-                @if ($paymentReturnPending)
+                @if ($page->paymentReturnPending)
                     <p class="mt-5 text-xs leading-relaxed text-slate-600">
-                        {!! BookingSnapPaymentCatalog::driver() === 'moota'
+                        {!! $page->paymentWaitIsMoota
                             ? __('bookings.show.payment_wait_moota_html')
                             : __('bookings.show.payment_wait_html') !!}
                     </p>
@@ -122,11 +120,10 @@
 @endif
 
 @if ($st === BookingStatus::Cancelled && $b->isRefundPending())
-    @php $pend = $b->pendingRefundRequest(); @endphp
     <div class="rounded-2xl border border-amber-200 bg-gradient-to-br from-amber-50 to-amber-50/40 p-6 text-sm text-amber-950 shadow-sm ring-1 ring-amber-200/60">
         <p class="font-bold">{{ __('bookings.show.refund_pending_title') }}</p>
         <p class="mt-2 leading-relaxed">
-            {!! __('bookings.show.refund_pending_body_html', ['amount' => $pend ? $fmt((float) $pend->net_refund_customer) : __('common.em_dash')]) !!}
+            {!! __('bookings.show.refund_pending_body_html', ['amount' => $page->pendingRefundAmountFormatted ?? __('common.em_dash')]) !!}
         </p>
     </div>
 @endif

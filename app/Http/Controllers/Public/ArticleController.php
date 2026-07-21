@@ -61,6 +61,7 @@ class ArticleController extends Controller
         }
 
         $services = $query
+            ->with(['user', 'services'])
             ->withMarketplaceStats()
             ->orderByMarketplaceRanking()
             ->limit(5)
@@ -69,6 +70,7 @@ class ArticleController extends Controller
         if ($services->isEmpty()) {
             return MuthowifProfile::query()
                 ->approved()
+                ->with(['user', 'services'])
                 ->withMarketplaceStats()
                 ->orderByMarketplaceRanking()
                 ->limit(5)
