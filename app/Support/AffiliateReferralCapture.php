@@ -56,10 +56,19 @@ final class AffiliateReferralCapture
         Cookie::queue(Cookie::forget(self::COOKIE_NAME));
     }
 
+    /**
+     * Resolve affiliate code for a booking create.
+     * - Field present in request (even empty): honor that value only — do not fall back to cookie.
+     * - Field absent (e.g. API/deep-link flow): fall back to session/cookie from ?ref= capture.
+     */
     public static function resolveForBooking(Request $request, ?string $explicitCode): ?string
     {
+        if ($request->exists('affiliate_code')) {
+            return filled($explicitCode) ? (string) $explicitCode : null;
+        }
+
         if (filled($explicitCode)) {
-            return $explicitCode;
+            return (string) $explicitCode;
         }
 
         return self::code($request);

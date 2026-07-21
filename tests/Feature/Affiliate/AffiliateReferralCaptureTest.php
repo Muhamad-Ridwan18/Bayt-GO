@@ -77,6 +77,73 @@ class AffiliateReferralCaptureTest extends TestCase
         $this->assertSame(0, AffiliateClick::query()->count());
     }
 
+    public function test_mark_converted_clears_captured_ref(): void
+    {
+        $affiliate = $this->makeAffiliate('ONCE01');
+
+        $this->get('/?ref=ONCE01')->assertOk();
+        $this->assertSame('ONCE01', session(AffiliateReferralCapture::SESSION_KEY));
+
+        $customer = User::factory()->create(['role' => UserRole::Customer]);
+        $muthowifUser = User::factory()->create(['role' => UserRole::Muthowif]);
+        $profile = MuthowifProfile::query()->create([
+            'id' => (string) Str::uuid(),
+            'user_id' => $muthowifUser->id,
+            'phone' => '081234567890',
+            'address' => 'Makkah',
+            'nik' => '1234567890123456',
+            'birth_date' => '1990-01-01',
+            'photo_path' => 'photos/test.jpg',
+            'ktp_image_path' => 'ktp/test.jpg',
+            'verification_status' => 'approved',
+            'wallet_balance' => 0,
+        ]);
+
+        $booking = MuthowifBooking::query()->create([
+            'booking_code' => 'BG-ONCE-1',
+            'muthowif_profile_id' => $profile->id,
+            'customer_id' => $customer->id,
+            'service_type' => 'support',
+            'pilgrim_count' => 1,
+            'starts_on' => now()->toDateString(),
+            'ends_on' => now()->toDateString(),
+            'status' => BookingStatus::Pending,
+            'affiliate_id' => $affiliate->id,
+            'affiliate_code_snapshot' => 'ONCE01',
+            'affiliate_rate_snapshot' => 0.01,
+            'affiliate_base_amount_snapshot' => 1_000_000,
+            'affiliate_commission_amount' => 10_000,
+        ]);
+
+        app(\App\Services\AffiliateReferralService::class)->markConverted($booking);
+
+        $this->assertNull(session(AffiliateReferralCapture::SESSION_KEY));
+        $this->assertNull(AffiliateReferralCapture::code());
+    }
+
+    public function test_resolve_for_booking_empty_field_does_not_use_cookie(): void
+    {
+        $this->makeAffiliate('KEEP01');
+        $this->get('/?ref=KEEP01')->assertOk();
+
+        $request = request();
+        $request->merge(['affiliate_code' => '']);
+
+        $this->assertNull(AffiliateReferralCapture::resolveForBooking($request, ''));
+        $this->assertSame('KEEP01', AffiliateReferralCapture::code($request));
+    }
+
+    public function test_resolve_for_booking_absent_field_uses_cookie(): void
+    {
+        $this->makeAffiliate('FALL01');
+        $this->get('/?ref=FALL01')->assertOk();
+
+        $request = \Illuminate\Http\Request::create('/bookings', 'POST');
+        $request->setLaravelSession(session()->driver());
+
+        $this->assertSame('FALL01', AffiliateReferralCapture::resolveForBooking($request, null));
+    }
+
     public function test_dashboard_includes_total_clicks(): void
     {
         $affiliate = $this->makeAffiliate('DASH01');

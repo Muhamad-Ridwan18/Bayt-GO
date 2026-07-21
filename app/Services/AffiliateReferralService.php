@@ -79,6 +79,10 @@ class AffiliateReferralService
         }
 
         $request ??= request();
+
+        // One conversion per capture: do not keep attributing later bookings to the same ?ref=.
+        AffiliateReferralCapture::clear($request);
+
         $visitorKey = $this->visitorKey($request);
 
         /** @var AffiliateClick|null $click */
