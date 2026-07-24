@@ -23,9 +23,9 @@
     @resize.window="if (window.innerWidth >= 1024) { open = false }"
 >
     <x-page-container class="relative flex min-h-[4.25rem] items-center justify-between gap-3 lg:gap-6">
-        <a href="{{ route('welcome') }}" class="relative z-10 flex min-w-0 shrink-0 items-center gap-2.5 group">
+        <a href="{{ route('welcome') }}" class="relative z-10 flex shrink-0 items-center gap-2.5 group">
             <x-site-logo variant="welcome" class="rounded-xl ring-1 ring-slate-200/70 shrink-0" />
-            <span class="truncate text-lg font-bold tracking-tight text-baytgo">Bayt<span class="text-gold-muted">Go</span></span>
+            <span class="shrink-0 whitespace-nowrap text-lg font-bold tracking-tight text-baytgo">Bayt<span class="text-gold-muted">Go</span></span>
         </a>
 
         <nav class="hidden lg:flex absolute left-1/2 top-1/2 max-w-none -translate-x-1/2 -translate-y-1/2 items-center gap-0 xl:gap-0.5" aria-label="{{ __('welcome.nav_primary_aria') }}">
@@ -81,9 +81,9 @@
             x-transition:leave-end="opacity-0 translate-y-2"
         >
             <div class="flex min-h-[4.25rem] shrink-0 items-center justify-between gap-3 border-b border-slate-100 px-4">
-                <a href="{{ route('welcome') }}" @click="open = false" class="flex min-w-0 items-center gap-2.5">
+                <a href="{{ route('welcome') }}" @click="open = false" class="flex shrink-0 items-center gap-2.5">
                     <x-site-logo variant="welcome" class="rounded-xl ring-1 ring-slate-200/70 shrink-0" />
-                    <span class="truncate text-lg font-bold tracking-tight text-baytgo">Bayt<span class="text-gold-muted">Go</span></span>
+                    <span class="shrink-0 whitespace-nowrap text-lg font-bold tracking-tight text-baytgo">Bayt<span class="text-gold-muted">Go</span></span>
                 </a>
                 <button
                     type="button"

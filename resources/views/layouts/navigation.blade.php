@@ -19,9 +19,9 @@
             <div class="flex min-w-0 flex-1 items-center lg:flex-initial lg:gap-0">
                 <!-- Logo -->
                 <div class="flex shrink-0 items-center">
-                    <a href="{{ route('dashboard') }}" class="flex min-w-0 items-center gap-2">
+                    <a href="{{ route('dashboard') }}" class="flex items-center gap-2">
                         <x-site-logo variant="nav" />
-                        <span class="truncate text-lg font-bold tracking-tight text-baytgo">Bayt<span class="text-gold-muted">Go</span></span>
+                        <span class="shrink-0 whitespace-nowrap text-lg font-bold tracking-tight text-baytgo">Bayt<span class="text-gold-muted">Go</span></span>
                     </a>
                 </div>
 
@@ -242,9 +242,9 @@
             x-transition:leave-end="opacity-0 translate-y-2"
         >
                 <div class="flex min-h-16 shrink-0 items-center justify-between gap-3 border-b border-slate-100 px-4">
-                    <a href="{{ route('dashboard') }}" @click="open = false" class="flex min-w-0 items-center gap-2">
+                    <a href="{{ route('dashboard') }}" @click="open = false" class="flex items-center gap-2">
                         <x-site-logo variant="nav" />
-                        <span class="truncate text-lg font-bold tracking-tight text-baytgo">Bayt<span class="text-gold-muted">Go</span></span>
+                        <span class="shrink-0 whitespace-nowrap text-lg font-bold tracking-tight text-baytgo">Bayt<span class="text-gold-muted">Go</span></span>
                     </a>
                     <button
                         type="button"
