@@ -11,6 +11,8 @@ use App\Support\WhatsAppMediaUrl;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Http\UploadedFile;
+use Illuminate\Support\Facades\Cache;
+use Illuminate\Support\Str;
 use Illuminate\View\View;
 
 class WhatsAppBroadcastController extends Controller
@@ -83,6 +85,7 @@ class WhatsAppBroadcastController extends Controller
             'whatsappConfigured' => $this->broadcast->whatsappConfigured(),
             'mediaUrlPublic' => WhatsAppMediaUrl::isPubliclyReachable(),
             'mediaBaseUrl' => WhatsAppMediaUrl::baseUrl(),
+            'idempotencyKey' => (string) Str::uuid(),
         ]);
     }
 
@@ -100,6 +103,7 @@ class WhatsAppBroadcastController extends Controller
             'muthowif_profile_ids' => ['nullable', 'array', 'max:500'],
             'muthowif_profile_ids.*' => ['uuid', 'exists:muthowif_profiles,id'],
             'free_numbers' => ['nullable', 'string', 'max:10000'],
+            'idempotency_key' => ['required', 'uuid'],
         ], [
             'message.required_without' => __('admin.whatsapp_broadcast.message_or_attachment_required'),
             'message.max' => __('admin.whatsapp_broadcast.message_max'),
@@ -107,10 +111,22 @@ class WhatsAppBroadcastController extends Controller
             'attachment.max' => __('admin.whatsapp_broadcast.attachment_max'),
         ]);
 
+        $idempotencyKey = (string) $validated['idempotency_key'];
+        $claimKey = 'wa:broadcast:claim:'.$idempotencyKey;
+
+        if (! Cache::add($claimKey, 1, now()->addMinutes(30))) {
+            return back()->with(
+                'status',
+                __('admin.whatsapp_broadcast.already_queued'),
+            );
+        }
+
         $profileIds = $validated['muthowif_profile_ids'] ?? [];
         $freeNumbers = trim((string) ($validated['free_numbers'] ?? ''));
 
         if ($profileIds === [] && $freeNumbers === '') {
+            Cache::forget($claimKey);
+
             return back()
                 ->withInput()
                 ->withErrors(['recipients' => __('admin.whatsapp_broadcast.recipients_required')]);
@@ -119,6 +135,7 @@ class WhatsAppBroadcastController extends Controller
         $preview = $this->broadcast->resolveRecipients($profileIds, $freeNumbers);
 
         if ($preview['recipients'] === []) {
+            Cache::forget($claimKey);
             $message = __('admin.whatsapp_broadcast.no_valid_recipients');
             if ($preview['invalid_numbers'] !== []) {
                 $message .= ' '.implode(', ', array_slice($preview['invalid_numbers'], 0, 5));
@@ -130,6 +147,8 @@ class WhatsAppBroadcastController extends Controller
         }
 
         if (count($preview['recipients']) > 500) {
+            Cache::forget($claimKey);
+
             return back()
                 ->withInput()
                 ->withErrors(['recipients' => __('admin.whatsapp_broadcast.too_many_recipients')]);
@@ -148,6 +167,7 @@ class WhatsAppBroadcastController extends Controller
             $profileIds,
             $freeNumbers,
             $attachmentPublicUrl,
+            $idempotencyKey,
         );
 
         return back()->with(
