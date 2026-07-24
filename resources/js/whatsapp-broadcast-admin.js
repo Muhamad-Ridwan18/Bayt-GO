@@ -23,6 +23,7 @@ export function registerWhatsappBroadcastAdmin(Alpine) {
             selectedCount: 0,
             allVisibleSelected: false,
             someVisibleSelected: false,
+            sending: false,
             init() {
                 this.updateSelectedCount();
             },
@@ -100,6 +101,10 @@ export function registerWhatsappBroadcastAdmin(Alpine) {
                 return (labels.totalEstimate ?? ':count recipients').replace(':count', String(n));
             },
             confirmSend(event) {
+                if (this.sending) {
+                    event.preventDefault();
+                    return;
+                }
                 this.updateSelectedCount();
                 const total = this.selectedCount + this.parseFreeNumbers().length;
                 if (total === 0) {
@@ -119,7 +124,9 @@ export function registerWhatsappBroadcastAdmin(Alpine) {
                 const msg = (labels.confirmSend ?? 'Send to :count recipients?').replace(':count', String(total));
                 if (! window.confirm(msg)) {
                     event.preventDefault();
+                    return;
                 }
+                this.sending = true;
             },
         };
     });
