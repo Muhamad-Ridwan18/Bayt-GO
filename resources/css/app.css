@@ -498,3 +498,10 @@
     animation-play-state: paused;
 }
 
+@media (prefers-reduced-motion: reduce) {
+    .marquee-track,
+    .marquee-track-reverse {
+        animation: none;
+    }
+}
+

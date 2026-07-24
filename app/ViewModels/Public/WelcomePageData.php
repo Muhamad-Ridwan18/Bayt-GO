@@ -56,7 +56,7 @@ final class WelcomePageData
             showLandingChrome: true,
             guideCards: [],
             muthowifLimit: 14,
-            galleryLimit: 8,
+            galleryLimit: 16,
             articleLimit: 4,
         );
     }
@@ -108,7 +108,7 @@ final class WelcomePageData
             showLandingChrome: $showLandingChrome,
             guideCards: $guideCards,
             muthowifLimit: $muthowifLimit,
-            galleryLimit: 8,
+            galleryLimit: 16,
             articleLimit: 4,
         );
     }
@@ -131,7 +131,9 @@ final class WelcomePageData
         /** @var Collection<int, Article> $articles */
         $articles = collect($cache['latestArticles'] ?? [])->take($articleLimit);
         /** @var Collection<int, MuthowifPortfolioImage> $gallery */
-        $gallery = collect($cache['galleryImages'] ?? [])->take($galleryLimit);
+        $gallery = collect($cache['galleryImages'] ?? [])
+            ->shuffle()
+            ->take($galleryLimit);
         /** @var Collection<int, Campaign> $campaigns */
         $campaigns = collect($cache['activeCampaigns'] ?? []);
 
