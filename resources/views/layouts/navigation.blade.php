@@ -241,7 +241,7 @@
             x-transition:leave-start="opacity-100 translate-y-0"
             x-transition:leave-end="opacity-0 translate-y-2"
         >
-                <div class="flex min-h-16 shrink-0 items-center justify-between gap-3 border-b border-slate-100 px-4">
+                <div class="flex min-h-16 shrink-0 items-center justify-between gap-3 border-b border-slate-100 px-5">
                     <a href="{{ route('dashboard') }}" @click="open = false" class="flex items-center gap-2">
                         <x-site-logo variant="nav" />
                         <span class="shrink-0 whitespace-nowrap text-lg font-bold tracking-tight text-baytgo">Bayt<span class="text-gold-muted">Go</span></span>
@@ -256,14 +256,14 @@
                     </button>
                 </div>
 
-                <div class="min-h-0 flex-1 overflow-y-auto">
-                    <div class="border-b border-slate-100 px-4 py-3">
+                <div class="min-h-0 flex-1 overflow-y-auto px-5">
+                    <div class="border-b border-slate-100 py-4">
                         <p class="text-[11px] font-semibold uppercase tracking-wide text-slate-500">{{ __('nav.language') }}</p>
                         <div class="mt-2 flex justify-start">
                             <x-language-switcher variant="segment" />
                         </div>
                     </div>
-                    <div class="space-y-1 py-2">
+                    <div class="space-y-1 py-3">
             <x-responsive-nav-link :href="route('dashboard')" :active="request()->routeIs('dashboard')" @click="open = false">
                 {{ __('nav.home') }}
             </x-responsive-nav-link>
@@ -336,9 +336,9 @@
                         type="button"
                         @click="manageOpen = ! manageOpen"
                         @class([
-                            'flex w-full items-center justify-between gap-2 border-l-4 py-2 pe-4 ps-3 text-start text-base font-medium transition duration-150 ease-in-out focus:outline-none',
-                            'border-gold bg-gold-light/30 text-baytgo focus:bg-gold-light/40' => $muthowifManageActive,
-                            'border-transparent text-slate-600 hover:border-slate-300 hover:bg-slate-50 hover:text-slate-800' => ! $muthowifManageActive,
+                            'flex w-full items-center justify-between gap-2 rounded-xl px-3 py-2.5 text-start text-base font-medium transition duration-150 ease-in-out focus:outline-none',
+                            'bg-baytgo/8 text-baytgo focus:bg-baytgo/12' => $muthowifManageActive,
+                            'text-slate-600 hover:bg-slate-50 hover:text-slate-800' => ! $muthowifManageActive,
                         ])
                     >
                         <span class="inline-flex items-center gap-2">
@@ -359,7 +359,7 @@
                             <path fill-rule="evenodd" d="M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z" clip-rule="evenodd" />
                         </svg>
                     </button>
-                    <div x-show="manageOpen" x-cloak class="space-y-1 border-l border-slate-200 ms-3">
+                    <div x-show="manageOpen" x-cloak class="ms-2 space-y-1 border-s border-slate-200 ps-2">
                         <x-responsive-nav-link :href="route('muthowif.kelola-layanan')" :active="request()->routeIs(['muthowif.kelola-layanan', 'muthowif.pelayanan.*', 'muthowif.pelayanan-pendukung.*'])">
                             {{ __('nav.manage_services') }}
                         </x-responsive-nav-link>
@@ -411,8 +411,8 @@
                     </div>
                 </div>
 
-                <div class="shrink-0 border-t border-slate-200 bg-white px-4 py-3 pb-[max(0.75rem,env(safe-area-inset-bottom))]">
-                    <div class="mb-2">
+                <div class="shrink-0 border-t border-slate-200 bg-white px-5 py-4 pb-[max(1rem,env(safe-area-inset-bottom))]">
+                    <div class="mb-3">
                         <div class="truncate font-medium text-base text-slate-800">{{ Auth::user()->name }}</div>
                         <div class="truncate font-medium text-sm text-slate-500">{{ Auth::user()->email }}</div>
                     </div>

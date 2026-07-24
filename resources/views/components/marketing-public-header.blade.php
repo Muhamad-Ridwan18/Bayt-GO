@@ -80,7 +80,7 @@
             x-transition:leave-start="opacity-100 translate-y-0"
             x-transition:leave-end="opacity-0 translate-y-2"
         >
-            <div class="flex min-h-[4.25rem] shrink-0 items-center justify-between gap-3 border-b border-slate-100 px-4">
+            <div class="flex min-h-[4.25rem] shrink-0 items-center justify-between gap-3 border-b border-slate-100 px-5">
                 <a href="{{ route('welcome') }}" @click="open = false" class="flex shrink-0 items-center gap-2.5">
                     <x-site-logo variant="welcome" class="rounded-xl ring-1 ring-slate-200/70 shrink-0" />
                     <span class="shrink-0 whitespace-nowrap text-lg font-bold tracking-tight text-baytgo">Bayt<span class="text-gold-muted">Go</span></span>
@@ -95,7 +95,7 @@
                 </button>
             </div>
 
-            <div class="min-h-0 flex-1 overflow-y-auto px-4 py-4">
+            <div class="min-h-0 flex-1 overflow-y-auto px-5 py-4">
                 <nav class="space-y-1" aria-label="{{ __('welcome.nav_mobile_aria') }}">
                     <a href="{{ route('welcome') }}" @click="open = false" class="{{ $active === 'welcome' ? $mobileLinkActive : $mobileLink }}">{{ __('welcome.nav_home') }}</a>
                     <a href="{{ route('articles.index') }}" @click="open = false" class="{{ $active === 'articles' ? $mobileLinkActive : $mobileLink }}">{{ __('nav.articles') }}</a>
@@ -112,7 +112,7 @@
                 </div>
             </div>
 
-            <div class="shrink-0 border-t border-slate-100 bg-white p-4 pb-[max(1rem,env(safe-area-inset-bottom))]">
+            <div class="shrink-0 border-t border-slate-100 bg-white px-5 py-4 pb-[max(1rem,env(safe-area-inset-bottom))]">
                 @auth
                     <a href="{{ route('dashboard') }}" @click="open = false" class="inline-flex w-full items-center justify-center rounded-xl bg-baytgo px-4 py-3 text-sm font-semibold text-white transition hover:bg-baytgo-800">{{ __('welcome.cta_dashboard') }}</a>
                 @elseif (Route::has('login'))
