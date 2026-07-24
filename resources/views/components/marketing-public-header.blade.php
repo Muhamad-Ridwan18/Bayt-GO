@@ -10,7 +10,19 @@
     $inactive = 'text-slate-600 hover:text-baytgo';
     $activeClass = 'relative text-baytgo after:absolute after:inset-x-1.5 xl:after:inset-x-3 after:-bottom-0.5 after:h-0.5 after:rounded-full after:bg-gold';
 @endphp
-<header class="sticky top-0 z-[100] border-b border-slate-100 bg-white shadow-sm" x-data="{ open: false }" @keydown.window.escape="open = false" @resize.window="if (window.innerWidth >= 1024) open = false">
+<header
+    class="sticky top-0 z-[100] border-b border-slate-100 bg-white shadow-sm"
+    x-data="{
+        open: false,
+        init() {
+            this.$watch('open', (value) => {
+                document.body.classList.toggle('overflow-hidden', value && window.innerWidth < 1024);
+            });
+        },
+    }"
+    @keydown.window.escape="open = false"
+    @resize.window="if (window.innerWidth >= 1024) open = false"
+>
     <x-page-container class="relative flex min-h-[4.25rem] items-center justify-between gap-3 lg:gap-6">
         <a href="{{ route('welcome') }}" class="relative z-10 flex min-w-0 shrink-0 items-center gap-2.5 group">
             <x-site-logo variant="welcome" class="rounded-xl ring-1 ring-slate-200/70 shrink-0" />
@@ -53,11 +65,26 @@
         </div>
     </x-page-container>
 
-    <div
-        id="marketing-mobile-nav"
-        :class="{'block': open, 'hidden': ! open}"
-        class="hidden border-t border-slate-100 bg-white lg:hidden"
-    >
+    <template x-teleport="body">
+        <div class="lg:hidden" x-show="open" x-cloak>
+            <div
+                x-show="open"
+                x-transition.opacity.duration.200ms
+                class="fixed inset-0 z-[200] bg-slate-950/40"
+                @click="open = false"
+                aria-hidden="true"
+            ></div>
+            <div
+                id="marketing-mobile-nav"
+                x-show="open"
+                x-transition:enter="transition ease-out duration-200"
+                x-transition:enter-start="-translate-y-2 opacity-0"
+                x-transition:enter-end="translate-y-0 opacity-100"
+                x-transition:leave="transition ease-in duration-150"
+                x-transition:leave-start="translate-y-0 opacity-100"
+                x-transition:leave-end="-translate-y-2 opacity-0"
+                class="fixed inset-x-0 top-[4.25rem] z-[210] max-h-[min(80vh,calc(100dvh-4.25rem))] overflow-y-auto border-b border-t border-slate-100 bg-white shadow-xl"
+            >
         <x-page-container class="space-y-0.5 py-4" tag="nav" aria-label="{{ __('welcome.nav_mobile_aria') }}">
             <a href="{{ route('welcome') }}" @click="open = false" class="block rounded-lg px-3 py-2.5 text-sm font-semibold {{ $active === 'welcome' ? 'bg-baytgo/8 text-baytgo' : 'text-slate-700 hover:bg-slate-50' }}">{{ __('welcome.nav_home') }}</a>
             <a href="{{ route('articles.index') }}" @click="open = false" class="block rounded-lg px-3 py-2.5 text-sm font-semibold {{ $active === 'articles' ? 'bg-baytgo/8 text-baytgo' : 'text-slate-700 hover:bg-slate-50' }}">{{ __('nav.articles') }}</a>
@@ -79,6 +106,8 @@
                     <a href="{{ route('login') }}" class="inline-flex flex-1 min-w-[8rem] items-center justify-center rounded-xl bg-baytgo px-3 py-2.5 text-sm font-semibold text-white transition hover:bg-baytgo-800">{{ __('welcome.nav_login_register') }}</a>
                 @endif
             @endauth
-        </x-page-container>
-    </div>
+            </x-page-container>
+            </div>
+        </div>
+    </template>
 </header>

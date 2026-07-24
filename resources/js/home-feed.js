@@ -53,57 +53,17 @@ export function registerHomeFeed(Alpine) {
         },
     }));
 
-    Alpine.data('homeGallery', (items = []) => ({
+    Alpine.data('homeGallery', () => ({
         open: false,
         url: '',
         title: '',
         href: null,
-        items: Array.isArray(items) ? [...items] : [],
-        row1: [],
-        row2: [],
-        reducedMotion: false,
-
-        init() {
-            this.reducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
-            this.shuffleRows();
-        },
-
-        shuffleRows() {
-            const pool = this.shuffle([...this.items]);
-            if (pool.length <= 1) {
-                this.row1 = pool;
-                this.row2 = [];
-                return;
-            }
-
-            const mid = Math.ceil(pool.length / 2);
-            this.row1 = pool.slice(0, mid);
-            this.row2 = pool.slice(mid);
-        },
-
-        shuffle(list) {
-            for (let i = list.length - 1; i > 0; i--) {
-                const j = Math.floor(Math.random() * (i + 1));
-                [list[i], list[j]] = [list[j], list[i]];
-            }
-            return list;
-        },
-
-        get row1Loop() {
-            return this.row1.length ? [...this.row1, ...this.row1] : [];
-        },
-
-        get row2Loop() {
-            return this.row2.length ? [...this.row2, ...this.row2] : [];
-        },
-
         show(u, t, h) {
             this.url = u;
             this.title = t;
             this.href = h;
             this.open = true;
         },
-
         close() {
             this.open = false;
         },

@@ -1,6 +1,18 @@
 {{-- Badge counts from App\View\Composers\NavigationComposer --}}
 
-<nav x-data="{ open: false }" class="relative z-[90] border-b border-slate-200/80 bg-white shadow-sm" @resize.window="if (window.innerWidth >= 1024) open = false">
+<nav
+    x-data="{
+        open: false,
+        init() {
+            this.$watch('open', (value) => {
+                document.body.classList.toggle('overflow-hidden', value && window.innerWidth < 1024);
+            });
+        },
+    }"
+    class="sticky top-0 z-[90] border-b border-slate-200/80 bg-white shadow-sm"
+    @resize.window="if (window.innerWidth >= 1024) { open = false }"
+    @keydown.window.escape="open = false"
+>
     <!-- Primary Navigation Menu -->
     <x-page-container>
         <div class="flex min-h-16 min-w-0 items-center justify-between gap-2">
@@ -212,12 +224,27 @@
         </div>
     </x-page-container>
 
-    <!-- Responsive Navigation Menu (< lg: hamburger; bahasa & menu dalam panel) -->
-    <div
-        id="responsive-main-nav"
-        :class="{'block': open, 'hidden': ! open}"
-        class="hidden border-t border-slate-200/80 bg-white lg:hidden"
-    >
+    <!-- Responsive Navigation Menu: overlay fixed (semua halaman, tidak dorong konten) -->
+    <template x-teleport="body">
+        <div class="lg:hidden" x-show="open" x-cloak>
+            <div
+                x-show="open"
+                x-transition.opacity.duration.200ms
+                class="fixed inset-0 z-[200] bg-slate-950/40"
+                @click="open = false"
+                aria-hidden="true"
+            ></div>
+            <div
+                id="responsive-main-nav"
+                x-show="open"
+                x-transition:enter="transition ease-out duration-200"
+                x-transition:enter-start="-translate-y-2 opacity-0"
+                x-transition:enter-end="translate-y-0 opacity-100"
+                x-transition:leave="transition ease-in duration-150"
+                x-transition:leave-start="translate-y-0 opacity-100"
+                x-transition:leave-end="-translate-y-2 opacity-0"
+                class="fixed inset-x-0 top-16 z-[210] max-h-[min(80vh,calc(100dvh-4rem))] overflow-y-auto border-b border-t border-slate-200/80 bg-white shadow-xl"
+            >
         <div class="px-4 py-3 border-b border-slate-100">
             <p class="text-[11px] font-semibold uppercase tracking-wide text-slate-500">{{ __('nav.language') }}</p>
             <div class="mt-2 flex justify-center">
@@ -394,5 +421,7 @@
                 </form>
             </div>
         </div>
-    </div>
+            </div>
+        </div>
+    </template>
 </nav>
