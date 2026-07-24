@@ -2,10 +2,12 @@
 
 namespace App\Services;
 
-use App\Jobs\SendWhatsAppTextJob;
 use App\Models\MuthowifProfile;
 use App\Support\IntlPhone;
 use App\Support\WhatsAppNotifySettings;
+use Illuminate\Support\Facades\Cache;
+use Illuminate\Support\Facades\Log;
+use Throwable;
 
 class WhatsAppBroadcastService
 {
@@ -32,31 +34,63 @@ class WhatsAppBroadcastService
         array $muthowifProfileIds,
         string $freeNumbersText,
         ?string $attachmentPublicUrl = null,
+        ?string $idempotencyKey = null,
     ): array {
         $resolved = $this->resolveRecipients($muthowifProfileIds, $freeNumbersText);
         $text = $this->messageWithOptionalFileLink($message, $attachmentPublicUrl);
+        $fonnte = app(FonnteService::class);
 
-        $queued = 0;
+        $sent = 0;
+        $failed = 0;
+        $duplicateSkipped = 0;
+        $failures = [];
+        $total = count($resolved['recipients']);
+
+        Log::info('whatsapp.broadcast.send.start', [
+            'idempotency_key' => $idempotencyKey,
+            'recipients' => $total,
+            'message_len' => strlen($text),
+        ]);
 
         foreach ($resolved['recipients'] as $index => $recipient) {
             $pending = SendWhatsAppTextJob::dispatch(
                 $recipient['dial']['target'],
                 $text,
-                $recipient['dial']['country_calling_code'],
-            );
+            ]));
+
+            // Anti-duplikat: request/job yang sama tidak boleh kirim ulang ke nomor yang sama.
+            if (! Cache::add('wa:broadcast:msg:'.$fingerprint, 1, now()->addMinutes(30))) {
+                $duplicateSkipped++;
+                Log::warning('whatsapp.broadcast.duplicate_skipped', [
+                    'idempotency_key' => $idempotencyKey,
+                    'e164' => $e164,
+                    'label' => $recipient['label'],
+                ]);
+
+                continue;
+            }
 
             if ($index > 0) {
                 $pending->delay(now()->addSeconds($index * self::SEND_STAGGER_SECONDS));
             }
 
-            $queued++;
+            if ($index < $total - 1) {
+                sleep(self::SEND_STAGGER_SECONDS);
+            }
         }
 
+        Log::info('whatsapp.broadcast.send.done', [
+            'idempotency_key' => $idempotencyKey,
+            'sent' => $sent,
+            'failed' => $failed,
+            'duplicate_skipped' => $duplicateSkipped,
+        ]);
+
         return [
-            'sent' => $queued,
-            'failed' => 0,
-            'skipped' => $resolved['skipped'],
-            'failures' => [],
+            'sent' => $sent,
+            'failed' => $failed,
+            'skipped' => $resolved['skipped'] + $duplicateSkipped,
+            'failures' => $failures,
             'invalid_numbers' => $resolved['invalid_numbers'],
         ];
     }
@@ -109,7 +143,7 @@ class WhatsAppBroadcastService
                     continue;
                 }
 
-                $key = $dial['country_calling_code'].'-'.$dial['target'];
+                $key = $this->normalizedE164($dial);
                 if (isset($seenKeys[$key])) {
                     continue;
                 }
@@ -130,7 +164,7 @@ class WhatsAppBroadcastService
                 continue;
             }
 
-            $key = $dial['country_calling_code'].'-'.$dial['target'];
+            $key = $this->normalizedE164($dial);
             if (isset($seenKeys[$key])) {
                 continue;
             }
@@ -147,6 +181,29 @@ class WhatsAppBroadcastService
             'skipped' => $skipped,
             'invalid_numbers' => $invalidNumbers,
         ];
+    }
+
+    /**
+     * @param  array{target: string, country_calling_code: string}  $dial
+     */
+    private function normalizedE164(array $dial): string
+    {
+        $cc = preg_replace('/\D+/', '', $dial['country_calling_code']) ?? '';
+        $digits = preg_replace('/\D+/', '', $dial['target']) ?? '';
+
+        if ($digits === '') {
+            return $cc;
+        }
+
+        if (str_starts_with($digits, '0')) {
+            return $cc.substr($digits, 1);
+        }
+
+        if ($cc !== '' && ! str_starts_with($digits, $cc)) {
+            return $cc.$digits;
+        }
+
+        return $digits;
     }
 
     private function messageWithOptionalFileLink(string $message, ?string $fileUrl): string
