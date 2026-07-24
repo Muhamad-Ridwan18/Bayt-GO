@@ -41,7 +41,7 @@ return [
     'manage_svc_umrah_desc' => 'Main umrah accompaniment (group & private).',
     'manage_svc_prayer' => 'Prayer companion',
     'manage_svc_prayer_desc' => 'Prayer assistance and related support packages.',
-    'manage_svc_photo' => 'Photo & video documentation',
+    'manage_svc_photo' => 'Photographer & videographer',
     'manage_svc_photo_desc' => 'Photography & videography packages for the journey.',
     'manage_svc_raudhah' => 'Raudhah companion',
     'manage_svc_raudhah_desc' => 'Ziyarah & Raudhah accompaniment.',

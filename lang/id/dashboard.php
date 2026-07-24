@@ -13,7 +13,7 @@ return [
     'customer_cat_umroh' => 'Pendamping Umrah',
     'customer_cat_wheelchair' => 'Kursi Roda',
     'customer_cat_prayer' => 'Pendamping Salat',
-    'customer_cat_photo' => 'Foto & Video',
+    'customer_cat_photo' => 'Fotografer & Videografer',
     'customer_cat_raudho' => 'Raudhah',
     'customer_quick_popular' => 'Muthowif Populer',
     'customer_quick_promo' => 'Promo',

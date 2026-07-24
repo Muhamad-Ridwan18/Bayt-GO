@@ -29,7 +29,7 @@ return [
         'umrah' => 'Umrah',
         'ziarah' => 'Ziarah',
         'mobility' => 'Mobility / wheelchair',
-        'other' => 'Other',
+        'other' => 'Photographer & videographer',
     ],
     'muthowif_verification_status' => [
         'pending' => 'Pending verification',

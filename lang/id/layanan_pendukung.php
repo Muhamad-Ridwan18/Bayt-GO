@@ -34,7 +34,7 @@ return [
         'umrah' => 'Pendamping Umrah',
         'ziarah' => 'Ziarah',
         'mobility' => 'Kursi Roda',
-        'other' => 'Lainnya',
+        'other' => 'Fotografer & Videografer',
     ],
     'no_results_title' => 'Belum ada paket ditemukan',
     'no_results_sub' => 'Coba kata kunci lain atau kembali nanti.',

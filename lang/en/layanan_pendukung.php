@@ -34,7 +34,7 @@ return [
         'umrah' => 'Umrah companion',
         'ziarah' => 'Ziarah',
         'mobility' => 'Wheelchair',
-        'other' => 'Other',
+        'other' => 'Photographer & videographer',
     ],
     'no_results_title' => 'No packages found',
     'no_results_sub' => 'Try another keyword or check back later.',

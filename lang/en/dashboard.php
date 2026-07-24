@@ -13,7 +13,7 @@ return [
     'customer_cat_umroh' => 'Umrah Companion',
     'customer_cat_wheelchair' => 'Wheelchair',
     'customer_cat_prayer' => 'Prayer Companion',
-    'customer_cat_photo' => 'Photo & Video',
+    'customer_cat_photo' => 'Photographer & Videographer',
     'customer_cat_raudho' => 'Raudhah',
     'customer_quick_popular' => 'Popular Muthowif',
     'customer_quick_promo' => 'Promo',
