@@ -21,7 +21,7 @@
                 <div class="flex shrink-0 items-center">
                     <a href="{{ route('dashboard') }}" class="flex min-w-0 items-center gap-2">
                         <x-site-logo variant="nav" />
-                        <span class="hidden text-lg font-bold tracking-tight text-baytgo sm:inline">Bayt<span class="text-gold-muted">Go</span></span>
+                        <span class="truncate text-lg font-bold tracking-tight text-baytgo">Bayt<span class="text-gold-muted">Go</span></span>
                     </a>
                 </div>
 
@@ -224,35 +224,47 @@
         </div>
     </x-page-container>
 
-    <!-- Responsive Navigation Menu: overlay fixed (semua halaman, tidak dorong konten) -->
+    <!-- Responsive Navigation Menu: full-screen sheet -->
     <template x-teleport="body">
-        <div class="lg:hidden" x-show="open" x-cloak>
-            <div
-                x-show="open"
-                x-transition.opacity.duration.200ms
-                class="fixed inset-0 z-[200] bg-slate-950/40"
-                @click="open = false"
-                aria-hidden="true"
-            ></div>
-            <div
-                id="responsive-main-nav"
-                x-show="open"
-                x-transition:enter="transition ease-out duration-200"
-                x-transition:enter-start="-translate-y-2 opacity-0"
-                x-transition:enter-end="translate-y-0 opacity-100"
-                x-transition:leave="transition ease-in duration-150"
-                x-transition:leave-start="translate-y-0 opacity-100"
-                x-transition:leave-end="-translate-y-2 opacity-0"
-                class="fixed inset-x-0 top-16 z-[210] max-h-[min(80vh,calc(100dvh-4rem))] overflow-y-auto border-b border-t border-slate-200/80 bg-white shadow-xl"
-            >
-        <div class="px-4 py-3 border-b border-slate-100">
-            <p class="text-[11px] font-semibold uppercase tracking-wide text-slate-500">{{ __('nav.language') }}</p>
-            <div class="mt-2 flex justify-center">
-                <x-language-switcher variant="segment" />
-            </div>
-        </div>
-        <div class="pt-2 pb-3 space-y-1">
-            <x-responsive-nav-link :href="route('dashboard')" :active="request()->routeIs('dashboard')">
+        <div
+            id="responsive-main-nav"
+            x-show="open"
+            x-cloak
+            class="fixed inset-0 z-[300] flex h-[100dvh] flex-col bg-white lg:hidden"
+            role="dialog"
+            aria-modal="true"
+            :aria-hidden="(! open).toString()"
+            x-transition:enter="transition ease-out duration-200"
+            x-transition:enter-start="opacity-0 translate-y-2"
+            x-transition:enter-end="opacity-100 translate-y-0"
+            x-transition:leave="transition ease-in duration-150"
+            x-transition:leave-start="opacity-100 translate-y-0"
+            x-transition:leave-end="opacity-0 translate-y-2"
+        >
+                <div class="flex min-h-16 shrink-0 items-center justify-between gap-3 border-b border-slate-100 px-4">
+                    <a href="{{ route('dashboard') }}" @click="open = false" class="flex min-w-0 items-center gap-2">
+                        <x-site-logo variant="nav" />
+                        <span class="truncate text-lg font-bold tracking-tight text-baytgo">Bayt<span class="text-gold-muted">Go</span></span>
+                    </a>
+                    <button
+                        type="button"
+                        class="inline-flex h-10 w-10 shrink-0 items-center justify-center rounded-xl border border-slate-200 text-slate-600 transition hover:bg-slate-50"
+                        @click="open = false"
+                    >
+                        <span class="sr-only">{{ __('nav.open_menu') }}</span>
+                        <svg class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" d="M6 18 18 6M6 6l12 12"/></svg>
+                    </button>
+                </div>
+
+                <div class="min-h-0 flex-1 overflow-y-auto">
+                    <div class="border-b border-slate-100 px-4 py-3">
+                        <p class="text-[11px] font-semibold uppercase tracking-wide text-slate-500">{{ __('nav.language') }}</p>
+                        <div class="mt-2 flex justify-start">
+                            <x-language-switcher variant="segment" />
+                        </div>
+                    </div>
+                    <div class="space-y-1 py-2">
+            <x-responsive-nav-link :href="route('dashboard')" :active="request()->routeIs('dashboard')" @click="open = false">
                 {{ __('nav.home') }}
             </x-responsive-nav-link>
             @if (Auth::user()->isCustomer())
@@ -396,32 +408,28 @@
                     </span>
                 </x-responsive-nav-link>
             @endif
-        </div>
+                    </div>
+                </div>
 
-        <!-- Responsive Settings Options -->
-        <div class="pt-4 pb-1 border-t border-slate-200">
-            <div class="px-4">
-                <div class="font-medium text-base text-slate-800">{{ Auth::user()->name }}</div>
-                <div class="font-medium text-sm text-slate-500">{{ Auth::user()->email }}</div>
-            </div>
+                <div class="shrink-0 border-t border-slate-200 bg-white px-4 py-3 pb-[max(0.75rem,env(safe-area-inset-bottom))]">
+                    <div class="mb-2">
+                        <div class="truncate font-medium text-base text-slate-800">{{ Auth::user()->name }}</div>
+                        <div class="truncate font-medium text-sm text-slate-500">{{ Auth::user()->email }}</div>
+                    </div>
+                    <div class="space-y-1">
+                        <x-responsive-nav-link :href="route('profile.edit')" @click="open = false">
+                            {{ __('nav.profile') }}
+                        </x-responsive-nav-link>
 
-            <div class="mt-3 space-y-1">
-                <x-responsive-nav-link :href="route('profile.edit')">
-                    {{ __('nav.profile') }}
-                </x-responsive-nav-link>
-
-                <form method="POST" action="{{ route('logout') }}">
-                    @csrf
-
-                    <x-responsive-nav-link :href="route('logout')"
-                            onclick="event.preventDefault();
-                                        this.closest('form').submit();">
-                        {{ __('Log Out') }}
-                    </x-responsive-nav-link>
-                </form>
-            </div>
-        </div>
-            </div>
+                        <form method="POST" action="{{ route('logout') }}">
+                            @csrf
+                            <x-responsive-nav-link :href="route('logout')"
+                                    onclick="event.preventDefault(); this.closest('form').submit();">
+                                {{ __('Log Out') }}
+                            </x-responsive-nav-link>
+                        </form>
+                    </div>
+                </div>
         </div>
     </template>
 </nav>

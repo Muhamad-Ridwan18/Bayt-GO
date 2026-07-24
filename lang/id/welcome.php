@@ -197,7 +197,7 @@ return [
     'cta_sub' => 'Daftar sekarang sebagai jamaah atau muthowif — gratis.',
     'cta_register_pilgrim' => 'Daftar sebagai jamaah',
     'cta_register_muthowif' => 'Daftar sebagai muthowif',
-    'cta_dashboard' => 'Ke beranda',
+    'cta_dashboard' => 'Ke dashboard',
 
     'how_title' => 'Cara pakai marketplace',
     'how_sub' => 'Empat langkah singkat dari pencarian sampai transaksi.',
