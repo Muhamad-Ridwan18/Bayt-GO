@@ -477,6 +477,7 @@ return [
         'no_valid_recipients' => 'No valid phone numbers to send to.',
         'too_many_recipients' => 'Maximum 500 recipients per broadcast.',
         'queued' => 'Broadcast to :count recipients is processing in the background. Check logs if any fail.',
+        'already_queued' => 'This broadcast is already queued. It will not be sent again.',
         'result_sent' => ':count messages sent successfully.',
         'result_failed' => ':count failed.',
         'result_invalid' => ':count invalid numbers (:sample).',

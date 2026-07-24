@@ -477,6 +477,7 @@ return [
         'no_valid_recipients' => 'Tidak ada nomor valid yang bisa dikirimi.',
         'too_many_recipients' => 'Maksimal 500 penerima per broadcast.',
         'queued' => 'Broadcast ke :count penerima sedang diproses di background. Pantau log jika ada kegagalan.',
+        'already_queued' => 'Broadcast ini sudah masuk antrean. Tidak dikirim ulang.',
         'result_sent' => ':count pesan berhasil dikirim.',
         'result_failed' => ':count gagal.',
         'result_invalid' => ':count nomor tidak valid (:sample).',

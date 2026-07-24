@@ -93,6 +93,7 @@
                 @submit="confirmSend($event)"
             >
                 @csrf
+                <input type="hidden" name="idempotency_key" value="{{ $idempotencyKey }}" />
 
                 <div class="overflow-hidden rounded-2xl border border-slate-200/90 bg-white shadow-sm ring-1 ring-slate-100/80">
                     <div class="border-b border-slate-100 bg-slate-50/80 px-5 py-4">
