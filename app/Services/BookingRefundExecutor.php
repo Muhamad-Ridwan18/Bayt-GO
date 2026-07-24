@@ -74,6 +74,8 @@ final class BookingRefundExecutor
                 'payment_status' => PaymentStatus::RefundPending,
             ]);
 
+            app(AffiliateCommissionService::class)->voidForBooking($booking, 'refund_requested');
+
             return $refund;
         });
     }

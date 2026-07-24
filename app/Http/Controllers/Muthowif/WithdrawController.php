@@ -7,6 +7,7 @@ use App\Http\Controllers\Controller;
 use App\Models\MuthowifProfile;
 use App\Models\MuthowifWithdrawal;
 use App\Services\MuthowifWalletLedger;
+use App\Support\AffiliateBankOptions;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Pagination\LengthAwarePaginator;
@@ -15,22 +16,6 @@ use Illuminate\View\View;
 
 class WithdrawController extends Controller
 {
-    /** @var array<string, string> */
-    private const BANK_OPTIONS = [
-        'BCA' => 'Bank Central Asia (BCA)',
-        'BNI' => 'Bank Negara Indonesia (BNI)',
-        'BRI' => 'Bank Rakyat Indonesia (BRI)',
-        'Mandiri' => 'Bank Mandiri',
-        'BSI' => 'Bank Syariah Indonesia (BSI)',
-        'CIMB Niaga' => 'CIMB Niaga',
-        'Permata' => 'Permata Bank',
-        'Danamon' => 'Bank Danamon',
-        'BTN' => 'Bank BTN',
-        'OCBC NISP' => 'OCBC NISP',
-        'Maybank' => 'Maybank Indonesia',
-        'Bank Muamalat' => 'Bank Muamalat',
-    ];
-
     public function index(Request $request): View
     {
         $profile = $request->user()->muthowifProfile;
@@ -62,7 +47,7 @@ class WithdrawController extends Controller
         return view('muthowif.withdrawals.index', [
             'withdrawals' => $withdrawals,
             'walletLedger' => $walletLedger,
-            'bankOptions' => self::BANK_OPTIONS,
+            'bankOptions' => AffiliateBankOptions::all(),
             'profile' => $profile,
         ]);
     }
@@ -110,7 +95,7 @@ class WithdrawController extends Controller
         $validated = $request->validate([
             'amount' => ['required', 'numeric', 'min:1000'],
             'beneficiary_name' => ['required', 'string', 'max:100'],
-            'beneficiary_bank' => ['required', 'string', 'max:64', Rule::in(array_keys(self::BANK_OPTIONS))],
+            'beneficiary_bank' => ['required', 'string', 'max:64', Rule::in(array_keys(AffiliateBankOptions::all()))],
             'beneficiary_account' => ['required', 'string', 'max:64'],
             'notes' => ['nullable', 'string', 'max:255'],
         ]);

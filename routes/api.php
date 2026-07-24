@@ -39,6 +39,13 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::get('/customer/dashboard', [\App\Http\Controllers\Api\Customer\DashboardController::class, 'index']);
     Route::get('/muthowif/dashboard', [\App\Http\Controllers\Api\Muthowif\DashboardController::class, 'index']);
 
+    Route::get('/affiliate', [\App\Http\Controllers\Api\Affiliate\AffiliateApiController::class, 'show']);
+    Route::post('/affiliate/register', [\App\Http\Controllers\Api\Affiliate\AffiliateApiController::class, 'register']);
+    Route::get('/affiliate/dashboard', [\App\Http\Controllers\Api\Affiliate\AffiliateApiController::class, 'dashboard']);
+    Route::post('/affiliate/bank-accounts', [\App\Http\Controllers\Api\Affiliate\AffiliateApiController::class, 'storeBankAccount']);
+    Route::delete('/affiliate/bank-accounts/{id}', [\App\Http\Controllers\Api\Affiliate\AffiliateApiController::class, 'destroyBankAccount']);
+    Route::post('/affiliate/withdrawals', [\App\Http\Controllers\Api\Affiliate\AffiliateApiController::class, 'storeWithdrawal']);
+
     // Customer Bookings
     Route::get('/customer/bookings', [\App\Http\Controllers\Api\Customer\BookingApiController::class, 'index']);
     Route::get('/customer/bookings/{booking}', [\App\Http\Controllers\Api\Customer\BookingApiController::class, 'show']);
@@ -49,7 +56,7 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::post('/customer/bookings/{booking}/refund-request', [\App\Http\Controllers\Api\Customer\BookingApiController::class, 'storeRefundRequest']);
     Route::post('/customer/bookings/{booking}/reschedule-request', [\App\Http\Controllers\Api\Customer\BookingApiController::class, 'storeRescheduleRequest']);
     Route::post('/customer/bookings/{booking}/complete', [\App\Http\Controllers\Api\Customer\BookingApiController::class, 'complete']);
-    Route::post('/customer/bookings/{booking}/support-completion-request', [\App\Http\Controllers\Api\Customer\BookingApiController::class, 'requestSupportCompletion']);
+    Route::post('/customer/bookings/{booking}/support-completion-code/resend', [\App\Http\Controllers\Api\Customer\BookingApiController::class, 'resendSupportCompletionCode']);
     Route::post('/customer/bookings/{booking}/cancel', [\App\Http\Controllers\Api\Customer\BookingApiController::class, 'cancel']);
     Route::post('/customer/bookings/{booking}/emergency-report', [\App\Http\Controllers\Api\Customer\BookingEmergencyApiController::class, 'store']);
     Route::post('/customer/bookings/{booking}/emergency-select/{offer}', [\App\Http\Controllers\Api\Customer\BookingEmergencyApiController::class, 'selectReplacement']);
@@ -70,8 +77,8 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::post('/muthowif/bookings/{id}/cancel', [\App\Http\Controllers\Api\Muthowif\MuthowifBookingController::class, 'cancel']);
     Route::post('/muthowif/bookings/{booking}/reschedule-requests/{rescheduleRequest}/approve', [\App\Http\Controllers\Api\Muthowif\MuthowifBookingController::class, 'approveReschedule']);
     Route::post('/muthowif/bookings/{booking}/reschedule-requests/{rescheduleRequest}/reject', [\App\Http\Controllers\Api\Muthowif\MuthowifBookingController::class, 'rejectReschedule']);
-    Route::post('/muthowif/bookings/{id}/support-completion/approve', [\App\Http\Controllers\Api\Muthowif\MuthowifBookingController::class, 'approveSupportCompletion']);
-    Route::post('/muthowif/bookings/{id}/support-completion/reject', [\App\Http\Controllers\Api\Muthowif\MuthowifBookingController::class, 'rejectSupportCompletion']);
+    Route::post('/muthowif/bookings/{id}/support-completion/code', [\App\Http\Controllers\Api\Muthowif\MuthowifBookingController::class, 'completeSupportWithCode']);
+    Route::post('/muthowif/bookings/{id}/support-completion/resend-code', [\App\Http\Controllers\Api\Muthowif\MuthowifBookingController::class, 'resendSupportCompletionCode']);
 
     Route::get('/muthowif/emergency-offers', [\App\Http\Controllers\Api\Muthowif\EmergencyOfferApiController::class, 'index']);
     Route::get('/muthowif/emergency-offers/pending-count', [\App\Http\Controllers\Api\Muthowif\EmergencyOfferApiController::class, 'pendingCount']);

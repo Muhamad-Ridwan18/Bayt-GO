@@ -1,23 +1,8 @@
 @php
     use App\Enums\BookingStatus;
-    use App\Enums\PaymentStatus;
-    use Carbon\Carbon;
 
-    $b = $booking;
+    $b = $page->booking;
     $st = $b->status;
-    $nights = $b->billingNightsInclusive();
-    $sleepNights = max(0, $nights - 1);
-    $dateLocale = app()->getLocale() === 'id' ? 'id-ID' : 'en-GB';
-    $fmtDate = fn ($d) => Carbon::parse($d)->locale($dateLocale)->translatedFormat('d M Y');
-
-    $statusBadge = match ($st) {
-        BookingStatus::Cancelled => 'bg-red-50 text-red-800 ring-red-200/90',
-        BookingStatus::Confirmed => 'bg-emerald-50 text-emerald-900 ring-emerald-200/80',
-        BookingStatus::InProgress => 'bg-sky-50 text-sky-900 ring-sky-200/80',
-        BookingStatus::Completed => 'bg-brand-50 text-brand-900 ring-brand-200/80',
-        BookingStatus::Pending => 'bg-amber-50 text-amber-950 ring-amber-200/80',
-        default => 'bg-slate-100 text-slate-800 ring-slate-200/80',
-    };
 @endphp
 
 <x-ui.card class="overflow-hidden p-0">
@@ -38,12 +23,12 @@
             <div class="flex min-w-0 flex-1 gap-4">
                 <img
                     src="{{ $b->muthowifProfile->photoUrl() }}"
-                    alt="{{ __('bookings.index.photo_alt', ['name' => $b->muthowifProfile->user->name]) }}"
+                    alt="{{ __('bookings.index.photo_alt', ['name' => $page->muthowifName]) }}"
                     class="h-16 w-16 shrink-0 rounded-full object-cover ring-2 ring-white shadow-md sm:h-[4.5rem] sm:w-[4.5rem]"
                     loading="lazy"
                 >
                 <div class="min-w-0 flex-1">
-                    <p class="text-lg font-bold text-slate-900">{{ $b->muthowifProfile->user->name }}</p>
+                    <p class="text-lg font-bold text-slate-900">{{ $page->muthowifName }}</p>
                     <a
                         href="{{ route('layanan.show', $b->muthowifProfile) }}"
                         class="mt-0.5 inline-flex items-center gap-1 text-sm font-semibold text-brand-700 hover:text-brand-800"
@@ -66,15 +51,15 @@
                                 title="{{ __('bookings.show.copy_code') }}"
                                 onclick="navigator.clipboard?.writeText(document.getElementById('booking-code-value')?.textContent?.trim() || '')"
                             >
-                                <svg class="h-4 w-4" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true">
-                                    <path d="M7 3.5A1.5 1.5 0 018.5 2h3.879a1.5 1.5 0 011.06.44l3.122 3.12A1.5 1.5 0 0117 6.622V12.5a1.5 1.5 0 01-1.5 1.5h-1v-3.879a1.5 1.5 0 00-.44-1.06L10.939 5.44A1.5 1.5 0 009.879 5H7v11.5A1.5 1.5 0 005.5 17.5h-2A1.5 1.5 0 012 16V4.5A1.5 1.5 0 013.5 3h2.879A1.5 1.5 0 017 3.5z" />
+                                <svg class="h-4 w-4" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.75" stroke="currentColor" aria-hidden="true">
+                                    <path stroke-linecap="round" stroke-linejoin="round" d="M16.5 8.25V6a2.25 2.25 0 0 0-2.25-2.25H6A2.25 2.25 0 0 0 3.75 6v8.25A2.25 2.25 0 0 0 6 16.5h2.25m8.25-8.25H18A2.25 2.25 0 0 1 20.25 10.5v8.25A2.25 2.25 0 0 1 18 21h-8.25A2.25 2.25 0 0 1 7.5 18.75V16.5m8.25-8.25H12a2.25 2.25 0 0 0-2.25 2.25v8.25" />
                                 </svg>
                             </button>
                         </div>
                     @endif
 
                     <div class="mt-2">
-                        <span class="inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-semibold ring-1 {{ $statusBadge }}">
+                        <span class="inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-semibold ring-1 {{ $page->statusBadgeClass }}">
                             {{ $st->label() }}
                         </span>
                     </div>
@@ -92,12 +77,12 @@
                         <p class="mt-0.5 text-xs text-slate-600">{{ __('layanan_pendukung.starts_at_hint') }}</p>
                     @else
                         <p class="mt-1 text-sm font-semibold tabular-nums text-slate-900">
-                            {{ $fmtDate($b->starts_on) }}
+                            {{ $page->formatDate($b->starts_on) }}
                             <span class="font-normal text-slate-400">–</span>
-                            {{ $fmtDate($b->ends_on) }}
+                            {{ $page->formatDate($b->ends_on) }}
                         </p>
                         <p class="mt-0.5 text-xs text-slate-600">
-                            ({{ __('bookings.show.period_duration_line', ['days' => $nights, 'nights' => $sleepNights]) }})
+                            ({{ __('bookings.show.period_duration_line', ['days' => $page->nights, 'nights' => $page->sleepNights]) }})
                         </p>
                     @endif
                 </div>

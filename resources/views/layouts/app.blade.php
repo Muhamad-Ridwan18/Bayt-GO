@@ -22,8 +22,8 @@
         @vite(['resources/css/app.css', 'resources/js/app.js'])
         @stack('styles')
     </head>
-    <body class="font-sans antialiased">
-        <div class="min-h-screen bg-slate-50">
+    <body class="font-sans antialiased @auth{{ Auth::user()->isCustomer() ? 'customer-mobile-nav' : '' }}@endauth">
+        <div class="flex min-h-screen flex-col bg-slate-50">
             @include('layouts.navigation')
 
             <!-- Page Heading -->
@@ -36,13 +36,22 @@
             @endif
 
             <!-- Page Content -->
-            <main class="ui-app-main">
+            <main class="ui-app-main flex-1 @auth{{ Auth::user()->isCustomer() ? 'pb-10 lg:pb-12' : '' }}@endauth">
                 {{ $slot }}
             </main>
+
+            @auth
+                @if (Auth::user()->isCustomer() && ! request()->routeIs('chat.index'))
+                    @include('partials.site-footer')
+                @endif
+            @endauth
         </div>
+        <x-customer-bottom-nav />
         <x-ui.toast-stack />
         @auth
-            @include('partials.global-chat')
+            @unless (request()->routeIs('chat.index'))
+                @include('partials.global-chat')
+            @endunless
         @endauth
         @stack('scripts')
     </body>

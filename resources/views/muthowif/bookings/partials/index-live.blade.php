@@ -1,3 +1,9 @@
+@php
+    use App\Enums\BookingStatus;
+
+    /** @var \App\ViewModels\Booking\MuthowifBookingIndexPageData $page */
+    $bookings = $page->bookings;
+@endphp
 <x-page-container class="ui-stack-compact py-2 sm:py-4">
     <div class="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
         <div>
@@ -12,8 +18,8 @@
 
     <div class="mt-2">
         @include('bookings.partials.index-status-tabs', [
-            'statusFilter' => $statusFilter ?? null,
-            'bookingStatusCounts' => $bookingStatusCounts ?? [],
+            'statusFilter' => $page->statusFilter,
+            'bookingStatusCounts' => $page->bookingStatusCounts,
             'indexRoute' => 'muthowif.bookings.index',
             'filterAllLabel' => __('muthowif.bookings.filter_all'),
         ])
@@ -22,8 +28,8 @@
     <div data-live-part="list">
     @if ($bookings->isEmpty())
         @php
-            $filteredStatus = filled($statusFilter ?? null)
-                ? \App\Enums\BookingStatus::tryFrom((string) $statusFilter)
+            $filteredStatus = filled($page->statusFilter)
+                ? BookingStatus::tryFrom((string) $page->statusFilter)
                 : null;
         @endphp
         <div class="rounded-2xl border border-dashed border-slate-300 bg-white px-6 py-12 text-center shadow-sm sm:py-14">
@@ -45,8 +51,7 @@
         <ul class="ui-stack-tight">
             @foreach ($bookings as $booking)
                 @include('muthowif.bookings.partials.booking-request-card', [
-                    'booking' => $booking,
-                    'addonsById' => $addonsById,
+                    'card' => $page->bookingCards[(string) $booking->getKey()],
                 ])
             @endforeach
         </ul>

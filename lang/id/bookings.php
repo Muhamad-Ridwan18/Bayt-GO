@@ -24,7 +24,7 @@ return [
     'validation' => [
         'start_past' => 'Tanggal mulai tidak boleh sebelum hari ini.',
         'range_max' => 'Rentang maksimal :days hari.',
-        'slot_unavailable' => 'Slot ini tidak lagi tersedia (libur atau sudah terisi). Perbarui pencarian Anda.',
+        'slot_unavailable' => 'Ketersediaan ini sudah tidak ada (libur atau sudah terisi). Perbarui pencarian Anda.',
         'service_unavailable' => 'Layanan yang dipilih tidak tersedia untuk muthowif ini.',
         'pilgrim_count_between' => 'Jumlah jemaah harus antara :min dan :max untuk layanan ini.',
         'addon_invalid' => 'Satu atau lebih add-on tidak valid untuk layanan ini.',
@@ -191,7 +191,7 @@ return [
         'review_placeholder' => 'Tulis pengalaman Anda (opsional)',
         'complete_submit' => 'Selesaikan layanan',
         'cancel_section_title' => 'Batalkan pesanan',
-        'cancel_section_hint' => 'Slot akan dibuka kembali untuk muthowif lain jika belum dibayar.',
+        'cancel_section_hint' => 'Ketersediaan akan dibuka kembali untuk muthowif lain jika belum dibayar.',
         'cancel_yes' => 'Ya, batalkan',
         'cancel_booking_confirm' => 'Batalkan pesanan ini?',
         'muthowif_jadwal_full_apology' => 'Mohon maaf — :name tidak dapat menerima pesanan ini karena jadwal pendampingan pada tanggal tersebut sudah penuh.',

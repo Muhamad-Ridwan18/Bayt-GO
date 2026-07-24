@@ -1,15 +1,10 @@
 @php
     use App\Enums\BookingStatus;
-    use App\Enums\MuthowifBookingMuthowifRejectionKind;
-    use App\Services\MuthowifNetworkReferralService;
 
-    $b = $booking;
-    $isTopRated = ($customerRecommendationSource ?? null) === MuthowifNetworkReferralService::SOURCE_TOP_RATED;
-    $showPanel = ! empty($showReferralNetworkPanel) && $showReferralNetworkPanel;
-    $isJadwalFull = ($b->muthowif_rejection_kind ?? null) === MuthowifBookingMuthowifRejectionKind::JadwalFull;
+    $b = $page->booking;
 @endphp
 
-@if ($showPanel && $b->status === BookingStatus::Cancelled)
+@if ($page->showReferralNetworkPanel && $b->status === BookingStatus::Cancelled)
     <x-ui.alert type="error" class="p-5 sm:p-6">
         <div class="flex gap-3">
             <span class="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-red-100 text-red-700">
@@ -19,15 +14,15 @@
             </span>
             <div class="min-w-0 flex-1">
                 <h3 class="text-base font-bold text-red-950">
-                    {{ $isJadwalFull ? __('bookings.show.cancellation_alert_jadwal_title') : __('bookings.show.cancellation_alert_title') }}
+                    {{ $page->isJadwalFull ? __('bookings.show.cancellation_alert_jadwal_title') : __('bookings.show.cancellation_alert_title') }}
                 </h3>
                 <p class="mt-2 text-sm font-normal leading-relaxed text-red-900/90">
-                    @if ($isJadwalFull)
-                        {{ __('bookings.show.muthowif_jadwal_full_apology', ['name' => $b->muthowifProfile?->user?->name ?? '—']) }}
-                    @elseif ($isTopRated)
+                    @if ($page->isJadwalFull)
+                        {{ __('bookings.show.muthowif_jadwal_full_apology', ['name' => $page->muthowifName]) }}
+                    @elseif ($page->isTopRated)
                         {{ __('bookings.show.top_rated_cancelled_intro') }}
                     @else
-                        {{ __('bookings.show.referral_network_cancelled_intro', ['name' => $b->muthowifProfile?->user?->name ?? '—']) }}
+                        {{ __('bookings.show.referral_network_cancelled_intro', ['name' => $page->muthowifName]) }}
                     @endif
                 </p>
                 @if (filled($b->muthowif_rejection_note))
@@ -36,7 +31,7 @@
                         {{ $b->muthowif_rejection_note }}
                     </p>
                 @endif
-                @if (($referralNetworkAlternatives ?? collect())->isNotEmpty())
+                @if (collect($page->referralNetworkAlternatives)->isNotEmpty())
                     <a
                         href="#booking-recommendations"
                         class="ui-btn-secondary mt-4 border-brand-400 text-brand-800 hover:bg-brand-50"

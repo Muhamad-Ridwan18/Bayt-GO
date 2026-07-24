@@ -29,6 +29,11 @@ class MuthowifBooking extends Model
         'emergency_overlay_status',
         'emergency_replacement_at',
         'customer_id',
+        'affiliate_id',
+        'affiliate_code_snapshot',
+        'affiliate_rate_snapshot',
+        'affiliate_base_amount_snapshot',
+        'affiliate_commission_amount',
         'service_type',
         'support_package_id',
         'pilgrim_count',
@@ -57,6 +62,9 @@ class MuthowifBooking extends Model
         'completion_requested_by',
         'completed_at',
         'completed_by',
+        'completion_code_hash',
+        'completion_code',
+        'completion_code_sent_at',
         'muthowif_rejection_kind',
         'muthowif_rejection_note',
     ];
@@ -77,6 +85,9 @@ class MuthowifBooking extends Model
             'with_transport' => 'boolean',
             'payment_status' => PaymentStatus::class,
             'total_amount' => 'decimal:2',
+            'affiliate_rate_snapshot' => 'decimal:6',
+            'affiliate_base_amount_snapshot' => 'decimal:2',
+            'affiliate_commission_amount' => 'decimal:2',
             'paid_at' => 'datetime',
             'daily_price_snapshot' => 'decimal:2',
             'same_hotel_price_snapshot' => 'decimal:2',
@@ -85,6 +96,7 @@ class MuthowifBooking extends Model
             'package_price_snapshot' => 'decimal:2',
             'completion_requested_at' => 'datetime',
             'completed_at' => 'datetime',
+            'completion_code_sent_at' => 'datetime',
         ];
     }
 
@@ -129,6 +141,16 @@ class MuthowifBooking extends Model
         return $this->belongsTo(User::class, 'customer_id');
     }
 
+    public function affiliate(): BelongsTo
+    {
+        return $this->belongsTo(Affiliate::class);
+    }
+
+    public function affiliateCommission(): HasOne
+    {
+        return $this->hasOne(AffiliateCommission::class, 'muthowif_booking_id');
+    }
+
     public function supportPackage(): BelongsTo
     {
         return $this->belongsTo(MuthowifSupportPackage::class, 'support_package_id');
@@ -152,6 +174,19 @@ class MuthowifBooking extends Model
     public function hasCompletionRequested(): bool
     {
         return $this->completion_requested_at !== null;
+    }
+
+    public function hasCompletionCode(): bool
+    {
+        return filled($this->completion_code_hash);
+    }
+
+    public function canCompleteSupportWithCode(): bool
+    {
+        return $this->isSupport()
+            && $this->isPaid()
+            && in_array($this->status, [BookingStatus::Confirmed, BookingStatus::InProgress], true)
+            && $this->hasCompletionCode();
     }
 
     public function review(): HasOne
@@ -218,6 +253,12 @@ class MuthowifBooking extends Model
 
     public function pendingRefundRequest(): ?BookingRefundRequest
     {
+        if ($this->relationLoaded('refundRequests')) {
+            return $this->refundRequests->first(
+                static fn (BookingRefundRequest $request): bool => $request->status === BookingChangeRequestStatus::Pending
+            );
+        }
+
         return $this->refundRequests()
             ->where('status', BookingChangeRequestStatus::Pending)
             ->first();
@@ -225,6 +266,12 @@ class MuthowifBooking extends Model
 
     public function pendingRescheduleRequest(): ?BookingRescheduleRequest
     {
+        if ($this->relationLoaded('rescheduleRequests')) {
+            return $this->rescheduleRequests->first(
+                static fn (BookingRescheduleRequest $request): bool => $request->status === BookingChangeRequestStatus::Pending
+            );
+        }
+
         return $this->rescheduleRequests()
             ->where('status', BookingChangeRequestStatus::Pending)
             ->first();

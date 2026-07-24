@@ -3,11 +3,14 @@
 
     $price = (int) round((float) $package->price);
     [$minPilgrims, $maxPilgrims] = array_values($package->pilgrimBounds());
+    $startsAtInput = $startsAtInput ?? '';
+    $catalogQuery = array_filter(['starts_at' => $startsAtInput !== '' ? $startsAtInput : null]);
+    $bookUrl = route('layanan-pendukung.book', array_merge(['supportPackage' => $package], $catalogQuery));
 @endphp
 
 <x-marketplace-layout :title="$package->name.' | '.__('layanan_pendukung.page_title')" :meta-description="$package->description">
     <div class="ui-stack-compact">
-        <a href="{{ route('layanan-pendukung.index') }}" class="inline-flex items-center gap-2 text-sm font-semibold text-brand-700 hover:text-brand-800">
+        <a href="{{ route('layanan-pendukung.index', $catalogQuery) }}" class="inline-flex items-center gap-2 text-sm font-semibold text-brand-700 hover:text-brand-800">
             ← {{ __('layanan_pendukung.back_to_catalog') }}
         </a>
 
@@ -41,7 +44,12 @@
                 <a href="{{ route('layanan.show', $profile) }}" class="mt-3 inline-flex text-sm font-semibold text-brand-700 hover:text-brand-800">
                     {{ __('layanan_pendukung.view_muthowif') }} →
                 </a>
-                <a href="{{ route('layanan-pendukung.book', $package) }}" class="mt-6 inline-flex w-full items-center justify-center rounded-xl bg-baytgo px-4 py-3 text-sm font-semibold text-white transition hover:bg-baytgo-800">
+                @if ($startsAtInput !== '')
+                    <p class="mt-4 rounded-xl bg-emerald-50 px-3 py-2 text-xs font-medium text-emerald-900 ring-1 ring-emerald-100">
+                        {{ __('layanan_pendukung.slot_selected_short', ['datetime' => \Carbon\Carbon::parse($startsAtInput)->timezone(config('app.timezone'))->translatedFormat('d M Y, H:i')]) }}
+                    </p>
+                @endif
+                <a href="{{ $bookUrl }}" class="mt-6 inline-flex w-full items-center justify-center rounded-xl bg-baytgo px-4 py-3 text-sm font-semibold text-white transition hover:bg-baytgo-800">
                     {{ __('layanan_pendukung.book_now') }}
                 </a>
             </aside>

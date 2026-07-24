@@ -60,12 +60,19 @@ class ArticleController extends Controller
             $query->whereJsonContains('languages', 'Bahasa Indonesia');
         }
 
-        $services = $query->orderByDesc('updated_at')->limit(5)->get();
+        $services = $query
+            ->with(['user', 'services'])
+            ->withMarketplaceStats()
+            ->orderByMarketplaceRanking()
+            ->limit(5)
+            ->get();
 
         if ($services->isEmpty()) {
             return MuthowifProfile::query()
                 ->approved()
-                ->orderByDesc('updated_at')
+                ->with(['user', 'services'])
+                ->withMarketplaceStats()
+                ->orderByMarketplaceRanking()
                 ->limit(5)
                 ->get();
         }

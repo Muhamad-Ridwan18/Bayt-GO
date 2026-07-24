@@ -2,6 +2,8 @@ import './bootstrap';
 
 import { initFormSubmitLock } from './form-submit-lock';
 import { registerDateRangePicker } from './date-range-picker';
+import { registerHomeFeed } from './home-feed';
+import { registerRegisterForm } from './register-form';
 import { registerWhatsappBroadcastAdmin } from './whatsapp-broadcast-admin';
 import Alpine from 'alpinejs';
 
@@ -26,6 +28,8 @@ import {
 } from './reverb-live';
 
 document.addEventListener('alpine:init', () => {
+    registerHomeFeed(Alpine);
+    registerRegisterForm(Alpine);
     registerWhatsappBroadcastAdmin(Alpine);
 
     Alpine.store('toasts', {
@@ -513,8 +517,10 @@ document.addEventListener('alpine:init', () => {
         userId: config.userId,
         locale: config.locale,
         labels: config.labels,
+        pageMode: !!config.pageMode,
+        openBookingId: config.openBookingId ?? null,
         
-        isPanelExpanded: false,
+        isPanelExpanded: !!config.pageMode,
         view: 'list', // 'list' | 'chat'
         
         conversations: [],
@@ -797,7 +803,7 @@ document.addEventListener('alpine:init', () => {
                     conv.last_message_time = last.created_at || conv.last_message_time;
                 }
 
-                if (this.isPanelExpanded && this.view === 'chat') {
+                if ((this.pageMode || this.isPanelExpanded) && this.view === 'chat') {
                     this.scrollToLatest({ force: true });
                 }
             } catch (e) {
@@ -870,7 +876,7 @@ document.addEventListener('alpine:init', () => {
                 const conv = this.conversations.find((c) => String(c.id) === String(this.activeConversation.id));
                 if (conv) conv.unread_count = data.unread_for_me ?? 0;
 
-                if (this.isPanelExpanded && this.view === 'chat') {
+                if ((this.pageMode || this.isPanelExpanded) && this.view === 'chat') {
                     this.scrollToLatest({ force: hasNewMessage });
                 }
 
@@ -938,6 +944,27 @@ document.addEventListener('alpine:init', () => {
         
         init() {
             this.debouncedListRefresh = debounce(() => void this.loadList(), 1200);
+
+            if (!this.pageMode) {
+                return;
+            }
+
+            this.isPanelExpanded = true;
+
+            const boot = () => {
+                if (this.openBookingId) {
+                    void this.openBookingById(this.openBookingId);
+                }
+            };
+
+            void ensureEcho().then((ok) => {
+                if (ok) {
+                    this.connectRealtime();
+                } else {
+                    void this.loadList();
+                }
+                boot();
+            });
         },
 
         destroy() {
@@ -1529,6 +1556,7 @@ document.addEventListener('alpine:init', () => {
         realtimeEnabled: config.realtimeEnabled ?? false,
         channelName: 'admin.service-monitor',
         refreshing: false,
+        lastUpdatedLabel: config.lastUpdatedLabel ?? '',
 
         init() {
             if (!this.realtimeEnabled) {
@@ -1574,6 +1602,14 @@ document.addEventListener('alpine:init', () => {
                 }
                 root.innerHTML = html;
                 Alpine.initTree(root);
+                this.lastUpdatedLabel = new Date().toLocaleString('id-ID', {
+                    day: '2-digit',
+                    month: 'short',
+                    year: 'numeric',
+                    hour: '2-digit',
+                    minute: '2-digit',
+                    second: '2-digit',
+                });
             } catch (err) {
                 console.error(err);
             } finally {

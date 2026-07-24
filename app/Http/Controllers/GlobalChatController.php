@@ -6,9 +6,17 @@ use App\Models\MuthowifBooking;
 use App\Services\ChatInboxService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
+use Illuminate\View\View;
 
 class GlobalChatController extends Controller
 {
+    public function page(Request $request): View
+    {
+        return view('chat.index', [
+            'openBookingId' => $request->query('booking'),
+        ]);
+    }
+
     public function index(Request $request, ChatInboxService $inbox): JsonResponse
     {
         $user = $request->user();
@@ -16,11 +24,25 @@ class GlobalChatController extends Controller
             return response()->json(['conversations' => []]);
         }
 
-        $limit = (int) $request->query('limit', ChatInboxService::DEFAULT_LIMIT);
+        return response()->json([
+            'conversations' => $this->buildConversations($user, $inbox),
+        ]);
+    }
+
+    /**
+     * @return \Illuminate\Support\Collection<int, array<string, mixed>>
+     */
+    private function buildConversations($user, ChatInboxService $inbox)
+    {
+        if (! $user) {
+            return collect();
+        }
+
+        $limit = (int) request()->query('limit', ChatInboxService::DEFAULT_LIMIT);
         $bookings = $inbox->bookingsFor($user, $limit);
         $latestByBooking = $inbox->latestMessagesForBookings($bookings->pluck('id')->all());
 
-        $conversations = $bookings->map(function (MuthowifBooking $booking) use ($user, $latestByBooking) {
+        return $bookings->map(function (MuthowifBooking $booking) use ($user, $latestByBooking) {
             $isCustomerView = (string) $booking->customer_id === (string) $user->id;
 
             if ($isCustomerView) {
@@ -65,9 +87,5 @@ class GlobalChatController extends Controller
                 'readUrl' => $chatReadUrl,
             ];
         })->values();
-
-        return response()->json([
-            'conversations' => $conversations,
-        ]);
     }
 }

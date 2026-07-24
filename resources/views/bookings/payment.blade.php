@@ -1,171 +1,3 @@
-@php
-    use App\Support\BookingSnapPaymentCatalog;
-    use App\Support\IndonesianNumber;
-    use Carbon\Carbon;
-    use App\Support\PlatformFee;
-
-    /** @var list<string> $mootaBankAccountIds */
-    $mootaBankAccountIds = $mootaBankAccountIds ?? [];
-
-    $isWaitingConfirmation = $selectedMethod !== '' && is_array($instructions);
-
-    /**
-     * Moota multi-rekening: susun $methods dari config (sinkron dengan .env).
-     */
-    if (BookingSnapPaymentCatalog::driver() === 'moota') {
-        $mootaIdsForUi = array_values(array_filter(array_map(trim(...), config('services.moota.bank_account_ids', []))));
-        $mootaBankAccountIds = $mootaIdsForUi;
-        if (count($mootaIdsForUi) > 1) {
-            $methods = array_map(
-                static fn (int $i): string => 'bank_transfer_moota__'.$i,
-                array_keys($mootaIdsForUi)
-            );
-        }
-    }
-
-    $isCompany = $booking->customer?->isCompanyCustomer() ?? false;
-    $split = PlatformFee::split((float) $booking->resolvedAmountDue(), $isCompany);
-    $customerPlatformFee = (float) ($split['customer_fee'] ?? 0.0);
-    $customerTotal = (float) ($split['customer_gross'] ?? 0.0);
-    $fmt = fn (float $n) => IndonesianNumber::formatThousands((string) (int) round($n));
-
-    $methodGroups = [
-        'bank' => [
-            'title' => __('bookings.payment.groups.bank.title'),
-            'description' => __('bookings.payment.groups.bank.description'),
-        ],
-        'ewallet' => [
-            'title' => __('bookings.payment.groups.ewallet.title'),
-            'description' => __('bookings.payment.groups.ewallet.description'),
-        ],
-        'qris' => [
-            'title' => __('bookings.payment.groups.qris.title'),
-            'description' => __('bookings.payment.groups.qris.description'),
-        ],
-        'moota' => [
-            'title' => __('bookings.payment.groups.moota.title'),
-            'description' => __('bookings.payment.groups.moota.description'),
-        ],
-    ];
-
-    $methodsUi = [
-        [
-            'id' => 'va_bca',
-            'group' => 'bank',
-            'name' => __('bookings.payment.method_va_bca.name'),
-            'logo_path' => asset('images/payments/va_bca.svg'),
-            'description' => __('bookings.payment.method_va_bca.description'),
-            'enabled' => in_array('va_bca', $methods, true),
-        ],
-        [
-            'id' => 'va_bni',
-            'group' => 'bank',
-            'name' => __('bookings.payment.method_va_bni.name'),
-            'logo_path' => asset('images/payments/va_bni.svg'),
-            'description' => __('bookings.payment.method_va_bni.description'),
-            'enabled' => in_array('va_bni', $methods, true),
-        ],
-        [
-            'id' => 'va_bri',
-            'group' => 'bank',
-            'name' => __('bookings.payment.method_va_bri.name'),
-            'logo_path' => asset('images/payments/va_bri.svg'),
-            'description' => __('bookings.payment.method_va_bri.description'),
-            'enabled' => in_array('va_bri', $methods, true),
-        ],
-        [
-            'id' => 'va_permata',
-            'group' => 'bank',
-            'name' => __('bookings.payment.method_va_permata.name'),
-            'logo_path' => asset('images/payments/va_permata.svg'),
-            'description' => __('bookings.payment.method_va_permata.description'),
-            'enabled' => in_array('va_permata', $methods, true),
-        ],
-        [
-            'id' => 'va_mandiri_bill',
-            'group' => 'bank',
-            'name' => __('bookings.payment.method_va_mandiri_bill.name'),
-            'logo_path' => asset('images/payments/va_mandiri_bill.svg'),
-            'description' => __('bookings.payment.method_va_mandiri_bill.description'),
-            'enabled' => in_array('va_mandiri_bill', $methods, true),
-        ],
-        [
-            'id' => 'bank_transfer_moota',
-            'group' => 'moota',
-            'name' => __('bookings.payment.method_bank_transfer_moota.name'),
-            'logo_path' => asset('images/payments/bank_transfer_moota.svg'),
-            'description' => __('bookings.payment.method_bank_transfer_moota.description'),
-            'enabled' => in_array('bank_transfer_moota', $methods, true),
-        ],
-        [
-            'id' => 'qris',
-            'group' => 'qris',
-            'name' => __('bookings.payment.method_qris.name'),
-            'logo_path' => asset('images/payments/qris.svg'),
-            'description' => __('bookings.payment.method_qris.description'),
-            'enabled' => in_array('qris', $methods, true),
-        ],
-        [
-            'id' => 'gopay',
-            'group' => 'ewallet',
-            'name' => __('bookings.payment.method_gopay.name'),
-            'logo_path' => asset('images/payments/gopay.svg'),
-            'description' => __('bookings.payment.method_gopay.description'),
-            'enabled' => in_array('gopay', $methods, true),
-        ],
-        [
-            'id' => 'shopeepay',
-            'group' => 'ewallet',
-            'name' => __('bookings.payment.method_shopeepay.name'),
-            'logo_path' => asset('images/payments/shopeepay.svg'),
-            'description' => __('bookings.payment.method_shopeepay.description'),
-            'enabled' => in_array('shopeepay', $methods, true),
-        ],
-    ];
-
-    $mootaExtras = [];
-    foreach ($methods as $mid) {
-        if (preg_match('/^bank_transfer_moota__(\d+)$/', (string) $mid, $mm)) {
-            $mi = (int) $mm[1];
-            $mootaExtras[] = [
-                'id' => $mid,
-                'group' => 'moota',
-                'name' => __('bookings.payment.moota_account_title', ['n' => $mi + 1]),
-                'logo_path' => asset('images/payments/bank_transfer_moota.svg'),
-                'description' => '',
-                'enabled' => true,
-            ];
-        }
-    }
-    if ($mootaExtras !== []) {
-        $methodsUi = array_values(array_merge(
-            array_values(array_filter($methodsUi, static fn (array $row): bool => $row['id'] !== 'bank_transfer_moota')),
-            $mootaExtras
-        ));
-    }
-
-    $mootaPaymentRows = $mootaPaymentRows ?? [];
-    if (BookingSnapPaymentCatalog::driver() === 'moota' && $mootaPaymentRows !== []) {
-        $methodsUi = array_map(static function (array $row) use ($mootaPaymentRows): array {
-            if (($row['group'] ?? '') !== 'moota') {
-                return $row;
-            }
-            if (preg_match('/^bank_transfer_moota__(\d+)$/', (string) ($row['id'] ?? ''), $m)) {
-                $mi = (int) $m[1];
-                if (isset($mootaPaymentRows[$mi])) {
-                    $row['name'] = $mootaPaymentRows[$mi]['name'];
-                    $row['description'] = $mootaPaymentRows[$mi]['description'];
-                }
-            } elseif (($row['id'] ?? '') === 'bank_transfer_moota' && isset($mootaPaymentRows[0])) {
-                $row['name'] = $mootaPaymentRows[0]['name'];
-                $row['description'] = $mootaPaymentRows[0]['description'];
-            }
-
-            return $row;
-        }, $methodsUi);
-    }
-@endphp
-
 <x-app-layout>
     <div
         class="relative min-h-[calc(100vh-4rem)] overflow-x-hidden bg-slate-50"
@@ -201,13 +33,13 @@
                             <p class="text-xs font-bold uppercase tracking-wider text-brand-700">{{ __('bookings.payment.page_kicker') }}</p>
                             <h1 class="mt-2 text-2xl font-bold tracking-tight text-slate-900 sm:text-3xl lg:text-[2rem] lg:leading-tight">{{ __('bookings.payment.page_title') }}</h1>
                             <p class="mt-3 text-sm leading-relaxed text-slate-600 sm:text-base">{{ __('bookings.payment.page_lead') }}</p>
-                            @if (BookingSnapPaymentCatalog::driver() === 'moota')
+                            @if ($page->paymentDriver === 'moota')
                                 <p class="mt-2 rounded-xl border border-amber-200/80 bg-amber-50/80 px-3 py-2 text-xs font-medium text-amber-950 ring-1 ring-amber-100/80 sm:text-sm">{{ __('bookings.payment.moota_amount_note') }}</p>
                             @endif
                         </div>
                         <div class="shrink-0 rounded-2xl border border-brand-200/80 bg-gradient-to-br from-brand-50 to-emerald-50/50 px-5 py-4 text-right shadow-inner ring-1 ring-brand-100/60">
                             <p class="text-[11px] font-semibold uppercase tracking-wide text-brand-800">{{ __('bookings.invoice.total') }}</p>
-                            <p class="mt-1 text-2xl font-bold tabular-nums tracking-tight text-brand-700 sm:text-3xl">Rp {{ $fmt($customerTotal) }}</p>
+                            <p class="mt-1 text-2xl font-bold tabular-nums tracking-tight text-brand-700 sm:text-3xl">Rp {{ $page->customerTotalFormatted() }}</p>
                         </div>
                     </div>
                 </div>
@@ -226,14 +58,14 @@
                                 </span>
                                 <div>
                                     <h2 class="text-sm font-bold text-slate-900">{{ __('bookings.payment.order_summary') }}</h2>
-                                    <p class="mt-0.5 text-[11px] text-slate-500">{{ BookingSnapPaymentCatalog::driver() === 'moota' ? __('bookings.payment.gateway_badge_moota') : __('bookings.payment.gateway_badge') }}</p>
+                                    <p class="mt-0.5 text-[11px] text-slate-500">{{ $page->paymentDriver === 'moota' ? __('bookings.payment.gateway_badge_moota') : __('bookings.payment.gateway_badge') }}</p>
                                 </div>
                             </div>
                             <dl class="mt-4 space-y-3 text-sm">
-                                @if (filled($booking->booking_code))
+                                @if (filled($page->bookingCode))
                                     <div class="flex justify-between gap-3 border-b border-slate-100 pb-3">
                                         <dt class="text-slate-500">{{ __('bookings.show.booking_code') }}</dt>
-                                        <dd class="text-right font-mono text-xs font-semibold text-slate-800">{{ $booking->booking_code }}</dd>
+                                        <dd class="text-right font-mono text-xs font-semibold text-slate-800">{{ $page->bookingCode }}</dd>
                                     </div>
                                 @endif
                                 <div class="flex justify-between gap-3">
@@ -242,23 +74,23 @@
                                 </div>
                                 <div class="flex justify-between gap-3">
                                     <dt class="text-slate-500">{{ __('bookings.show.muthowif') }}</dt>
-                                    <dd class="text-right font-medium text-slate-900">{{ $booking->muthowifProfile->user->name ?? '—' }}</dd>
+                                    <dd class="text-right font-medium text-slate-900">{{ $page->muthowifName }}</dd>
                                 </div>
                                 <div class="flex justify-between gap-3">
                                     <dt class="text-slate-500">{{ __('bookings.show.period') }}</dt>
                                     <dd class="text-right font-medium tabular-nums text-slate-900">
-                                        {{ Carbon::parse($booking->starts_on)->format('d/m/Y') }} – {{ Carbon::parse($booking->ends_on)->format('d/m/Y') }}
+                                        {{ $page->tripDateRangeLabel }}
                                     </dd>
                                 </div>
-                                @if ($customerPlatformFee > 0)
+                                @if ($page->customerPlatformFee > 0)
                                     <div class="flex justify-between gap-3 border-t border-slate-100 pt-3">
                                         <dt class="text-slate-500">{{ __('bookings.show.platform_fee') }}</dt>
-                                        <dd class="font-medium tabular-nums text-slate-900">Rp {{ $fmt($customerPlatformFee) }}</dd>
+                                        <dd class="font-medium tabular-nums text-slate-900">Rp {{ $page->customerPlatformFeeFormatted() }}</dd>
                                     </div>
                                 @endif
                                 <div class="flex items-end justify-between gap-3 rounded-xl bg-gradient-to-br from-brand-600/10 via-brand-50/90 to-emerald-50/50 px-3 py-3 ring-1 ring-brand-200/60">
                                     <dt class="text-sm font-bold text-slate-900">{{ __('bookings.invoice.total') }}</dt>
-                                    <dd class="text-xl font-bold tabular-nums text-brand-700 sm:text-2xl">Rp {{ $fmt($customerTotal) }}</dd>
+                                    <dd class="text-xl font-bold tabular-nums text-brand-700 sm:text-2xl">Rp {{ $page->customerTotalFormatted() }}</dd>
                                 </div>
                             </dl>
                         </div>
@@ -288,12 +120,12 @@
                                     </span>
                                     <div>
                                         <h2 class="text-lg font-bold text-white sm:text-xl">{{ __('bookings.payment.methods_heading') }}</h2>
-                                        <p class="mt-1 text-sm text-brand-100/85">{{ BookingSnapPaymentCatalog::driver() === 'moota' ? __('bookings.payment.moota_methods_intro') : __('bookings.payment.grouped_hint') }}</p>
+                                        <p class="mt-1 text-sm text-brand-100/85">{{ $page->paymentDriver === 'moota' ? __('bookings.payment.moota_methods_intro') : __('bookings.payment.grouped_hint') }}</p>
                                     </div>
                                 </div>
                                 <span class="inline-flex items-center gap-1.5 rounded-full bg-white/10 px-3 py-1.5 text-[11px] font-semibold text-white ring-1 ring-white/20">
                                     <svg class="h-3.5 w-3.5 text-emerald-300" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true"><path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.857-9.809a.75.75 0 00-1.214-.882l-3.483 4.79-1.88-1.88a.75.75 0 10-1.06 1.061l2.5 2.5a.75.75 0 001.137-.089l4-5.5z" clip-rule="evenodd" /></svg>
-                                    {{ BookingSnapPaymentCatalog::driver() === 'moota' ? __('bookings.payment.gateway_badge_moota') : __('bookings.payment.gateway_badge') }}
+                                    {{ $page->paymentDriver === 'moota' ? __('bookings.payment.gateway_badge_moota') : __('bookings.payment.gateway_badge') }}
                                 </span>
                             </div>
                         </div>
@@ -302,16 +134,10 @@
                             <p class="text-sm font-bold text-slate-900">{{ __('bookings.payment.choose_method') }}</p>
 
                             <div class="mt-4 space-y-3">
-                                @foreach ($methodGroups as $groupId => $groupMeta)
-                                    @php
-                                        $groupMethods = array_values(array_filter(
-                                            $methodsUi,
-                                            fn (array $item): bool => $item['enabled'] && $item['group'] === $groupId
-                                        ));
-                                        $shouldOpen = $selectedMethod !== '' && in_array($selectedMethod, array_map(fn ($m) => $m['id'], $groupMethods), true);
-                                    @endphp
+                                @foreach ($page->methodGroups as $groupId => $groupMeta)
+                                    @php($groupMethods = $page->enabledMethodsForGroup($groupId))
                                     @if ($groupMethods !== [])
-                                        @if ($groupId === 'moota' && BookingSnapPaymentCatalog::driver() === 'moota')
+                                        @if ($groupId === 'moota' && $page->isMootaDriver())
                                             <div class="overflow-hidden rounded-2xl border border-slate-200/90 bg-white shadow-md ring-1 ring-slate-200/80">
                                                 <div class="border-b border-teal-100/80 bg-gradient-to-r from-teal-50/90 to-white px-4 py-3.5 sm:px-5">
                                                     <p class="text-sm font-bold text-slate-900">{{ __('bookings.payment.moota_flat_heading') }}</p>
@@ -321,7 +147,7 @@
                                                     @foreach ($groupMethods as $method)
                                                         <label class="group/m flex min-h-[4.25rem] cursor-pointer touch-manipulation items-center justify-between gap-3 rounded-xl border px-4 py-3 transition active:scale-[0.99] {{ $selectedMethod === $method['id'] ? 'border-brand-400 bg-gradient-to-br from-brand-50 to-white ring-2 ring-brand-200/60' : 'border-slate-200 bg-white hover:border-slate-300 hover:bg-slate-50/80' }}">
                                                             <span class="flex min-w-0 items-center gap-3">
-                                                                <img src="{{ $method['logo_path'] }}" alt="" class="h-10 w-16 shrink-0 rounded-lg border border-slate-200/80 bg-white object-contain p-1" width="64" height="40">
+                                                                <img src="{{ $method['logo_path'] }}" alt="{{ $method['name'] }}" class="h-11 w-16 shrink-0 rounded-xl border border-slate-200/80 bg-white object-contain p-1.5 shadow-sm" width="64" height="44">
                                                                 <span class="min-w-0">
                                                                     <span class="block text-sm font-semibold text-slate-900">{{ $method['name'] }}</span>
                                                                     @if (trim((string) ($method['description'] ?? '')) !== '')
@@ -335,16 +161,20 @@
                                                 </div>
                                             </div>
                                         @else
-                                        <details class="group rounded-2xl border border-slate-200/90 bg-white open:shadow-md open:ring-1 open:ring-slate-200/80" {{ $shouldOpen ? 'open' : '' }}>
+                                        <details class="group rounded-2xl border border-slate-200/90 bg-white open:shadow-md open:ring-1 open:ring-slate-200/80" {{ $page->groupContainsSelectedMethod($groupId) ? 'open' : '' }}>
                                             <summary class="flex cursor-pointer list-none items-center justify-between gap-3 rounded-2xl px-4 py-3.5 text-left transition hover:bg-slate-50/90 [&::-webkit-details-marker]:hidden">
                                                 <span class="flex min-w-0 items-center gap-3">
                                                     @if ($groupId === 'bank')
-                                                        <span class="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-slate-100 text-slate-700 ring-1 ring-slate-200/80" aria-hidden="true">
-                                                            <svg class="h-5 w-5" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M2.25 18h19.5M2.25 9h19.5M2.25 4.5h19.5M9 4.5V18M15 4.5V18" /></svg>
+                                                        <span class="flex shrink-0 items-center -space-x-1.5" aria-hidden="true">
+                                                            @foreach (array_slice($groupMethods, 0, 4) as $previewMethod)
+                                                                <img src="{{ $previewMethod['logo_path'] }}" alt="" class="h-8 w-8 rounded-lg border border-white bg-white object-contain p-0.5 ring-1 ring-slate-200/80 shadow-sm">
+                                                            @endforeach
                                                         </span>
                                                     @elseif ($groupId === 'moota')
-                                                        <span class="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-teal-50 text-teal-800 ring-1 ring-teal-200/70" aria-hidden="true">
-                                                            <svg class="h-5 w-5" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M2.25 18h19.5M2.25 9h19.5M2.25 4.5h19.5M9 4.5V18M15 4.5V18" /></svg>
+                                                        <span class="flex shrink-0 items-center -space-x-1.5" aria-hidden="true">
+                                                            @foreach (array_slice($groupMethods, 0, 3) as $previewMethod)
+                                                                <img src="{{ $previewMethod['logo_path'] }}" alt="" class="h-8 w-8 rounded-lg border border-white bg-white object-contain p-0.5 ring-1 ring-slate-200/80 shadow-sm">
+                                                            @endforeach
                                                         </span>
                                                     @elseif ($groupId === 'ewallet')
                                                         <span class="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-amber-50 text-amber-800 ring-1 ring-amber-200/70" aria-hidden="true">
@@ -372,7 +202,7 @@
                                                     @foreach ($groupMethods as $method)
                                                         <label class="group/m flex min-h-[4.25rem] cursor-pointer touch-manipulation items-center justify-between gap-3 rounded-xl border px-4 py-3 transition active:scale-[0.99] {{ $selectedMethod === $method['id'] ? 'border-brand-400 bg-gradient-to-br from-brand-50 to-white ring-2 ring-brand-200/60' : 'border-slate-200 bg-white hover:border-slate-300 hover:bg-slate-50/80' }}">
                                                             <span class="flex min-w-0 items-center gap-3">
-                                                                <img src="{{ $method['logo_path'] }}" alt="" class="h-10 w-16 shrink-0 rounded-lg border border-slate-200/80 bg-white object-contain p-1" width="64" height="40">
+                                                                <img src="{{ $method['logo_path'] }}" alt="{{ $method['name'] }}" class="h-11 w-16 shrink-0 rounded-xl border border-slate-200/80 bg-white object-contain p-1.5 shadow-sm" width="64" height="44">
                                                                 <span class="min-w-0">
                                                                     <span class="block text-sm font-semibold text-slate-900">{{ $method['name'] }}</span>
                                                                     @if (trim((string) ($method['description'] ?? '')) !== '')
@@ -399,17 +229,25 @@
                         </form>
                     </section>
 
-                    @if ($selectedMethod !== '' && is_array($instructions))
+                    @if ($page->isWaitingConfirmation)
+                        @php($selectedMethodUi = $page->selectedMethodUi())
                         <section class="relative overflow-hidden rounded-2xl border border-emerald-200/80 bg-gradient-to-br from-emerald-50/95 via-white to-amber-50/30 p-5 shadow-lg shadow-emerald-900/5 ring-1 ring-emerald-100/70 sm:p-6">
                             <div class="pointer-events-none absolute -right-12 top-0 h-40 w-40 rounded-full bg-emerald-300/20 blur-3xl" aria-hidden="true"></div>
                             <div class="relative flex flex-wrap items-start justify-between gap-3">
                                 <div class="flex items-start gap-3">
-                                    <span class="flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl bg-emerald-600 text-white shadow-lg shadow-emerald-600/25">
-                                        <svg class="h-6 w-6" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" d="M9 12.75L11.25 15 15 9.75M21 12c0 1.268-.63 2.39-1.593 3.068a3.745 3.745 0 01-1.043 3.296 3.745 3.745 0 01-3.296 1.043A3.745 3.745 0 0112 21c-1.268 0-2.39-.63-3.068-1.593a3.746 3.746 0 01-3.296-1.043 3.745 3.745 0 01-1.043-3.296A3.745 3.745 0 013 12c0-1.268.63-2.39 1.593-3.068a3.745 3.745 0 011.043-3.296 3.746 3.746 0 013.296-1.043A3.746 3.746 0 0112 3c1.268 0 2.39.63 3.068 1.593a3.746 3.746 0 013.296 1.043 3.746 3.746 0 011.043 3.296A3.745 3.745 0 0121 12z" /></svg>
-                                    </span>
+                                    @if (! empty($selectedMethodUi['logo_path']))
+                                        <span class="flex h-12 w-16 shrink-0 items-center justify-center overflow-hidden rounded-2xl border border-emerald-100 bg-white p-1.5 shadow-sm">
+                                            <img src="{{ $selectedMethodUi['logo_path'] }}" alt="" class="h-full w-full object-contain">
+
+                                        </span>
+                                    @else
+                                        <span class="flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl bg-emerald-600 text-white shadow-lg shadow-emerald-600/25">
+                                            <svg class="h-6 w-6" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" d="M9 12.75L11.25 15 15 9.75M21 12c0 1.268-.63 2.39-1.593 3.068a3.745 3.745 0 01-1.043 3.296 3.745 3.745 0 01-3.296 1.043A3.745 3.745 0 0112 21c-1.268 0-2.39-.63-3.068-1.593a3.746 3.746 0 01-3.296-1.043 3.745 3.745 0 01-1.043-3.296A3.745 3.745 0 013 12c0-1.268.63-2.39 1.593-3.068a3.745 3.745 0 011.043-3.296 3.746 3.746 0 013.296-1.043A3.746 3.746 0 0112 3c1.268 0 2.39.63 3.068 1.593a3.746 3.746 0 013.296 1.043 3.746 3.746 0 011.043 3.296A3.745 3.745 0 0121 12z" /></svg>
+                                        </span>
+                                    @endif
                                     <div>
                                         <p class="text-xs font-bold uppercase tracking-wide text-emerald-900">{{ __('bookings.payment.instructions_heading') }}</p>
-                                        <p class="mt-0.5 font-mono text-sm font-semibold text-slate-800">{{ strtoupper(str_replace('_', ' ', $selectedMethod)) }}</p>
+                                        <p class="mt-0.5 text-sm font-semibold text-slate-800">{{ is_array($selectedMethodUi) ? ($selectedMethodUi['name'] ?? strtoupper(str_replace('_', ' ', $selectedMethod))) : strtoupper(str_replace('_', ' ', $selectedMethod)) }}</p>
                                     </div>
                                 </div>
                                 <span class="inline-flex items-center rounded-full bg-amber-100 px-3 py-1 text-[10px] font-bold uppercase tracking-wide text-amber-950 ring-1 ring-amber-200/80">{{ __('bookings.payment.status_pending') }}</span>
@@ -466,7 +304,7 @@
                                     </span>
                                     <div>
                                         <p class="text-[11px] font-semibold uppercase tracking-wide text-slate-500">{{ __('bookings.payment.deadline') }}</p>
-                                        <p id="expiry-text" class="mt-0.5 text-sm font-semibold tabular-nums text-slate-900">{{ ! empty($instructions['expiry_time']) ? Carbon::parse($instructions['expiry_time'])->timezone(config('app.timezone'))->format('d M Y, H:i') : '—' }}{{ __('common.timezone_suffix') }}</p>
+                                        <p id="expiry-text" class="mt-0.5 text-sm font-semibold tabular-nums text-slate-900">{{ $page->expiryFormatted ?? '—' }}{{ __('common.timezone_suffix') }}</p>
                                     </div>
                                 </div>
                                 <div class="flex gap-3 sm:border-l sm:border-emerald-100 sm:pl-5">
@@ -504,7 +342,7 @@
             </div>
         </div>
 
-        @if ($isWaitingConfirmation)
+        @if ($page->isWaitingConfirmation)
             <script>
                 (function () {
                     const statusUrl = @json(route('bookings.payment.status', $booking));

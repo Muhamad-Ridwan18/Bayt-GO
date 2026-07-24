@@ -1,17 +1,4 @@
-@php
-    use App\Support\IndonesianNumber;
-
-    $allAddons = collect();
-    if ($private) {
-        $allAddons = $allAddons->merge($private->addOns);
-    }
-    if ($group) {
-        $allAddons = $allAddons->merge($group->addOns ?? collect());
-    }
-    $allAddons = $allAddons->unique('id')->values();
-@endphp
-
-@if ($allAddons->isNotEmpty())
+@if ($page->addonCards !== [])
     <x-ui.card pad="lg" class="block">
         <div class="flex items-start gap-3">
             <span class="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-amber-50 text-amber-800" aria-hidden="true">
@@ -24,11 +11,11 @@
         </div>
 
         <ul class="ui-section-body grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-4">
-            @foreach ($allAddons as $addon)
+            @foreach ($page->addonCards as $addon)
                 <li class="flex flex-col items-center rounded-xl border border-slate-100 bg-slate-50/80 px-3 py-4 text-center ring-1 ring-slate-100/80">
                     <span class="flex h-10 w-10 items-center justify-center rounded-full bg-white text-lg shadow-sm" aria-hidden="true">✨</span>
-                    <p class="mt-2 text-sm font-semibold text-slate-800 line-clamp-2">{{ $addon->name }}</p>
-                    <p class="mt-1 text-xs font-bold text-brand-700">Rp {{ IndonesianNumber::formatThousands((string) (int) $addon->price) }}</p>
+                    <p class="mt-2 text-sm font-semibold text-slate-800 line-clamp-2">{{ $addon['name'] }}</p>
+                    <p class="mt-1 text-xs font-bold text-brand-700">Rp {{ $addon['price'] }}</p>
                 </li>
             @endforeach
         </ul>

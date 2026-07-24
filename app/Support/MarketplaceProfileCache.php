@@ -99,7 +99,10 @@ final class MarketplaceProfileCache
                 ->limit($blockedDatesLimit),
         ]);
         $profile->loadCount([
-            'bookings as confirmed_bookings_count' => static fn ($q) => $q->where('status', BookingStatus::Confirmed),
+            'bookings as confirmed_bookings_count' => static fn ($q) => $q->whereIn('status', [
+                BookingStatus::Confirmed,
+                BookingStatus::Completed,
+            ]),
             'bookingReviews',
             'portfolios',
             'blockedDates' => static fn ($q) => $q->where('blocked_on', '>=', $today),

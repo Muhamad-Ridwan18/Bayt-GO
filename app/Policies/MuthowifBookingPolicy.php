@@ -59,30 +59,25 @@ class MuthowifBookingPolicy
             && $booking->payment_status === PaymentStatus::Paid;
     }
 
-    public function requestSupportCompletion(User $user, MuthowifBooking $booking): bool
-    {
-        return $user->isCustomer()
-            && $booking->customer_id === $user->id
-            && $booking->isSupport()
-            && $booking->status === BookingStatus::InProgress
-            && $booking->isPaid()
-            && ! $booking->hasCompletionRequested();
-    }
-
-    public function approveSupportCompletion(User $user, MuthowifBooking $booking): bool
+    public function completeSupportWithCode(User $user, MuthowifBooking $booking): bool
     {
         return $this->muthowifOwns($user, $booking)
-            && $booking->isSupport()
-            && $booking->status === BookingStatus::InProgress
-            && $booking->hasCompletionRequested();
+            && $booking->canCompleteSupportWithCode();
     }
 
-    public function rejectSupportCompletion(User $user, MuthowifBooking $booking): bool
+    public function resendSupportCompletionCode(User $user, MuthowifBooking $booking): bool
     {
-        return $this->muthowifOwns($user, $booking)
-            && $booking->isSupport()
-            && $booking->status === BookingStatus::InProgress
-            && $booking->hasCompletionRequested();
+        if (! $booking->isSupport()
+            || ! $booking->isPaid()
+            || ! in_array($booking->status, [BookingStatus::Confirmed, BookingStatus::InProgress], true)) {
+            return false;
+        }
+
+        if ($user->isCustomer() && $booking->customer_id === $user->id) {
+            return true;
+        }
+
+        return $this->muthowifOwns($user, $booking);
     }
 
     public function review(User $user, MuthowifBooking $booking): bool

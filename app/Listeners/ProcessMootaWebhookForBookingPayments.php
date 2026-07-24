@@ -452,6 +452,8 @@ final class ProcessMootaWebhookForBookingPayments
                 $payment->settled_at = now();
                 $payment->save();
 
+                app(\App\Services\AffiliateCommissionService::class)->createPendingFromSettledPayment($payment);
+
                 PaymentFlowLog::info('moota.settle.completed_booking_paid', [
                     'history_id' => $historyId,
                     'mutation_index' => $mutationIndex,

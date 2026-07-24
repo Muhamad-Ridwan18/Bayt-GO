@@ -21,11 +21,12 @@ class ProcessSupportBookingLifecycle extends Command
 
         $result = $support->processLifecycle();
 
-        if ($result['started'] > 0 || $result['extended'] > 0) {
+        if ($result['started'] > 0 || $result['extended'] > 0 || ($result['codes_issued'] ?? 0) > 0) {
             $this->info(sprintf(
-                'Support lifecycle: %d dimulai, %d kalender diperpanjang.',
+                'Support lifecycle: %d dimulai, %d kalender diperpanjang, %d kode verifikasi dikirim.',
                 $result['started'],
-                $result['extended']
+                $result['extended'],
+                $result['codes_issued'] ?? 0
             ));
         }
 

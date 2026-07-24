@@ -2,7 +2,9 @@
 
 namespace App\Http\Controllers\Admin;
 
+use App\Enums\PaymentStatus;
 use App\Http\Controllers\Controller;
+use App\Models\MuthowifBooking;
 use App\Support\AdminFinanceSummary;
 use App\Support\AdminFinanceTimeline;
 use Illuminate\Pagination\LengthAwarePaginator;
@@ -26,8 +28,50 @@ class FinanceController extends Controller
          *   INNER JOIN muthowif_bookings b ON b.id = bp.muthowif_booking_id
          *   WHERE bp.status IN ('settlement','capture');
          */
-        $totalPlatformFees = AdminFinanceSummary::totalPlatformFees();
+        $totalPlatformFees = AdminFinanceSummary::netPlatformFees();
+        $affiliateCommissions = AdminFinanceSummary::affiliateCommissionsPaidOrPending();
         $totalVolume = AdminFinanceSummary::grossVolumeExcludingRefundedBookings();
+        $totalOrders = AdminFinanceSummary::settlementOrderCountTotal();
+
+        $today = now();
+        $yesterday = now()->subDay();
+
+        $pct = static function (float $current, float $previous): ?float {
+            if ($previous <= 0) {
+                return $current > 0 ? 100.0 : null;
+            }
+
+            return round((($current - $previous) / $previous) * 100, 1);
+        };
+
+        $feeToday = AdminFinanceSummary::platformFeePaymentsSumBetween($today, $today);
+        $feeYesterday = AdminFinanceSummary::platformFeePaymentsSumBetween($yesterday, $yesterday);
+        $affToday = AdminFinanceSummary::affiliateCommissionSumBetween($today, $today);
+        $affYesterday = AdminFinanceSummary::affiliateCommissionSumBetween($yesterday, $yesterday);
+        $grossToday = AdminFinanceSummary::grossVolumeBetween($today, $today);
+        $grossYesterday = AdminFinanceSummary::grossVolumeBetween($yesterday, $yesterday);
+        $ordersToday = AdminFinanceSummary::settlementOrderCountBetween($today, $today);
+        $ordersYesterday = AdminFinanceSummary::settlementOrderCountBetween($yesterday, $yesterday);
+
+        $trends = [
+            'fee' => $pct($feeToday, $feeYesterday),
+            'affiliate' => $pct($affToday, $affYesterday),
+            'gross' => $pct((float) $grossToday, (float) $grossYesterday),
+            'orders' => $pct((float) $ordersToday, (float) $ordersYesterday),
+        ];
+
+        $chart = AdminFinanceSummary::chartDailyFinanceSeriesLastDays(7);
+
+        $todaySummary = [
+            'gross' => (float) $grossToday,
+            'fee' => $feeToday,
+            'affiliate' => $affToday,
+            'net_muthowif' => max(0, (float) $grossToday - $feeToday),
+        ];
+
+        $pendingRefundCount = MuthowifBooking::query()
+            ->where('payment_status', PaymentStatus::RefundPending)
+            ->count();
 
         $historySince = now()->subMonths((int) config('admin.finance.history_months', 24))->startOfDay();
         $groups = AdminFinanceTimeline::groupsSince($historySince);
@@ -52,7 +96,13 @@ class FinanceController extends Controller
         return view('admin.finance.index', [
             'history' => $history,
             'totalPlatformFees' => $totalPlatformFees,
+            'affiliateCommissions' => $affiliateCommissions,
             'totalVolume' => $totalVolume,
+            'totalOrders' => $totalOrders,
+            'trends' => $trends,
+            'chart' => $chart,
+            'todaySummary' => $todaySummary,
+            'pendingRefundCount' => $pendingRefundCount,
         ]);
     }
 }

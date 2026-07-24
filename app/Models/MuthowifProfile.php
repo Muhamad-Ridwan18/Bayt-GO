@@ -158,7 +158,7 @@ class MuthowifProfile extends Model
     }
 
     /**
-     * Statistik untuk kartu marketplace (rating & jumlah ulasan).
+     * Statistik untuk kartu marketplace (rating & jumlah ulasan/booking).
      *
      * @param  \Illuminate\Database\Eloquent\Builder<MuthowifProfile>  $query
      * @return \Illuminate\Database\Eloquent\Builder<MuthowifProfile>
@@ -167,14 +167,17 @@ class MuthowifProfile extends Model
     {
         return $query
             ->withCount([
-                'bookings as confirmed_bookings_count' => static fn ($q) => $q->where('status', BookingStatus::Confirmed),
+                'bookings as confirmed_bookings_count' => static fn ($q) => $q->whereIn('status', [
+                    BookingStatus::Confirmed,
+                    BookingStatus::Completed,
+                ]),
                 'bookingReviews',
             ])
             ->withAvg('bookingReviews as average_rating', 'rating');
     }
 
     /**
-     * Urutan: muthowif berulasan dulu (rating tertinggi), sisanya by verified_at.
+     * Urutan populer: rating → jumlah booking → daftar paling awal ke BaytGo.
      * Wajib dipanggil setelah {@see scopeWithMarketplaceStats}.
      *
      * @param  \Illuminate\Database\Eloquent\Builder<MuthowifProfile>  $query
@@ -183,9 +186,36 @@ class MuthowifProfile extends Model
     public function scopeOrderByMarketplaceRanking($query)
     {
         return $query
-            ->orderByRaw('CASE WHEN COALESCE(booking_reviews_count, 0) > 0 THEN 1 ELSE 0 END DESC')
-            ->orderByDesc('average_rating')
-            ->orderByDesc('verified_at');
+            ->orderByRaw('COALESCE(average_rating, 0) DESC')
+            ->orderByDesc('confirmed_bookings_count')
+            ->orderBy('created_at');
+    }
+
+    /**
+     * Urutan ranking lewat FK ke muthowif_profiles (mis. katalog paket).
+     *
+     * @param  \Illuminate\Database\Eloquent\Builder<\Illuminate\Database\Eloquent\Model>  $query
+     * @return \Illuminate\Database\Eloquent\Builder<\Illuminate\Database\Eloquent\Model>
+     */
+    public static function orderRelatedByMarketplaceRanking($query, string $profileIdColumn)
+    {
+        $confirmed = BookingStatus::Confirmed->value;
+        $completed = BookingStatus::Completed->value;
+
+        return $query
+            ->orderByRaw(
+                "COALESCE((SELECT AVG(rating) FROM booking_reviews WHERE muthowif_profile_id = {$profileIdColumn}), 0) DESC"
+            )
+            ->orderByRaw(
+                "(SELECT COUNT(*) FROM muthowif_bookings WHERE muthowif_profile_id = {$profileIdColumn} AND status IN (?, ?)) DESC",
+                [$confirmed, $completed]
+            )
+            ->orderBy(
+                static::query()
+                    ->select('created_at')
+                    ->whereColumn('muthowif_profiles.id', $profileIdColumn)
+                    ->limit(1)
+            );
     }
 
     protected function casts(): array

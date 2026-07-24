@@ -11,7 +11,7 @@ use Illuminate\Support\Facades\Cache;
 
 final class MarketplaceSearchCache
 {
-    private const CACHE_VERSION = 'v1';
+    private const CACHE_VERSION = 'v2';
 
     public static function paginate(Request $request, string $startStr, string $endStr, string $q): LengthAwarePaginator
     {

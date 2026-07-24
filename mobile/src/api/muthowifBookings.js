@@ -36,15 +36,16 @@ export async function rejectReschedule(token, bookingId, rescheduleId, note) {
   });
 }
 
-export async function approveSupportCompletion(token, bookingId) {
-  return apiFetch(`/muthowif/bookings/${bookingId}/support-completion/approve`, {
+export async function completeSupportWithCode(token, bookingId, code) {
+  return apiFetch(`/muthowif/bookings/${bookingId}/support-completion/code`, {
     token,
     method: 'POST',
+    body: { code },
   });
 }
 
-export async function rejectSupportCompletion(token, bookingId) {
-  return apiFetch(`/muthowif/bookings/${bookingId}/support-completion/reject`, {
+export async function resendSupportCompletionCode(token, bookingId) {
+  return apiFetch(`/muthowif/bookings/${bookingId}/support-completion/resend-code`, {
     token,
     method: 'POST',
   });

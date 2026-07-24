@@ -1,32 +1,10 @@
 @php
     use App\Enums\BookingStatus;
-    use App\Enums\MuthowifServiceType;
-    use App\Enums\PaymentStatus;
     use App\Support\IndonesianNumber;
     use Carbon\Carbon;
 
-    $statusCardStyles = [
-        BookingStatus::Pending->value => [
-            'bar' => 'from-amber-400 via-amber-500 to-orange-500',
-            'glow' => 'shadow-amber-500/10',
-            'badge' => 'bg-amber-100 text-amber-950 ring-amber-200/80',
-        ],
-        BookingStatus::Confirmed->value => [
-            'bar' => 'from-emerald-400 via-emerald-500 to-teal-600',
-            'glow' => 'shadow-emerald-500/10',
-            'badge' => 'bg-emerald-100 text-emerald-950 ring-emerald-200/80',
-        ],
-        BookingStatus::Completed->value => [
-            'bar' => 'from-brand-400 via-brand-500 to-brand-700',
-            'glow' => 'shadow-brand-500/15',
-            'badge' => 'bg-brand-100 text-brand-950 ring-brand-200/80',
-        ],
-        BookingStatus::Cancelled->value => [
-            'bar' => 'from-red-300 via-red-400 to-red-500',
-            'glow' => 'shadow-red-500/10',
-            'badge' => 'bg-red-100 text-red-800 ring-red-200/80',
-        ],
-    ];
+    /** @var \App\ViewModels\Booking\CustomerBookingIndexPageData $page */
+    $bookings = $page->bookings;
 @endphp
         <x-page-container class="ui-page-y relative z-10 pb-16">
             {{-- Hero --}}
@@ -71,8 +49,8 @@
 
             <div class="mt-8">
                 @include('bookings.partials.index-status-tabs', [
-                    'statusFilter' => $statusFilter ?? null,
-                    'bookingStatusCounts' => $bookingStatusCounts,
+                    'statusFilter' => $page->statusFilter,
+                    'bookingStatusCounts' => $page->bookingStatusCounts,
                     'indexRoute' => 'bookings.index',
                 ])
             </div>
@@ -80,8 +58,8 @@
             <div data-live-part="list">
             @if ($bookings->isEmpty())
                 @php
-                    $filteredStatus = filled($statusFilter ?? null)
-                        ? BookingStatus::tryFrom((string) $statusFilter)
+                    $filteredStatus = filled($page->statusFilter)
+                        ? BookingStatus::tryFrom((string) $page->statusFilter)
                         : null;
                 @endphp
                 <div class="mt-6 flex flex-col items-center justify-center rounded-3xl border-2 border-dashed border-slate-200/80 bg-white px-6 py-16 text-center shadow-inner shadow-slate-900/5 sm:px-12">
@@ -114,42 +92,13 @@
                 <ul class="mt-6 ui-stack-compact">
                     @foreach ($bookings as $booking)
                         @php
+                            $card = $page->bookingCards[(string) $booking->getKey()];
                             $st = $booking->status;
-                            $cardStyle = $statusCardStyles[$st->value] ?? $statusCardStyles[BookingStatus::Pending->value];
-                            $nights = $booking->billingNightsInclusive();
-                            $daily = (float) ($booking->daily_price_snapshot ?? 0.0);
-                            $serviceSubtotal = (float) ($nights * $daily);
-
-                            $addonLines = collect();
-                            if ($booking->service_type === MuthowifServiceType::PrivateJamaah) {
-                                if (! empty($booking->add_ons_snapshot)) {
-                                    $addonLines = collect($booking->add_ons_snapshot)->map(fn ($a) => (object) $a);
-                                } elseif (! empty($booking->selected_add_on_ids)) {
-                                    foreach ($booking->selected_add_on_ids as $aid) {
-                                        if (isset($addonsById[$aid])) {
-                                            $addonLines->push($addonsById[$aid]);
-                                        }
-                                    }
-                                }
-                            }
-                            $addonsSum = $addonLines->sum(fn ($a) => (float) $a->price);
-
-                            $sameHotelPrice = (float) ($booking->same_hotel_price_snapshot ?? 0.0);
-                            $sameHotelLine = $booking->with_same_hotel ? ($nights * $sameHotelPrice) : 0.0;
-
-                            $transportPrice = (float) ($booking->transport_price_snapshot ?? 0.0);
-                            $transportLine = $booking->with_transport ? $transportPrice : 0.0;
-
-                            $totalDue = (float) ($serviceSubtotal + $addonsSum + $sameHotelLine + $transportLine);
-                            $isCompany = $booking->customer?->isCompanyCustomer() ?? false;
-                            $split = \App\Support\PlatformFee::split($totalDue, $isCompany);
-                            $customerGross = (float) ($split['customer_gross'] ?? $totalDue);
-                            $customerFee = (float) ($split['customer_fee'] ?? 0.0);
                         @endphp
                         <li class="group relative">
                             <div class="absolute -inset-px rounded-[1.35rem] bg-gradient-to-br from-white to-slate-100/80 opacity-0 blur transition duration-300 group-hover:opacity-100"></div>
                             <article
-                                class="relative overflow-hidden rounded-3xl border border-slate-200/80 bg-white shadow-md shadow-slate-900/5 transition duration-300 hover:-translate-y-0.5 hover:border-slate-300/80 hover:shadow-lg hover:shadow-slate-900/10 {{ $cardStyle['glow'] }}"
+                                class="relative overflow-hidden rounded-3xl border border-slate-200/80 bg-white shadow-md shadow-slate-900/5 transition duration-300 hover:-translate-y-0.5 hover:border-slate-300/80 hover:shadow-lg hover:shadow-slate-900/10 {{ $card->cardStyle['glow'] }}"
                             >
                                 <div class="p-4 sm:p-5">
                                     {{-- Row 1: Name & Price --}}
@@ -158,7 +107,7 @@
                                             {{ $booking->muthowifProfile->user->name }}
                                         </h2>
                                         <p class="text-base font-bold text-brand-700 tabular-nums sm:text-lg">
-                                            Rp {{ IndonesianNumber::formatThousands((string) (int) round($customerGross)) }}
+                                            Rp {{ $card->customerGrossFormatted }}
                                         </p>
                                     </div>
 
@@ -168,16 +117,10 @@
                                             {{ $booking->booking_code ?? '-' }}
                                         </p>
                                         <div class="flex items-center gap-2">
-                                            <span class="inline-flex max-w-[11rem] shrink-0 items-center truncate rounded-full px-2 py-0.5 text-[10px] font-bold ring-1 sm:text-xs {{ $cardStyle['badge'] }}">
+                                            <span class="inline-flex max-w-[11rem] shrink-0 items-center truncate rounded-full px-2 py-0.5 text-[10px] font-bold ring-1 sm:text-xs {{ $card->cardStyle['badge'] }}">
                                                 {{ $st->label() }}
                                             </span>
-                                            <span class="flex min-w-0 items-center gap-1.5 {{ match ($booking->payment_status) {
-                                                PaymentStatus::Paid => 'text-emerald-600',
-                                                PaymentStatus::RefundPending => 'text-amber-600',
-                                                PaymentStatus::Refunded => 'text-red-600',
-                                                PaymentStatus::Pending => 'text-slate-500',
-                                                default => 'text-slate-600',
-                                            } }} font-bold">
+                                            <span class="flex min-w-0 items-center gap-1.5 {{ $card->paymentStatusClass }} font-bold">
                                                 <span class="text-[8px]">●</span> {{ $booking->payment_status->label() }}
                                             </span>
                                         </div>
@@ -218,37 +161,37 @@
                                         <dl class="divide-y divide-brand-100/40 text-[10px] sm:text-xs">
                                             <div class="flex justify-between gap-3 px-3 py-1.5">
                                                 <dt class="text-slate-600">{{ __('bookings.show.subtotal_service') }}</dt>
-                                                <dd class="font-medium tabular-nums text-slate-900">Rp {{ IndonesianNumber::formatThousands((string) (int) round($serviceSubtotal)) }}</dd>
+                                                <dd class="font-medium tabular-nums text-slate-900">Rp {{ IndonesianNumber::formatThousands((string) (int) round($card->serviceSubtotal)) }}</dd>
                                             </div>
-                                            @if ($addonLines->isNotEmpty())
-                                                @foreach ($addonLines as $ad)
+                                            @if ($card->addonLines->isNotEmpty())
+                                                @foreach ($card->addonLines as $ad)
                                                     <div class="flex justify-between gap-3 px-3 py-1.5">
                                                         <dt class="text-slate-500">+ {{ $ad->name }}</dt>
                                                         <dd class="font-medium tabular-nums text-slate-800">Rp {{ IndonesianNumber::formatThousands((string) (int) round((float) $ad->price)) }}</dd>
                                                     </div>
                                                 @endforeach
                                             @endif
-                                            @if ($sameHotelLine > 0)
+                                            @if ($card->sameHotelLine > 0)
                                                 <div class="flex justify-between gap-3 px-3 py-1.5">
-                                                    <dt class="text-slate-500">{{ __('bookings.show.same_hotel_label', ['nights' => $nights, 'days' => __('common.days')]) }}</dt>
-                                                    <dd class="font-medium tabular-nums text-slate-800">Rp {{ IndonesianNumber::formatThousands((string) (int) round($sameHotelLine)) }}</dd>
+                                                    <dt class="text-slate-500">{{ __('bookings.show.same_hotel_label', ['nights' => $card->nights, 'days' => __('common.days')]) }}</dt>
+                                                    <dd class="font-medium tabular-nums text-slate-800">Rp {{ IndonesianNumber::formatThousands((string) (int) round($card->sameHotelLine)) }}</dd>
                                                 </div>
                                             @endif
-                                            @if ($transportLine > 0)
+                                            @if ($card->transportLine > 0)
                                                 <div class="flex justify-between gap-3 px-3 py-1.5">
                                                     <dt class="text-slate-500">{{ __('bookings.show.transport_label') }}</dt>
-                                                    <dd class="font-medium tabular-nums text-slate-800">Rp {{ IndonesianNumber::formatThousands((string) (int) round($transportLine)) }}</dd>
+                                                    <dd class="font-medium tabular-nums text-slate-800">Rp {{ IndonesianNumber::formatThousands((string) (int) round($card->transportLine)) }}</dd>
                                                 </div>
                                             @endif
-                                            @if ($customerFee > 0)
+                                            @if ($card->customerFee > 0)
                                                 <div class="flex justify-between gap-3 px-3 py-1.5">
                                                     <dt class="text-slate-600">{{ __('bookings.show.platform_fee') }}</dt>
-                                                    <dd class="font-medium tabular-nums text-slate-900">+ Rp {{ IndonesianNumber::formatThousands((string) (int) round($customerFee)) }}</dd>
+                                                    <dd class="font-medium tabular-nums text-slate-900">+ Rp {{ IndonesianNumber::formatThousands((string) (int) round($card->customerFee)) }}</dd>
                                                 </div>
                                             @endif
                                             <div class="flex justify-between gap-3 bg-brand-50/60 px-3 py-2">
                                                 <dt class="font-bold text-slate-900">{{ __('bookings.invoice.total') }}</dt>
-                                                <dd class="font-bold tabular-nums text-brand-700 sm:text-sm">Rp {{ IndonesianNumber::formatThousands((string) (int) round($customerGross)) }}</dd>
+                                                <dd class="font-bold tabular-nums text-brand-700 sm:text-sm">Rp {{ $card->customerGrossFormatted }}</dd>
                                             </div>
                                         </dl>
                                     </div>
@@ -261,13 +204,13 @@
                                             {{ __('bookings.index.detail') }}
                                         </a>
 
-                                        @if ($st === BookingStatus::Confirmed && $booking->payment_status === PaymentStatus::Pending)
+                                        @if ($card->showPayButton)
                                             <a href="{{ route('bookings.payment', $booking) }}" class="inline-flex items-center justify-center rounded-lg bg-brand-600 px-3.5 py-1.5 text-[11px] font-bold text-white transition hover:bg-brand-700 sm:text-xs">
                                                 {{ __('bookings.index.pay_online') }}
                                             </a>
                                         @endif
 
-                                        @if (in_array($booking->payment_status, [PaymentStatus::Paid, PaymentStatus::RefundPending, PaymentStatus::Refunded], true))
+                                        @if ($card->showInvoiceButton)
                                             <a href="{{ route('bookings.invoice', $booking) }}" target="_blank" rel="noopener noreferrer" class="inline-flex items-center justify-center rounded-lg border border-slate-200 bg-white px-3.5 py-1.5 text-[11px] font-bold text-slate-700 transition hover:bg-slate-50 sm:text-xs">
                                                 {{ __('bookings.index.print_invoice') }}
                                             </a>
@@ -275,11 +218,11 @@
 
                                         @if ($st === BookingStatus::Completed)
                                             <a href="{{ route('bookings.show', $booking) }}" class="inline-flex items-center justify-center rounded-lg border border-brand-200 bg-brand-50 px-3.5 py-1.5 text-[11px] font-bold text-brand-700 transition hover:bg-brand-100 sm:text-xs">
-                                                {{ $booking->review ? __('bookings.index.view_review') : __('bookings.index.give_review') }}
+                                                {{ $card->reviewButtonLabel }}
                                             </a>
                                         @endif
 
-                                        @if ($st === BookingStatus::Confirmed && $booking->isPaid())
+                                        @if ($card->showRefundButton)
                                             <a href="{{ route('bookings.refund', $booking) }}" class="inline-flex items-center justify-center rounded-lg border border-red-100 bg-red-50 px-3.5 py-1.5 text-[11px] font-bold text-red-600 transition hover:bg-red-100 sm:text-xs">
                                                 Refund
                                             </a>
@@ -288,7 +231,7 @@
                                             </a>
                                         @endif
 
-                                        @if ($st === BookingStatus::Pending)
+                                        @if ($card->showCancelForm)
                                             <form method="POST" action="{{ route('bookings.cancel', $booking) }}" onsubmit="return confirm(@json(__('bookings.index.cancel_confirm')));" class="inline">
                                                 @csrf
                                                 <x-submit-button class="rounded-lg border border-red-100 bg-red-50 px-3.5 py-1.5 text-[11px] font-bold text-red-600 transition hover:bg-red-100 sm:text-xs">

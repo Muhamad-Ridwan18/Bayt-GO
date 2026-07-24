@@ -2,12 +2,12 @@
     <div class="mb-6">
         <h1 class="text-xl font-semibold text-slate-900">Verifikasi WhatsApp</h1>
         <p class="mt-1 text-sm text-slate-500">
-            Data pendaftaran Anda sudah kami simpan sementara. Masukkan kode OTP yang kami kirim ke <span class="font-medium text-slate-800">{{ $maskedPhone }}</span> untuk menyelesaikan pendaftaran.
+            Data pendaftaran Anda sudah kami simpan sementara. Masukkan kode OTP yang kami kirim ke <span class="font-medium text-slate-800">{{ $page->maskedPhone }}</span> untuk menyelesaikan pendaftaran.
         </p>
     </div>
 
-    @if (session('status'))
-        <x-ui.alert type="success" class="mb-4">{{ session('status') }}</x-ui.alert>
+    @if ($page->hasStatus())
+        <x-ui.alert type="success" class="mb-4">{{ $page->status }}</x-ui.alert>
     @endif
 
     <div class="mb-5 rounded-xl border border-slate-200 bg-slate-50/80 p-4">
@@ -17,8 +17,8 @@
             @csrf
             <x-phone-international-input
                 name="phone"
-                :value="old('phone', $pendingPhone)"
-                :country="old('country', $pendingCountry)"
+                :value="old('phone', $page->pendingPhone)"
+                :country="old('country', $page->pendingCountry)"
                 :label="__('auth_otp.new_phone_label')"
                 :hint="__('auth_custom.phone_national_hint')"
                 :required="true"
@@ -32,16 +32,10 @@
         </form>
     </div>
 
-    @php
-        $bannerErrorMessages = collect($errors->getMessages())
-            ->except(['phone', 'country'])
-            ->flatten()
-            ->all();
-    @endphp
-    @if (count($bannerErrorMessages) > 0)
+    @if ($page->hasBannerErrors())
         <x-ui.alert type="error" class="mb-4">
             <ul class="list-inside list-disc space-y-0.5">
-                @foreach ($bannerErrorMessages as $err)
+                @foreach ($page->bannerErrors as $err)
                     <li>{{ $err }}</li>
                 @endforeach
             </ul>
@@ -54,22 +48,22 @@
             <p class="text-xs text-slate-600">{{ __('auth_otp.hint') }}</p>
             <p class="text-sm text-slate-700">
                 Kode OTP telah dikirim ke WhatsApp Anda di
-                <span class="font-semibold">{{ $maskedPhone }}</span>.
+                <span class="font-semibold">{{ $page->maskedPhone }}</span>.
             </p>
-            <div class="pt-2 border-t border-brand-200/60 flex items-center justify-between gap-2">
+            <div class="flex items-center justify-between gap-2 border-t border-brand-200/60 pt-2">
                 <span class="text-xs text-slate-500">{{ __('auth_otp.resend_label') }}</span>
                 <form method="POST" action="{{ route('register.pending-phone') }}" class="inline">
                     @csrf
-                    <input type="hidden" name="phone" value="{{ $pendingPhone }}" />
-                    <input type="hidden" name="country" value="{{ $pendingCountry }}" />
-                    <x-submit-button class="text-xs font-semibold text-brand-700 hover:text-brand-800 transition focus:outline-none">
+                    <input type="hidden" name="phone" value="{{ $page->pendingPhone }}" />
+                    <input type="hidden" name="country" value="{{ $page->pendingCountry }}" />
+                    <x-submit-button class="text-xs font-semibold text-brand-700 transition hover:text-brand-800 focus:outline-none">
                         {{ __('auth_otp.resend_btn') }}
                     </x-submit-button>
                 </form>
             </div>
         </div>
 
-        <form method="POST" action="{{ route('register.complete') }}" class="pt-2 border-t border-slate-100 space-y-4">
+        <form method="POST" action="{{ route('register.complete') }}" class="space-y-4 border-t border-slate-100 pt-2">
             @csrf
             <div>
                 <x-input-label for="otp" value="Kode OTP" />
@@ -77,11 +71,11 @@
                 <x-input-error :messages="$errors->get('otp')" class="mt-2" />
             </div>
 
-            <div class="flex flex-col-reverse sm:flex-row sm:items-center sm:justify-between gap-3">
-                <a class="text-sm text-slate-600 hover:text-brand-700 font-medium text-center sm:text-left" href="{{ route('register') }}">
+            <div class="flex flex-col-reverse gap-3 sm:flex-row sm:items-center sm:justify-between">
+                <a class="text-center text-sm font-medium text-slate-600 hover:text-brand-700 sm:text-left" href="{{ route('register') }}">
                     {{ __('auth_otp.back_edit') }}
                 </a>
-                <x-primary-button class="w-full sm:w-auto justify-center" type="submit">
+                <x-primary-button class="w-full justify-center sm:w-auto" type="submit">
                     {{ __('auth_otp.finish_register') }}
                 </x-primary-button>
             </div>

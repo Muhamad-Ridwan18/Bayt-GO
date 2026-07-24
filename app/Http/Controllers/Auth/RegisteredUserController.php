@@ -14,6 +14,8 @@ use App\Services\RegistrationOtpService;
 use App\Services\UploadedImageOptimizer;
 use App\Support\IntlPhone;
 use App\Support\MuthowifVerificationBroadcast;
+use App\ViewModels\Auth\RegisterPageData;
+use App\ViewModels\Auth\RegisterVerifyWhatsAppPageData;
 use Illuminate\Auth\Events\Registered;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
@@ -23,6 +25,7 @@ use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Str;
+use Illuminate\Support\ViewErrorBag;
 use Illuminate\Validation\Rule;
 use Illuminate\Validation\Rules;
 use Illuminate\Validation\ValidationException;
@@ -45,7 +48,7 @@ class RegisteredUserController extends Controller
         }
 
         return view('auth.register', [
-            'otpEnabled' => $otpEnabled,
+            'page' => RegisterPageData::make($otpEnabled),
         ]);
     }
 
@@ -73,11 +76,15 @@ class RegisteredUserController extends Controller
         $phoneVerifiedInitial = $registrationOtp->isPhoneVerifiedForRegistration($phone);
 
         return view('auth.register-verify-whatsapp', [
-            'maskedPhone' => $this->maskedPhoneLabel($phone),
-            'pendingPhone' => $phone,
-            'pendingCountry' => $pending['fields']['country'] ?? null,
-            'role' => (string) ($pending['fields']['role'] ?? 'customer'),
-            'phoneVerifiedInitial' => $phoneVerifiedInitial,
+            'page' => RegisterVerifyWhatsAppPageData::make(
+                maskedPhone: $this->maskedPhoneLabel($phone),
+                pendingPhone: $phone,
+                pendingCountry: $pending['fields']['country'] ?? null,
+                role: (string) ($pending['fields']['role'] ?? 'customer'),
+                phoneVerifiedInitial: $phoneVerifiedInitial,
+                status: session('status'),
+                errors: session('errors') ?? new ViewErrorBag,
+            ),
         ]);
     }
 

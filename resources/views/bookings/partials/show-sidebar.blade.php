@@ -1,37 +1,23 @@
 @php
     use App\Enums\BookingStatus;
-    use App\Enums\MuthowifBookingMuthowifRejectionKind;
-    use App\Services\MuthowifNetworkReferralService;
 
-    $b = $booking;
-    $isTopRated = ($customerRecommendationSource ?? null) === MuthowifNetworkReferralService::SOURCE_TOP_RATED;
+    $b = $page->booking;
     $st = $b->status;
-    $showPanel = ! empty($showReferralNetworkPanel) && $showReferralNetworkPanel;
-    $isJadwalFull = ($b->muthowif_rejection_kind ?? null) === MuthowifBookingMuthowifRejectionKind::JadwalFull;
-
-    $statusBadge = match ($st) {
-        BookingStatus::Cancelled => 'bg-red-50 text-red-800 ring-red-200/90',
-        BookingStatus::Confirmed => 'bg-emerald-50 text-emerald-900 ring-emerald-200/80',
-        BookingStatus::InProgress => 'bg-sky-50 text-sky-900 ring-sky-200/80',
-        BookingStatus::Completed => 'bg-brand-50 text-brand-900 ring-brand-200/80',
-        BookingStatus::Pending => 'bg-amber-50 text-amber-950 ring-amber-200/80',
-        default => 'bg-slate-100 text-slate-800 ring-slate-200/80',
-    };
 @endphp
 
 <aside class="flex flex-col gap-6 lg:sticky lg:top-24 lg:self-start">
     <section class="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm sm:p-6">
         <div class="flex items-start justify-between gap-3">
             <h2 class="text-sm font-bold text-slate-900">{{ __('bookings.show.status_card_title') }}</h2>
-            <span class="inline-flex shrink-0 items-center rounded-full px-2.5 py-0.5 text-xs font-semibold ring-1 {{ $statusBadge }}">
+            <span class="inline-flex shrink-0 items-center rounded-full px-2.5 py-0.5 text-xs font-semibold ring-1 {{ $page->statusBadgeClass }}">
                 {{ $st->label() }}
             </span>
         </div>
 
         @if ($st === BookingStatus::Cancelled)
             <p class="mt-3 text-sm leading-relaxed text-slate-600">
-                @if ($isJadwalFull)
-                    {{ __('bookings.show.status_cancelled_jadwal_body', ['name' => $b->muthowifProfile?->user?->name ?? '—']) }}
+                @if ($page->isJadwalFull)
+                    {{ __('bookings.show.status_cancelled_jadwal_body', ['name' => $page->muthowifName]) }}
                 @else
                     {{ __('bookings.show.status_cancelled_body') }}
                 @endif
@@ -42,11 +28,7 @@
             <p class="mt-3 text-sm leading-relaxed text-slate-600">{{ __('bookings.show.status_confirmed_body') }}</p>
         @elseif ($st === BookingStatus::InProgress)
             <p class="mt-3 text-sm leading-relaxed text-slate-600">
-                @if ($b->hasCompletionRequested())
-                    {{ __('layanan_pendukung.completion_waiting') }}
-                @else
-                    {{ __('layanan_pendukung.starts_at_hint') }}
-                @endif
+                {{ __('layanan_pendukung.completion_intro') }}
             </p>
         @elseif ($st === BookingStatus::Completed)
             <p class="mt-3 text-sm leading-relaxed text-slate-600">{{ __('bookings.show.status_completed_body') }}</p>
@@ -65,11 +47,11 @@
 
     @include('bookings.partials.show-sidebar-actions', ['booking' => $b])
 
-    @if ($showPanel)
+    @if ($page->showReferralNetworkPanel)
         <section id="booking-recommendations" class="scroll-mt-24 rounded-2xl border border-slate-200 bg-white p-5 shadow-sm sm:p-6">
             <h2 class="text-sm font-bold text-slate-900">{{ __('bookings.show.recommendations_title') }}</h2>
             <p class="mt-1 text-xs leading-relaxed text-slate-600">
-                @if ($isTopRated)
+                @if ($page->isTopRated)
                     {{ __('bookings.show.top_rated_subtitle') }}
                 @else
                     {{ __('bookings.show.recommendations_subtitle') }}
@@ -78,7 +60,7 @@
             <div class="mt-4">
                 @include('bookings.partials.show-recommendations-list', [
                     'booking' => $b,
-                    'referralNetworkAlternatives' => $referralNetworkAlternatives ?? collect(),
+                    'referralNetworkAlternatives' => $page->referralNetworkAlternatives,
                 ])
             </div>
         </section>

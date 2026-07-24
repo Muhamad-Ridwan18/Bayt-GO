@@ -3,6 +3,7 @@
 namespace App\Services;
 
 use App\Enums\BookingStatus;
+use App\Models\BookingChatMessage;
 use App\Models\BookingPayment;
 use App\Models\BookingReview;
 use App\Models\MuthowifBooking;
@@ -13,6 +14,7 @@ class BookingCompletionService
 {
     public function __construct(
         private readonly BookingWalletCreditingService $walletCrediting,
+        private readonly AffiliateCommissionService $affiliateCommissions,
     ) {}
 
     /**
@@ -49,6 +51,7 @@ class BookingCompletionService
                 $booking->refresh();
 
                 if ($booking->status === BookingStatus::Completed) {
+                    $this->purgeChat($booking);
                     $completed = true;
 
                     return;
@@ -76,7 +79,10 @@ class BookingCompletionService
                     }
                 }
 
+                $this->affiliateCommissions->markAvailableOnCompletion($booking);
+
                 $booking->status = BookingStatus::Completed;
+                $booking->completed_at ??= now();
                 $booking->save();
 
                 BookingReview::query()->updateOrCreate(
@@ -89,6 +95,7 @@ class BookingCompletionService
                     ]
                 );
 
+                $this->purgeChat($booking);
                 $completed = true;
             });
         } catch (\Throwable $e) {
@@ -100,6 +107,13 @@ class BookingCompletionService
             'credited' => $credited,
             'error' => $error,
         ];
+    }
+
+    private function purgeChat(MuthowifBooking $booking): void
+    {
+        BookingChatMessage::query()
+            ->where('muthowif_booking_id', $booking->getKey())
+            ->delete();
     }
 
     public function shouldAutoCompleteNow(MuthowifBooking $booking): bool

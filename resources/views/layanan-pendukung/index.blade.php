@@ -13,7 +13,11 @@
     }
 
     $stats = $catalogStats ?? ['packages' => 0, 'muthowifs' => 0, 'avg_rating' => 0];
-    $allQuery = array_filter(['q' => ($searchQuery ?? '') !== '' ? $searchQuery : null]);
+    $hasSearch = (bool) ($hasSearch ?? false);
+    $startsAtInput = $startsAtInput ?? '';
+    $defaultStartsAt = $startsAtInput !== ''
+        ? $startsAtInput
+        : now()->addDay()->setTime(9, 0)->format('Y-m-d\TH:i');
 @endphp
 
 <x-marketplace-layout :title="__('layanan_pendukung.page_title')" :meta-description="__('layanan_pendukung.hero_lead')" :full-bleed="true">
@@ -25,7 +29,7 @@
             <div class="pointer-events-none absolute inset-0 z-[1] bg-gradient-to-b from-welcomeCanvas via-welcomeCanvas/95 to-welcomeCanvas/60 sm:hidden" aria-hidden="true"></div>
             <div class="pointer-events-none absolute inset-0 z-[1] hidden bg-gradient-to-r from-welcomeCanvas from-[30%] via-welcomeCanvas/96 via-[58%] to-welcomeCanvas/15 sm:block lg:from-[34%] lg:via-[60%] lg:to-transparent" aria-hidden="true"></div>
 
-            <div class="relative z-10 mx-auto max-w-6xl px-4 pt-8 sm:px-6 sm:pt-10 lg:pt-12">
+            <div class="relative z-10 mx-auto w-full px-4 pt-8 sm:px-6 sm:pt-10 lg:px-8 lg:pt-12 xl:px-10">
                 <div class="flex flex-col gap-8 lg:flex-row lg:items-end lg:justify-between">
                     <div class="max-w-2xl">
                         <p class="text-xs font-bold uppercase tracking-wider text-baytgo">{{ __('layanan_pendukung.hero_kicker') }}</p>
@@ -35,6 +39,7 @@
                             {{ __('layanan_pendukung.hero_title_after') }}
                         </h1>
                         <p class="mt-3 max-w-xl text-sm leading-relaxed text-slate-700 sm:text-base">{{ __('layanan_pendukung.hero_lead') }}</p>
+                        <p class="mt-2 max-w-xl text-sm font-medium text-baytgo">{{ __('layanan_pendukung.schedule_first_hint') }}</p>
                     </div>
 
                     <dl class="grid grid-cols-3 gap-3 sm:gap-4 lg:min-w-[18rem]">
@@ -60,103 +65,88 @@
                     </dl>
                 </div>
 
-                <form method="GET" action="{{ route('layanan-pendukung.index') }}" class="mt-8">
+                <form method="GET" action="{{ route('layanan-pendukung.index') }}" class="mt-8 space-y-3">
                     @if ($activeCategory)
                         <input type="hidden" name="category" value="{{ $activeCategory->value }}">
                     @endif
-                    <div class="flex overflow-hidden rounded-2xl border border-slate-200/90 bg-white shadow-[0_16px_40px_-12px_rgba(15,42,37,0.18)] ring-1 ring-slate-100/90">
-                        <div class="relative min-w-0 flex-1">
-                            <span class="pointer-events-none absolute inset-y-0 left-0 flex items-center pl-4 text-slate-400" aria-hidden="true">
-                                <svg class="h-5 w-5" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.75" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M21 21l-5.197-5.197m0 0A7.5 7.5 0 105.196 5.196a7.5 7.5 0 0010.607 10.607z" /></svg>
-                            </span>
-                            <input
-                                type="search"
-                                name="q"
-                                value="{{ $searchQuery }}"
-                                placeholder="{{ __('layanan_pendukung.search_placeholder') }}"
-                                class="w-full border-0 bg-transparent py-3.5 pl-12 pr-3 text-sm text-slate-900 placeholder:text-slate-400 focus:outline-none focus:ring-0 sm:py-4 sm:text-base"
-                            >
+                    <div class="overflow-hidden rounded-2xl border border-slate-200/90 bg-white shadow-[0_16px_40px_-12px_rgba(15,42,37,0.18)] ring-1 ring-slate-100/90">
+                        <div class="flex flex-col gap-0 sm:flex-row sm:items-stretch">
+                            <div class="min-w-0 flex-1 border-b border-slate-100 px-4 py-3 sm:border-b-0 sm:border-r sm:px-5 sm:py-3.5">
+                                <label for="starts_at" class="block text-[11px] font-bold uppercase tracking-wide text-slate-500">{{ __('layanan_pendukung.starts_at') }}</label>
+                                <input
+                                    id="starts_at"
+                                    type="datetime-local"
+                                    name="starts_at"
+                                    required
+                                    value="{{ $defaultStartsAt }}"
+                                    min="{{ now()->format('Y-m-d\TH:i') }}"
+                                    class="mt-1 w-full border-0 bg-transparent p-0 text-sm font-semibold text-slate-900 focus:outline-none focus:ring-0 sm:text-base"
+                                >
+                            </div>
+                            <div class="relative min-w-0 flex-[1.2] px-4 py-3 sm:px-5 sm:py-3.5">
+                                <label for="q" class="block text-[11px] font-bold uppercase tracking-wide text-slate-500">{{ __('layanan_pendukung.search_label') }}</label>
+                                <input
+                                    id="q"
+                                    type="search"
+                                    name="q"
+                                    value="{{ $searchQuery }}"
+                                    placeholder="{{ __('layanan_pendukung.search_placeholder') }}"
+                                    class="mt-1 w-full border-0 bg-transparent p-0 text-sm text-slate-900 placeholder:text-slate-400 focus:outline-none focus:ring-0 sm:text-base"
+                                >
+                            </div>
+                            <x-submit-button class="shrink-0 rounded-none rounded-b-2xl bg-baytgo px-5 py-3.5 text-sm font-semibold text-white shadow-none hover:bg-baytgo-800 sm:rounded-b-none sm:rounded-r-2xl sm:px-8 sm:py-4">
+                                {{ __('layanan_pendukung.search_submit') }}
+                            </x-submit-button>
                         </div>
-                        <x-submit-button class="shrink-0 rounded-none rounded-r-2xl bg-baytgo px-5 py-3.5 text-sm font-semibold text-white shadow-none hover:bg-baytgo-800 sm:px-8 sm:py-4">
-                            {{ __('layanan_pendukung.search_submit') }}
-                        </x-submit-button>
                     </div>
+                    <p class="text-xs text-slate-600">{{ __('layanan_pendukung.starts_at_catalog_hint') }}</p>
                 </form>
-
-                <div class="mt-6 grid grid-cols-2 gap-2 sm:grid-cols-3 sm:gap-3 lg:grid-cols-5">
-                    @foreach ($categories as $cat)
-                        @php
-                            $tileQuery = array_filter([
-                                'q' => ($searchQuery ?? '') !== '' ? $searchQuery : null,
-                                'category' => $cat->value,
-                            ]);
-                            $tileActive = ($activeCategory ?? null) === $cat;
-                        @endphp
-                        <a href="{{ route('layanan-pendukung.index', $tileQuery) }}"
-                           @class([
-                               'group flex flex-col items-center gap-2 rounded-2xl border px-3 py-3.5 text-center transition sm:py-4',
-                               $tileActive
-                                   ? 'border-baytgo bg-baytgo text-white shadow-md shadow-baytgo/20'
-                                   : 'border-white/80 bg-white/90 text-slate-700 shadow-sm ring-1 ring-slate-100/80 hover:border-baytgo/30 hover:bg-white',
-                           ])>
-                            <span @class([
-                                'flex h-10 w-10 items-center justify-center rounded-xl transition',
-                                $tileActive ? 'bg-white/15 text-white' : 'bg-emerald-50 text-baytgo group-hover:bg-emerald-100',
-                            ]) aria-hidden="true">
-                                @include('layanan-pendukung.partials.category-icon', ['category' => $cat])
-                            </span>
-                            <span class="text-[11px] font-bold leading-tight sm:text-xs">{{ __('layanan_pendukung.quick.'.$cat->value) }}</span>
-                        </a>
-                    @endforeach
-                </div>
             </div>
         </section>
 
-        <div class="relative mx-auto max-w-6xl space-y-6 px-4 py-8 sm:px-6 sm:py-10">
-            <div>
-                <p class="text-xs font-semibold uppercase tracking-wide text-slate-500">{{ __('layanan_pendukung.category_filter') }}</p>
-                <div class="mt-2.5 flex flex-wrap gap-2">
-                    <a href="{{ route('layanan-pendukung.index', $allQuery) }}"
-                       @class([
-                           'inline-flex rounded-full px-3.5 py-1.5 text-xs font-semibold ring-1 transition',
-                           ($activeCategory ?? null) === null
-                               ? 'bg-baytgo text-white ring-baytgo'
-                               : 'bg-white text-slate-700 ring-slate-200 hover:bg-slate-50',
-                       ])>
-                        {{ __('layanan_pendukung.category_all') }}
-                    </a>
-                    @foreach ($categories as $cat)
-                        @php
-                            $catQuery = array_filter([
-                                'q' => ($searchQuery ?? '') !== '' ? $searchQuery : null,
-                                'category' => $cat->value,
-                            ]);
-                        @endphp
-                        <a href="{{ route('layanan-pendukung.index', $catQuery) }}"
-                           @class([
-                               'inline-flex rounded-full px-3.5 py-1.5 text-xs font-semibold ring-1 transition',
-                               ($activeCategory ?? null) === $cat
-                                   ? 'bg-baytgo text-white ring-baytgo'
-                                   : 'bg-white text-slate-700 ring-slate-200 hover:bg-slate-50',
-                           ])>
-                            {{ $cat->label() }}
-                        </a>
-                    @endforeach
+        <div class="relative mx-auto w-full space-y-6 px-4 py-8 sm:px-6 sm:py-10 lg:px-8 xl:px-10">
+            @if (session('error'))
+                <div class="rounded-2xl border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-900" role="alert">
+                    {{ session('error') }}
                 </div>
-            </div>
+            @endif
 
-            @if ($packages->isEmpty())
-                <div class="rounded-3xl border border-dashed border-slate-300 bg-white p-12 text-center shadow-sm">
-                    <p class="text-lg font-bold text-slate-900">{{ __('layanan_pendukung.no_results_title') }}</p>
-                    <p class="mx-auto mt-2 max-w-md text-sm text-slate-600">{{ __('layanan_pendukung.no_results_sub') }}</p>
+            @if (! $hasSearch)
+                <div class="rounded-3xl border border-dashed border-slate-300 bg-white px-6 py-14 text-center shadow-sm">
+                    <span class="mx-auto flex h-14 w-14 items-center justify-center rounded-2xl bg-emerald-50 text-baytgo ring-1 ring-emerald-200/80" aria-hidden="true">
+                        <svg class="h-7 w-7" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M12 6v6h4.5m4.5 0a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
+                    </span>
+                    <p class="mt-4 text-lg font-bold text-slate-900">{{ __('layanan_pendukung.pick_schedule_title') }}</p>
+                    <p class="mx-auto mt-2 max-w-md text-sm text-slate-600">{{ __('layanan_pendukung.pick_schedule_sub') }}</p>
                 </div>
             @else
-                <ul class="grid grid-cols-1 gap-5 sm:grid-cols-2 lg:grid-cols-3">
-                    @foreach ($packages as $package)
-                        @include('layanan-pendukung.partials.package-card', ['package' => $package])
-                    @endforeach
-                </ul>
-                <div class="flex justify-center pt-2">{{ $packages->links() }}</div>
+                @if ($startsAt)
+                    <div class="flex flex-wrap items-center gap-2 rounded-2xl border border-emerald-100 bg-emerald-50/80 px-4 py-3 text-sm text-emerald-950">
+                        <svg class="h-4 w-4 shrink-0 text-emerald-700" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true"><path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm.75-13a.75.75 0 00-1.5 0v5c0 .414.336.75.75.75h4a.75.75 0 000-1.5h-3.25V5z" clip-rule="evenodd" /></svg>
+                        <span class="font-semibold">{{ __('layanan_pendukung.slot_label', ['datetime' => $startsAt->timezone(config('app.timezone'))->translatedFormat('d M Y, H:i')]) }}</span>
+                        <span class="text-emerald-800/80">· {{ __('layanan_pendukung.slot_availability_note') }}</span>
+                        @if ($activeCategory)
+                            <span class="text-emerald-800/80">· {{ $activeCategory->label() }}</span>
+                        @endif
+                    </div>
+                @endif
+
+                @if ($packages->isEmpty())
+                    <div class="rounded-3xl border border-dashed border-slate-300 bg-white p-12 text-center shadow-sm">
+                        <p class="text-lg font-bold text-slate-900">{{ __('layanan_pendukung.no_availability_title') }}</p>
+                        <p class="mx-auto mt-2 max-w-md text-sm text-slate-600">{{ __('layanan_pendukung.no_availability_sub') }}</p>
+                    </div>
+                @else
+                    <ul class="grid grid-cols-1 gap-5 sm:grid-cols-2 lg:grid-cols-3">
+                        @foreach ($packages as $package)
+                            @include('layanan-pendukung.partials.package-card', [
+                                'package' => $package,
+                                'startsAtInput' => $startsAtInput,
+                            ])
+                        @endforeach
+                    </ul>
+                    <div class="flex justify-center pt-2">{{ $packages->links() }}</div>
+                @endif
             @endif
 
             <div class="flex items-center justify-center gap-2 rounded-2xl border border-emerald-100 bg-emerald-50/70 px-4 py-3.5 text-center text-xs font-medium text-emerald-900 sm:text-sm">

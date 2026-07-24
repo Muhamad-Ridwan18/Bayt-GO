@@ -66,7 +66,7 @@ class BookingApiController extends Controller
 
         $data = ApiBookingDetail::format($booking);
         $data['can_report_emergency'] = $request->user()->can('reportEmergency', $booking);
-        $data['can_request_support_completion'] = $request->user()->can('requestSupportCompletion', $booking);
+        $data['can_resend_support_completion_code'] = $request->user()->can('resendSupportCompletionCode', $booking);
         $data['emergency'] = ApiEmergencyDetail::for($booking);
 
         return response()->json($data);
@@ -90,6 +90,7 @@ class BookingApiController extends Controller
             'add_on_ids.*' => ['uuid'],
             'with_same_hotel' => ['sometimes', 'boolean'],
             'with_transport' => ['sometimes', 'boolean'],
+            'affiliate_code' => ['nullable', 'string', 'max:32'],
             'ticket_outbound' => ['required', 'file', 'mimes:pdf,jpeg,jpg,png', 'max:10240'],
             'ticket_return' => ['required', 'file', 'mimes:pdf,jpeg,jpg,png', 'max:10240'],
             'passport' => ['required', 'file', 'mimes:pdf,jpeg,jpg,png', 'max:10240'],
@@ -174,7 +175,7 @@ class BookingApiController extends Controller
                 $bookingCode = app(BookingOrderCodeService::class)->allocateNextWithinTransaction();
                 $pricingService = app(BookingPricingService::class);
 
-                $booking = MuthowifBooking::query()->create(array_merge([
+                $attributes = array_merge([
                     'booking_code' => $bookingCode,
                     'muthowif_profile_id' => $profile->id,
                     'customer_id' => $request->user()->id,
@@ -194,7 +195,19 @@ class BookingApiController extends Controller
                     'with_transport' => $withTransport,
                     'starts_on' => $start->toDateString(),
                     'ends_on' => $end->toDateString(),
-                ]))));
+                ])));
+
+                $draft = new MuthowifBooking($attributes);
+                $attributes['total_amount'] = $pricingService->calculateBaseFromComponents($draft);
+
+                $affiliateSnapshot = app(\App\Services\AffiliateAttributionService::class)->snapshotForBooking(
+                    new MuthowifBooking($attributes),
+                    \App\Support\AffiliateReferralCapture::resolveForBooking($request, $validated['affiliate_code'] ?? null),
+                    (string) $request->user()->id,
+                    $request->user()->isCompanyCustomer(),
+                );
+
+                $booking = MuthowifBooking::query()->create(array_merge($attributes, $affiliateSnapshot));
 
                 $dir = 'booking-documents/'.$booking->getKey();
                 $optimizer = app(UploadedImageOptimizer::class);
@@ -217,6 +230,11 @@ class BookingApiController extends Controller
                 return $booking->fresh();
             });
 
+            if ($booking->affiliate_id !== null) {
+                app(\App\Services\AffiliateReferralService::class)->markConverted($booking, $request);
+                app(\App\Services\AffiliateNotifier::class)->referralBooked($booking);
+            }
+
             app(BookingNotificationDispatcher::class)->dispatchCreated($booking);
 
             return response()->json([
@@ -225,6 +243,8 @@ class BookingApiController extends Controller
                 'booking_code' => $booking->booking_code,
             ], 201);
 
+        } catch (ValidationException $e) {
+            return response()->json(['message' => 'Validasi gagal', 'errors' => $e->errors()], 422);
         } catch (\Exception $e) {
             return response()->json(['message' => $e->getMessage()], 400);
         }
@@ -694,22 +714,22 @@ class BookingApiController extends Controller
         ]);
     }
 
-    public function requestSupportCompletion(
+    public function resendSupportCompletionCode(
         Request $request,
         MuthowifBooking $booking,
         SupportBookingService $support,
     ): JsonResponse {
-        $this->authorize('requestSupportCompletion', $booking);
+        $this->authorize('resendSupportCompletionCode', $booking);
 
         if ($booking->customer_id !== $request->user()->id) {
             return response()->json(['message' => 'Unauthorized'], 403);
         }
 
-        $support->requestCompletion($booking, (string) $request->user()->id);
+        $support->issueCompletionCode($booking, true);
         CustomerBookingBroadcast::afterResponse($booking->fresh());
 
         return response()->json([
-            'message' => __('layanan_pendukung.flash.completion_requested'),
+            'message' => __('layanan_pendukung.flash.completion_code_sent'),
             'booking' => ApiBookingDetail::format($booking->fresh()),
         ]);
     }
@@ -727,6 +747,7 @@ class BookingApiController extends Controller
                 'muthowif_rejection_kind' => null,
                 'muthowif_rejection_note' => null,
             ]);
+            app(\App\Services\AffiliateCommissionService::class)->voidForBooking($booking, 'cancelled_by_customer');
         });
 
         CustomerBookingBroadcast::afterResponse($booking->fresh());

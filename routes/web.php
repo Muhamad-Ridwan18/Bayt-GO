@@ -19,10 +19,15 @@ use App\Http\Controllers\Admin\UserManagementController;
 use App\Http\Controllers\Admin\WhatsAppBroadcastController;
 use App\Http\Controllers\Admin\WhatsAppNotifySettingsController;
 use App\Http\Controllers\Admin\WithdrawalsController;
+use App\Http\Controllers\Admin\AffiliateAdminController;
+use App\Http\Controllers\Affiliate\AffiliateDashboardController;
+use App\Http\Controllers\Affiliate\AffiliateBankAccountController;
+use App\Http\Controllers\Affiliate\AffiliateWithdrawController;
 use App\Http\Controllers\BookingChatController;
 use App\Http\Controllers\Customer\BookingController as CustomerBookingController;
 use App\Http\Controllers\Customer\SupportBookingController;
 use App\Http\Controllers\Customer\BookingEmergencyController as CustomerBookingEmergencyController;
+use App\Http\Controllers\DashboardController;
 use App\Http\Controllers\GlobalChatController;
 use App\Http\Controllers\LocaleController;
 use App\Http\Controllers\MootaWebhookController;
@@ -31,6 +36,7 @@ use App\Http\Controllers\Muthowif\EmergencyOfferController;
 use App\Http\Controllers\Muthowif\MuthowifDashboardCalendarController;
 use App\Http\Controllers\Muthowif\MuthowifPortfolioController;
 use App\Http\Controllers\Muthowif\MuthowifScheduleController;
+use App\Http\Controllers\Muthowif\KelolaLayananController;
 use App\Http\Controllers\Muthowif\MuthowifServiceController;
 use App\Http\Controllers\Muthowif\SupportPackageController;
 use App\Http\Controllers\Muthowif\WithdrawController as MuthowifWithdrawController;
@@ -131,6 +137,9 @@ Route::get('/sitemap-{type}-{page}.xml', [SeoLandingController::class, 'sitemapP
     ->name('seo.sitemap.page');
 
 Route::get('/', WelcomeController::class)->name('welcome');
+Route::get('/r/{code}', fn (string $code) => redirect()->route('welcome'))
+    ->where('code', '[A-Za-z0-9]{3,32}')
+    ->name('affiliate.landing');
 
 /** Hanya local: beberapa panel uji hanya bisa POST ke root URL tunnel (tanpa path). */
 if (app()->environment('local')) {
@@ -167,13 +176,9 @@ Route::get('/perusahaan/daftar/menunggu', function () {
     return view('auth.company-registration-pending', ['pendingId' => $pendingId]);
 })->name('company.registration.pending');
 
-Route::get('/dashboard', function () {
-    $welcomeData = \App\Support\WelcomePageCache::data();
-
-    return view('dashboard', [
-        'activeCampaigns' => $welcomeData['activeCampaigns'],
-    ]);
-})->middleware(['auth'])->name('dashboard');
+Route::get('/dashboard', DashboardController::class)
+    ->middleware(['auth'])
+    ->name('dashboard');
 
 Route::get('/dashboard/muthowif-calendar', MuthowifDashboardCalendarController::class)
     ->middleware(['auth'])
@@ -203,7 +208,16 @@ Route::middleware('auth')->group(function () {
         ->name('profile.public.document');
     Route::delete('/profile', [ProfileController::class, 'destroy'])->name('profile.destroy');
 
+    Route::get('/chat', [GlobalChatController::class, 'page'])->name('chat.index');
     Route::get('/chat/conversations', [GlobalChatController::class, 'index'])->name('chat.conversations');
+
+    Route::prefix('affiliate')->name('affiliate.')->group(function () {
+        Route::get('/', [AffiliateDashboardController::class, 'index'])->name('index');
+        Route::post('/daftar', [AffiliateDashboardController::class, 'register'])->name('register');
+        Route::post('/rekening', [AffiliateBankAccountController::class, 'store'])->name('bank-accounts.store');
+        Route::delete('/rekening/{bankAccount}', [AffiliateBankAccountController::class, 'destroy'])->name('bank-accounts.destroy');
+        Route::post('/withdraw', [AffiliateWithdrawController::class, 'store'])->name('withdrawals.store');
+    });
 
     Route::middleware(['reporter'])->prefix('support')->name('support.')->group(function () {
         Route::get('live-index-fragment', [SupportTicketController::class, 'indexLiveFragment'])->name('index.live-fragment');
@@ -221,7 +235,7 @@ Route::middleware('auth')->group(function () {
         Route::post('documents/temp', [CustomerBookingController::class, 'uploadTempDocument'])->name('documents.temp');
         Route::post('/', [CustomerBookingController::class, 'store'])->name('store');
         Route::post('support', [SupportBookingController::class, 'store'])->name('support.store');
-        Route::post('{booking}/support-selesai', [SupportBookingController::class, 'requestCompletion'])->name('support.request-completion');
+        Route::post('{booking}/support-kode-ulang', [SupportBookingController::class, 'resendCompletionCode'])->name('support.resend-completion-code');
         Route::get('{booking}/live-state', [CustomerBookingController::class, 'showLiveState'])->name('show.live-state');
         Route::get('{booking}/fragment', [CustomerBookingController::class, 'showLiveFragment'])->name('show.fragment');
         Route::get('{booking}/pembayaran', [CustomerBookingController::class, 'payment'])->name('payment');
@@ -251,6 +265,7 @@ Route::middleware('auth')->group(function () {
         ->prefix('muthowif')
         ->name('muthowif.')
         ->group(function () {
+            Route::get('kelola-layanan', KelolaLayananController::class)->name('kelola-layanan');
             Route::get('pelayanan', [MuthowifServiceController::class, 'edit'])->name('pelayanan.edit');
             Route::put('pelayanan/group', [MuthowifServiceController::class, 'updateGroup'])->name('pelayanan.group');
             Route::put('pelayanan/private', [MuthowifServiceController::class, 'updatePrivate'])->name('pelayanan.private');
@@ -287,8 +302,8 @@ Route::middleware('auth')->group(function () {
                 ->name('bookings.documents.show');
             Route::get('bookings/{booking}', [MuthowifBookingController::class, 'show'])->name('bookings.show');
             Route::post('bookings/{booking}/confirm', [MuthowifBookingController::class, 'confirm'])->name('bookings.confirm');
-            Route::post('bookings/{booking}/support-selesai-setujui', [MuthowifBookingController::class, 'approveSupportCompletion'])->name('bookings.support-completion.approve');
-            Route::post('bookings/{booking}/support-selesai-tolak', [MuthowifBookingController::class, 'rejectSupportCompletion'])->name('bookings.support-completion.reject');
+            Route::post('bookings/{booking}/support-selesai-kode', [MuthowifBookingController::class, 'completeSupportWithCode'])->name('bookings.support-completion.code');
+            Route::post('bookings/{booking}/support-kode-ulang', [MuthowifBookingController::class, 'resendSupportCompletionCode'])->name('bookings.support-completion.resend-code');
             Route::post('bookings/{booking}/cancel', [MuthowifBookingController::class, 'cancel'])->name('bookings.cancel');
             Route::post('bookings/{booking}/reschedule-requests/{rescheduleRequest}/approve', [MuthowifBookingController::class, 'approveReschedule'])->name('bookings.reschedule_requests.approve');
             Route::post('bookings/{booking}/reschedule-requests/{rescheduleRequest}/reject', [MuthowifBookingController::class, 'rejectReschedule'])->name('bookings.reschedule_requests.reject');
@@ -353,6 +368,18 @@ Route::middleware('auth')->group(function () {
         Route::post('withdrawals/{withdrawal}/gagal-transfer', [WithdrawalsController::class, 'markTransferFailed'])->name('withdrawals.mark_transfer_failed');
         Route::get('referral', [MuthowifReferralMonitorController::class, 'index'])->name('referrals.index');
         Route::get('referral/{profile}', [MuthowifReferralMonitorController::class, 'show'])->name('referrals.show');
+        Route::get('affiliate', [AffiliateAdminController::class, 'index'])->name('affiliates.index');
+        Route::get('affiliate/pengaturan', [AffiliateAdminController::class, 'settingsEdit'])->name('affiliates.settings.edit');
+        Route::post('affiliate/pengaturan', [AffiliateAdminController::class, 'settingsUpdate'])->name('affiliates.settings.update');
+        Route::get('affiliate/withdraw', [AffiliateAdminController::class, 'withdrawalsIndex'])->name('affiliates.withdrawals.index');
+        Route::post('affiliate/withdraw/{withdrawal}/approve', [AffiliateAdminController::class, 'approveWithdrawal'])->name('affiliates.withdrawals.approve');
+        Route::post('affiliate/withdraw/{withdrawal}/reject', [AffiliateAdminController::class, 'rejectWithdrawal'])->name('affiliates.withdrawals.reject');
+        Route::post('affiliate/withdraw/{withdrawal}/paid', [AffiliateAdminController::class, 'markWithdrawalPaid'])->name('affiliates.withdrawals.paid');
+        Route::post('affiliate/withdraw/{withdrawal}/failed', [AffiliateAdminController::class, 'markWithdrawalFailed'])->name('affiliates.withdrawals.failed');
+        Route::get('affiliate/{affiliate}', [AffiliateAdminController::class, 'show'])->name('affiliates.show');
+        Route::post('affiliate/{affiliate}/toggle', [AffiliateAdminController::class, 'toggleStatus'])->name('affiliates.toggle');
+        Route::post('affiliate/rekening/{bankAccount}/verify', [AffiliateAdminController::class, 'verifyBank'])->name('affiliates.banks.verify');
+        Route::post('affiliate/rekening/{bankAccount}/reject', [AffiliateAdminController::class, 'rejectBank'])->name('affiliates.banks.reject');
         Route::get('muthowif/live-index-fragment', [MuthowifVerificationController::class, 'indexLiveFragment'])->name('muthowif.index.live-fragment');
         Route::get('muthowif', [MuthowifVerificationController::class, 'index'])->name('muthowif.index');
         Route::get('muthowif/{profile}/photo', [MuthowifVerificationController::class, 'photo'])->name('muthowif.photo');

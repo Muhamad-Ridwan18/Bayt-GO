@@ -1,15 +1,14 @@
 import React, { useCallback, useState } from 'react';
-import { StyleSheet, Text, View, ScrollView, RefreshControl, Alert } from 'react-native';
+import { StyleSheet, Text, View, ScrollView, RefreshControl, Alert, TextInput } from 'react-native';
 import { useFocusEffect } from '@react-navigation/native';
 import {
   User, Briefcase, Calendar, Clock, Users, Bed, Car, CheckCircle, XCircle, MessagesSquare,
-  CircleCheckBig,
 } from 'lucide-react-native';
 import ScreenHeader from '../components/ScreenHeader';
 import BookingDocumentGallery from '../components/BookingDocumentGallery';
 import {
   fetchMuthowifBooking, confirmMuthowifBooking, cancelMuthowifBooking,
-  approveReschedule, rejectReschedule, approveSupportCompletion, rejectSupportCompletion,
+  approveReschedule, rejectReschedule, completeSupportWithCode, resendSupportCompletionCode,
 } from '../api/muthowifBookings';
 import { useAuth } from '../context/AuthContext';
 import { useHideTabBarOnFocus } from '../hooks/useHideTabBarOnFocus';
@@ -26,7 +25,7 @@ import { formatIdr } from '../utils/format';
 import { MuthowifPricingBreakdown } from '../components/BookingPricingBreakdown';
 import {
   bookingStatusMeta, paymentStatusMeta, serviceTypeLabel, formatDateRange,
-  billingNights, changeRequestStatusLabel,
+  billingNights, changeRequestStatusLabel, canCompleteSupportWithCode,
 } from '../utils/bookingLabels';
 
 function InfoCell({ icon: Icon, label, value }) {
@@ -70,6 +69,7 @@ export default function MuthowifBookingDetailScreen({ navigation, route }) {
   const [rescheduleApprove, setRescheduleApprove] = useState(true);
   const [rescheduleReq, setRescheduleReq] = useState(null);
   const [rescheduleNote, setRescheduleNote] = useState('');
+  const [supportCode, setSupportCode] = useState('');
 
   const load = useCallback(async (silent = false) => {
     if (!silent) setLoading(true);
@@ -172,28 +172,43 @@ export default function MuthowifBookingDetailScreen({ navigation, route }) {
     }
   };
 
-  const handleSupportCompletion = (approve) => {
-    const title = approve ? 'Setujui penyelesaian layanan?' : 'Tolak permintaan penyelesaian?';
-    Alert.alert(title, 'Konfirmasi keputusan Anda.', [
+  const handleCompleteSupportWithCode = () => {
+    const code = String(supportCode || '').replace(/\D+/g, '');
+    if (code.length !== 6) {
+      notifyError('Masukkan 6 digit kode verifikasi dari jamaah.');
+      return;
+    }
+    Alert.alert('Selesaikan layanan?', 'Kode benar akan menutup booking dan mencatat saldo.', [
       { text: 'Batal', style: 'cancel' },
       {
-        text: approve ? 'Setujui' : 'Tolak',
-        style: approve ? 'default' : 'destructive',
+        text: 'Selesaikan',
         onPress: async () => {
           setActing(true);
           try {
-            if (approve) await approveSupportCompletion(token, bookingId);
-            else await rejectSupportCompletion(token, bookingId);
-            notifySuccess(approve ? 'Layanan ditandai selesai.' : 'Permintaan ditolak.');
+            await completeSupportWithCode(token, bookingId, code);
+            notifySuccess('Layanan ditandai selesai.');
+            setSupportCode('');
             await load(true);
           } catch (err) {
-            notifyError(err.message || 'Tidak dapat memproses');
+            notifyError(err.message || 'Kode tidak valid');
           } finally {
             setActing(false);
           }
         },
       },
     ]);
+  };
+
+  const handleResendSupportCode = async () => {
+    setActing(true);
+    try {
+      await resendSupportCompletionCode(token, bookingId);
+      notifySuccess('Kode dikirim ulang ke WhatsApp jamaah.');
+    } catch (err) {
+      notifyError(err.message || 'Tidak dapat mengirim ulang kode');
+    } finally {
+      setActing(false);
+    }
   };
 
   const openChat = () => {
@@ -228,7 +243,7 @@ export default function MuthowifBookingDetailScreen({ navigation, route }) {
   const bookingMeta = bookingStatusMeta(booking.status);
   const paymentMeta = paymentStatusMeta(booking.payment_status);
   const pendingReschedule = (booking.reschedule_requests || []).find((r) => r.status === 'pending');
-  const showSupportCompletion = booking.is_support && booking.completion_requested_at && booking.status !== 'completed';
+  const showSupportCompletion = canCompleteSupportWithCode(booking);
   const nights = billingNights(booking.starts_on, booking.ends_on);
   const isPendingDecision = booking.status === 'pending';
 
@@ -304,14 +319,33 @@ export default function MuthowifBookingDetailScreen({ navigation, route }) {
         ) : null}
 
         {showSupportCompletion ? (
-          <AlertCard icon={CircleCheckBig} title="Permintaan penyelesaian layanan" body="Jamaah meminta layanan pendukung ditandai selesai.">
-            <View style={styles.actionRow}>
-              <View style={styles.actionBtn}><Button label="Setujui" size="sm" icon={<CheckCircle size={16} color={colors.white} strokeWidth={2} />}
-                onPress={() => handleSupportCompletion(true)} fullWidth={false} /></View>
-              <View style={styles.actionBtn}><Button label="Tolak" size="sm" variant="danger" icon={<XCircle size={16} color={colors.error} strokeWidth={2} />}
-                onPress={() => handleSupportCompletion(false)} fullWidth={false} /></View>
+          <BookingSection title="Selesaikan dengan kode" variant="success">
+            <Text style={styles.supportIntro}>
+              Minta kode 6 digit dari jamaah, lalu masukkan di bawah untuk menutup layanan.
+            </Text>
+            <TextInput
+              value={supportCode}
+              onChangeText={setSupportCode}
+              keyboardType="number-pad"
+              maxLength={6}
+              placeholder="000000"
+              style={styles.codeInput}
+            />
+            <Button
+              label={acting ? 'Memproses...' : 'Selesaikan layanan'}
+              icon={<CheckCircle size={18} color={colors.white} strokeWidth={2} />}
+              onPress={handleCompleteSupportWithCode}
+              loading={acting}
+            />
+            <View style={{ marginTop: spacing.sm }}>
+              <Button
+                label="Kirim ulang kode ke jamaah"
+                variant="secondary"
+                onPress={handleResendSupportCode}
+                disabled={acting}
+              />
             </View>
-          </AlertCard>
+          </BookingSection>
         ) : null}
 
         <BookingDocumentGallery token={token} bookingId={bookingId} documents={booking.documents || []} title="Dokumen jamaah" />
@@ -402,6 +436,21 @@ const styles = StyleSheet.create({
   alertHead: { flexDirection: 'row', alignItems: 'center', gap: spacing.sm, marginBottom: spacing.sm },
   alertTitle: { ...typography.caption, fontFamily: 'PlusJakartaSans_800ExtraBold', color: '#92400E' },
   alertBody: { ...typography.caption, lineHeight: 20, color: '#78350F' },
+  supportIntro: { ...typography.caption, color: colors.textSecondary, lineHeight: 20, marginBottom: spacing.md },
+  codeInput: {
+    borderWidth: 1,
+    borderColor: colors.border,
+    borderRadius: radius.sm,
+    paddingHorizontal: spacing.md,
+    paddingVertical: spacing.md,
+    marginBottom: spacing.md,
+    letterSpacing: 8,
+    fontSize: 22,
+    fontWeight: '700',
+    textAlign: 'center',
+    color: colors.textPrimary,
+    backgroundColor: colors.white,
+  },
   actionRow: { flexDirection: 'row', gap: spacing.md, marginTop: spacing.md },
   actionBtn: { flex: 1 },
   decisionCard: { borderColor: '#DDD6FE' },

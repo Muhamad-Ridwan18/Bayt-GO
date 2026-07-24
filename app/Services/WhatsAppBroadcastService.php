@@ -11,7 +11,7 @@ use Throwable;
 
 class WhatsAppBroadcastService
 {
-    /** Jeda antar penerima (detik). */
+    /** Jeda antar penerima (detik). Queue database hanya presisi detik — jangan pakai ms. */
     private const SEND_STAGGER_SECONDS = 2;
 
     public function whatsappConfigured(): bool
@@ -53,10 +53,8 @@ class WhatsAppBroadcastService
         ]);
 
         foreach ($resolved['recipients'] as $index => $recipient) {
-            $e164 = $this->normalizedE164($recipient['dial']);
-            $fingerprint = hash('sha256', implode('|', [
-                (string) $idempotencyKey,
-                $e164,
+            $pending = SendWhatsAppTextJob::dispatch(
+                $recipient['dial']['target'],
                 $text,
             ]));
 
@@ -72,25 +70,8 @@ class WhatsAppBroadcastService
                 continue;
             }
 
-            try {
-                $fonnte->sendText(
-                    $recipient['dial']['target'],
-                    $text,
-                    $recipient['dial']['country_calling_code'],
-                );
-                $sent++;
-            } catch (Throwable $e) {
-                $failed++;
-                $failures[] = [
-                    'label' => $recipient['label'],
-                    'reason' => $e->getMessage(),
-                ];
-                Cache::forget('wa:broadcast:msg:'.$fingerprint);
-                Log::warning('whatsapp.broadcast.recipient_failed', [
-                    'e164' => $e164,
-                    'label' => $recipient['label'],
-                    'exception' => $e->getMessage(),
-                ]);
+            if ($index > 0) {
+                $pending->delay(now()->addSeconds($index * self::SEND_STAGGER_SECONDS));
             }
 
             if ($index < $total - 1) {

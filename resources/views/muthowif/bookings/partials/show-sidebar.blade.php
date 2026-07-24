@@ -50,18 +50,25 @@
     <section class="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm sm:p-6">
         <h2 class="text-sm font-bold text-slate-900">{{ __('muthowif.booking_show.payment_heading') }}</h2>
         <dl class="mt-4 space-y-2 text-xs">
-            <div class="flex justify-between gap-3">
-                <dt class="text-slate-600">{{ __('muthowif.booking_show.rate_per_day') }}</dt>
-                <dd class="font-medium tabular-nums text-slate-900">Rp {{ $fmt($daily) }}</dd>
-            </div>
-            <div class="flex justify-between gap-3">
-                <dt class="text-slate-600">{{ __('bookings.show.day_count') }}</dt>
-                <dd class="font-medium text-slate-900">{{ __('bookings.show.days_count', ['count' => $nights]) }}</dd>
-            </div>
-            <div class="flex justify-between gap-3 border-t border-slate-100 pt-2">
-                <dt class="text-slate-600">{{ __('muthowif.booking_show.subtotal_service') }}</dt>
-                <dd class="font-medium tabular-nums text-slate-900">Rp {{ $fmt($serviceSubtotal) }}</dd>
-            </div>
+            @if ($b->isSupport())
+                <div class="flex justify-between gap-3">
+                    <dt class="text-slate-600">{{ __('layanan_pendukung.package_price') }}</dt>
+                    <dd class="font-medium tabular-nums text-slate-900">Rp {{ $fmt($serviceSubtotal) }}</dd>
+                </div>
+            @else
+                <div class="flex justify-between gap-3">
+                    <dt class="text-slate-600">{{ __('muthowif.booking_show.rate_per_day') }}</dt>
+                    <dd class="font-medium tabular-nums text-slate-900">Rp {{ $fmt($daily) }}</dd>
+                </div>
+                <div class="flex justify-between gap-3">
+                    <dt class="text-slate-600">{{ __('bookings.show.day_count') }}</dt>
+                    <dd class="font-medium text-slate-900">{{ __('bookings.show.days_count', ['count' => $nights]) }}</dd>
+                </div>
+                <div class="flex justify-between gap-3 border-t border-slate-100 pt-2">
+                    <dt class="text-slate-600">{{ __('muthowif.booking_show.subtotal_service') }}</dt>
+                    <dd class="font-medium tabular-nums text-slate-900">Rp {{ $fmt($serviceSubtotal) }}</dd>
+                </div>
+            @endif
             @if ($addonLines->isNotEmpty())
                 @foreach ($addonLines as $ad)
                     <div class="flex justify-between gap-3">

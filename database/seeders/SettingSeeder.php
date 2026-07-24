@@ -14,7 +14,13 @@ class SettingSeeder extends Seeder
     {
         $settings = [
             'platform_fee_rate' => '0.075',
-            // Tambahkan pengaturan default lainnya di sini jika diperlukan
+            'affiliate_commission_rate' => '0.01',
+            'affiliate_commission_tiers' => json_encode([
+                ['min' => 0, 'rate' => 0.01],
+                ['min' => 250000000, 'rate' => 0.015],
+                ['min' => 500000000, 'rate' => 0.02],
+            ]),
+            'affiliate_min_withdraw' => '100000',
         ];
 
         foreach ($settings as $key => $value) {

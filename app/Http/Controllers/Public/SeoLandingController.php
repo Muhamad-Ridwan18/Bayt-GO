@@ -21,7 +21,9 @@ class SeoLandingController extends Controller
         $services = MuthowifProfile::approved()
             ->when($landing['city'] ?? null, fn ($query, $city) => $query->where('city', $city))
             ->when($landing['language'] ?? null, fn ($query, $language) => $query->whereJsonContains('languages', $language))
-            ->orderByDesc('updated_at')
+            ->with(['user', 'services'])
+            ->withMarketplaceStats()
+            ->orderByMarketplaceRanking()
             ->limit(12)
             ->get();
 

@@ -20,20 +20,25 @@ class BookingPricingService
             return (float) $booking->total_amount;
         }
 
+        return $this->calculateBaseFromComponents($booking);
+    }
+
+    /**
+     * Base transaksi untuk affiliate: layanan + add-on + hotel + transport.
+     * Tidak memakai total_amount agar tidak tertinggal komponen opsional.
+     */
+    public function calculateBaseFromComponents(MuthowifBooking $booking): float
+    {
         if ($booking->service_type === MuthowifServiceType::Support) {
             return round((float) ($booking->package_price_snapshot ?? 0), 2);
         }
 
         $nights = $booking->billingNightsInclusive();
-        
-        // 1. Base Price (Daily Price)
+
         $dailyPrice = $this->getDailyPrice($booking);
         $base = $nights * $dailyPrice;
-
-        // 2. Add-ons Price
         $addons = $this->getAddOnsTotal($booking);
 
-        // 3. Optional Services
         $sameHotel = 0.0;
         if ($booking->with_same_hotel) {
             $sameHotel = $nights * $this->getSameHotelPrice($booking);

@@ -4,6 +4,7 @@ namespace App\Jobs;
 
 use App\Models\MuthowifBooking;
 use App\Services\MuthowifBookingWhatsAppNotifier;
+use App\Services\SupportBookingService;
 use Illuminate\Bus\Queueable;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Foundation\Bus\Dispatchable;
@@ -18,11 +19,18 @@ class NotifyCustomerOfPaidBooking implements ShouldQueue
         public string $bookingId
     ) {}
 
-    public function handle(MuthowifBookingWhatsAppNotifier $notifier): void
+    public function handle(MuthowifBookingWhatsAppNotifier $notifier, SupportBookingService $support): void
     {
         $booking = MuthowifBooking::query()->find($this->bookingId);
-        if ($booking) {
-            $notifier->notifyCustomerPaymentSettled($booking);
+        if (! $booking) {
+            return;
         }
+
+        if ($booking->isSupport()) {
+            $support->issueCompletionCodeAfterPayment($booking);
+            $booking = $booking->fresh();
+        }
+
+        $notifier->notifyCustomerPaymentSettled($booking);
     }
 }

@@ -7,7 +7,7 @@ import {
 import { LinearGradient } from 'expo-linear-gradient';
 import ScreenHeader from '../components/ScreenHeader';
 import BookingDocumentGallery from '../components/BookingDocumentGallery';
-import { fetchBooking, cancelBooking, requestSupportCompletion } from '../api/bookings';
+import { fetchBooking, cancelBooking, resendSupportCompletionCode } from '../api/bookings';
 import { selectEmergencyReplacement } from '../api/emergency';
 import { useAuth } from '../context/AuthContext';
 import { useUserBookingRealtime } from '../hooks/useUserBookingRealtime';
@@ -36,8 +36,8 @@ import { resolveMediaUrl } from '../utils/mediaUrl';
 import {
   bookingStatusMeta, paymentStatusMeta, formatDateRange,
   needsPayment, canCancelBooking, canCompleteBooking, canReviewBooking, canViewInvoice,
-  canRequestRefund, canRequestReschedule, hasPendingReschedule, canRequestSupportCompletion,
-  hasSupportCompletionPending, changeRequestStatusLabel, billingNights, canOpenBookingChat,
+  canRequestRefund, canRequestReschedule, hasPendingReschedule, canResendSupportCompletionCode,
+  changeRequestStatusLabel, billingNights, canOpenBookingChat,
   hasMuthowifRejectionInfo,
 } from '../utils/bookingLabels';
 import { CustomerPricingBreakdown, customerPayableAmount } from '../components/BookingPricingBreakdown';
@@ -154,22 +154,22 @@ export default function BookingDetailScreen({ navigation, route }) {
     ]);
   }, [token, bookingId, load]);
 
-  const handleRequestSupportCompletion = () => {
+  const handleResendSupportCompletionCode = () => {
     Alert.alert(
-      'Minta penyelesaian layanan?',
-      'Muthowif akan diminta mengonfirmasi bahwa layanan pendukung sudah selesai.',
+      'Kirim ulang kode verifikasi?',
+      'Kode baru akan dikirim ke WhatsApp Anda.',
       [
         { text: 'Batal', style: 'cancel' },
         {
-          text: 'Kirim permintaan',
+          text: 'Kirim ulang',
           onPress: async () => {
             setRequestingCompletion(true);
             try {
-              await requestSupportCompletion(token, bookingId);
-              notifySuccess('Permintaan penyelesaian dikirim ke muthowif.');
+              await resendSupportCompletionCode(token, bookingId);
+              notifySuccess('Kode verifikasi dikirim via WhatsApp.');
               load(true);
             } catch (err) {
-              Alert.alert('Gagal', err.message || 'Tidak dapat mengirim permintaan');
+              Alert.alert('Gagal', err.message || 'Tidak dapat mengirim kode');
             } finally {
               setRequestingCompletion(false);
             }
@@ -378,20 +378,25 @@ export default function BookingDetailScreen({ navigation, route }) {
           />
         ) : null}
 
-        {booking.is_support && booking.payment_status === 'paid' && booking.status === 'in_progress' ? (
-          <BookingSection title="Penyelesaian layanan pendukung" variant="success">
+        {booking.is_support && booking.payment_status === 'paid' && ['confirmed', 'in_progress'].includes(booking.status) ? (
+          <BookingSection title="Kode verifikasi penyelesaian" variant="success">
             <Text style={styles.supportIntro}>
-              Setelah layanan selesai, kirim permintaan agar muthowif mengonfirmasi penyelesaian.
+              Tunjukkan kode ini kepada muthowif agar layanan dapat diselesaikan.
             </Text>
-            {hasSupportCompletionPending(booking) ? (
-              <PendingBanner text="Menunggu konfirmasi muthowif" />
-            ) : canRequestSupportCompletion(booking) ? (
-              <Button
-                label={requestingCompletion ? 'Mengirim...' : 'Minta penyelesaian layanan'}
-                icon={<CheckCheck size={18} color={colors.white} strokeWidth={2} />}
-                onPress={handleRequestSupportCompletion}
-                loading={requestingCompletion}
-              />
+            {booking.completion_code ? (
+              <Text style={styles.completionCode}>{booking.completion_code}</Text>
+            ) : (
+              <PendingBanner text="Kode belum tersedia. Kirim ulang atau tunggu konfirmasi pembayaran." />
+            )}
+            {canResendSupportCompletionCode(booking) ? (
+              <View style={{ marginTop: spacing.md }}>
+                <Button
+                  label={requestingCompletion ? 'Mengirim...' : 'Kirim ulang via WhatsApp'}
+                  icon={<CheckCheck size={18} color={colors.white} strokeWidth={2} />}
+                  onPress={handleResendSupportCompletionCode}
+                  loading={requestingCompletion}
+                />
+              </View>
             ) : null}
           </BookingSection>
         ) : null}
@@ -431,6 +436,15 @@ const styles = StyleSheet.create({
   pendingBanner: { marginBottom: spacing.md },
   paidText: { ...typography.caption, color: colors.textSecondary, fontWeight: '600' },
   supportIntro: { ...typography.caption, color: colors.textSecondary, lineHeight: 20, marginBottom: spacing.md },
+  completionCode: {
+    ...typography.title,
+    fontSize: 32,
+    letterSpacing: 8,
+    textAlign: 'center',
+    color: colors.baytgo,
+    fontWeight: '700',
+    marginBottom: spacing.sm,
+  },
   stickyPress: { borderRadius: radius.sm, overflow: 'hidden' },
   stickyGradient: {
     flexDirection: 'row', alignItems: 'center', justifyContent: 'center',

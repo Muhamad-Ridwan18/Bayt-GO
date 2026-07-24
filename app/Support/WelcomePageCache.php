@@ -14,15 +14,17 @@ use Illuminate\Support\Facades\Cache;
 
 final class WelcomePageCache
 {
-    public const KEY = 'welcome:page_data:v2';
+    public const KEY = 'welcome:page_data:v4';
 
     /** @deprecated Bust legacy entries that cached serialized Eloquent collections. */
-    private const LEGACY_KEY = 'welcome:page_data:v1';
+    private const LEGACY_KEY = 'welcome:page_data:v3';
 
     public static function forget(): void
     {
         Cache::forget(self::KEY);
         Cache::forget(self::LEGACY_KEY);
+        Cache::forget('welcome:page_data:v2');
+        Cache::forget('welcome:page_data:v1');
     }
 
     /**
@@ -53,7 +55,7 @@ final class WelcomePageCache
     private static function buildPayload(): array
     {
         $featuredMuthowifs = MuthowifProfile::query()
-            ->with(['user:id,name', 'services:id,muthowif_profile_id,daily_price,name'])
+            ->with(['user:id,name', 'services:id,muthowif_profile_id,daily_price,name,type'])
             ->approved()
             ->hasPublishedServices()
             ->withMarketplaceStats()
@@ -75,7 +77,8 @@ final class WelcomePageCache
         $latestServices = MuthowifProfile::query()
             ->approved()
             ->with('user:id,name')
-            ->orderByDesc('updated_at')
+            ->withMarketplaceStats()
+            ->orderByMarketplaceRanking()
             ->limit(4)
             ->get();
 
@@ -134,7 +137,7 @@ final class WelcomePageCache
         $featuredMuthowifs = self::orderedModels(
             $featuredIds,
             MuthowifProfile::query()
-                ->with(['user:id,name', 'services:id,muthowif_profile_id,daily_price,name'])
+                ->with(['user:id,name', 'services:id,muthowif_profile_id,daily_price,name,type'])
                 ->whereIn((new MuthowifProfile)->getQualifiedKeyName(), $featuredIds)
                 ->get(),
         );
@@ -159,7 +162,12 @@ final class WelcomePageCache
         $galleryImages = self::orderedModels(
             $galleryIds,
             MuthowifPortfolioImage::query()
-                ->select('id', 'path')
+                ->select('id', 'path', 'muthowif_portfolio_id')
+                ->with([
+                    'portfolio:id,muthowif_profile_id,title',
+                    'portfolio.muthowifProfile:id,slug,user_id',
+                    'portfolio.muthowifProfile.user:id,name',
+                ])
                 ->whereIn((new MuthowifPortfolioImage)->getQualifiedKeyName(), $galleryIds)
                 ->get(),
         );

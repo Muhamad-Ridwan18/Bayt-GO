@@ -53,7 +53,7 @@ return [
     'range_prefix' => 'Range',
     'companions_ready' => ':count companion(s) available',
     'no_results_title' => 'No muthowif match this range yet',
-    'no_results_sub' => 'Everyone may be on leave or slots are full. Try different dates or name keywords.',
+    'no_results_sub' => 'Everyone may be on leave or availability is full. Try different dates or name keywords.',
     'breadcrumb_find' => 'Find muthowif',
     'booking_search_again' => 'Find muthowif again',
     'booking_empty' => 'No bookings yet. Find a muthowif and complete your request from the profile or the dedicated booking page after choosing dates.',

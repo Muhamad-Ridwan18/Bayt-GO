@@ -59,6 +59,11 @@ class User extends Authenticatable
         return $this->hasOne(MuthowifProfile::class);
     }
 
+    public function affiliate(): HasOne
+    {
+        return $this->hasOne(Affiliate::class);
+    }
+
     /**
      * @return HasMany<MuthowifBooking, $this>
      */

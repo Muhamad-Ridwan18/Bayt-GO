@@ -29,7 +29,7 @@ return [
         'umrah' => 'Umrah',
         'ziarah' => 'Ziarah',
         'mobility' => 'Mobilitas / kursi roda',
-        'other' => 'Lainnya',
+        'other' => 'Fotografer & Videografer',
     ],
     'muthowif_verification_status' => [
         'pending' => 'Menunggu verifikasi',

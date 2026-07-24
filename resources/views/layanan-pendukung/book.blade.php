@@ -1,11 +1,16 @@
 @php
     [$minPilgrims, $maxPilgrims] = array_values($package->pilgrimBounds());
-    $defaultStartsAt = old('starts_at', now()->addDay()->setTime(9, 0)->format('Y-m-d\TH:i'));
+    $startsAtInput = $startsAtInput ?? '';
+    $defaultStartsAt = old('starts_at', $startsAtInput !== ''
+        ? $startsAtInput
+        : now()->addDay()->setTime(9, 0)->format('Y-m-d\TH:i'));
+    $catalogQuery = array_filter(['starts_at' => $startsAtInput !== '' ? $startsAtInput : null]);
+    $showUrl = route('layanan-pendukung.show', array_merge(['supportPackage' => $package], $catalogQuery));
 @endphp
 
 <x-marketplace-layout :title="__('layanan_pendukung.book_now').' — '.$package->name">
     <div class="mx-auto max-w-xl ui-stack-compact">
-        <a href="{{ route('layanan-pendukung.show', $package) }}" class="inline-flex items-center gap-2 text-sm font-semibold text-brand-700 hover:text-brand-800">
+        <a href="{{ $showUrl }}" class="inline-flex items-center gap-2 text-sm font-semibold text-brand-700 hover:text-brand-800">
             ← {{ __('layanan_pendukung.back_to_catalog') }}
         </a>
 
@@ -37,6 +42,14 @@
                         <x-text-input id="pilgrim_count" name="pilgrim_count" type="number" class="mt-1 block w-full"
                                       :value="old('pilgrim_count', $minPilgrims)" :min="$minPilgrims" :max="$maxPilgrims" required />
                         <x-input-error class="mt-2" :messages="$errors->get('pilgrim_count')" />
+                    </div>
+
+                    <div>
+                        <x-input-label for="affiliate_code" value="Kode Affiliate (opsional)" />
+                        <x-text-input id="affiliate_code" name="affiliate_code" type="text" class="mt-1 block w-full border-slate-300 font-mono uppercase"
+                                      :value="old('affiliate_code', \App\Support\AffiliateReferralCapture::code())" maxlength="32" autocomplete="off" placeholder="Contoh: RIDWAN" />
+                        <p class="mt-1 text-xs text-slate-500">Masukkan kode affiliate jika Anda datang dari referral.</p>
+                        <x-input-error class="mt-2" :messages="$errors->get('affiliate_code')" />
                     </div>
 
                     <x-input-error :messages="$errors->get('support_package_id')" />

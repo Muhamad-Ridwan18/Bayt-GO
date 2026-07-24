@@ -8,7 +8,6 @@ use App\Enums\MuthowifVerificationStatus;
 use App\Models\MuthowifBooking;
 use App\Models\MuthowifProfile;
 use App\Models\MuthowifService;
-use App\Models\User;
 use Illuminate\Support\Carbon;
 use Illuminate\Support\Collection;
 
@@ -78,12 +77,8 @@ class MuthowifNetworkReferralService
             ->where('referred_by_muthowif_profile_id', $declinerId)
             ->whereKeyNot($declinerId)
             ->whereHas('services', fn ($q) => $q->where('type', $serviceType->value))
-            ->orderBy(
-                User::query()
-                    ->select('name')
-                    ->whereColumn('users.id', 'muthowif_profiles.user_id')
-                    ->limit(1)
-            )
+            ->withMarketplaceStats()
+            ->orderByMarketplaceRanking()
             ->limit(80)
             ->get()
             ->pipe(fn (Collection $profiles) => $this->filterEligibleForBooking($profiles, $booking, $start, $end, $serviceType));

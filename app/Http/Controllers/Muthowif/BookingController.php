@@ -20,8 +20,9 @@ use App\Models\MuthowifServiceAddOn;
 use App\Services\BookingPendingPaymentEnsurer;
 use App\Services\SupportBookingService;
 use App\Support\BookingWebLive;
+use App\Support\BookingPricingViewData;
 use App\Support\CustomerBookingBroadcast;
-use App\Support\PlatformFee;
+use App\ViewModels\Booking\MuthowifBookingIndexPageData;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
@@ -47,10 +48,12 @@ class BookingController extends Controller
         $bookingStatusCounts = $this->muthowifBookingStatusCounts((string) $profile->getKey());
 
         return view('muthowif.bookings.index', [
-            'bookings' => $bookings,
-            'addonsById' => $this->addOnsKeyById($bookings),
-            'bookingStatusCounts' => $bookingStatusCounts,
-            'statusFilter' => $statusFilter,
+            'page' => MuthowifBookingIndexPageData::make(
+                $bookings,
+                $this->addOnsKeyById($bookings),
+                $bookingStatusCounts,
+                $statusFilter,
+            ),
         ]);
     }
 
@@ -77,10 +80,12 @@ class BookingController extends Controller
         $bookingStatusCounts = $this->muthowifBookingStatusCounts((string) $profile->getKey());
 
         return view('muthowif.bookings.partials.index-live', [
-            'bookings' => $bookings,
-            'addonsById' => $this->addOnsKeyById($bookings),
-            'bookingStatusCounts' => $bookingStatusCounts,
-            'statusFilter' => $statusFilter,
+            'page' => MuthowifBookingIndexPageData::make(
+                $bookings,
+                $this->addOnsKeyById($bookings),
+                $bookingStatusCounts,
+                $statusFilter,
+            ),
         ]);
     }
 
@@ -284,6 +289,8 @@ class BookingController extends Controller
                 'muthowif_rejection_note' => $note,
             ]);
 
+            app(\App\Services\AffiliateCommissionService::class)->voidForBooking($booking, 'cancelled_by_muthowif');
+
             NotifyCustomerOfBookingRejectedJadwalFull::dispatchAfterResponse(
                 (string) $booking->getKey()
             );
@@ -477,31 +484,9 @@ class BookingController extends Controller
         bool $loadReferralFromPayments,
     ): array {
         $booking->loadMissing(['muthowifProfile.services']);
-        $service = $booking->muthowifProfile?->services->firstWhere('type', $booking->service_type);
-        $nights = $booking->billingNightsInclusive();
-        $daily = (float) ($booking->daily_price_snapshot ?? ($service ? $service->daily_price : 0.0));
-        $serviceSubtotal = (float) ($nights * $daily);
-
-        $addonLines = collect();
-        if (! empty($booking->add_ons_snapshot)) {
-            $addonLines = collect($booking->add_ons_snapshot)->map(fn ($a) => (object) $a);
-        } elseif (! empty($booking->selected_add_on_ids)) {
-            foreach ($booking->selected_add_on_ids as $aid) {
-                if (isset($addonsById[$aid])) {
-                    $addonLines->push($addonsById[$aid]);
-                }
-            }
-        }
-
-        $addonsSum = $addonLines->sum(fn ($a) => (float) $a->price);
-        $sameHotelPrice = (float) ($booking->same_hotel_price_snapshot ?? ($service ? $service->same_hotel_price_per_day : 0.0));
-        $sameHotelLine = $booking->with_same_hotel ? ($nights * $sameHotelPrice) : 0.0;
-        $transportPrice = (float) ($booking->transport_price_snapshot ?? ($service ? (float) $service->transport_price_flat : 0.0));
-        $transportLine = $booking->with_transport ? $transportPrice : 0.0;
-        $totalGross = (float) ($serviceSubtotal + $addonsSum + $sameHotelLine + $transportLine);
-        $split = PlatformFee::split($totalGross);
-        $muthowifNet = (float) ($split['muthowif_net'] ?? 0.0);
-        $muthowifFee = (float) ($split['muthowif_fee'] ?? 0.0);
+        $pricing = BookingPricingViewData::forMuthowif($booking, $addonsById);
+        $muthowifNet = $pricing['muthowifNet'];
+        $muthowifFee = $pricing['muthowifFee'];
 
         $referralRewardFromPay = 0.0;
         if ($loadReferralFromPayments) {
@@ -527,12 +512,12 @@ class BookingController extends Controller
 
         return [
             'referralRewardFromPay' => $referralRewardFromPay,
-            'daily' => $daily,
-            'nights' => $nights,
-            'serviceSubtotal' => $serviceSubtotal,
-            'addonLines' => $addonLines,
-            'sameHotelLine' => $sameHotelLine,
-            'transportLine' => $transportLine,
+            'daily' => $pricing['daily'],
+            'nights' => $pricing['nights'],
+            'serviceSubtotal' => $pricing['serviceSubtotal'],
+            'addonLines' => $pricing['addonLines'],
+            'sameHotelLine' => $pricing['sameHotelLine'],
+            'transportLine' => $pricing['transportLine'],
             'muthowifFee' => $muthowifFee,
             'muthowifNetAfterReferral' => $muthowifNetAfterReferral,
         ];
@@ -558,7 +543,7 @@ class BookingController extends Controller
     {
         $query = MuthowifBooking::query()
             ->where('muthowif_profile_id', $profile->id)
-            ->with(['customer'])
+            ->with(['customer', 'muthowifProfile.services'])
             ->withCount([
                 'rescheduleRequests as pending_reschedule_requests_count' => fn ($q) => $q->where('status', BookingChangeRequestStatus::Pending),
             ])
@@ -590,11 +575,15 @@ class BookingController extends Controller
         )->all();
     }
 
-    public function approveSupportCompletion(Request $request, MuthowifBooking $booking, SupportBookingService $support): RedirectResponse
+    public function completeSupportWithCode(Request $request, MuthowifBooking $booking, SupportBookingService $support): RedirectResponse
     {
-        $this->authorize('approveSupportCompletion', $booking);
+        $this->authorize('completeSupportWithCode', $booking);
 
-        $result = $support->approveCompletion($booking, (string) $request->user()->id);
+        $validated = $request->validate([
+            'code' => ['required', 'string', 'max:12'],
+        ]);
+
+        $result = $support->completeWithCode($booking, $validated['code'], (string) $request->user()->id);
 
         if (! $result['completed']) {
             return redirect()
@@ -610,18 +599,14 @@ class BookingController extends Controller
             ->with('status', __('layanan_pendukung.flash.completion_approved'));
     }
 
-    public function rejectSupportCompletion(Request $request, MuthowifBooking $booking, SupportBookingService $support): RedirectResponse
+    public function resendSupportCompletionCode(Request $request, MuthowifBooking $booking, SupportBookingService $support): RedirectResponse
     {
-        $this->authorize('rejectSupportCompletion', $booking);
+        $this->authorize('resendSupportCompletionCode', $booking);
 
-        $validated = $request->validate([
-            'rejection_note' => ['nullable', 'string', 'max:2000'],
-        ]);
-
-        $support->rejectCompletionRequest($booking);
+        $support->issueCompletionCode($booking, true);
 
         return redirect()
             ->route('muthowif.bookings.show', $booking)
-            ->with('status', __('layanan_pendukung.flash.completion_rejected'));
+            ->with('status', __('layanan_pendukung.flash.completion_code_sent'));
     }
 }
