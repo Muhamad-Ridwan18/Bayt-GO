@@ -15,7 +15,7 @@
                         'label' => __('nav.manage_svc_wheelchair'),
                         'desc' => __('nav.manage_svc_wheelchair_desc'),
                         'bg' => 'bg-[#0EA5E9]',
-                        'icon' => 'M15.75 6a3.75 3.75 0 11-7.5 0 3.75 3.75 0 017.5 0zM4.501 20.118a7.5 7.5 0 0114.998 0M8 18a2.25 2.25 0 11-4.5 0 2.25 2.25 0 014.5 0zM10.25 18H15a3 3 0 003-3v-2.25',
+                        'icon' => 'wheelchair',
                     ],
                     [
                         'href' => route('muthowif.pelayanan.edit'),
@@ -30,7 +30,7 @@
                         'label' => __('nav.manage_svc_prayer'),
                         'desc' => __('nav.manage_svc_prayer_desc'),
                         'bg' => 'bg-[#4F46E5]',
-                        'icon' => 'M12 3v3m0 12v3M4.5 9.75h15M6 9.75V18a1.5 1.5 0 001.5 1.5h9A1.5 1.5 0 0018 18V9.75M9 6.75h6',
+                        'icon' => 'mosque',
                     ],
                     [
                         'href' => route('muthowif.pelayanan-pendukung.index', ['category' => 'other']),
@@ -53,12 +53,18 @@
                             <span class="absolute right-3 top-3 rounded-full bg-gold px-2 py-0.5 text-[9px] font-bold uppercase tracking-wide text-baytgo-950">{{ $item['badge'] }}</span>
                         @endif
                         <span class="flex h-12 w-12 shrink-0 items-center justify-center rounded-full {{ $item['bg'] }} text-white shadow-sm transition group-hover:scale-105">
-                            <svg class="h-6 w-6" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.7" stroke="currentColor" aria-hidden="true">
-                                <path stroke-linecap="round" stroke-linejoin="round" d="{{ $item['icon'] }}" />
-                                @if (! empty($item['icon2']))
-                                    <path stroke-linecap="round" stroke-linejoin="round" d="{{ $item['icon2'] }}" />
-                                @endif
-                            </svg>
+                            @if (($item['icon'] ?? '') === 'wheelchair')
+                                <x-icons.wheelchair class="h-6 w-6" />
+                            @elseif (($item['icon'] ?? '') === 'mosque')
+                                <x-icons.mosque class="h-6 w-6" />
+                            @else
+                                <svg class="h-6 w-6" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.7" stroke="currentColor" aria-hidden="true">
+                                    <path stroke-linecap="round" stroke-linejoin="round" d="{{ $item['icon'] }}" />
+                                    @if (! empty($item['icon2']))
+                                        <path stroke-linecap="round" stroke-linejoin="round" d="{{ $item['icon2'] }}" />
+                                    @endif
+                                </svg>
+                            @endif
                         </span>
                         <span class="min-w-0 flex-1 pe-8">
                             <span class="block text-sm font-bold text-slate-900 group-hover:text-baytgo">{{ $item['label'] }}</span>
