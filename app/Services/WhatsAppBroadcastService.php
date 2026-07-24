@@ -146,6 +146,12 @@ class WhatsAppBroadcastService
                     continue;
                 }
 
+                if ($profile->isRejected()) {
+                    $skipped++;
+
+                    continue;
+                }
+
                 $phone = $profile->whatsAppPhone();
                 if ($phone === null) {
                     $skipped++;

@@ -26,7 +26,7 @@ class WhatsAppBroadcastController extends Controller
         WhatsAppMediaUrl::ensureBroadcastStorageReady();
 
         $status = $request->query('status', 'all');
-        if (! in_array($status, ['all', 'approved', 'pending', 'rejected'], true)) {
+        if (! in_array($status, ['all', 'approved', 'pending'], true)) {
             $status = 'all';
         }
 
@@ -35,6 +35,7 @@ class WhatsAppBroadcastController extends Controller
         $query = MuthowifProfile::query()
             ->with('user')
             ->withReachablePhone()
+            ->where('verification_status', '!=', MuthowifVerificationStatus::Rejected)
             ->orderByDesc('created_at');
 
         if ($status !== 'all') {
@@ -55,6 +56,7 @@ class WhatsAppBroadcastController extends Controller
 
         $countRows = MuthowifProfile::query()
             ->withReachablePhone()
+            ->where('verification_status', '!=', MuthowifVerificationStatus::Rejected)
             ->select('verification_status')
             ->selectRaw('count(*) as aggregate')
             ->groupBy('verification_status')
@@ -64,7 +66,6 @@ class WhatsAppBroadcastController extends Controller
             'all' => 0,
             'approved' => 0,
             'pending' => 0,
-            'rejected' => 0,
         ];
 
         foreach ($countRows as $row) {

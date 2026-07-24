@@ -165,7 +165,6 @@
                                 <a href="{{ route('admin.whatsapp-broadcast.index', $filterParams('all')) }}" class="rounded-xl px-3 py-2 text-xs font-semibold {{ $status === 'all' ? 'bg-brand-600 text-white' : 'bg-slate-100 text-slate-700 hover:bg-slate-200' }}">{{ __('admin.whatsapp_broadcast.filter_all') }} ({{ $counts['all'] }})</a>
                                 <a href="{{ route('admin.whatsapp-broadcast.index', $filterParams('approved')) }}" class="rounded-xl px-3 py-2 text-xs font-semibold {{ $status === 'approved' ? 'bg-emerald-600 text-white' : 'bg-slate-100 text-slate-700 hover:bg-slate-200' }}">{{ __('admin.whatsapp_broadcast.filter_approved') }} ({{ $counts['approved'] }})</a>
                                 <a href="{{ route('admin.whatsapp-broadcast.index', $filterParams('pending')) }}" class="rounded-xl px-3 py-2 text-xs font-semibold {{ $status === 'pending' ? 'bg-amber-600 text-white' : 'bg-slate-100 text-slate-700 hover:bg-slate-200' }}">{{ __('admin.whatsapp_broadcast.filter_pending') }} ({{ $counts['pending'] }})</a>
-                                <a href="{{ route('admin.whatsapp-broadcast.index', $filterParams('rejected')) }}" class="rounded-xl px-3 py-2 text-xs font-semibold {{ $status === 'rejected' ? 'bg-red-600 text-white' : 'bg-slate-100 text-slate-700 hover:bg-slate-200' }}">{{ __('admin.whatsapp_broadcast.filter_rejected') }} ({{ $counts['rejected'] }})</a>
                         </div>
 
                         <div class="mt-4 flex flex-wrap items-center gap-3">
