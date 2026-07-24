@@ -46,4 +46,8 @@ return [
     'manage_svc_raudhah' => 'Raudhah companion',
     'manage_svc_raudhah_desc' => 'Ziyarah & Raudhah accompaniment.',
     'affiliate' => 'Affiliate',
+    'greeting' => 'Assalamu’alaikum,',
+    'menu_section' => 'Menu',
+    'account_section' => 'Account',
+    'close_menu' => 'Close menu',
 ];

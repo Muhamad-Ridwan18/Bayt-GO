@@ -2,19 +2,28 @@
     'active' => null,
 ])
 @php
-    $contactRaw = (string) (config('app.contact_whatsapp') ?: config('app.contact_phone'));
-    $contactDigits = preg_replace('/\D+/', '', $contactRaw ?? '') ?? '';
-    $contactLink = $contactDigits !== '' ? 'https://wa.me/'.$contactDigits : null;
     $homeUrl = url('/');
     $linkBase = 'rounded-lg px-1.5 xl:px-3 py-2 transition text-xs xl:text-sm font-semibold whitespace-nowrap';
     $inactive = 'text-slate-600 hover:text-baytgo';
     $activeClass = 'relative text-baytgo after:absolute after:inset-x-1.5 xl:after:inset-x-3 after:-bottom-0.5 after:h-0.5 after:rounded-full after:bg-gold';
 @endphp
-<header class="sticky top-0 z-[100] border-b border-slate-100 bg-white shadow-sm" x-data="{ open: false }" @keydown.window.escape="open = false" @resize.window="if (window.innerWidth >= 1024) open = false">
+<header
+    class="sticky top-0 z-[100] border-b border-slate-100 bg-white shadow-sm"
+    x-data="{
+        open: false,
+        init() {
+            this.$watch('open', (value) => {
+                document.body.classList.toggle('overflow-hidden', value && window.innerWidth < 1024);
+            });
+        },
+    }"
+    @keydown.window.escape="open = false"
+    @resize.window="if (window.innerWidth >= 1024) { open = false }"
+>
     <x-page-container class="relative flex min-h-[4.25rem] items-center justify-between gap-3 lg:gap-6">
-        <a href="{{ route('welcome') }}" class="relative z-10 flex min-w-0 shrink-0 items-center gap-2.5 group">
+        <a href="{{ route('welcome') }}" class="relative z-10 flex shrink-0 items-center gap-2.5 group">
             <x-site-logo variant="welcome" class="rounded-xl ring-1 ring-slate-200/70 shrink-0" />
-            <span class="truncate text-lg font-bold tracking-tight text-baytgo">Bayt<span class="text-gold-muted">Go</span></span>
+            <span class="shrink-0 whitespace-nowrap text-lg font-bold tracking-tight text-baytgo">Bayt<span class="text-gold-muted">Go</span></span>
         </a>
 
         <nav class="hidden lg:flex absolute left-1/2 top-1/2 max-w-none -translate-x-1/2 -translate-y-1/2 items-center gap-0 xl:gap-0.5" aria-label="{{ __('welcome.nav_primary_aria') }}">
@@ -29,7 +38,7 @@
             <div class="hidden items-center gap-2 sm:gap-3 lg:flex">
                 <x-language-switcher variant="segment" />
                 @auth
-                    <a href="{{ route('dashboard') }}" class="inline-flex rounded-xl border border-slate-200 px-3 py-2 text-sm font-semibold text-slate-700 transition hover:border-baytgo hover:text-baytgo">{{ __('nav.home') }}</a>
+                    <a href="{{ route('dashboard') }}" class="inline-flex rounded-xl border border-slate-200 px-3 py-2 text-sm font-semibold text-slate-700 transition hover:border-baytgo hover:text-baytgo">{{ __('welcome.cta_dashboard') }}</a>
                 @else
                     @if (Route::has('login'))
                         <a href="{{ route('login') }}" class="inline-flex rounded-xl bg-baytgo px-4 py-2 text-sm font-semibold text-white shadow-sm transition hover:bg-baytgo-800">{{ __('welcome.nav_login_register') }}</a>
@@ -53,32 +62,75 @@
         </div>
     </x-page-container>
 
-    <div
-        id="marketing-mobile-nav"
-        :class="{'block': open, 'hidden': ! open}"
-        class="hidden border-t border-slate-100 bg-white lg:hidden"
-    >
-        <x-page-container class="space-y-0.5 py-4" tag="nav" aria-label="{{ __('welcome.nav_mobile_aria') }}">
-            <a href="{{ route('welcome') }}" @click="open = false" class="block rounded-lg px-3 py-2.5 text-sm font-semibold {{ $active === 'welcome' ? 'bg-baytgo/8 text-baytgo' : 'text-slate-700 hover:bg-slate-50' }}">{{ __('welcome.nav_home') }}</a>
-            <a href="{{ route('articles.index') }}" @click="open = false" class="block rounded-lg px-3 py-2.5 text-sm font-semibold {{ $active === 'articles' ? 'bg-baytgo/8 text-baytgo' : 'text-slate-700 hover:bg-slate-50' }}">{{ __('nav.articles') }}</a>
-            <a href="{{ $homeUrl }}#cara-kerja" @click="open = false" class="block rounded-lg px-3 py-2.5 text-sm font-semibold text-slate-700 hover:bg-slate-50">{{ __('welcome.nav_how') }}</a>
-            <a href="{{ $homeUrl }}#faq" @click="open = false" class="block rounded-lg px-3 py-2.5 text-sm font-semibold text-slate-700 hover:bg-slate-50">{{ __('welcome.nav_faq') }}</a>
-            <a href="{{ $homeUrl }}#tentang" @click="open = false" class="block rounded-lg px-3 py-2.5 text-sm font-semibold text-slate-700 hover:bg-slate-50">{{ __('welcome.nav_about') }}</a>
-        </x-page-container>
-        <x-page-container class="border-t border-slate-100 py-4">
-            <p class="text-[11px] font-semibold uppercase tracking-wide text-slate-500">{{ __('nav.language') }}</p>
-            <div class="mt-3 flex justify-start">
-                <x-language-switcher variant="segment" />
+    <template x-teleport="body">
+        <div
+            id="marketing-mobile-nav"
+            x-show="open"
+            x-cloak
+            class="fixed inset-0 z-[300] flex h-[100dvh] flex-col bg-white lg:hidden"
+            role="dialog"
+            aria-modal="true"
+            :aria-hidden="(! open).toString()"
+            x-transition:enter="transition ease-out duration-200"
+            x-transition:enter-start="opacity-0 translate-y-2"
+            x-transition:enter-end="opacity-100 translate-y-0"
+            x-transition:leave="transition ease-in duration-150"
+            x-transition:leave-start="opacity-100 translate-y-0"
+            x-transition:leave-end="opacity-0 translate-y-2"
+        >
+            <div class="flex min-h-16 shrink-0 items-center justify-between gap-3 px-5 pt-3">
+                <a href="{{ route('welcome') }}" @click="open = false" class="flex shrink-0 items-center gap-2.5">
+                    <x-site-logo variant="welcome" class="rounded-xl ring-1 ring-slate-200/70 shrink-0" />
+                    <span class="shrink-0 whitespace-nowrap text-lg font-bold tracking-tight text-baytgo">Bayt<span class="text-gold-muted">Go</span></span>
+                </a>
+                <button
+                    type="button"
+                    class="inline-flex h-10 w-10 shrink-0 items-center justify-center rounded-full text-slate-500 transition hover:bg-slate-100 hover:text-slate-800"
+                    @click="open = false"
+                >
+                    <span class="sr-only">{{ __('nav.close_menu') }}</span>
+                    <x-nav-icon name="x" class="h-6 w-6" />
+                </button>
             </div>
-        </x-page-container>
-        <x-page-container class="flex flex-wrap gap-2 border-t border-slate-100 py-4">
-            @auth
-                <a href="{{ route('dashboard') }}" class="inline-flex flex-1 min-w-[8rem] items-center justify-center rounded-xl border border-slate-200 px-3 py-2.5 text-sm font-semibold text-slate-700 transition hover:border-baytgo hover:text-baytgo">{{ __('nav.home') }}</a>
-            @else
-                @if (Route::has('login'))
-                    <a href="{{ route('login') }}" class="inline-flex flex-1 min-w-[8rem] items-center justify-center rounded-xl bg-baytgo px-3 py-2.5 text-sm font-semibold text-white transition hover:bg-baytgo-800">{{ __('welcome.nav_login_register') }}</a>
+
+            <div class="min-h-0 flex-1 overflow-y-auto px-5 pb-4">
+                <div class="flex items-center justify-between gap-3 py-3">
+                    <p class="min-w-0 text-[15px] font-medium text-slate-600">{{ __('nav.greeting') }}</p>
+                    <x-language-switcher variant="segment" class="shrink-0" />
+                </div>
+
+                <p class="mt-2 text-[11px] font-semibold uppercase tracking-[0.14em] text-slate-400">{{ __('nav.menu_section') }}</p>
+                <nav class="mt-2 space-y-0.5" aria-label="{{ __('welcome.nav_mobile_aria') }}">
+                    <x-mobile-nav-item :href="route('welcome')" :active="$active === 'welcome'" @click="open = false">
+                        <x-slot:icon><x-nav-icon name="home" /></x-slot:icon>
+                        {{ __('welcome.nav_home') }}
+                    </x-mobile-nav-item>
+                    <x-mobile-nav-item :href="route('articles.index')" :active="$active === 'articles'" @click="open = false">
+                        <x-slot:icon><x-nav-icon name="clipboard" /></x-slot:icon>
+                        {{ __('nav.articles') }}
+                    </x-mobile-nav-item>
+                    <x-mobile-nav-item :href="$homeUrl.'#cara-kerja'" @click="open = false">
+                        <x-slot:icon><x-nav-icon name="briefcase" /></x-slot:icon>
+                        {{ __('welcome.nav_how') }}
+                    </x-mobile-nav-item>
+                    <x-mobile-nav-item :href="$homeUrl.'#faq'" @click="open = false">
+                        <x-slot:icon><x-nav-icon name="help" /></x-slot:icon>
+                        {{ __('welcome.nav_faq') }}
+                    </x-mobile-nav-item>
+                    <x-mobile-nav-item :href="$homeUrl.'#tentang'" @click="open = false">
+                        <x-slot:icon><x-nav-icon name="users" /></x-slot:icon>
+                        {{ __('welcome.nav_about') }}
+                    </x-mobile-nav-item>
+                </nav>
+            </div>
+
+            <div class="shrink-0 border-t border-slate-100 bg-white px-5 py-4 pb-[max(1rem,env(safe-area-inset-bottom))]">
+                @auth
+                    <a href="{{ route('dashboard') }}" @click="open = false" class="inline-flex w-full items-center justify-center rounded-xl bg-baytgo px-4 py-3 text-sm font-semibold text-white transition hover:bg-baytgo-800">{{ __('welcome.cta_dashboard') }}</a>
+                @elseif (Route::has('login'))
+                    <a href="{{ route('login') }}" @click="open = false" class="inline-flex w-full items-center justify-center rounded-xl bg-baytgo px-4 py-3 text-sm font-semibold text-white transition hover:bg-baytgo-800">{{ __('welcome.nav_login_register') }}</a>
                 @endif
-            @endauth
-        </x-page-container>
-    </div>
+            </div>
+        </div>
+    </template>
 </header>

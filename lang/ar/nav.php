@@ -14,4 +14,8 @@ return [
     'lang_en' => 'English',
     'lang_id' => 'Indonesia',
     'lang_ar' => 'العربية',
+    'greeting' => 'السلام عليكم،',
+    'menu_section' => 'القائمة',
+    'account_section' => 'الحساب',
+    'close_menu' => 'إغلاق القائمة',
 ];
