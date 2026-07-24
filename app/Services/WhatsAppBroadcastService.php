@@ -53,8 +53,10 @@ class WhatsAppBroadcastService
         ]);
 
         foreach ($resolved['recipients'] as $index => $recipient) {
-            $pending = SendWhatsAppTextJob::dispatch(
-                $recipient['dial']['target'],
+            $e164 = $this->normalizedE164($recipient['dial']);
+            $fingerprint = hash('sha256', implode('|', [
+                (string) $idempotencyKey,
+                $e164,
                 $text,
             ]));
 
@@ -70,8 +72,25 @@ class WhatsAppBroadcastService
                 continue;
             }
 
-            if ($index > 0) {
-                $pending->delay(now()->addSeconds($index * self::SEND_STAGGER_SECONDS));
+            try {
+                $fonnte->sendText(
+                    $recipient['dial']['target'],
+                    $text,
+                    $recipient['dial']['country_calling_code'],
+                );
+                $sent++;
+            } catch (Throwable $e) {
+                $failed++;
+                $failures[] = [
+                    'label' => $recipient['label'],
+                    'reason' => $e->getMessage(),
+                ];
+                Cache::forget('wa:broadcast:msg:'.$fingerprint);
+                Log::warning('whatsapp.broadcast.recipient_failed', [
+                    'e164' => $e164,
+                    'label' => $recipient['label'],
+                    'exception' => $e->getMessage(),
+                ]);
             }
 
             if ($index < $total - 1) {
