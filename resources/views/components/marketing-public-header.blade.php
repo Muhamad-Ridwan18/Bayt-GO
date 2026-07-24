@@ -6,8 +6,6 @@
     $linkBase = 'rounded-lg px-1.5 xl:px-3 py-2 transition text-xs xl:text-sm font-semibold whitespace-nowrap';
     $inactive = 'text-slate-600 hover:text-baytgo';
     $activeClass = 'relative text-baytgo after:absolute after:inset-x-1.5 xl:after:inset-x-3 after:-bottom-0.5 after:h-0.5 after:rounded-full after:bg-gold';
-    $mobileLink = 'block rounded-xl px-3 py-3 text-base font-semibold text-slate-800 transition hover:bg-slate-50';
-    $mobileLinkActive = 'block rounded-xl bg-baytgo/8 px-3 py-3 text-base font-semibold text-baytgo';
 @endphp
 <header
     class="sticky top-0 z-[100] border-b border-slate-100 bg-white shadow-sm"
@@ -80,36 +78,50 @@
             x-transition:leave-start="opacity-100 translate-y-0"
             x-transition:leave-end="opacity-0 translate-y-2"
         >
-            <div class="flex min-h-[4.25rem] shrink-0 items-center justify-between gap-3 border-b border-slate-100 px-5">
+            <div class="flex min-h-16 shrink-0 items-center justify-between gap-3 px-5 pt-3">
                 <a href="{{ route('welcome') }}" @click="open = false" class="flex shrink-0 items-center gap-2.5">
                     <x-site-logo variant="welcome" class="rounded-xl ring-1 ring-slate-200/70 shrink-0" />
                     <span class="shrink-0 whitespace-nowrap text-lg font-bold tracking-tight text-baytgo">Bayt<span class="text-gold-muted">Go</span></span>
                 </a>
                 <button
                     type="button"
-                    class="inline-flex h-10 w-10 shrink-0 items-center justify-center rounded-xl border border-slate-200 text-slate-600 transition hover:bg-slate-50"
+                    class="inline-flex h-10 w-10 shrink-0 items-center justify-center rounded-full text-slate-500 transition hover:bg-slate-100 hover:text-slate-800"
                     @click="open = false"
                 >
-                    <span class="sr-only">{{ __('welcome.landing_gallery_close') }}</span>
-                    <svg class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" d="M6 18 18 6M6 6l12 12"/></svg>
+                    <span class="sr-only">{{ __('nav.close_menu') }}</span>
+                    <x-nav-icon name="x" class="h-6 w-6" />
                 </button>
             </div>
 
-            <div class="min-h-0 flex-1 overflow-y-auto px-5 py-4">
-                <nav class="space-y-1" aria-label="{{ __('welcome.nav_mobile_aria') }}">
-                    <a href="{{ route('welcome') }}" @click="open = false" class="{{ $active === 'welcome' ? $mobileLinkActive : $mobileLink }}">{{ __('welcome.nav_home') }}</a>
-                    <a href="{{ route('articles.index') }}" @click="open = false" class="{{ $active === 'articles' ? $mobileLinkActive : $mobileLink }}">{{ __('nav.articles') }}</a>
-                    <a href="{{ $homeUrl }}#cara-kerja" @click="open = false" class="{{ $mobileLink }}">{{ __('welcome.nav_how') }}</a>
-                    <a href="{{ $homeUrl }}#faq" @click="open = false" class="{{ $mobileLink }}">{{ __('welcome.nav_faq') }}</a>
-                    <a href="{{ $homeUrl }}#tentang" @click="open = false" class="{{ $mobileLink }}">{{ __('welcome.nav_about') }}</a>
-                </nav>
-
-                <div class="mt-6 border-t border-slate-100 pt-5">
-                    <p class="text-[11px] font-semibold uppercase tracking-wide text-slate-500">{{ __('nav.language') }}</p>
-                    <div class="mt-3">
-                        <x-language-switcher variant="segment" />
-                    </div>
+            <div class="min-h-0 flex-1 overflow-y-auto px-5 pb-4">
+                <div class="flex items-center justify-between gap-3 py-3">
+                    <p class="min-w-0 text-[15px] font-medium text-slate-600">{{ __('nav.greeting') }}</p>
+                    <x-language-switcher variant="segment" class="shrink-0" />
                 </div>
+
+                <p class="mt-2 text-[11px] font-semibold uppercase tracking-[0.14em] text-slate-400">{{ __('nav.menu_section') }}</p>
+                <nav class="mt-2 space-y-0.5" aria-label="{{ __('welcome.nav_mobile_aria') }}">
+                    <x-mobile-nav-item :href="route('welcome')" :active="$active === 'welcome'" @click="open = false">
+                        <x-slot:icon><x-nav-icon name="home" /></x-slot:icon>
+                        {{ __('welcome.nav_home') }}
+                    </x-mobile-nav-item>
+                    <x-mobile-nav-item :href="route('articles.index')" :active="$active === 'articles'" @click="open = false">
+                        <x-slot:icon><x-nav-icon name="clipboard" /></x-slot:icon>
+                        {{ __('nav.articles') }}
+                    </x-mobile-nav-item>
+                    <x-mobile-nav-item :href="$homeUrl.'#cara-kerja'" @click="open = false">
+                        <x-slot:icon><x-nav-icon name="briefcase" /></x-slot:icon>
+                        {{ __('welcome.nav_how') }}
+                    </x-mobile-nav-item>
+                    <x-mobile-nav-item :href="$homeUrl.'#faq'" @click="open = false">
+                        <x-slot:icon><x-nav-icon name="help" /></x-slot:icon>
+                        {{ __('welcome.nav_faq') }}
+                    </x-mobile-nav-item>
+                    <x-mobile-nav-item :href="$homeUrl.'#tentang'" @click="open = false">
+                        <x-slot:icon><x-nav-icon name="users" /></x-slot:icon>
+                        {{ __('welcome.nav_about') }}
+                    </x-mobile-nav-item>
+                </nav>
             </div>
 
             <div class="shrink-0 border-t border-slate-100 bg-white px-5 py-4 pb-[max(1rem,env(safe-area-inset-bottom))]">

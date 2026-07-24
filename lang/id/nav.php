@@ -46,4 +46,8 @@ return [
     'manage_svc_raudhah' => 'Pendamping Raudhah',
     'manage_svc_raudhah_desc' => 'Pendampingan ziarah & Raudhah.',
     'affiliate' => 'Affiliate',
+    'greeting' => 'Assalamu’alaikum,',
+    'menu_section' => 'Menu',
+    'account_section' => 'Akun',
+    'close_menu' => 'Tutup menu',
 ];
