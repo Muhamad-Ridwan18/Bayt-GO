@@ -177,7 +177,7 @@ final class AdminWhatsAppNotifier
             );
 
             if ($index > 0) {
-                $job->delay(now()->addMilliseconds($index * 300));
+                $job->delay(now()->addSeconds($index));
             }
         }
     }

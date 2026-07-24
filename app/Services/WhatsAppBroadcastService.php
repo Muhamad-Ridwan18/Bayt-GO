@@ -9,7 +9,8 @@ use App\Support\WhatsAppNotifySettings;
 
 class WhatsAppBroadcastService
 {
-    private const SEND_DELAY_MICROSECONDS = 300_000;
+    /** Jeda antar penerima (detik). Queue database hanya presisi detik — jangan pakai ms. */
+    private const SEND_STAGGER_SECONDS = 2;
 
     public function whatsappConfigured(): bool
     {
@@ -38,14 +39,14 @@ class WhatsAppBroadcastService
         $queued = 0;
 
         foreach ($resolved['recipients'] as $index => $recipient) {
-            $job = SendWhatsAppTextJob::dispatch(
+            $pending = SendWhatsAppTextJob::dispatch(
                 $recipient['dial']['target'],
                 $text,
                 $recipient['dial']['country_calling_code'],
             );
 
             if ($index > 0) {
-                $job->delay(now()->addMilliseconds($index * (self::SEND_DELAY_MICROSECONDS / 1000)));
+                $pending->delay(now()->addSeconds($index * self::SEND_STAGGER_SECONDS));
             }
 
             $queued++;
