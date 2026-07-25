@@ -1,3 +1,10 @@
+@php
+    $backCategory = $package->category?->value
+        ?? request()->query('category')
+        ?? 'mobility';
+    $backUrl = url('/muthowif/pelayanan-pendukung').'?category='.urlencode((string) $backCategory);
+@endphp
+
 <x-app-layout>
     <x-ui.app-page compact>
         <div class="pointer-events-none absolute inset-0 bg-[radial-gradient(ellipse_80%_40%_at_50%_-10%,rgba(15,42,37,0.07),transparent)]"></div>
@@ -15,7 +22,7 @@
                             <p class="mt-2 max-w-xl truncate text-sm leading-relaxed text-emerald-50/90">{{ $package->name }}</p>
                         </div>
                     </div>
-                    <a href="{{ $listUrl }}" class="inline-flex shrink-0 items-center gap-2 self-start rounded-xl border border-white/20 bg-white/10 px-4 py-2.5 text-sm font-semibold text-white backdrop-blur-sm transition hover:bg-white/20">
+                    <a href="{{ $backUrl }}" class="inline-flex shrink-0 items-center gap-2 self-start rounded-xl border border-white/20 bg-white/10 px-4 py-2.5 text-sm font-semibold text-white backdrop-blur-sm transition hover:bg-white/20">
                         ← {{ __('layanan_pendukung.back_to_list') }}
                     </a>
                 </div>
@@ -37,7 +44,7 @@
                                 <x-submit-button class="rounded-xl bg-baytgo px-5 py-2.5 text-sm font-semibold text-white shadow-sm shadow-baytgo/20 hover:bg-baytgo-800">
                                     {{ __('layanan_pendukung.save_package') }}
                                 </x-submit-button>
-                                <a href="{{ $listUrl }}" class="inline-flex items-center rounded-xl border border-slate-200 px-4 py-2.5 text-sm font-semibold text-slate-700 transition hover:bg-slate-50">
+                                <a href="{{ $backUrl }}" class="inline-flex items-center rounded-xl border border-slate-200 px-4 py-2.5 text-sm font-semibold text-slate-700 transition hover:bg-slate-50">
                                     {{ __('layanan_pendukung.cancel') }}
                                 </a>
                             </div>
@@ -54,7 +61,7 @@
                         @csrf
                         @method('DELETE')
                         <button type="submit" class="inline-flex items-center gap-2 rounded-xl border border-red-300 bg-white px-4 py-2.5 text-sm font-semibold text-red-700 transition hover:bg-red-50">
-                            <svg class="h-4 w-4" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true"><path fill-rule="evenodd" d="M8.75 1A2.75 2.75 0 006 3.75v.443c-.795.077-1.584.176-2.365.298a.75.75 0 10.23 1.482l.226-.038 1.027 12.317A2.75 2.75 0 007.86 20h4.28a2.75 2.75 0 002.742-2.748l1.027-12.317.226.038a.75.75 0 00.23-1.482A41.03 41.03 0 0014 4.193V3.75A2.75 2.75 0 0011.25 1h-2.5zM10 4c.784 0 1.565.023 2.34.068v.343a41.56 41.56 0 00-4.68 0V4.068A41.4 41.4 0 0110 4zM8.58 7.72a.75.75 0 00-1.5.06l.6 9a.75.75 0 101.5-.06l-.6-9zm5.34.06a.75.75 0 10-1.5-.06l-.6 9a.75.75 0 001.5.06l.6-9z" clip-rule="evenodd" /></svg>
+                            <svg class="h-4 w-4" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true"><path fill-rule="evenodd" d="M8.75 1A2.75 2.75 0 006 3.75v.443c-.795.077-1.584.176-2.365.298a.75.75 0 10.23 1.482l.226-.038 1.027 12.317A2.75 2.75 0 007.86 20h4.28a2.75 2.75 0 002.742-2.748l1.027-12.317.226.038a.75.75 0 00.23-1.482A41.03 41.03 0 0014 4.193V3.75A2.75 2.75 0 0011.25 1h-2.5zM10 4c.784 0 1.565.023 2.34.068v.343a41.56 41.56 0 00-4.68 0V4.068A41.4 41.4 0 0110 4zM8.58 7.72a.75.75 0 00-1.5.06l.6 9a.75.75 0 101.5-.06l-.6-9zm5.34.06a.75.75 0 001.5.06l.6-9z" clip-rule="evenodd" /></svg>
                             {{ __('layanan_pendukung.delete_package') }}
                         </button>
                     </form>
