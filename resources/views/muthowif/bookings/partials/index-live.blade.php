@@ -5,18 +5,18 @@
     $bookings = $page->bookings;
 @endphp
 <x-page-container class="ui-stack-compact py-2 sm:py-4">
-    <div class="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
-        <div>
-            <h1 class="text-2xl font-bold tracking-tight text-slate-900 sm:text-3xl">{{ __('muthowif.bookings.page_title') }}</h1>
-            <p class="mt-2 max-w-2xl text-sm leading-relaxed text-slate-600">{{ __('muthowif.bookings.page_subtitle') }}</p>
+    <div class="flex items-start justify-between gap-3">
+        <div class="min-w-0">
+            <h1 class="text-xl font-bold tracking-tight text-slate-900 sm:text-3xl">{{ __('muthowif.bookings.page_title') }}</h1>
+            <p class="mt-0.5 hidden max-w-2xl text-sm leading-relaxed text-slate-600 sm:mt-2 sm:block">{{ __('muthowif.bookings.page_subtitle') }}</p>
         </div>
-        <a href="{{ route('dashboard') }}" class="inline-flex shrink-0 items-center gap-2 self-start rounded-xl border border-slate-200 bg-white px-4 py-2.5 text-sm font-semibold text-slate-800 shadow-sm transition hover:border-slate-300 hover:bg-slate-50">
+        <a href="{{ route('dashboard') }}" class="hidden shrink-0 items-center gap-2 rounded-xl border border-slate-200 bg-white px-4 py-2.5 text-sm font-semibold text-slate-800 shadow-sm transition hover:border-slate-300 hover:bg-slate-50 sm:inline-flex">
             <svg class="h-4 w-4 text-slate-500" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true"><path fill-rule="evenodd" d="M9.293 2.293a1 1 0 011.414 0l7 7A1 1 0 0117 11h-1v6a1 1 0 01-1 1h-2a1 1 0 01-1-1v-3a1 1 0 00-1-1H9a1 1 0 00-1 1v3a1 1 0 01-1 1H5a1 1 0 01-1-1v-6H3a1 1 0 01-.707-1.707l7-7z" clip-rule="evenodd" /></svg>
             {{ __('muthowif.bookings.back_dashboard') }}
         </a>
     </div>
 
-    <div class="mt-2">
+    <div class="mt-1 sm:mt-2">
         @include('bookings.partials.index-status-tabs', [
             'statusFilter' => $page->statusFilter,
             'bookingStatusCounts' => $page->bookingStatusCounts,
