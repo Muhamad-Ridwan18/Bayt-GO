@@ -466,7 +466,7 @@ return [
         'clear_selection' => 'Clear selection',
         'selected_count' => ':count muthowifs selected',
         'free_section' => 'Free-form numbers (optional)',
-        'free_hint' => 'One number per line, or separate with commas. Formats: +62812…, 0812…, or 62812…',
+        'free_hint' => 'One number per line, or separate with commas. Non-Indonesia numbers must use + or 00 (e.g. +201205363589). Indonesia: +62812…, 0812…, or 62812…',
         'free_placeholder' => "+6281234567890\n081234567890\n628987654321",
         'free_count' => ':count free-form numbers',
         'total_estimate' => 'Estimated total recipients: :count (duplicate numbers are merged automatically)',

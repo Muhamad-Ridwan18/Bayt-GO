@@ -4,7 +4,10 @@
     $price = (int) round((float) $package->price);
     [$minPilgrims, $maxPilgrims] = array_values($package->pilgrimBounds());
     $startsAtInput = $startsAtInput ?? '';
-    $catalogQuery = array_filter(['starts_at' => $startsAtInput !== '' ? $startsAtInput : null]);
+    $catalogQuery = array_filter([
+        'category' => $package->category?->value,
+        'starts_at' => $startsAtInput !== '' ? $startsAtInput : null,
+    ]);
     $bookUrl = route('layanan-pendukung.book', array_merge(['supportPackage' => $package], $catalogQuery));
 @endphp
 

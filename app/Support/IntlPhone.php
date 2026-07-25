@@ -47,24 +47,44 @@ final class IntlPhone
             return $util->parse('+'.substr($digitsOnly, 2), null);
         }
 
+        $protoLocal = null;
         try {
-            $proto = $util->parse($trimmed, self::defaultRegion());
-            if ($util->isPossibleNumber($proto)) {
-                return $proto;
+            $candidate = $util->parse($trimmed, self::defaultRegion());
+            if ($util->isPossibleNumber($candidate)) {
+                $protoLocal = $candidate;
             }
         } catch (NumberParseException) {
-            // Fallback di bawah.
+            // Coba internasional di bawah.
         }
 
+        $protoIntl = null;
         if ($digitsOnly !== '' && ctype_digit($digitsOnly) && ! str_starts_with($digitsOnly, '0')) {
             try {
-                $protoIntl = $util->parse('+'.$digitsOnly, null);
-                if ($util->isPossibleNumber($protoIntl)) {
-                    return $protoIntl;
+                $candidate = $util->parse('+'.$digitsOnly, null);
+                if ($util->isPossibleNumber($candidate)) {
+                    $protoIntl = $candidate;
                 }
             } catch (NumberParseException) {
-                // Fallback akhir di bawah.
+                // Fallback di bawah.
             }
+        }
+
+        // Nomor lokal valid (mis. 812… / 08…) tetap prioritas wilayah default.
+        if ($protoLocal !== null && $util->isValidNumber($protoLocal)) {
+            return $protoLocal;
+        }
+
+        // Tanpa '+', "2012…" sering "possible" sebagai ID padahal valid sebagai internasional (EG, dll.).
+        if ($protoIntl !== null && $util->isValidNumber($protoIntl)) {
+            return $protoIntl;
+        }
+
+        if ($protoLocal !== null) {
+            return $protoLocal;
+        }
+
+        if ($protoIntl !== null) {
+            return $protoIntl;
         }
 
         return $util->parse($trimmed, self::defaultRegion());

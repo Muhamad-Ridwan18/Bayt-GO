@@ -91,19 +91,47 @@ class FonnteService
     private function normalizeTargetDigits(string $target, string $countryCode): string
     {
         $digits = preg_replace('/\D+/', '', $target) ?? '';
+        $countryCode = preg_replace('/\D+/', '', $countryCode) ?? '';
         if ($digits === '') {
             return $target;
         }
 
         if (str_starts_with($digits, '0')) {
-            return $countryCode.substr($digits, 1);
+            $digits = $countryCode !== '' ? $countryCode.substr($digits, 1) : substr($digits, 1);
+        } elseif ($countryCode !== '' && ! str_starts_with($digits, $countryCode)) {
+            $withCountry = $countryCode.$digits;
+            $aloneValid = $this->isValidE164Digits($digits);
+            $withValid = $this->isValidE164Digits($withCountry);
+
+            // Jangan tempel CC default ke nomor yang sudah valid internasional negara lain.
+            if ($withValid) {
+                $digits = $withCountry;
+            } elseif ($aloneValid) {
+                // keep $digits
+            } else {
+                $digits = $withCountry;
+            }
         }
 
-        if (! str_starts_with($digits, $countryCode)) {
-            return $countryCode.$digits;
+        $normalized = \App\Support\IntlPhone::normalize('+'.$digits);
+
+        return $normalized ?? $digits;
+    }
+
+    private function isValidE164Digits(string $digits): bool
+    {
+        if ($digits === '' || ! ctype_digit($digits)) {
+            return false;
         }
 
-        return $digits;
+        try {
+            $util = \libphonenumber\PhoneNumberUtil::getInstance();
+            $proto = $util->parse('+'.$digits, null);
+
+            return $util->isValidNumber($proto);
+        } catch (\libphonenumber\NumberParseException) {
+            return false;
+        }
     }
 
     private function normalizeGatewayToken(string $token): string

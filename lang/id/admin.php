@@ -466,7 +466,7 @@ return [
         'clear_selection' => 'Hapus pilihan',
         'selected_count' => ':count muthowif dipilih',
         'free_section' => 'Nomor bebas (opsional)',
-        'free_hint' => 'Satu nomor per baris, atau pisahkan dengan koma. Format: +62812…, 0812…, atau 62812…',
+        'free_hint' => 'Satu nomor per baris, atau pisahkan dengan koma. Nomor luar negeri wajib pakai + atau 00 (contoh: +201205363589). Nomor Indonesia: +62812…, 0812…, atau 62812…',
         'free_placeholder' => "+6281234567890\n081234567890\n628987654321",
         'free_count' => ':count nomor bebas',
         'total_estimate' => 'Perkiraan total penerima: :count (duplikat nomor otomatis digabung)',

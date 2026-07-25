@@ -9,6 +9,7 @@ use App\Models\MuthowifProfile;
 use App\Models\MuthowifSupportPackage;
 use Carbon\Carbon;
 use Illuminate\Database\Eloquent\Builder;
+use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Pagination\LengthAwarePaginator;
 use Illuminate\Support\Facades\DB;
@@ -16,11 +17,16 @@ use Illuminate\View\View;
 
 class SupportCatalogController extends Controller
 {
-    public function index(Request $request): View
+    public function index(Request $request): View|RedirectResponse
     {
         $q = trim((string) $request->query('q', ''));
         $categoryRaw = trim((string) $request->query('category', ''));
         $category = SupportPackageCategory::tryFrom($categoryRaw);
+
+        if ($category === null) {
+            return redirect()->route('welcome');
+        }
+
         $startsAtRaw = trim((string) $request->query('starts_at', ''));
 
         $startsAt = null;

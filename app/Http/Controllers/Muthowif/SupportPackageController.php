@@ -13,7 +13,7 @@ use Illuminate\View\View;
 
 class SupportPackageController extends Controller
 {
-    public function index(Request $request): View
+    public function index(Request $request): View|RedirectResponse
     {
         $this->authorize('viewAny', MuthowifSupportPackage::class);
 
@@ -22,13 +22,15 @@ class SupportPackageController extends Controller
 
         $categoryFilter = SupportPackageCategory::tryFrom((string) $request->query('category', ''));
 
+        if ($categoryFilter === null) {
+            return redirect()->route('muthowif.kelola-layanan');
+        }
+
         $packagesQuery = $profile->supportPackages()
             ->orderBy('sort_order')
             ->orderBy('name');
 
-        if ($categoryFilter !== null) {
-            $packagesQuery->where('category', $categoryFilter->value);
-        }
+        $packagesQuery->where('category', $categoryFilter->value);
 
         $packages = $packagesQuery->get();
 
@@ -38,11 +40,14 @@ class SupportPackageController extends Controller
         ]);
     }
 
-    public function create(Request $request): View
+    public function create(Request $request): View|RedirectResponse
     {
         $this->authorize('create', MuthowifSupportPackage::class);
 
         $prefillCategory = SupportPackageCategory::tryFrom((string) $request->query('category', ''));
+        if ($prefillCategory === null) {
+            return redirect()->route('muthowif.kelola-layanan');
+        }
 
         return view('muthowif.pelayanan-pendukung.create', [
             'categories' => SupportPackageCategory::ordered(),
@@ -64,13 +69,7 @@ class SupportPackageController extends Controller
             'sort_order' => $profile->supportPackages()->count() + 1,
         ]);
 
-        $redirectParams = [];
-        if (SupportPackageCategory::tryFrom($data['category']) !== null) {
-            $redirectParams['category'] = $data['category'];
-        }
-
-        return redirect()
-            ->route('muthowif.pelayanan-pendukung.index', $redirectParams)
+        return $this->redirectToCategoryList($data['category'])
             ->with('status', __('layanan_pendukung.flash.package_created'));
     }
 
@@ -91,13 +90,7 @@ class SupportPackageController extends Controller
         $data = $this->validatedPackage($request);
         $supportPackage->update($data);
 
-        $redirectParams = [];
-        if (SupportPackageCategory::tryFrom($data['category']) !== null) {
-            $redirectParams['category'] = $data['category'];
-        }
-
-        return redirect()
-            ->route('muthowif.pelayanan-pendukung.index', $redirectParams)
+        return $this->redirectToCategoryList($data['category'])
             ->with('status', __('layanan_pendukung.flash.package_updated'));
     }
 
@@ -108,14 +101,17 @@ class SupportPackageController extends Controller
         $category = $supportPackage->category?->value;
         $supportPackage->delete();
 
-        $redirectParams = [];
+        return $this->redirectToCategoryList($category)
+            ->with('status', __('layanan_pendukung.flash.package_deleted'));
+    }
+
+    private function redirectToCategoryList(?string $category): RedirectResponse
+    {
         if (is_string($category) && SupportPackageCategory::tryFrom($category) !== null) {
-            $redirectParams['category'] = $category;
+            return redirect()->route('muthowif.pelayanan-pendukung.index', ['category' => $category]);
         }
 
-        return redirect()
-            ->route('muthowif.pelayanan-pendukung.index', $redirectParams)
-            ->with('status', __('layanan_pendukung.flash.package_deleted'));
+        return redirect()->route('muthowif.kelola-layanan');
     }
 
     /**

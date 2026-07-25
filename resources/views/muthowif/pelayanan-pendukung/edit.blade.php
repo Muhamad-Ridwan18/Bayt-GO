@@ -1,3 +1,12 @@
+@php
+    $listCategory = $package->category?->value
+        ?? old('category')
+        ?? request()->query('category');
+    $listUrl = $listCategory
+        ? route('muthowif.pelayanan-pendukung.index', ['category' => $listCategory])
+        : route('muthowif.kelola-layanan');
+@endphp
+
 <x-app-layout>
     <x-ui.app-page compact>
         <div class="pointer-events-none absolute inset-0 bg-[radial-gradient(ellipse_80%_40%_at_50%_-10%,rgba(15,42,37,0.07),transparent)]"></div>
@@ -15,7 +24,7 @@
                             <p class="mt-2 max-w-xl truncate text-sm leading-relaxed text-emerald-50/90">{{ $package->name }}</p>
                         </div>
                     </div>
-                    <a href="{{ route('muthowif.pelayanan-pendukung.index') }}" class="inline-flex shrink-0 items-center gap-2 self-start rounded-xl border border-white/20 bg-white/10 px-4 py-2.5 text-sm font-semibold text-white backdrop-blur-sm transition hover:bg-white/20">
+                    <a href="{{ $listUrl }}" class="inline-flex shrink-0 items-center gap-2 self-start rounded-xl border border-white/20 bg-white/10 px-4 py-2.5 text-sm font-semibold text-white backdrop-blur-sm transition hover:bg-white/20">
                         ← {{ __('layanan_pendukung.back_to_list') }}
                     </a>
                 </div>
@@ -37,7 +46,7 @@
                                 <x-submit-button class="rounded-xl bg-baytgo px-5 py-2.5 text-sm font-semibold text-white shadow-sm shadow-baytgo/20 hover:bg-baytgo-800">
                                     {{ __('layanan_pendukung.save_package') }}
                                 </x-submit-button>
-                                <a href="{{ route('muthowif.pelayanan-pendukung.index') }}" class="inline-flex items-center rounded-xl border border-slate-200 px-4 py-2.5 text-sm font-semibold text-slate-700 transition hover:bg-slate-50">
+                                <a href="{{ $listUrl }}" class="inline-flex items-center rounded-xl border border-slate-200 px-4 py-2.5 text-sm font-semibold text-slate-700 transition hover:bg-slate-50">
                                     {{ __('layanan_pendukung.cancel') }}
                                 </a>
                             </div>

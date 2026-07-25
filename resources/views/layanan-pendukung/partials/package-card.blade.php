@@ -44,7 +44,10 @@
     );
 
     $startsAtInput = $startsAtInput ?? '';
-    $showParams = array_filter(['starts_at' => $startsAtInput !== '' ? $startsAtInput : null]);
+    $showParams = array_filter([
+        'category' => $package->category?->value,
+        'starts_at' => $startsAtInput !== '' ? $startsAtInput : null,
+    ]);
     $showUrl = route('layanan-pendukung.show', array_merge(['supportPackage' => $package], $showParams));
 @endphp
 

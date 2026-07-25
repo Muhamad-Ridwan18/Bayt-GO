@@ -66,9 +66,7 @@
                 </div>
 
                 <form method="GET" action="{{ route('layanan-pendukung.index') }}" class="mt-8 space-y-3">
-                    @if ($activeCategory)
-                        <input type="hidden" name="category" value="{{ $activeCategory->value }}">
-                    @endif
+                    <input type="hidden" name="category" value="{{ $activeCategory->value }}">
                     <div class="overflow-hidden rounded-2xl border border-slate-200/90 bg-white shadow-[0_16px_40px_-12px_rgba(15,42,37,0.18)] ring-1 ring-slate-100/90">
                         <div class="flex flex-col gap-0 sm:flex-row sm:items-stretch">
                             <div class="min-w-0 flex-1 border-b border-slate-100 px-4 py-3 sm:border-b-0 sm:border-r sm:px-5 sm:py-3.5">
