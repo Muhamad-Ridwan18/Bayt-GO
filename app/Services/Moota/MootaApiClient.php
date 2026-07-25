@@ -201,6 +201,33 @@ final class MootaApiClient
         }
     }
 
+    public function hasEnvAccessToken(): bool
+    {
+        return trim((string) config('services.moota.access_token', '')) !== '';
+    }
+
+    public function hasPersistedAccessToken(): bool
+    {
+        return $this->readPersistedToken() !== null;
+    }
+
+    public function persistManualAccessToken(string $token): void
+    {
+        $token = trim($token);
+        if ($token === '') {
+            throw new RuntimeException('Token Moota kosong.');
+        }
+
+        Cache::forget($this->loginFailCacheKey());
+        $this->storePersistedToken($token);
+    }
+
+    public function clearPersistedAccessToken(): void
+    {
+        $this->forgetCachedToken();
+        Cache::forget($this->loginFailCacheKey());
+    }
+
     /**
      * Setelah HTTP 401: buang token lama lalu login sekali (bukan tiap request).
      */

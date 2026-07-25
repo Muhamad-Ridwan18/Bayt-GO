@@ -9,6 +9,7 @@ use App\Http\Controllers\Admin\BookingRefundController;
 use App\Http\Controllers\Admin\CampaignsAdminController;
 use App\Http\Controllers\Admin\CompanyApprovalController;
 use App\Http\Controllers\Admin\FinanceController;
+use App\Http\Controllers\Admin\MootaApiSettingsController;
 use App\Http\Controllers\Admin\MootaWebhookHistoriesLiveController;
 use App\Http\Controllers\Admin\MuthowifReferralMonitorController;
 use App\Http\Controllers\Admin\MuthowifVerificationController;
@@ -324,6 +325,8 @@ Route::middleware('auth')->group(function () {
         Route::get('pengaturan/whatsapp-notifikasi', [WhatsAppNotifySettingsController::class, 'edit'])->name('whatsapp-notify-settings.edit');
         Route::post('pengaturan/whatsapp-notifikasi', [WhatsAppNotifySettingsController::class, 'update'])->name('whatsapp-notify-settings.update');
         Route::post('pengaturan/whatsapp-notifikasi/uji', [WhatsAppNotifySettingsController::class, 'test'])->name('whatsapp-notify-settings.test');
+        Route::get('pengaturan/moota-api', [MootaApiSettingsController::class, 'edit'])->name('moota-api-settings.edit');
+        Route::post('pengaturan/moota-api', [MootaApiSettingsController::class, 'update'])->name('moota-api-settings.update');
         Route::get('whatsapp-broadcast', [WhatsAppBroadcastController::class, 'index'])->name('whatsapp-broadcast.index');
         Route::post('whatsapp-broadcast/kirim', [WhatsAppBroadcastController::class, 'send'])->name('whatsapp-broadcast.send');
         Route::post('artikel/ckeditor/unggah', [ArticlesAdminController::class, 'ckeditorUpload'])->name('articles.ckeditor_upload');
