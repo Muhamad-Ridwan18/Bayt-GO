@@ -74,7 +74,7 @@ class AppServiceProvider extends ServiceProvider
         Event::listen(CustomerBookingUpdated::class, NotifyAdminServiceMonitorOnBookingChange::class);
         Paginator::useTailwind();
 
-        View::composer('layouts.navigation', NavigationComposer::class);
+        View::composer(['layouts.navigation', 'components.muthowif-bottom-nav'], NavigationComposer::class);
 
         foreach ([MuthowifProfile::class, Campaign::class, Article::class, MuthowifPortfolioImage::class] as $model) {
             $model::saved(fn () => WelcomePageCache::forget());

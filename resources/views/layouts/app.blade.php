@@ -22,7 +22,7 @@
         @vite(['resources/css/app.css', 'resources/js/app.js'])
         @stack('styles')
     </head>
-    <body class="font-sans antialiased @auth{{ Auth::user()->isCustomer() ? 'customer-mobile-nav' : '' }}@endauth">
+    <body class="font-sans antialiased @auth{{ Auth::user()->isCustomer() || Auth::user()->isMuthowif() ? 'app-mobile-bottom-nav' : '' }}@endauth">
         <div class="flex min-h-screen flex-col bg-slate-50">
             @include('layouts.navigation')
 
@@ -36,7 +36,7 @@
             @endif
 
             <!-- Page Content -->
-            <main class="ui-app-main flex-1 @auth{{ Auth::user()->isCustomer() ? 'pb-10 lg:pb-12' : '' }}@endauth">
+            <main class="ui-app-main flex-1 @auth{{ Auth::user()->isCustomer() || Auth::user()->isMuthowif() ? 'pb-10 lg:pb-12' : '' }}@endauth">
                 {{ $slot }}
             </main>
 
@@ -47,6 +47,7 @@
             @endauth
         </div>
         <x-customer-bottom-nav />
+        <x-muthowif-bottom-nav />
         <x-ui.toast-stack />
         @auth
             @unless (request()->routeIs('chat.index'))

@@ -167,12 +167,12 @@
         </div>
     </div>
 
-    <!-- Floating Action Button -->
+    <!-- Floating Action Button (desktop only; mobile uses bottom nav → /chat) -->
     <button
         type="button"
         id="global-chat-fab"
         @click="togglePanel()"
-        class="relative z-50 flex h-14 w-14 items-center justify-center rounded-full bg-brand-600 text-white shadow-lg ring-4 ring-white transition-colors hover:bg-brand-700 lg:h-16 lg:w-16"
+        class="relative z-50 hidden h-14 w-14 items-center justify-center rounded-full bg-brand-600 text-white shadow-lg ring-4 ring-white transition-colors hover:bg-brand-700 lg:flex lg:h-16 lg:w-16"
         aria-label="Toggle Chat"
     >
         <span
