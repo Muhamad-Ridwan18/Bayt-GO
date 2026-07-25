@@ -595,6 +595,7 @@ return [
         'col_muthowif' => 'Muthowif',
         'col_progress' => 'Progress',
         'col_items' => 'Item layanan',
+        'col_price' => 'Rincian harga',
         'items_empty' => 'Tidak ada item layanan',
         'item_support' => 'Paket pendukung',
         'item_same_hotel' => 'Hotel sama',

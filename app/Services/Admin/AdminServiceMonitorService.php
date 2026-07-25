@@ -6,6 +6,8 @@ use App\Enums\BookingStatus;
 use App\Enums\PaymentStatus;
 use App\Models\BookingPayment;
 use App\Models\MuthowifBooking;
+use App\Support\BookingPricingViewData;
+use App\Support\IndonesianNumber;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Http\Request;
 use Illuminate\Support\Collection;
@@ -120,8 +122,9 @@ final class AdminServiceMonitorService
     {
         return MuthowifBooking::query()
             ->with([
-                'customer:id,name,email',
+                'customer:id,name,email,role,customer_type',
                 'muthowifProfile.user:id,name',
+                'muthowifProfile.services',
                 'supportPackage:id,name',
                 'latestSettledBookingPayment' => fn ($q) => $q->select(
                     'booking_payments.id',
@@ -219,6 +222,88 @@ final class AdminServiceMonitorService
         }
 
         return $items;
+    }
+
+    /**
+     * Rincian harga customer (subtotal, add-on, hotel, transport, biaya platform, total).
+     *
+     * @return array{
+     *   nights: int,
+     *   lines: list<array{label: string, amount: float, emphasis?: bool}>,
+     *   total: float,
+     *   total_formatted: string
+     * }
+     */
+    public function priceBreakdown(MuthowifBooking $booking): array
+    {
+        $pricing = BookingPricingViewData::forCustomer($booking);
+        $lines = [];
+
+        if ($pricing['isSupport']) {
+            $packageLabel = trim((string) ($pricing['packageName'] ?? ''));
+            $lines[] = [
+                'label' => $packageLabel !== '' ? $packageLabel : __('admin.service_monitor.item_support'),
+                'amount' => (float) $pricing['baseSubtotal'],
+            ];
+        } else {
+            $serviceLabel = __('bookings.show.subtotal_service');
+            if ($pricing['daily'] !== null && $pricing['nights'] > 0) {
+                $serviceLabel .= ' ('.$pricing['nights'].' × Rp '.IndonesianNumber::formatThousands((string) (int) round((float) $pricing['daily'])).')';
+            }
+            $lines[] = [
+                'label' => $serviceLabel,
+                'amount' => (float) $pricing['baseSubtotal'],
+            ];
+        }
+
+        foreach ($pricing['addonLines'] as $addon) {
+            $name = trim((string) ($addon->name ?? ''));
+            if ($name === '') {
+                continue;
+            }
+            $lines[] = [
+                'label' => '+ '.$name,
+                'amount' => (float) ($addon->price ?? 0),
+            ];
+        }
+
+        if ((float) $pricing['sameHotelLine'] > 0) {
+            $lines[] = [
+                'label' => __('bookings.show.same_hotel_label', [
+                    'nights' => $pricing['nights'],
+                    'days' => __('common.days'),
+                ]),
+                'amount' => (float) $pricing['sameHotelLine'],
+            ];
+        }
+
+        if ((float) $pricing['transportLine'] > 0) {
+            $lines[] = [
+                'label' => __('bookings.show.transport_label'),
+                'amount' => (float) $pricing['transportLine'],
+            ];
+        }
+
+        if ((float) $pricing['customerPlatformFee'] > 0) {
+            $lines[] = [
+                'label' => __('bookings.show.platform_fee'),
+                'amount' => (float) $pricing['customerPlatformFee'],
+            ];
+        }
+
+        $total = (float) $pricing['customerTotal'];
+        $lines[] = [
+            'label' => __('bookings.invoice.total'),
+            'amount' => $total,
+            'emphasis' => true,
+        ];
+
+        return [
+            'nights' => (int) $pricing['nights'],
+            'lines' => $lines,
+            'total' => $total,
+            'total_formatted' => IndonesianNumber::formatThousands((string) (int) round($total)),
+        ];
     }
 
     public function servicePhaseKey(MuthowifBooking $booking): ?string

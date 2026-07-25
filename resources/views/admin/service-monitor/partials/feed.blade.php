@@ -155,6 +155,7 @@
                     $phaseKey = $monitor->servicePhaseKey($booking);
                     $progress = $monitor->serviceProgress($booking);
                     $serviceItems = $monitor->serviceItems($booking);
+                    $price = $monitor->priceBreakdown($booking);
                     $customerName = $booking->customer?->name ?? '—';
                     $muthowifName = $booking->muthowifProfile?->user?->name ?? '—';
                     $paymentKey = $monitor->paymentStatusKey($booking);
@@ -270,20 +271,36 @@
                         @endif
                     </div>
 
-                    {{-- Item layanan --}}
-                    <div class="col-span-2 sm:col-span-3 lg:col-span-12">
-                        <p class="text-[10px] font-semibold uppercase tracking-wide text-slate-400">{{ __('admin.service_monitor.col_items') }}</p>
-                        @if ($serviceItems !== [])
-                            <div class="mt-1.5 flex flex-wrap gap-1.5">
-                                @foreach ($serviceItems as $item)
-                                    <span class="inline-flex max-w-full items-center rounded-full px-2.5 py-0.5 text-[11px] font-medium ring-1 {{ $itemChip($item['kind']) }}">
-                                        <span class="truncate">{{ $item['label'] }}</span>
-                                    </span>
+                    {{-- Item layanan + rincian harga --}}
+                    <div class="col-span-2 sm:col-span-3 lg:col-span-12 grid gap-3 lg:grid-cols-2">
+                        <div>
+                            <p class="text-[10px] font-semibold uppercase tracking-wide text-slate-400">{{ __('admin.service_monitor.col_items') }}</p>
+                            @if ($serviceItems !== [])
+                                <div class="mt-1.5 flex flex-wrap gap-1.5">
+                                    @foreach ($serviceItems as $item)
+                                        <span class="inline-flex max-w-full items-center rounded-full px-2.5 py-0.5 text-[11px] font-medium ring-1 {{ $itemChip($item['kind']) }}">
+                                            <span class="truncate">{{ $item['label'] }}</span>
+                                        </span>
+                                    @endforeach
+                                </div>
+                            @else
+                                <p class="mt-1 text-xs text-slate-400">{{ __('admin.service_monitor.items_empty') }}</p>
+                            @endif
+                        </div>
+
+                        <div class="overflow-hidden rounded-xl border border-slate-200 bg-slate-50/70">
+                            <p class="border-b border-slate-200/80 px-3 py-1.5 text-[10px] font-semibold uppercase tracking-wide text-slate-500">{{ __('admin.service_monitor.col_price') }}</p>
+                            <dl class="divide-y divide-slate-200/70 text-[11px]">
+                                @foreach ($price['lines'] as $line)
+                                    <div class="flex justify-between gap-3 px-3 py-1.5 {{ ! empty($line['emphasis']) ? 'bg-white' : '' }}">
+                                        <dt class="{{ ! empty($line['emphasis']) ? 'font-bold text-slate-900' : 'text-slate-600' }}">{{ $line['label'] }}</dt>
+                                        <dd class="shrink-0 tabular-nums {{ ! empty($line['emphasis']) ? 'font-bold text-brand-700' : 'font-medium text-slate-800' }}">
+                                            Rp {{ $fmt($line['amount']) }}
+                                        </dd>
+                                    </div>
                                 @endforeach
-                            </div>
-                        @else
-                            <p class="mt-1 text-xs text-slate-400">{{ __('admin.service_monitor.items_empty') }}</p>
-                        @endif
+                            </dl>
+                        </div>
                     </div>
                 </div>
             @empty

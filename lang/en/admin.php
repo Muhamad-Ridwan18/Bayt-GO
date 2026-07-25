@@ -595,6 +595,7 @@ return [
         'col_muthowif' => 'Muthowif',
         'col_progress' => 'Progress',
         'col_items' => 'Service items',
+        'col_price' => 'Price breakdown',
         'items_empty' => 'No service items',
         'item_support' => 'Support package',
         'item_same_hotel' => 'Same hotel',
