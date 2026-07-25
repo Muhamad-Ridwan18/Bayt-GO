@@ -271,6 +271,24 @@ final class BookingPaymentPageData
     }
 
     /**
+     * @return array<string, mixed>|null
+     */
+    public function selectedMethodUi(): ?array
+    {
+        if ($this->selectedMethod === '') {
+            return null;
+        }
+
+        foreach ($this->methodsUi as $row) {
+            if (($row['id'] ?? '') === $this->selectedMethod) {
+                return $row;
+            }
+        }
+
+        return null;
+    }
+
+    /**
      * @return list<array<string, mixed>>
      */
     public function enabledMethodsForGroup(string $groupId): array
