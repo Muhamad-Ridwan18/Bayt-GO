@@ -26,11 +26,16 @@ class SupportPackageController extends Controller
             return redirect()->route('muthowif.kelola-layanan');
         }
 
+        $categoryFilter = $categoryFilter->hubCategory();
+        if ($categoryFilter->value !== (string) $request->query('category', '')) {
+            return redirect()->route('muthowif.pelayanan-pendukung.index', ['category' => $categoryFilter->value]);
+        }
+
         $packagesQuery = $profile->supportPackages()
             ->orderBy('sort_order')
             ->orderBy('name');
 
-        $packagesQuery->where('category', $categoryFilter->value);
+        $packagesQuery->whereIn('category', $categoryFilter->storageValues());
 
         $packages = $packagesQuery->get();
 
@@ -48,6 +53,8 @@ class SupportPackageController extends Controller
         if ($prefillCategory === null) {
             return redirect()->route('muthowif.kelola-layanan');
         }
+
+        $prefillCategory = $prefillCategory->hubCategory();
 
         return view('muthowif.pelayanan-pendukung.create', [
             'categories' => SupportPackageCategory::ordered(),
@@ -78,8 +85,8 @@ class SupportPackageController extends Controller
     {
         $this->authorize('update', $supportPackage);
 
-        $category = $supportPackage->category?->value
-            ?? SupportPackageCategory::tryFrom((string) $request->query('category', ''))?->value;
+        $category = $supportPackage->category?->hubCategory()->value
+            ?? SupportPackageCategory::tryFrom((string) $request->query('category', ''))?->hubCategory()->value;
 
         if ($category === null) {
             return redirect()->route('muthowif.kelola-layanan');
@@ -116,8 +123,11 @@ class SupportPackageController extends Controller
 
     private function redirectToCategoryList(?string $category): RedirectResponse
     {
-        if (is_string($category) && SupportPackageCategory::tryFrom($category) !== null) {
-            return redirect()->route('muthowif.pelayanan-pendukung.index', ['category' => $category]);
+        $enum = is_string($category) ? SupportPackageCategory::tryFrom($category) : null;
+        if ($enum !== null) {
+            return redirect()->route('muthowif.pelayanan-pendukung.index', [
+                'category' => $enum->hubCategory()->value,
+            ]);
         }
 
         return redirect()->route('muthowif.kelola-layanan');
@@ -156,8 +166,10 @@ class SupportPackageController extends Controller
         $min = max(1, (int) $validated['min_pilgrims']);
         $max = max($min, (int) $validated['max_pilgrims']);
         $category = $validated['category'] instanceof SupportPackageCategory
-            ? $validated['category']->value
-            : (string) $validated['category'];
+            ? $validated['category']
+            : SupportPackageCategory::tryFrom((string) $validated['category']);
+
+        $category = ($category ?? SupportPackageCategory::Other)->hubCategory()->value;
 
         return [
             'name' => trim((string) $validated['name']),

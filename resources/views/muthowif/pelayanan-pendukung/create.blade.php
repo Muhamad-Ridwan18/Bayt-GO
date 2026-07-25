@@ -1,6 +1,6 @@
 @php
-    $backCategory = ($prefillCategory?->value)
-        ?? request()->query('category')
+    $backCategory = ($prefillCategory?->hubCategory()->value)
+        ?? (\App\Enums\SupportPackageCategory::tryFrom((string) request()->query('category', ''))?->hubCategory()->value)
         ?? 'mobility';
     $backUrl = url('/muthowif/pelayanan-pendukung').'?category='.urlencode((string) $backCategory);
 @endphp

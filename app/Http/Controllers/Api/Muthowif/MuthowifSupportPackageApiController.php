@@ -138,7 +138,8 @@ class MuthowifSupportPackageApiController extends Controller
             $max = max($min, (int) ($row['max_pilgrims'] !== '' ? $row['max_pilgrims'] : $min));
 
             $category = $row['category'] !== '' ? $row['category'] : SupportPackageCategory::Other->value;
-            if (SupportPackageCategory::tryFrom($category) === null) {
+            $categoryEnum = SupportPackageCategory::tryFrom($category);
+            if ($categoryEnum === null) {
                 throw ValidationException::withMessages([
                     'packages' => [__('layanan_pendukung.validation.category_invalid')],
                 ]);
@@ -147,7 +148,7 @@ class MuthowifSupportPackageApiController extends Controller
             $out[] = [
                 'id' => $row['id'],
                 'name' => $row['name'],
-                'category' => $category,
+                'category' => $categoryEnum->hubCategory()->value,
                 'description' => $row['description'] !== '' ? $row['description'] : null,
                 'price' => (string) $row['price'],
                 'min_pilgrims' => $min,

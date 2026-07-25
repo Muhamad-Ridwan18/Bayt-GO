@@ -18,13 +18,6 @@
                         'icon' => 'wheelchair',
                     ],
                     [
-                        'href' => route('muthowif.pelayanan-pendukung.index', ['category' => 'tawaf']),
-                        'label' => __('enums.support_package_category.tawaf'),
-                        'desc' => __('layanan_pendukung.manage_lead'),
-                        'bg' => 'bg-[#059669]',
-                        'icon' => 'wheelchair',
-                    ],
-                    [
                         'href' => route('muthowif.pelayanan.edit'),
                         'label' => __('nav.manage_svc_umrah'),
                         'desc' => __('nav.manage_svc_umrah_desc'),

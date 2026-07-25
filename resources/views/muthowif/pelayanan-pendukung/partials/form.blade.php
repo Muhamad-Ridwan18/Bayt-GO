@@ -7,8 +7,13 @@
 @php
     use App\Enums\SupportPackageCategory;
 
-    $categoryValue = old('category', $package?->category?->value ?? ($prefillCategory?->value ?? 'other'));
-    $categoryEnum = SupportPackageCategory::tryFrom((string) $categoryValue);
+    $categoryValue = old(
+        'category',
+        $package?->category?->hubCategory()->value
+            ?? ($prefillCategory?->hubCategory()->value ?? 'other')
+    );
+    $categoryEnum = SupportPackageCategory::tryFrom((string) $categoryValue)?->hubCategory();
+    $categoryValue = $categoryEnum?->value ?? $categoryValue;
     $categoryLocked = $package !== null || $prefillCategory !== null;
     $isActive = old('is_active', $package?->is_active ?? true);
     if ($isActive === '0' || $isActive === 0 || $isActive === false) {

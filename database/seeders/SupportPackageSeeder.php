@@ -17,7 +17,7 @@ class SupportPackageSeeder extends Seeder
     {
         return [
             [
-                'category' => SupportPackageCategory::Tawaf,
+                'category' => SupportPackageCategory::Mobility,
                 'name' => 'Dorong kursi roda tawaf',
                 'description' => 'Pendampingan dorong kursi roda selama tawaf di Masjidil Haram. Selesai setelah satu kali tawaf.',
                 'price' => 350000,

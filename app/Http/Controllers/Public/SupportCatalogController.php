@@ -27,6 +27,15 @@ class SupportCatalogController extends Controller
             return redirect()->route('welcome');
         }
 
+        $category = $category->hubCategory();
+        if ($category->value !== $categoryRaw) {
+            return redirect()->route('layanan-pendukung.index', array_filter([
+                'category' => $category->value,
+                'q' => $request->query('q'),
+                'starts_at' => $request->query('starts_at'),
+            ], static fn ($v) => $v !== null && $v !== ''));
+        }
+
         $startsAtRaw = trim((string) $request->query('starts_at', ''));
 
         $startsAt = null;
@@ -84,7 +93,7 @@ class SupportCatalogController extends Controller
                 ])
                 ->when(
                     $category !== null,
-                    fn ($query) => $query->where('category', $category),
+                    fn ($query) => $query->whereIn('category', $category->storageValues()),
                 )
                 ->when($q !== '', function ($query) use ($q): void {
                     $query->where(function ($inner) use ($q): void {
