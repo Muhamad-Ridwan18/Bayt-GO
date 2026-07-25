@@ -28,7 +28,7 @@ final class AdminServiceMonitorService
         $filter = $this->normalizeFilter($request->query('filter', self::FILTER_ACTIVE));
 
         $bookings = $this->filteredQuery($filter)
-            ->limit(80)
+            ->limit(120)
             ->get();
 
         return [
@@ -98,11 +98,19 @@ final class AdminServiceMonitorService
             $today = now()->toDateString();
 
             return $query
+                ->where('payment_status', PaymentStatus::Paid)
+                ->whereIn('status', [
+                    BookingStatus::Confirmed->value,
+                    BookingStatus::InProgress->value,
+                ])
                 ->whereDate('starts_on', '<=', $today)
                 ->whereDate('ends_on', '>=', $today);
         }
 
-        return $query->where('status', '!=', BookingStatus::Completed->value);
+        return $query->whereNotIn('status', [
+            BookingStatus::Completed->value,
+            BookingStatus::Cancelled->value,
+        ]);
     }
 
     /**
@@ -114,6 +122,7 @@ final class AdminServiceMonitorService
             ->with([
                 'customer:id,name,email',
                 'muthowifProfile.user:id,name',
+                'supportPackage:id,name',
                 'latestSettledBookingPayment' => fn ($q) => $q->select(
                     'booking_payments.id',
                     'booking_payments.muthowif_booking_id',
@@ -121,19 +130,95 @@ final class AdminServiceMonitorService
                     'booking_payments.wallet_credited_at',
                 ),
             ])
-            ->where('status', BookingStatus::Confirmed)
-            ->where('payment_status', PaymentStatus::Paid)
-            ->orderBy('starts_on');
+            ->orderByRaw('starts_on is null')
+            ->orderBy('starts_on')
+            ->orderByDesc('id');
     }
 
     public function escrowLabel(MuthowifBooking $booking): string
     {
+        if ($booking->payment_status !== PaymentStatus::Paid) {
+            return 'unpaid';
+        }
+
         $payment = $booking->latestSettledBookingPayment;
         if ($payment?->wallet_credited_at !== null) {
             return 'released';
         }
 
         return 'held';
+    }
+
+    public function paymentStatusKey(MuthowifBooking $booking): string
+    {
+        return $booking->payment_status instanceof PaymentStatus
+            ? $booking->payment_status->value
+            : (string) $booking->payment_status;
+    }
+
+    /**
+     * Item layanan untuk UI pantau: tipe, paket, add-on, hotel sama, transport.
+     *
+     * @return list<array{label: string, kind: string}>
+     */
+    public function serviceItems(MuthowifBooking $booking): array
+    {
+        $items = [];
+
+        if ($booking->isSupport()) {
+            $package = trim((string) ($booking->package_name_snapshot ?? $booking->supportPackage?->name ?? ''));
+            $items[] = [
+                'label' => $package !== '' ? $package : ($booking->service_type?->label() ?? __('admin.service_monitor.item_support')),
+                'kind' => 'package',
+            ];
+        } else {
+            $serviceLabel = trim((string) ($booking->service_type?->label() ?? ''));
+            if ($serviceLabel !== '') {
+                $pilgrims = (int) ($booking->pilgrim_count ?? 0);
+                $items[] = [
+                    'label' => $pilgrims > 0
+                        ? $serviceLabel.' · '.$pilgrims.' '.__('common.pilgrims')
+                        : $serviceLabel,
+                    'kind' => 'service',
+                ];
+            }
+        }
+
+        $addons = $booking->add_ons_snapshot;
+        if (is_array($addons)) {
+            foreach ($addons as $addon) {
+                $name = trim((string) (is_array($addon) ? ($addon['name'] ?? '') : ($addon->name ?? '')));
+                if ($name === '') {
+                    continue;
+                }
+                $items[] = [
+                    'label' => $name,
+                    'kind' => 'addon',
+                ];
+            }
+        }
+
+        if ($booking->with_same_hotel) {
+            $nights = (int) $booking->billingNightsInclusive();
+            $items[] = [
+                'label' => $nights > 0
+                    ? __('bookings.show.same_hotel_label', [
+                        'nights' => $nights,
+                        'days' => __('common.days'),
+                    ])
+                    : __('admin.service_monitor.item_same_hotel'),
+                'kind' => 'hotel',
+            ];
+        }
+
+        if ($booking->with_transport) {
+            $items[] = [
+                'label' => __('bookings.show.transport_label'),
+                'kind' => 'transport',
+            ];
+        }
+
+        return $items;
     }
 
     public function servicePhaseKey(MuthowifBooking $booking): ?string

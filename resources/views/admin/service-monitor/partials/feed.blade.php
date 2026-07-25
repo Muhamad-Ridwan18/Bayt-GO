@@ -13,6 +13,14 @@
         'pre_service' => 'bg-slate-100 text-slate-700 ring-slate-200/70',
         default => 'bg-slate-100 text-slate-500 ring-slate-200/70',
     };
+
+    $itemChip = fn (string $kind) => match ($kind) {
+        'addon' => 'bg-amber-50 text-amber-900 ring-amber-200/70',
+        'hotel' => 'bg-sky-50 text-sky-900 ring-sky-200/70',
+        'transport' => 'bg-violet-50 text-violet-900 ring-violet-200/70',
+        'package' => 'bg-teal-50 text-teal-900 ring-teal-200/70',
+        default => 'bg-slate-100 text-slate-700 ring-slate-200/70',
+    };
 @endphp
 <div
     class="space-y-5"
@@ -126,6 +134,7 @@
             </select>
             <select x-model="escrow" class="rounded-xl border-slate-200 bg-white text-sm text-slate-700 focus:border-brand-500 focus:ring-brand-500">
                 <option value="">{{ __('admin.service_monitor.filter_all_escrow') }}</option>
+                <option value="unpaid">{{ __('admin.service_monitor.escrow_unpaid') }}</option>
                 <option value="held">{{ __('admin.service_monitor.escrow_held') }}</option>
                 <option value="released">{{ __('admin.service_monitor.escrow_released') }}</option>
             </select>
@@ -145,9 +154,14 @@
                     $escrow = $monitor->escrowLabel($booking);
                     $phaseKey = $monitor->servicePhaseKey($booking);
                     $progress = $monitor->serviceProgress($booking);
+                    $serviceItems = $monitor->serviceItems($booking);
                     $customerName = $booking->customer?->name ?? '—';
                     $muthowifName = $booking->muthowifProfile?->user?->name ?? '—';
-                    $searchIndex = strtolower(trim(($booking->booking_code ?? '').' '.$customerName.' '.$muthowifName));
+                    $paymentKey = $monitor->paymentStatusKey($booking);
+                    $searchIndex = strtolower(trim(
+                        ($booking->booking_code ?? '').' '.$customerName.' '.$muthowifName.' '.
+                        collect($serviceItems)->pluck('label')->implode(' ')
+                    ));
                     $barColor = ($progress['pct'] ?? 0) >= 75 && $phaseKey === 'in_service' ? 'bg-amber-500' : 'bg-emerald-500';
                 @endphp
                 <div
@@ -156,7 +170,7 @@
                     data-phase="{{ $phaseKey ?? '' }}"
                     data-escrow="{{ $escrow }}"
                     x-show="match($el)"
-                    class="grid grid-cols-2 gap-x-4 gap-y-3 px-5 py-4 transition hover:bg-slate-50/70 sm:grid-cols-3 lg:grid-cols-12 lg:items-center"
+                    class="grid grid-cols-2 gap-x-4 gap-y-3 px-5 py-4 transition hover:bg-slate-50/70 sm:grid-cols-3 lg:grid-cols-12 lg:items-start"
                 >
                     {{-- Pesanan --}}
                     <div class="col-span-2 sm:col-span-3 lg:col-span-3">
@@ -166,7 +180,15 @@
                             </span>
                             <div class="min-w-0">
                                 <p class="truncate font-mono text-sm font-bold text-slate-900">{{ $booking->booking_code }}</p>
-                                <p class="mt-0.5 text-xs font-medium {{ $phaseKey === 'in_service' ? 'text-emerald-700' : 'text-slate-500' }}">{{ $monitor->serviceDayLabel($booking) }}</p>
+                                <p class="mt-0.5 text-xs font-medium {{ $phaseKey === 'in_service' ? 'text-emerald-700' : 'text-slate-500' }}">{{ $monitor->serviceDayLabel($booking) ?? '—' }}</p>
+                                <div class="mt-1 flex flex-wrap items-center gap-1.5">
+                                    <span class="inline-flex rounded-full px-2 py-0.5 text-[10px] font-semibold ring-1 {{ $paymentKey === 'paid' ? 'bg-emerald-50 text-emerald-800 ring-emerald-200/70' : ($paymentKey === 'pending' ? 'bg-amber-50 text-amber-900 ring-amber-200/70' : 'bg-slate-100 text-slate-700 ring-slate-200/70') }}">
+                                        {{ $booking->payment_status?->label() ?? $paymentKey }}
+                                    </span>
+                                    <span class="inline-flex rounded-full bg-slate-100 px-2 py-0.5 text-[10px] font-semibold text-slate-700 ring-1 ring-slate-200/70">
+                                        {{ $booking->status?->label() ?? (string) $booking->status }}
+                                    </span>
+                                </div>
                                 @if ($booking->created_at)
                                     <p class="mt-0.5 text-[11px] text-slate-400">{{ __('admin.service_monitor.order_created', ['date' => $booking->created_at->timezone(config('app.timezone'))->format('d M Y H:i')]) }}</p>
                                 @endif
@@ -196,7 +218,7 @@
                     <div class="lg:col-span-2">
                         <p class="text-[10px] font-semibold uppercase tracking-wide text-slate-400">{{ __('admin.service_monitor.col_period') }}</p>
                         <p class="mt-1 whitespace-nowrap text-sm font-medium text-slate-900">
-                            {{ $booking->starts_on?->format('d M Y') }} <span class="text-slate-400">–</span> {{ $booking->ends_on?->format('d M Y') }}
+                            {{ $booking->starts_on?->format('d M Y') ?? '—' }} <span class="text-slate-400">–</span> {{ $booking->ends_on?->format('d M Y') ?? '—' }}
                         </p>
                         @if ($progress !== null)
                             <p class="text-[11px] text-slate-400">{{ __('admin.service_monitor.duration_days', ['days' => $progress['total']]) }}</p>
@@ -226,7 +248,7 @@
                         </span>
                     </div>
 
-                    {{-- Escrow --}}
+                    {{-- Escrow / bayar --}}
                     <div class="lg:col-span-1">
                         <p class="text-[10px] font-semibold uppercase tracking-wide text-slate-400">{{ __('admin.service_monitor.col_escrow') }}</p>
                         @if ($escrow === 'released')
@@ -234,12 +256,33 @@
                                 <svg class="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M9 12.75 11.25 15 15 9.75M21 12a9 9 0 1 1-18 0 9 9 0 0 1 18 0Z" /></svg>
                                 {{ __('admin.service_monitor.escrow_released') }}
                             </p>
+                        @elseif ($escrow === 'unpaid')
+                            <p class="mt-1 inline-flex items-center gap-1 text-xs font-semibold text-amber-700">
+                                <svg class="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M12 6v6h4.5m4.5 0a9 9 0 1 1-18 0 9 9 0 0 1 18 0Z" /></svg>
+                                {{ __('admin.service_monitor.escrow_unpaid') }}
+                            </p>
                         @else
                             <p class="mt-1 inline-flex items-center gap-1 text-xs font-semibold text-slate-600">
                                 <svg class="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M16.5 10.5V6.75a4.5 4.5 0 1 0-9 0v3.75m-.75 11.25h10.5a2.25 2.25 0 0 0 2.25-2.25v-6.75a2.25 2.25 0 0 0-2.25-2.25H6.75a2.25 2.25 0 0 0-2.25 2.25v6.75a2.25 2.25 0 0 0 2.25 2.25Z" /></svg>
                                 {{ __('admin.service_monitor.escrow_held') }}
                             </p>
                             <p class="text-[11px] text-slate-400">{{ __('admin.service_monitor.stat_escrow_caption') }}</p>
+                        @endif
+                    </div>
+
+                    {{-- Item layanan --}}
+                    <div class="col-span-2 sm:col-span-3 lg:col-span-12">
+                        <p class="text-[10px] font-semibold uppercase tracking-wide text-slate-400">{{ __('admin.service_monitor.col_items') }}</p>
+                        @if ($serviceItems !== [])
+                            <div class="mt-1.5 flex flex-wrap gap-1.5">
+                                @foreach ($serviceItems as $item)
+                                    <span class="inline-flex max-w-full items-center rounded-full px-2.5 py-0.5 text-[11px] font-medium ring-1 {{ $itemChip($item['kind']) }}">
+                                        <span class="truncate">{{ $item['label'] }}</span>
+                                    </span>
+                                @endforeach
+                            </div>
+                        @else
+                            <p class="mt-1 text-xs text-slate-400">{{ __('admin.service_monitor.items_empty') }}</p>
                         @endif
                     </div>
                 </div>
