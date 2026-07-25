@@ -1,12 +1,3 @@
-@php
-    $listCategory = $package->category?->value
-        ?? old('category')
-        ?? request()->query('category');
-    $listUrl = $listCategory
-        ? route('muthowif.pelayanan-pendukung.index', ['category' => $listCategory])
-        : route('muthowif.kelola-layanan');
-@endphp
-
 <x-app-layout>
     <x-ui.app-page compact>
         <div class="pointer-events-none absolute inset-0 bg-[radial-gradient(ellipse_80%_40%_at_50%_-10%,rgba(15,42,37,0.07),transparent)]"></div>

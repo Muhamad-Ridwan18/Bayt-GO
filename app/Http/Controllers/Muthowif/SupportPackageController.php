@@ -52,6 +52,7 @@ class SupportPackageController extends Controller
         return view('muthowif.pelayanan-pendukung.create', [
             'categories' => SupportPackageCategory::ordered(),
             'prefillCategory' => $prefillCategory,
+            'listUrl' => route('muthowif.pelayanan-pendukung.index', ['category' => $prefillCategory->value]),
         ]);
     }
 
@@ -73,13 +74,21 @@ class SupportPackageController extends Controller
             ->with('status', __('layanan_pendukung.flash.package_created'));
     }
 
-    public function edit(MuthowifSupportPackage $supportPackage): View
+    public function edit(Request $request, MuthowifSupportPackage $supportPackage): View|RedirectResponse
     {
         $this->authorize('update', $supportPackage);
+
+        $category = $supportPackage->category?->value
+            ?? SupportPackageCategory::tryFrom((string) $request->query('category', ''))?->value;
+
+        if ($category === null) {
+            return redirect()->route('muthowif.kelola-layanan');
+        }
 
         return view('muthowif.pelayanan-pendukung.edit', [
             'package' => $supportPackage,
             'categories' => SupportPackageCategory::ordered(),
+            'listUrl' => route('muthowif.pelayanan-pendukung.index', ['category' => $category]),
         ]);
     }
 
