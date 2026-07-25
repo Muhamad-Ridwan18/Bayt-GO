@@ -11,8 +11,12 @@
 
 @php
     if ($welcomeAccent || $marketplaceMode) {
-        $dateClass = 'block w-full h-11 rounded-xl border border-slate-200 bg-white px-3 text-sm text-slate-900 shadow-sm transition focus:border-baytgo focus:outline-none focus:ring-2 focus:ring-baytgo/25';
-        $textClass = 'block w-full h-11 rounded-xl border border-slate-200 bg-white px-3 text-sm text-slate-900 shadow-sm transition placeholder:text-slate-400 focus:border-baytgo focus:outline-none focus:ring-2 focus:ring-baytgo/25';
+        $dateClass = $marketplaceMode
+            ? 'block w-full h-10 rounded-lg border border-slate-200 bg-white px-3 text-sm text-slate-900 shadow-sm transition focus:border-baytgo focus:outline-none focus:ring-2 focus:ring-baytgo/25 sm:h-11 sm:rounded-xl'
+            : 'block w-full h-11 rounded-xl border border-slate-200 bg-white px-3 text-sm text-slate-900 shadow-sm transition focus:border-baytgo focus:outline-none focus:ring-2 focus:ring-baytgo/25';
+        $textClass = $marketplaceMode
+            ? 'block w-full h-10 rounded-lg border border-slate-200 bg-white px-3 text-sm text-slate-900 shadow-sm transition placeholder:text-slate-400 focus:border-baytgo focus:outline-none focus:ring-2 focus:ring-baytgo/25 sm:h-11 sm:rounded-xl'
+            : 'block w-full h-11 rounded-xl border border-slate-200 bg-white px-3 text-sm text-slate-900 shadow-sm transition placeholder:text-slate-400 focus:border-baytgo focus:outline-none focus:ring-2 focus:ring-baytgo/25';
     } else {
         $dateClass = 'block w-full min-w-[11rem] h-11 rounded-xl border border-slate-200/90 bg-white px-3 text-sm text-slate-900 shadow-sm transition focus:border-brand-500 focus:outline-none focus:ring-2 focus:ring-brand-500/30';
         $textClass = 'block w-full min-w-0 h-11 rounded-xl border border-slate-200/90 bg-white px-3 text-sm text-slate-900 shadow-sm transition placeholder:text-slate-400 focus:border-brand-500 focus:outline-none focus:ring-2 focus:ring-brand-500/30';
@@ -22,15 +26,17 @@
         : ($showHeaderBanner
             ? 'w-full min-w-0 overflow-hidden rounded-3xl border border-slate-200/90 bg-white shadow-market ring-1 ring-brand-100/50'
             : 'w-full min-w-0 overflow-hidden rounded-2xl border border-slate-200/80 bg-white shadow-xl shadow-slate-300/40 ring-1 ring-slate-100/90');
-    $submitClass = ($welcomeAccent || $marketplaceMode)
-        ? 'inline-flex h-11 w-full min-h-[2.75rem] items-center justify-center gap-2 whitespace-nowrap rounded-xl bg-baytgo px-5 text-sm font-semibold text-white shadow-md shadow-baytgo/20 transition hover:bg-baytgo-800 focus:outline-none focus-visible:ring-2 focus-visible:ring-baytgo/40 focus-visible:ring-offset-2'
-        : 'inline-flex h-11 w-full min-h-[2.75rem] items-center justify-center gap-2 whitespace-nowrap rounded-xl bg-gradient-to-r from-brand-600 to-brand-700 px-5 text-sm font-semibold text-white shadow-lg shadow-brand-600/25 transition hover:from-brand-500 hover:to-brand-600 focus:outline-none focus-visible:ring-2 focus-visible:ring-brand-500 focus-visible:ring-offset-2';
+    $submitClass = $marketplaceMode
+        ? 'inline-flex h-10 w-full min-h-[2.5rem] items-center justify-center gap-2 whitespace-nowrap rounded-lg bg-baytgo px-4 text-sm font-semibold text-white shadow-md shadow-baytgo/20 transition hover:bg-baytgo-800 focus:outline-none focus-visible:ring-2 focus-visible:ring-baytgo/40 focus-visible:ring-offset-2 sm:h-11 sm:min-h-[2.75rem] sm:rounded-xl sm:px-5'
+        : (($welcomeAccent)
+            ? 'inline-flex h-11 w-full min-h-[2.75rem] items-center justify-center gap-2 whitespace-nowrap rounded-xl bg-baytgo px-5 text-sm font-semibold text-white shadow-md shadow-baytgo/20 transition hover:bg-baytgo-800 focus:outline-none focus-visible:ring-2 focus-visible:ring-baytgo/40 focus-visible:ring-offset-2'
+            : 'inline-flex h-11 w-full min-h-[2.75rem] items-center justify-center gap-2 whitespace-nowrap rounded-xl bg-gradient-to-r from-brand-600 to-brand-700 px-5 text-sm font-semibold text-white shadow-lg shadow-brand-600/25 transition hover:from-brand-500 hover:to-brand-600 focus:outline-none focus-visible:ring-2 focus-visible:ring-brand-500 focus-visible:ring-offset-2');
     $dateClassInner = $dateClass;
     $innerPad = $marketplaceMode
-        ? 'p-5 sm:p-6 lg:p-7'
+        ? 'p-3.5 sm:p-6 lg:p-7'
         : ($showHeaderBanner ? 'p-5 sm:p-6 md:p-7' : ($welcomeInlineHeader ? 'p-5 pb-6 sm:p-6 sm:pb-7 md:px-7 md:pb-8 md:pt-6' : 'p-5 sm:p-6'));
     $gridClass = $marketplaceMode
-        ? 'grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-12 lg:items-end lg:gap-3'
+        ? 'grid grid-cols-1 gap-3 sm:grid-cols-2 sm:gap-4 lg:grid-cols-12 lg:items-end lg:gap-3'
         : 'flex flex-col gap-4 lg:flex-row lg:flex-wrap lg:items-end lg:gap-x-3 lg:gap-y-4';
 @endphp
 
@@ -67,13 +73,13 @@
         @endif
 
         @if ($marketplaceMode)
-            <div class="mb-5 flex items-start gap-3 border-b border-slate-100 pb-5 sm:mb-6">
-                <span class="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-emerald-50 text-baytgo ring-1 ring-emerald-100">
-                    <svg class="h-5 w-5" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path fill-rule="evenodd" d="M6.75 2.25A.75.75 0 017.5 3v1.5h9V3A.75.75 0 0118 3v1.5h.75a3 3 0 013 3v11.25a3 3 0 01-3 3H5.25a3 3 0 01-3-3V7.5a3 3 0 013-3H6V3a.75.75 0 01.75-.75zm13.5 9a1.5 1.5 0 00-1.5-1.5H5.25a1.5 1.5 0 00-1.5 1.5v7.5a1.5 1.5 0 001.5 1.5h13.5a1.5 1.5 0 001.5-1.5v-7.5z" clip-rule="evenodd" /></svg>
+            <div class="mb-3 flex items-center gap-2.5 border-b border-slate-100 pb-3 sm:mb-6 sm:items-start sm:gap-3 sm:pb-5">
+                <span class="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-emerald-50 text-baytgo ring-1 ring-emerald-100 sm:h-11 sm:w-11 sm:rounded-xl">
+                    <svg class="h-4 w-4 sm:h-5 sm:w-5" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path fill-rule="evenodd" d="M6.75 2.25A.75.75 0 017.5 3v1.5h9V3A.75.75 0 0118 3v1.5h.75a3 3 0 013 3v11.25a3 3 0 01-3 3H5.25a3 3 0 01-3-3V7.5a3 3 0 013-3H6V3a.75.75 0 01.75-.75zm13.5 9a1.5 1.5 0 00-1.5-1.5H5.25a1.5 1.5 0 00-1.5 1.5v7.5a1.5 1.5 0 001.5 1.5h13.5a1.5 1.5 0 001.5-1.5v-7.5z" clip-rule="evenodd" /></svg>
                 </span>
                 <div class="min-w-0">
-                    <h2 class="text-lg font-bold text-baytgo sm:text-xl">{{ __('welcome.search_section_title') }}</h2>
-                    <p class="mt-1 text-sm text-slate-600">{{ __('layanan.search_form_sub') }}</p>
+                    <h2 class="text-base font-bold text-baytgo sm:text-xl">{{ __('welcome.search_section_title') }}</h2>
+                    <p class="mt-0.5 hidden text-sm text-slate-600 sm:mt-1 sm:block">{{ __('layanan.search_form_sub') }}</p>
                 </div>
             </div>
         @endif
@@ -102,9 +108,13 @@
             </div>
         </div>
 
-        @if ($welcomeInlineHeader || $marketplaceMode)
-            <p class="mt-5 rounded-xl border px-4 py-2.5 text-xs leading-relaxed {{ ($welcomeAccent || $marketplaceMode) ? 'border-emerald-100/90 bg-emerald-50/80 text-emerald-950' : 'border-stone-100/90 bg-stone-50/80 text-slate-600' }}">
-                <span class="font-semibold {{ ($welcomeAccent || $marketplaceMode) ? 'text-emerald-900' : 'text-slate-700' }}">{{ __('welcome.search_tip_label') }}</span> {{ __('welcome.search_tip_body') }}
+        @if ($marketplaceMode)
+            <p class="mt-3 hidden rounded-xl border border-emerald-100/90 bg-emerald-50/80 px-4 py-2.5 text-xs leading-relaxed text-emerald-950 sm:mt-5 sm:block">
+                <span class="font-semibold text-emerald-900">{{ __('welcome.search_tip_label') }}</span> {{ __('welcome.search_tip_body') }}
+            </p>
+        @elseif ($welcomeInlineHeader)
+            <p class="mt-5 rounded-xl border px-4 py-2.5 text-xs leading-relaxed {{ $welcomeAccent ? 'border-emerald-100/90 bg-emerald-50/80 text-emerald-950' : 'border-stone-100/90 bg-stone-50/80 text-slate-600' }}">
+                <span class="font-semibold {{ $welcomeAccent ? 'text-emerald-900' : 'text-slate-700' }}">{{ __('welcome.search_tip_label') }}</span> {{ __('welcome.search_tip_body') }}
             </p>
         @else
             <p class="mt-5 rounded-xl bg-slate-50/90 px-3 py-2.5 text-xs leading-relaxed text-slate-600 ring-1 ring-slate-100">

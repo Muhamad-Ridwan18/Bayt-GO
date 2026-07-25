@@ -4,18 +4,18 @@
 
 <x-marketplace-layout :title="$page->seoTitle" :meta-description="$page->seoDesc" :full-bleed="true">
     <div class="relative min-w-0 overflow-x-hidden">
-        <section class="relative left-1/2 mb-0 w-screen max-w-[100vw] -translate-x-1/2 overflow-hidden bg-welcomeCanvas pb-10 sm:pb-12">
+        <section class="relative left-1/2 mb-0 w-screen max-w-[100vw] -translate-x-1/2 overflow-hidden bg-welcomeCanvas pb-6 sm:pb-12">
             <div class="pointer-events-none absolute inset-0 z-0" aria-hidden="true">
-                <img src="{{ $page->heroBgUrl }}" alt="" class="h-full w-full min-h-[16rem] object-cover object-[74%_30%] sm:min-h-[18rem] lg:min-h-[20rem]" loading="eager" decoding="async" />
+                <img src="{{ $page->heroBgUrl }}" alt="" class="h-full w-full min-h-[10rem] object-cover object-[74%_30%] sm:min-h-[18rem] lg:min-h-[20rem]" loading="eager" decoding="async" />
             </div>
             <div class="pointer-events-none absolute inset-0 z-[1] bg-gradient-to-b from-welcomeCanvas via-welcomeCanvas/95 to-welcomeCanvas/55 sm:hidden" aria-hidden="true"></div>
             <div class="pointer-events-none absolute inset-0 z-[1] hidden bg-gradient-to-r from-welcomeCanvas from-[28%] via-welcomeCanvas/96 via-[55%] to-welcomeCanvas/10 sm:block lg:from-[32%] lg:via-[58%] lg:to-transparent" aria-hidden="true"></div>
 
-            <div class="relative z-10 mx-auto w-full px-4 pt-8 sm:px-6 sm:pt-10 lg:px-8 lg:pt-12 xl:px-10">
-                <p class="text-xs font-bold uppercase tracking-wider text-baytgo">{{ __('layanan.hero_kicker') }}</p>
-                <h1 class="mt-2 max-w-2xl text-2xl font-bold tracking-tight text-slate-900 sm:text-3xl lg:text-4xl">{{ __('layanan.hero_title') }}</h1>
-                <p class="mt-3 max-w-xl text-base leading-relaxed text-slate-700 sm:text-lg">{{ __('layanan.hero_lead') }}</p>
-                <ul class="mt-6 flex flex-wrap gap-2">
+            <div class="relative z-10 mx-auto w-full px-4 pt-5 sm:px-6 sm:pt-10 lg:px-8 lg:pt-12 xl:px-10">
+                <p class="text-[11px] font-bold uppercase tracking-wider text-baytgo sm:text-xs">{{ __('layanan.hero_kicker') }}</p>
+                <h1 class="mt-1 max-w-2xl text-xl font-bold tracking-tight text-slate-900 sm:mt-2 sm:text-3xl lg:text-4xl">{{ __('layanan.hero_title') }}</h1>
+                <p class="mt-3 hidden max-w-xl text-base leading-relaxed text-slate-700 sm:block sm:text-lg">{{ __('layanan.hero_lead') }}</p>
+                <ul class="mt-6 hidden flex-wrap gap-2 sm:flex">
                     @foreach ([
                         ['key' => 'chip_verified', 'icon' => 'check'],
                         ['key' => 'chip_realtime', 'icon' => 'clock'],
@@ -37,8 +37,8 @@
                 </ul>
             </div>
 
-            <div class="relative z-20 mx-auto mt-8 w-full px-4 sm:mt-10 sm:px-6 lg:px-8 xl:px-10" id="marketplace-search">
-                <div class="overflow-hidden rounded-2xl border border-slate-200/90 bg-white shadow-[0_20px_50px_-12px_rgba(15,42,37,0.18)] ring-1 ring-slate-100/90 sm:rounded-3xl">
+            <div class="relative z-20 mx-auto mt-4 w-full px-4 sm:mt-10 sm:px-6 lg:px-8 xl:px-10" id="marketplace-search">
+                <div class="overflow-hidden rounded-xl border border-slate-200/90 bg-white shadow-[0_12px_32px_-12px_rgba(15,42,37,0.16)] ring-1 ring-slate-100/90 sm:rounded-3xl sm:shadow-[0_20px_50px_-12px_rgba(15,42,37,0.18)]">
                     @include('layanan.partials.date-search-form', [
                         'startDate' => $page->startDate,
                         'endDate' => $page->endDate,
