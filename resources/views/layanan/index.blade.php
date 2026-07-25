@@ -110,7 +110,7 @@
                             <a href="#marketplace-search" class="mt-6 inline-flex items-center justify-center rounded-xl bg-baytgo px-5 py-2.5 text-sm font-semibold text-white shadow-md hover:bg-baytgo-800">{{ __('layanan.submit_search') }}</a>
                         </div>
                     @else
-                        <ul class="grid grid-cols-1 gap-3 sm:grid-cols-2 sm:gap-4 lg:grid-cols-3 xl:grid-cols-4 xl:gap-5">
+                        <ul class="grid grid-cols-1 gap-2.5 sm:grid-cols-2 sm:gap-3 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 xl:gap-4">
                             @foreach ($page->profileCards as $card)
                                 @include('layanan.partials.muthowif-card', ['card' => $card])
                             @endforeach

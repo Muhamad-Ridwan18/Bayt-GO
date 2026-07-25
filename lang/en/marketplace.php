@@ -14,6 +14,7 @@ return [
         'new_marketplace' => 'New on the marketplace · ready to guide',
         'view_profile' => 'View profile',
         'quick_book' => 'Quick book',
+        'book_short' => 'Book',
         'reviews_line' => ':rating ★ · :count reviews',
         'reviews_count' => '(:count)',
         'languages_prefix' => 'Languages:',

@@ -14,6 +14,7 @@ return [
         'new_marketplace' => 'Baru di marketplace · siap mendampingi',
         'view_profile' => 'Lihat profil',
         'quick_book' => 'Booking Cepat',
+        'book_short' => 'Booking',
         'reviews_line' => ':rating ★ · :count review',
         'reviews_count' => '(:count)',
         'languages_prefix' => 'Bahasa:',
