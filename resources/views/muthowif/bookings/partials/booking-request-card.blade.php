@@ -9,7 +9,7 @@
 <li
     class="overflow-hidden rounded-2xl border border-slate-200/90 bg-white shadow-sm ring-1 ring-slate-100/80"
     x-data="{
-        open: false,
+        open: @js($errors->has('muthowif_rejection_kind') || $errors->has('muthowif_rejection_note') || filled($card->rejectNoteOld)),
         showBreakdown: true,
         showAllDocs: false,
         rejectNote: @js($card->rejectNoteOld),
@@ -28,6 +28,12 @@
         closeDocPreview() {
             this.docModalOpen = false;
             document.body.classList.remove('overflow-y-hidden');
+        },
+        openReject() {
+            this.open = true;
+            this.$nextTick(() => {
+                this.$refs.rejectPanel?.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+            });
         },
     }"
     @keydown.escape.window="docModalOpen && closeDocPreview()"
@@ -119,6 +125,44 @@
                     >
                         <svg class="h-5 w-5 transition" :class="open && 'rotate-180'" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true"><path fill-rule="evenodd" d="M5.23 7.21a.75.75 0 011.06.02L10 11.168l3.71-3.94a.75.75 0 111.08 1.04l-4.24 4.5a.75.75 0 01-1.08 0l-4.24-4.5a.75.75 0 01.02-1.06z" clip-rule="evenodd" /></svg>
                     </button>
+                </div>
+            </div>
+
+            {{-- Aksi cepat saat card tertutup --}}
+            <div class="border-t border-slate-100 px-4 py-3 sm:px-5" x-show="!open" x-cloak>
+                <div class="flex flex-wrap items-center gap-2">
+                    <a
+                        href="{{ route('muthowif.bookings.show', $booking) }}"
+                        class="inline-flex flex-1 items-center justify-center gap-1.5 rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm font-semibold text-slate-800 shadow-sm transition hover:border-slate-300 hover:bg-slate-50 sm:flex-none"
+                    >
+                        <svg class="h-4 w-4 text-slate-500" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true"><path d="M10 12a2 2 0 100-4 2 2 0 000 4z" /><path fill-rule="evenodd" d="M.458 10C1.732 5.943 5.522 3 10 3s8.268 2.943 9.542 7c-1.274 4.057-5.064 7-9.542 7-4.478 0-8.268-2.943-9.542-7zM14 10a4 4 0 11-8 0 4 4 0 018 0z" clip-rule="evenodd" /></svg>
+                        {{ __('muthowif.bookings.view_detail') }}
+                    </a>
+                    @if ($card->isPending)
+                        <button
+                            type="button"
+                            class="inline-flex flex-1 items-center justify-center gap-1.5 rounded-lg border-2 border-red-200 bg-white px-3 py-2 text-sm font-semibold text-red-700 transition hover:border-red-300 hover:bg-red-50 sm:flex-none"
+                            @click="openReject()"
+                        >
+                            <svg class="h-4 w-4" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true"><path fill-rule="evenodd" d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z" clip-rule="evenodd" /></svg>
+                            {{ __('muthowif.bookings.reject') }}
+                        </button>
+                        <form method="POST" action="{{ route('muthowif.bookings.confirm', $booking) }}" class="flex-1 sm:flex-none" x-data="{ submitting: false }" @submit="submitting = true">
+                            @csrf
+                            <button type="submit" :disabled="submitting" class="inline-flex h-[2.5rem] w-full items-center justify-center gap-1.5 rounded-lg bg-brand-700 px-3 text-sm font-semibold text-white shadow-sm transition hover:bg-brand-800 disabled:cursor-wait disabled:opacity-70">
+                                <svg x-show="submitting" x-cloak class="h-4 w-4 shrink-0 animate-spin" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" aria-hidden="true"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"></path></svg>
+                                <svg x-show="!submitting" class="h-4 w-4 shrink-0" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true"><path fill-rule="evenodd" d="M16.704 4.153a.75.75 0 01.143 1.052l-8 10.5a.75.75 0 01-1.127.075l-4.5-4.5a.75.75 0 011.06-1.06l3.894 3.893 7.48-9.817a.75.75 0 011.05-.143z" clip-rule="evenodd" /></svg>
+                                <span x-text="submitting ? @js(__('muthowif.bookings.submitting')) : @js(__('muthowif.bookings.approve'))"></span>
+                            </button>
+                        </form>
+                    @elseif ($card->hasPendingReschedule)
+                        <a
+                            href="{{ route('muthowif.bookings.show', $booking) }}"
+                            class="inline-flex flex-1 items-center justify-center gap-1.5 rounded-lg bg-amber-50 px-3 py-2 text-sm font-semibold text-amber-950 ring-1 ring-amber-200/90 sm:flex-none"
+                        >
+                            {{ __('muthowif.bookings.reschedule_badge') }}
+                        </a>
+                    @endif
                 </div>
             </div>
 
@@ -223,7 +267,9 @@
                 </div>
 
                 @if ($card->isPending)
-                    @include('muthowif.bookings.partials.pending-booking-actions', ['booking' => $booking, 'variant' => 'card'])
+                    <div x-ref="rejectPanel">
+                        @include('muthowif.bookings.partials.pending-booking-actions', ['booking' => $booking, 'variant' => 'card'])
+                    </div>
                 @elseif ($card->hasPendingReschedule)
                     <div class="border-t border-slate-100 px-4 py-3 sm:px-5">
                         <a href="{{ route('muthowif.bookings.show', $booking) }}" class="inline-flex items-center gap-2 rounded-full bg-amber-50 px-3 py-1.5 text-xs font-semibold text-amber-950 ring-1 ring-amber-200/90">
