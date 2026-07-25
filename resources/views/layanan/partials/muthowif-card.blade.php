@@ -11,18 +11,20 @@
 <{{ $as }} class="h-full list-none">
     <article class="group/card relative flex h-full overflow-hidden rounded-xl border border-slate-200/90 bg-white shadow-sm ring-1 ring-slate-100/80 transition duration-300 hover:border-baytgo/25 hover:shadow-md hover:shadow-baytgo/5 sm:flex-col sm:rounded-2xl">
         {{-- Photo: compact thumb on mobile, shorter vertical on desktop --}}
-        <div class="relative w-[6.75rem] shrink-0 self-stretch overflow-hidden bg-slate-200 sm:aspect-[5/4] sm:w-full sm:self-auto">
-            <a href="{{ $card->profileHref }}" class="absolute inset-0 block focus:outline-none focus-visible:ring-2 focus-visible:ring-baytgo focus-visible:ring-inset" tabindex="-1" aria-hidden="true">
-                <img
-                    src="{{ $profile->photoUrl() }}"
-                    alt=""
-                    class="h-full w-full object-cover object-[center_30%] transition duration-500 group-hover/card:scale-[1.02]"
-                    loading="lazy"
-                    decoding="async"
-                    onerror="this.onerror=null; this.src={!! json_encode($card->fallbackSvg) !!}"
-                />
-            </a>
-            <span class="absolute left-1.5 top-1.5 inline-flex items-center gap-0.5 rounded bg-emerald-600 px-1.5 py-0.5 text-[9px] font-bold uppercase tracking-wide text-white shadow-sm sm:left-2.5 sm:top-2.5 sm:rounded-md sm:px-2 sm:text-[10px]">
+        <div class="relative w-[6.75rem] shrink-0 overflow-hidden bg-slate-200 sm:w-full">
+            <div class="relative aspect-square w-full sm:aspect-[5/4]">
+                <a href="{{ $card->profileHref }}" class="absolute inset-0 block focus:outline-none focus-visible:ring-2 focus-visible:ring-baytgo focus-visible:ring-inset" tabindex="-1" aria-hidden="true">
+                    <img
+                        src="{{ $profile->photoUrl() }}"
+                        alt=""
+                        class="h-full w-full object-cover object-[center_30%] transition duration-500 group-hover/card:scale-[1.02]"
+                        loading="lazy"
+                        decoding="async"
+                        onerror="this.onerror=null; this.src={!! json_encode($card->fallbackSvg) !!}"
+                    />
+                </a>
+            </div>
+            <span class="absolute left-1.5 top-1.5 z-10 inline-flex items-center gap-0.5 rounded bg-emerald-600 px-1.5 py-0.5 text-[9px] font-bold uppercase tracking-wide text-white shadow-sm sm:left-2.5 sm:top-2.5 sm:rounded-md sm:px-2 sm:text-[10px]">
                 <svg class="h-2.5 w-2.5 sm:h-3 sm:w-3" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true"><path fill-rule="evenodd" d="M16.704 4.153a.75.75 0 01.143 1.052l-8 10.5a.75.75 0 01-1.127.075l-4.5-4.5a.75.75 0 011.06-1.06l3.894 3.893 7.48-9.817a.75.75 0 011.05-.143z" clip-rule="evenodd" /></svg>
                 {{ __('marketplace.card.badge_verified') }}
             </span>
