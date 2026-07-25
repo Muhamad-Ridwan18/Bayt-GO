@@ -2,9 +2,11 @@
 
 namespace App\Services\Moota;
 
+use App\Models\SiteSetting;
 use App\Support\AffiliateBankOptions;
 use App\Support\PaymentFlowLog;
 use Illuminate\Support\Facades\Cache;
+use Illuminate\Support\Facades\Crypt;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Log;
 use RuntimeException;
@@ -13,6 +15,8 @@ final class MootaApiClient
 {
     private const CACHE_TOKEN_KEY = 'moota:v2_access_token';
 
+    private const SETTING_TOKEN_KEY_PREFIX = 'moota.access_token.';
+
     public function baseUrl(): string
     {
         return rtrim((string) config('services.moota.api_base_url', 'https://api.moota.co'), '/');
@@ -20,19 +24,21 @@ final class MootaApiClient
 
     public function isConfigured(): bool
     {
-        $email = trim((string) config('services.moota.api_email'));
-        $password = (string) config('services.moota.api_password');
         /** @var array<int, string> $accounts */
         $accounts = config('services.moota.bank_account_ids', []);
 
-        return $email !== '' && $password !== '' && $accounts !== [];
+        return $this->isAuthConfigured() && $accounts !== [];
     }
 
     /**
-     * Hanya kredensial API (tanpa MOOTA_BANK_ACCOUNT_ID). Dipakai untuk daftar webhook via API.
+     * Kredensial API (tanpa MOOTA_BANK_ACCOUNT_ID). Dipakai untuk daftar webhook via API.
      */
     public function isAuthConfigured(): bool
     {
+        if (trim((string) config('services.moota.access_token', '')) !== '') {
+            return true;
+        }
+
         $email = trim((string) config('services.moota.api_email'));
         $password = (string) config('services.moota.api_password');
 
@@ -130,9 +136,17 @@ final class MootaApiClient
         }
 
         if (! is_string($token) || $token === '') {
-            PaymentFlowLog::warning('moota.api.login_no_token', ['elapsed_ms' => $elapsedMs]);
+            $hint = trim((string) ($json['message'] ?? ''));
+            PaymentFlowLog::warning('moota.api.login_no_token', [
+                'elapsed_ms' => $elapsedMs,
+                'message' => $hint !== '' ? $hint : null,
+            ]);
 
-            throw new RuntimeException('Respons login Moota tidak berisi access_token.');
+            throw new RuntimeException(
+                $hint !== ''
+                    ? 'Login Moota: '.$hint
+                    : 'Respons login Moota tidak berisi access_token.'
+            );
         }
 
         PaymentFlowLog::info('moota.api.login_ok', ['elapsed_ms' => $elapsedMs]);
@@ -140,18 +154,125 @@ final class MootaApiClient
         return $token;
     }
 
+    /**
+     * Urutan: MOOTA_ACCESS_TOKEN (.env) → cache → site_settings (DB) → login sekali lalu simpan DB.
+     * Login gagal di-cooldown agar tidak membuat token berulang tiap request.
+     */
     public function bearerToken(): string
     {
-        $minutes = max(5, min(720, (int) config('services.moota.token_cache_minutes', 55)));
+        $static = trim((string) config('services.moota.access_token', ''));
+        if ($static !== '') {
+            return $static;
+        }
 
-        return Cache::remember(self::CACHE_TOKEN_KEY.'|'.$this->configFingerprint(), now()->addMinutes($minutes), function (): string {
-            return $this->loginAndToken();
-        });
+        $persisted = $this->readPersistedToken();
+        if ($persisted !== null) {
+            return $persisted;
+        }
+
+        $failKey = $this->loginFailCacheKey();
+        $failMessage = Cache::get($failKey);
+        if (is_string($failMessage) && $failMessage !== '') {
+            throw new RuntimeException($failMessage);
+        }
+
+        try {
+            $token = $this->loginAndToken();
+        } catch (\Throwable $e) {
+            $cooldown = max(5, min(1440, (int) config('services.moota.token_cache_minutes', 55)));
+            Cache::put($failKey, $e->getMessage(), now()->addMinutes($cooldown));
+
+            throw $e;
+        }
+
+        $this->storePersistedToken($token);
+
+        return $token;
     }
 
     public function forgetCachedToken(): void
     {
-        Cache::forget(self::CACHE_TOKEN_KEY.'|'.$this->configFingerprint());
+        Cache::forget($this->tokenCacheKey());
+
+        try {
+            SiteSetting::putValue($this->tokenSettingKey(), null);
+        } catch (\Throwable $e) {
+            Log::warning('Moota hapus token DB gagal', ['message' => $e->getMessage()]);
+        }
+    }
+
+    /**
+     * Setelah HTTP 401: buang token lama lalu login sekali (bukan tiap request).
+     */
+    private function refreshBearerTokenAfterUnauthorized(): string
+    {
+        $this->forgetCachedToken();
+        Cache::forget($this->loginFailCacheKey());
+
+        return $this->bearerToken();
+    }
+
+    private function readPersistedToken(): ?string
+    {
+        $cacheKey = $this->tokenCacheKey();
+        $cached = Cache::get($cacheKey);
+        if (is_string($cached) && $cached !== '') {
+            return $cached;
+        }
+
+        try {
+            $raw = SiteSetting::getValue($this->tokenSettingKey());
+        } catch (\Throwable $e) {
+            Log::warning('Moota baca token DB gagal', ['message' => $e->getMessage()]);
+
+            return null;
+        }
+
+        if (! is_string($raw) || trim($raw) === '') {
+            return null;
+        }
+
+        try {
+            $token = Crypt::decryptString($raw);
+        } catch (\Throwable) {
+            $token = $raw;
+        }
+
+        $token = trim($token);
+        if ($token === '') {
+            return null;
+        }
+
+        Cache::forever($cacheKey, $token);
+
+        return $token;
+    }
+
+    private function storePersistedToken(string $token): void
+    {
+        Cache::forever($this->tokenCacheKey(), $token);
+
+        try {
+            SiteSetting::putValue($this->tokenSettingKey(), Crypt::encryptString($token));
+            PaymentFlowLog::info('moota.api.token_persisted');
+        } catch (\Throwable $e) {
+            Log::warning('Moota simpan token DB gagal', ['message' => $e->getMessage()]);
+        }
+    }
+
+    private function tokenCacheKey(): string
+    {
+        return self::CACHE_TOKEN_KEY.'|'.$this->configFingerprint();
+    }
+
+    private function tokenSettingKey(): string
+    {
+        return self::SETTING_TOKEN_KEY_PREFIX.$this->configFingerprint();
+    }
+
+    private function loginFailCacheKey(): string
+    {
+        return self::CACHE_TOKEN_KEY.':login_fail|'.$this->configFingerprint();
     }
 
     private function configFingerprint(): string
@@ -180,8 +301,7 @@ final class MootaApiClient
         $elapsedMs = (int) round((microtime(true) - $started) * 1000);
 
         if ($response->status() === 401) {
-            $this->forgetCachedToken();
-            $token = $this->bearerToken();
+            $token = $this->refreshBearerTokenAfterUnauthorized();
             $response = Http::timeout(60)->acceptJson()->asJson()->withToken($token)
                 ->post($this->baseUrl().'/api/v2/create-transaction', $body);
             $elapsedMs = (int) round((microtime(true) - $started) * 1000);
@@ -226,8 +346,7 @@ final class MootaApiClient
             ->get($this->baseUrl().'/api/v2/integration/webhook', $query);
 
         if ($response->status() === 401) {
-            $this->forgetCachedToken();
-            $token = $this->bearerToken();
+            $token = $this->refreshBearerTokenAfterUnauthorized();
             $response = Http::timeout(45)->acceptJson()->withToken($token)
                 ->get($this->baseUrl().'/api/v2/integration/webhook', $query);
         }
@@ -272,8 +391,7 @@ final class MootaApiClient
             ->post($this->baseUrl().'/api/v2/integration/webhook', $body);
 
         if ($response->status() === 401) {
-            $this->forgetCachedToken();
-            $token = $this->bearerToken();
+            $token = $this->refreshBearerTokenAfterUnauthorized();
             $response = Http::timeout(45)->acceptJson()->asJson()->withToken($token)
                 ->post($this->baseUrl().'/api/v2/integration/webhook', $body);
         }
@@ -309,20 +427,60 @@ final class MootaApiClient
      */
     public function bankAccountDetailsByIdMap(): array
     {
-        return Cache::remember(
-            'moota:bank_account_details|'.$this->configFingerprint(),
-            now()->addMinutes(10),
-            function (): array {
-                try {
-                    return $this->fetchBankAccountDetailsMap();
-                } catch (\Throwable $e) {
-                    Log::warning('Moota list bank gagal', ['message' => $e->getMessage()]);
-                    PaymentFlowLog::warning('moota.api.list_bank_failed', ['message' => $e->getMessage()]);
+        $cacheKey = 'moota:bank_account_details|'.$this->configFingerprint();
 
-                    return [];
-                }
-            }
-        );
+        /** @var array<string, array{label: string, bank_type: string, account_number: string, atas_nama: string}>|null $cached */
+        $cached = Cache::get($cacheKey);
+        if (is_array($cached) && $cached !== []) {
+            return $cached;
+        }
+
+        try {
+            $map = $this->fetchBankAccountDetailsMap();
+        } catch (\Throwable $e) {
+            Log::warning('Moota list bank gagal', ['message' => $e->getMessage()]);
+            PaymentFlowLog::warning('moota.api.list_bank_failed', ['message' => $e->getMessage()]);
+
+            return $this->configBankAccountDetailsFallbackMap();
+        }
+
+        if ($map === []) {
+            return $this->configBankAccountDetailsFallbackMap();
+        }
+
+        Cache::put($cacheKey, $map, now()->addMinutes(10));
+
+        return $map;
+    }
+
+    /**
+     * Fallback dari .env bila API list bank tidak tersedia.
+     *
+     * @return array<string, array{label: string, bank_type: string, account_number: string, atas_nama: string}>
+     */
+    private function configBankAccountDetailsFallbackMap(): array
+    {
+        /** @var list<string> $ids */
+        $ids = array_values(array_filter(array_map(trim(...), config('services.moota.bank_account_ids', []))));
+        /** @var list<string> $types */
+        $types = array_values(array_map(trim(...), config('services.moota.bank_types', [])));
+        /** @var list<string> $holders */
+        $holders = array_values(array_map(trim(...), config('services.moota.bank_holders', [])));
+        /** @var list<string> $numbers */
+        $numbers = array_values(array_map(trim(...), config('services.moota.bank_numbers', [])));
+
+        $byId = [];
+        foreach ($ids as $i => $id) {
+            $type = (string) ($types[$i] ?? '');
+            $byId[$id] = [
+                'label' => '',
+                'bank_type' => $type,
+                'account_number' => (string) ($numbers[$i] ?? ''),
+                'atas_nama' => (string) ($holders[$i] ?? ''),
+            ];
+        }
+
+        return $byId;
     }
 
     /**
@@ -357,6 +515,16 @@ final class MootaApiClient
 
             $row = $map[$id] ?? null;
             if ($row === null) {
+                $fallback = $this->configBankAccountDetailsFallbackMap()[$id] ?? null;
+                $row = $fallback;
+            }
+
+            if ($row === null || (
+                trim((string) ($row['label'] ?? '')) === ''
+                && trim((string) ($row['bank_type'] ?? '')) === ''
+                && trim((string) ($row['account_number'] ?? '')) === ''
+                && trim((string) ($row['atas_nama'] ?? '')) === ''
+            )) {
                 $out[$i] = [
                     'name' => __('bookings.payment.moota_account_title', ['n' => $i + 1]),
                     'description' => '',
@@ -380,8 +548,12 @@ final class MootaApiClient
             $bankCode = AffiliateBankOptions::resolveCodeFromHint((string) ($row['bank_type'] ?? ''))
                 ?? AffiliateBankOptions::resolveCodeFromHint($name);
 
+            if ($bankCode !== null && ($name === '' || $name === __('bookings.payment.moota_bank_fallback') || preg_match('/^Transfer bank/i', $name) === 1)) {
+                $name = AffiliateBankOptions::label($bankCode);
+            }
+
             $out[$i] = [
-                'name' => $name,
+                'name' => $name !== '' ? $name : __('bookings.payment.moota_account_title', ['n' => $i + 1]),
                 'description' => implode("\n", $lines),
                 'bank_type' => (string) ($row['bank_type'] ?? ''),
                 'logo_url' => $bankCode !== null ? AffiliateBankOptions::logoUrl($bankCode) : null,
@@ -410,8 +582,7 @@ final class MootaApiClient
                 ]);
 
             if ($response->status() === 401) {
-                $this->forgetCachedToken();
-                $token = $this->bearerToken();
+                $token = $this->refreshBearerTokenAfterUnauthorized();
                 $response = Http::timeout(45)->acceptJson()
                     ->withToken($token)
                     ->get($this->baseUrl().'/api/v2/bank', [
@@ -474,6 +645,10 @@ final class MootaApiClient
         }
 
         $bt = (string) ($row['bank_type'] ?? '');
+        $code = AffiliateBankOptions::resolveCodeFromHint($bt);
+        if ($code !== null) {
+            return AffiliateBankOptions::label($code);
+        }
 
         return match ($bt) {
             'bca', 'bcaGiro', 'bcaSyariah' => 'BCA',

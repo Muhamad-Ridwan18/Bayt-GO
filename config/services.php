@@ -91,6 +91,8 @@ return [
         'api_base_url' => rtrim((string) env('MOOTA_API_BASE_URL', 'https://api.moota.co'), '/'),
         'api_email' => (string) env('MOOTA_API_EMAIL', ''),
         'api_password' => (string) env('MOOTA_API_PASSWORD', ''),
+        /** Token tetap dari dashboard Moota — preferensi untuk hindari limit pembuatan token via login. */
+        'access_token' => (string) env('MOOTA_ACCESS_TOKEN', ''),
         /**
          * Satu atau lebih ID rekening Moota (`bank_account_id` di Create Transaction). Pisahkan dengan koma/spasi.
          * Bila lebih dari satu, halaman bayar web menampilkan satu opsi per rekening.
@@ -100,9 +102,29 @@ return [
             'trim',
             preg_split('/[\s,]+/', (string) env('MOOTA_BANK_ACCOUNT_ID', ''), -1, PREG_SPLIT_NO_EMPTY) ?: []
         ))),
+        /**
+         * Opsional — urutan sama dengan MOOTA_BANK_ACCOUNT_ID.
+         * Dipakai untuk nama + logo di UI bila GET /api/v2/bank gagal (mis. limit token API).
+         * Contoh: MOOTA_BANK_TYPES=bca,bni
+         */
+        'bank_types' => array_values(array_map(
+            'trim',
+            preg_split('/[\s,]+/', (string) env('MOOTA_BANK_TYPES', ''), -1, PREG_SPLIT_NO_EMPTY) ?: []
+        )),
+        /** Opsional — a.n. rekening, urutan sama dengan ID (pisah koma; boleh kosong per slot). */
+        'bank_holders' => array_values(array_map(
+            'trim',
+            preg_split('/,/', (string) env('MOOTA_BANK_HOLDERS', '')) ?: []
+        )),
+        /** Opsional — nomor rekening (tampil di UI), urutan sama dengan ID. */
+        'bank_numbers' => array_values(array_map(
+            'trim',
+            preg_split('/[\s,]+/', (string) env('MOOTA_BANK_NUMBERS', ''), -1, PREG_SPLIT_NO_EMPTY) ?: []
+        )),
         /** `first` | `round_robin` | `user` (fallback bila tidak ada rekening terpilih; web multi-rek: pakai opsi per ID). */
         'bank_account_pick' => strtolower(trim((string) env('MOOTA_BANK_ACCOUNT_PICK', 'first'))),
         'payment_expire_minutes' => (int) env('MOOTA_PAYMENT_EXPIRE_MINUTES', 1440),
+        /** Cooldown (menit) setelah login gagal — token sukses disimpan permanen sampai 401. */
         'token_cache_minutes' => (int) env('MOOTA_ACCESS_TOKEN_CACHE_MINUTES', 55),
         /** true = tampilkan badge sandbox di UI pembayaran (staging/local). */
         'is_sandbox' => filter_var(env('MOOTA_IS_SANDBOX', false), FILTER_VALIDATE_BOOLEAN),
