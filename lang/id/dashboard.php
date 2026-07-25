@@ -28,6 +28,7 @@ return [
     'customer_verified_badge' => 'Terverifikasi',
     'customer_bottom_home' => 'Beranda',
     'customer_bottom_bookings' => 'Pesanan Saya',
+    'customer_bottom_affiliate' => 'Affiliate',
     'customer_bottom_chat' => 'Chat',
     'customer_bottom_account' => 'Akun Saya',
     'muthowif_bottom_home' => 'Beranda',

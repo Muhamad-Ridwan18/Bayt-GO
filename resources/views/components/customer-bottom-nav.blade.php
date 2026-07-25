@@ -7,11 +7,11 @@
     class="pointer-events-none fixed inset-x-0 bottom-0 z-[80] px-4 pb-[max(0.75rem,env(safe-area-inset-bottom))] lg:hidden"
     aria-label="{{ __('dashboard.customer_bottom_home') }}"
 >
-    <div class="pointer-events-auto mx-auto flex max-w-[21rem] items-stretch gap-0.5 rounded-2xl border border-slate-200/90 bg-white/95 px-1.5 py-1.5 shadow-[0_10px_32px_-10px_rgba(15,42,37,0.28)] backdrop-blur">
+    <div class="pointer-events-auto mx-auto flex max-w-[24rem] items-stretch gap-0.5 rounded-2xl border border-slate-200/90 bg-white/95 px-1 py-1.5 shadow-[0_10px_32px_-10px_rgba(15,42,37,0.28)] backdrop-blur">
         <a
             href="{{ route('dashboard') }}"
             @class([
-                'flex min-w-0 flex-1 flex-col items-center gap-0.5 rounded-xl px-1.5 py-2 text-[10px] font-semibold transition',
+                'flex min-w-0 flex-1 flex-col items-center gap-0.5 rounded-xl px-1 py-2 text-[10px] font-semibold transition',
                 'bg-emerald-50 text-baytgo' => request()->routeIs('dashboard'),
                 'text-slate-500 hover:bg-slate-50 hover:text-slate-800' => ! request()->routeIs('dashboard'),
             ])
@@ -23,7 +23,7 @@
         <a
             href="{{ route('bookings.index') }}"
             @class([
-                'flex min-w-0 flex-1 flex-col items-center gap-0.5 rounded-xl px-1.5 py-2 text-[10px] font-semibold transition',
+                'flex min-w-0 flex-1 flex-col items-center gap-0.5 rounded-xl px-1 py-2 text-[10px] font-semibold transition',
                 'bg-emerald-50 text-baytgo' => request()->routeIs('bookings.*'),
                 'text-slate-500 hover:bg-slate-50 hover:text-slate-800' => ! request()->routeIs('bookings.*'),
             ])
@@ -33,9 +33,21 @@
         </a>
 
         <a
+            href="{{ route('affiliate.index') }}"
+            @class([
+                'flex min-w-0 flex-1 flex-col items-center gap-0.5 rounded-xl px-1 py-2 text-[10px] font-semibold transition',
+                'bg-emerald-50 text-baytgo' => request()->routeIs('affiliate.*'),
+                'text-slate-500 hover:bg-slate-50 hover:text-slate-800' => ! request()->routeIs('affiliate.*'),
+            ])
+        >
+            <svg class="h-5 w-5 shrink-0" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.7" stroke="currentColor" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" d="M13.19 8.688a4.5 4.5 0 011.242 7.244l-4.5 4.5a4.5 4.5 0 01-6.364-6.364l1.757-1.757m13.35-.622l1.757-1.757a4.5 4.5 0 00-6.364-6.364l-4.5 4.5a4.5 4.5 0 001.242 7.244"/></svg>
+            <span class="truncate">{{ __('dashboard.customer_bottom_affiliate') }}</span>
+        </a>
+
+        <a
             href="{{ route('chat.index') }}"
             @class([
-                'flex min-w-0 flex-1 flex-col items-center gap-0.5 rounded-xl px-1.5 py-2 text-[10px] font-semibold transition',
+                'flex min-w-0 flex-1 flex-col items-center gap-0.5 rounded-xl px-1 py-2 text-[10px] font-semibold transition',
                 'bg-emerald-50 text-baytgo' => request()->routeIs('chat.index'),
                 'text-slate-500 hover:bg-slate-50 hover:text-slate-800' => ! request()->routeIs('chat.index'),
             ])
@@ -47,7 +59,7 @@
         <a
             href="{{ route('profile.edit') }}"
             @class([
-                'flex min-w-0 flex-1 flex-col items-center gap-0.5 rounded-xl px-1.5 py-2 text-[10px] font-semibold transition',
+                'flex min-w-0 flex-1 flex-col items-center gap-0.5 rounded-xl px-1 py-2 text-[10px] font-semibold transition',
                 'bg-emerald-50 text-baytgo' => request()->routeIs('profile.*'),
                 'text-slate-500 hover:bg-slate-50 hover:text-slate-800' => ! request()->routeIs('profile.*'),
             ])

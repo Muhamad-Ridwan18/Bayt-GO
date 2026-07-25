@@ -28,6 +28,7 @@ return [
     'customer_verified_badge' => 'Verified',
     'customer_bottom_home' => 'Home',
     'customer_bottom_bookings' => 'My Bookings',
+    'customer_bottom_affiliate' => 'Affiliate',
     'customer_bottom_chat' => 'Chat',
     'customer_bottom_account' => 'My Account',
     'muthowif_bottom_home' => 'Home',
