@@ -195,7 +195,11 @@ export default function HomeScreen({ navigation }) {
           </View>
         ) : null}
 
-        <FeatureChips onFeaturePress={openDirectory} onSeeAll={() => openDirectory()} />
+        <FeatureChips
+          onFeaturePress={openDirectory}
+          onSeeAll={() => openDirectory()}
+          onSupportPress={() => navigation.navigate('SupportCatalog', { category: 'mobility' })}
+        />
 
         <View style={styles.sectionPad}>
           <View style={styles.sectionHead}>

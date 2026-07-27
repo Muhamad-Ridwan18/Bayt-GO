@@ -14,6 +14,10 @@ import PortfolioScreen from '../screens/PortfolioScreen';
 import PortfolioEditScreen from '../screens/PortfolioEditScreen';
 import EmergencyOffersScreen from '../screens/EmergencyOffersScreen';
 import SupportPackagesScreen from '../screens/SupportPackagesScreen';
+import SupportCatalogScreen from '../screens/SupportCatalogScreen';
+import SupportPackageDetailScreen from '../screens/SupportPackageDetailScreen';
+import SupportPackageBookScreen from '../screens/SupportPackageBookScreen';
+import AffiliateScreen from '../screens/AffiliateScreen';
 import EditMuthowifProfileScreen from '../screens/EditMuthowifProfileScreen';
 
 const Stack = createNativeStackNavigator();
@@ -57,6 +61,10 @@ export default function DashboardStack() {
       <Stack.Screen name="Portfolio" component={PortfolioScreen} />
       <Stack.Screen name="PortfolioEdit" component={PortfolioEditScreen} />
       <Stack.Screen name="SupportPackages" component={SupportPackagesScreen} />
+      <Stack.Screen name="SupportCatalog" component={SupportCatalogScreen} />
+      <Stack.Screen name="SupportPackageDetail" component={SupportPackageDetailScreen} />
+      <Stack.Screen name="SupportPackageBook" component={SupportPackageBookScreen} />
+      <Stack.Screen name="Affiliate" component={AffiliateScreen} />
       <Stack.Screen name="EmergencyOffers" component={EmergencyOffersScreen} />
       <Stack.Screen name="EditMuthowifProfile" component={EditMuthowifProfileScreen} />
     </Stack.Navigator>

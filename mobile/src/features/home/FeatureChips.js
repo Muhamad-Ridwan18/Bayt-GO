@@ -1,6 +1,6 @@
 import React from 'react';
 import { Dimensions, ScrollView, StyleSheet, Text, View } from 'react-native';
-import { User, Users } from 'lucide-react-native';
+import { Briefcase, User, Users } from 'lucide-react-native';
 import { PressableScale } from '../../ui';
 import { colors, layout, radius, spacing, typography } from '../../theme/tokens';
 
@@ -23,9 +23,18 @@ const SERVICES = [
     bg: '#EFF6FF',
     color: '#2563EB',
   },
+  {
+    id: 'support',
+    title: 'Layanan Pendukung',
+    sub: 'Kursi roda & lainnya',
+    Icon: Briefcase,
+    bg: '#F5F3FF',
+    color: '#7C3AED',
+    badge: 'Baru',
+  },
 ];
 
-export default function FeatureChips({ onFeaturePress, onSeeAll }) {
+export default function FeatureChips({ onFeaturePress, onSeeAll, onSupportPress }) {
   return (
     <View style={styles.wrap}>
       <View style={styles.head}>
@@ -45,7 +54,13 @@ export default function FeatureChips({ onFeaturePress, onSeeAll }) {
         {SERVICES.map((feat) => (
           <PressableScale
             key={feat.id}
-            onPress={() => onFeaturePress?.({ sort: feat.id })}
+            onPress={() => {
+              if (feat.id === 'support') {
+                onSupportPress?.();
+                return;
+              }
+              onFeaturePress?.({ sort: feat.id });
+            }}
             haptic="light"
             scaleTo={0.97}
           >

@@ -19,6 +19,9 @@ Route::get('/home', [\App\Http\Controllers\Api\HomeApiController::class, 'index'
 Route::get('/directory', [\App\Http\Controllers\Api\MuthowifDirectoryApiController::class, 'index']);
 Route::get('/directory/{id}', [\App\Http\Controllers\Api\MuthowifDirectoryApiController::class, 'show']);
 
+Route::get('/support-packages', [\App\Http\Controllers\Api\SupportPackageCatalogApiController::class, 'index']);
+Route::get('/support-packages/{id}', [\App\Http\Controllers\Api\SupportPackageCatalogApiController::class, 'show']);
+
 Route::middleware('auth:sanctum')->group(function () {
     Route::get('/user', function (Request $request) {
         $user = $request->user();
@@ -50,6 +53,7 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::get('/customer/bookings', [\App\Http\Controllers\Api\Customer\BookingApiController::class, 'index']);
     Route::get('/customer/bookings/{booking}', [\App\Http\Controllers\Api\Customer\BookingApiController::class, 'show']);
     Route::post('/customer/bookings', [\App\Http\Controllers\Api\Customer\BookingApiController::class, 'store']);
+    Route::post('/customer/support-bookings', [\App\Http\Controllers\Api\Customer\SupportBookingApiController::class, 'store']);
     Route::post('/customer/bookings/{booking}/pay', [\App\Http\Controllers\Api\Customer\BookingApiController::class, 'pay']);
     Route::get('/customer/bookings/{booking}/invoice', [\App\Http\Controllers\Api\Customer\BookingApiController::class, 'invoice']);
     Route::post('/customer/bookings/{booking}/review', [\App\Http\Controllers\Api\Customer\BookingApiController::class, 'review']);

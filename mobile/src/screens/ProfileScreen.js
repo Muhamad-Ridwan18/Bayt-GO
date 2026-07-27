@@ -13,6 +13,7 @@ import {
   Images,
   KeyRound,
   LifeBuoy,
+  Link2,
   LogOut,
   Mail,
   MapPin,
@@ -128,12 +129,15 @@ export default function ProfileScreen({ navigation }) {
 
   const customerMenus = [
     { icon: Receipt, label: 'Pesanan Saya', onPress: () => navigation.getParent()?.navigate('BookingsTab', { screen: 'BookingsList' }) },
+    { icon: Link2, label: 'Affiliate', onPress: () => navigation.navigate('Affiliate') },
+    { icon: Briefcase, label: 'Layanan Pendukung', onPress: () => navigation.getParent()?.navigate('HomeTab', { screen: 'SupportCatalog' }) },
     { icon: LifeBuoy, label: 'Tiket Bantuan', onPress: () => navigation.getParent()?.navigate('SupportTab', { screen: 'SupportList' }) },
   ];
 
   const muthowifMenus = [
     { icon: ClipboardList, label: 'Permintaan Booking', onPress: () => navigation.getParent()?.navigate('MuthowifBookingsTab', { screen: 'MuthowifBookingsList' }) },
     { icon: Wallet, label: 'Dompet', onPress: () => navigation.getParent()?.navigate('WalletTab', { screen: 'WalletMain' }) },
+    { icon: Link2, label: 'Affiliate', onPress: () => navigation.getParent()?.navigate('HomeTab', { screen: 'Affiliate' }) },
     { icon: Calendar, label: 'Jadwal Libur', onPress: () => navigation.getParent()?.navigate('HomeTab', { screen: 'Schedule' }) },
     { icon: Tag, label: 'Kelola Layanan', onPress: () => navigation.getParent()?.navigate('HomeTab', { screen: 'Services' }) },
     { icon: Briefcase, label: 'Paket Layanan Pendukung', onPress: () => navigation.getParent()?.navigate('HomeTab', { screen: 'SupportPackages' }) },
