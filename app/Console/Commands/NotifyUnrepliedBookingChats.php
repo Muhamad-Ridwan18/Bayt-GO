@@ -11,7 +11,7 @@ class NotifyUnrepliedBookingChats extends Command
                             {--force : Lewati batas 1x sehari — untuk testing}
                             {--dry-run : Hitung percakapan eligible tanpa mengirim WA}';
 
-    protected $description = 'Kirim WA harian ke muthowif yang belum membalas chat jamaah';
+    protected $description = 'Kirim WA ke muthowif jika pesan jemaah belum dibaca';
 
     public function handle(BookingChatUnrepliedReminderService $reminder): int
     {

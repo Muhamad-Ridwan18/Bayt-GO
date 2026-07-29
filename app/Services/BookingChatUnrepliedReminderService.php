@@ -53,17 +53,17 @@ final class BookingChatUnrepliedReminderService
                 continue;
             }
 
-            $lastMessage = $booking->chatMessages()->latest('created_at')->first();
-            if ($lastMessage === null || $lastMessage->created_at->gt($threshold)) {
+            $oldestUnread = $this->oldestUnreadCustomerMessage($booking);
+            if ($oldestUnread === null || $oldestUnread->created_at->gt($threshold)) {
                 continue;
             }
 
-            $recipient = $this->recipientFor($booking, $lastMessage);
+            $recipient = $this->muthowifRecipient($booking);
             if ($recipient === null) {
                 continue;
             }
 
-            $sendType = $this->resolveSendType($booking, $lastMessage, $today, $force);
+            $sendType = $this->resolveSendType($booking, $oldestUnread, $today, $force);
             if ($sendType === null) {
                 continue;
             }
@@ -82,7 +82,7 @@ final class BookingChatUnrepliedReminderService
             try {
                 $this->sendReminder($booking, $recipient);
                 if (! $force) {
-                    $this->markSent($booking, $lastMessage, $today, $sendType);
+                    $this->markSent($booking, $oldestUnread, $today, $sendType);
                 }
                 $recipients[] = array_merge($summary, ['status' => 'sent']);
             } catch (Throwable $e) {
@@ -163,18 +163,20 @@ final class BookingChatUnrepliedReminderService
         return $now->gte($target) && $now->lt($target->copy()->addMinutes(5));
     }
 
+    private function oldestUnreadCustomerMessage(MuthowifBooking $booking): ?BookingChatMessage
+    {
+        return $booking->chatMessages()
+            ->where('user_id', $booking->customer_id)
+            ->whereNull('read_at')
+            ->orderBy('created_at')
+            ->first();
+    }
+
     /**
      * @return array{role: string, user: User, dial: array{target: string, country_calling_code: string}}|null
      */
-    private function recipientFor(MuthowifBooking $booking, BookingChatMessage $lastMessage): ?array
+    private function muthowifRecipient(MuthowifBooking $booking): ?array
     {
-        $customerId = (string) $booking->customer_id;
-        $senderId = (string) $lastMessage->user_id;
-
-        if ($senderId !== $customerId) {
-            return null;
-        }
-
         $user = $booking->muthowifProfile?->user;
         $phone = $booking->muthowifProfile?->whatsAppPhone();
         if ($user === null || $phone === null) {
@@ -250,5 +252,113 @@ final class BookingChatUnrepliedReminderService
             __('whatsapp.chat_unreplied.body', ['code' => $bookingCode], $locale),
             __('whatsapp.chat_unreplied.cta', [], $locale),
         ]);
+    }
+
+    public static function resetReminders(?string $bookingRef = null): int
+    {
+        $bookingId = self::resolveBookingId($bookingRef);
+        $cleared = 0;
+
+        $store = Cache::getStore();
+
+        if ($store instanceof \Illuminate\Cache\RedisStore) {
+            $redis = $store->connection();
+            $prefix = $store->getPrefix();
+            $pattern = $prefix.self::CACHE_PREFIX.'*';
+            if ($bookingId !== null) {
+                $pattern = $prefix.self::CACHE_PREFIX.$bookingId.'*';
+            }
+
+            $firstPattern = $prefix.self::FIRST_CACHE_PREFIX.'*';
+            if ($bookingId !== null) {
+                $firstPattern = $prefix.self::FIRST_CACHE_PREFIX.$bookingId.':*';
+            }
+
+            foreach ([$pattern, $firstPattern] as $searchPattern) {
+                $keys = $redis->keys($searchPattern);
+                foreach ($keys as $key) {
+                    if ($redis->del($key) > 0) {
+                        $cleared++;
+                    }
+                }
+            }
+
+            return $cleared;
+        }
+
+        $query = \Illuminate\Support\Facades\DB::table(config('cache.stores.database.table', 'cache'))
+            ->where(static function ($q): void {
+                $q->where('key', 'like', '%'.self::CACHE_PREFIX.'%')
+                    ->orWhere('key', 'like', '%'.self::FIRST_CACHE_PREFIX.'%');
+            });
+
+        if ($bookingId !== null) {
+            $query->where(static function ($q) use ($bookingId): void {
+                $q->where('key', 'like', '%'.self::CACHE_PREFIX.$bookingId.'%')
+                    ->orWhere('key', 'like', '%'.self::FIRST_CACHE_PREFIX.$bookingId.':%');
+            });
+        }
+
+        $cleared = (int) $query->delete();
+
+        if ($cleared === 0 && $bookingRef === null) {
+            return self::resetRemindersByBookingIteration($bookingId);
+        }
+
+        return $cleared;
+    }
+
+    private static function resetRemindersByBookingIteration(?string $bookingId): int
+    {
+        $cleared = 0;
+        $query = MuthowifBooking::query()->whereHas('chatMessages');
+        if ($bookingId !== null) {
+            $query->whereKey($bookingId);
+        }
+
+        foreach ($query->cursor() as $booking) {
+            $unreadMessages = $booking->chatMessages()
+                ->where('user_id', $booking->customer_id)
+                ->whereNull('read_at')
+                ->get(['id']);
+
+            foreach ($unreadMessages as $message) {
+                if (Cache::forget(self::firstCacheKey($booking, $message))) {
+                    $cleared++;
+                }
+            }
+
+            for ($day = 0; $day < 14; $day++) {
+                $date = now()->subDays($day)->toDateString();
+                if (Cache::forget(self::dailyCacheKey($booking, $date))) {
+                    $cleared++;
+                }
+            }
+        }
+
+        return $cleared;
+    }
+
+    private static function resolveBookingId(?string $bookingRef): ?string
+    {
+        if ($bookingRef === null || trim($bookingRef) === '') {
+            return null;
+        }
+
+        $bookingRef = trim($bookingRef);
+
+        $byCode = MuthowifBooking::query()
+            ->where('booking_code', $bookingRef)
+            ->value('id');
+
+        if ($byCode !== null) {
+            return (string) $byCode;
+        }
+
+        if (MuthowifBooking::query()->whereKey($bookingRef)->exists()) {
+            return $bookingRef;
+        }
+
+        return null;
     }
 }
