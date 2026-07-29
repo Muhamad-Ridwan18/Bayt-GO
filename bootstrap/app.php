@@ -6,7 +6,9 @@ use App\Http\Middleware\EnsureCustomerOrMuthowif;
 use App\Http\Middleware\EnsureUserRole;
 use App\Http\Middleware\EnsureVerifiedMuthowif;
 use App\Http\Middleware\SetLocale;
+use App\Support\RedirectExpiredSession;
 use App\Support\WhatsAppNotifySettings;
+use Illuminate\Auth\AuthenticationException;
 use Illuminate\Broadcasting\BroadcastException;
 use Illuminate\Console\Scheduling\Schedule;
 use Illuminate\Http\Exceptions\PostTooLargeException;
@@ -14,8 +16,10 @@ use Illuminate\Foundation\Application;
 use Illuminate\Foundation\Configuration\Exceptions;
 use Illuminate\Foundation\Configuration\Middleware;
 use Illuminate\Http\Request;
+use Illuminate\Session\TokenMismatchException;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Str;
+use Symfony\Component\HttpKernel\Exception\HttpException;
 
 return Application::configure(basePath: dirname(__DIR__))
     ->withRouting(
@@ -82,5 +86,21 @@ return Application::configure(basePath: dirname(__DIR__))
             return redirect()->back()
                 ->withInput()
                 ->withErrors(['ticket_outbound' => __('bookings.validation.document_upload_failed')]);
+        });
+
+        $exceptions->renderable(function (AuthenticationException $e, Request $request) {
+            return RedirectExpiredSession::respond($request);
+        });
+
+        $exceptions->renderable(function (TokenMismatchException $e, Request $request) {
+            return RedirectExpiredSession::respond($request);
+        });
+
+        $exceptions->renderable(function (HttpException $e, Request $request) {
+            if ($e->getStatusCode() !== 403 || $request->user() !== null) {
+                return null;
+            }
+
+            return RedirectExpiredSession::respond($request);
         });
     })->create();
