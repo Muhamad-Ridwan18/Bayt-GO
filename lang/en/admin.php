@@ -442,6 +442,12 @@ return [
         'chat_unreplied_threshold_minutes_hint' => 'Notification is sent when the last message has been unreplied longer than this. Min. 1, max. 1440 (24 hours).',
         'chat_unreplied_daily_time' => 'Daily send time',
         'chat_unreplied_daily_time_hint' => 'Automatic daily send time (24-hour format).',
+        'run_chat_unreplied_heading' => 'Live chat reminder testing (real)',
+        'run_chat_unreplied_hint' => 'Run the real process for unreplied chats. Testing mode skips the once-daily limit. Ensure the queue worker is running so WhatsApp messages are sent.',
+        'run_chat_unreplied_dry_button' => 'Check eligible (no send)',
+        'run_chat_unreplied_button' => 'Run now (testing)',
+        'run_chat_unreplied_dry_run' => ':count conversations eligible (dry-run, not sent).',
+        'run_chat_unreplied_success' => ':count notifications queued for delivery (testing mode).',
         'groups' => [
             'auth' => 'OTP & authentication',
             'booking' => 'Booking & payment',

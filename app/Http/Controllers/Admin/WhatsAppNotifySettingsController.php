@@ -210,6 +210,25 @@ class WhatsAppNotifySettingsController extends Controller
         ]);
     }
 
+    public function runChatUnrepliedNow(Request $request, BookingChatUnrepliedReminderService $reminder): JsonResponse
+    {
+        if (! WhatsAppNotifySettings::hasToken()) {
+            return response()->json([
+                'message' => __('admin.whatsapp_notify.test_token_missing'),
+            ], 422);
+        }
+
+        $dryRun = filter_var($request->input('dry_run', false), FILTER_VALIDATE_BOOLEAN);
+        $count = $reminder->process(force: true, dryRun: $dryRun);
+
+        return response()->json([
+            'message' => $dryRun
+                ? __('admin.whatsapp_notify.run_chat_unreplied_dry_run', ['count' => $count])
+                : __('admin.whatsapp_notify.run_chat_unreplied_success', ['count' => $count]),
+            'count' => $count,
+        ]);
+    }
+
     /**
      * @return array<string, list<string>>
      */

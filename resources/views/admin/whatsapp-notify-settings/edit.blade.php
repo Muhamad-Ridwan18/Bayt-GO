@@ -163,6 +163,27 @@
                                             <x-input-error :messages="$errors->get('chat_unreplied_daily_time')" class="mt-2" />
                                         </div>
                                     </div>
+                                    <div class="mt-5 rounded-xl border border-amber-200 bg-amber-50 p-4">
+                                        <h4 class="text-sm font-semibold text-amber-950">{{ __('admin.whatsapp_notify.run_chat_unreplied_heading') }}</h4>
+                                        <p class="mt-1 text-xs text-amber-900/80">{{ __('admin.whatsapp_notify.run_chat_unreplied_hint') }}</p>
+                                        <div id="wa-run-chat-unreplied-result" class="mt-3 hidden rounded-xl border px-4 py-3 text-sm"></div>
+                                        <div class="mt-3 flex flex-wrap gap-3">
+                                            <button
+                                                type="button"
+                                                id="wa-run-chat-unreplied-dry-btn"
+                                                class="inline-flex items-center rounded-xl border border-amber-300 bg-white px-5 py-2.5 text-sm font-semibold text-amber-900 shadow-sm hover:bg-amber-100 disabled:cursor-not-allowed disabled:opacity-60"
+                                            >
+                                                {{ __('admin.whatsapp_notify.run_chat_unreplied_dry_button') }}
+                                            </button>
+                                            <button
+                                                type="button"
+                                                id="wa-run-chat-unreplied-btn"
+                                                class="inline-flex items-center rounded-xl bg-amber-600 px-5 py-2.5 text-sm font-semibold text-white shadow-sm hover:bg-amber-700 disabled:cursor-not-allowed disabled:opacity-60"
+                                            >
+                                                {{ __('admin.whatsapp_notify.run_chat_unreplied_button') }}
+                                            </button>
+                                        </div>
+                                    </div>
                                 </div>
                                 <div class="mt-5 border-t border-slate-100 pt-5">
                                     <h3 class="text-sm font-semibold text-slate-900">{{ __('admin.whatsapp_notify.test_chat_unreplied_heading') }}</h3>
@@ -365,6 +386,68 @@
                                     chatBtn.disabled = false;
                                     chatBtn.textContent = chatLabels.defaultButton;
                                 }
+                            });
+                        }
+
+                        async function runChatUnreplied(dryRun) {
+                            const runBtn = document.getElementById('wa-run-chat-unreplied-btn');
+                            const dryBtn = document.getElementById('wa-run-chat-unreplied-dry-btn');
+                            const runResultBox = document.getElementById('wa-run-chat-unreplied-result');
+                            if (!runBtn || !dryBtn || !runResultBox) return;
+
+                            runBtn.disabled = true;
+                            dryBtn.disabled = true;
+                            runResultBox.classList.add('hidden');
+                            runResultBox.textContent = '';
+
+                            const formData = new FormData(form);
+                            formData.set('dry_run', dryRun ? '1' : '0');
+
+                            try {
+                                const response = await fetch(@json(route('admin.whatsapp-notify-settings.run-chat-unreplied')), {
+                                    method: 'POST',
+                                    headers: {
+                                        'X-CSRF-TOKEN': @json(csrf_token()),
+                                        'Accept': 'application/json',
+                                    },
+                                    body: formData,
+                                });
+
+                                const data = await response.json();
+                                let text = data.message || '';
+                                if (data.errors) {
+                                    text = Object.values(data.errors).flat().join('\n');
+                                }
+
+                                runResultBox.textContent = text;
+                                runResultBox.style.whiteSpace = 'pre-wrap';
+                                runResultBox.classList.remove('hidden');
+                                runResultBox.classList.toggle('border-emerald-200', response.ok);
+                                runResultBox.classList.toggle('bg-emerald-50', response.ok);
+                                runResultBox.classList.toggle('text-emerald-900', response.ok);
+                                runResultBox.classList.toggle('border-red-200', !response.ok);
+                                runResultBox.classList.toggle('bg-red-50', !response.ok);
+                                runResultBox.classList.toggle('text-red-900', !response.ok);
+                            } catch (error) {
+                                runResultBox.textContent = @json(__('admin.whatsapp_notify.test_request_failed'));
+                                runResultBox.classList.remove('hidden');
+                                runResultBox.classList.add('border-red-200', 'bg-red-50', 'text-red-900');
+                            } finally {
+                                runBtn.disabled = false;
+                                dryBtn.disabled = false;
+                            }
+                        }
+
+                        const runChatBtn = document.getElementById('wa-run-chat-unreplied-btn');
+                        const runChatDryBtn = document.getElementById('wa-run-chat-unreplied-dry-btn');
+                        if (runChatBtn) {
+                            runChatBtn.addEventListener('click', function () {
+                                runChatUnreplied(false);
+                            });
+                        }
+                        if (runChatDryBtn) {
+                            runChatDryBtn.addEventListener('click', function () {
+                                runChatUnreplied(true);
                             });
                         }
                     })();

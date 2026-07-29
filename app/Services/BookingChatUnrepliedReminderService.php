@@ -17,9 +17,11 @@ final class BookingChatUnrepliedReminderService
 {
     private const CACHE_PREFIX = 'chat_unreplied_wa:';
 
-    public function process(): int
+    public function process(bool $force = false, bool $dryRun = false): int
     {
-        if (! WhatsAppNotifySettings::enabled('chat_unreplied_daily')) {
+        $forTesting = $force || $dryRun;
+
+        if (! $forTesting && ! WhatsAppNotifySettings::enabled('chat_unreplied_daily')) {
             return 0;
         }
 
@@ -56,12 +58,20 @@ final class BookingChatUnrepliedReminderService
             }
 
             $cacheKey = self::CACHE_PREFIX.$booking->getKey().':'.$recipient['role'].':'.$today;
-            if (Cache::has($cacheKey)) {
+            if (! $force && Cache::has($cacheKey)) {
+                continue;
+            }
+
+            if ($dryRun) {
+                $sent++;
+
                 continue;
             }
 
             if ($this->sendReminder($booking, $recipient)) {
-                Cache::put($cacheKey, true, now()->endOfDay());
+                if (! $force) {
+                    Cache::put($cacheKey, true, now()->endOfDay());
+                }
                 $sent++;
             }
         }

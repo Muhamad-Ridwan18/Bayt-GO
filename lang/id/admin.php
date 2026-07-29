@@ -442,6 +442,12 @@ return [
         'chat_unreplied_threshold_minutes_hint' => 'Notifikasi dikirim jika pesan terakhir belum dibalas lebih dari nilai ini. Min. 1, maks. 1440 (24 jam).',
         'chat_unreplied_daily_time' => 'Jadwal kirim harian',
         'chat_unreplied_daily_time_hint' => 'Waktu pengiriman otomatis setiap hari (format 24 jam).',
+        'run_chat_unreplied_heading' => 'Testing pengingat live chat (real)',
+        'run_chat_unreplied_hint' => 'Jalankan proses nyata ke chat yang belum dibalas. Mode testing melewati batas 1× sehari. Pastikan queue worker aktif agar WA terkirim.',
+        'run_chat_unreplied_dry_button' => 'Cek eligible (tanpa kirim)',
+        'run_chat_unreplied_button' => 'Jalankan sekarang (testing)',
+        'run_chat_unreplied_dry_run' => ':count percakapan memenuhi syarat (dry-run, tidak dikirim).',
+        'run_chat_unreplied_success' => ':count notifikasi masuk antrian pengiriman (mode testing).',
         'groups' => [
             'auth' => 'OTP & autentikasi',
             'booking' => 'Booking & pembayaran',
