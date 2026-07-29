@@ -18,8 +18,10 @@ final class BookingChatUnrepliedReminderService
 {
     private const CACHE_PREFIX = 'chat_unreplied_wa:';
 
+    private const FIRST_CACHE_PREFIX = 'chat_unreplied_wa:first:';
+
     /**
-     * @return array{count: int, recipients: list<array{role: string, name: string, phone: string, booking_code: string, status: string, error?: string}>}
+     * @return array{count: int, recipients: list<array{booking_id: string, role: string, name: string, phone: string, booking_code: string, status: string, send_type?: string, error?: string}>}
      */
     public function process(bool $force = false, bool $dryRun = false): array
     {
@@ -61,12 +63,15 @@ final class BookingChatUnrepliedReminderService
                 continue;
             }
 
-            $cacheKey = self::cacheKeyForBooking($booking, $today);
-            if (! $force && Cache::has($cacheKey)) {
+            $sendType = $this->resolveSendType($booking, $lastMessage, $today, $force);
+            if ($sendType === null) {
                 continue;
             }
 
-            $summary = $this->recipientSummary($booking, $recipient);
+            $summary = array_merge(
+                $this->recipientSummary($booking, $recipient),
+                ['send_type' => $sendType],
+            );
 
             if ($dryRun) {
                 $recipients[] = array_merge($summary, ['status' => 'eligible']);
@@ -77,13 +82,14 @@ final class BookingChatUnrepliedReminderService
             try {
                 $this->sendReminder($booking, $recipient);
                 if (! $force) {
-                    Cache::put($cacheKey, true, now()->endOfDay());
+                    $this->markSent($booking, $lastMessage, $today, $sendType);
                 }
                 $recipients[] = array_merge($summary, ['status' => 'sent']);
             } catch (Throwable $e) {
                 Log::warning('chat_unreplied.wa_failed', [
                     'booking_code' => $summary['booking_code'],
                     'phone' => $summary['phone'],
+                    'send_type' => $sendType,
                     'exception' => $e->getMessage(),
                 ]);
                 $recipients[] = array_merge($summary, [
@@ -100,6 +106,61 @@ final class BookingChatUnrepliedReminderService
             )),
             'recipients' => $recipients,
         ];
+    }
+
+    private function resolveSendType(
+        MuthowifBooking $booking,
+        BookingChatMessage $lastMessage,
+        string $today,
+        bool $force,
+    ): ?string {
+        $firstKey = self::firstCacheKey($booking, $lastMessage);
+        $dailyKey = self::dailyCacheKey($booking, $today);
+
+        if (! Cache::has($firstKey)) {
+            return 'first';
+        }
+
+        if (! self::isDailyScheduleWindow()) {
+            return null;
+        }
+
+        if (! $force && Cache::has($dailyKey)) {
+            return null;
+        }
+
+        return 'daily';
+    }
+
+    private function markSent(
+        MuthowifBooking $booking,
+        BookingChatMessage $lastMessage,
+        string $today,
+        string $sendType,
+    ): void {
+        $firstKey = self::firstCacheKey($booking, $lastMessage);
+
+        if ($sendType === 'first') {
+            Cache::put($firstKey, true, now()->addDays(60));
+            Cache::put(self::dailyCacheKey($booking, $today), true, now()->endOfDay());
+
+            return;
+        }
+
+        Cache::put(self::dailyCacheKey($booking, $today), true, now()->endOfDay());
+    }
+
+    private static function isDailyScheduleWindow(): bool
+    {
+        $scheduled = WhatsAppNotifySettings::chatUnrepliedDailyTime();
+        if (! preg_match('/^(\d{2}):(\d{2})$/', $scheduled, $matches)) {
+            return false;
+        }
+
+        $target = now()->copy()->setTime((int) $matches[1], (int) $matches[2], 0);
+        $now = now();
+
+        return $now->gte($target) && $now->lt($target->copy()->addMinutes(5));
     }
 
     /**
@@ -130,7 +191,7 @@ final class BookingChatUnrepliedReminderService
 
     /**
      * @param  array{role: string, user: User, dial: array{target: string, country_calling_code: string}}  $recipient
-     * @return array{role: string, name: string, phone: string, booking_code: string}
+     * @return array{booking_id: string, role: string, name: string, phone: string, booking_code: string}
      */
     private function recipientSummary(MuthowifBooking $booking, array $recipient): array
     {
@@ -143,7 +204,12 @@ final class BookingChatUnrepliedReminderService
         ];
     }
 
-    private static function cacheKeyForBooking(MuthowifBooking $booking, string $date): string
+    private static function firstCacheKey(MuthowifBooking $booking, BookingChatMessage $lastMessage): string
+    {
+        return self::FIRST_CACHE_PREFIX.(string) $booking->getKey().':'.(string) $lastMessage->getKey();
+    }
+
+    private static function dailyCacheKey(MuthowifBooking $booking, string $date): string
     {
         return self::CACHE_PREFIX.(string) $booking->getKey().':'.$date;
     }

@@ -34,7 +34,7 @@ return Application::configure(basePath: dirname(__DIR__))
         $schedule->command('bookings:process-timeouts')->everyFiveMinutes();
         $schedule->command('bookings:auto-complete-service')->everyMinute();
         $schedule->command('bookings:process-support-lifecycle')->everyMinute();
-        $schedule->command('chat:notify-unreplied')->dailyAt(WhatsAppNotifySettings::chatUnrepliedDailyTime());
+        $schedule->command('chat:notify-unreplied')->everyMinute();
     })
     ->withMiddleware(function (Middleware $middleware): void {
         $middleware->trustProxies(
