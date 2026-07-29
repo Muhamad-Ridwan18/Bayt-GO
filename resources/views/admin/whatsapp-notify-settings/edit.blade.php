@@ -133,6 +133,38 @@
                             </ul>
                             @if ($groupKey === 'chat')
                                 <div class="mt-5 border-t border-slate-100 pt-5">
+                                    <h3 class="text-sm font-semibold text-slate-900">{{ __('admin.whatsapp_notify.chat_settings_heading') }}</h3>
+                                    <p class="mt-1 text-xs text-slate-500">{{ __('admin.whatsapp_notify.chat_settings_hint') }}</p>
+                                    <div class="mt-4 grid gap-4 sm:grid-cols-2">
+                                        <div>
+                                            <x-input-label for="chat_unreplied_threshold_minutes" :value="__('admin.whatsapp_notify.chat_unreplied_threshold_minutes')" />
+                                            <input
+                                                id="chat_unreplied_threshold_minutes"
+                                                name="chat_unreplied_threshold_minutes"
+                                                type="number"
+                                                min="1"
+                                                max="1440"
+                                                value="{{ old('chat_unreplied_threshold_minutes', $chatSettings['threshold_minutes']) }}"
+                                                class="mt-1 block w-full rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm text-slate-900 shadow-sm focus:border-emerald-500 focus:ring-emerald-500"
+                                            >
+                                            <p class="mt-1.5 text-xs text-slate-500">{{ __('admin.whatsapp_notify.chat_unreplied_threshold_minutes_hint') }}</p>
+                                            <x-input-error :messages="$errors->get('chat_unreplied_threshold_minutes')" class="mt-2" />
+                                        </div>
+                                        <div>
+                                            <x-input-label for="chat_unreplied_daily_time" :value="__('admin.whatsapp_notify.chat_unreplied_daily_time')" />
+                                            <input
+                                                id="chat_unreplied_daily_time"
+                                                name="chat_unreplied_daily_time"
+                                                type="time"
+                                                value="{{ old('chat_unreplied_daily_time', $chatSettings['daily_time']) }}"
+                                                class="mt-1 block w-full rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm text-slate-900 shadow-sm focus:border-emerald-500 focus:ring-emerald-500"
+                                            >
+                                            <p class="mt-1.5 text-xs text-slate-500">{{ __('admin.whatsapp_notify.chat_unreplied_daily_time_hint') }}</p>
+                                            <x-input-error :messages="$errors->get('chat_unreplied_daily_time')" class="mt-2" />
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="mt-5 border-t border-slate-100 pt-5">
                                     <h3 class="text-sm font-semibold text-slate-900">{{ __('admin.whatsapp_notify.test_chat_unreplied_heading') }}</h3>
                                     <p class="mt-1 text-xs text-slate-500">{{ __('admin.whatsapp_notify.test_chat_unreplied_hint') }}</p>
                                     <div class="mt-4 grid gap-4 sm:grid-cols-3">

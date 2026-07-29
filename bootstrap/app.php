@@ -6,6 +6,7 @@ use App\Http\Middleware\EnsureCustomerOrMuthowif;
 use App\Http\Middleware\EnsureUserRole;
 use App\Http\Middleware\EnsureVerifiedMuthowif;
 use App\Http\Middleware\SetLocale;
+use App\Support\WhatsAppNotifySettings;
 use Illuminate\Broadcasting\BroadcastException;
 use Illuminate\Console\Scheduling\Schedule;
 use Illuminate\Http\Exceptions\PostTooLargeException;
@@ -28,7 +29,7 @@ return Application::configure(basePath: dirname(__DIR__))
         $schedule->command('bookings:process-timeouts')->everyFiveMinutes();
         $schedule->command('bookings:auto-complete-service')->everyMinute();
         $schedule->command('bookings:process-support-lifecycle')->everyMinute();
-        $schedule->command('chat:notify-unreplied')->dailyAt('09:00');
+        $schedule->command('chat:notify-unreplied')->dailyAt(WhatsAppNotifySettings::chatUnrepliedDailyTime());
     })
     ->withMiddleware(function (Middleware $middleware): void {
         $middleware->trustProxies(

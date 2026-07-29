@@ -15,8 +15,6 @@ use Illuminate\Support\Facades\Log;
 
 final class BookingChatUnrepliedReminderService
 {
-    private const REPLY_THRESHOLD_MINUTES = 30;
-
     private const CACHE_PREFIX = 'chat_unreplied_wa:';
 
     public function process(): int
@@ -31,7 +29,7 @@ final class BookingChatUnrepliedReminderService
             return 0;
         }
 
-        $threshold = now()->subMinutes(self::REPLY_THRESHOLD_MINUTES);
+        $threshold = now()->subMinutes(WhatsAppNotifySettings::chatUnrepliedThresholdMinutes());
         $today = now()->toDateString();
         $sent = 0;
 

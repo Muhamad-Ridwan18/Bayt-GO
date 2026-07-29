@@ -24,12 +24,13 @@ class WhatsAppNotifySettingsController extends Controller
             'whatsappConfigured' => WhatsAppNotifySettings::hasToken(),
             'groups' => WhatsAppNotifySettings::groups(),
             'toggles' => WhatsAppNotifySettings::toggles(),
+            'chatSettings' => WhatsAppNotifySettings::chatValuesForForm(),
         ]);
     }
 
     public function update(Request $request): RedirectResponse
     {
-        $request->validate($this->gatewayValidationRules());
+        $request->validate(array_merge($this->gatewayValidationRules(), $this->chatValidationRules()));
 
         WhatsAppNotifySettings::saveFromInput($request->all());
 
@@ -221,6 +222,17 @@ class WhatsAppNotifySettingsController extends Controller
             'gateway_session_id' => ['nullable', 'string', 'max:64'],
             'gateway_country_code' => ['nullable', 'string', 'max:4', 'regex:/^\d+$/'],
             'gateway_media_public_url' => ['nullable', 'string', 'max:500'],
+        ];
+    }
+
+    /**
+     * @return array<string, list<string>>
+     */
+    private function chatValidationRules(): array
+    {
+        return [
+            'chat_unreplied_threshold_minutes' => ['nullable', 'integer', 'min:1', 'max:1440'],
+            'chat_unreplied_daily_time' => ['nullable', 'string', 'regex:/^\d{2}:\d{2}$/'],
         ];
     }
 }

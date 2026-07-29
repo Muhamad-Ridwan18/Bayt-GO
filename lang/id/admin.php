@@ -436,6 +436,12 @@ return [
         'test_chat_unreplied_running' => 'Mengirim uji coba…',
         'test_chat_unreplied_numbers_missing' => 'Isi nomor tujuan atau minimal satu nomor admin.',
         'test_chat_unreplied_success' => 'Uji pengingat chat terkirim ke :sent dari :total nomor. Cek WhatsApp Anda.',
+        'chat_settings_heading' => 'Pengaturan pengingat live chat',
+        'chat_settings_hint' => 'Atur batas waktu belum dibalas dan jadwal pengiriman harian (zona waktu aplikasi).',
+        'chat_unreplied_threshold_minutes' => 'Batas waktu belum dibalas (menit)',
+        'chat_unreplied_threshold_minutes_hint' => 'Notifikasi dikirim jika pesan terakhir belum dibalas lebih dari nilai ini. Min. 1, maks. 1440 (24 jam).',
+        'chat_unreplied_daily_time' => 'Jadwal kirim harian',
+        'chat_unreplied_daily_time_hint' => 'Waktu pengiriman otomatis setiap hari (format 24 jam).',
         'groups' => [
             'auth' => 'OTP & autentikasi',
             'booking' => 'Booking & pembayaran',
@@ -466,7 +472,7 @@ return [
             'support_completion_requested' => 'Layanan pendukung selesai (jamaah) → muthowif (legacy)',
             'support_completion_approved' => 'Konfirmasi selesai layanan pendukung → jamaah',
             'support_completion_rejected' => 'Tolak selesai layanan pendukung → jamaah (legacy)',
-            'chat_unreplied_daily' => 'Pengingat balas live chat (>30 menit) → muthowif/jamaah (1× sehari)',
+            'chat_unreplied_daily' => 'Pengingat balas live chat → muthowif/jamaah (1× sehari)',
         ],
     ],
     'whatsapp_broadcast' => [

@@ -436,6 +436,12 @@ return [
         'test_chat_unreplied_running' => 'Sending test…',
         'test_chat_unreplied_numbers_missing' => 'Enter a target number or at least one admin number.',
         'test_chat_unreplied_success' => 'Chat reminder test sent to :sent of :total numbers. Check WhatsApp.',
+        'chat_settings_heading' => 'Live chat reminder settings',
+        'chat_settings_hint' => 'Configure the unreplied threshold and daily send schedule (app timezone).',
+        'chat_unreplied_threshold_minutes' => 'Unreplied threshold (minutes)',
+        'chat_unreplied_threshold_minutes_hint' => 'Notification is sent when the last message has been unreplied longer than this. Min. 1, max. 1440 (24 hours).',
+        'chat_unreplied_daily_time' => 'Daily send time',
+        'chat_unreplied_daily_time_hint' => 'Automatic daily send time (24-hour format).',
         'groups' => [
             'auth' => 'OTP & authentication',
             'booking' => 'Booking & payment',
@@ -466,7 +472,7 @@ return [
             'support_completion_requested' => 'Support marked complete (pilgrim) → muthowif (legacy)',
             'support_completion_approved' => 'Support completion confirmed → pilgrim',
             'support_completion_rejected' => 'Support completion rejected → pilgrim (legacy)',
-            'chat_unreplied_daily' => 'Unreplied live chat reminder (>30 min) → muthowif/pilgrim (once daily)',
+            'chat_unreplied_daily' => 'Unreplied live chat reminder → muthowif/pilgrim (once daily)',
         ],
     ],
     'whatsapp_broadcast' => [
