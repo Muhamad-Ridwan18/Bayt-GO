@@ -12,10 +12,10 @@ import { notifyError, notifySuccess } from '../utils/feedback';
 
 export default function SupportPackageBookScreen({ navigation, route }) {
   const { token } = useAuth();
-  const { id, startsAtDate: initialDate, packagePreview } = route.params || {};
+  const { id, startsAt: initialStartsAt, startsAtDate, packagePreview } = route.params || {};
   const pkg = packagePreview || {};
 
-  const [startsAtDate, setStartsAtDate] = useState(initialDate || '');
+  const [startsAt, setStartsAt] = useState(initialStartsAt || startsAtDate || '');
   const [pilgrimCount, setPilgrimCount] = useState(String(pkg.min_pilgrims || 1));
   const [affiliateCode, setAffiliateCode] = useState('');
   const [submitting, setSubmitting] = useState(false);
@@ -31,8 +31,8 @@ export default function SupportPackageBookScreen({ navigation, route }) {
     const min = Number(pkg.min_pilgrims || 1);
     const max = Number(pkg.max_pilgrims || 500);
 
-    if (!startsAtDate) {
-      Alert.alert('Validasi', 'Pilih tanggal layanan');
+    if (!startsAt) {
+      Alert.alert('Validasi', 'Pilih tanggal & jam layanan');
       return;
     }
     if (!count || count < min || count > max) {
@@ -44,7 +44,7 @@ export default function SupportPackageBookScreen({ navigation, route }) {
     try {
       const result = await createSupportBooking(token, {
         support_package_id: id,
-        starts_at: `${startsAtDate}T09:00:00`,
+        starts_at: startsAt,
         pilgrim_count: count,
         affiliate_code: affiliateCode.trim() || null,
       });
@@ -72,12 +72,14 @@ export default function SupportPackageBookScreen({ navigation, route }) {
 
         <Card style={styles.card}>
           <DatePickerField
-            label="Tanggal layanan"
-            value={startsAtDate}
-            onChange={setStartsAtDate}
-            placeholder="Pilih tanggal"
+            label="Tanggal & jam mulai"
+            mode="datetime"
+            value={startsAt}
+            onChange={setStartsAt}
+            placeholder="Pilih tanggal & jam"
             minimumDate={today}
           />
+          <Text style={styles.hint}>Layanan dimulai pada waktu ini.</Text>
           <Text style={styles.label}>Jumlah jamaah ({pkg.min_pilgrims}–{pkg.max_pilgrims})</Text>
           <TextInput
             value={pilgrimCount}
@@ -121,6 +123,11 @@ const styles = StyleSheet.create({
     ...typography.subtitle,
     color: colors.baytgo,
     fontFamily: 'PlusJakartaSans_800ExtraBold',
+  },
+  hint: {
+    ...typography.small,
+    color: colors.textMuted,
+    marginTop: -spacing.xs,
   },
   label: {
     ...typography.caption,

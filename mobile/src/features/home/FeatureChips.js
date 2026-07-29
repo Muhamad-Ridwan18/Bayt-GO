@@ -1,40 +1,65 @@
 import React from 'react';
 import { Dimensions, ScrollView, StyleSheet, Text, View } from 'react-native';
-import { Briefcase, User, Users } from 'lucide-react-native';
+import { Accessibility, Camera, MapPin, Moon, User } from 'lucide-react-native';
 import { PressableScale } from '../../ui';
 import { colors, layout, radius, spacing, typography } from '../../theme/tokens';
 
 const { width: SCREEN_W } = Dimensions.get('window');
 
-const SERVICES = [
+/** Mirror web WelcomePageData::buildCategories() */
+export const HOME_CATEGORIES = [
   {
-    id: 'private',
-    title: 'Jamaah Private',
-    sub: 'Pendamping eksklusif',
+    key: 'umroh',
+    type: 'layanan',
+    title: 'Pendamping Umrah',
+    sub: 'Private & group',
     Icon: User,
     bg: '#ECFDF5',
     color: '#059669',
   },
   {
-    id: 'group',
-    title: 'Jamaah Group',
-    sub: 'Untuk rombongan',
-    Icon: Users,
+    key: 'mobility',
+    type: 'support',
+    category: 'mobility',
+    title: 'Kursi Roda',
+    sub: 'Mobilitas di Haram',
+    Icon: Accessibility,
     bg: '#EFF6FF',
     color: '#2563EB',
   },
   {
-    id: 'support',
-    title: 'Layanan Pendukung',
-    sub: 'Kursi roda & lainnya',
-    Icon: Briefcase,
+    key: 'umrah',
+    type: 'support',
+    category: 'umrah',
+    title: 'Pendamping Salat',
+    sub: 'Bimbingan ibadah',
+    Icon: Moon,
+    bg: '#F0FDF4',
+    color: '#16A34A',
+  },
+  {
+    key: 'other',
+    type: 'support',
+    category: 'other',
+    title: 'Fotografer & Videografer',
+    sub: 'Dokumentasi perjalanan',
+    Icon: Camera,
     bg: '#F5F3FF',
     color: '#7C3AED',
-    badge: 'Baru',
+  },
+  {
+    key: 'ziarah',
+    type: 'support',
+    category: 'ziarah',
+    title: 'Raudhah',
+    sub: 'Pendamping ziarah',
+    Icon: MapPin,
+    bg: '#FFF7ED',
+    color: '#EA580C',
   },
 ];
 
-export default function FeatureChips({ onFeaturePress, onSeeAll, onSupportPress }) {
+export default function FeatureChips({ onCategoryPress, onSeeAll }) {
   return (
     <View style={styles.wrap}>
       <View style={styles.head}>
@@ -51,30 +76,19 @@ export default function FeatureChips({ onFeaturePress, onSeeAll, onSupportPress 
         contentContainerStyle={styles.row}
         nestedScrollEnabled
       >
-        {SERVICES.map((feat) => (
+        {HOME_CATEGORIES.map((feat) => (
           <PressableScale
-            key={feat.id}
-            onPress={() => {
-              if (feat.id === 'support') {
-                onSupportPress?.();
-                return;
-              }
-              onFeaturePress?.({ sort: feat.id });
-            }}
+            key={feat.key}
+            onPress={() => onCategoryPress?.(feat)}
             haptic="light"
             scaleTo={0.97}
           >
             <View style={[styles.card, { backgroundColor: feat.bg }]}>
-              {feat.badge ? (
-                <View style={styles.newBadge}>
-                  <Text style={styles.newBadgeText}>{feat.badge}</Text>
-                </View>
-              ) : null}
               <View style={[styles.iconWrap, { backgroundColor: `${feat.color}18` }]}>
                 <feat.Icon size={20} color={feat.color} strokeWidth={2} />
               </View>
-              <Text style={styles.title}>{feat.title}</Text>
-              <Text style={styles.sub}>{feat.sub}</Text>
+              <Text style={styles.title} numberOfLines={2}>{feat.title}</Text>
+              <Text style={styles.sub} numberOfLines={2}>{feat.sub}</Text>
             </View>
           </PressableScale>
         ))}
@@ -112,28 +126,12 @@ const styles = StyleSheet.create({
     paddingBottom: spacing.xs,
   },
   card: {
-    width: SCREEN_W * 0.38,
+    width: SCREEN_W * 0.36,
     borderRadius: radius.md - 2,
     padding: spacing.lg,
     minHeight: 118,
     borderWidth: 1,
     borderColor: 'rgba(0,0,0,0.04)',
-    position: 'relative',
-  },
-  newBadge: {
-    position: 'absolute',
-    top: spacing.sm,
-    right: spacing.sm,
-    backgroundColor: colors.primary,
-    paddingHorizontal: spacing.sm,
-    paddingVertical: 2,
-    borderRadius: radius.full,
-  },
-  newBadgeText: {
-    fontSize: 8,
-    fontWeight: '800',
-    fontFamily: 'PlusJakartaSans_800ExtraBold',
-    color: colors.white,
   },
   iconWrap: {
     width: 40,

@@ -74,6 +74,19 @@ export default function HomeScreen({ navigation }) {
     });
   }, [navigation, searchName, startDate, endDate]);
 
+  const openCategory = useCallback((cat) => {
+    if (!cat) return;
+    if (cat.type === 'support') {
+      navigation.navigate('SupportCatalog', {
+        category: cat.category || cat.key,
+        startsAt: startDate.trim() ? `${startDate.trim()}T09:00` : undefined,
+        q: searchName.trim() || undefined,
+      });
+      return;
+    }
+    openDirectory();
+  }, [navigation, openDirectory, searchName, startDate]);
+
   const openMuthowifDetail = (item) => navigation.navigate('MuthowifDetail', {
     id: item.id, startDate: startDate.trim() || undefined, endDate: endDate.trim() || undefined,
   });
@@ -196,9 +209,8 @@ export default function HomeScreen({ navigation }) {
         ) : null}
 
         <FeatureChips
-          onFeaturePress={openDirectory}
+          onCategoryPress={openCategory}
           onSeeAll={() => openDirectory()}
-          onSupportPress={() => navigation.navigate('SupportCatalog', { category: 'mobility' })}
         />
 
         <View style={styles.sectionPad}>

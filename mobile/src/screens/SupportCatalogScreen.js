@@ -19,9 +19,9 @@ import { formatIdr } from '../utils/format';
 
 const DEFAULT_CATEGORIES = [
   { value: 'mobility', label: 'Kursi Roda' },
-  { value: 'umrah', label: 'Umrah' },
-  { value: 'ziarah', label: 'Ziarah' },
-  { value: 'other', label: 'Lainnya' },
+  { value: 'umrah', label: 'Pendamping Salat' },
+  { value: 'other', label: 'Fotografer & Videografer' },
+  { value: 'ziarah', label: 'Raudhah' },
 ];
 
 export default function SupportCatalogScreen({ navigation, route }) {
@@ -30,7 +30,7 @@ export default function SupportCatalogScreen({ navigation, route }) {
 
   const [category, setCategory] = useState(initial.category || 'mobility');
   const [q, setQ] = useState(initial.q || '');
-  const [startsAtDate, setStartsAtDate] = useState(initial.startsAtDate || '');
+  const [startsAt, setStartsAt] = useState(initial.startsAt || initial.startsAtDate || '');
   const [categories, setCategories] = useState(DEFAULT_CATEGORIES);
   const [items, setItems] = useState([]);
   const [hasSearch, setHasSearch] = useState(false);
@@ -41,13 +41,21 @@ export default function SupportCatalogScreen({ navigation, route }) {
   const [error, setError] = useState(null);
   const [stats, setStats] = useState(null);
 
+  useEffect(() => {
+    const next = route.params || {};
+    if (next.category) setCategory(next.category);
+    if (next.q != null) setQ(next.q || '');
+    const nextStarts = next.startsAt ?? next.startsAtDate;
+    if (nextStarts != null) setStartsAt(nextStarts || '');
+  }, [route.params?.category, route.params?.q, route.params?.startsAt, route.params?.startsAtDate]);
+
   const today = useMemo(() => {
     const d = new Date();
     d.setHours(0, 0, 0, 0);
     return d;
   }, []);
 
-  const startsAtParam = startsAtDate ? `${startsAtDate}T09:00:00` : '';
+  const startsAtParam = startsAt || '';
 
   const loadPage = useCallback(async (pageNum, { append = false } = {}) => {
     if (!category) return;
@@ -90,7 +98,7 @@ export default function SupportCatalogScreen({ navigation, route }) {
   const openDetail = (item) => {
     navigation.navigate('SupportPackageDetail', {
       id: item.id,
-      startsAtDate: startsAtDate || undefined,
+      startsAt: startsAt || undefined,
       packagePreview: item,
     });
   };
@@ -114,11 +122,14 @@ export default function SupportCatalogScreen({ navigation, route }) {
           onSelect={(value) => setCategory(value)}
         />
         <DatePickerField
-          label="Tanggal layanan"
-          value={startsAtDate}
-          onChange={setStartsAtDate}
-          placeholder="Pilih tanggal"
+          label="Tanggal & jam mulai"
+          mode="datetime"
+          value={startsAt}
+          onChange={setStartsAt}
+          placeholder="Pilih tanggal & jam"
           minimumDate={today}
+          clearable
+          onClear={() => setStartsAt('')}
         />
         <SearchBar
           value={q}
@@ -139,8 +150,8 @@ export default function SupportCatalogScreen({ navigation, route }) {
       {!loading && !error && !hasSearch ? (
         <EmptyState
           variant="package"
-          title="Pilih tanggal dulu"
-          description="Isi tanggal layanan lalu cari untuk melihat paket yang tersedia."
+          title="Pilih tanggal & jam dulu"
+          description="Isi tanggal dan jam mulai layanan lalu cari untuk melihat paket yang tersedia."
         />
       ) : null}
 

@@ -12,7 +12,7 @@
     "@react-navigation/bottom-tabs": "^7.18.3",
     "@react-navigation/native": "^7.3.3",
     "@react-navigation/native-stack": "^7.17.5",
-    "@shopify/flash-list": "^2.3.2",
+    "@shopify/flash-list": "2.0.2",
     "babel-preset-expo": "~54.0.10",
     "expo": "~54.0.0",
     "expo-blur": "~15.0.8",
@@ -46,6 +46,7 @@
     "start:tunnel": "powershell -ExecutionPolicy Bypass -File ./scripts/start-tunnel.ps1",
     "start:tunnel:ngrok": "powershell -ExecutionPolicy Bypass -File ./scripts/start-tunnel.ps1 -Provider ngrok",
     "start:tunnel:cloudflare": "powershell -ExecutionPolicy Bypass -File ./scripts/start-tunnel.ps1 -Provider cloudflare",
+    "push:test": "node scripts/send-test-push.js",
     "android": "expo start --android",
     "ios": "expo start --ios",
     "web": "expo start --web"

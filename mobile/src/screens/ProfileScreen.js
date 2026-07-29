@@ -26,6 +26,7 @@ import {
   Tag,
   User,
   Wallet,
+  BellRing,
 } from 'lucide-react-native';
 import TabPageHeader from '../components/TabPageHeader';
 import { useAuth } from '../context/AuthContext';
@@ -249,8 +250,17 @@ export default function ProfileScreen({ navigation }) {
             icon={KeyRound}
             label="Ganti Password"
             onPress={() => navigation.navigate('ChangePassword')}
-            isLast
+            isLast={!__DEV__}
           />
+          {__DEV__ ? (
+            <MenuRow
+              icon={BellRing}
+              label="Test Push Notification"
+              onPress={() => navigation.navigate('PushNotificationTest')}
+              iconBg="#FEF3C7"
+              isLast
+            />
+          ) : null}
         </Section>
 
         <View style={styles.section}>

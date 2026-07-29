@@ -8,6 +8,7 @@ import EditMuthowifProfileScreen from '../screens/EditMuthowifProfileScreen';
 import ChangePasswordScreen from '../screens/ChangePasswordScreen';
 import DeleteAccountScreen from '../screens/DeleteAccountScreen';
 import AffiliateScreen from '../screens/AffiliateScreen';
+import PushNotificationTestScreen from '../screens/PushNotificationTestScreen';
 
 const Stack = createNativeStackNavigator();
 
@@ -33,6 +34,9 @@ export default function ProfileStack() {
       <Stack.Screen name="ChangePassword" component={ChangePasswordScreen} />
       <Stack.Screen name="DeleteAccount" component={DeleteAccountScreen} />
       <Stack.Screen name="Affiliate" component={AffiliateScreen} />
+      {__DEV__ ? (
+        <Stack.Screen name="PushNotificationTest" component={PushNotificationTestScreen} />
+      ) : null}
     </Stack.Navigator>
   );
 }

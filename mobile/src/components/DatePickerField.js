@@ -19,6 +19,16 @@ export function toIsoDate(date) {
   return `${y}-${m}-${d}`;
 }
 
+/** Match web datetime-local: YYYY-MM-DDTHH:mm */
+export function toIsoDateTime(date) {
+  const y = date.getFullYear();
+  const m = String(date.getMonth() + 1).padStart(2, '0');
+  const d = String(date.getDate()).padStart(2, '0');
+  const h = String(date.getHours()).padStart(2, '0');
+  const min = String(date.getMinutes()).padStart(2, '0');
+  return `${y}-${m}-${d}T${h}:${min}`;
+}
+
 export function parseIsoDate(value) {
   if (!value) return new Date();
   const match = /^(\d{4})-(\d{2})-(\d{2})$/.exec(value);
@@ -28,10 +38,40 @@ export function parseIsoDate(value) {
   return Number.isNaN(parsed.getTime()) ? new Date() : parsed;
 }
 
-function formatDisplay(value, compact = false) {
+export function parseIsoDateTime(value) {
+  if (!value) return new Date();
+  const dateOnly = /^(\d{4})-(\d{2})-(\d{2})$/.exec(String(value));
+  if (dateOnly) {
+    return new Date(Number(dateOnly[1]), Number(dateOnly[2]) - 1, Number(dateOnly[3]), 9, 0, 0);
+  }
+  const match = /^(\d{4})-(\d{2})-(\d{2})[T\s](\d{2}):(\d{2})(?::(\d{2}))?/.exec(String(value));
+  if (!match) return new Date();
+  const [, y, m, d, h, min, s] = match;
+  const parsed = new Date(
+    Number(y),
+    Number(m) - 1,
+    Number(d),
+    Number(h),
+    Number(min),
+    Number(s || 0),
+  );
+  return Number.isNaN(parsed.getTime()) ? new Date() : parsed;
+}
+
+function formatDisplay(value, { compact = false, withTime = false } = {}) {
   if (!value) return '';
   try {
-    return parseIsoDate(value).toLocaleDateString('id-ID', compact
+    const date = withTime ? parseIsoDateTime(value) : parseIsoDate(value);
+    if (withTime) {
+      return date.toLocaleString('id-ID', {
+        day: 'numeric',
+        month: compact ? 'short' : 'short',
+        year: compact ? undefined : 'numeric',
+        hour: '2-digit',
+        minute: '2-digit',
+      });
+    }
+    return date.toLocaleDateString('id-ID', compact
       ? { day: 'numeric', month: 'short' }
       : { day: 'numeric', month: 'short', year: 'numeric' });
   } catch {
@@ -45,106 +85,143 @@ export default function DatePickerField({
   label,
   value,
   onChange,
-  placeholder = 'Pilih tanggal',
+  placeholder,
   minimumDate,
   maximumDate,
   onClear,
   clearable = false,
   variant = 'default',
   compact = false,
+  mode = 'date',
 }) {
+  const isDateTime = mode === 'datetime';
+  const parseValue = isDateTime ? parseIsoDateTime : parseIsoDate;
+  const serialize = isDateTime ? toIsoDateTime : toIsoDate;
+  const resolvedPlaceholder = placeholder
+    || (isDateTime ? 'Pilih tanggal & jam' : 'Pilih tanggal');
+
   const [show, setShow] = useState(false);
-  const [draft, setDraft] = useState(parseIsoDate(value));
+  const [draft, setDraft] = useState(parseValue(value));
+  const [androidStep, setAndroidStep] = useState('date'); // date | time
 
   const openPicker = () => {
-    setDraft(parseIsoDate(value));
+    setDraft(parseValue(value));
+    setAndroidStep('date');
     setShow(true);
   };
 
-  const closePicker = () => setShow(false);
-
-  const handleChange = (event, selectedDate) => {
-    if (Platform.OS === 'android') {
-      closePicker();
-      if (event.type === 'dismissed') return;
-      if (selectedDate) onChange(toIsoDate(selectedDate));
-      return;
-    }
-    if (selectedDate) setDraft(selectedDate);
+  const closePicker = () => {
+    setShow(false);
+    setAndroidStep('date');
   };
 
-  const confirm = () => {
-    onChange(toIsoDate(draft));
+  const commit = (date) => {
+    onChange(serialize(date));
     closePicker();
   };
 
+  const handleChange = (event, selectedDate) => {
+    if (Platform.OS === 'android') {
+      if (event.type === 'dismissed') {
+        closePicker();
+        return;
+      }
+      if (!selectedDate) {
+        closePicker();
+        return;
+      }
+
+      if (isDateTime && androidStep === 'date') {
+        const next = new Date(selectedDate);
+        next.setHours(draft.getHours(), draft.getMinutes(), 0, 0);
+        setDraft(next);
+        setAndroidStep('time');
+        return;
+      }
+
+      if (isDateTime && androidStep === 'time') {
+        const next = new Date(draft);
+        next.setHours(selectedDate.getHours(), selectedDate.getMinutes(), 0, 0);
+        commit(next);
+        return;
+      }
+
+      commit(selectedDate);
+      return;
+    }
+
+    if (selectedDate) setDraft(selectedDate);
+  };
+
+  const handleTimeChange = (_event, selectedDate) => {
+    if (selectedDate) {
+      const next = new Date(draft);
+      next.setHours(selectedDate.getHours(), selectedDate.getMinutes(), 0, 0);
+      setDraft(next);
+    }
+  };
+
+  const confirm = () => commit(draft);
+
   const isChip = variant === 'chip';
+  const displayValue = value
+    ? formatDisplay(value, { compact, withTime: isDateTime })
+    : '';
+
+  // Android datetime: native dialogs (date then time) — no custom sheet.
+  if (Platform.OS === 'android' && show && isDateTime) {
+    return (
+      <View style={[styles.wrap, isChip && styles.wrapChip]}>
+        {label && !isChip ? <Text style={styles.label}>{label}</Text> : null}
+        <FieldButton
+          isChip={isChip}
+          label={label}
+          clearable={clearable}
+          value={value}
+          displayValue={displayValue}
+          placeholder={resolvedPlaceholder}
+          onPress={openPicker}
+          onClear={onClear}
+          variant={variant}
+        />
+        <DateTimePicker
+          key={androidStep}
+          value={draft}
+          mode={isDateTime && androidStep === 'time' ? 'time' : 'date'}
+          display={isDateTime && androidStep === 'time' ? 'default' : CALENDAR_DISPLAY}
+          is24Hour
+          minimumDate={androidStep === 'date' ? minimumDate : undefined}
+          maximumDate={androidStep === 'date' ? maximumDate : undefined}
+          onChange={handleChange}
+        />
+      </View>
+    );
+  }
 
   return (
     <View style={[styles.wrap, isChip && styles.wrapChip]}>
       {label && !isChip ? <Text style={styles.label}>{label}</Text> : null}
 
-      <PressableScale
-        style={[
-          styles.field,
-          variant === 'soft' && styles.fieldSoft,
-          isChip && styles.fieldChip,
-        ]}
+      <FieldButton
+        isChip={isChip}
+        label={label}
+        clearable={clearable}
+        value={value}
+        displayValue={displayValue}
+        placeholder={resolvedPlaceholder}
         onPress={openPicker}
-        haptic="light"
-      >
-        {isChip ? (
-          <>
-            <View style={styles.chipTopRow}>
-              <Text style={styles.chipLabel}>{label}</Text>
-              {clearable && value ? (
-                <Pressable
-                  onPress={(e) => {
-                    e.stopPropagation?.();
-                    onClear?.();
-                  }}
-                  hitSlop={8}
-                >
-                  <XCircle size={14} color={colors.textMuted} strokeWidth={2} />
-                </Pressable>
-              ) : null}
-            </View>
-            <View style={styles.chipValueRow}>
-              <Calendar size={15} color={colors.baytgo} strokeWidth={2} />
-              <Text style={[styles.chipValue, !value && styles.placeholder]} numberOfLines={1}>
-                {value ? formatDisplay(value, true) : placeholder}
-              </Text>
-            </View>
-          </>
-        ) : (
-          <>
-            <Calendar size={20} color={colors.baytgo} strokeWidth={2} />
-            <Text style={[styles.value, !value && styles.placeholder]} numberOfLines={1}>
-              {value ? formatDisplay(value) : placeholder}
-            </Text>
-            {clearable && value ? (
-              <Pressable
-                onPress={(e) => {
-                  e.stopPropagation?.();
-                  onClear?.();
-                }}
-                hitSlop={8}
-              >
-                <XCircle size={18} color={colors.textMuted} strokeWidth={2} />
-              </Pressable>
-            ) : (
-              <ChevronDown size={16} color={colors.textMuted} strokeWidth={2} />
-            )}
-          </>
-        )}
-      </PressableScale>
+        onClear={onClear}
+        variant={variant}
+      />
 
       <Modal visible={show} transparent animationType="slide" onRequestClose={closePicker}>
         <Pressable style={styles.overlay} onPress={closePicker} />
         <View style={styles.sheet}>
           <View style={styles.sheetHandle} />
           <View style={styles.sheetHeader}>
-            <Text style={styles.sheetTitle}>{label || 'Pilih tanggal'}</Text>
+            <Text style={styles.sheetTitle}>
+              {label || (isDateTime ? 'Pilih tanggal & jam' : 'Pilih tanggal')}
+            </Text>
             <PressableScale onPress={closePicker} haptic="light" hitSlop={12}>
               <X size={22} color={colors.textSecondary} strokeWidth={2} />
             </PressableScale>
@@ -163,16 +240,104 @@ export default function DatePickerField({
               accentColor={colors.baytgo}
               style={Platform.OS === 'ios' ? styles.iosCalendar : undefined}
             />
+            {isDateTime ? (
+              <View style={styles.timeWrap}>
+                <Text style={styles.timeLabel}>Jam mulai</Text>
+                <DateTimePicker
+                  value={draft}
+                  mode="time"
+                  display="spinner"
+                  is24Hour
+                  minuteInterval={5}
+                  onChange={handleTimeChange}
+                  locale="id-ID"
+                  themeVariant="light"
+                  accentColor={colors.baytgo}
+                  style={styles.iosTime}
+                />
+              </View>
+            ) : null}
           </View>
 
           {Platform.OS === 'ios' ? (
             <PressableScale style={styles.confirmBtn} onPress={confirm} haptic="medium">
-              <Text style={styles.confirmBtnText}>Pilih tanggal</Text>
+              <Text style={styles.confirmBtnText}>
+                {isDateTime ? 'Pilih tanggal & jam' : 'Pilih tanggal'}
+              </Text>
             </PressableScale>
           ) : null}
         </View>
       </Modal>
     </View>
+  );
+}
+
+function FieldButton({
+  isChip,
+  label,
+  clearable,
+  value,
+  displayValue,
+  placeholder,
+  onPress,
+  onClear,
+  variant,
+}) {
+  return (
+    <PressableScale
+      style={[
+        styles.field,
+        variant === 'soft' && styles.fieldSoft,
+        isChip && styles.fieldChip,
+      ]}
+      onPress={onPress}
+      haptic="light"
+    >
+      {isChip ? (
+        <>
+          <View style={styles.chipTopRow}>
+            <Text style={styles.chipLabel}>{label}</Text>
+            {clearable && value ? (
+              <Pressable
+                onPress={(e) => {
+                  e.stopPropagation?.();
+                  onClear?.();
+                }}
+                hitSlop={8}
+              >
+                <XCircle size={14} color={colors.textMuted} strokeWidth={2} />
+              </Pressable>
+            ) : null}
+          </View>
+          <View style={styles.chipValueRow}>
+            <Calendar size={15} color={colors.baytgo} strokeWidth={2} />
+            <Text style={[styles.chipValue, !value && styles.placeholder]} numberOfLines={1}>
+              {value ? displayValue : placeholder}
+            </Text>
+          </View>
+        </>
+      ) : (
+        <>
+          <Calendar size={20} color={colors.baytgo} strokeWidth={2} />
+          <Text style={[styles.value, !value && styles.placeholder]} numberOfLines={1}>
+            {value ? displayValue : placeholder}
+          </Text>
+          {clearable && value ? (
+            <Pressable
+              onPress={(e) => {
+                e.stopPropagation?.();
+                onClear?.();
+              }}
+              hitSlop={8}
+            >
+              <XCircle size={18} color={colors.textMuted} strokeWidth={2} />
+            </Pressable>
+          ) : (
+            <ChevronDown size={16} color={colors.textMuted} strokeWidth={2} />
+          )}
+        </>
+      )}
+    </PressableScale>
   );
 }
 
@@ -267,6 +432,20 @@ const styles = StyleSheet.create({
     overflow: 'hidden',
   },
   iosCalendar: { width: '100%', height: 340 },
+  timeWrap: {
+    width: '100%',
+    marginTop: spacing.sm,
+    borderTopWidth: 1,
+    borderTopColor: colors.border,
+    paddingTop: spacing.sm,
+  },
+  timeLabel: {
+    ...typography.label,
+    color: colors.textSecondary,
+    textTransform: 'uppercase',
+    marginBottom: spacing.xs,
+  },
+  iosTime: { width: '100%', height: 160 },
   confirmBtn: {
     marginTop: spacing.md,
     backgroundColor: colors.baytgo,

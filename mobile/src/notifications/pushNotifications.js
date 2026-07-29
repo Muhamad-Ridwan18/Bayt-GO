@@ -20,14 +20,83 @@ export function getCachedExpoPushToken() {
   return cachedExpoPushToken;
 }
 
+export function getPushEnvironmentInfo() {
+  return {
+    isDevice: Device.isDevice,
+    isExpoGo,
+    executionEnvironment: Constants.executionEnvironment,
+    platform: Platform.OS,
+    modelName: Device.modelName || null,
+    projectId:
+      Constants.expoConfig?.extra?.eas?.projectId
+      ?? Constants.easConfig?.projectId
+      ?? null,
+    appOwnership: Constants.appOwnership,
+  };
+}
+
 function logPushDebug(message, extra) {
   if (__DEV__) {
     console.warn(`[push] ${message}`, extra ?? '');
   }
 }
 
-export async function registerForPushNotificationsAsync() {
-  if (!Device.isDevice) {
+export async function ensureAndroidDefaultChannel() {
+  if (Platform.OS !== 'android') return;
+  await Notifications.setNotificationChannelAsync('default', {
+    name: 'default',
+    importance: Notifications.AndroidImportance.MAX,
+    vibrationPattern: [0, 250, 250, 250],
+  });
+}
+
+export async function requestNotificationPermissionAsync() {
+  const { status: existingStatus } = await Notifications.getPermissionsAsync();
+  if (existingStatus === 'granted') return existingStatus;
+  const { status } = await Notifications.requestPermissionsAsync();
+  return status;
+}
+
+/**
+ * Local notification — works on emulator & Expo Go (no remote/FCM).
+ * Use this to test banner UI + tap → chat navigation.
+ */
+export async function scheduleLocalTestNotification({
+  title = 'BaytGo Test',
+  body = 'Ini notifikasi lokal untuk testing.',
+  seconds = 2,
+  data = null,
+} = {}) {
+  await ensureAndroidDefaultChannel();
+  const permission = await requestNotificationPermissionAsync();
+  if (permission !== 'granted') {
+    throw new Error(`Izin notifikasi: ${permission}`);
+  }
+
+  const id = await Notifications.scheduleNotificationAsync({
+    content: {
+      title,
+      body,
+      sound: true,
+      data: data || {
+        type: 'chat',
+        booking_id: '0',
+        booking_code: 'TEST-LOCAL',
+        other_name: 'Push Test',
+      },
+    },
+    trigger: {
+      type: Notifications.SchedulableTriggerInputTypes.TIME_INTERVAL,
+      seconds: Math.max(1, Number(seconds) || 2),
+      channelId: 'default',
+    },
+  });
+
+  return id;
+}
+
+export async function registerForPushNotificationsAsync({ allowEmulator = __DEV__ } = {}) {
+  if (!Device.isDevice && !allowEmulator) {
     logPushDebug('skipped: simulator/emulator');
     return null;
   }
@@ -37,21 +106,9 @@ export async function registerForPushNotificationsAsync() {
     return null;
   }
 
-  if (Platform.OS === 'android') {
-    await Notifications.setNotificationChannelAsync('default', {
-      name: 'default',
-      importance: Notifications.AndroidImportance.MAX,
-      vibrationPattern: [0, 250, 250, 250],
-    });
-  }
+  await ensureAndroidDefaultChannel();
 
-  const { status: existingStatus } = await Notifications.getPermissionsAsync();
-  let finalStatus = existingStatus;
-  if (existingStatus !== 'granted') {
-    const { status } = await Notifications.requestPermissionsAsync();
-    finalStatus = status;
-  }
-
+  const finalStatus = await requestNotificationPermissionAsync();
   if (finalStatus !== 'granted') {
     logPushDebug('skipped: notification permission not granted', finalStatus);
     return null;

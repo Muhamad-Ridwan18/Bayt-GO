@@ -16,10 +16,11 @@ import { navigateRoot } from '../navigation/rootNavigation';
 
 export default function SupportPackageDetailScreen({ navigation, route }) {
   const { token, isAuthenticated } = useAuth();
-  const { id, startsAtDate, packagePreview } = route.params || {};
+  const { id, startsAt: startsAtParam, startsAtDate, packagePreview } = route.params || {};
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [pkg, setPkg] = useState(packagePreview || null);
+  const startsAt = startsAtParam || startsAtDate || '';
 
   const load = useCallback(async () => {
     if (!id) return;
@@ -28,7 +29,7 @@ export default function SupportPackageDetailScreen({ navigation, route }) {
       const data = await fetchSupportPackageDetail({
         token,
         id,
-        startsAt: startsAtDate ? `${startsAtDate}T09:00:00` : undefined,
+        startsAt: startsAt || undefined,
       });
       setPkg(data.data || data);
       setError(null);
@@ -37,7 +38,7 @@ export default function SupportPackageDetailScreen({ navigation, route }) {
     } finally {
       setLoading(false);
     }
-  }, [token, id, startsAtDate]);
+  }, [token, id, startsAt]);
 
   useFocusEffect(
     useCallback(() => {
@@ -52,7 +53,7 @@ export default function SupportPackageDetailScreen({ navigation, route }) {
     }
     navigation.navigate('SupportPackageBook', {
       id,
-      startsAtDate,
+      startsAt,
       packagePreview: pkg,
     });
   };
