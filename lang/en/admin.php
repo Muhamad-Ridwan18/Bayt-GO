@@ -432,6 +432,7 @@ return [
             'admin' => 'To admin',
             'emergency' => 'Emergency incidents',
             'support' => 'Support services',
+            'chat' => 'Live chat',
         ],
         'toggles' => [
             'otp' => 'Registration & password reset OTP',
@@ -454,6 +455,7 @@ return [
             'support_completion_requested' => 'Support marked complete (pilgrim) → muthowif (legacy)',
             'support_completion_approved' => 'Support completion confirmed → pilgrim',
             'support_completion_rejected' => 'Support completion rejected → pilgrim (legacy)',
+            'chat_unreplied_daily' => 'Unreplied live chat reminder (>30 min) → muthowif/pilgrim (once daily)',
         ],
     ],
     'whatsapp_broadcast' => [

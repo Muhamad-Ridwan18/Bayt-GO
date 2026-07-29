@@ -1,0 +1,148 @@
+<?php
+
+namespace App\Services;
+
+use App\Enums\BookingStatus;
+use App\Enums\PaymentStatus;
+use App\Jobs\SendWhatsAppTextJob;
+use App\Models\BookingChatMessage;
+use App\Models\MuthowifBooking;
+use App\Models\User;
+use App\Support\IntlPhone;
+use App\Support\WhatsAppNotifySettings;
+use Illuminate\Support\Facades\Cache;
+use Illuminate\Support\Facades\Log;
+
+final class BookingChatUnrepliedReminderService
+{
+    private const REPLY_THRESHOLD_MINUTES = 30;
+
+    private const CACHE_PREFIX = 'chat_unreplied_wa:';
+
+    public function process(): int
+    {
+        if (! WhatsAppNotifySettings::enabled('chat_unreplied_daily')) {
+            return 0;
+        }
+
+        if (! WhatsAppNotifySettings::hasToken()) {
+            Log::debug('WhatsApp chat unreplied reminder skipped: token gateway kosong.');
+
+            return 0;
+        }
+
+        $threshold = now()->subMinutes(self::REPLY_THRESHOLD_MINUTES);
+        $today = now()->toDateString();
+        $sent = 0;
+
+        $bookings = MuthowifBooking::query()
+            ->where('payment_status', PaymentStatus::Paid)
+            ->whereIn('status', [BookingStatus::Confirmed, BookingStatus::InProgress])
+            ->whereHas('chatMessages')
+            ->with(['muthowifProfile.user', 'customer'])
+            ->cursor();
+
+        foreach ($bookings as $booking) {
+            if (! $booking->isBookingChatOpen()) {
+                continue;
+            }
+
+            $lastMessage = $booking->chatMessages()->latest('created_at')->first();
+            if ($lastMessage === null || $lastMessage->created_at->gt($threshold)) {
+                continue;
+            }
+
+            $recipient = $this->recipientFor($booking, $lastMessage);
+            if ($recipient === null) {
+                continue;
+            }
+
+            $cacheKey = self::CACHE_PREFIX.$booking->getKey().':'.$recipient['role'].':'.$today;
+            if (Cache::has($cacheKey)) {
+                continue;
+            }
+
+            if ($this->sendReminder($booking, $recipient)) {
+                Cache::put($cacheKey, true, now()->endOfDay());
+                $sent++;
+            }
+        }
+
+        return $sent;
+    }
+
+    /**
+     * @return array{role: string, user: User, dial: array{target: string, country_calling_code: string}}|null
+     */
+    private function recipientFor(MuthowifBooking $booking, BookingChatMessage $lastMessage): ?array
+    {
+        $customerId = (string) $booking->customer_id;
+        $muthowifUserId = (string) ($booking->muthowifProfile?->user_id ?? '');
+        $senderId = (string) $lastMessage->user_id;
+
+        if ($senderId === $customerId) {
+            $user = $booking->muthowifProfile?->user;
+            $phone = $booking->muthowifProfile?->whatsAppPhone();
+            if ($user === null || $phone === null) {
+                return null;
+            }
+
+            $dial = IntlPhone::fonnteDial($phone);
+            if ($dial === null) {
+                return null;
+            }
+
+            return ['role' => 'muthowif', 'user' => $user, 'dial' => $dial];
+        }
+
+        if ($senderId === $muthowifUserId) {
+            $user = $booking->customer;
+            if ($user === null) {
+                return null;
+            }
+
+            $dial = IntlPhone::fonnteDial($user->phone);
+            if ($dial === null) {
+                return null;
+            }
+
+            return ['role' => 'customer', 'user' => $user, 'dial' => $dial];
+        }
+
+        return null;
+    }
+
+    /**
+     * @param  array{role: string, user: User, dial: array{target: string, country_calling_code: string}}  $recipient
+     */
+    private function sendReminder(MuthowifBooking $booking, array $recipient): bool
+    {
+        $locale = filled($recipient['user']->locale)
+            ? (string) $recipient['user']->locale
+            : config('app.locale');
+
+        $previous = app()->getLocale();
+        try {
+            app()->setLocale($locale);
+
+            $name = $recipient['user']->name ?? __('whatsapp.fallback_pilgrim', [], $locale);
+            $code = $booking->booking_code ?? '—';
+
+            $message = implode("\n\n", [
+                __('whatsapp.chat_unreplied.greeting', ['name' => $name], $locale),
+                __('whatsapp.chat_unreplied.body', ['code' => $code], $locale),
+                __('whatsapp.chat_unreplied.cta', [], $locale),
+            ]);
+
+            SendWhatsAppTextJob::dispatch(
+                $recipient['dial']['target'],
+                $message,
+                $recipient['dial']['country_calling_code'],
+            );
+
+            return true;
+        } finally {
+            app()->setLocale($previous);
+        }
+    }
+}

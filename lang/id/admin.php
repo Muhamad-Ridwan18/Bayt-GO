@@ -432,6 +432,7 @@ return [
             'admin' => 'Ke admin',
             'emergency' => 'Insiden darurat',
             'support' => 'Layanan pendukung',
+            'chat' => 'Live chat',
         ],
         'toggles' => [
             'otp' => 'OTP registrasi & reset password',
@@ -454,6 +455,7 @@ return [
             'support_completion_requested' => 'Layanan pendukung selesai (jamaah) → muthowif (legacy)',
             'support_completion_approved' => 'Konfirmasi selesai layanan pendukung → jamaah',
             'support_completion_rejected' => 'Tolak selesai layanan pendukung → jamaah (legacy)',
+            'chat_unreplied_daily' => 'Pengingat balas live chat (>30 menit) → muthowif/jamaah (1× sehari)',
         ],
     ],
     'whatsapp_broadcast' => [

@@ -128,6 +128,11 @@ class WhatsAppNotifySettings
                 'group' => 'support',
                 'default' => false,
             ],
+            'chat_unreplied_daily' => [
+                'label' => 'admin.whatsapp_notify.toggles.chat_unreplied_daily',
+                'group' => 'chat',
+                'default' => true,
+            ],
         ];
     }
 
@@ -143,6 +148,7 @@ class WhatsAppNotifySettings
             'admin' => 'admin.whatsapp_notify.groups.admin',
             'emergency' => 'admin.whatsapp_notify.groups.emergency',
             'support' => 'admin.whatsapp_notify.groups.support',
+            'chat' => 'admin.whatsapp_notify.groups.chat',
         ];
     }
 
