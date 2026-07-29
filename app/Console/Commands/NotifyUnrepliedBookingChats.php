@@ -57,8 +57,9 @@ class NotifyUnrepliedBookingChats extends Command
 
         $this->newLine();
         $this->table(
-            ['Peran', 'Nama', 'Nomor WA', 'Kode booking', 'Status', 'Error'],
+            ['Booking ID', 'Peran', 'Nama', 'Nomor WA', 'Kode booking', 'Status', 'Error'],
             array_map(static fn (array $row): array => [
+                $row['booking_id'] ?? '—',
                 $row['role'],
                 $row['name'],
                 $row['phone'],

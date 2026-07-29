@@ -61,7 +61,7 @@ final class BookingChatUnrepliedReminderService
                 continue;
             }
 
-            $cacheKey = self::CACHE_PREFIX.$booking->getKey().':'.$recipient['role'].':'.$today;
+            $cacheKey = self::cacheKeyForBooking($booking, $today);
             if (! $force && Cache::has($cacheKey)) {
                 continue;
             }
@@ -150,11 +150,17 @@ final class BookingChatUnrepliedReminderService
     private function recipientSummary(MuthowifBooking $booking, array $recipient): array
     {
         return [
+            'booking_id' => (string) $booking->getKey(),
             'role' => $recipient['role'],
             'name' => $recipient['user']->name ?? '—',
             'phone' => $recipient['dial']['target'],
             'booking_code' => $booking->booking_code ?? '—',
         ];
+    }
+
+    private static function cacheKeyForBooking(MuthowifBooking $booking, string $date): string
+    {
+        return self::CACHE_PREFIX.(string) $booking->getKey().':'.$date;
     }
 
     /**
