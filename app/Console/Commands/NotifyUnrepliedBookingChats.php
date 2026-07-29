@@ -24,8 +24,19 @@ class NotifyUnrepliedBookingChats extends Command
         if ($dryRun) {
             $this->info("Eligible: {$count} percakapan (dry-run, tidak dikirim).");
         } else {
+            $sent = count(array_filter(
+                $result['recipients'],
+                static fn (array $row): bool => ($row['status'] ?? '') === 'sent',
+            ));
+            $failed = count(array_filter(
+                $result['recipients'],
+                static fn (array $row): bool => ($row['status'] ?? '') === 'failed',
+            ));
             $suffix = $force ? ' (mode testing — cache harian dilewati)' : '';
-            $this->info("Notifikasi WhatsApp terkirim: {$count}{$suffix}");
+            $this->info("Notifikasi WhatsApp terkirim: {$sent}{$suffix}");
+            if ($failed > 0) {
+                $this->error("Gagal kirim: {$failed}");
+            }
         }
 
         $this->displayRecipients($result['recipients']);
@@ -34,7 +45,7 @@ class NotifyUnrepliedBookingChats extends Command
     }
 
     /**
-     * @param  list<array{role: string, name: string, phone: string, booking_code: string}>  $recipients
+     * @param  list<array{role: string, name: string, phone: string, booking_code: string, status?: string, error?: string}>  $recipients
      */
     private function displayRecipients(array $recipients): void
     {
@@ -46,12 +57,14 @@ class NotifyUnrepliedBookingChats extends Command
 
         $this->newLine();
         $this->table(
-            ['Peran', 'Nama', 'Nomor WA', 'Kode booking'],
+            ['Peran', 'Nama', 'Nomor WA', 'Kode booking', 'Status', 'Error'],
             array_map(static fn (array $row): array => [
                 $row['role'],
                 $row['name'],
                 $row['phone'],
                 $row['booking_code'],
+                $row['status'] ?? '—',
+                $row['error'] ?? '—',
             ], $recipients),
         );
     }

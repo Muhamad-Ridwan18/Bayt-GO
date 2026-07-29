@@ -419,7 +419,14 @@
                                     text = Object.values(data.errors).flat().join('\n');
                                 } else if (Array.isArray(data.recipients) && data.recipients.length) {
                                     const lines = data.recipients.map(function (row) {
-                                        return '• ' + row.role + ' — ' + row.name + ' (' + row.phone + ') — ' + row.booking_code;
+                                        let line = '• ' + row.role + ' — ' + row.name + ' (' + row.phone + ') — ' + row.booking_code;
+                                        if (row.status) {
+                                            line += ' [' + row.status + ']';
+                                        }
+                                        if (row.error) {
+                                            line += ' — ' + row.error;
+                                        }
+                                        return line;
                                     });
                                     text += (text ? '\n\n' : '') + lines.join('\n');
                                 }

@@ -12,13 +12,14 @@ use App\Support\IntlPhone;
 use App\Support\WhatsAppNotifySettings;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Log;
+use Throwable;
 
 final class BookingChatUnrepliedReminderService
 {
     private const CACHE_PREFIX = 'chat_unreplied_wa:';
 
     /**
-     * @return array{count: int, recipients: list<array{role: string, name: string, phone: string, booking_code: string}>}
+     * @return array{count: int, recipients: list<array{role: string, name: string, phone: string, booking_code: string, status: string, error?: string}>}
      */
     public function process(bool $force = false, bool $dryRun = false): array
     {
@@ -68,21 +69,35 @@ final class BookingChatUnrepliedReminderService
             $summary = $this->recipientSummary($booking, $recipient);
 
             if ($dryRun) {
-                $recipients[] = $summary;
+                $recipients[] = array_merge($summary, ['status' => 'eligible']);
 
                 continue;
             }
 
-            if ($this->sendReminder($booking, $recipient)) {
+            try {
+                $this->sendReminder($booking, $recipient);
                 if (! $force) {
                     Cache::put($cacheKey, true, now()->endOfDay());
                 }
-                $recipients[] = $summary;
+                $recipients[] = array_merge($summary, ['status' => 'sent']);
+            } catch (Throwable $e) {
+                Log::warning('chat_unreplied.wa_failed', [
+                    'booking_code' => $summary['booking_code'],
+                    'phone' => $summary['phone'],
+                    'exception' => $e->getMessage(),
+                ]);
+                $recipients[] = array_merge($summary, [
+                    'status' => 'failed',
+                    'error' => $e->getMessage(),
+                ]);
             }
         }
 
         return [
-            'count' => count($recipients),
+            'count' => count(array_filter(
+                $recipients,
+                static fn (array $row): bool => in_array($row['status'], ['sent', 'eligible'], true),
+            )),
             'recipients' => $recipients,
         ];
     }
@@ -144,8 +159,10 @@ final class BookingChatUnrepliedReminderService
 
     /**
      * @param  array{role: string, user: User, dial: array{target: string, country_calling_code: string}}  $recipient
+     *
+     * @throws Throwable
      */
-    private function sendReminder(MuthowifBooking $booking, array $recipient): bool
+    private function sendReminder(MuthowifBooking $booking, array $recipient): void
     {
         $locale = filled($recipient['user']->locale)
             ? (string) $recipient['user']->locale
@@ -154,13 +171,17 @@ final class BookingChatUnrepliedReminderService
         $name = $recipient['user']->name ?? __('whatsapp.fallback_pilgrim', [], $locale);
         $code = $booking->booking_code ?? '—';
 
-        SendWhatsAppTextJob::dispatch(
+        SendWhatsAppTextJob::dispatchSync(
             $recipient['dial']['target'],
             self::buildMessage($name, $code, $locale),
             $recipient['dial']['country_calling_code'],
+            [],
+            null,
+            null,
+            null,
+            null,
+            true,
         );
-
-        return true;
     }
 
     public static function buildMessage(string $name, string $bookingCode, ?string $locale = null): string

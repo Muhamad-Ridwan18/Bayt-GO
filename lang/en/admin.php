@@ -447,7 +447,7 @@ return [
         'run_chat_unreplied_dry_button' => 'Check eligible (no send)',
         'run_chat_unreplied_button' => 'Run now (testing)',
         'run_chat_unreplied_dry_run' => ':count conversations eligible (dry-run, not sent).',
-        'run_chat_unreplied_success' => ':count notifications queued for delivery (testing mode).',
+        'run_chat_unreplied_success' => ':count WhatsApp notifications sent (testing mode).',
         'groups' => [
             'auth' => 'OTP & authentication',
             'booking' => 'Booking & payment',

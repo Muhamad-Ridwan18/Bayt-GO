@@ -447,7 +447,7 @@ return [
         'run_chat_unreplied_dry_button' => 'Cek eligible (tanpa kirim)',
         'run_chat_unreplied_button' => 'Jalankan sekarang (testing)',
         'run_chat_unreplied_dry_run' => ':count percakapan memenuhi syarat (dry-run, tidak dikirim).',
-        'run_chat_unreplied_success' => ':count notifikasi masuk antrian pengiriman (mode testing).',
+        'run_chat_unreplied_success' => ':count notifikasi WhatsApp terkirim (mode testing).',
         'groups' => [
             'auth' => 'OTP & autentikasi',
             'booking' => 'Booking & pembayaran',
