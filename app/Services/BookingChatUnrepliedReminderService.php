@@ -121,28 +121,26 @@ final class BookingChatUnrepliedReminderService
             ? (string) $recipient['user']->locale
             : config('app.locale');
 
-        $previous = app()->getLocale();
-        try {
-            app()->setLocale($locale);
+        $name = $recipient['user']->name ?? __('whatsapp.fallback_pilgrim', [], $locale);
+        $code = $booking->booking_code ?? '—';
 
-            $name = $recipient['user']->name ?? __('whatsapp.fallback_pilgrim', [], $locale);
-            $code = $booking->booking_code ?? '—';
+        SendWhatsAppTextJob::dispatch(
+            $recipient['dial']['target'],
+            self::buildMessage($name, $code, $locale),
+            $recipient['dial']['country_calling_code'],
+        );
 
-            $message = implode("\n\n", [
-                __('whatsapp.chat_unreplied.greeting', ['name' => $name], $locale),
-                __('whatsapp.chat_unreplied.body', ['code' => $code], $locale),
-                __('whatsapp.chat_unreplied.cta', [], $locale),
-            ]);
+        return true;
+    }
 
-            SendWhatsAppTextJob::dispatch(
-                $recipient['dial']['target'],
-                $message,
-                $recipient['dial']['country_calling_code'],
-            );
+    public static function buildMessage(string $name, string $bookingCode, ?string $locale = null): string
+    {
+        $locale = $locale ?? config('app.locale');
 
-            return true;
-        } finally {
-            app()->setLocale($previous);
-        }
+        return implode("\n\n", [
+            __('whatsapp.chat_unreplied.greeting', ['name' => $name], $locale),
+            __('whatsapp.chat_unreplied.body', ['code' => $bookingCode], $locale),
+            __('whatsapp.chat_unreplied.cta', [], $locale),
+        ]);
     }
 }

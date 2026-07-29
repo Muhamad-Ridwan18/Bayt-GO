@@ -4,6 +4,7 @@ namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
 use App\Jobs\SendWhatsAppTextJob;
+use App\Services\BookingChatUnrepliedReminderService;
 use App\Support\IntlPhone;
 use App\Support\WhatsAppNotifySettings;
 use Illuminate\Http\JsonResponse;
@@ -109,6 +110,98 @@ class WhatsAppNotifySettingsController extends Controller
 
         return response()->json([
             'message' => __('admin.whatsapp_notify.test_success', [
+                'sent' => $sent,
+                'total' => count($numbers),
+            ]),
+            'results' => $results,
+        ]);
+    }
+
+    public function testChatUnreplied(Request $request): JsonResponse
+    {
+        $request->validate(array_merge($this->gatewayValidationRules(), [
+            'test_chat_name' => ['nullable', 'string', 'max:100'],
+            'test_chat_booking_code' => ['nullable', 'string', 'max:50'],
+            'test_chat_phone' => ['nullable', 'string', 'max:30'],
+        ]));
+
+        $gatewayConfig = WhatsAppNotifySettings::gatewayFromInput($request->all());
+        if ($gatewayConfig['token'] === '') {
+            return response()->json([
+                'message' => __('admin.whatsapp_notify.test_token_missing'),
+            ], 422);
+        }
+
+        $phoneInput = trim((string) $request->input('test_chat_phone', ''));
+        $numbers = $phoneInput !== ''
+            ? [$phoneInput]
+            : WhatsAppNotifySettings::adminNumbersFromInput($request->all());
+
+        if ($numbers === []) {
+            return response()->json([
+                'message' => __('admin.whatsapp_notify.test_chat_unreplied_numbers_missing'),
+            ], 422);
+        }
+
+        $name = trim((string) $request->input('test_chat_name', ''));
+        if ($name === '') {
+            $name = __('admin.whatsapp_notify.test_chat_unreplied_default_name');
+        }
+
+        $bookingCode = trim((string) $request->input('test_chat_booking_code', ''));
+        if ($bookingCode === '') {
+            $bookingCode = 'BG-TEST';
+        }
+
+        $message = BookingChatUnrepliedReminderService::buildMessage($name, $bookingCode);
+
+        $results = [];
+        $sent = 0;
+
+        foreach ($numbers as $phone) {
+            $dial = IntlPhone::fonnteDial($phone);
+            if ($dial === null) {
+                $results[] = [
+                    'phone' => $phone,
+                    'ok' => false,
+                    'error' => __('admin.whatsapp_notify.test_invalid_number'),
+                ];
+
+                continue;
+            }
+
+            try {
+                SendWhatsAppTextJob::dispatchSync(
+                    $dial['target'],
+                    $message,
+                    $dial['country_calling_code'],
+                    [],
+                    $gatewayConfig['token'],
+                    $gatewayConfig['api_url'],
+                    $gatewayConfig['session_id'],
+                    $gatewayConfig['country_code'],
+                    true,
+                );
+                $sent++;
+                $results[] = ['phone' => $phone, 'ok' => true];
+            } catch (Throwable $e) {
+                $results[] = [
+                    'phone' => $phone,
+                    'ok' => false,
+                    'error' => $e->getMessage(),
+                ];
+            }
+        }
+
+        if ($sent === 0) {
+            return response()->json([
+                'message' => __('admin.whatsapp_notify.test_all_failed'),
+                'results' => $results,
+            ], 422);
+        }
+
+        return response()->json([
+            'message' => __('admin.whatsapp_notify.test_chat_unreplied_success', [
                 'sent' => $sent,
                 'total' => count($numbers),
             ]),
