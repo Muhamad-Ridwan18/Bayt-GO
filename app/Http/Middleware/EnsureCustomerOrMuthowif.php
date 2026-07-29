@@ -23,6 +23,6 @@ class EnsureCustomerOrMuthowif
             return $next($request);
         }
 
-        abort(403);
+        return RedirectExpiredSession::respondForbidden($request);
     }
 }

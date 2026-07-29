@@ -4,15 +4,36 @@ window.axios = axios;
 window.axios.defaults.headers.common['X-Requested-With'] = 'XMLHttpRequest';
 
 const loginUrl = document.querySelector('meta[name="login-url"]')?.getAttribute('content') ?? '/login';
+const homeUrl = document.querySelector('meta[name="home-url"]')?.getAttribute('content') ?? '/';
 
-function redirectToLoginFromResponse(response) {
-    if (![401, 419].includes(response.status)) {
-        return false;
+async function redirectFromSessionResponse(response) {
+    if (response.redirected) {
+        const target = response.url || loginUrl;
+        if (target.includes('/login') || target.includes('/masuk')) {
+            window.location.assign(target);
+
+            return true;
+        }
     }
 
-    window.location.assign(loginUrl);
+    if (response.status === 401 || response.status === 419) {
+        window.location.assign(loginUrl);
 
-    return true;
+        return true;
+    }
+
+    if (response.status === 403) {
+        try {
+            const data = await response.clone().json();
+            window.location.assign(data.redirect || homeUrl);
+        } catch {
+            window.location.assign(loginUrl);
+        }
+
+        return true;
+    }
+
+    return false;
 }
 
 const nativeFetch = window.fetch.bind(window);
@@ -24,7 +45,7 @@ window.fetch = async (...args) => {
         : new Headers(init.headers ?? {});
 
     if (headers.get('X-Requested-With') === 'XMLHttpRequest') {
-        redirectToLoginFromResponse(response);
+        await redirectFromSessionResponse(response);
     }
 
     return response;
@@ -32,8 +53,8 @@ window.fetch = async (...args) => {
 
 window.axios.interceptors.response.use(
     (response) => response,
-    (error) => {
-        if (error.response && redirectToLoginFromResponse(error.response)) {
+    async (error) => {
+        if (error.response && await redirectFromSessionResponse(error.response)) {
             return new Promise(() => {});
         }
 

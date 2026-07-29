@@ -8,6 +8,7 @@ use App\Http\Middleware\EnsureVerifiedMuthowif;
 use App\Http\Middleware\SetLocale;
 use App\Support\RedirectExpiredSession;
 use App\Support\WhatsAppNotifySettings;
+use Illuminate\Auth\Access\AuthorizationException;
 use Illuminate\Auth\AuthenticationException;
 use Illuminate\Broadcasting\BroadcastException;
 use Illuminate\Console\Scheduling\Schedule;
@@ -96,11 +97,19 @@ return Application::configure(basePath: dirname(__DIR__))
             return RedirectExpiredSession::respond($request);
         });
 
-        $exceptions->renderable(function (HttpException $e, Request $request) {
-            if ($e->getStatusCode() !== 403 || $request->user() !== null) {
+        $exceptions->renderable(function (AuthorizationException $e, Request $request) {
+            if ($request->is('api/*')) {
                 return null;
             }
 
-            return RedirectExpiredSession::respond($request);
+            return RedirectExpiredSession::respondForbidden($request);
+        });
+
+        $exceptions->renderable(function (HttpException $e, Request $request) {
+            if ($e->getStatusCode() !== 403 || $request->is('api/*')) {
+                return null;
+            }
+
+            return RedirectExpiredSession::respondForbidden($request);
         });
     })->create();
