@@ -17,23 +17,26 @@ final class BookingChatUnrepliedReminderService
 {
     private const CACHE_PREFIX = 'chat_unreplied_wa:';
 
-    public function process(bool $force = false, bool $dryRun = false): int
+    /**
+     * @return array{count: int, recipients: list<array{role: string, name: string, phone: string, booking_code: string}>}
+     */
+    public function process(bool $force = false, bool $dryRun = false): array
     {
         $forTesting = $force || $dryRun;
 
         if (! $forTesting && ! WhatsAppNotifySettings::enabled('chat_unreplied_daily')) {
-            return 0;
+            return ['count' => 0, 'recipients' => []];
         }
 
         if (! WhatsAppNotifySettings::hasToken()) {
             Log::debug('WhatsApp chat unreplied reminder skipped: token gateway kosong.');
 
-            return 0;
+            return ['count' => 0, 'recipients' => []];
         }
 
         $threshold = now()->subMinutes(WhatsAppNotifySettings::chatUnrepliedThresholdMinutes());
         $today = now()->toDateString();
-        $sent = 0;
+        $recipients = [];
 
         $bookings = MuthowifBooking::query()
             ->where('payment_status', PaymentStatus::Paid)
@@ -62,8 +65,10 @@ final class BookingChatUnrepliedReminderService
                 continue;
             }
 
+            $summary = $this->recipientSummary($booking, $recipient);
+
             if ($dryRun) {
-                $sent++;
+                $recipients[] = $summary;
 
                 continue;
             }
@@ -72,11 +77,14 @@ final class BookingChatUnrepliedReminderService
                 if (! $force) {
                     Cache::put($cacheKey, true, now()->endOfDay());
                 }
-                $sent++;
+                $recipients[] = $summary;
             }
         }
 
-        return $sent;
+        return [
+            'count' => count($recipients),
+            'recipients' => $recipients,
+        ];
     }
 
     /**
@@ -118,6 +126,20 @@ final class BookingChatUnrepliedReminderService
         }
 
         return null;
+    }
+
+    /**
+     * @param  array{role: string, user: User, dial: array{target: string, country_calling_code: string}}  $recipient
+     * @return array{role: string, name: string, phone: string, booking_code: string}
+     */
+    private function recipientSummary(MuthowifBooking $booking, array $recipient): array
+    {
+        return [
+            'role' => $recipient['role'],
+            'name' => $recipient['user']->name ?? '—',
+            'phone' => $recipient['dial']['target'],
+            'booking_code' => $booking->booking_code ?? '—',
+        ];
     }
 
     /**

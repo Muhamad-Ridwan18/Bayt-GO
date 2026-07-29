@@ -219,13 +219,14 @@ class WhatsAppNotifySettingsController extends Controller
         }
 
         $dryRun = filter_var($request->input('dry_run', false), FILTER_VALIDATE_BOOLEAN);
-        $count = $reminder->process(force: true, dryRun: $dryRun);
+        $result = $reminder->process(force: true, dryRun: $dryRun);
 
         return response()->json([
             'message' => $dryRun
-                ? __('admin.whatsapp_notify.run_chat_unreplied_dry_run', ['count' => $count])
-                : __('admin.whatsapp_notify.run_chat_unreplied_success', ['count' => $count]),
-            'count' => $count,
+                ? __('admin.whatsapp_notify.run_chat_unreplied_dry_run', ['count' => $result['count']])
+                : __('admin.whatsapp_notify.run_chat_unreplied_success', ['count' => $result['count']]),
+            'count' => $result['count'],
+            'recipients' => $result['recipients'],
         ]);
     }
 

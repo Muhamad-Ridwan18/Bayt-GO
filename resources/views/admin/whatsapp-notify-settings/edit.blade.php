@@ -417,6 +417,11 @@
                                 let text = data.message || '';
                                 if (data.errors) {
                                     text = Object.values(data.errors).flat().join('\n');
+                                } else if (Array.isArray(data.recipients) && data.recipients.length) {
+                                    const lines = data.recipients.map(function (row) {
+                                        return '• ' + row.role + ' — ' + row.name + ' (' + row.phone + ') — ' + row.booking_code;
+                                    });
+                                    text += (text ? '\n\n' : '') + lines.join('\n');
                                 }
 
                                 runResultBox.textContent = text;

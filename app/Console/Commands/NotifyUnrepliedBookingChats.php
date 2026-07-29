@@ -18,17 +18,41 @@ class NotifyUnrepliedBookingChats extends Command
         $force = (bool) $this->option('force');
         $dryRun = (bool) $this->option('dry-run');
 
-        if ($dryRun) {
-            $count = $reminder->process(force: true, dryRun: true);
-            $this->info("Eligible: {$count} percakapan (dry-run, tidak dikirim).");
+        $result = $reminder->process(force: $force || $dryRun, dryRun: $dryRun);
+        $count = $result['count'];
 
-            return self::SUCCESS;
+        if ($dryRun) {
+            $this->info("Eligible: {$count} percakapan (dry-run, tidak dikirim).");
+        } else {
+            $suffix = $force ? ' (mode testing — cache harian dilewati)' : '';
+            $this->info("Notifikasi WhatsApp terkirim: {$count}{$suffix}");
         }
 
-        $sent = $reminder->process(force: $force);
-        $suffix = $force ? ' (mode testing — cache harian dilewati)' : '';
-        $this->info("Notifikasi WhatsApp terkirim: {$sent}{$suffix}");
+        $this->displayRecipients($result['recipients']);
 
         return self::SUCCESS;
+    }
+
+    /**
+     * @param  list<array{role: string, name: string, phone: string, booking_code: string}>  $recipients
+     */
+    private function displayRecipients(array $recipients): void
+    {
+        if ($recipients === []) {
+            $this->line('Tidak ada penerima.');
+
+            return;
+        }
+
+        $this->newLine();
+        $this->table(
+            ['Peran', 'Nama', 'Nomor WA', 'Kode booking'],
+            array_map(static fn (array $row): array => [
+                $row['role'],
+                $row['name'],
+                $row['phone'],
+                $row['booking_code'],
+            ], $recipients),
+        );
     }
 }
