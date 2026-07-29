@@ -441,7 +441,7 @@ return [
         'chat_unreplied_threshold_minutes' => 'Batas waktu belum dibalas (menit)',
         'chat_unreplied_threshold_minutes_hint' => 'Notifikasi dikirim jika pesan terakhir belum dibalas lebih dari nilai ini. Min. 1, maks. 1440 (24 jam). Batas 1× sehari berlaku per booking.',
         'chat_unreplied_daily_time' => 'Jadwal kirim harian',
-        'chat_unreplied_daily_time_hint' => 'Waktu cek & kirim otomatis setiap hari. Setiap booking dengan chat belum dibalas bisa dapat 1 WA (bukan 1 WA total per user).',
+        'chat_unreplied_daily_time_hint' => 'Waktu cek & kirim otomatis setiap hari. Hanya muthowif yang belum membalas pesan jamaah (1 WA per booking).',
         'run_chat_unreplied_heading' => 'Testing pengingat live chat (real)',
         'run_chat_unreplied_hint' => 'Jalankan proses nyata ke setiap booking yang chat-nya belum dibalas. Mode testing melewati batas 1× sehari per booking.',
         'run_chat_unreplied_dry_button' => 'Cek eligible (tanpa kirim)',
@@ -478,7 +478,7 @@ return [
             'support_completion_requested' => 'Layanan pendukung selesai (jamaah) → muthowif (legacy)',
             'support_completion_approved' => 'Konfirmasi selesai layanan pendukung → jamaah',
             'support_completion_rejected' => 'Tolak selesai layanan pendukung → jamaah (legacy)',
-            'chat_unreplied_daily' => 'Pengingat balas live chat → muthowif/jamaah (1× sehari per booking)',
+            'chat_unreplied_daily' => 'Pengingat balas live chat → muthowif (1× sehari per booking)',
         ],
     ],
     'whatsapp_broadcast' => [

@@ -441,7 +441,7 @@ return [
         'chat_unreplied_threshold_minutes' => 'Unreplied threshold (minutes)',
         'chat_unreplied_threshold_minutes_hint' => 'Notification is sent when the last message has been unreplied longer than this. Min. 1, max. 1440 (24 hours). Once-daily limit applies per booking.',
         'chat_unreplied_daily_time' => 'Daily send time',
-        'chat_unreplied_daily_time_hint' => 'Automatic daily check time. Each booking with an unreplied chat can receive 1 WhatsApp (not 1 total per user).',
+        'chat_unreplied_daily_time_hint' => 'Automatic daily check time. Only muthowif who have not replied to pilgrim messages (1 WhatsApp per booking).',
         'run_chat_unreplied_heading' => 'Live chat reminder testing (real)',
         'run_chat_unreplied_hint' => 'Run the real process for unreplied chats. Testing mode skips the once-daily limit. Ensure the queue worker is running so WhatsApp messages are sent.',
         'run_chat_unreplied_dry_button' => 'Check eligible (no send)',
@@ -478,7 +478,7 @@ return [
             'support_completion_requested' => 'Support marked complete (pilgrim) → muthowif (legacy)',
             'support_completion_approved' => 'Support completion confirmed → pilgrim',
             'support_completion_rejected' => 'Support completion rejected → pilgrim (legacy)',
-            'chat_unreplied_daily' => 'Unreplied live chat reminder → muthowif/pilgrim (once daily per booking)',
+            'chat_unreplied_daily' => 'Unreplied live chat reminder → muthowif (once daily per booking)',
         ],
     ],
     'whatsapp_broadcast' => [

@@ -108,39 +108,24 @@ final class BookingChatUnrepliedReminderService
     private function recipientFor(MuthowifBooking $booking, BookingChatMessage $lastMessage): ?array
     {
         $customerId = (string) $booking->customer_id;
-        $muthowifUserId = (string) ($booking->muthowifProfile?->user_id ?? '');
         $senderId = (string) $lastMessage->user_id;
 
-        if ($senderId === $customerId) {
-            $user = $booking->muthowifProfile?->user;
-            $phone = $booking->muthowifProfile?->whatsAppPhone();
-            if ($user === null || $phone === null) {
-                return null;
-            }
-
-            $dial = IntlPhone::fonnteDial($phone);
-            if ($dial === null) {
-                return null;
-            }
-
-            return ['role' => 'muthowif', 'user' => $user, 'dial' => $dial];
+        if ($senderId !== $customerId) {
+            return null;
         }
 
-        if ($senderId === $muthowifUserId) {
-            $user = $booking->customer;
-            if ($user === null) {
-                return null;
-            }
-
-            $dial = IntlPhone::fonnteDial($user->phone);
-            if ($dial === null) {
-                return null;
-            }
-
-            return ['role' => 'customer', 'user' => $user, 'dial' => $dial];
+        $user = $booking->muthowifProfile?->user;
+        $phone = $booking->muthowifProfile?->whatsAppPhone();
+        if ($user === null || $phone === null) {
+            return null;
         }
 
-        return null;
+        $dial = IntlPhone::fonnteDial($phone);
+        if ($dial === null) {
+            return null;
+        }
+
+        return ['role' => 'muthowif', 'user' => $user, 'dial' => $dial];
     }
 
     /**
