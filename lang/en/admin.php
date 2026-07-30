@@ -164,6 +164,8 @@ return [
         'proof_missing' => 'None yet',
         'approve_confirm' => 'Approve this withdrawal? The chaperone balance will be debited, then you can complete the transfer.',
         'approve' => 'Approve',
+        'reject_confirm' => 'Reject this withdrawal? Balance is not debited yet; the request will be marked failed.',
+        'reject' => 'Reject',
         'mark_transferred' => 'Mark transfer complete',
         'fail_confirm' => 'Transfer failed? The balance will be returned to the chaperone wallet.',
         'mark_failed' => 'Mark failed (restore balance)',

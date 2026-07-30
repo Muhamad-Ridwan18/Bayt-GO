@@ -369,6 +369,7 @@ Route::middleware('auth')->group(function () {
         Route::get('withdrawals', [WithdrawalsController::class, 'index'])->name('withdrawals.index');
         Route::get('withdrawals/fragment', [WithdrawalsController::class, 'indexFragment'])->name('withdrawals.fragment');
         Route::post('withdrawals/{withdrawal}/approve', [WithdrawalsController::class, 'approve'])->name('withdrawals.approve');
+        Route::post('withdrawals/{withdrawal}/reject', [WithdrawalsController::class, 'reject'])->name('withdrawals.reject');
         Route::post('withdrawals/{withdrawal}/selesai-transfer', [WithdrawalsController::class, 'markTransferred'])->name('withdrawals.mark_transferred');
         Route::post('withdrawals/{withdrawal}/gagal-transfer', [WithdrawalsController::class, 'markTransferFailed'])->name('withdrawals.mark_transfer_failed');
         Route::get('referral', [MuthowifReferralMonitorController::class, 'index'])->name('referrals.index');

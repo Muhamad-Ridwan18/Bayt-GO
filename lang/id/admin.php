@@ -164,6 +164,8 @@ return [
         'proof_missing' => 'Belum ada',
         'approve_confirm' => 'Setujui withdraw ini? Saldo muthowif akan didebit (setelah pesanan selesai dan saldo masuk), lalu Anda bisa menyelesaikan transfer.',
         'approve' => 'Setujui',
+        'reject_confirm' => 'Tolak withdraw ini? Saldo belum didebit, permintaan akan ditandai gagal.',
+        'reject' => 'Tolak',
         'mark_transferred' => 'Tandai transfer selesai',
         'fail_confirm' => 'Transfer gagal? Saldo akan dikembalikan ke wallet muthowif.',
         'mark_failed' => 'Tandai gagal (kembalikan saldo)',
