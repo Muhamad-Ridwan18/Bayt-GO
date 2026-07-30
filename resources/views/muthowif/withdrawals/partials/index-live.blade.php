@@ -39,7 +39,7 @@
                     <th class="px-4 py-3 whitespace-nowrap">Nominal</th>
                     <th class="px-4 py-3 whitespace-nowrap">Bank / Tujuan</th>
                     <th class="px-4 py-3 whitespace-nowrap">Status</th>
-                    <th class="px-4 py-3 whitespace-nowrap text-right">Aksi</th>
+                    <th class="px-4 py-3 whitespace-nowrap text-right">Bukti Transfer</th>
                 </tr>
             </thead>
             <tbody class="divide-y divide-slate-100">
