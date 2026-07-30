@@ -31,6 +31,7 @@ class FinanceController extends Controller
         $totalPlatformFees = AdminFinanceSummary::netPlatformFees();
         $affiliateCommissions = AdminFinanceSummary::affiliateCommissionsPaidOrPending();
         $totalVolume = AdminFinanceSummary::grossVolumeExcludingRefundedBookings();
+        $totalMuthowifFees = AdminFinanceSummary::muthowifNetExcludingRefundedBookings();
         $totalOrders = AdminFinanceSummary::settlementOrderCountTotal();
 
         $today = now();
@@ -50,6 +51,8 @@ class FinanceController extends Controller
         $affYesterday = AdminFinanceSummary::affiliateCommissionSumBetween($yesterday, $yesterday);
         $grossToday = AdminFinanceSummary::grossVolumeBetween($today, $today);
         $grossYesterday = AdminFinanceSummary::grossVolumeBetween($yesterday, $yesterday);
+        $muthowifToday = AdminFinanceSummary::muthowifNetBetween($today, $today);
+        $muthowifYesterday = AdminFinanceSummary::muthowifNetBetween($yesterday, $yesterday);
         $ordersToday = AdminFinanceSummary::settlementOrderCountBetween($today, $today);
         $ordersYesterday = AdminFinanceSummary::settlementOrderCountBetween($yesterday, $yesterday);
 
@@ -57,6 +60,7 @@ class FinanceController extends Controller
             'fee' => $pct($feeToday, $feeYesterday),
             'affiliate' => $pct($affToday, $affYesterday),
             'gross' => $pct((float) $grossToday, (float) $grossYesterday),
+            'muthowif' => $pct($muthowifToday, $muthowifYesterday),
             'orders' => $pct((float) $ordersToday, (float) $ordersYesterday),
         ];
 
@@ -98,6 +102,7 @@ class FinanceController extends Controller
             'totalPlatformFees' => $totalPlatformFees,
             'affiliateCommissions' => $affiliateCommissions,
             'totalVolume' => $totalVolume,
+            'totalMuthowifFees' => $totalMuthowifFees,
             'totalOrders' => $totalOrders,
             'trends' => $trends,
             'chart' => $chart,

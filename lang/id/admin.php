@@ -62,6 +62,8 @@ return [
         'refund_pending_count_suffix' => 'transaksi perlu tindakan',
         'platform_total_note' => 'Setelah dikurangi komisi affiliate',
         'affiliate_commission' => 'Komisi affiliate',
+        'muthowif_fee_total' => 'Fee ke muthowif',
+        'muthowif_fee_total_note' => 'Net muthowif (belum refunded)',
         'total_orders' => 'Total order',
         'vs_yesterday' => 'vs kemarin',
         'chart_title' => 'Performa Pendapatan',

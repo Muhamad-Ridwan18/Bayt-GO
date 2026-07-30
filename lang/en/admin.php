@@ -62,6 +62,8 @@ return [
         'refund_pending_count_suffix' => 'transactions need action',
         'platform_total_note' => 'After affiliate commissions deducted',
         'affiliate_commission' => 'Affiliate commissions',
+        'muthowif_fee_total' => 'Fee to muthowif',
+        'muthowif_fee_total_note' => 'Muthowif net (not refunded)',
         'total_orders' => 'Total orders',
         'vs_yesterday' => 'vs yesterday',
         'chart_title' => 'Revenue Performance',
