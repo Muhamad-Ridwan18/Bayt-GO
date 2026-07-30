@@ -1003,7 +1003,7 @@ class MuthowifBookingWhatsAppNotifier
     }
 
     /**
-     * Admin menandai withdraw selesai + bukti — kirim WA ke muthowif dengan lampiran.
+     * Admin menandai withdraw selesai + bukti — kirim WA teks ke muthowif (tanpa URL/lampiran).
      */
     public function notifyMuthowifWithdrawalTransferCompleted(MuthowifWithdrawal $withdrawal): void
     {
@@ -1033,12 +1033,10 @@ class MuthowifBookingWhatsAppNotifier
         }
 
         $locale = $this->localeForUser($profile->user?->locale);
-        $proofUrl = WhatsAppMediaUrl::forPublicDiskPath($withdrawal->transfer_proof_path);
         $amountFmt = IndonesianNumber::formatThousands((string) (int) round((float) $withdrawal->amount));
         $appName = config('app.name', 'BaytGo');
-        $panelUrl = route('muthowif.withdrawals.index');
 
-        $this->withLocale($locale, function () use ($withdrawal, $fonnteDial, $locale, $proofUrl, $amountFmt, $appName, $panelUrl): void {
+        $this->withLocale($locale, function () use ($withdrawal, $fonnteDial, $locale, $amountFmt, $appName): void {
             $lines = [
                 __('whatsapp.muthowif.withdrawal_transfer_done.headline', ['app' => $appName], $locale),
                 '',
@@ -1046,10 +1044,7 @@ class MuthowifBookingWhatsAppNotifier
                 '',
                 __('whatsapp.muthowif.withdrawal_transfer_done.amount', ['amount' => $amountFmt], $locale),
                 '',
-                __('whatsapp.muthowif.withdrawal_transfer_done.open_panel', [], $locale),
-                $panelUrl,
-                '',
-                __('whatsapp.muthowif.withdrawal_transfer_done.proof_link', ['url' => $proofUrl], $locale),
+                __('whatsapp.muthowif.withdrawal_transfer_done.proof_hint', [], $locale),
             ];
 
             $message = implode("\n", $lines);

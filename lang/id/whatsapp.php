@@ -72,10 +72,9 @@ return [
         ],
         'withdrawal_transfer_done' => [
             'headline' => '*:app* — withdraw sudah ditransfer',
-            'body' => 'Pencairan withdraw Anda sudah diproses. Unduh bukti transfer melalui link di bawah.',
+            'body' => 'Pencairan withdraw Anda sudah diproses.',
             'amount' => '*Nominal:* Rp :amount',
-            'open_panel' => '*Withdraw:*',
-            'proof_link' => '*Bukti transfer:* :url',
+            'proof_hint' => 'Bukti transfer dapat dilihat di halaman Withdraw di website.',
         ],
         'support_new_booking' => [
             'headline' => '*:app* — permintaan layanan pendukung',

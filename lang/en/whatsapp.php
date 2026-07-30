@@ -72,10 +72,9 @@ return [
         ],
         'withdrawal_transfer_done' => [
             'headline' => '*:app* — withdrawal payout sent',
-            'body' => 'Your withdrawal has been paid. Download the transfer proof via the link below.',
+            'body' => 'Your withdrawal has been paid.',
             'amount' => '*Amount:* Rp :amount',
-            'open_panel' => '*Withdrawals:*',
-            'proof_link' => '*Transfer proof:* :url',
+            'proof_hint' => 'Transfer proof is available on the Withdrawals page on the website.',
         ],
         'support_new_booking' => [
             'headline' => '*:app* — support service request',
