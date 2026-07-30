@@ -131,6 +131,106 @@
                                     </li>
                                 @endforeach
                             </ul>
+                            @if ($groupKey === 'chat')
+                                <div class="mt-5 border-t border-slate-100 pt-5">
+                                    <h3 class="text-sm font-semibold text-slate-900">{{ __('admin.whatsapp_notify.chat_settings_heading') }}</h3>
+                                    <p class="mt-1 text-xs text-slate-500">{{ __('admin.whatsapp_notify.chat_settings_hint') }}</p>
+                                    <div class="mt-4 grid gap-4 sm:grid-cols-2">
+                                        <div>
+                                            <x-input-label for="chat_unreplied_threshold_minutes" :value="__('admin.whatsapp_notify.chat_unreplied_threshold_minutes')" />
+                                            <input
+                                                id="chat_unreplied_threshold_minutes"
+                                                name="chat_unreplied_threshold_minutes"
+                                                type="number"
+                                                min="1"
+                                                max="1440"
+                                                value="{{ old('chat_unreplied_threshold_minutes', $chatSettings['threshold_minutes']) }}"
+                                                class="mt-1 block w-full rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm text-slate-900 shadow-sm focus:border-emerald-500 focus:ring-emerald-500"
+                                            >
+                                            <p class="mt-1.5 text-xs text-slate-500">{{ __('admin.whatsapp_notify.chat_unreplied_threshold_minutes_hint') }}</p>
+                                            <x-input-error :messages="$errors->get('chat_unreplied_threshold_minutes')" class="mt-2" />
+                                        </div>
+                                        <div>
+                                            <x-input-label for="chat_unreplied_daily_time" :value="__('admin.whatsapp_notify.chat_unreplied_daily_time')" />
+                                            <input
+                                                id="chat_unreplied_daily_time"
+                                                name="chat_unreplied_daily_time"
+                                                type="time"
+                                                value="{{ old('chat_unreplied_daily_time', $chatSettings['daily_time']) }}"
+                                                class="mt-1 block w-full rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm text-slate-900 shadow-sm focus:border-emerald-500 focus:ring-emerald-500"
+                                            >
+                                            <p class="mt-1.5 text-xs text-slate-500">{{ __('admin.whatsapp_notify.chat_unreplied_daily_time_hint') }}</p>
+                                            <x-input-error :messages="$errors->get('chat_unreplied_daily_time')" class="mt-2" />
+                                        </div>
+                                    </div>
+                                    <div class="mt-5 rounded-xl border border-amber-200 bg-amber-50 p-4">
+                                        <h4 class="text-sm font-semibold text-amber-950">{{ __('admin.whatsapp_notify.run_chat_unreplied_heading') }}</h4>
+                                        <p class="mt-1 text-xs text-amber-900/80">{{ __('admin.whatsapp_notify.run_chat_unreplied_hint') }}</p>
+                                        <div id="wa-run-chat-unreplied-result" class="mt-3 hidden rounded-xl border px-4 py-3 text-sm"></div>
+                                        <div class="mt-3 flex flex-wrap gap-3">
+                                            <button
+                                                type="button"
+                                                id="wa-run-chat-unreplied-dry-btn"
+                                                class="inline-flex items-center rounded-xl border border-amber-300 bg-white px-5 py-2.5 text-sm font-semibold text-amber-900 shadow-sm hover:bg-amber-100 disabled:cursor-not-allowed disabled:opacity-60"
+                                            >
+                                                {{ __('admin.whatsapp_notify.run_chat_unreplied_dry_button') }}
+                                            </button>
+                                            <button
+                                                type="button"
+                                                id="wa-run-chat-unreplied-btn"
+                                                class="inline-flex items-center rounded-xl bg-amber-600 px-5 py-2.5 text-sm font-semibold text-white shadow-sm hover:bg-amber-700 disabled:cursor-not-allowed disabled:opacity-60"
+                                            >
+                                                {{ __('admin.whatsapp_notify.run_chat_unreplied_button') }}
+                                            </button>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="mt-5 border-t border-slate-100 pt-5">
+                                    <h3 class="text-sm font-semibold text-slate-900">{{ __('admin.whatsapp_notify.test_chat_unreplied_heading') }}</h3>
+                                    <p class="mt-1 text-xs text-slate-500">{{ __('admin.whatsapp_notify.test_chat_unreplied_hint') }}</p>
+                                    <div class="mt-4 grid gap-4 sm:grid-cols-3">
+                                        <div>
+                                            <x-input-label for="test_chat_name" :value="__('admin.whatsapp_notify.test_chat_unreplied_name')" />
+                                            <input
+                                                id="test_chat_name"
+                                                name="test_chat_name"
+                                                type="text"
+                                                value="{{ old('test_chat_name', __('admin.whatsapp_notify.test_chat_unreplied_default_name')) }}"
+                                                class="mt-1 block w-full rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm text-slate-900 shadow-sm focus:border-emerald-500 focus:ring-emerald-500"
+                                            >
+                                        </div>
+                                        <div>
+                                            <x-input-label for="test_chat_booking_code" :value="__('admin.whatsapp_notify.test_chat_unreplied_booking_code')" />
+                                            <input
+                                                id="test_chat_booking_code"
+                                                name="test_chat_booking_code"
+                                                type="text"
+                                                value="{{ old('test_chat_booking_code', 'BG-TEST') }}"
+                                                class="mt-1 block w-full rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm text-slate-900 shadow-sm focus:border-emerald-500 focus:ring-emerald-500"
+                                            >
+                                        </div>
+                                        <div>
+                                            <x-input-label for="test_chat_phone" :value="__('admin.whatsapp_notify.test_chat_unreplied_phone')" />
+                                            <input
+                                                id="test_chat_phone"
+                                                name="test_chat_phone"
+                                                type="text"
+                                                placeholder="081234567890"
+                                                class="mt-1 block w-full rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm text-slate-900 shadow-sm focus:border-emerald-500 focus:ring-emerald-500"
+                                            >
+                                            <p class="mt-1.5 text-xs text-slate-500">{{ __('admin.whatsapp_notify.test_chat_unreplied_phone_hint') }}</p>
+                                        </div>
+                                    </div>
+                                    <div id="wa-test-chat-unreplied-result" class="mt-4 hidden rounded-xl border px-4 py-3 text-sm"></div>
+                                    <button
+                                        type="button"
+                                        id="wa-test-chat-unreplied-btn"
+                                        class="mt-4 inline-flex items-center rounded-xl border border-emerald-200 bg-white px-5 py-2.5 text-sm font-semibold text-emerald-800 shadow-sm hover:bg-emerald-50 disabled:cursor-not-allowed disabled:opacity-60"
+                                    >
+                                        {{ __('admin.whatsapp_notify.test_chat_unreplied_button') }}
+                                    </button>
+                                </div>
+                            @endif
                         </div>
                     @endif
                 @endforeach
@@ -228,6 +328,140 @@
                                 btn.textContent = labels.defaultButton;
                             }
                         });
+
+                        const chatBtn = document.getElementById('wa-test-chat-unreplied-btn');
+                        const chatResultBox = document.getElementById('wa-test-chat-unreplied-result');
+                        if (chatBtn && chatResultBox) {
+                            const chatLabels = {
+                                testing: @json(__('admin.whatsapp_notify.test_chat_unreplied_running')),
+                                defaultButton: @json(__('admin.whatsapp_notify.test_chat_unreplied_button')),
+                            };
+
+                            chatBtn.addEventListener('click', async function () {
+                                chatBtn.disabled = true;
+                                chatBtn.textContent = chatLabels.testing;
+                                chatResultBox.classList.add('hidden');
+                                chatResultBox.textContent = '';
+
+                                try {
+                                    const response = await fetch(@json(route('admin.whatsapp-notify-settings.test-chat-unreplied')), {
+                                        method: 'POST',
+                                        headers: {
+                                            'X-CSRF-TOKEN': @json(csrf_token()),
+                                            'Accept': 'application/json',
+                                        },
+                                        body: new FormData(form),
+                                    });
+
+                                    const data = await response.json();
+                                    let text = data.message || '';
+                                    if (data.errors) {
+                                        text = Object.values(data.errors).flat().join('\n');
+                                    } else if (Array.isArray(data.results)) {
+                                        const lines = data.results.map(function (row) {
+                                            if (row.ok) {
+                                                return '✓ ' + row.phone;
+                                            }
+                                            return '✗ ' + row.phone + (row.error ? ': ' + row.error : '');
+                                        });
+                                        if (lines.length) {
+                                            text += (text ? '\n\n' : '') + lines.join('\n');
+                                        }
+                                    }
+
+                                    chatResultBox.textContent = text;
+                                    chatResultBox.style.whiteSpace = 'pre-wrap';
+                                    chatResultBox.classList.remove('hidden');
+                                    chatResultBox.classList.toggle('border-emerald-200', response.ok);
+                                    chatResultBox.classList.toggle('bg-emerald-50', response.ok);
+                                    chatResultBox.classList.toggle('text-emerald-900', response.ok);
+                                    chatResultBox.classList.toggle('border-red-200', !response.ok);
+                                    chatResultBox.classList.toggle('bg-red-50', !response.ok);
+                                    chatResultBox.classList.toggle('text-red-900', !response.ok);
+                                } catch (error) {
+                                    chatResultBox.textContent = @json(__('admin.whatsapp_notify.test_request_failed'));
+                                    chatResultBox.classList.remove('hidden');
+                                    chatResultBox.classList.add('border-red-200', 'bg-red-50', 'text-red-900');
+                                } finally {
+                                    chatBtn.disabled = false;
+                                    chatBtn.textContent = chatLabels.defaultButton;
+                                }
+                            });
+                        }
+
+                        async function runChatUnreplied(dryRun) {
+                            const runBtn = document.getElementById('wa-run-chat-unreplied-btn');
+                            const dryBtn = document.getElementById('wa-run-chat-unreplied-dry-btn');
+                            const runResultBox = document.getElementById('wa-run-chat-unreplied-result');
+                            if (!runBtn || !dryBtn || !runResultBox) return;
+
+                            runBtn.disabled = true;
+                            dryBtn.disabled = true;
+                            runResultBox.classList.add('hidden');
+                            runResultBox.textContent = '';
+
+                            const formData = new FormData(form);
+                            formData.set('dry_run', dryRun ? '1' : '0');
+
+                            try {
+                                const response = await fetch(@json(route('admin.whatsapp-notify-settings.run-chat-unreplied')), {
+                                    method: 'POST',
+                                    headers: {
+                                        'X-CSRF-TOKEN': @json(csrf_token()),
+                                        'Accept': 'application/json',
+                                    },
+                                    body: formData,
+                                });
+
+                                const data = await response.json();
+                                let text = data.message || '';
+                                if (data.errors) {
+                                    text = Object.values(data.errors).flat().join('\n');
+                                } else if (Array.isArray(data.recipients) && data.recipients.length) {
+                                    const lines = data.recipients.map(function (row) {
+                                        let line = '• ' + row.role + ' — ' + row.name + ' (' + row.phone + ') — ' + row.booking_code;
+                                        if (row.status) {
+                                            line += ' [' + row.status + ']';
+                                        }
+                                        if (row.error) {
+                                            line += ' — ' + row.error;
+                                        }
+                                        return line;
+                                    });
+                                    text += (text ? '\n\n' : '') + lines.join('\n');
+                                }
+
+                                runResultBox.textContent = text;
+                                runResultBox.style.whiteSpace = 'pre-wrap';
+                                runResultBox.classList.remove('hidden');
+                                runResultBox.classList.toggle('border-emerald-200', response.ok);
+                                runResultBox.classList.toggle('bg-emerald-50', response.ok);
+                                runResultBox.classList.toggle('text-emerald-900', response.ok);
+                                runResultBox.classList.toggle('border-red-200', !response.ok);
+                                runResultBox.classList.toggle('bg-red-50', !response.ok);
+                                runResultBox.classList.toggle('text-red-900', !response.ok);
+                            } catch (error) {
+                                runResultBox.textContent = @json(__('admin.whatsapp_notify.test_request_failed'));
+                                runResultBox.classList.remove('hidden');
+                                runResultBox.classList.add('border-red-200', 'bg-red-50', 'text-red-900');
+                            } finally {
+                                runBtn.disabled = false;
+                                dryBtn.disabled = false;
+                            }
+                        }
+
+                        const runChatBtn = document.getElementById('wa-run-chat-unreplied-btn');
+                        const runChatDryBtn = document.getElementById('wa-run-chat-unreplied-dry-btn');
+                        if (runChatBtn) {
+                            runChatBtn.addEventListener('click', function () {
+                                runChatUnreplied(false);
+                            });
+                        }
+                        if (runChatDryBtn) {
+                            runChatDryBtn.addEventListener('click', function () {
+                                runChatUnreplied(true);
+                            });
+                        }
                     })();
                 </script>
             @endpush

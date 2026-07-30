@@ -32,6 +32,11 @@ return [
             'open' => '*Process in admin panel:*',
         ],
     ],
+    'chat_unreplied' => [
+        'greeting' => 'Assalamualaikum :name',
+        'body' => 'You have a message in live chat with booking code :code',
+        'cta' => 'Please respond as soon as possible',
+    ],
     'fallback_pilgrim' => 'Pilgrim',
     'fallback_muthowif' => 'Chaperone',
     'fallback_service' => 'Service',

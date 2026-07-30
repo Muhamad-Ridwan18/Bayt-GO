@@ -3,6 +3,7 @@
 namespace App\Http\Middleware;
 
 use App\Enums\UserRole;
+use App\Support\RedirectExpiredSession;
 use Closure;
 use Illuminate\Http\Request;
 use Symfony\Component\HttpFoundation\Response;
@@ -17,7 +18,7 @@ class EnsureUserRole
     {
         $user = $request->user();
         if (! $user) {
-            abort(403);
+            return RedirectExpiredSession::respond($request);
         }
 
         $map = [
@@ -34,6 +35,6 @@ class EnsureUserRole
             return $next($request);
         }
 
-        abort(403);
+        return RedirectExpiredSession::respondForbidden($request);
     }
 }

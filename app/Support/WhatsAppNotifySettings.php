@@ -22,6 +22,14 @@ class WhatsAppNotifySettings
 
     public const SETTING_MEDIA_PUBLIC_URL = 'wa_gateway_media_public_url';
 
+    public const SETTING_CHAT_UNREPLIED_THRESHOLD_MINUTES = 'wa_notify_chat_unreplied_threshold_minutes';
+
+    public const SETTING_CHAT_UNREPLIED_DAILY_TIME = 'wa_notify_chat_unreplied_daily_time';
+
+    private const DEFAULT_CHAT_UNREPLIED_THRESHOLD_MINUTES = 30;
+
+    private const DEFAULT_CHAT_UNREPLIED_DAILY_TIME = '09:00';
+
     /**
      * @return array<string, array{label: string, group: string, default: bool}>
      */
@@ -128,6 +136,11 @@ class WhatsAppNotifySettings
                 'group' => 'support',
                 'default' => false,
             ],
+            'chat_unreplied_daily' => [
+                'label' => 'admin.whatsapp_notify.toggles.chat_unreplied_daily',
+                'group' => 'chat',
+                'default' => true,
+            ],
         ];
     }
 
@@ -143,6 +156,7 @@ class WhatsAppNotifySettings
             'admin' => 'admin.whatsapp_notify.groups.admin',
             'emergency' => 'admin.whatsapp_notify.groups.emergency',
             'support' => 'admin.whatsapp_notify.groups.support',
+            'chat' => 'admin.whatsapp_notify.groups.chat',
         ];
     }
 
@@ -181,6 +195,37 @@ class WhatsAppNotifySettings
             ?? self::storedValue('wa_bulk_gateway_media_public_url');
 
         return $value !== null && $value !== '' ? $value : null;
+    }
+
+    public static function chatUnrepliedThresholdMinutes(): int
+    {
+        $stored = self::storedValue(self::SETTING_CHAT_UNREPLIED_THRESHOLD_MINUTES);
+        if ($stored === null || ! is_numeric($stored)) {
+            return self::DEFAULT_CHAT_UNREPLIED_THRESHOLD_MINUTES;
+        }
+
+        return max(1, min(1440, (int) $stored));
+    }
+
+    public static function chatUnrepliedDailyTime(): string
+    {
+        $stored = self::storedValue(self::SETTING_CHAT_UNREPLIED_DAILY_TIME);
+        if ($stored !== null && preg_match('/^\d{2}:\d{2}$/', $stored) === 1) {
+            return $stored;
+        }
+
+        return self::DEFAULT_CHAT_UNREPLIED_DAILY_TIME;
+    }
+
+    /**
+     * @return array{threshold_minutes: int, daily_time: string}
+     */
+    public static function chatValuesForForm(): array
+    {
+        return [
+            'threshold_minutes' => self::chatUnrepliedThresholdMinutes(),
+            'daily_time' => self::chatUnrepliedDailyTime(),
+        ];
     }
 
     /**
@@ -321,6 +366,18 @@ class WhatsAppNotifySettings
             self::SETTING_MEDIA_PUBLIC_URL,
             self::nullableTrimmed($input['gateway_media_public_url'] ?? null),
         );
+
+        if (array_key_exists('chat_unreplied_threshold_minutes', $input)) {
+            $minutes = max(1, min(1440, (int) $input['chat_unreplied_threshold_minutes']));
+            SiteSetting::putValue(self::SETTING_CHAT_UNREPLIED_THRESHOLD_MINUTES, (string) $minutes);
+        }
+
+        if (array_key_exists('chat_unreplied_daily_time', $input)) {
+            $time = trim((string) $input['chat_unreplied_daily_time']);
+            if (preg_match('/^\d{2}:\d{2}$/', $time) === 1) {
+                SiteSetting::putValue(self::SETTING_CHAT_UNREPLIED_DAILY_TIME, $time);
+            }
+        }
     }
 
     private static function storedValue(string $settingKey): ?string

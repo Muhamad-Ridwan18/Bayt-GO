@@ -325,6 +325,8 @@ Route::middleware('auth')->group(function () {
         Route::get('pengaturan/whatsapp-notifikasi', [WhatsAppNotifySettingsController::class, 'edit'])->name('whatsapp-notify-settings.edit');
         Route::post('pengaturan/whatsapp-notifikasi', [WhatsAppNotifySettingsController::class, 'update'])->name('whatsapp-notify-settings.update');
         Route::post('pengaturan/whatsapp-notifikasi/uji', [WhatsAppNotifySettingsController::class, 'test'])->name('whatsapp-notify-settings.test');
+        Route::post('pengaturan/whatsapp-notifikasi/uji-chat-unreplied', [WhatsAppNotifySettingsController::class, 'testChatUnreplied'])->name('whatsapp-notify-settings.test-chat-unreplied');
+        Route::post('pengaturan/whatsapp-notifikasi/jalankan-chat-unreplied', [WhatsAppNotifySettingsController::class, 'runChatUnrepliedNow'])->name('whatsapp-notify-settings.run-chat-unreplied');
         Route::get('pengaturan/moota-api', [MootaApiSettingsController::class, 'edit'])->name('moota-api-settings.edit');
         Route::post('pengaturan/moota-api', [MootaApiSettingsController::class, 'update'])->name('moota-api-settings.update');
         Route::get('whatsapp-broadcast', [WhatsAppBroadcastController::class, 'index'])->name('whatsapp-broadcast.index');
