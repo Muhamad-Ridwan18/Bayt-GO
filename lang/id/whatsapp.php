@@ -71,10 +71,10 @@ return [
             'open_detail' => '*Buka detail pesanan:*',
         ],
         'withdrawal_transfer_done' => [
-            'headline' => '*:app* — withdraw sudah ditransfer',
-            'body' => 'Pencairan withdraw Anda sudah diproses.',
+            'headline' => '*:app* — pencairan dana sudah dikirim',
+            'body' => 'Permintaan penarikan Anda sudah diproses.',
             'amount' => '*Nominal:* Rp :amount',
-            'proof_hint' => 'Bukti transfer dapat dilihat di halaman Withdraw di website.',
+            'proof_hint' => 'Bukti transfer dapat dilihat di halaman penarikan di website.',
         ],
         'support_new_booking' => [
             'headline' => '*:app* — permintaan layanan pendukung',

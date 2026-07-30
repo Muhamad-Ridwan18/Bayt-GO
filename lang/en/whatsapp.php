@@ -71,10 +71,10 @@ return [
             'open_detail' => '*Open booking details:*',
         ],
         'withdrawal_transfer_done' => [
-            'headline' => '*:app* — withdrawal payout sent',
-            'body' => 'Your withdrawal has been paid.',
+            'headline' => '*:app* — payout has been sent',
+            'body' => 'Your payout request has been processed.',
             'amount' => '*Amount:* Rp :amount',
-            'proof_hint' => 'Transfer proof is available on the Withdrawals page on the website.',
+            'proof_hint' => 'Transfer proof is available on the payouts page on the website.',
         ],
         'support_new_booking' => [
             'headline' => '*:app* — support service request',
