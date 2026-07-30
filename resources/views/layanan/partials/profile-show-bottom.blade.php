@@ -1,13 +1,16 @@
 @php
+    use App\Support\PublicBioText;
     use Illuminate\Support\Str;
 
     $bio = filled($profile->reference_text)
-        ? $profile->reference_text
+        ? PublicBioText::withoutContactNumbers($profile->reference_text)
         : ($group && filled($group->description)
-            ? Str::limit(trim(strip_tags($group->description)), 400)
+            ? PublicBioText::withoutContactNumbers(Str::limit(trim(strip_tags($group->description)), 400))
             : ($private && filled($private->description)
-                ? Str::limit(trim(strip_tags($private->description)), 400)
+                ? PublicBioText::withoutContactNumbers(Str::limit(trim(strip_tags($private->description)), 400))
                 : __('marketplace.card.bio_fallback')));
+
+    $bio = $bio ?: __('marketplace.card.bio_fallback');
 
     $specializations = collect([$group?->name, $private?->name])
         ->filter()

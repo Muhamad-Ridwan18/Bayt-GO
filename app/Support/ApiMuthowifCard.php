@@ -19,8 +19,12 @@ class ApiMuthowifCard
         $reviewCount = (int) ($profile->booking_reviews_count ?? 0);
 
         $bio = filled($profile->reference_text)
-            ? Str::limit(trim(strip_tags((string) $profile->reference_text)), 140)
+            ? Str::limit((string) (PublicBioText::withoutContactNumbers((string) $profile->reference_text) ?? ''), 140)
             : null;
+
+        if ($bio === '') {
+            $bio = null;
+        }
 
         return [
             'id' => $profile->id,
