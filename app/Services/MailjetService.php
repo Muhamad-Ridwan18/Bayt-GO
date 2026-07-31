@@ -16,6 +16,7 @@ class MailjetService
     }
 
     /**
+     * @param  list<array{ContentType: string, Filename: string, Base64Content: string}>  $attachments
      * @return array<string, mixed>
      */
     public function sendText(
@@ -24,6 +25,7 @@ class MailjetService
         string $text,
         ?string $fromEmail = null,
         ?string $fromName = null,
+        array $attachments = [],
     ): array {
         if (! $this->configured()) {
             throw new RuntimeException('Mailjet belum dikonfigurasi. Simpan API key & secret di pengaturan admin.');
@@ -40,22 +42,26 @@ class MailjetService
             throw new RuntimeException('Alamat From dan To wajib diisi.');
         }
 
-        $payload = [
-            'Messages' => [
+        $message = [
+            'From' => [
+                'Email' => $fromEmail,
+                'Name' => $fromName !== '' ? $fromName : config('app.name', 'BaytGo'),
+            ],
+            'To' => [
                 [
-                    'From' => [
-                        'Email' => $fromEmail,
-                        'Name' => $fromName !== '' ? $fromName : config('app.name', 'BaytGo'),
-                    ],
-                    'To' => [
-                        [
-                            'Email' => $toEmail,
-                        ],
-                    ],
-                    'Subject' => $subject,
-                    'TextPart' => $text,
+                    'Email' => $toEmail,
                 ],
             ],
+            'Subject' => $subject,
+            'TextPart' => $text,
+        ];
+
+        if ($attachments !== []) {
+            $message['Attachments'] = array_values($attachments);
+        }
+
+        $payload = [
+            'Messages' => [$message],
         ];
 
         try {

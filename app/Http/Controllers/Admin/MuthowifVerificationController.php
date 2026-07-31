@@ -89,11 +89,12 @@ class MuthowifVerificationController extends Controller
 
         app(MuthowifReferralCodeService::class)->ensureAssigned($profile->fresh());
         $fonnteDial = IntlPhone::fonnteDial($profile->phone);
-        if ($fonnteDial !== null && WhatsAppNotifySettings::hasToken()) {
-            $appName = config('app.name', 'BaytGo');
-            $name = $profile->user->name;
-            $message = "Halo *{$name}*,\n\nPendaftaran muthowif Anda di *{$appName}* telah *disetujui*.\n\nAnda sekarang dapat masuk ke akun menggunakan email terdaftar.\nDan menentukan rate card harian mu😉\nhttps://baytgo.id/login\n\nSilahkan bergabung dengan grup baytgo communication untuk informasi terupdate dari baytgo serta jika ada kendala dari muthowif bisa menginformasikan ke grup\nhttps://chat.whatsapp.com/DjbIrgD1jFaCrdlGeF1V7n\n\nTerima kasih.";
+        $appName = config('app.name', 'BaytGo');
+        $name = $profile->user->name;
+        $message = "Halo *{$name}*,\n\nPendaftaran muthowif Anda di *{$appName}* telah *disetujui*.\n\nAnda sekarang dapat masuk ke akun menggunakan email terdaftar.\nDan menentukan rate card harian mu😉\nhttps://baytgo.id/login\n\nSilahkan bergabung dengan grup baytgo communication untuk informasi terupdate dari baytgo serta jika ada kendala dari muthowif bisa menginformasikan ke grup\nhttps://chat.whatsapp.com/DjbIrgD1jFaCrdlGeF1V7n\n\nTerima kasih.";
 
+        $waFlash = '';
+        if ($fonnteDial !== null && WhatsAppNotifySettings::hasToken()) {
             SendWhatsAppTextJob::dispatchAfterResponse(
                 $fonnteDial['target'],
                 $message,
@@ -159,18 +160,6 @@ class MuthowifVerificationController extends Controller
         $profile->loadMissing('user');
 
         $fonnteDial = IntlPhone::fonnteDial($profile->phone);
-        if ($fonnteDial === null) {
-            return redirect()
-                ->route('admin.muthowif.show', $profile)
-                ->with('error', __('admin.muthowif.notify_rejection_invalid_phone'));
-        }
-
-        if (! WhatsAppNotifySettings::hasToken()) {
-            return redirect()
-                ->route('admin.muthowif.show', $profile)
-                ->with('error', __('admin.muthowif.notify_rejection_no_token'));
-        }
-
         $appName = config('app.name', 'BaytGo');
         $name = $profile->user->name;
         $message = "Halo *{$name}*,\n\nMohon maaf, pendaftaran muthowif Anda di *{$appName}* belum bisa kami setujui karena data atau dokumen yang Anda kirimkan (seperti CV dan dokumen pendukung lainnya) belum sesuai.";
@@ -180,6 +169,19 @@ class MuthowifVerificationController extends Controller
         }
 
         $message .= "\n\nSilakan perbaiki data/dokumen Anda, lalu mendaftar kembali.\n\nTerima kasih atas pengertiannya.";
+
+        $canWa = $fonnteDial !== null && WhatsAppNotifySettings::hasToken();
+        if ($fonnteDial === null) {
+            return redirect()
+                ->route('admin.muthowif.show', $profile)
+                ->with('error', __('admin.muthowif.notify_rejection_invalid_phone'));
+        }
+
+        if (! $canWa) {
+            return redirect()
+                ->route('admin.muthowif.show', $profile)
+                ->with('error', __('admin.muthowif.notify_rejection_no_token'));
+        }
 
         SendWhatsAppTextJob::dispatchAfterResponse(
             $fonnteDial['target'],

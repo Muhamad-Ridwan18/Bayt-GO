@@ -14,6 +14,8 @@ class MailjetSettings
 
     public const SETTING_FROM_NAME = 'mailjet_from_name';
 
+    public const SETTING_ADMIN_EMAILS = 'mailjet_admin_emails';
+
     private const DEFAULT_API_URL = 'https://api.mailjet.com/v3.1/send';
 
     public static function apiKey(): ?string
@@ -52,11 +54,37 @@ class MailjetSettings
     }
 
     /**
+     * @return list<string>
+     */
+    public static function adminEmails(): array
+    {
+        $stored = SiteSetting::getValue(self::SETTING_ADMIN_EMAILS);
+        if ($stored === null || trim($stored) === '') {
+            return [];
+        }
+
+        return array_values(array_filter(array_map(
+            static function (string $email): string {
+                return strtolower(trim($email));
+            },
+            explode(',', $stored),
+        ), static function (string $email): bool {
+            return $email !== '' && filter_var($email, FILTER_VALIDATE_EMAIL);
+        }));
+    }
+
+    public static function adminEmailsForForm(): string
+    {
+        return SiteSetting::getValue(self::SETTING_ADMIN_EMAILS) ?? '';
+    }
+
+    /**
      * @return array{
      *     api_key_set: bool,
      *     secret_key_set: bool,
      *     from_address: string,
      *     from_name: string,
+     *     admin_emails: string,
      * }
      */
     public static function valuesForForm(): array
@@ -66,6 +94,7 @@ class MailjetSettings
             'secret_key_set' => filled(self::secretKey()),
             'from_address' => self::fromAddress() ?? '',
             'from_name' => self::fromName() ?? (string) config('app.name', 'BaytGo'),
+            'admin_emails' => self::adminEmailsForForm(),
         ];
     }
 
@@ -91,6 +120,12 @@ class MailjetSettings
         SiteSetting::putValue(
             self::SETTING_FROM_NAME,
             self::nullableTrimmed($input['from_name'] ?? null),
+        );
+
+        $adminEmails = trim((string) ($input['admin_emails'] ?? ''));
+        SiteSetting::putValue(
+            self::SETTING_ADMIN_EMAILS,
+            $adminEmails === '' ? null : $adminEmails,
         );
     }
 

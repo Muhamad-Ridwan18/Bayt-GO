@@ -97,6 +97,20 @@
                         </div>
                     </div>
 
+                    <div>
+                        <x-input-label for="admin_emails" :value="__('admin.mailjet_test.admin_emails')" />
+                        <x-text-input
+                            id="admin_emails"
+                            name="admin_emails"
+                            type="text"
+                            class="mt-1 block w-full"
+                            :value="old('admin_emails', $settings['admin_emails'])"
+                            :placeholder="__('admin.mailjet_test.admin_emails_placeholder')"
+                        />
+                        <p class="mt-1.5 text-xs text-slate-500">{{ __('admin.mailjet_test.admin_emails_hint') }}</p>
+                        <x-input-error :messages="$errors->get('admin_emails')" class="mt-2" />
+                    </div>
+
                     <div class="flex justify-end pt-2">
                         <x-submit-button class="rounded-xl bg-slate-900 px-6 py-2.5 text-sm font-semibold text-white hover:bg-slate-800">
                             {{ __('admin.mailjet_test.save_settings') }}

@@ -28,6 +28,7 @@ class MailjetTestController extends Controller
             'secret_key' => ['nullable', 'string', 'max:255'],
             'from_address' => ['nullable', 'email', 'max:255'],
             'from_name' => ['nullable', 'string', 'max:120'],
+            'admin_emails' => ['nullable', 'string', 'max:2000'],
         ]);
 
         if (! MailjetSettings::hasCredentials()) {

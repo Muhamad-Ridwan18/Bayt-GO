@@ -229,10 +229,11 @@ final class BookingChatUnrepliedReminderService
 
         $name = $recipient['user']->name ?? __('whatsapp.fallback_pilgrim', [], $locale);
         $code = $booking->booking_code ?? '—';
+        $message = self::buildMessage($name, $code, $locale);
 
         SendWhatsAppTextJob::dispatchSync(
             $recipient['dial']['target'],
-            self::buildMessage($name, $code, $locale),
+            $message,
             $recipient['dial']['country_calling_code'],
             [],
             null,

@@ -56,10 +56,11 @@ class CompanyApprovalController extends Controller
         $user->is_company_approved = true;
         $user->save();
 
+        $message = "Halo *{$user->name}*,\n\nAkun perusahaan Anda telah *disetujui* oleh Administrator. Anda sekarang sudah bisa masuk (login) ke website ".config('app.name', 'BaytGo')." dan mulai menggunakan layanan kami.\n\nTerima kasih!";
+
         if ($user->phone) {
             $fonnteDial = IntlPhone::fonnteDial($user->phone);
             if ($fonnteDial !== null) {
-                $message = "Halo *{$user->name}*,\n\nAkun perusahaan Anda telah *disetujui* oleh Administrator. Anda sekarang sudah bisa masuk (login) ke website ".config('app.name', 'BaytGo')." dan mulai menggunakan layanan kami.\n\nTerima kasih!";
                 SendWhatsAppTextJob::dispatchAfterResponse(
                     $fonnteDial['target'],
                     $message,
