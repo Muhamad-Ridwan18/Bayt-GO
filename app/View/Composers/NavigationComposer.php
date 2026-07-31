@@ -53,6 +53,8 @@ final class NavigationComposer
                 'admin.service_monitor.*',
                 'admin.moota_webhooks.*',
                 'admin.whatsapp-broadcast.*',
+                'admin.whatsapp-notify-settings.*',
+                'admin.mailjet-test.*',
                 'log-viewer.*',
             ]);
         }

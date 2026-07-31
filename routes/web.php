@@ -18,6 +18,7 @@ use App\Http\Controllers\Admin\SiteAppearanceController;
 use App\Http\Controllers\Admin\SupportTicketsController;
 use App\Http\Controllers\Admin\UserManagementController;
 use App\Http\Controllers\Admin\WhatsAppBroadcastController;
+use App\Http\Controllers\Admin\MailjetTestController;
 use App\Http\Controllers\Admin\WhatsAppNotifySettingsController;
 use App\Http\Controllers\Admin\WithdrawalsController;
 use App\Http\Controllers\Admin\AffiliateAdminController;
@@ -327,6 +328,9 @@ Route::middleware('auth')->group(function () {
         Route::post('pengaturan/whatsapp-notifikasi/uji', [WhatsAppNotifySettingsController::class, 'test'])->name('whatsapp-notify-settings.test');
         Route::post('pengaturan/whatsapp-notifikasi/uji-chat-unreplied', [WhatsAppNotifySettingsController::class, 'testChatUnreplied'])->name('whatsapp-notify-settings.test-chat-unreplied');
         Route::post('pengaturan/whatsapp-notifikasi/jalankan-chat-unreplied', [WhatsAppNotifySettingsController::class, 'runChatUnrepliedNow'])->name('whatsapp-notify-settings.run-chat-unreplied');
+        Route::get('pengaturan/mailjet-uji', [MailjetTestController::class, 'edit'])->name('mailjet-test.edit');
+        Route::post('pengaturan/mailjet-uji', [MailjetTestController::class, 'update'])->name('mailjet-test.update');
+        Route::post('pengaturan/mailjet-uji/kirim', [MailjetTestController::class, 'send'])->name('mailjet-test.send');
         Route::get('pengaturan/moota-api', [MootaApiSettingsController::class, 'edit'])->name('moota-api-settings.edit');
         Route::post('pengaturan/moota-api', [MootaApiSettingsController::class, 'update'])->name('moota-api-settings.update');
         Route::get('whatsapp-broadcast', [WhatsAppBroadcastController::class, 'index'])->name('whatsapp-broadcast.index');
