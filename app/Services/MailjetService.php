@@ -26,6 +26,7 @@ class MailjetService
         ?string $fromEmail = null,
         ?string $fromName = null,
         array $attachments = [],
+        ?string $html = null,
     ): array {
         if (! $this->configured()) {
             throw new RuntimeException('Mailjet belum dikonfigurasi. Simpan API key & secret di pengaturan admin.');
@@ -55,6 +56,10 @@ class MailjetService
             'Subject' => $subject,
             'TextPart' => $text,
         ];
+
+        if (filled($html)) {
+            $message['HTMLPart'] = $html;
+        }
 
         if ($attachments !== []) {
             $message['Attachments'] = array_values($attachments);

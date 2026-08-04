@@ -15,6 +15,7 @@ use App\Support\DualChannelNotify;
 use App\Support\IndonesianNumber;
 use App\Support\IntlPhone;
 use App\Support\MailjetAttachment;
+use App\Support\TransactionalEmailHtml;
 use App\Support\WhatsAppMediaUrl;
 use App\Support\WhatsAppNotifySettings;
 use Illuminate\Support\Facades\Log;
@@ -259,7 +260,12 @@ class MuthowifBookingWhatsAppNotifier
 
                 $message = implode("\n", $lines);
                 $this->sendToTarget($fonnteDial, $message, $booking->id);
-                $this->queueTransactionalEmail($customer->email, $message, [BookingInvoiceAttachment::forBooking($booking)]);
+                $this->queueTransactionalEmail(
+                    $customer->email,
+                    $message,
+                    [BookingInvoiceAttachment::forBooking($booking)],
+                    __('bookings.invoice.attachment_invoice'),
+                );
 
                 return;
             }
@@ -290,7 +296,12 @@ class MuthowifBookingWhatsAppNotifier
 
             $message = implode("\n", $lines);
             $this->sendToTarget($fonnteDial, $message, $booking->id);
-            $this->queueTransactionalEmail($customer->email, $message, [BookingInvoiceAttachment::forBooking($booking)]);
+            $this->queueTransactionalEmail(
+                $customer->email,
+                $message,
+                [BookingInvoiceAttachment::forBooking($booking)],
+                __('bookings.invoice.attachment_invoice'),
+            );
         });
     }
 
@@ -949,6 +960,7 @@ class MuthowifBookingWhatsAppNotifier
                 $customer->email,
                 $message,
                 $proofAttachment !== null ? [$proofAttachment] : [],
+                __('bookings.invoice.attachment_transfer_proof'),
             );
         });
     }
@@ -998,6 +1010,7 @@ class MuthowifBookingWhatsAppNotifier
                 $profile->user?->email,
                 $message,
                 $proofAttachment !== null ? [$proofAttachment] : [],
+                __('bookings.invoice.attachment_transfer_proof'),
             );
         });
     }
@@ -1317,8 +1330,13 @@ class MuthowifBookingWhatsAppNotifier
     /**
      * @param  list<array{ContentType: string, Filename: string, Base64Content: string}>  $attachments
      */
-    private function queueTransactionalEmail(?string $email, string $message, array $attachments = []): void
+    private function queueTransactionalEmail(?string $email, string $message, array $attachments = [], ?string $footnote = null): void
     {
-        DualChannelNotify::queueEmail($email, $message, attachments: $attachments);
+        DualChannelNotify::queueEmail(
+            $email,
+            $message,
+            attachments: $attachments,
+            html: TransactionalEmailHtml::wrap($message, $footnote),
+        );
     }
 }

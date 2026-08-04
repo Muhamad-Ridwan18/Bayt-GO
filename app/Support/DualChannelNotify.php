@@ -7,7 +7,7 @@ use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Str;
 
 /**
- * Email transaksi Mailjet (teks + lampiran), terpisah dari notifikasi WhatsApp biasa.
+ * Email transaksi Mailjet (teks + HTML + lampiran), terpisah dari notifikasi WhatsApp biasa.
  */
 final class DualChannelNotify
 {
@@ -21,6 +21,7 @@ final class DualChannelNotify
         bool $afterResponse = false,
         bool $sync = false,
         array $attachments = [],
+        ?string $html = null,
     ): void {
         $email = self::normalizeEmail($email);
         if ($email === null) {
@@ -40,19 +41,23 @@ final class DualChannelNotify
             $subject = self::subjectFromMessage($message);
         }
 
+        if ($html === null) {
+            $html = TransactionalEmailHtml::wrap($message);
+        }
+
         if ($sync) {
-            SendMailjetTextJob::dispatchSync($email, $subject, $message, false, $attachments);
+            SendMailjetTextJob::dispatchSync($email, $subject, $message, false, $attachments, $html);
 
             return;
         }
 
         if ($afterResponse) {
-            SendMailjetTextJob::dispatchAfterResponse($email, $subject, $message, false, $attachments);
+            SendMailjetTextJob::dispatchAfterResponse($email, $subject, $message, false, $attachments, $html);
 
             return;
         }
 
-        SendMailjetTextJob::dispatch($email, $subject, $message, false, $attachments);
+        SendMailjetTextJob::dispatch($email, $subject, $message, false, $attachments, $html);
     }
 
     public static function subjectFromMessage(string $message): string

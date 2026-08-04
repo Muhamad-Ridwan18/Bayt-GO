@@ -507,12 +507,13 @@ class BookingController extends Controller
 
     private function renderInvoice(MuthowifBooking $booking): View
     {
-        $booking->load(['muthowifProfile.user', 'customer']);
+        $booking->load(['muthowifProfile.user', 'customer', 'supportPackage']);
         $settled = $booking->settledBookingPayment();
 
         return view('bookings.invoice', [
             'booking' => $booking,
             'payment' => $settled,
+            'logoUrl' => \App\Support\SiteBrand::logoPublicUrl(),
         ]);
     }
 

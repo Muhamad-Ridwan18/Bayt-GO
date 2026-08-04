@@ -34,12 +34,20 @@ final class MailjetAttachment
     /**
      * @return array{ContentType: string, Filename: string, Base64Content: string}
      */
-    public static function fromHtml(string $html, string $filename): array
+    public static function fromBinary(string $binary, string $filename, string $contentType): array
     {
         return [
-            'ContentType' => 'text/html; charset=utf-8',
+            'ContentType' => $contentType,
             'Filename' => $filename,
-            'Base64Content' => base64_encode($html),
+            'Base64Content' => base64_encode($binary),
         ];
+    }
+
+    /**
+     * @return array{ContentType: string, Filename: string, Base64Content: string}
+     */
+    public static function fromHtml(string $html, string $filename): array
+    {
+        return self::fromBinary($html, $filename, 'text/html; charset=utf-8');
     }
 }

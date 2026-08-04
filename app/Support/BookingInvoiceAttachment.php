@@ -3,6 +3,8 @@
 namespace App\Support;
 
 use App\Models\MuthowifBooking;
+use Barryvdh\DomPDF\Facade\Pdf;
+use Illuminate\Support\Facades\Storage;
 
 final class BookingInvoiceAttachment
 {
@@ -11,18 +13,40 @@ final class BookingInvoiceAttachment
      */
     public static function forBooking(MuthowifBooking $booking): array
     {
-        $booking->loadMissing(['customer', 'muthowifProfile.user']);
+        $booking->loadMissing(['customer', 'muthowifProfile.user', 'supportPackage']);
         $payment = $booking->settledBookingPayment();
 
-        $html = view('emails.invoice-attachment', [
+        $pdf = Pdf::loadView('emails.invoice-pdf', [
             'booking' => $booking,
             'payment' => $payment,
-        ])->render();
+            'logoDataUri' => self::logoDataUri(),
+        ])->setPaper('a4');
 
         $code = filled($booking->booking_code)
             ? preg_replace('/[^A-Za-z0-9_-]+/', '-', (string) $booking->booking_code)
             : (string) $booking->getKey();
 
-        return MailjetAttachment::fromHtml($html, 'invoice-'.$code.'.html');
+        return MailjetAttachment::fromBinary(
+            $pdf->output(),
+            'invoice-'.$code.'.pdf',
+            'application/pdf',
+        );
+    }
+
+    private static function logoDataUri(): ?string
+    {
+        $path = SiteBrand::logoStoragePath();
+        if ($path === null || ! Storage::disk('public')->exists($path)) {
+            return null;
+        }
+
+        $binary = Storage::disk('public')->get($path);
+        if ($binary === null || $binary === '') {
+            return null;
+        }
+
+        $mime = Storage::disk('public')->mimeType($path) ?: 'image/png';
+
+        return 'data:'.$mime.';base64,'.base64_encode($binary);
     }
 }

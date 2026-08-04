@@ -25,6 +25,7 @@ class SendMailjetTextJob implements ShouldQueue
         public string $message,
         public bool $rethrowOnFailure = false,
         public array $attachments = [],
+        public ?string $html = null,
     ) {}
 
     public function handle(MailjetService $mailjet): void
@@ -37,6 +38,7 @@ class SendMailjetTextJob implements ShouldQueue
                 null,
                 null,
                 $this->attachments,
+                $this->html,
             );
         } catch (RuntimeException|Throwable $e) {
             Log::warning('mailjet.job_failed', [
