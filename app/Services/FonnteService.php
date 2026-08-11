@@ -78,16 +78,18 @@ class FonnteService
         }
 
         if (isset($payload['target'], $payload['countryCode'])) {
+            $cc = (string) $payload['countryCode'];
             $payload['target'] = $this->normalizeTargetDigits(
                 (string) $payload['target'],
-                (string) $payload['countryCode'],
+                $cc,
             );
-            // Fonnte default countryCode=62 and prepends it when omitted.
-            // Target is already E.164 digits — disable that rewrite for non-ID numbers
-            // (e.g. +90… would otherwise become 6290… / target invalid).
-            // Docs: countryCode "0" bypasses the filter when target already includes CC.
             if ($this->usesFonnteOfficialApi($apiUrl)) {
-                $payload['countryCode'] = '0';
+                // Jangan kirim "0": Fonnte/PHP empty("0") dianggap kosong lalu default 62
+                // dan menempelkan 62 ke nomor luar negeri (90… → 6290… / target invalid).
+                // Docs: countryCode + target yang sudah berisi CC yang sama, mis. 60 + 60111…
+                $dial = \App\Support\IntlPhone::dialAndNational('+'.$payload['target']);
+                $fallbackCc = preg_replace('/\D+/', '', $cc) ?? '';
+                $payload['countryCode'] = $dial['dial'] ?? ($fallbackCc !== '' ? $fallbackCc : '62');
             } else {
                 unset($payload['countryCode']);
             }
