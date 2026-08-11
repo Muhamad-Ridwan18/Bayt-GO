@@ -82,7 +82,15 @@ class FonnteService
                 (string) $payload['target'],
                 (string) $payload['countryCode'],
             );
-            unset($payload['countryCode']);
+            // Fonnte default countryCode=62 and prepends it when omitted.
+            // Target is already E.164 digits — disable that rewrite for non-ID numbers
+            // (e.g. +90… would otherwise become 6290… / target invalid).
+            // Docs: countryCode "0" bypasses the filter when target already includes CC.
+            if ($this->usesFonnteOfficialApi($apiUrl)) {
+                $payload['countryCode'] = '0';
+            } else {
+                unset($payload['countryCode']);
+            }
         }
 
         return $payload;
