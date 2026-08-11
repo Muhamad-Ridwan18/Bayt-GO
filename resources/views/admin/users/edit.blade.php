@@ -49,7 +49,7 @@
 
                             <div>
                                 <x-input-label for="phone" :value="__('admin.users.field_phone')" />
-                                <x-text-input id="phone" name="phone" type="text" class="mt-1 block w-full" :value="old('phone', $editUser->phone)" />
+                                <x-text-input id="phone" name="phone" type="text" class="mt-1 block w-full" :value="old('phone', $editUser->contactPhone())" />
                                 <x-input-error class="mt-2" :messages="$errors->get('phone')" />
                             </div>
 

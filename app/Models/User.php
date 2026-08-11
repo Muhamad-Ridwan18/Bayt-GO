@@ -59,6 +59,21 @@ class User extends Authenticatable
         return $this->hasOne(MuthowifProfile::class);
     }
 
+    /**
+     * Nomor kontak tampilan/WA: profil muthowif lebih dulu (saat daftar, users.phone kosong).
+     */
+    public function contactPhone(): ?string
+    {
+        $profilePhone = trim((string) ($this->muthowifProfile?->phone ?? ''));
+        if ($profilePhone !== '') {
+            return $profilePhone;
+        }
+
+        $userPhone = trim((string) ($this->phone ?? ''));
+
+        return $userPhone !== '' ? $userPhone : null;
+    }
+
     public function affiliate(): HasOne
     {
         return $this->hasOne(Affiliate::class);
