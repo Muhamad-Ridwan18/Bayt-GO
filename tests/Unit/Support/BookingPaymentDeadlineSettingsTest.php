@@ -13,23 +13,29 @@ class BookingPaymentDeadlineSettingsTest extends TestCase
 {
     use RefreshDatabase;
 
-    public function test_defaults_are_forty_eight_hours_and_two_hours_support(): void
+    public function test_defaults_are_forty_eight_hours_and_two_hours_support_in_minutes(): void
     {
-        $this->assertSame(48, BookingPaymentDeadlineSettings::regularHours());
         $this->assertSame(2880, BookingPaymentDeadlineSettings::regularMinutes());
         $this->assertSame(120, BookingPaymentDeadlineSettings::supportMinutes());
     }
 
     public function test_minutes_for_support_vs_regular(): void
     {
-        SiteSetting::putValue(BookingPaymentDeadlineSettings::SETTING_REGULAR_HOURS, '24');
+        SiteSetting::putValue(BookingPaymentDeadlineSettings::SETTING_REGULAR_MINUTES, '1440');
         SiteSetting::putValue(BookingPaymentDeadlineSettings::SETTING_SUPPORT_MINUTES, '90');
 
         $regular = new MuthowifBooking(['service_type' => MuthowifServiceType::PrivateJamaah]);
         $support = new MuthowifBooking(['service_type' => MuthowifServiceType::Support]);
 
-        $this->assertSame(24 * 60, BookingPaymentDeadlineSettings::minutesFor($regular));
+        $this->assertSame(1440, BookingPaymentDeadlineSettings::minutesFor($regular));
         $this->assertSame(90, BookingPaymentDeadlineSettings::minutesFor($support));
+    }
+
+    public function test_legacy_hours_setting_is_converted_to_minutes(): void
+    {
+        SiteSetting::putValue(BookingPaymentDeadlineSettings::SETTING_REGULAR_HOURS, '24');
+
+        $this->assertSame(1440, BookingPaymentDeadlineSettings::regularMinutes());
     }
 
     public function test_due_at_from_now_uses_booking_window(): void

@@ -20,8 +20,8 @@ class BookingPaymentDeadlineSettingsController extends Controller
     public function update(Request $request): RedirectResponse
     {
         $request->validate([
-            'regular_hours' => ['required', 'integer', 'min:1', 'max:168'],
-            'support_minutes' => ['required', 'integer', 'min:15', 'max:1440'],
+            'regular_minutes' => ['required', 'integer', 'min:15', 'max:10080'],
+            'support_minutes' => ['required', 'integer', 'min:15', 'max:10080'],
         ]);
 
         BookingPaymentDeadlineSettings::saveFromInput($request->all());

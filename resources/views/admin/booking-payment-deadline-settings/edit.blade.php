@@ -29,19 +29,19 @@
 
                     <div class="mt-5 grid gap-5 sm:grid-cols-2">
                         <div>
-                            <x-input-label for="regular_hours" :value="__('admin.booking_payment_deadline.regular_hours')" />
+                            <x-input-label for="regular_minutes" :value="__('admin.booking_payment_deadline.regular_minutes')" />
                             <x-text-input
-                                id="regular_hours"
-                                name="regular_hours"
+                                id="regular_minutes"
+                                name="regular_minutes"
                                 type="number"
-                                min="1"
-                                max="168"
+                                min="15"
+                                max="10080"
                                 class="mt-1 block w-full"
-                                :value="old('regular_hours', $values['regular_hours'])"
+                                :value="old('regular_minutes', $values['regular_minutes'])"
                                 required
                             />
-                            <p class="mt-1 text-xs text-slate-500">{{ __('admin.booking_payment_deadline.regular_hours_hint') }}</p>
-                            <x-input-error :messages="$errors->get('regular_hours')" class="mt-2" />
+                            <p class="mt-1 text-xs text-slate-500">{{ __('admin.booking_payment_deadline.regular_minutes_hint') }}</p>
+                            <x-input-error :messages="$errors->get('regular_minutes')" class="mt-2" />
                         </div>
                         <div>
                             <x-input-label for="support_minutes" :value="__('admin.booking_payment_deadline.support_minutes')" />
@@ -50,7 +50,7 @@
                                 name="support_minutes"
                                 type="number"
                                 min="15"
-                                max="1440"
+                                max="10080"
                                 class="mt-1 block w-full"
                                 :value="old('support_minutes', $values['support_minutes'])"
                                 required
