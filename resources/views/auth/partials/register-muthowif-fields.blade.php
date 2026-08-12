@@ -6,7 +6,7 @@
 >
     <legend class="sr-only">Data muthowif</legend>
     <p class="text-sm font-medium text-slate-800">Data muthowif</p>
-    <p class="mt-[-0.75rem] text-xs text-slate-500">Gunakan tombol <strong>+ Tambah</strong> untuk menambah baris bahasa, studi, pengalaman, atau dokumen.</p>
+    <p class="mt-[-0.75rem] text-xs text-slate-500">Gunakan tombol <strong>+ Tambah</strong> untuk menambah baris bahasa, studi, pengalaman, foto galeri, atau dokumen.</p>
 
     <div>
         <x-input-label for="birth_date" value="Tanggal lahir" required />
@@ -45,6 +45,34 @@
         <p class="mt-1 text-xs text-slate-500">Pastikan teks pada KTP terbaca.</p>
         <x-input-error :messages="$errors->get('ktp_image')" class="mt-2" />
     </div>
+
+    @if ($page->hasCachedGalleryImages())
+        <div class="space-y-2">
+            <span class="block text-sm font-medium text-slate-700">Foto galeri yang sudah terunggah:</span>
+            <div class="grid grid-cols-1 gap-2">
+                @foreach ($page->cachedGalleryImages as $img)
+                    <x-auth.cached-upload
+                        class="mb-0"
+                        :label="$img['original_name']"
+                        :remove-payload="$img['remove']"
+                    />
+                @endforeach
+            </div>
+            <p class="mt-1 text-xs italic text-slate-500">Anda bisa menambahkan foto baru di bawah jika kurang dari 3.</p>
+        </div>
+    @endif
+
+    <x-repeating-file-field
+        name="gallery_images"
+        label="Galeri foto :"
+        :required="true"
+        item-label="Foto"
+        add-label="Tambah foto"
+        accept="image/jpeg,image/png,image/webp"
+        :initial-count="max(1, 3 - count($page->cachedGalleryImages))"
+        :max-count="20"
+        hint="Wajib minimal 3 foto (kegiatan bersama jemaah / portofolio). JPG, PNG, atau WebP — tiap file maks. 5 MB."
+    />
 
     <x-repeating-text-field
         name="languages"

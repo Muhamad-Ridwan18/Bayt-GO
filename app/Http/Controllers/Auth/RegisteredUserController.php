@@ -99,6 +99,7 @@ class RegisteredUserController extends Controller
             'registration_draft' => $request->except([
                 'photo',
                 'ktp_image',
+                'gallery_images',
                 'supporting_documents',
                 '_token',
             ]),
@@ -203,7 +204,7 @@ class RegisteredUserController extends Controller
     public function removeCachedRegistrationFile(Request $request): RedirectResponse
     {
         $request->validate([
-            'type' => ['required', 'string', Rule::in(['photo', 'ktp_image', 'supporting_document'])],
+            'type' => ['required', 'string', Rule::in(['photo', 'ktp_image', 'gallery_image', 'supporting_document'])],
             'file_id' => ['nullable', 'string', 'uuid'],
             'path' => ['nullable', 'string', 'max:500'],
         ]);
@@ -214,14 +215,18 @@ class RegisteredUserController extends Controller
             $this->deleteCachedRegistrationFile('registration_files.photo');
         } elseif ($type === 'ktp_image') {
             $this->deleteCachedRegistrationFile('registration_files.ktp_image');
-        } else {
+        } elseif ($type === 'gallery_image' || $type === 'supporting_document') {
+            $sessionKey = $type === 'gallery_image'
+                ? 'registration_files.gallery_images'
+                : 'registration_files.supporting_documents';
+
             $targetId = $request->string('file_id')->toString();
             $targetPath = $request->string('path')->toString();
             if ($targetId === '' && $targetPath === '') {
                 return redirect()->route('register');
             }
 
-            $docs = session('registration_files.supporting_documents', []);
+            $docs = session($sessionKey, []);
             if (! is_array($docs)) {
                 return redirect()->route('register');
             }
@@ -253,7 +258,7 @@ class RegisteredUserController extends Controller
                 return redirect()->route('register');
             }
 
-            session(['registration_files.supporting_documents' => array_values($docs)]);
+            session([$sessionKey => array_values($docs)]);
         }
 
         $draft = session('registration_draft', []);
@@ -375,6 +380,8 @@ class RegisteredUserController extends Controller
             'reference_text' => ['nullable', 'string', 'max:10000'],
             'photo' => [Rule::requiredIf(fn () => $request->input('role') === 'muthowif' && ! session()->has('registration_files.photo')), 'nullable', 'file', 'mimes:jpeg,jpg,png,webp', 'max:5120'],
             'ktp_image' => [Rule::requiredIf(fn () => $request->input('role') === 'muthowif' && ! session()->has('registration_files.ktp_image')), 'nullable', 'file', 'mimes:jpeg,jpg,png,webp', 'max:5120'],
+            'gallery_images' => ['nullable', 'array', 'max:20'],
+            'gallery_images.*' => ['file', 'mimes:jpeg,jpg,png,webp', 'max:5120'],
             'supporting_documents' => ['nullable', 'array', 'max:20'],
             'supporting_documents.*' => ['file', 'mimes:pdf,jpeg,jpg,png,webp', 'max:10240'],
             'muthowif_referral_code' => ['nullable', 'string', 'max:16'],
@@ -393,6 +400,12 @@ class RegisteredUserController extends Controller
             if (count($languages) === 0) {
                 throw ValidationException::withMessages([
                     'languages' => 'Isi minimal satu bahasa.',
+                ]);
+            }
+
+            if ($this->countGalleryImages($request) < 3) {
+                throw ValidationException::withMessages([
+                    'gallery_images' => 'Unggah minimal 3 foto galeri.',
                 ]);
             }
 
@@ -522,12 +535,14 @@ class RegisteredUserController extends Controller
                         'sort_order' => $row['sort_order'],
                     ]);
                 }
+
+                $this->createRegistrationGalleryPortfolio($profile, $stagedMuthowifFiles['gallery'] ?? []);
             }
 
             DB::commit();
 
             if ($user->isMuthowif() && $stagedMuthowifFiles !== null) {
-                $this->finalizeStagedMuthowifFiles((string) $user->id, $stagedMuthowifFiles);
+                $this->finalizeStagedMuthowifFiles((string) $user->id, $stagedMuthowifFiles, $muthowifProfileId);
             }
 
             session()->forget(['registration_files', 'registration_draft']);
@@ -571,7 +586,7 @@ class RegisteredUserController extends Controller
 
     /**
      * @param  array<string, mixed>  $input
-     * @param  array{photo_path: string, ktp_path: string, supporting: list<array{path: string, original_name: string, sort_order: int}>}|null  $muthowifFiles
+     * @param  array{photo_path: string, ktp_path: string, gallery?: list<array{path: string, original_name: string, sort_order: int}>, supporting: list<array{path: string, original_name: string, sort_order: int}>}|null  $muthowifFiles
      * @param  array<string, mixed>|null  $pending
      *
      * @throws Throwable
@@ -678,12 +693,14 @@ class RegisteredUserController extends Controller
                         'sort_order' => $row['sort_order'],
                     ]);
                 }
+
+                $this->createRegistrationGalleryPortfolio($profile, $muthowifFiles['gallery'] ?? []);
             }
 
             DB::commit();
 
             if ($user->isMuthowif() && $muthowifFiles !== null) {
-                $this->finalizePendingMuthowifFiles((string) $user->id, $muthowifFiles);
+                $this->finalizePendingMuthowifFiles((string) $user->id, $muthowifFiles, $muthowifProfileId);
             }
 
             if ($registrationOtp->otpEnabled()) {
@@ -741,7 +758,7 @@ class RegisteredUserController extends Controller
         $base = 'pending_registration/'.$pendingId;
 
         $fields = $request->except([
-            '_token', 'password', 'password_confirmation', 'photo', 'ktp_image', 'supporting_documents',
+            '_token', 'password', 'password_confirmation', 'photo', 'ktp_image', 'gallery_images', 'supporting_documents',
         ]);
         $fields['password_enc'] = Crypt::encryptString($request->string('password')->toString());
 
@@ -772,6 +789,7 @@ class RegisteredUserController extends Controller
                 $ktpPath = $optimizer->optimizeStoredPath($ktpPath, 'local', 'profile');
             }
 
+            $gallery = $this->collectGalleryFromRequestAndSession($request, $base, $optimizer);
             $supporting = [];
             $files = $request->file('supporting_documents', []);
             if (! is_array($files)) {
@@ -803,6 +821,7 @@ class RegisteredUserController extends Controller
             $muthowifFiles = [
                 'photo_path' => $photoPath,
                 'ktp_path' => $ktpPath,
+                'gallery' => $gallery,
                 'supporting' => $supporting,
             ];
         }
@@ -878,7 +897,7 @@ class RegisteredUserController extends Controller
     /**
      * Optimasi & simpan berkas muthowif di luar transaksi DB.
      *
-     * @return array{staging_dir: string, photo_path: string, ktp_path: string, supporting: list<array{path: string, original_name: string, sort_order: int}>}
+     * @return array{staging_dir: string, photo_path: string, ktp_path: string, gallery: list<array{path: string, original_name: string, sort_order: int}>, supporting: list<array{path: string, original_name: string, sort_order: int}>}
      */
     private function stageMuthowifFilesFromRequest(Request $request): array
     {
@@ -905,6 +924,8 @@ class RegisteredUserController extends Controller
             Storage::disk('local')->move($cachedKtp['path'], $ktpPath);
             $ktpPath = $optimizer->optimizeStoredPath($ktpPath, 'local', 'profile');
         }
+
+        $gallery = $this->collectGalleryFromRequestAndSession($request, $stagingDir, $optimizer);
 
         $supporting = [];
         $files = $request->file('supporting_documents', []);
@@ -938,14 +959,15 @@ class RegisteredUserController extends Controller
             'staging_dir' => $stagingDir,
             'photo_path' => $photoPath,
             'ktp_path' => $ktpPath,
+            'gallery' => $gallery,
             'supporting' => $supporting,
         ];
     }
 
     /**
-     * @param  array{staging_dir: string, photo_path: string, ktp_path: string, supporting: list<array{path: string, original_name: string, sort_order: int}>}  $staged
+     * @param  array{staging_dir: string, photo_path: string, ktp_path: string, gallery?: list<array{path: string, original_name: string, sort_order: int}>, supporting: list<array{path: string, original_name: string, sort_order: int}>}  $staged
      */
-    private function finalizeStagedMuthowifFiles(string $userId, array $staged): void
+    private function finalizeStagedMuthowifFiles(string $userId, array $staged, ?string $profileId = null): void
     {
         $finalDir = 'muthowif_documents/'.$userId;
         Storage::disk('local')->makeDirectory($finalDir);
@@ -957,13 +979,15 @@ class RegisteredUserController extends Controller
             $this->moveRegistrationFile($row['path'], $finalDir.'/'.basename($row['path']));
         }
 
+        $this->finalizeGalleryFiles($staged['gallery'] ?? [], $profileId);
+
         Storage::disk('local')->deleteDirectory($staged['staging_dir']);
     }
 
     /**
-     * @param  array{photo_path: string, ktp_path: string, supporting: list<array{path: string, original_name: string, sort_order: int}>}  $pendingFiles
+     * @param  array{photo_path: string, ktp_path: string, gallery?: list<array{path: string, original_name: string, sort_order: int}>, supporting: list<array{path: string, original_name: string, sort_order: int}>}  $pendingFiles
      */
-    private function finalizePendingMuthowifFiles(string $userId, array $pendingFiles): void
+    private function finalizePendingMuthowifFiles(string $userId, array $pendingFiles, ?string $profileId = null): void
     {
         $finalDir = 'muthowif_documents/'.$userId;
         Storage::disk('local')->makeDirectory($finalDir);
@@ -974,6 +998,120 @@ class RegisteredUserController extends Controller
         foreach ($pendingFiles['supporting'] as $row) {
             $this->moveRegistrationFile($row['path'], $finalDir.'/'.basename($row['path']));
         }
+
+        $this->finalizeGalleryFiles($pendingFiles['gallery'] ?? [], $profileId);
+    }
+
+    /**
+     * @param  list<array{path: string, original_name: string, sort_order: int}>  $gallery
+     */
+    private function finalizeGalleryFiles(array $gallery, ?string $profileId): void
+    {
+        if ($profileId === null || $profileId === '' || $gallery === []) {
+            return;
+        }
+
+        $portfolioDir = 'portfolio/'.$profileId;
+        Storage::disk('local')->makeDirectory($portfolioDir);
+
+        foreach ($gallery as $row) {
+            $this->moveRegistrationFile($row['path'], $portfolioDir.'/'.basename($row['path']));
+        }
+    }
+
+    /**
+     * @param  list<array{path: string, original_name: string, sort_order: int}>  $gallery
+     */
+    private function createRegistrationGalleryPortfolio(MuthowifProfile $profile, array $gallery): void
+    {
+        if ($gallery === []) {
+            return;
+        }
+
+        $portfolio = $profile->portfolios()->create([
+            'title' => 'Galeri',
+            'description' => null,
+            'image_path' => '',
+            'sort_order' => $profile->portfolios()->count() + 1,
+        ]);
+
+        $coverPath = null;
+        $profileId = (string) $profile->getKey();
+
+        foreach ($gallery as $row) {
+            $finalPath = 'portfolio/'.$profileId.'/'.basename($row['path']);
+            $portfolio->images()->create([
+                'path' => $finalPath,
+                'original_name' => $row['original_name'],
+                'sort_order' => $row['sort_order'],
+            ]);
+            $coverPath ??= $finalPath;
+        }
+
+        if (is_string($coverPath)) {
+            $portfolio->image_path = $coverPath;
+            $portfolio->save();
+        }
+    }
+
+    private function countGalleryImages(Request $request): int
+    {
+        $count = 0;
+        $files = $request->file('gallery_images', []);
+        if (! is_array($files)) {
+            $files = array_filter([$files]);
+        }
+        foreach ($files as $file) {
+            if ($file && $file->isValid()) {
+                $count++;
+            }
+        }
+
+        $cached = session('registration_files.gallery_images', []);
+        if (is_array($cached)) {
+            $count += count($cached);
+        }
+
+        return $count;
+    }
+
+    /**
+     * @return list<array{path: string, original_name: string, sort_order: int}>
+     */
+    private function collectGalleryFromRequestAndSession(Request $request, string $destDir, UploadedImageOptimizer $optimizer): array
+    {
+        $gallery = [];
+        $files = $request->file('gallery_images', []);
+        if (! is_array($files)) {
+            $files = array_filter([$files]);
+        }
+        foreach ($files as $file) {
+            if ($file && $file->isValid()) {
+                $gallery[] = [
+                    'path' => $optimizer->store($file, $destDir.'/gallery', 'local', 'portfolio'),
+                    'original_name' => $file->getClientOriginalName(),
+                    'sort_order' => count($gallery),
+                ];
+            }
+        }
+
+        $cachedGallery = session('registration_files.gallery_images', []);
+        foreach ($cachedGallery as $img) {
+            if (! is_array($img) || empty($img['path']) || ! Storage::disk('local')->exists($img['path'])) {
+                continue;
+            }
+            $dest = $destDir.'/gallery/'.basename($img['path']);
+            Storage::disk('local')->makeDirectory($destDir.'/gallery');
+            Storage::disk('local')->move($img['path'], $dest);
+            $dest = $optimizer->optimizeStoredPath($dest, 'local', 'portfolio');
+            $gallery[] = [
+                'path' => $dest,
+                'original_name' => (string) ($img['original_name'] ?? basename($dest)),
+                'sort_order' => count($gallery),
+            ];
+        }
+
+        return $gallery;
     }
 
     private function moveRegistrationFile(string $from, string $to): void
@@ -1027,6 +1165,29 @@ class RegisteredUserController extends Controller
                     'original_name' => $request->file('ktp_image')->getClientOriginalName(),
                 ],
             ]);
+        }
+
+        // Cache gallery images
+        if ($request->hasFile('gallery_images')) {
+            $files = $request->file('gallery_images');
+            if (! is_array($files)) {
+                $files = array_filter([$files]);
+            }
+
+            $cachedGallery = session('registration_files.gallery_images', []);
+
+            foreach ($files as $file) {
+                if ($file && $file->isValid()) {
+                    $path = $optimizer->store($file, $baseDir.'/gallery', 'local', 'portfolio');
+                    $cachedGallery[] = [
+                        'id' => (string) Str::uuid(),
+                        'path' => $path,
+                        'original_name' => $file->getClientOriginalName(),
+                    ];
+                }
+            }
+
+            session(['registration_files.gallery_images' => $cachedGallery]);
         }
 
         // Cache supporting documents

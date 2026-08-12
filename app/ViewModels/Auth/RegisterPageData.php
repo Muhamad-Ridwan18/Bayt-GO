@@ -7,6 +7,7 @@ final class RegisterPageData
     /**
      * @param  array{original_name: string, label: string}|null  $cachedPhoto
      * @param  array{original_name: string, label: string}|null  $cachedKtp
+     * @param  list<array{id: string, path: string, original_name: string, remove: array{type: string, file_id: string, path: string}}>  $cachedGalleryImages
      * @param  list<array{id: string, path: string, original_name: string, remove: array{type: string, file_id: string, path: string}}>  $cachedSupportingDocuments
      */
     public function __construct(
@@ -15,6 +16,7 @@ final class RegisterPageData
         public readonly string $customerType,
         public readonly ?array $cachedPhoto,
         public readonly ?array $cachedKtp,
+        public readonly array $cachedGalleryImages,
         public readonly array $cachedSupportingDocuments,
         public readonly string $removeFileUrl,
     ) {}
@@ -24,7 +26,34 @@ final class RegisterPageData
         $files = session('registration_files', []);
         $photo = is_array($files['photo'] ?? null) ? $files['photo'] : null;
         $ktp = is_array($files['ktp_image'] ?? null) ? $files['ktp_image'] : null;
+        $galleryRaw = is_array($files['gallery_images'] ?? null) ? $files['gallery_images'] : [];
         $docs = is_array($files['supporting_documents'] ?? null) ? $files['supporting_documents'] : [];
+
+        $gallery = [];
+        foreach ($galleryRaw as $img) {
+            if (! is_array($img)) {
+                continue;
+            }
+
+            $id = (string) ($img['id'] ?? '');
+            $path = (string) ($img['path'] ?? '');
+            $name = (string) ($img['original_name'] ?? '');
+
+            if ($name === '') {
+                continue;
+            }
+
+            $gallery[] = [
+                'id' => $id,
+                'path' => $path,
+                'original_name' => $name,
+                'remove' => [
+                    'type' => 'gallery_image',
+                    'file_id' => $id,
+                    'path' => $path,
+                ],
+            ];
+        }
 
         $supporting = [];
         foreach ($docs as $doc) {
@@ -68,6 +97,7 @@ final class RegisterPageData
                     'name' => (string) ($ktp['original_name'] ?? ''),
                 ]),
             ] : null,
+            cachedGalleryImages: $gallery,
             cachedSupportingDocuments: $supporting,
             removeFileUrl: route('register.remove-file'),
         );
@@ -86,6 +116,11 @@ final class RegisterPageData
     public function isCompany(): bool
     {
         return $this->customerType === 'company';
+    }
+
+    public function hasCachedGalleryImages(): bool
+    {
+        return $this->cachedGalleryImages !== [];
     }
 
     public function hasCachedSupportingDocuments(): bool
