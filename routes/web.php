@@ -3,6 +3,7 @@
 use App\Enums\MuthowifVerificationStatus;
 use App\Http\Controllers\Admin\AdminSettingsHubController;
 use App\Http\Controllers\Admin\ArticlesAdminController;
+use App\Http\Controllers\Admin\BookingPaymentDeadlineSettingsController;
 use App\Http\Controllers\Admin\BookingEmergencyController;
 use App\Http\Controllers\Admin\BookingNotificationController;
 use App\Http\Controllers\Admin\BookingRefundController;
@@ -330,6 +331,8 @@ Route::middleware('auth')->group(function () {
         Route::post('pengaturan/whatsapp-notifikasi/uji', [WhatsAppNotifySettingsController::class, 'test'])->name('whatsapp-notify-settings.test');
         Route::post('pengaturan/whatsapp-notifikasi/uji-chat-unreplied', [WhatsAppNotifySettingsController::class, 'testChatUnreplied'])->name('whatsapp-notify-settings.test-chat-unreplied');
         Route::post('pengaturan/whatsapp-notifikasi/jalankan-chat-unreplied', [WhatsAppNotifySettingsController::class, 'runChatUnrepliedNow'])->name('whatsapp-notify-settings.run-chat-unreplied');
+        Route::get('pengaturan/batas-bayar', [BookingPaymentDeadlineSettingsController::class, 'edit'])->name('booking-payment-deadline-settings.edit');
+        Route::post('pengaturan/batas-bayar', [BookingPaymentDeadlineSettingsController::class, 'update'])->name('booking-payment-deadline-settings.update');
         Route::get('pengaturan/mailjet-uji', [MailjetTestController::class, 'edit'])->name('mailjet-test.edit');
         Route::post('pengaturan/mailjet-uji', [MailjetTestController::class, 'update'])->name('mailjet-test.update');
         Route::post('pengaturan/mailjet-uji/kirim', [MailjetTestController::class, 'send'])->name('mailjet-test.send');

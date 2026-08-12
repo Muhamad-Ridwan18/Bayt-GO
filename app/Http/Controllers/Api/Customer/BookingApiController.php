@@ -20,6 +20,7 @@ use App\Services\BookingCompletionService;
 use App\Services\BookingOrderCodeService;
 use App\Services\BookingPricingService;
 use App\Services\BookingRefundExecutor;
+use App\Services\CancelUnpaidBookingAfterPaymentDeadline;
 use App\Services\Doku\DokuDirectChargeService;
 use App\Services\Moota\MootaBookingChargeService;
 use App\Services\SupportBookingService;
@@ -314,6 +315,15 @@ class BookingApiController extends Controller
             PaymentFlowLog::info('api.payment.skip_already_paid', ['booking_id' => $booking->getKey()]);
 
             return response()->json(['message' => 'Pembayaran sudah diterima'], 400);
+        }
+
+        $deadlineCanceller = app(CancelUnpaidBookingAfterPaymentDeadline::class);
+        if ($deadlineCanceller->isPaymentWindowExpired($booking)) {
+            $deadlineCanceller->cancelIfOverdue($booking);
+
+            return response()->json([
+                'message' => __('bookings.flash.payment_deadline_expired'),
+            ], 422);
         }
 
         $driver = (string) config('services.booking.payment_driver', 'doku');

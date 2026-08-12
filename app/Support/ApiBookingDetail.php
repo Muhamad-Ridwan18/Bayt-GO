@@ -161,6 +161,7 @@ final class ApiBookingDetail
             'transport_price_snapshot' => (float) ($booking->transport_price_snapshot ?? 0),
             'add_ons_snapshot' => $booking->add_ons_snapshot ?? [],
             'paid_at' => $booking->paid_at?->toIso8601String(),
+            'payment_due_at' => $booking->payment_due_at?->toIso8601String(),
             'review' => $booking->review ? [
                 'id' => $booking->review->id,
                 'rating' => $booking->review->rating,

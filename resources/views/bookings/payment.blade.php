@@ -33,6 +33,13 @@
                             <p class="text-xs font-bold uppercase tracking-wider text-brand-700">{{ __('bookings.payment.page_kicker') }}</p>
                             <h1 class="mt-2 text-2xl font-bold tracking-tight text-slate-900 sm:text-3xl lg:text-[2rem] lg:leading-tight">{{ __('bookings.payment.page_title') }}</h1>
                             <p class="mt-3 text-sm leading-relaxed text-slate-600 sm:text-base">{{ __('bookings.payment.page_lead') }}</p>
+                            @if ($booking->payment_due_at && $booking->isAwaitingPayment())
+                                <p class="mt-2 rounded-xl border border-amber-200/80 bg-amber-50/80 px-3 py-2 text-xs font-medium text-amber-950 ring-1 ring-amber-100/80 sm:text-sm">
+                                    {{ __('bookings.payment.deadline_banner', [
+                                        'datetime' => $booking->payment_due_at->timezone(config('app.timezone'))->format('d/m/Y H:i'),
+                                    ]) }}
+                                </p>
+                            @endif
                             @if ($page->paymentDriver === 'moota')
                                 <p class="mt-2 rounded-xl border border-amber-200/80 bg-amber-50/80 px-3 py-2 text-xs font-medium text-amber-950 ring-1 ring-amber-100/80 sm:text-sm">{{ __('bookings.payment.moota_amount_note') }}</p>
                             @endif

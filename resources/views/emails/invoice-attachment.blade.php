@@ -157,16 +157,6 @@
                                     <td style="padding:14px 16px;background:#1A3D34;font-size:18px;font-weight:700;text-align:right;color:#e8dcb8;">Rp {{ $fmt($gross) }}</td>
                                 </tr>
                             </table>
-
-                            @if ($payment)
-                                <p style="margin:14px 0 0;font-size:11px;line-height:1.5;color:#64748b;">
-                                    {{ __('bookings.invoice.gateway_via') }}
-                                    @if ($payment->payment_type)
-                                        ({{ $payment->payment_type }})
-                                    @endif
-                                    . {{ __('bookings.invoice.gateway_fee_note') }}
-                                </p>
-                            @endif
                         </td>
                     </tr>
 
@@ -174,7 +164,6 @@
                         <td style="padding:20px 28px 28px;border-top:1px solid #e2e8f0;text-align:center;background:#ffffff;">
                             <div style="height:1px;width:72px;margin:0 auto 14px;background:linear-gradient(90deg,transparent,#C5A059,transparent);"></div>
                             <p style="margin:0;font-size:13px;font-weight:700;color:#1A3D34;">{{ __('bookings.invoice.thank_you', ['app' => $appName]) }}</p>
-                            <p style="margin:8px auto 0;max-width:420px;font-size:11px;line-height:1.55;color:#94a3b8;">{{ __('bookings.invoice.electronic_doc') }}</p>
                         </td>
                     </tr>
                 </table>

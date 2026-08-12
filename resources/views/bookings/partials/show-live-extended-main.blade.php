@@ -89,6 +89,13 @@
             </dl>
 
             @if ($b->isAwaitingPayment())
+                @if ($b->payment_due_at)
+                    <p class="mt-4 rounded-xl border border-amber-200/80 bg-amber-50/90 px-3 py-2 text-xs font-medium leading-relaxed text-amber-950 ring-1 ring-amber-100/80">
+                        {{ __('bookings.payment_deadline.banner', [
+                            'datetime' => $b->payment_due_at->timezone(config('app.timezone'))->format('d/m/Y H:i'),
+                        ]) }}
+                    </p>
+                @endif
                 @if ($page->paymentReturnPending)
                     <p class="mt-5 text-xs leading-relaxed text-slate-600">
                         {!! $page->paymentWaitIsMoota

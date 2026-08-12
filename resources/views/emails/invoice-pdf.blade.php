@@ -278,20 +278,10 @@
                 <td class="right gold">Rp {{ $fmt($gross) }}</td>
             </tr>
         </table>
-        @if ($payment)
-            <p class="muted" style="margin-top:10px;">
-                {{ __('bookings.invoice.gateway_via') }}
-                @if ($payment->payment_type)
-                    ({{ $payment->payment_type }})
-                @endif
-                . {{ __('bookings.invoice.gateway_fee_note') }}
-            </p>
-        @endif
     </div>
 
     <div class="footer">
         <p style="margin:0 0 6px;color:#1A3D34;font-weight:bold;font-size:12px;">{{ __('bookings.invoice.thank_you', ['app' => $appName]) }}</p>
-        <p style="margin:0;">{{ __('bookings.invoice.electronic_doc') }}</p>
     </div>
 </body>
 </html>

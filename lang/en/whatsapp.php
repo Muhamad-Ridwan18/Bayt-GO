@@ -159,6 +159,14 @@ return [
             'status' => '*Status:* Awaiting payment',
             'pay_at' => '*Continue payment at:*',
         ],
+        'payment_deadline_expired' => [
+            'headline' => '*:app* — payment deadline expired',
+            'body' => 'Your booking with *:muthowif* was auto-cancelled because payment was not completed in time.',
+            'booking_code' => '*Booking code:* :code',
+            'due_at' => '*Pay by:* :datetime',
+            'status' => '*Status:* Cancelled',
+            'view_detail' => '*Booking detail:*',
+        ],
         'support_approved' => [
             'headline' => '*:app* — support service approved',
             'body' => 'Your support booking with *:muthowif* has been approved.',

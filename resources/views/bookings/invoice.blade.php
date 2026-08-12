@@ -206,30 +206,11 @@
                         <dd class="text-xl font-bold tabular-nums text-gold-light sm:text-2xl">Rp {{ $fmt($gross) }}</dd>
                     </div>
                 </dl>
-
-                @if ($payment)
-                    <div class="mt-5 flex items-start gap-3 rounded-2xl border border-brand-100 bg-brand-50/60 px-4 py-3.5">
-                        <span class="mt-0.5 flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-brand-600/10 text-brand-700">
-                            <svg class="h-3.5 w-3.5" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true">
-                                <path fill-rule="evenodd" d="M10 1a4.5 4.5 0 00-4.5 4.5V9H5a2 2 0 00-2 2v6a2 2 0 002 2h10a2 2 0 002-2v-6a2 2 0 00-2-2h-.5V5.5A4.5 4.5 0 0010 1zm3 8V5.5a3 3 0 10-6 0V9h6z" clip-rule="evenodd" />
-                            </svg>
-                        </span>
-                        <p class="text-xs leading-relaxed text-slate-600">
-                            <span class="font-semibold text-slate-800">{{ __('bookings.invoice.payment_ref') }}</span>
-                            — {{ __('bookings.invoice.gateway_via') }}
-                            @if ($payment->payment_type)
-                                <span class="font-medium text-slate-700">({{ $payment->payment_type }})</span>
-                            @endif
-                            . {{ __('bookings.invoice.gateway_fee_note') }}
-                        </p>
-                    </div>
-                @endif
             </div>
 
             <footer class="border-t border-slate-100 bg-white px-6 py-8 text-center sm:px-10">
                 <div class="mx-auto mb-4 h-px w-24 bg-gradient-to-r from-transparent via-gold to-transparent"></div>
                 <p class="text-sm font-semibold text-baytgo">{{ __('bookings.invoice.thank_you', ['app' => config('app.name')]) }}</p>
-                <p class="mx-auto mt-3 max-w-md text-xs leading-relaxed text-slate-400">{{ __('bookings.invoice.electronic_doc') }}</p>
             </footer>
         </div>
     </x-page-container>

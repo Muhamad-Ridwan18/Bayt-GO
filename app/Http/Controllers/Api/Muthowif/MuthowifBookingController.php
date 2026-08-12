@@ -15,6 +15,7 @@ use App\Models\BookingRescheduleRequest;
 use App\Models\MuthowifBooking;
 use App\Services\BookingPendingPaymentEnsurer;
 use App\Support\ApiBookingDetail;
+use App\Support\BookingPaymentDeadlineSettings;
 use App\Support\CustomerBookingBroadcast;
 use Carbon\Carbon;
 use Illuminate\Http\JsonResponse;
@@ -107,6 +108,7 @@ class MuthowifBookingController extends Controller
                 'status' => BookingStatus::Confirmed,
                 'payment_status' => PaymentStatus::Pending,
                 'total_amount' => $total,
+                'payment_due_at' => BookingPaymentDeadlineSettings::dueAtFromNow($booking),
             ];
 
             if ($booking->isSupport()) {

@@ -159,6 +159,14 @@ return [
             'status' => '*Status:* Menunggu pembayaran',
             'pay_at' => '*Lanjutkan pembayaran di:*',
         ],
+        'payment_deadline_expired' => [
+            'headline' => '*:app* — batas pembayaran habis',
+            'body' => 'Pesanan dengan *:muthowif* dibatalkan otomatis karena pembayaran tidak diselesaikan tepat waktu.',
+            'booking_code' => '*Kode pesanan:* :code',
+            'due_at' => '*Batas bayar:* :datetime',
+            'status' => '*Status:* Dibatalkan',
+            'view_detail' => '*Detail pesanan:*',
+        ],
         'support_approved' => [
             'headline' => '*:app* — layanan pendukung disetujui',
             'body' => 'Pesanan layanan pendukung dengan *:muthowif* sudah disetujui.',

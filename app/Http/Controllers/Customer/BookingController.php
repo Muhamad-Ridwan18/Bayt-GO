@@ -25,6 +25,7 @@ use App\Services\BookingNotificationDispatcher;
 use App\Services\BookingOrderCodeService;
 use App\Services\BookingPricingService;
 use App\Services\BookingRefundExecutor;
+use App\Services\CancelUnpaidBookingAfterPaymentDeadline;
 use App\Services\Moota\MootaApiClient;
 use App\Services\MuthowifNetworkReferralService;
 use App\Support\BookingPostPayRules;
@@ -217,6 +218,15 @@ class BookingController extends Controller
     {
         $this->authorize('pay', $booking);
         $booking->loadMissing(['customer', 'muthowifProfile.user']);
+
+        $deadlineCanceller = app(CancelUnpaidBookingAfterPaymentDeadline::class);
+        if ($deadlineCanceller->isPaymentWindowExpired($booking)) {
+            $deadlineCanceller->cancelIfOverdue($booking);
+
+            return redirect()
+                ->route('bookings.show', $booking)
+                ->with('error', __('bookings.flash.payment_deadline_expired'));
+        }
 
         PaymentFlowLog::info('web.payment.enter', [
             'booking_id' => $booking->getKey(),

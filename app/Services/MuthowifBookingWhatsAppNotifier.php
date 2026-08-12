@@ -473,6 +473,60 @@ class MuthowifBookingWhatsAppNotifier
     }
 
     /**
+     * Auto-cancel karena lewat batas waktu pembayaran setelah approve.
+     */
+    public function notifyCustomerPaymentDeadlineExpired(MuthowifBooking $booking): void
+    {
+        if (! WhatsAppNotifySettings::enabled('customer_payment_deadline_expired')) {
+            return;
+        }
+
+        $booking->loadMissing(['customer', 'muthowifProfile.user']);
+        $customer = $booking->customer;
+        if ($customer === null) {
+            return;
+        }
+
+        $fonnteDial = IntlPhone::fonnteDial($customer->phone);
+        if ($fonnteDial === null) {
+            Log::warning('WhatsApp payment deadline notify skipped: nomor customer kosong atau tidak valid.', [
+                'customer_id' => $customer->id,
+                'booking_id' => $booking->id,
+            ]);
+        }
+
+        $locale = $this->localeForUser($customer->locale);
+
+        $this->withLocale($locale, function () use ($booking, $fonnteDial, $locale): void {
+            $appName = config('app.name', 'BaytGo');
+            $muthowifName = $booking->muthowifProfile?->user?->name ?? __('whatsapp.fallback_muthowif', [], $locale);
+            $url = route('bookings.show', $booking);
+            $due = $booking->payment_due_at
+                ? $booking->payment_due_at->timezone(config('app.timezone'))->format('d/m/Y H:i')
+                : '—';
+
+            $lines = [
+                __('whatsapp.customer.payment_deadline_expired.headline', ['app' => $appName], $locale),
+                '',
+                __('whatsapp.customer.payment_deadline_expired.body', ['muthowif' => $muthowifName], $locale),
+                '',
+            ];
+
+            if (filled($booking->booking_code)) {
+                $lines[] = __('whatsapp.customer.payment_deadline_expired.booking_code', ['code' => $booking->booking_code], $locale);
+            }
+
+            $lines[] = __('whatsapp.customer.payment_deadline_expired.due_at', ['datetime' => $due], $locale);
+            $lines[] = __('whatsapp.customer.payment_deadline_expired.status', [], $locale);
+            $lines[] = '';
+            $lines[] = __('whatsapp.customer.payment_deadline_expired.view_detail', [], $locale);
+            $lines[] = $url;
+
+            $this->sendToTarget($fonnteDial, implode("\n", $lines), $booking->id);
+        });
+    }
+
+    /**
      * Muthowif menolak atau membatalkan booking — arahkan ke template sesuai alasan.
      */
     public function notifyCustomerBookingRejectedByMuthowif(MuthowifBooking $booking): void

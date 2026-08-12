@@ -47,6 +47,7 @@ class MuthowifBooking extends Model
         'payment_status',
         'total_amount',
         'paid_at',
+        'payment_due_at',
         'ticket_outbound_path',
         'ticket_return_path',
         'passport_path',
@@ -89,6 +90,7 @@ class MuthowifBooking extends Model
             'affiliate_base_amount_snapshot' => 'decimal:2',
             'affiliate_commission_amount' => 'decimal:2',
             'paid_at' => 'datetime',
+            'payment_due_at' => 'datetime',
             'daily_price_snapshot' => 'decimal:2',
             'same_hotel_price_snapshot' => 'decimal:2',
             'transport_price_snapshot' => 'decimal:2',
@@ -342,6 +344,13 @@ class MuthowifBooking extends Model
     {
         return $this->status === BookingStatus::Confirmed
             && $this->payment_status === PaymentStatus::Pending;
+    }
+
+    public function isPaymentDeadlineExpired(): bool
+    {
+        return $this->isAwaitingPayment()
+            && $this->payment_due_at !== null
+            && $this->payment_due_at->isPast();
     }
 
     public function isPaid(): bool

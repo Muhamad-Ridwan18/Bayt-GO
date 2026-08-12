@@ -19,6 +19,7 @@ use App\Models\MuthowifProfile;
 use App\Models\MuthowifServiceAddOn;
 use App\Services\BookingPendingPaymentEnsurer;
 use App\Services\SupportBookingService;
+use App\Support\BookingPaymentDeadlineSettings;
 use App\Support\BookingWebLive;
 use App\Support\BookingPricingViewData;
 use App\Support\CustomerBookingBroadcast;
@@ -205,6 +206,7 @@ class BookingController extends Controller
                 'status' => BookingStatus::Confirmed,
                 'payment_status' => PaymentStatus::Pending,
                 'total_amount' => $total,
+                'payment_due_at' => BookingPaymentDeadlineSettings::dueAtFromNow($booking),
             ];
 
             if ($booking->isSupport()) {
