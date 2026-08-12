@@ -124,6 +124,7 @@ class MootaRegisterWebhookCommand extends Command
 
         $created = 0;
         $skipped = 0;
+        $failed = 0;
 
         foreach ($bankAccountIds as $bankId) {
             $payload = [
@@ -135,7 +136,13 @@ class MootaRegisterWebhookCommand extends Command
                 'end_unique_code' => $end,
             ];
 
-            $existing = $this->webhooksForUrlAndBankAccount($client, $targetUrl, $bankId);
+            try {
+                $existing = $this->webhooksForUrlAndBankAccount($client, $targetUrl, $bankId);
+            } catch (RuntimeException $e) {
+                $this->warn('Cek webhook existing gagal untuk '.$bankId.' ('.$e->getMessage().'). Lanjut coba daftar.');
+                $existing = [];
+            }
+
             if ($existing !== []) {
                 $row = $existing[0];
                 $wid = is_string($row['webhook_id'] ?? null) ? $row['webhook_id'] : (string) ($row['token'] ?? $row['id'] ?? '?');
@@ -152,12 +159,11 @@ class MootaRegisterWebhookCommand extends Command
                 $created++;
             } catch (RuntimeException $e) {
                 $this->error($bankId.': '.$e->getMessage());
-
-                return self::FAILURE;
+                $failed++;
             }
         }
 
-        if ($created === 0 && $skipped > 0) {
+        if ($created === 0 && $skipped > 0 && $failed === 0) {
             $this->newLine();
             $this->info('Tidak ada webhook baru; semua rekening sudah punya webhook untuk URL ini.');
 
@@ -167,7 +173,7 @@ class MootaRegisterWebhookCommand extends Command
         $this->newLine();
         $this->line('Pastikan <fg=yellow>config/services.php → moota.webhook_ips</> mencakup IP pengirim Moota, dan (jika pakai HTTPS) sertifikat valid.');
 
-        return self::SUCCESS;
+        return $failed > 0 ? self::FAILURE : self::SUCCESS;
     }
 
     /**

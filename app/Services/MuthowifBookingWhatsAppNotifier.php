@@ -19,6 +19,7 @@ use App\Support\TransactionalEmailHtml;
 use App\Support\WhatsAppMediaUrl;
 use App\Support\WhatsAppNotifySettings;
 use Illuminate\Support\Facades\Log;
+use Throwable;
 
 class MuthowifBookingWhatsAppNotifier
 {
@@ -263,7 +264,7 @@ class MuthowifBookingWhatsAppNotifier
                 $this->queueTransactionalEmail(
                     $customer->email,
                     $message,
-                    [BookingInvoiceAttachment::forBooking($booking)],
+                    $this->safeInvoiceAttachments($booking),
                     __('bookings.invoice.attachment_invoice'),
                 );
 
@@ -299,7 +300,7 @@ class MuthowifBookingWhatsAppNotifier
             $this->queueTransactionalEmail(
                 $customer->email,
                 $message,
-                [BookingInvoiceAttachment::forBooking($booking)],
+                $this->safeInvoiceAttachments($booking),
                 __('bookings.invoice.attachment_invoice'),
             );
         });
@@ -933,9 +934,8 @@ class MuthowifBookingWhatsAppNotifier
         $amountFmt = IndonesianNumber::formatThousands((string) (int) round((float) $refund->net_refund_customer));
         $appName = config('app.name', 'BaytGo');
         $detailUrl = route('bookings.show', $booking);
-        $proofAttachment = MailjetAttachment::fromPublicDisk($refund->transfer_proof_path);
 
-        $this->withLocale($locale, function () use ($refund, $booking, $fonnteDial, $locale, $proofUrl, $amountFmt, $appName, $detailUrl, $customer, $proofAttachment): void {
+        $this->withLocale($locale, function () use ($refund, $booking, $fonnteDial, $locale, $proofUrl, $amountFmt, $appName, $detailUrl, $customer): void {
             $lines = [
                 __('whatsapp.customer.refund_transfer_done.headline', ['app' => $appName], $locale),
                 '',
@@ -959,7 +959,7 @@ class MuthowifBookingWhatsAppNotifier
             $this->queueTransactionalEmail(
                 $customer->email,
                 $message,
-                $proofAttachment !== null ? [$proofAttachment] : [],
+                $this->safePublicDiskAttachments($refund->transfer_proof_path),
                 __('bookings.invoice.attachment_transfer_proof'),
             );
         });
@@ -991,9 +991,8 @@ class MuthowifBookingWhatsAppNotifier
         $locale = $this->localeForUser($profile->user?->locale);
         $amountFmt = IndonesianNumber::formatThousands((string) (int) round((float) $withdrawal->amount));
         $appName = config('app.name', 'BaytGo');
-        $proofAttachment = MailjetAttachment::fromPublicDisk($withdrawal->transfer_proof_path);
 
-        $this->withLocale($locale, function () use ($withdrawal, $fonnteDial, $locale, $amountFmt, $appName, $profile, $proofAttachment): void {
+        $this->withLocale($locale, function () use ($withdrawal, $fonnteDial, $locale, $amountFmt, $appName, $profile): void {
             $lines = [
                 __('whatsapp.muthowif.withdrawal_transfer_done.headline', ['app' => $appName], $locale),
                 '',
@@ -1009,7 +1008,7 @@ class MuthowifBookingWhatsAppNotifier
             $this->queueTransactionalEmail(
                 $profile->user?->email,
                 $message,
-                $proofAttachment !== null ? [$proofAttachment] : [],
+                $this->safePublicDiskAttachments($withdrawal->transfer_proof_path),
                 __('bookings.invoice.attachment_transfer_proof'),
             );
         });
@@ -1332,11 +1331,58 @@ class MuthowifBookingWhatsAppNotifier
      */
     private function queueTransactionalEmail(?string $email, string $message, array $attachments = [], ?string $footnote = null): void
     {
-        DualChannelNotify::queueEmail(
-            $email,
-            $message,
-            attachments: $attachments,
-            html: TransactionalEmailHtml::wrap($message, $footnote),
-        );
+        try {
+            DualChannelNotify::queueEmail(
+                $email,
+                $message,
+                attachments: $attachments,
+                html: TransactionalEmailHtml::wrap($message, $footnote),
+            );
+        } catch (Throwable $e) {
+            Log::warning('Transactional email skipped (WhatsApp unaffected)', [
+                'email' => $email,
+                'exception' => $e->getMessage(),
+            ]);
+        }
+    }
+
+    /**
+     * @return list<array{ContentType: string, Filename: string, Base64Content: string}>
+     */
+    private function safeInvoiceAttachments(MuthowifBooking $booking): array
+    {
+        try {
+            return [BookingInvoiceAttachment::forBooking($booking)];
+        } catch (Throwable $e) {
+            Log::warning('Invoice email attachment skipped (WhatsApp unaffected)', [
+                'booking_id' => $booking->id,
+                'exception' => $e->getMessage(),
+            ]);
+
+            return [];
+        }
+    }
+
+    /**
+     * @return list<array{ContentType: string, Filename: string, Base64Content: string}>
+     */
+    private function safePublicDiskAttachments(?string $path): array
+    {
+        if ($path === null || $path === '') {
+            return [];
+        }
+
+        try {
+            $attachment = MailjetAttachment::fromPublicDisk($path);
+
+            return $attachment !== null ? [$attachment] : [];
+        } catch (Throwable $e) {
+            Log::warning('Transfer proof email attachment skipped (WhatsApp unaffected)', [
+                'path' => $path,
+                'exception' => $e->getMessage(),
+            ]);
+
+            return [];
+        }
     }
 }

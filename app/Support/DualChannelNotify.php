@@ -5,9 +5,11 @@ namespace App\Support;
 use App\Jobs\SendMailjetTextJob;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Str;
+use Throwable;
 
 /**
  * Email transaksi Mailjet (teks + HTML + lampiran), terpisah dari notifikasi WhatsApp biasa.
+ * Kegagalan email tidak boleh mengganggu saluran WhatsApp / alur pemanggil.
  */
 final class DualChannelNotify
 {
@@ -23,41 +25,48 @@ final class DualChannelNotify
         array $attachments = [],
         ?string $html = null,
     ): void {
-        $email = self::normalizeEmail($email);
-        if ($email === null) {
-            return;
-        }
+        try {
+            $email = self::normalizeEmail($email);
+            if ($email === null) {
+                return;
+            }
 
-        if (! MailjetSettings::hasCredentials() || ! filled(MailjetSettings::fromAddress())) {
-            Log::debug('Mailjet notify skipped: kredensial/from belum dikonfigurasi.', [
-                'to' => $email,
+            if (! MailjetSettings::hasCredentials() || ! filled(MailjetSettings::fromAddress())) {
+                Log::debug('Mailjet notify skipped: kredensial/from belum dikonfigurasi.', [
+                    'to' => $email,
+                ]);
+
+                return;
+            }
+
+            $subject = trim((string) $subject);
+            if ($subject === '') {
+                $subject = self::subjectFromMessage($message);
+            }
+
+            if ($html === null) {
+                $html = TransactionalEmailHtml::wrap($message);
+            }
+
+            if ($sync) {
+                SendMailjetTextJob::dispatchSync($email, $subject, $message, false, $attachments, $html);
+
+                return;
+            }
+
+            if ($afterResponse) {
+                SendMailjetTextJob::dispatchAfterResponse($email, $subject, $message, false, $attachments, $html);
+
+                return;
+            }
+
+            SendMailjetTextJob::dispatch($email, $subject, $message, false, $attachments, $html);
+        } catch (Throwable $e) {
+            Log::warning('mailjet.queue_failed', [
+                'to' => $email ?? null,
+                'exception' => $e->getMessage(),
             ]);
-
-            return;
         }
-
-        $subject = trim((string) $subject);
-        if ($subject === '') {
-            $subject = self::subjectFromMessage($message);
-        }
-
-        if ($html === null) {
-            $html = TransactionalEmailHtml::wrap($message);
-        }
-
-        if ($sync) {
-            SendMailjetTextJob::dispatchSync($email, $subject, $message, false, $attachments, $html);
-
-            return;
-        }
-
-        if ($afterResponse) {
-            SendMailjetTextJob::dispatchAfterResponse($email, $subject, $message, false, $attachments, $html);
-
-            return;
-        }
-
-        SendMailjetTextJob::dispatch($email, $subject, $message, false, $attachments, $html);
     }
 
     public static function subjectFromMessage(string $message): string
