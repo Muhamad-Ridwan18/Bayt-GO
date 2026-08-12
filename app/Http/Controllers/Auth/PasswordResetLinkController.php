@@ -47,8 +47,14 @@ class PasswordResetLinkController extends Controller
                 ->withErrors($e->errors());
         }
 
+        $status = 'Jika nomor WhatsApp terdaftar, kode OTP telah dikirim. Periksa WhatsApp Anda.';
+
+        if (! ($payload['sent'] ?? false)) {
+            return back()->with('status', $status);
+        }
+
         return redirect()
             ->route('password.reset', ['token' => $payload['reset_token']])
-            ->with('status', 'Kode reset password sudah dikirim ke WhatsApp '.$payload['masked_phone'].'.');
+            ->with('status', $status);
     }
 }

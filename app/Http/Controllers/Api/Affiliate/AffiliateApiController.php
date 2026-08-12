@@ -157,11 +157,14 @@ class AffiliateApiController extends Controller
             'account_holder' => trim($validated['account_holder']),
             'account_number' => trim($validated['account_number']),
             'is_primary' => $request->boolean('is_primary') || $affiliate->bankAccounts()->count() === 0,
-            'verification_status' => AffiliateBankVerificationStatus::Verified,
-            'verified_at' => now(),
+            'verification_status' => AffiliateBankVerificationStatus::Pending,
+            'verified_at' => null,
         ]);
 
-        return response()->json(['message' => 'Rekening ditambahkan', 'bank_account' => $bank], 201);
+        return response()->json([
+            'message' => 'Rekening ditambahkan. Menunggu verifikasi admin sebelum dapat dipakai withdraw.',
+            'bank_account' => $bank,
+        ], 201);
     }
 
     public function destroyBankAccount(Request $request, string $id): JsonResponse

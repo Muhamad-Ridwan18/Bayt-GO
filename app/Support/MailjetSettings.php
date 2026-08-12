@@ -20,12 +20,12 @@ class MailjetSettings
 
     public static function apiKey(): ?string
     {
-        return self::storedValue(self::SETTING_API_KEY);
+        return SiteSetting::getSecret(self::SETTING_API_KEY);
     }
 
     public static function secretKey(): ?string
     {
-        return self::storedValue(self::SETTING_SECRET_KEY);
+        return SiteSetting::getSecret(self::SETTING_SECRET_KEY);
     }
 
     public static function fromAddress(): ?string
@@ -105,12 +105,12 @@ class MailjetSettings
     {
         $apiKey = trim((string) ($input['api_key'] ?? ''));
         if ($apiKey !== '') {
-            SiteSetting::putValue(self::SETTING_API_KEY, $apiKey);
+            SiteSetting::putSecret(self::SETTING_API_KEY, $apiKey);
         }
 
         $secretKey = trim((string) ($input['secret_key'] ?? ''));
         if ($secretKey !== '') {
-            SiteSetting::putValue(self::SETTING_SECRET_KEY, $secretKey);
+            SiteSetting::putSecret(self::SETTING_SECRET_KEY, $secretKey);
         }
 
         SiteSetting::putValue(

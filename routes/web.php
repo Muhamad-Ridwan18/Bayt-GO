@@ -83,23 +83,25 @@ Route::post('/payments/doku/notification', [PaymentWebhookController::class, 'do
     ->name('payments.doku.notification');
 
 /**
- * Endpoint uji webhook: POST dari gateway / layanan luar (tanpa CSRF).
+ * Endpoint uji webhook — hanya local/testing (tanpa CSRF).
  * Pakai URL: {APP_URL}/webhooks/test
  */
-Route::withoutMiddleware([ValidateCsrfToken::class])
-    ->post('/webhooks/test', function (Request $request) {
-        Log::info('webhooks.test', [
-            'ip' => $request->ip(),
-            'content_type' => $request->header('Content-Type'),
-            'raw_preview' => Str::limit($request->getContent(), 8192),
-        ]);
+if (app()->environment(['local', 'testing'])) {
+    Route::withoutMiddleware([ValidateCsrfToken::class])
+        ->post('/webhooks/test', function (Request $request) {
+            Log::info('webhooks.test', [
+                'ip' => $request->ip(),
+                'content_type' => $request->header('Content-Type'),
+                'raw_preview' => Str::limit($request->getContent(), 8192),
+            ]);
 
-        return response()->json([
-            'ok' => true,
-            'received_at' => now()->toIso8601String(),
-            'hint' => 'Uji webhook; produksi pakai POST /payments/doku/notification atau /payments/midtrans/notification.',
-        ]);
-    })->name('webhooks.test');
+            return response()->json([
+                'ok' => true,
+                'received_at' => now()->toIso8601String(),
+                'hint' => 'Uji webhook; produksi pakai POST /payments/doku/notification atau /payments/midtrans/notification.',
+            ]);
+        })->name('webhooks.test');
+}
 
 Route::get('/docs/moota-webhook', function () {
     return view('docs.moota-webhook', [
@@ -416,9 +418,11 @@ Route::get('/muthowif/{keyword}', [SeoLandingController::class, 'showKeyword'])
     ->where('keyword', '[a-z0-9\-]+')
     ->name('seo.landing');
 
-Route::get('/php-test', function () {
-    return [
-        'upload_max_filesize' => ini_get('upload_max_filesize'),
-        'post_max_size' => ini_get('post_max_size'),
-    ];
-});
+if (app()->environment(['local', 'testing'])) {
+    Route::get('/php-test', function () {
+        return [
+            'upload_max_filesize' => ini_get('upload_max_filesize'),
+            'post_max_size' => ini_get('post_max_size'),
+        ];
+    });
+}

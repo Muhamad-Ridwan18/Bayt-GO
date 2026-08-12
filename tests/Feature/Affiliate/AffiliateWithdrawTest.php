@@ -55,15 +55,13 @@ class AffiliateWithdrawTest extends TestCase
         $this->assertEquals(100000, (float) $affiliate->fresh()->available_balance);
     }
 
-    public function test_pending_bank_can_withdraw(): void
+    public function test_pending_bank_cannot_withdraw(): void
     {
         [, $affiliate, $bank] = $this->makeAffiliateWithBalance();
         $bank->update(['verification_status' => AffiliateBankVerificationStatus::Pending]);
 
-        $withdrawal = app(AffiliateWalletService::class)->requestWithdrawal($affiliate, $bank->fresh(), 100000);
-
-        $this->assertSame(AffiliateWithdrawalStatus::Requested, $withdrawal->status);
-        $this->assertEquals(100000, (float) $affiliate->fresh()->available_balance);
+        $this->expectException(ValidationException::class);
+        app(AffiliateWalletService::class)->requestWithdrawal($affiliate, $bank->fresh(), 100000);
     }
 
     public function test_reject_releases_balance_once(): void

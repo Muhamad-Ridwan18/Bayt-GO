@@ -15,7 +15,7 @@
         "laravel/reverb": "^1.10",
         "laravel/sanctum": "^4.0",
         "laravel/tinker": "^3.0",
-        "maestroerror/php-heic-to-jpg": "*",
+        "maestroerror/php-heic-to-jpg": "^1.0.8",
         "opcodesio/log-viewer": "^3.24",
         "pusher/pusher-php-server": "^7.2",
         "stevebauman/purify": "^6.3",

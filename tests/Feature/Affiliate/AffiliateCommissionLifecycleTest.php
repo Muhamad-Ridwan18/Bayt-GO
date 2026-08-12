@@ -54,9 +54,11 @@ class AffiliateCommissionLifecycleTest extends TestCase
             'birth_date' => '1990-01-01',
             'photo_path' => 'photos/test.jpg',
             'ktp_image_path' => 'ktp/test.jpg',
+        ]);
+        $profile->forceFill([
             'verification_status' => 'approved',
             'wallet_balance' => 0,
-        ]);
+        ])->save();
 
         $affiliate = Affiliate::query()->create([
             'user_id' => $affiliateUser->id,

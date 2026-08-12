@@ -491,10 +491,12 @@ class RegisteredUserController extends Controller
                     'reference_text' => $request->input('reference_text'),
                     'photo_path' => $finalDir.'/'.basename($stagedMuthowifFiles['photo_path']),
                     'ktp_image_path' => $finalDir.'/'.basename($stagedMuthowifFiles['ktp_path']),
+                    'referred_by_muthowif_profile_id' => $referredById,
+                ];
+                $statusPayload = [
                     'verification_status' => MuthowifVerificationStatus::Pending,
                     'verified_at' => null,
                     'rejection_reason' => null,
-                    'referred_by_muthowif_profile_id' => $referredById,
                 ];
 
                 if ($existingRejected !== null) {
@@ -503,11 +505,13 @@ class RegisteredUserController extends Controller
                         throw new \RuntimeException('Profil muthowif hilang.');
                     }
                     $reregistration->discardStoredDocuments($profile);
-                    $profile->update($profilePayload);
+                    $profile->fill($profilePayload);
+                    $profile->forceFill($statusPayload)->save();
                 } else {
-                    $profile = MuthowifProfile::create(array_merge($profilePayload, [
+                    $profile = new MuthowifProfile(array_merge($profilePayload, [
                         'user_id' => $user->id,
                     ]));
+                    $profile->forceFill($statusPayload)->save();
                 }
                 $muthowifProfileId = (string) $profile->getKey();
 
@@ -643,10 +647,12 @@ class RegisteredUserController extends Controller
                     'reference_text' => $input['reference_text'] ?? null,
                     'photo_path' => $finalDir.'/'.basename($muthowifFiles['photo_path']),
                     'ktp_image_path' => $finalDir.'/'.basename($muthowifFiles['ktp_path']),
+                    'referred_by_muthowif_profile_id' => $referredById,
+                ];
+                $statusPayload = [
                     'verification_status' => MuthowifVerificationStatus::Pending,
                     'verified_at' => null,
                     'rejection_reason' => null,
-                    'referred_by_muthowif_profile_id' => $referredById,
                 ];
 
                 if ($existingRejected !== null) {
@@ -655,11 +661,13 @@ class RegisteredUserController extends Controller
                         throw new \RuntimeException('Profil muthowif hilang.');
                     }
                     $reregistration->discardStoredDocuments($profile);
-                    $profile->update($profilePayload);
+                    $profile->fill($profilePayload);
+                    $profile->forceFill($statusPayload)->save();
                 } else {
-                    $profile = MuthowifProfile::create(array_merge($profilePayload, [
+                    $profile = new MuthowifProfile(array_merge($profilePayload, [
                         'user_id' => $user->id,
                     ]));
+                    $profile->forceFill($statusPayload)->save();
                 }
                 $muthowifProfileId = (string) $profile->getKey();
 

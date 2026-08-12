@@ -76,7 +76,7 @@ class RegistrationOtpService
         }
         $message = $greeting.$otpMessage;
 
-        SendWhatsAppTextJob::dispatchAfterResponse(
+        SendWhatsAppTextJob::dispatchCachedAfterResponse(
             $fonnteDial['target'],
             $message,
             $fonnteDial['country_calling_code'],

@@ -9,11 +9,11 @@ use App\Models\MuthowifSupportingDocument;
 use App\Models\User;
 use App\Services\MuthowifReferralCodeService;
 use App\Services\UploadedImageOptimizer;
+use App\Support\PrivateDocumentStorage;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Redirect;
-use Illuminate\Support\Facades\Storage;
 use Illuminate\Validation\Rule;
 use Illuminate\Validation\ValidationException;
 use Illuminate\View\View;
@@ -256,31 +256,11 @@ class ProfileController extends Controller
 
     private function storedFileResponse(?string $path, ?string $name = null): Response
     {
-        if (! is_string($path) || $path === '') {
-            abort(404);
-        }
-
-        foreach (['local', 'public'] as $diskName) {
-            $disk = Storage::disk($diskName);
-            if ($disk->exists($path)) {
-                return $disk->response($path, $name);
-            }
-        }
-
-        abort(404);
+        return PrivateDocumentStorage::response($path, $name);
     }
 
     private function deleteStoredPath(?string $path): void
     {
-        if (! is_string($path) || $path === '') {
-            return;
-        }
-
-        foreach (['local', 'public'] as $diskName) {
-            $disk = Storage::disk($diskName);
-            if ($disk->exists($path)) {
-                $disk->delete($path);
-            }
-        }
+        PrivateDocumentStorage::delete($path);
     }
 }

@@ -8,13 +8,16 @@ use App\Models\MuthowifProfile;
 use App\Models\User;
 use App\Services\MuthowifReferralCodeService;
 use App\Services\UploadedImageOptimizer;
+use App\Models\MuthowifSupportingDocument;
 use App\Support\ApiMediaUrl;
+use App\Support\PrivateDocumentStorage;
 use Illuminate\Auth\Notifications\VerifyEmail;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Validation\Rule;
 use Illuminate\Validation\Rules\Password;
 use Illuminate\Validation\ValidationException;
+use Symfony\Component\HttpFoundation\StreamedResponse;
 
 class ProfileController extends Controller
 {
@@ -47,7 +50,7 @@ class ProfileController extends Controller
                 'work_location' => $muthowif->work_location,
                 'work_location_label' => $muthowif->workLocationLabel(),
                 'photo_url' => filled($muthowif->photo_path) ? ApiMediaUrl::muthowifAvatar($muthowif) : null,
-                'ktp_url' => filled($muthowif->ktp_image_path) ? ApiMediaUrl::publicDisk($muthowif->ktp_image_path) : null,
+                'ktp_url' => filled($muthowif->ktp_image_path) ? url('/api/profile/ktp') : null,
                 'languages' => $muthowif->languagesForDisplay() ?: [],
                 'educations' => $muthowif->educationsForDisplay() ?: [],
                 'work_experiences' => $muthowif->workExperiencesForDisplay() ?: [],
@@ -58,7 +61,7 @@ class ProfileController extends Controller
                 'inviter_referral_code' => $muthowif->referredBy?->referral_code,
                 'supporting_documents' => $muthowif->supportingDocuments->map(fn ($d) => [
                     'id' => $d->id,
-                    'url' => ApiMediaUrl::publicDisk($d->path),
+                    'url' => url('/api/profile/documents/'.$d->id),
                     'name' => $d->original_name,
                 ]),
             ] : null,
@@ -261,32 +264,50 @@ class ProfileController extends Controller
         $user = $request->user();
         $muthowif = $user->muthowifProfile;
 
+        if ($muthowif === null) {
+            return response()->json(['message' => 'Profil Muthowif tidak ditemukan'], 404);
+        }
+
         $request->validate([
             'ktp' => 'required|image|max:2048',
         ]);
 
         if ($request->hasFile('ktp')) {
+            PrivateDocumentStorage::delete($muthowif->ktp_image_path);
+
             $path = app(UploadedImageOptimizer::class)->store(
                 $request->file('ktp'),
-                'muthowif/ktp',
-                'public',
+                'muthowif_documents/'.$user->id,
+                'local',
                 'profile',
             );
             $muthowif->update(['ktp_image_path' => $path]);
 
             return response()->json([
                 'message' => 'Scan KTP berhasil diunggah',
-                'ktp_url' => ApiMediaUrl::publicDisk($path),
+                'ktp_url' => url('/api/profile/ktp'),
             ]);
         }
 
         return response()->json(['message' => 'File tidak ditemukan'], 400);
     }
 
+    public function showKtp(Request $request): StreamedResponse
+    {
+        $muthowif = $request->user()->muthowifProfile;
+        abort_unless($muthowif !== null && filled($muthowif->ktp_image_path), 404);
+
+        return PrivateDocumentStorage::response($muthowif->ktp_image_path);
+    }
+
     public function uploadSupportingDocument(Request $request)
     {
         $user = $request->user();
         $muthowif = $user->muthowifProfile;
+
+        if ($muthowif === null) {
+            return response()->json(['message' => 'Profil Muthowif tidak ditemukan'], 404);
+        }
 
         $request->validate([
             'document' => 'required|file|mimes:pdf,jpeg,jpg,png,webp|max:10240',
@@ -296,8 +317,8 @@ class ProfileController extends Controller
             $file = $request->file('document');
             $path = app(UploadedImageOptimizer::class)->store(
                 $file,
-                'muthowif/documents',
-                'public',
+                'muthowif_documents/'.$user->id,
+                'local',
                 'document',
             );
 
@@ -311,8 +332,7 @@ class ProfileController extends Controller
                 'message' => 'Dokumen berhasil diunggah',
                 'document' => [
                     'id' => $doc->id,
-                    'path' => $doc->path,
-                    'url' => ApiMediaUrl::publicDisk($doc->path),
+                    'url' => url('/api/profile/documents/'.$doc->id),
                     'name' => $doc->original_name,
                 ],
             ]);
@@ -321,12 +341,31 @@ class ProfileController extends Controller
         return response()->json(['message' => 'File tidak ditemukan'], 400);
     }
 
+    public function showSupportingDocument(Request $request, string $id): StreamedResponse
+    {
+        $muthowif = $request->user()->muthowifProfile;
+        abort_unless($muthowif !== null, 404);
+
+        /** @var MuthowifSupportingDocument $doc */
+        $doc = $muthowif->supportingDocuments()->findOrFail($id);
+
+        return PrivateDocumentStorage::response(
+            $doc->path,
+            $doc->original_name ?? basename((string) $doc->path),
+        );
+    }
+
     public function deleteSupportingDocument(Request $request, $id)
     {
         $user = $request->user();
         $muthowif = $user->muthowifProfile;
 
+        if ($muthowif === null) {
+            return response()->json(['message' => 'Profil Muthowif tidak ditemukan'], 404);
+        }
+
         $doc = $muthowif->supportingDocuments()->findOrFail($id);
+        PrivateDocumentStorage::delete($doc->path);
         $doc->delete();
 
         return response()->json(['message' => 'Dokumen berhasil dihapus']);
@@ -342,6 +381,8 @@ class ProfileController extends Controller
         $request->user()->update([
             'password' => Hash::make($request->password),
         ]);
+
+        $request->user()->tokens()->delete();
 
         return response()->json([
             'message' => 'Password berhasil diperbarui',

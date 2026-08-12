@@ -11,7 +11,7 @@ final class BookingInvoiceUrl
     {
         return URL::temporarySignedRoute(
             'bookings.invoice.signed',
-            $expires ?? now()->addDays(90),
+            $expires ?? now()->addDays(7),
             ['booking' => $booking],
         );
     }

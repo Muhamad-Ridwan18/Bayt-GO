@@ -39,12 +39,6 @@ class MuthowifProfile extends Model
         'reference_text',
         'photo_path',
         'ktp_image_path',
-        'verification_status',
-        'account_status',
-        'verified_at',
-        'rejection_reason',
-        'wallet_balance',
-        'referral_code',
         'referred_by_muthowif_profile_id',
         'slug',
     ];

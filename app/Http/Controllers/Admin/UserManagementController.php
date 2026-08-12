@@ -105,17 +105,14 @@ class UserManagementController extends Controller
 
         $user->loadMissing('muthowifProfile');
         if ($user->muthowifProfile !== null) {
-            $profileUpdate = [];
             if (array_key_exists('phone', $data)) {
-                $profileUpdate['phone'] = $data['phone'] ?? null;
+                $user->muthowifProfile->update(['phone' => $data['phone'] ?? null]);
             }
             if ($role === UserRole::Muthowif && $accountStatusRaw !== null && $accountStatusRaw !== '') {
-                $profileUpdate['account_status'] = $accountStatusRaw instanceof MuthowifAccountStatus
+                $accountStatus = $accountStatusRaw instanceof MuthowifAccountStatus
                     ? $accountStatusRaw
                     : MuthowifAccountStatus::from((string) $accountStatusRaw);
-            }
-            if ($profileUpdate !== []) {
-                $user->muthowifProfile->update($profileUpdate);
+                $user->muthowifProfile->forceFill(['account_status' => $accountStatus])->save();
             }
         }
 

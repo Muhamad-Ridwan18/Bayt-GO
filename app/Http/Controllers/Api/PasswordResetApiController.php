@@ -31,7 +31,7 @@ class PasswordResetApiController extends Controller
         $payload = $this->passwordResetOtp->send($request->string('phone')->toString());
 
         return response()->json([
-            'message' => 'Kode reset password sudah dikirim ke WhatsApp '.$payload['masked_phone'].'.',
+            'message' => 'Jika nomor WhatsApp terdaftar, kode OTP telah dikirim. Periksa WhatsApp Anda.',
             'reset_token' => $payload['reset_token'],
             'masked_phone' => $payload['masked_phone'],
         ]);
@@ -65,6 +65,8 @@ class PasswordResetApiController extends Controller
             'password' => Hash::make($request->string('password')->toString()),
             'remember_token' => Str::random(60),
         ])->save();
+
+        $user->tokens()->delete();
 
         return response()->json([
             'message' => 'Password berhasil direset. Silakan masuk.',
