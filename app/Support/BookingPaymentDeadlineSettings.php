@@ -4,6 +4,8 @@ namespace App\Support;
 
 use App\Models\MuthowifBooking;
 use App\Models\SiteSetting;
+use App\Enums\BookingStatus;
+use App\Enums\PaymentStatus;
 use Carbon\CarbonInterface;
 
 final class BookingPaymentDeadlineSettings
@@ -126,5 +128,45 @@ final class BookingPaymentDeadlineSettings
         SiteSetting::putValue(self::SETTING_REGULAR_MINUTES, (string) $regular);
         SiteSetting::putValue(self::SETTING_SUPPORT_MINUTES, (string) $support);
         SiteSetting::putValue(self::SETTING_REGULAR_HOURS, null);
+    }
+
+    public static function countAwaitingPaymentMissingDueAt(): int
+    {
+        return MuthowifBooking::query()
+            ->where('status', BookingStatus::Confirmed)
+            ->where('payment_status', PaymentStatus::Pending)
+            ->whereNull('payment_due_at')
+            ->count();
+    }
+
+    /**
+     * Isi payment_due_at untuk confirmed+unpaid yang masih kosong (mulai dari sekarang + setting).
+     */
+    public static function stampMissingPaymentDueAt(?CarbonInterface $from = null): int
+    {
+        $from ??= now();
+        $stamped = 0;
+
+        MuthowifBooking::query()
+            ->where('status', BookingStatus::Confirmed)
+            ->where('payment_status', PaymentStatus::Pending)
+            ->whereNull('payment_due_at')
+            ->orderBy('id')
+            ->chunkById(100, function ($bookings) use ($from, &$stamped): void {
+                foreach ($bookings as $booking) {
+                    /** @var MuthowifBooking $booking */
+                    $due = self::dueAtFromNow($booking, $from);
+                    $updated = MuthowifBooking::query()
+                        ->whereKey($booking->getKey())
+                        ->where('status', BookingStatus::Confirmed)
+                        ->where('payment_status', PaymentStatus::Pending)
+                        ->whereNull('payment_due_at')
+                        ->update(['payment_due_at' => $due]);
+
+                    $stamped += $updated;
+                }
+            });
+
+        return $stamped;
     }
 }

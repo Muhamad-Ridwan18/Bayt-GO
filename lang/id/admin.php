@@ -390,6 +390,12 @@ return [
         'support_minutes_hint' => 'Default 120 menit / 2 jam (1–10080).',
         'save' => 'Simpan',
         'settings_saved' => 'Batas waktu pembayaran disimpan.',
+        'stamp_heading' => 'Isi batas bayar yang kosong',
+        'stamp_hint' => 'Untuk booking confirmed + belum bayar yang payment_due_at-nya masih kosong. Batas dihitung dari sekarang + setting di atas.',
+        'stamp_count' => 'Ada :count booking yang belum punya payment_due_at.',
+        'stamp_button' => 'Isi payment_due_at sekarang',
+        'stamp_confirm' => 'Isi payment_due_at untuk semua booking confirmed+unpaid yang kosong?',
+        'stamp_missing_done' => 'Berhasil mengisi payment_due_at untuk :count booking.',
     ],
     'mailjet_test' => [
         'badge' => 'Email',

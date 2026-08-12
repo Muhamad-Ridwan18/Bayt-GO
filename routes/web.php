@@ -333,6 +333,7 @@ Route::middleware('auth')->group(function () {
         Route::post('pengaturan/whatsapp-notifikasi/jalankan-chat-unreplied', [WhatsAppNotifySettingsController::class, 'runChatUnrepliedNow'])->name('whatsapp-notify-settings.run-chat-unreplied');
         Route::get('pengaturan/batas-bayar', [BookingPaymentDeadlineSettingsController::class, 'edit'])->name('booking-payment-deadline-settings.edit');
         Route::post('pengaturan/batas-bayar', [BookingPaymentDeadlineSettingsController::class, 'update'])->name('booking-payment-deadline-settings.update');
+        Route::post('pengaturan/batas-bayar/isi-kosong', [BookingPaymentDeadlineSettingsController::class, 'stampMissing'])->name('booking-payment-deadline-settings.stamp-missing');
         Route::get('pengaturan/mailjet-uji', [MailjetTestController::class, 'edit'])->name('mailjet-test.edit');
         Route::post('pengaturan/mailjet-uji', [MailjetTestController::class, 'update'])->name('mailjet-test.update');
         Route::post('pengaturan/mailjet-uji/kirim', [MailjetTestController::class, 'send'])->name('mailjet-test.send');

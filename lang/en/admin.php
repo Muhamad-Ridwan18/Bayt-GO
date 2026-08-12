@@ -390,6 +390,12 @@ return [
         'support_minutes_hint' => 'Default 120 minutes / 2 hours (1–10080).',
         'save' => 'Save',
         'settings_saved' => 'Payment deadline settings saved.',
+        'stamp_heading' => 'Fill missing payment deadlines',
+        'stamp_hint' => 'For confirmed + unpaid bookings with empty payment_due_at. Deadline is now + the settings above.',
+        'stamp_count' => ':count booking(s) are still missing payment_due_at.',
+        'stamp_button' => 'Fill payment_due_at now',
+        'stamp_confirm' => 'Fill payment_due_at for all confirmed+unpaid bookings that are missing it?',
+        'stamp_missing_done' => 'Filled payment_due_at for :count booking(s).',
     ],
     'mailjet_test' => [
         'badge' => 'Email',

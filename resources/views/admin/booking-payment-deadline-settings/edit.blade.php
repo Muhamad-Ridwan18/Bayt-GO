@@ -67,6 +67,25 @@
                     </x-primary-button>
                 </div>
             </form>
+
+            <div class="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm">
+                <h2 class="text-sm font-bold text-slate-900">{{ __('admin.booking_payment_deadline.stamp_heading') }}</h2>
+                <p class="mt-1 text-xs text-slate-500">{{ __('admin.booking_payment_deadline.stamp_hint') }}</p>
+                <p class="mt-3 text-sm text-slate-700">
+                    {{ __('admin.booking_payment_deadline.stamp_count', ['count' => $missingDueAtCount]) }}
+                </p>
+                <form
+                    method="post"
+                    action="{{ route('admin.booking-payment-deadline-settings.stamp-missing') }}"
+                    class="mt-4"
+                    onsubmit="return confirm(@json(__('admin.booking_payment_deadline.stamp_confirm')));"
+                >
+                    @csrf
+                    <x-primary-button :disabled="$missingDueAtCount < 1">
+                        {{ __('admin.booking_payment_deadline.stamp_button') }}
+                    </x-primary-button>
+                </form>
+            </div>
         </x-page-container>
     </div>
 </x-app-layout>
