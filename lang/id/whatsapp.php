@@ -61,6 +61,14 @@ return [
             'open' => '*Buka panel pesanan:*',
             'booking_code' => '*Kode pesanan:* :code',
         ],
+        'payment_deadline_expired' => [
+            'headline' => '*:app* — pesanan dibatalkan (batas bayar)',
+            'body' => 'Pesanan dari *:customer* dibatalkan otomatis karena jamaah tidak menyelesaikan pembayaran dalam waktu yang ditentukan.',
+            'booking_code' => '*Kode pesanan:* :code',
+            'due_at' => '*Batas bayar:* :datetime',
+            'status' => '*Status:* Dibatalkan',
+            'open_detail' => '*Buka detail pesanan:*',
+        ],
         'reschedule_requested' => [
             'headline' => '*:app* — pengajuan reschedule',
             'body' => '*:customer* mengajukan pergantian tanggal layanan.',
@@ -161,7 +169,7 @@ return [
         ],
         'payment_deadline_expired' => [
             'headline' => '*:app* — batas pembayaran habis',
-            'body' => 'Pesanan dengan *:muthowif* dibatalkan otomatis karena pembayaran tidak diselesaikan tepat waktu.',
+            'body' => 'Pesanan Anda dengan *:muthowif* dibatalkan otomatis karena pembayaran tidak diselesaikan dalam waktu yang ditentukan.',
             'booking_code' => '*Kode pesanan:* :code',
             'due_at' => '*Batas bayar:* :datetime',
             'status' => '*Status:* Dibatalkan',

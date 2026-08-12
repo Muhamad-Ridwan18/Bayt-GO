@@ -522,6 +522,7 @@ return [
             'customer_booking_submitted' => 'New booking → pilgrim',
             'customer_booking_approved' => 'Booking approved → pilgrim',
             'customer_payment_deadline_expired' => 'Payment deadline expired (auto-cancel) → pilgrim',
+            'muthowif_payment_deadline_expired' => 'Payment deadline expired (auto-cancel) → muthowif',
             'customer_booking_rejected_jadwal_full' => 'Rejected (schedule full) → pilgrim',
             'refund_transfer_proof' => 'Refund transfer proof → pilgrim',
             'withdrawal_transfer_proof' => 'Withdrawal transfer proof → muthowif',

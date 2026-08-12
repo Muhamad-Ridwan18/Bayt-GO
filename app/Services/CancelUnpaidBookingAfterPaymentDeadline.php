@@ -73,10 +73,21 @@ final class CancelUnpaidBookingAfterPaymentDeadline
             Cache::forget('customer_booking_status_counts:'.(string) $fresh->customer_id);
 
             if ($notify) {
+                $notifier = app(MuthowifBookingWhatsAppNotifier::class);
+
                 try {
-                    app(MuthowifBookingWhatsAppNotifier::class)->notifyCustomerPaymentDeadlineExpired($fresh);
+                    $notifier->notifyCustomerPaymentDeadlineExpired($fresh);
                 } catch (Throwable $e) {
-                    Log::warning('payment_deadline.notify_failed', [
+                    Log::warning('payment_deadline.notify_customer_failed', [
+                        'booking_id' => $fresh->getKey(),
+                        'exception' => $e->getMessage(),
+                    ]);
+                }
+
+                try {
+                    $notifier->notifyMuthowifPaymentDeadlineExpired($fresh);
+                } catch (Throwable $e) {
+                    Log::warning('payment_deadline.notify_muthowif_failed', [
                         'booking_id' => $fresh->getKey(),
                         'exception' => $e->getMessage(),
                     ]);

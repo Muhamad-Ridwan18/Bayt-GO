@@ -527,6 +527,54 @@ class MuthowifBookingWhatsAppNotifier
     }
 
     /**
+     * Auto-cancel karena lewat batas waktu pembayaran — beritahu muthowif.
+     */
+    public function notifyMuthowifPaymentDeadlineExpired(MuthowifBooking $booking): void
+    {
+        if (! WhatsAppNotifySettings::enabled('muthowif_payment_deadline_expired')) {
+            return;
+        }
+
+        $booking->loadMissing(['customer', 'muthowifProfile.user']);
+        $profile = $booking->muthowifProfile;
+        if ($profile === null) {
+            return;
+        }
+
+        $fonnteDial = $this->resolveMuthowifDial($profile, (string) $booking->id);
+
+        $locale = $this->localeForUser($profile->user?->locale);
+
+        $this->withLocale($locale, function () use ($booking, $fonnteDial, $locale): void {
+            $appName = config('app.name', 'BaytGo');
+            $customerName = $booking->customer?->name ?? __('whatsapp.fallback_pilgrim', [], $locale);
+            $url = route('muthowif.bookings.show', $booking);
+            $due = $booking->payment_due_at
+                ? $booking->payment_due_at->timezone(config('app.timezone'))->format('d/m/Y H:i')
+                : '—';
+
+            $lines = [
+                __('whatsapp.muthowif.payment_deadline_expired.headline', ['app' => $appName], $locale),
+                '',
+                __('whatsapp.muthowif.payment_deadline_expired.body', ['customer' => $customerName], $locale),
+                '',
+            ];
+
+            if (filled($booking->booking_code)) {
+                $lines[] = __('whatsapp.muthowif.payment_deadline_expired.booking_code', ['code' => $booking->booking_code], $locale);
+            }
+
+            $lines[] = __('whatsapp.muthowif.payment_deadline_expired.due_at', ['datetime' => $due], $locale);
+            $lines[] = __('whatsapp.muthowif.payment_deadline_expired.status', [], $locale);
+            $lines[] = '';
+            $lines[] = __('whatsapp.muthowif.payment_deadline_expired.open_detail', [], $locale);
+            $lines[] = $url;
+
+            $this->sendToTarget($fonnteDial, implode("\n", $lines), $booking->id);
+        });
+    }
+
+    /**
      * Muthowif menolak atau membatalkan booking — arahkan ke template sesuai alasan.
      */
     public function notifyCustomerBookingRejectedByMuthowif(MuthowifBooking $booking): void

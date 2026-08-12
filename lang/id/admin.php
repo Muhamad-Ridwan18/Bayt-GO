@@ -522,6 +522,7 @@ return [
             'customer_booking_submitted' => 'Booking baru → jamaah',
             'customer_booking_approved' => 'Booking disetujui → jamaah',
             'customer_payment_deadline_expired' => 'Batas bayar habis (auto-cancel) → jamaah',
+            'muthowif_payment_deadline_expired' => 'Batas bayar habis (auto-cancel) → muthowif',
             'customer_booking_rejected_jadwal_full' => 'Ditolak (jadwal penuh) → jamaah',
             'refund_transfer_proof' => 'Bukti transfer refund → jamaah',
             'withdrawal_transfer_proof' => 'Bukti transfer withdraw → muthowif',

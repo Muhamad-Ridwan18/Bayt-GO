@@ -66,6 +66,11 @@ class WhatsAppNotifySettings
                 'group' => 'booking',
                 'default' => true,
             ],
+            'muthowif_payment_deadline_expired' => [
+                'label' => 'admin.whatsapp_notify.toggles.muthowif_payment_deadline_expired',
+                'group' => 'booking',
+                'default' => true,
+            ],
             'customer_payment_settled' => [
                 'label' => 'admin.whatsapp_notify.toggles.customer_payment_settled',
                 'group' => 'booking',

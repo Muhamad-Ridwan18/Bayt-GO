@@ -61,6 +61,14 @@ return [
             'open' => '*Open bookings:*',
             'booking_code' => '*Booking code:* :code',
         ],
+        'payment_deadline_expired' => [
+            'headline' => '*:app* — booking cancelled (payment deadline)',
+            'body' => 'Booking from *:customer* was auto-cancelled because the pilgrim did not complete payment within the allowed time.',
+            'booking_code' => '*Booking code:* :code',
+            'due_at' => '*Pay by:* :datetime',
+            'status' => '*Status:* Cancelled',
+            'open_detail' => '*Open booking details:*',
+        ],
         'reschedule_requested' => [
             'headline' => '*:app* — reschedule request',
             'body' => '*:customer* requested to change the service dates.',
@@ -161,7 +169,7 @@ return [
         ],
         'payment_deadline_expired' => [
             'headline' => '*:app* — payment deadline expired',
-            'body' => 'Your booking with *:muthowif* was auto-cancelled because payment was not completed in time.',
+            'body' => 'Your booking with *:muthowif* was auto-cancelled because payment was not completed within the allowed time.',
             'booking_code' => '*Booking code:* :code',
             'due_at' => '*Pay by:* :datetime',
             'status' => '*Status:* Cancelled',
