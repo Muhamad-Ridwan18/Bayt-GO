@@ -23,12 +23,12 @@ final class BookingPaymentDeadlineSettings
     {
         $stored = SiteSetting::getValue(self::SETTING_REGULAR_MINUTES);
         if ($stored !== null && is_numeric($stored)) {
-            return max(15, min(10080, (int) $stored));
+            return max(1, min(10080, (int) $stored));
         }
 
         $legacyHours = SiteSetting::getValue(self::SETTING_REGULAR_HOURS);
         if ($legacyHours !== null && is_numeric($legacyHours)) {
-            return max(15, min(10080, (int) $legacyHours * 60));
+            return max(1, min(10080, (int) $legacyHours * 60));
         }
 
         return self::DEFAULT_REGULAR_MINUTES;
@@ -41,7 +41,7 @@ final class BookingPaymentDeadlineSettings
             return self::DEFAULT_SUPPORT_MINUTES;
         }
 
-        return max(15, min(10080, (int) $stored));
+        return max(1, min(10080, (int) $stored));
     }
 
     public static function minutesFor(MuthowifBooking $booking): int
@@ -77,8 +77,8 @@ final class BookingPaymentDeadlineSettings
      */
     public static function saveFromInput(array $input): void
     {
-        $regular = max(15, min(10080, (int) ($input['regular_minutes'] ?? self::DEFAULT_REGULAR_MINUTES)));
-        $support = max(15, min(10080, (int) ($input['support_minutes'] ?? self::DEFAULT_SUPPORT_MINUTES)));
+        $regular = max(1, min(10080, (int) ($input['regular_minutes'] ?? self::DEFAULT_REGULAR_MINUTES)));
+        $support = max(1, min(10080, (int) ($input['support_minutes'] ?? self::DEFAULT_SUPPORT_MINUTES)));
 
         SiteSetting::putValue(self::SETTING_REGULAR_MINUTES, (string) $regular);
         SiteSetting::putValue(self::SETTING_SUPPORT_MINUTES, (string) $support);
