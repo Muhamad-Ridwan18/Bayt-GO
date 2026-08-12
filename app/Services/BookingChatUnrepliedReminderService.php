@@ -289,14 +289,14 @@ final class BookingChatUnrepliedReminderService
 
         $query = \Illuminate\Support\Facades\DB::table(config('cache.stores.database.table', 'cache'))
             ->where(static function ($q): void {
-                $q->where('key', 'like', '%'.self::CACHE_PREFIX.'%')
-                    ->orWhere('key', 'like', '%'.self::FIRST_CACHE_PREFIX.'%');
+                $q->whereILike('key', '%'.self::CACHE_PREFIX.'%')
+                    ->orWhereILike('key', '%'.self::FIRST_CACHE_PREFIX.'%');
             });
 
         if ($bookingId !== null) {
             $query->where(static function ($q) use ($bookingId): void {
-                $q->where('key', 'like', '%'.self::CACHE_PREFIX.$bookingId.'%')
-                    ->orWhere('key', 'like', '%'.self::FIRST_CACHE_PREFIX.$bookingId.':%');
+                $q->whereILike('key', '%'.self::CACHE_PREFIX.$bookingId.'%')
+                    ->orWhereILike('key', '%'.self::FIRST_CACHE_PREFIX.$bookingId.':%');
             });
         }
 

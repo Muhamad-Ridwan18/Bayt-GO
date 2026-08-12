@@ -83,6 +83,20 @@ final class SyncBookingCodeOnBookingPaymentsCommand extends Command
             return self::SUCCESS;
         }
 
+        if ($driver === 'pgsql') {
+            $affected = DB::update(
+                <<<'SQL'
+                UPDATE booking_payments AS bp
+                SET booking_code = b.booking_code
+                FROM muthowif_bookings AS b
+                WHERE b.id = bp.muthowif_booking_id
+                SQL
+            );
+            $this->info('Driver pgsql: UPDATE … FROM — baris tersentuh: '.$affected.'.');
+
+            return self::SUCCESS;
+        }
+
         $updated = 0;
         $missingBooking = 0;
         $scanned = 0;

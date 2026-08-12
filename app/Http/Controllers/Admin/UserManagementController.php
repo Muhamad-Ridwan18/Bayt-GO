@@ -24,11 +24,11 @@ class UserManagementController extends Controller
         if ($q !== '') {
             $like = '%'.$q.'%';
             $query->where(function ($sub) use ($like): void {
-                $sub->where('name', 'like', $like)
-                    ->orWhere('email', 'like', $like)
-                    ->orWhere('phone', 'like', $like)
+                $sub->whereILike('name', $like)
+                    ->orWhereILike('email', $like)
+                    ->orWhereILike('phone', $like)
                     ->orWhereHas('muthowifProfile', function ($profile) use ($like): void {
-                        $profile->where('phone', 'like', $like);
+                        $profile->whereILike('phone', $like);
                     });
             });
         }

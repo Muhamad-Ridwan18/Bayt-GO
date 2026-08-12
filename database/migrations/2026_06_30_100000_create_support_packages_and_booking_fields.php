@@ -59,15 +59,7 @@ return new class extends Migration
 
     private function indexExists(string $table, string $index): bool
     {
-        $connection = Schema::getConnection();
-        $database = $connection->getDatabaseName();
-
-        $result = $connection->select(
-            'SELECT 1 FROM information_schema.statistics WHERE table_schema = ? AND table_name = ? AND index_name = ? LIMIT 1',
-            [$database, $table, $index]
-        );
-
-        return $result !== [];
+        return \App\Support\SqlDialect::indexExists($table, $index);
     }
 
     public function down(): void

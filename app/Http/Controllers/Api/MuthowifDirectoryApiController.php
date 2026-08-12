@@ -85,7 +85,7 @@ class MuthowifDirectoryApiController extends Controller
         }
 
         if ($q !== '') {
-            $query->whereHas('user', fn ($u) => $u->where('name', 'like', '%'.$q.'%'));
+            $query->whereHas('user', fn ($u) => $u->whereILike('name', '%'.$q.'%'));
         }
 
         $profiles = $query->orderByMarketplaceRanking()->paginate(12)->withQueryString();

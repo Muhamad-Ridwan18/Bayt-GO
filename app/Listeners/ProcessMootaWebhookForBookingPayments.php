@@ -101,7 +101,7 @@ final class ProcessMootaWebhookForBookingPayments
     private function whereMootaBankTransferIncludingPlaceholder(Builder $q): Builder
     {
         return $q->where(function (Builder $w): void {
-            $w->where('payment_type', 'like', 'bank_transfer_moota%')
+            $w->whereILike('payment_type', 'bank_transfer_moota%')
                 ->orWhereNull('payment_type')
                 ->orWhere('payment_type', '');
         });

@@ -97,9 +97,9 @@ class SupportCatalogController extends Controller
                 )
                 ->when($q !== '', function ($query) use ($q): void {
                     $query->where(function ($inner) use ($q): void {
-                        $inner->where('name', 'like', '%'.$q.'%')
-                            ->orWhere('description', 'like', '%'.$q.'%')
-                            ->orWhereHas('muthowifProfile.user', fn ($u) => $u->where('name', 'like', '%'.$q.'%'));
+                        $inner->whereILike('name', '%'.$q.'%')
+                            ->orWhereILike('description', '%'.$q.'%')
+                            ->orWhereHas('muthowifProfile.user', fn ($u) => $u->whereILike('name', '%'.$q.'%'));
                     });
                 });
 
