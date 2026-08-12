@@ -31,7 +31,7 @@ return Application::configure(basePath: dirname(__DIR__))
         health: '/up',
     )
     ->withSchedule(function (Schedule $schedule): void {
-        $schedule->command('bookings:process-timeouts')->everyFiveMinutes();
+        $schedule->command('bookings:process-timeouts')->everyMinute();
         $schedule->command('bookings:auto-complete-service')->everyMinute();
         $schedule->command('bookings:process-support-lifecycle')->everyMinute();
         $schedule->command('chat:notify-unreplied')->everyMinute();
