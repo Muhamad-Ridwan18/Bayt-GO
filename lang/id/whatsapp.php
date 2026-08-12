@@ -63,7 +63,7 @@ return [
         ],
         'payment_deadline_expired' => [
             'headline' => '*:app* — pesanan dibatalkan (batas bayar)',
-            'body' => 'Pesanan dari *:customer* dibatalkan otomatis karena jamaah tidak menyelesaikan pembayaran dalam waktu yang ditentukan.',
+            'body' => 'Pesanan dari *:customer* dibatalkan otomatis karena jamaah tidak menyelesaikan pembayaran dalam waktu *:duration*.',
             'booking_code' => '*Kode pesanan:* :code',
             'due_at' => '*Batas bayar:* :datetime',
             'status' => '*Status:* Dibatalkan',
@@ -169,7 +169,7 @@ return [
         ],
         'payment_deadline_expired' => [
             'headline' => '*:app* — batas pembayaran habis',
-            'body' => 'Pesanan Anda dengan *:muthowif* dibatalkan otomatis karena pembayaran tidak diselesaikan dalam waktu yang ditentukan.',
+            'body' => 'Pesanan Anda dengan *:muthowif* dibatalkan otomatis karena pembayaran tidak diselesaikan dalam waktu *:duration*.',
             'booking_code' => '*Kode pesanan:* :code',
             'due_at' => '*Batas bayar:* :datetime',
             'status' => '*Status:* Dibatalkan',

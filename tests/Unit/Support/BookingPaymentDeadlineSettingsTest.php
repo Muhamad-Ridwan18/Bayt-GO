@@ -47,4 +47,14 @@ class BookingPaymentDeadlineSettingsTest extends TestCase
 
         $this->assertTrue($due->equalTo($from->copy()->addMinutes(120)));
     }
+
+    public function test_format_duration_label(): void
+    {
+        $this->assertSame('1 menit', BookingPaymentDeadlineSettings::formatDuration(1, 'id'));
+        $this->assertSame('1 jam', BookingPaymentDeadlineSettings::formatDuration(60, 'id'));
+        $this->assertSame('24 jam', BookingPaymentDeadlineSettings::formatDuration(1440, 'id'));
+        $this->assertSame('48 jam', BookingPaymentDeadlineSettings::formatDuration(2880, 'id'));
+        $this->assertSame('1 hour', BookingPaymentDeadlineSettings::formatDuration(60, 'en'));
+        $this->assertSame('1 jam 30 menit', BookingPaymentDeadlineSettings::formatDuration(90, 'id'));
+    }
 }

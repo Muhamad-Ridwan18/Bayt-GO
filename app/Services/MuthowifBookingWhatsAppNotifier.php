@@ -11,6 +11,7 @@ use App\Models\MuthowifProfile;
 use App\Models\MuthowifWithdrawal;
 use App\Support\BookingInvoiceAttachment;
 use App\Support\BookingInvoiceUrl;
+use App\Support\BookingPaymentDeadlineSettings;
 use App\Support\DualChannelNotify;
 use App\Support\IndonesianNumber;
 use App\Support\IntlPhone;
@@ -504,11 +505,15 @@ class MuthowifBookingWhatsAppNotifier
             $due = $booking->payment_due_at
                 ? $booking->payment_due_at->timezone(config('app.timezone'))->format('d/m/Y H:i')
                 : '—';
+            $duration = BookingPaymentDeadlineSettings::durationLabelFor($booking, $locale);
 
             $lines = [
                 __('whatsapp.customer.payment_deadline_expired.headline', ['app' => $appName], $locale),
                 '',
-                __('whatsapp.customer.payment_deadline_expired.body', ['muthowif' => $muthowifName], $locale),
+                __('whatsapp.customer.payment_deadline_expired.body', [
+                    'muthowif' => $muthowifName,
+                    'duration' => $duration,
+                ], $locale),
                 '',
             ];
 
@@ -552,11 +557,15 @@ class MuthowifBookingWhatsAppNotifier
             $due = $booking->payment_due_at
                 ? $booking->payment_due_at->timezone(config('app.timezone'))->format('d/m/Y H:i')
                 : '—';
+            $duration = BookingPaymentDeadlineSettings::durationLabelFor($booking, $locale);
 
             $lines = [
                 __('whatsapp.muthowif.payment_deadline_expired.headline', ['app' => $appName], $locale),
                 '',
-                __('whatsapp.muthowif.payment_deadline_expired.body', ['customer' => $customerName], $locale),
+                __('whatsapp.muthowif.payment_deadline_expired.body', [
+                    'customer' => $customerName,
+                    'duration' => $duration,
+                ], $locale),
                 '',
             ];
 

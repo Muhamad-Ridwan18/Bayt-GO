@@ -51,6 +51,49 @@ final class BookingPaymentDeadlineSettings
             : self::regularMinutes();
     }
 
+    /**
+     * Label durasi untuk teks notifikasi (mis. "1 menit", "1 jam", "48 jam").
+     */
+    public static function durationLabelFor(MuthowifBooking $booking, ?string $locale = null): string
+    {
+        return self::formatDuration(self::minutesFor($booking), $locale);
+    }
+
+    public static function formatDuration(int $minutes, ?string $locale = null): string
+    {
+        $minutes = max(1, $minutes);
+        $locale ??= app()->getLocale();
+        $isEn = str_starts_with(strtolower($locale), 'en');
+
+        if ($minutes < 60) {
+            if ($isEn) {
+                return $minutes === 1 ? '1 minute' : $minutes.' minutes';
+            }
+
+            return $minutes.' menit';
+        }
+
+        if ($minutes % 60 === 0) {
+            $hours = intdiv($minutes, 60);
+            if ($isEn) {
+                return $hours === 1 ? '1 hour' : $hours.' hours';
+            }
+
+            return $hours.' jam';
+        }
+
+        $hours = intdiv($minutes, 60);
+        $rem = $minutes % 60;
+        if ($isEn) {
+            $h = $hours === 1 ? '1 hour' : $hours.' hours';
+            $m = $rem === 1 ? '1 minute' : $rem.' minutes';
+
+            return $h.' '.$m;
+        }
+
+        return $hours.' jam '.$rem.' menit';
+    }
+
     public static function dueAtFromNow(?MuthowifBooking $booking = null, ?CarbonInterface $from = null): CarbonInterface
     {
         $from ??= now();
