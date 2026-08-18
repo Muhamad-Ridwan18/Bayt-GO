@@ -312,6 +312,24 @@ export const styles = StyleSheet.create({
   packageAddonName: { flex: 1, ...typography.small, fontSize: 12, color: colors.slate800, fontWeight: '700' },
   packageAddonPrice: { ...typography.small, fontSize: 12, color: colors.baytgo, fontWeight: '800' },
 
+  bioText: { ...typography.caption, fontSize: 14, lineHeight: 22, color: colors.slate600, fontWeight: '500' },
+  muted: { ...typography.caption, fontSize: 13, lineHeight: 20, color: colors.slate500, fontWeight: '500' },
+  tagsLabel: { marginTop: spacing.md, ...typography.label, fontSize: 10, color: colors.slate500, textTransform: 'uppercase' },
+  tagsRow: { flexDirection: 'row', flexWrap: 'wrap', gap: spacing.sm, marginTop: spacing.sm },
+  tag: {
+    backgroundColor: colors.baytgoLight,
+    borderRadius: radius.full,
+    paddingHorizontal: spacing.md,
+    paddingVertical: spacing.xs + 1,
+  },
+  tagText: { ...typography.small, fontSize: 11, color: colors.baytgo, fontWeight: '700' },
+  addonList: { gap: spacing.sm },
+  galleryList: { gap: spacing.md, paddingRight: spacing.md },
+  galleryImage: { width: 168, height: 124, backgroundColor: colors.slate100 },
+  reviewSummary: { flexDirection: 'row', alignItems: 'center', gap: spacing.md, marginBottom: spacing.lg },
+  reviewSummaryScore: { ...typography.title, fontSize: 28, color: colors.slate900, fontFamily: 'PlusJakartaSans_800ExtraBold' },
+  reviewSummaryCount: { ...typography.small, color: colors.slate500, fontWeight: '600' },
+
   reviewCard: {
     backgroundColor: colors.slate100,
     borderRadius: radius.sm + 2,

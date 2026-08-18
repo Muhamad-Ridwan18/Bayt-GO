@@ -9,7 +9,7 @@ import { createBooking } from '../api/bookings';
 import { useAuth } from '../context/AuthContext';
 import { Button, Card, InlineAlert } from '../ui';
 import {
-  AddOnToggle, BookingAddonChoices, BookingEstimateCard, FormError, PilgrimCounter, SectionTitle, ServiceOption, StepBadges,
+  AddOnToggle, BookingAddonChoices, BookingEstimateCard, FormError, PilgrimCounter, SectionTitle, ServiceOption, StepBadges, TermsConsentSheet,
 } from '../features/booking/BookingFormParts';
 import { colors, layout, spacing, typography } from '../theme/tokens';
 import { estimateBookingPricing } from '../utils/bookingEstimate';
@@ -43,6 +43,8 @@ export default function BookingFormScreen({ navigation, route }) {
   const [affiliateCode, setAffiliateCode] = useAffiliateReferralCode(routeAffiliateCode);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
+  const [tcOpen, setTcOpen] = useState(false);
+  const [tcAgree, setTcAgree] = useState(false);
 
   const [ticketOutbound, setTicketOutbound] = useState(null);
   const [ticketReturn, setTicketReturn] = useState(null);
@@ -124,6 +126,14 @@ export default function BookingFormScreen({ navigation, route }) {
     if (err) { setError(err); return; }
     setError('');
     setStep(2);
+  };
+
+  const openTerms = () => {
+    const err = validateStep2();
+    if (err) { setError(err); return; }
+    setError('');
+    setTcAgree(false);
+    setTcOpen(true);
   };
 
   const handleSubmit = async () => {
@@ -295,10 +305,26 @@ export default function BookingFormScreen({ navigation, route }) {
               Dokumen bersifat pribadi. Jangan bagikan ke pihak lain.
             </InlineAlert>
 
-            <Button label="Buat pemesanan" onPress={handleSubmit} loading={loading} style={styles.cta} />
+            <Button label="Buat pemesanan" onPress={openTerms} loading={loading} style={styles.cta} />
+            <Text style={styles.consentHint}>
+              Dengan mengajukan, Anda setuju muthowif akan meninjau permintaan (status Menunggu).
+            </Text>
           </>
         )}
       </ScrollView>
+
+      <TermsConsentSheet
+        visible={tcOpen}
+        agreed={tcAgree}
+        loading={loading}
+        onClose={() => setTcOpen(false)}
+        onAgreeChange={setTcAgree}
+        onConfirm={() => {
+          if (!tcAgree) return;
+          setTcOpen(false);
+          handleSubmit();
+        }}
+      />
     </View>
   );
 }
@@ -318,4 +344,11 @@ const styles = StyleSheet.create({
     lineHeight: 16,
   },
   cta: { marginTop: spacing['2xl'] },
+  consentHint: {
+    marginTop: spacing.md,
+    ...typography.small,
+    color: colors.textMuted,
+    textAlign: 'center',
+    lineHeight: 18,
+  },
 });

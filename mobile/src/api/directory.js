@@ -33,3 +33,7 @@ export async function fetchMuthowifDetail({ token, id, startDate, endDate } = {}
     { token },
   );
 }
+
+export async function fetchMuthowifPortfolios({ token, id } = {}) {
+  return apiFetch(`/directory/${encodeURIComponent(id)}/portfolios`, { token });
+}

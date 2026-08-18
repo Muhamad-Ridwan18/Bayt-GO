@@ -111,12 +111,7 @@ class MuthowifDirectoryApiController extends Controller
 
     public function show(Request $request, string $id): JsonResponse
     {
-        $query = MuthowifProfile::query()
-            ->where('verification_status', MuthowifVerificationStatus::Approved);
-
-        $publicProfile = ctype_digit($id)
-            ? $query->where('id', (int) $id)->firstOrFail()
-            : $query->where('slug', $id)->firstOrFail();
+        $publicProfile = $this->approvedProfile($id);
 
         $publicProfile = MarketplaceProfileCache::forShow($publicProfile);
 
@@ -194,15 +189,7 @@ class MuthowifDirectoryApiController extends Controller
                 'price' => (float) $addon->price,
                 'type' => $addon->type->value ?? (string) $addon->type,
             ])->values(),
-            'portfolios' => $publicProfile->portfolios->map(fn ($portfolio) => [
-                'id' => $portfolio->id,
-                'title' => $portfolio->title,
-                'description' => $portfolio->description,
-                'cover_url' => ApiMediaUrl::absolute($portfolio->coverUrl()),
-                'images' => $portfolio->images->isNotEmpty()
-                    ? $portfolio->images->map(fn ($image) => ApiMediaUrl::absolute($image->publicUrl()))->values()
-                    : collect([ApiMediaUrl::absolute($portfolio->coverUrl())]),
-            ])->values(),
+            'portfolios' => $this->formatPortfolios($publicProfile->portfolios),
             'portfolios_count' => (int) ($publicProfile->portfolios_count ?? $publicProfile->portfolios->count()),
             'reviews' => $publicProfile->bookingReviews->map(function ($review) {
                 $customerName = $review->customer->name ?? 'Jamaah';
@@ -271,6 +258,42 @@ class MuthowifDirectoryApiController extends Controller
         }
 
         return $items;
+    }
+
+    public function portfolios(string $id): JsonResponse
+    {
+        $profile = $this->approvedProfile($id);
+        $portfolios = $profile->portfolios()
+            ->with(['images' => fn ($images) => $images->orderBy('sort_order')])
+            ->get();
+
+        return response()->json([
+            'data' => $this->formatPortfolios($portfolios),
+            'total' => $portfolios->count(),
+        ]);
+    }
+
+    private function approvedProfile(string $id): MuthowifProfile
+    {
+        $query = MuthowifProfile::query()
+            ->where('verification_status', MuthowifVerificationStatus::Approved);
+
+        return ctype_digit($id)
+            ? $query->where('id', (int) $id)->firstOrFail()
+            : $query->where('slug', $id)->firstOrFail();
+    }
+
+    private function formatPortfolios($portfolios)
+    {
+        return $portfolios->map(fn ($portfolio) => [
+            'id' => $portfolio->id,
+            'title' => $portfolio->title,
+            'description' => $portfolio->description,
+            'cover_url' => ApiMediaUrl::absolute($portfolio->coverUrl()),
+            'images' => $portfolio->images->isNotEmpty()
+                ? $portfolio->images->map(fn ($image) => ApiMediaUrl::absolute($image->publicUrl()))->values()
+                : collect([ApiMediaUrl::absolute($portfolio->coverUrl())])->filter()->values(),
+        ])->values();
     }
 
     private function optionalUser(Request $request): ?\App\Models\User

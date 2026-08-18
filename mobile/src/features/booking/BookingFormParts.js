@@ -1,9 +1,18 @@
 import React from 'react';
-import { StyleSheet, Switch, Text, TextInput, View } from 'react-native';
-import { Minus, Plus } from 'lucide-react-native';
-import { Card, PressableScale } from '../../ui';
+import { Linking, ScrollView, StyleSheet, Switch, Text, TextInput, View } from 'react-native';
+import { Check, Minus, Plus } from 'lucide-react-native';
+import { Button, Card, FilterSheet, PressableScale } from '../../ui';
 import { colors, radius, spacing, typography } from '../../theme/tokens';
 import { formatIdr } from '../../utils/format';
+import { WEB_BASE_URL } from '../../config/api';
+
+const TC_POINTS = [
+  'Permintaan pesanan bersifat mengikat setelah muthowif menyetujui dan Anda menyelesaikan pembayaran sesuai ketentuan BaytGo.',
+  'Data dan dokumen yang Anda unggah digunakan untuk verifikasi layanan; pastikan tiket dan dokumen sesuai jadwal perjalanan.',
+  'Muthowif dapat menolak atau membatalkan jika jadwal bentrok, tidak tersedia, atau tidak memenuhi kebijakan.',
+  'Pembayaran, pembatalan, refund, dan reschedule mengikuti kebijakan platform dan yang tercantum pada halaman pesanan.',
+  'Dengan melanjutkan, Anda menyatakan data yang diisi benar dan memahami alur persetujuan serta pembayaran.',
+];
 
 export function ServiceOption({ label, active, price, onPress }) {
   return (
@@ -248,6 +257,59 @@ export function FormError({ message }) {
   );
 }
 
+export function TermsConsentSheet({
+  visible,
+  agreed,
+  loading,
+  onClose,
+  onAgreeChange,
+  onConfirm,
+}) {
+  return (
+    <FilterSheet
+      visible={visible}
+      onClose={onClose}
+      title="Syarat & ketentuan"
+      footer={(
+        <>
+          <Button label="Batal" variant="secondary" onPress={onClose} />
+          <Button
+            label="Setuju dan kirim"
+            onPress={onConfirm}
+            disabled={!agreed}
+            loading={loading}
+          />
+        </>
+      )}
+    >
+      <ScrollView style={styles.tcScroll} showsVerticalScrollIndicator={false}>
+        {TC_POINTS.map((point) => (
+          <View key={point} style={styles.tcPoint}>
+            <Text style={styles.tcBullet}>•</Text>
+            <Text style={styles.tcPointText}>{point}</Text>
+          </View>
+        ))}
+        <PressableScale
+          onPress={() => Linking.openURL(`${WEB_BASE_URL.replace(/\/$/, '')}/terms`)}
+          haptic="light"
+        >
+          <Text style={styles.tcLink}>Baca syarat dan ketentuan lengkap</Text>
+        </PressableScale>
+        <PressableScale
+          onPress={() => onAgreeChange(!agreed)}
+          haptic="light"
+          style={styles.tcCheckRow}
+        >
+          <View style={[styles.tcBox, agreed && styles.tcBoxOn]}>
+            {agreed ? <Check size={14} color={colors.white} strokeWidth={3} /> : null}
+          </View>
+          <Text style={styles.tcCheckLabel}>Saya telah membaca dan menyetujui syarat & ketentuan di atas.</Text>
+        </PressableScale>
+      </ScrollView>
+    </FilterSheet>
+  );
+}
+
 const styles = StyleSheet.create({
   serviceOptionWrap: { flex: 1 },
   serviceOption: { borderColor: colors.border },
@@ -347,4 +409,39 @@ const styles = StyleSheet.create({
   sectionTitle: { ...typography.caption, fontFamily: 'PlusJakartaSans_800ExtraBold', color: colors.baytgo, marginTop: spacing.lg, marginBottom: spacing.md },
   errorCard: { backgroundColor: colors.errorLight, borderColor: '#FECACA', marginBottom: spacing.md },
   errorText: { ...typography.caption, color: colors.error, fontWeight: '600' },
+  tcScroll: { maxHeight: 360 },
+  tcPoint: { flexDirection: 'row', gap: spacing.sm, marginBottom: spacing.sm },
+  tcBullet: { ...typography.caption, color: colors.baytgo, lineHeight: 20 },
+  tcPointText: { flex: 1, ...typography.caption, color: colors.slate700, lineHeight: 20, fontWeight: '500' },
+  tcLink: {
+    marginTop: spacing.sm,
+    marginBottom: spacing.md,
+    ...typography.caption,
+    color: colors.baytgo,
+    fontFamily: 'PlusJakartaSans_700Bold',
+    textDecorationLine: 'underline',
+  },
+  tcCheckRow: {
+    flexDirection: 'row',
+    alignItems: 'flex-start',
+    gap: spacing.md,
+    padding: spacing.md,
+    borderRadius: radius.sm,
+    borderWidth: 1,
+    borderColor: colors.border,
+    backgroundColor: colors.background,
+  },
+  tcBox: {
+    width: 22,
+    height: 22,
+    borderRadius: 6,
+    borderWidth: 2,
+    borderColor: colors.border,
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginTop: 1,
+    backgroundColor: colors.white,
+  },
+  tcBoxOn: { backgroundColor: colors.baytgo, borderColor: colors.baytgo },
+  tcCheckLabel: { flex: 1, ...typography.caption, color: colors.slate800, fontWeight: '600', lineHeight: 20 },
 });

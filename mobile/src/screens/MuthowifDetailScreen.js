@@ -1,4 +1,4 @@
-import React, { useCallback, useEffect, useMemo, useState } from 'react';
+import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import {
   View, Text, StyleSheet, ScrollView, Alert, Share,
 } from 'react-native';
@@ -7,9 +7,9 @@ import { LinearGradient } from 'expo-linear-gradient';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import {
   AlertCircle, Briefcase, Calendar, ChevronDown, ChevronLeft, ChevronUp,
-  CirclePlus, Headphones, Images, Lock, MapPin, Share2, ShieldCheck, Star, User,
+  CirclePlus, GraduationCap, Headphones, Images, Lock, MapPin, Share2, ShieldCheck, Star, User,
 } from 'lucide-react-native';
-import { fetchMuthowifDetail } from '../api/directory';
+import { fetchMuthowifDetail, fetchMuthowifPortfolios } from '../api/directory';
 import { useAuth } from '../context/AuthContext';
 import { navigateRoot } from '../navigation/rootNavigation';
 import { AppImage, Button, Card, EmptyState, ErrorState, PressableScale, SkeletonList, StickyFooter } from '../ui';
@@ -26,7 +26,7 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 export default function MuthowifDetailScreen({ navigation, route }) {
   const { token, isAuthenticated, user } = useAuth();
-  const { id, startDate, endDate } = route.params;
+  const { id, startDate, endDate, autoBook } = route.params || {};
 
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
@@ -40,6 +40,7 @@ export default function MuthowifDetailScreen({ navigation, route }) {
   const [bookingIntent, setBookingIntent] = useState(null);
   const [lightbox, setLightbox] = useState({ visible: false, images: [], index: 0, title: '' });
   const [showBlocked, setShowBlocked] = useState(false);
+  const autoBookedRef = useRef(false);
 
   const allAddOns = useMemo(() => {
     if (addOns.length > 0) return addOns;
@@ -75,6 +76,26 @@ export default function MuthowifDetailScreen({ navigation, route }) {
   const insets = useSafeAreaInsets();
   const scrollBottomInset = 96 + Math.max(insets.bottom, spacing.md);
 
+  const loadAllPortfolios = useCallback(async () => {
+    try {
+      const data = await fetchMuthowifPortfolios({ token, id });
+      const next = data.data || [];
+      setPortfolios(next);
+      setPortfoliosCount(data.total || next.length);
+    } catch { /* keep preview albums */ }
+  }, [token, id]);
+
+  const goToBookingForm = useCallback(() => {
+    if (!profile) return;
+    navigation.navigate('BookingForm', {
+      profileId: profile.id,
+      profileName: profile.name,
+      startDate: bookingIntent.start,
+      endDate: bookingIntent.end,
+      services,
+    });
+  }, [navigation, profile, bookingIntent, services]);
+
   const handleBook = () => {
     if (!isAuthenticated) {
       Alert.alert('Masuk diperlukan', 'Silakan masuk sebagai jamaah untuk memesan.', [
@@ -98,14 +119,16 @@ export default function MuthowifDetailScreen({ navigation, route }) {
       }
       return;
     }
-    navigation.navigate('BookingForm', {
-      profileId: profile.id,
-      profileName: profile.name,
-      startDate: bookingIntent.start,
-      endDate: bookingIntent.end,
-      services,
-    });
+    goToBookingForm();
   };
+
+  useEffect(() => {
+    if (!autoBook || autoBookedRef.current || loading || !profile) return;
+    if (!isAuthenticated || user?.role !== 'customer') return;
+    if (!bookingIntent?.can_submit || services.length === 0) return;
+    autoBookedRef.current = true;
+    goToBookingForm();
+  }, [autoBook, loading, profile, isAuthenticated, user?.role, bookingIntent, services, goToBookingForm]);
 
   if (loading) {
     return (
@@ -288,7 +311,7 @@ export default function MuthowifDetailScreen({ navigation, route }) {
           </SectionCard>
 
           {profile.bio || (profile.specializations || []).length > 0 ? (
-            <SectionCard title="Tentang Muthowif" icon={User}>
+            <SectionCard title="Tentang muthowif" icon={User}>
               {profile.bio ? <Text style={partStyles.bioText}>{profile.bio}</Text> : null}
               {(profile.specializations || []).length > 0 ? (
                 <>
@@ -305,31 +328,66 @@ export default function MuthowifDetailScreen({ navigation, route }) {
             </SectionCard>
           ) : null}
 
-          {portfolios.length > 0 ? (
-            <SectionCard
-              title="Galeri Portfolio"
-              subtitle={portfoliosCount > portfolios.length ? `${portfoliosCount} album` : null}
-              icon={Images}
-              iconBg="#F3E8FF"
-            >
-              <FlashList
-                horizontal
-                data={portfolios}
-                keyExtractor={(item) => String(item.id)}
-                showsHorizontalScrollIndicator={false}
-                estimatedItemSize={168}
-                contentContainerStyle={partStyles.galleryList}
-                renderItem={({ item }) => (
-                  <PressableScale
-                    onPress={() => setLightbox({ visible: true, images: item.images, index: 0, title: item.title })}
-                    haptic="light"
-                  >
-                    <AppImage uri={resolveMediaUrl(item.cover_url)} style={partStyles.galleryImage} rounded={radius.sm} />
+          <SectionCard title="Studi & pengalaman" icon={GraduationCap} iconBg={colors.goldLight}>
+            {(profile.educations || []).length === 0 && (profile.work_experiences || []).length === 0 ? (
+              <Text style={partStyles.muted}>Belum diisi oleh muthowif.</Text>
+            ) : (
+              <View style={styles.timeline}>
+                {(profile.educations || []).length > 0 ? (
+                  <View style={styles.timelineBlock}>
+                    <Text style={styles.timelineLabel}>Pendidikan</Text>
+                    {(profile.educations || []).map((item) => (
+                      <Text key={item} style={styles.timelineItem}>{item}</Text>
+                    ))}
+                  </View>
+                ) : null}
+                {(profile.work_experiences || []).length > 0 ? (
+                  <View style={styles.timelineBlock}>
+                    <Text style={styles.timelineLabel}>Pengalaman</Text>
+                    {(profile.work_experiences || []).map((item) => (
+                      <Text key={item} style={styles.timelineItem}>{item}</Text>
+                    ))}
+                  </View>
+                ) : null}
+              </View>
+            )}
+          </SectionCard>
+
+          <SectionCard
+            title="Galeri foto"
+            subtitle={portfoliosCount > 0 ? `${portfoliosCount} album` : null}
+            icon={Images}
+            iconBg="#F3E8FF"
+          >
+            {portfolios.length === 0 ? (
+              <Text style={partStyles.muted}>Muthowif belum menambahkan foto portfolio.</Text>
+            ) : (
+              <>
+                <FlashList
+                  horizontal
+                  data={portfolios}
+                  keyExtractor={(item) => String(item.id)}
+                  showsHorizontalScrollIndicator={false}
+                  estimatedItemSize={168}
+                  contentContainerStyle={partStyles.galleryList}
+                  renderItem={({ item }) => (
+                    <PressableScale
+                      onPress={() => setLightbox({ visible: true, images: item.images, index: 0, title: item.title })}
+                      haptic="light"
+                    >
+                      <AppImage uri={resolveMediaUrl(item.cover_url)} style={partStyles.galleryImage} rounded={radius.sm} />
+                      {item.title ? <Text style={styles.galleryTitle} numberOfLines={1}>{item.title}</Text> : null}
+                    </PressableScale>
+                  )}
+                />
+                {portfoliosCount > portfolios.length ? (
+                  <PressableScale onPress={loadAllPortfolios} haptic="light" style={styles.seeAllBtn}>
+                    <Text style={styles.seeAllText}>Lihat semua foto ({portfoliosCount})</Text>
                   </PressableScale>
-                )}
-              />
-            </SectionCard>
-          ) : null}
+                ) : null}
+              </>
+            )}
+          </SectionCard>
 
           <SectionCard title="Ulasan Jamaah" icon={Star} iconBg={colors.goldLight}>
             {reviews.length === 0 ? (
@@ -363,32 +421,41 @@ export default function MuthowifDetailScreen({ navigation, route }) {
             </View>
           </Card>
 
-          {blockedDates.length > 0 ? (
-            <PressableScale onPress={() => setShowBlocked((v) => !v)} haptic="light">
-              <Card style={styles.blockedToggle} padding={spacing.lg} elevated={false}>
-                <Calendar size={18} color={colors.warning} strokeWidth={2} />
-                <Text style={styles.blockedToggleText}>
-                  {blockedDates.length} tanggal libur / tidak tersedia
-                </Text>
+          <SectionCard
+            title="Jadwal tidak tersedia (libur)"
+            subtitle="Tanggal berikut muthowif tidak tersedia. Di luar itu, jadwal bisa sudah terisi — gunakan pencarian tanggal di daftar."
+            icon={Calendar}
+            iconBg={colors.warningLight}
+          >
+            {blockedDates.length === 0 ? (
+              <Text style={partStyles.muted}>Belum ada tanggal libur yang diumumkan (atau semua tanggal sudah lewat).</Text>
+            ) : (
+              <>
+                <PressableScale onPress={() => setShowBlocked((v) => !v)} haptic="light">
+                  <View style={styles.blockedToggleRow}>
+                    <Text style={styles.blockedToggleText}>
+                      {blockedDates.length} tanggal libur / tidak tersedia
+                    </Text>
+                    {showBlocked ? (
+                      <ChevronUp size={18} color={colors.textSecondary} strokeWidth={2} />
+                    ) : (
+                      <ChevronDown size={18} color={colors.textSecondary} strokeWidth={2} />
+                    )}
+                  </View>
+                </PressableScale>
                 {showBlocked ? (
-                  <ChevronUp size={18} color={colors.textSecondary} strokeWidth={2} />
-                ) : (
-                  <ChevronDown size={18} color={colors.textSecondary} strokeWidth={2} />
-                )}
-              </Card>
-            </PressableScale>
-          ) : null}
-
-          {showBlocked && blockedDates.length > 0 ? (
-            <View style={styles.blockedList}>
-              {blockedDates.map((bd) => (
-                <Card key={bd.date} style={styles.blockedItem} padding={spacing.md} elevated={false}>
-                  <Text style={styles.blockedDate}>{bd.date}</Text>
-                  {bd.note ? <Text style={styles.blockedNote}>{bd.note}</Text> : null}
-                </Card>
-              ))}
-            </View>
-          ) : null}
+                  <View style={styles.blockedListInner}>
+                    {blockedDates.map((bd) => (
+                      <View key={bd.date} style={styles.blockedItemInner}>
+                        <Text style={styles.blockedDate}>{bd.date}</Text>
+                        {bd.note ? <Text style={styles.blockedNote}>{bd.note}</Text> : null}
+                      </View>
+                    ))}
+                  </View>
+                ) : null}
+              </>
+            )}
+          </SectionCard>
         </View>
       </ScrollView>
 
@@ -508,10 +575,33 @@ const styles = StyleSheet.create({
   trustBar: { marginTop: spacing.lg, gap: spacing.md },
   trustItem: { flexDirection: 'row', alignItems: 'center', gap: spacing.md },
   trustText: { ...typography.caption, color: colors.slate700, fontWeight: '600' },
-  blockedToggle: { flexDirection: 'row', alignItems: 'center', gap: spacing.md, marginTop: spacing.md, backgroundColor: colors.warningLight, borderColor: '#FDE68A' },
+  timeline: { gap: spacing.lg },
+  timelineBlock: { gap: 6 },
+  timelineLabel: {
+    ...typography.label,
+    fontSize: 11,
+    color: colors.baytgo,
+    textTransform: 'uppercase',
+    fontFamily: 'PlusJakartaSans_800ExtraBold',
+  },
+  timelineItem: { ...typography.caption, fontSize: 13, lineHeight: 20, color: colors.slate700, fontWeight: '500' },
+  galleryTitle: {
+    marginTop: spacing.sm,
+    width: 168,
+    ...typography.small,
+    color: colors.slate700,
+    fontWeight: '700',
+  },
+  seeAllBtn: { marginTop: spacing.md },
+  seeAllText: { ...typography.caption, color: colors.baytgo, fontFamily: 'PlusJakartaSans_700Bold' },
+  blockedToggleRow: { flexDirection: 'row', alignItems: 'center', gap: spacing.md },
   blockedToggleText: { flex: 1, ...typography.caption, fontFamily: 'PlusJakartaSans_700Bold', color: '#92400E' },
-  blockedList: { marginTop: spacing.sm, gap: 6 },
-  blockedItem: { borderColor: '#FDE68A' },
+  blockedListInner: { marginTop: spacing.md, gap: 6 },
+  blockedItemInner: {
+    backgroundColor: colors.warningLight,
+    borderRadius: radius.sm,
+    padding: spacing.md,
+  },
   blockedDate: { ...typography.caption, fontFamily: 'PlusJakartaSans_800ExtraBold', color: colors.textPrimary },
   blockedNote: { marginTop: 2, ...typography.small, color: colors.textSecondary, fontWeight: '500' },
 });

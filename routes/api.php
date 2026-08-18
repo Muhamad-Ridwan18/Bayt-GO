@@ -29,6 +29,7 @@ Route::post('/affiliate/capture', [\App\Http\Controllers\Api\Affiliate\Affiliate
     ->middleware('throttle:30,1');
 
 Route::get('/directory', [\App\Http\Controllers\Api\MuthowifDirectoryApiController::class, 'index']);
+Route::get('/directory/{id}/portfolios', [\App\Http\Controllers\Api\MuthowifDirectoryApiController::class, 'portfolios']);
 Route::get('/directory/{id}', [\App\Http\Controllers\Api\MuthowifDirectoryApiController::class, 'show']);
 
 Route::get('/support-packages', [\App\Http\Controllers\Api\SupportPackageCatalogApiController::class, 'index']);
