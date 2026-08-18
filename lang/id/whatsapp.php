@@ -61,6 +61,14 @@ return [
             'open' => '*Buka panel pesanan:*',
             'booking_code' => '*Kode pesanan:* :code',
         ],
+        'payment_deadline_expired' => [
+            'headline' => '*:app* — pesanan dibatalkan (batas bayar)',
+            'body' => 'Pesanan dari *:customer* dibatalkan otomatis karena jamaah tidak menyelesaikan pembayaran dalam waktu *:duration*.',
+            'booking_code' => '*Kode pesanan:* :code',
+            'due_at' => '*Batas bayar:* :datetime',
+            'status' => '*Status:* Dibatalkan',
+            'open_detail' => '*Buka detail pesanan:*',
+        ],
         'reschedule_requested' => [
             'headline' => '*:app* — pengajuan reschedule',
             'body' => '*:customer* mengajukan pergantian tanggal layanan.',
@@ -71,11 +79,10 @@ return [
             'open_detail' => '*Buka detail pesanan:*',
         ],
         'withdrawal_transfer_done' => [
-            'headline' => '*:app* — withdraw sudah ditransfer',
-            'body' => 'Pencairan withdraw Anda sudah diproses. Unduh bukti transfer melalui link di bawah.',
+            'headline' => '*:app* — pencairan dana sudah dikirim',
+            'body' => 'Permintaan penarikan Anda sudah diproses.',
             'amount' => '*Nominal:* Rp :amount',
-            'open_panel' => '*Withdraw:*',
-            'proof_link' => '*Bukti transfer:* :url',
+            'proof_hint' => 'Bukti transfer dapat dilihat di halaman penarikan di website.',
         ],
         'support_new_booking' => [
             'headline' => '*:app* — permintaan layanan pendukung',
@@ -159,6 +166,14 @@ return [
             'service_dates' => '*Tanggal layanan:* :start - :end',
             'status' => '*Status:* Menunggu pembayaran',
             'pay_at' => '*Lanjutkan pembayaran di:*',
+        ],
+        'payment_deadline_expired' => [
+            'headline' => '*:app* — batas pembayaran habis',
+            'body' => 'Pesanan Anda dengan *:muthowif* dibatalkan otomatis karena pembayaran tidak diselesaikan dalam waktu *:duration*.',
+            'booking_code' => '*Kode pesanan:* :code',
+            'due_at' => '*Batas bayar:* :datetime',
+            'status' => '*Status:* Dibatalkan',
+            'view_detail' => '*Detail pesanan:*',
         ],
         'support_approved' => [
             'headline' => '*:app* — layanan pendukung disetujui',

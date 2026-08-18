@@ -24,6 +24,7 @@ final class AdminFinanceSummary
         \Illuminate\Support\Facades\Cache::forget('admin_affiliate_commissions');
         \Illuminate\Support\Facades\Cache::forget('admin_net_platform_fees');
         \Illuminate\Support\Facades\Cache::forget('admin_gross_volume_excluding_refunded');
+        \Illuminate\Support\Facades\Cache::forget('admin_muthowif_net_excluding_refunded');
         \Illuminate\Support\Facades\Cache::forget('admin_finance_timeline_groups');
     }
 
@@ -109,6 +110,33 @@ final class AdminFinanceSummary
             ])
             ->where('b.payment_status', '!=', PaymentStatus::Refunded->value)
             ->sum('booking_payments.gross_amount');
+    }
+
+    /**
+     * Net ke muthowif (muthowif_net_amount) pada booking yang belum refunded.
+     */
+    public static function muthowifNetExcludingRefundedBookings(): float
+    {
+        return (float) \Illuminate\Support\Facades\Cache::remember('admin_muthowif_net_excluding_refunded', 86400, function () {
+            return (float) BookingPayment::query()
+                ->join('muthowif_bookings as b', 'b.id', '=', 'booking_payments.muthowif_booking_id')
+                ->whereIn('booking_payments.status', ['settlement', 'capture'])
+                ->where('b.payment_status', '!=', PaymentStatus::Refunded->value)
+                ->sum('booking_payments.muthowif_net_amount');
+        });
+    }
+
+    public static function muthowifNetBetween(CarbonInterface $start, CarbonInterface $end): float
+    {
+        return (float) BookingPayment::query()
+            ->join('muthowif_bookings as b', 'b.id', '=', 'booking_payments.muthowif_booking_id')
+            ->whereIn('booking_payments.status', ['settlement', 'capture'])
+            ->whereBetween('booking_payments.settled_at', [
+                Carbon::instance($start)->startOfDay(),
+                Carbon::instance($end)->endOfDay(),
+            ])
+            ->where('b.payment_status', '!=', PaymentStatus::Refunded->value)
+            ->sum('booking_payments.muthowif_net_amount');
     }
 
     /**

@@ -145,11 +145,12 @@ class MuthowifDummySeeder extends Seeder
 
                         'country' => 'ID',
                         'locale' => 'id',
-
-                        'email_verified_at' => now(),
-                        'phone_verified_at' => now(),
                     ]
                 );
+                $user->forceFill([
+                    'email_verified_at' => now(),
+                    'phone_verified_at' => now(),
+                ])->save();
 
                 $profile = MuthowifProfile::query()->updateOrCreate(
                     [
@@ -194,15 +195,13 @@ class MuthowifDummySeeder extends Seeder
                         'photo_path' => $data['photo'] . '?w=600&q=80',
 
                         'ktp_image_path' => 'seed/dummy/ktp-example.png',
-
-                        'verification_status' =>
-                            MuthowifVerificationStatus::Approved,
-
-                        'verified_at' => now(),
-
-                        'wallet_balance' => rand(500000, 5000000),
                     ]
                 );
+                $profile->forceFill([
+                    'verification_status' => MuthowifVerificationStatus::Approved,
+                    'verified_at' => now(),
+                    'wallet_balance' => rand(500000, 5000000),
+                ])->save();
 
                 if ($number === 1) {
                     $parentProfileId = $profile->getKey();

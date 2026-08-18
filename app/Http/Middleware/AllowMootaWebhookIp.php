@@ -27,8 +27,6 @@ final class AllowMootaWebhookIp
                 'resolved_ip' => $resolved,
                 'allowed_ips' => $allowed,
                 'laravel_ip' => $request->ip(),
-                'cf_connecting_ip' => $request->headers->get('CF-Connecting-IP'),
-                'x_forwarded_for' => $request->headers->get('X-Forwarded-For'),
                 'remote_addr' => $request->server('REMOTE_ADDR'),
                 'path' => $request->path(),
             ]);
@@ -47,31 +45,18 @@ final class AllowMootaWebhookIp
         return $next($request);
     }
 
-    /** IP yang dipakai untuk whitelist audit (sama logika penyimpanan history). */
+    /**
+     * IP peer untuk whitelist. Pakai $request->ip() (menghormati TRUSTED_PROXIES),
+     * bukan header CF/XFF mentah — header itu mudah di-spoof bila trustProxies='*'.
+     * Auth utama webhook: HMAC Signature (wajib di non-local).
+     */
     public static function resolveWebhookSourceIp(Request $request): ?string
     {
-        foreach (['CF-Connecting-IP', 'True-Client-IP'] as $header) {
-            $raw = $request->headers->get($header);
-            if (! is_string($raw) || $raw === '') {
-                continue;
-            }
-            $first = trim(explode(',', $raw, 2)[0]);
-            if ($first !== '' && filter_var($first, FILTER_VALIDATE_IP) !== false) {
-                return $first;
-            }
-        }
-
-        $xff = $request->headers->get('X-Forwarded-For');
-        if (is_string($xff) && $xff !== '') {
-            $first = trim(explode(',', $xff, 2)[0]);
-            if ($first !== '' && filter_var($first, FILTER_VALIDATE_IP) !== false) {
-                return $first;
-            }
-        }
-
         $ip = $request->ip();
 
-        return is_string($ip) && $ip !== '' ? $ip : null;
+        return is_string($ip) && $ip !== '' && filter_var($ip, FILTER_VALIDATE_IP) !== false
+            ? $ip
+            : null;
     }
 
     private function forbidden(string $message): Response

@@ -39,12 +39,6 @@ class MuthowifProfile extends Model
         'reference_text',
         'photo_path',
         'ktp_image_path',
-        'verification_status',
-        'account_status',
-        'verified_at',
-        'rejection_reason',
-        'wallet_balance',
-        'referral_code',
         'referred_by_muthowif_profile_id',
         'slug',
     ];
@@ -185,8 +179,11 @@ class MuthowifProfile extends Model
      */
     public function scopeOrderByMarketplaceRanking($query)
     {
+        // Postgres: alias SELECT tidak bisa dipakai di dalam ekspresi ORDER BY (COALESCE(alias)).
         return $query
-            ->orderByRaw('COALESCE(average_rating, 0) DESC')
+            ->orderByRaw(
+                'COALESCE((SELECT AVG(rating) FROM booking_reviews WHERE muthowif_profile_id = muthowif_profiles.id), 0) DESC'
+            )
             ->orderByDesc('confirmed_bookings_count')
             ->orderBy('created_at');
     }

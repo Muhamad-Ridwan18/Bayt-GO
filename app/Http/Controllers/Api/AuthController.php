@@ -12,10 +12,13 @@ use App\Models\User;
 use App\Services\MuthowifRejectedReregistration;
 use App\Services\UploadedImageOptimizer;
 use App\Support\MuthowifVerificationBroadcast;
+use Illuminate\Auth\Events\Lockout;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Hash;
+use Illuminate\Support\Facades\RateLimiter;
 use Illuminate\Support\Facades\Storage;
+use Illuminate\Support\Str;
 use Illuminate\Validation\Rule;
 use Illuminate\Validation\Rules;
 use Illuminate\Validation\ValidationException;
@@ -31,19 +34,56 @@ class AuthController extends Controller
             'device_name' => 'required',
         ]);
 
+        $throttleKey = $this->loginThrottleKey($request);
+        if (RateLimiter::tooManyAttempts($throttleKey, 5)) {
+            event(new Lockout($request));
+            $seconds = RateLimiter::availableIn($throttleKey);
+
+            return response()->json([
+                'message' => trans('auth.throttle', [
+                    'seconds' => $seconds,
+                    'minutes' => ceil($seconds / 60),
+                ]),
+            ], 429);
+        }
+
         $user = User::where('email', $request->email)->first();
 
         if (! $user || ! Hash::check($request->password, $user->password)) {
+            RateLimiter::hit($throttleKey);
+
             return response()->json([
                 'message' => 'Email atau password salah.',
             ], 422);
         }
 
+        if ($user->isMuthowif()) {
+            $user->loadMissing('muthowifProfile');
+            $profile = $user->muthowifProfile;
+
+            if ($profile === null || ! $profile->isApproved()) {
+                RateLimiter::hit($throttleKey);
+
+                $message = match (true) {
+                    $profile === null => 'Akun muthowif tidak lengkap. Hubungi admin.',
+                    $profile->isPending() => 'Akun muthowif Anda belum disetujui admin. Tunggu hingga pendaftaran disetujui sebelum masuk.',
+                    $profile->isRejected() => 'Pendaftaran muthowif ditolak.'.($profile->rejection_reason ? ' '.$profile->rejection_reason : ''),
+                    default => 'Akun muthowif tidak dapat digunakan saat ini.',
+                };
+
+                return response()->json(['message' => $message], 403);
+            }
+        }
+
         if ($user->isCompanyCustomer() && ! $user->is_company_approved) {
+            RateLimiter::hit($throttleKey);
+
             return response()->json([
                 'message' => 'Akun perusahaan Anda belum disetujui oleh admin. Anda belum dapat masuk.',
             ], 403);
         }
+
+        RateLimiter::clear($throttleKey);
 
         $token = $user->createToken($request->device_name)->plainTextToken;
 
@@ -51,6 +91,11 @@ class AuthController extends Controller
             'token' => $token,
             'user' => $this->apiUserPayload($user),
         ]);
+    }
+
+    private function loginThrottleKey(Request $request): string
+    {
+        return Str::transliterate(Str::lower($request->string('email')->toString()).'|'.$request->ip());
     }
 
     /**
@@ -201,18 +246,22 @@ class AuthController extends Controller
                     'reference_text' => $request->input('reference_text'),
                     'photo_path' => $photoPath,
                     'ktp_image_path' => $ktpPath,
+                    'referred_by_muthowif_profile_id' => $referredById,
+                ];
+                $statusPayload = [
                     'verification_status' => MuthowifVerificationStatus::Pending,
                     'verified_at' => null,
                     'rejection_reason' => null,
-                    'referred_by_muthowif_profile_id' => $referredById,
                 ];
 
                 if ($existingRejected !== null) {
-                    $profile->update($profilePayload);
+                    $profile->fill($profilePayload);
+                    $profile->forceFill($statusPayload)->save();
                 } else {
-                    $profile = MuthowifProfile::create(array_merge($profilePayload, [
+                    $profile = new MuthowifProfile(array_merge($profilePayload, [
                         'user_id' => $user->id,
                     ]));
+                    $profile->forceFill($statusPayload)->save();
                 }
                 $muthowifProfileId = (string) $profile->getKey();
 

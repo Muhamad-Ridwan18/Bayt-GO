@@ -19,14 +19,17 @@ class UserManagementController extends Controller
         $roleFilter = $request->query('role');
         $q = trim((string) $request->query('q', ''));
 
-        $query = User::query()->orderByDesc('created_at');
+        $query = User::query()->with('muthowifProfile')->orderByDesc('created_at');
 
         if ($q !== '') {
             $like = '%'.$q.'%';
             $query->where(function ($sub) use ($like): void {
-                $sub->where('name', 'like', $like)
-                    ->orWhere('email', 'like', $like)
-                    ->orWhere('phone', 'like', $like);
+                $sub->whereILike('name', $like)
+                    ->orWhereILike('email', $like)
+                    ->orWhereILike('phone', $like)
+                    ->orWhereHas('muthowifProfile', function ($profile) use ($like): void {
+                        $profile->whereILike('phone', $like);
+                    });
             });
         }
 
@@ -100,13 +103,17 @@ class UserManagementController extends Controller
         $user->fill($data);
         $user->save();
 
-        if ($role === UserRole::Muthowif && $accountStatusRaw !== null && $accountStatusRaw !== '') {
-            $accountStatus = $accountStatusRaw instanceof MuthowifAccountStatus
-                ? $accountStatusRaw
-                : MuthowifAccountStatus::from((string) $accountStatusRaw);
-
-            $user->loadMissing('muthowifProfile');
-            $user->muthowifProfile?->update(['account_status' => $accountStatus]);
+        $user->loadMissing('muthowifProfile');
+        if ($user->muthowifProfile !== null) {
+            if (array_key_exists('phone', $data)) {
+                $user->muthowifProfile->update(['phone' => $data['phone'] ?? null]);
+            }
+            if ($role === UserRole::Muthowif && $accountStatusRaw !== null && $accountStatusRaw !== '') {
+                $accountStatus = $accountStatusRaw instanceof MuthowifAccountStatus
+                    ? $accountStatusRaw
+                    : MuthowifAccountStatus::from((string) $accountStatusRaw);
+                $user->muthowifProfile->forceFill(['account_status' => $accountStatus])->save();
+            }
         }
 
         return redirect()

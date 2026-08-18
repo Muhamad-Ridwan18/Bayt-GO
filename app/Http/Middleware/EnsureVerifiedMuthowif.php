@@ -15,6 +15,12 @@ class EnsureVerifiedMuthowif
     {
         $user = $request->user();
         if (! $user || ! $user->isVerifiedMuthowif()) {
+            if ($request->is('api/*') || $request->expectsJson()) {
+                return response()->json([
+                    'message' => 'Fitur ini hanya untuk muthowif yang sudah terverifikasi.',
+                ], 403);
+            }
+
             return redirect()
                 ->route('dashboard')
                 ->with('error', 'Fitur ini hanya untuk muthowif yang sudah terverifikasi.');

@@ -25,10 +25,13 @@ final class ProcessMootaWebhookForBookingPayments
         Log::info('moota.settle.listener_start', ['history_id' => $history->getKey()]);
 
         $secret = (string) config('services.moota.signing_secret', '');
-        if ($secret !== '' && $history->signature_verified !== true) {
+        $requireSignature = $secret !== '' || ! app()->environment(['local', 'testing']);
+
+        if ($requireSignature && $history->signature_verified !== true) {
             Log::warning('moota.settle.skipped_signature', [
                 'history_id' => $history->getKey(),
                 'signature_verified' => $history->signature_verified,
+                'secret_configured' => $secret !== '',
             ]);
             PaymentFlowLog::info('moota.settle.skip_signature', ['id' => $history->id]);
 
@@ -98,7 +101,7 @@ final class ProcessMootaWebhookForBookingPayments
     private function whereMootaBankTransferIncludingPlaceholder(Builder $q): Builder
     {
         return $q->where(function (Builder $w): void {
-            $w->where('payment_type', 'like', 'bank_transfer_moota%')
+            $w->whereILike('payment_type', 'bank_transfer_moota%')
                 ->orWhereNull('payment_type')
                 ->orWhere('payment_type', '');
         });

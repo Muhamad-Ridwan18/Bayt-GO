@@ -61,6 +61,14 @@ return [
             'open' => '*Open bookings:*',
             'booking_code' => '*Booking code:* :code',
         ],
+        'payment_deadline_expired' => [
+            'headline' => '*:app* — booking cancelled (payment deadline)',
+            'body' => 'Booking from *:customer* was auto-cancelled because the pilgrim did not complete payment within *:duration*.',
+            'booking_code' => '*Booking code:* :code',
+            'due_at' => '*Pay by:* :datetime',
+            'status' => '*Status:* Cancelled',
+            'open_detail' => '*Open booking details:*',
+        ],
         'reschedule_requested' => [
             'headline' => '*:app* — reschedule request',
             'body' => '*:customer* requested to change the service dates.',
@@ -71,11 +79,10 @@ return [
             'open_detail' => '*Open booking details:*',
         ],
         'withdrawal_transfer_done' => [
-            'headline' => '*:app* — withdrawal payout sent',
-            'body' => 'Your withdrawal has been paid. Download the transfer proof via the link below.',
+            'headline' => '*:app* — payout has been sent',
+            'body' => 'Your payout request has been processed.',
             'amount' => '*Amount:* Rp :amount',
-            'open_panel' => '*Withdrawals:*',
-            'proof_link' => '*Transfer proof:* :url',
+            'proof_hint' => 'Transfer proof is available on the payouts page on the website.',
         ],
         'support_new_booking' => [
             'headline' => '*:app* — support service request',
@@ -159,6 +166,14 @@ return [
             'service_dates' => '*Service dates:* :start - :end',
             'status' => '*Status:* Awaiting payment',
             'pay_at' => '*Continue payment at:*',
+        ],
+        'payment_deadline_expired' => [
+            'headline' => '*:app* — payment deadline expired',
+            'body' => 'Your booking with *:muthowif* was auto-cancelled because payment was not completed within *:duration*.',
+            'booking_code' => '*Booking code:* :code',
+            'due_at' => '*Pay by:* :datetime',
+            'status' => '*Status:* Cancelled',
+            'view_detail' => '*Booking detail:*',
         ],
         'support_approved' => [
             'headline' => '*:app* — support service approved',

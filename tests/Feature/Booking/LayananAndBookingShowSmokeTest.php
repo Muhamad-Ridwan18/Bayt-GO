@@ -38,11 +38,13 @@ class LayananAndBookingShowSmokeTest extends TestCase
             'birth_date' => '1990-01-01',
             'photo_path' => 'photos/test.jpg',
             'ktp_image_path' => 'ktp/test.jpg',
-            'verification_status' => 'approved',
-            'wallet_balance' => 0,
             'languages' => ['Bahasa Indonesia', 'Arab'],
             'work_experiences' => ['5 tahun pengalaman'],
         ]);
+        $profile->forceFill([
+            'verification_status' => 'approved',
+            'wallet_balance' => 0,
+        ])->save();
 
         MuthowifService::query()->create([
             'muthowif_profile_id' => $profile->id,

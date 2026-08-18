@@ -52,13 +52,25 @@ class MuthowifRejectedReregistration
 
         $disk = Storage::disk('local');
 
-        $profile->loadMissing('supportingDocuments');
+        $profile->loadMissing(['supportingDocuments', 'portfolios.images']);
         foreach ($profile->supportingDocuments as $doc) {
             if (filled($doc->path) && $disk->exists($doc->path)) {
                 $disk->delete($doc->path);
             }
         }
         $profile->supportingDocuments()->delete();
+
+        foreach ($profile->portfolios as $portfolio) {
+            foreach ($portfolio->images as $image) {
+                $image->delete();
+            }
+            $portfolio->delete();
+        }
+
+        $profileId = (string) $profile->getKey();
+        if ($profileId !== '') {
+            $disk->deleteDirectory('portfolio/'.$profileId);
+        }
 
         foreach ([$profile->photo_path, $profile->ktp_image_path] as $path) {
             if (! filled($path) || MuthowifProfile::photoPathIsExternalUrl((string) $path)) {

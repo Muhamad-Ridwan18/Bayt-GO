@@ -27,6 +27,7 @@ use Illuminate\Support\Facades\Gate;
 use Illuminate\Support\Facades\URL;
 use Illuminate\Support\Facades\View;
 use Illuminate\Support\ServiceProvider;
+use App\Support\SqlDialect;
 use App\View\Composers\NavigationComposer;
 
 class AppServiceProvider extends ServiceProvider
@@ -60,6 +61,9 @@ class AppServiceProvider extends ServiceProvider
      */
     public function boot(): void
     {
+        SqlDialect::assertSupportedSqlDriver();
+        SqlDialect::registerQueryMacros();
+
         Gate::define('viewLogViewer', fn ($user) => $user->isAdmin());
 
         $this->app->booted(function () {

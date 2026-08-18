@@ -31,8 +31,8 @@ class SupportTicketsController extends Controller
             ->when($q !== '', function ($query) use ($q): void {
                 $like = '%'.str_replace(['%', '_'], ['\\%', '\\_'], $q).'%';
                 $query->where(function ($nested) use ($like): void {
-                    $nested->where('code', 'like', $like)
-                        ->orWhere('subject', 'like', $like);
+                    $nested->whereILike('code', $like)
+                        ->orWhereILike('subject', $like);
                 });
             })
             ->when(is_string($statusFilter) && $statusFilter !== '' && SupportTicketStatus::tryFrom($statusFilter), function ($query) use ($statusFilter): void {
@@ -175,8 +175,8 @@ class SupportTicketsController extends Controller
             ->when($q !== '', function ($query) use ($q): void {
                 $like = '%'.str_replace(['%', '_'], ['\\%', '\\_'], $q).'%';
                 $query->where(function ($nested) use ($like): void {
-                    $nested->where('code', 'like', $like)
-                        ->orWhere('subject', 'like', $like);
+                    $nested->whereILike('code', $like)
+                        ->orWhereILike('subject', $like);
                 });
             })
             ->when(is_string($statusFilter) && $statusFilter !== '' && SupportTicketStatus::tryFrom($statusFilter), function ($query) use ($statusFilter): void {

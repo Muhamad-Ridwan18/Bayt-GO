@@ -11,6 +11,7 @@ use App\Models\MuthowifService;
 use App\Support\ApiMuthowifCard;
 use App\Support\ApiMediaUrl;
 use App\Support\MarketplaceProfileCache;
+use App\Support\PublicBioText;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
 use Illuminate\Http\JsonResponse;
@@ -84,7 +85,7 @@ class MuthowifDirectoryApiController extends Controller
         }
 
         if ($q !== '') {
-            $query->whereHas('user', fn ($u) => $u->where('name', 'like', '%'.$q.'%'));
+            $query->whereHas('user', fn ($u) => $u->whereILike('name', '%'.$q.'%'));
         }
 
         $profiles = $query->orderByMarketplaceRanking()->paginate(12)->withQueryString();
@@ -131,11 +132,11 @@ class MuthowifDirectoryApiController extends Controller
         $startPrice = $publicProfile->services->min('price') ?? 0;
 
         $bio = filled($publicProfile->reference_text)
-            ? $publicProfile->reference_text
+            ? PublicBioText::withoutContactNumbers($publicProfile->reference_text)
             : ($group && filled($group->description)
-                ? Str::limit(trim(strip_tags($group->description)), 400)
+                ? PublicBioText::withoutContactNumbers(Str::limit(trim(strip_tags($group->description)), 400))
                 : ($private && filled($private->description)
-                    ? Str::limit(trim(strip_tags($private->description)), 400)
+                    ? PublicBioText::withoutContactNumbers(Str::limit(trim(strip_tags($private->description)), 400))
                     : null));
 
         $specializations = collect([$group?->name, $private?->name])

@@ -159,6 +159,34 @@ class WithdrawalsController extends Controller
             ->with('status', 'Withdraw disetujui. Lakukan transfer ke rekening tujuan, lalu klik "Tandai transfer selesai".');
     }
 
+    /**
+     * Reject: tolak permintaan sebelum debit saldo (status masih pending_approval).
+     */
+    public function reject(Request $request, MuthowifWithdrawal $withdrawal): RedirectResponse
+    {
+        abort_unless($withdrawal->status === 'pending_approval', 409);
+
+        $validated = $request->validate([
+            'reason' => ['nullable', 'string', 'max:1000'],
+        ]);
+
+        $reason = trim((string) ($validated['reason'] ?? ''));
+
+        $withdrawal->update([
+            'status' => 'failed',
+            'failed_at' => now(),
+            'failed_reason' => $reason !== ''
+                ? $reason
+                : 'Ditolak oleh admin.',
+        ]);
+
+        WithdrawalBroadcast::afterResponse($withdrawal->fresh());
+
+        return redirect()
+            ->route('admin.withdrawals.index')
+            ->with('status', 'Withdraw ditolak.');
+    }
+
     public function markTransferred(Request $request, MuthowifWithdrawal $withdrawal): RedirectResponse
     {
         abort_unless($withdrawal->status === 'processing', 409);

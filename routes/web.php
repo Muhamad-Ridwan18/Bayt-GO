@@ -3,6 +3,7 @@
 use App\Enums\MuthowifVerificationStatus;
 use App\Http\Controllers\Admin\AdminSettingsHubController;
 use App\Http\Controllers\Admin\ArticlesAdminController;
+use App\Http\Controllers\Admin\BookingPaymentDeadlineSettingsController;
 use App\Http\Controllers\Admin\BookingEmergencyController;
 use App\Http\Controllers\Admin\BookingNotificationController;
 use App\Http\Controllers\Admin\BookingRefundController;
@@ -18,6 +19,7 @@ use App\Http\Controllers\Admin\SiteAppearanceController;
 use App\Http\Controllers\Admin\SupportTicketsController;
 use App\Http\Controllers\Admin\UserManagementController;
 use App\Http\Controllers\Admin\WhatsAppBroadcastController;
+use App\Http\Controllers\Admin\MailjetTestController;
 use App\Http\Controllers\Admin\WhatsAppNotifySettingsController;
 use App\Http\Controllers\Admin\WithdrawalsController;
 use App\Http\Controllers\Admin\AffiliateAdminController;
@@ -82,23 +84,25 @@ Route::post('/payments/doku/notification', [PaymentWebhookController::class, 'do
     ->name('payments.doku.notification');
 
 /**
- * Endpoint uji webhook: POST dari gateway / layanan luar (tanpa CSRF).
+ * Endpoint uji webhook — hanya local/testing (tanpa CSRF).
  * Pakai URL: {APP_URL}/webhooks/test
  */
-Route::withoutMiddleware([ValidateCsrfToken::class])
-    ->post('/webhooks/test', function (Request $request) {
-        Log::info('webhooks.test', [
-            'ip' => $request->ip(),
-            'content_type' => $request->header('Content-Type'),
-            'raw_preview' => Str::limit($request->getContent(), 8192),
-        ]);
+if (app()->environment(['local', 'testing'])) {
+    Route::withoutMiddleware([ValidateCsrfToken::class])
+        ->post('/webhooks/test', function (Request $request) {
+            Log::info('webhooks.test', [
+                'ip' => $request->ip(),
+                'content_type' => $request->header('Content-Type'),
+                'raw_preview' => Str::limit($request->getContent(), 8192),
+            ]);
 
-        return response()->json([
-            'ok' => true,
-            'received_at' => now()->toIso8601String(),
-            'hint' => 'Uji webhook; produksi pakai POST /payments/doku/notification atau /payments/midtrans/notification.',
-        ]);
-    })->name('webhooks.test');
+            return response()->json([
+                'ok' => true,
+                'received_at' => now()->toIso8601String(),
+                'hint' => 'Uji webhook; produksi pakai POST /payments/doku/notification atau /payments/midtrans/notification.',
+            ]);
+        })->name('webhooks.test');
+}
 
 Route::get('/docs/moota-webhook', function () {
     return view('docs.moota-webhook', [
@@ -327,6 +331,12 @@ Route::middleware('auth')->group(function () {
         Route::post('pengaturan/whatsapp-notifikasi/uji', [WhatsAppNotifySettingsController::class, 'test'])->name('whatsapp-notify-settings.test');
         Route::post('pengaturan/whatsapp-notifikasi/uji-chat-unreplied', [WhatsAppNotifySettingsController::class, 'testChatUnreplied'])->name('whatsapp-notify-settings.test-chat-unreplied');
         Route::post('pengaturan/whatsapp-notifikasi/jalankan-chat-unreplied', [WhatsAppNotifySettingsController::class, 'runChatUnrepliedNow'])->name('whatsapp-notify-settings.run-chat-unreplied');
+        Route::get('pengaturan/batas-bayar', [BookingPaymentDeadlineSettingsController::class, 'edit'])->name('booking-payment-deadline-settings.edit');
+        Route::post('pengaturan/batas-bayar', [BookingPaymentDeadlineSettingsController::class, 'update'])->name('booking-payment-deadline-settings.update');
+        Route::post('pengaturan/batas-bayar/isi-kosong', [BookingPaymentDeadlineSettingsController::class, 'stampMissing'])->name('booking-payment-deadline-settings.stamp-missing');
+        Route::get('pengaturan/mailjet-uji', [MailjetTestController::class, 'edit'])->name('mailjet-test.edit');
+        Route::post('pengaturan/mailjet-uji', [MailjetTestController::class, 'update'])->name('mailjet-test.update');
+        Route::post('pengaturan/mailjet-uji/kirim', [MailjetTestController::class, 'send'])->name('mailjet-test.send');
         Route::get('pengaturan/moota-api', [MootaApiSettingsController::class, 'edit'])->name('moota-api-settings.edit');
         Route::post('pengaturan/moota-api', [MootaApiSettingsController::class, 'update'])->name('moota-api-settings.update');
         Route::get('whatsapp-broadcast', [WhatsAppBroadcastController::class, 'index'])->name('whatsapp-broadcast.index');
@@ -369,6 +379,7 @@ Route::middleware('auth')->group(function () {
         Route::get('withdrawals', [WithdrawalsController::class, 'index'])->name('withdrawals.index');
         Route::get('withdrawals/fragment', [WithdrawalsController::class, 'indexFragment'])->name('withdrawals.fragment');
         Route::post('withdrawals/{withdrawal}/approve', [WithdrawalsController::class, 'approve'])->name('withdrawals.approve');
+        Route::post('withdrawals/{withdrawal}/reject', [WithdrawalsController::class, 'reject'])->name('withdrawals.reject');
         Route::post('withdrawals/{withdrawal}/selesai-transfer', [WithdrawalsController::class, 'markTransferred'])->name('withdrawals.mark_transferred');
         Route::post('withdrawals/{withdrawal}/gagal-transfer', [WithdrawalsController::class, 'markTransferFailed'])->name('withdrawals.mark_transfer_failed');
         Route::get('referral', [MuthowifReferralMonitorController::class, 'index'])->name('referrals.index');
@@ -411,9 +422,11 @@ Route::get('/muthowif/{keyword}', [SeoLandingController::class, 'showKeyword'])
     ->where('keyword', '[a-z0-9\-]+')
     ->name('seo.landing');
 
-Route::get('/php-test', function () {
-    return [
-        'upload_max_filesize' => ini_get('upload_max_filesize'),
-        'post_max_size' => ini_get('post_max_size'),
-    ];
-});
+if (app()->environment(['local', 'testing'])) {
+    Route::get('/php-test', function () {
+        return [
+            'upload_max_filesize' => ini_get('upload_max_filesize'),
+            'post_max_size' => ini_get('post_max_size'),
+        ];
+    });
+}

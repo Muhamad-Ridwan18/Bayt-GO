@@ -61,6 +61,16 @@ class WhatsAppNotifySettings
                 'group' => 'booking',
                 'default' => true,
             ],
+            'customer_payment_deadline_expired' => [
+                'label' => 'admin.whatsapp_notify.toggles.customer_payment_deadline_expired',
+                'group' => 'booking',
+                'default' => true,
+            ],
+            'muthowif_payment_deadline_expired' => [
+                'label' => 'admin.whatsapp_notify.toggles.muthowif_payment_deadline_expired',
+                'group' => 'booking',
+                'default' => true,
+            ],
             'customer_payment_settled' => [
                 'label' => 'admin.whatsapp_notify.toggles.customer_payment_settled',
                 'group' => 'booking',
@@ -162,7 +172,7 @@ class WhatsAppNotifySettings
 
     public static function token(): ?string
     {
-        return self::storedValue(self::SETTING_TOKEN);
+        return SiteSetting::getSecret(self::SETTING_TOKEN);
     }
 
     public static function hasToken(): bool
@@ -347,7 +357,7 @@ class WhatsAppNotifySettings
 
         $token = trim((string) ($input['gateway_token'] ?? ''));
         if ($token !== '') {
-            SiteSetting::putValue(self::SETTING_TOKEN, $token);
+            SiteSetting::putSecret(self::SETTING_TOKEN, $token);
         }
 
         SiteSetting::putValue(

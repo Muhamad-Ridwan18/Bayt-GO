@@ -45,10 +45,10 @@ class WhatsAppBroadcastController extends Controller
         if ($search !== '') {
             $like = '%'.$search.'%';
             $query->where(function ($q) use ($like): void {
-                $q->where('phone', 'like', $like)
-                    ->orWhereHas('user', fn ($uq) => $uq->where('name', 'like', $like)
-                        ->orWhere('email', 'like', $like)
-                        ->orWhere('phone', 'like', $like));
+                $q->whereILike('phone', $like)
+                    ->orWhereHas('user', fn ($uq) => $uq->whereILike('name', $like)
+                        ->orWhereILike('email', $like)
+                        ->orWhereILike('phone', $like));
             });
         }
 

@@ -64,7 +64,7 @@ class IntlPhoneLookupTest extends TestCase
             'phone' => null,
         ]);
 
-        MuthowifProfile::create([
+        $profile = MuthowifProfile::create([
             'user_id' => $user->id,
             'phone' => self::STORED,
             'address' => 'Alamat uji',
@@ -72,8 +72,10 @@ class IntlPhoneLookupTest extends TestCase
             'birth_date' => '1990-01-01',
             'photo_path' => 'muthowif_documents/test/photo.jpg',
             'ktp_image_path' => 'muthowif_documents/test/ktp.jpg',
-            'verification_status' => MuthowifVerificationStatus::Approved,
         ]);
+        $profile->forceFill([
+            'verification_status' => MuthowifVerificationStatus::Approved,
+        ])->save();
 
         return $user;
     }

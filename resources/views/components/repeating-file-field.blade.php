@@ -5,14 +5,23 @@
     'accept' => 'application/pdf,image/jpeg,image/png,image/webp',
     'addLabel' => 'Tambah dokumen',
     'hint' => '',
+    'required' => false,
+    'initialCount' => 1,
+    'maxCount' => 20,
 ])
+
+@php
+    $initialCount = max(1, min((int) $initialCount, (int) $maxCount));
+@endphp
 
 <div
     class="space-y-3"
     x-data="{
-        nextSlotKey: 1,
-        fileSlots: [{ key: 0 }],
+        nextSlotKey: {{ $initialCount }},
+        maxCount: {{ (int) $maxCount }},
+        fileSlots: Array.from({ length: {{ $initialCount }} }, (_, i) => ({ key: i })),
         addSlot() {
+            if (this.fileSlots.length >= this.maxCount) return;
             this.fileSlots.push({ key: this.nextSlotKey++ });
         },
         removeSlot(index) {
@@ -23,7 +32,12 @@
     }"
 >
     @if ($label)
-        <p class="text-sm font-semibold text-slate-900">{{ $label }}</p>
+        <p class="text-sm font-semibold text-slate-900">
+            {{ $label }}
+            @if ($required)
+                <span class="text-red-600">*</span>
+            @endif
+        </p>
     @endif
 
     <template x-for="(slot, index) in fileSlots" :key="slot.key">
@@ -55,6 +69,7 @@
         <button
             type="button"
             class="inline-flex items-center gap-1.5 rounded-lg border border-slate-200 bg-slate-50 px-3 py-2 text-sm font-medium text-slate-700 hover:bg-slate-100 transition"
+            x-show="fileSlots.length < maxCount"
             x-on:click="addSlot()"
         >
             <span class="text-base leading-none">+</span>

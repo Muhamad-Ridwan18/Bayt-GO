@@ -85,7 +85,7 @@ return [
             '128.199.173.138',
             '108.165.253.123', // Moota «Cek URL» / sandbox (dev.baytgo.id log)
         ],
-        /** Secret untuk verifikasi header Signature (HMAC-SHA256 atas raw POST body); samakan dengan Moota. */
+        /** Secret HMAC-SHA256 header Signature — wajib di non-local (tanpa secret webhook ditolak). */
         'signing_secret' => (string) env('MOOTA_WEBHOOK_SIGNING_SECRET', ''),
         /** Outbound API v2 (Create Transaction). */
         'api_base_url' => rtrim((string) env('MOOTA_API_BASE_URL', 'https://api.moota.co'), '/'),

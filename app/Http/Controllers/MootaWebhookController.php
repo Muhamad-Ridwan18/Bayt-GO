@@ -44,6 +44,15 @@ final class MootaWebhookController extends Controller
         }
 
         $secret = (string) config('services.moota.signing_secret', '');
+        if ($secret === '' && ! app()->environment(['local', 'testing'])) {
+            Log::error('moota.webhook.signing_secret_missing');
+
+            return response()->json([
+                'ok' => false,
+                'error' => 'signing_secret_not_configured',
+            ], Response::HTTP_SERVICE_UNAVAILABLE)->header('Cache-Control', 'no-store');
+        }
+
         $sigHeaderRaw = $request->header('Signature');
 
         $signatureVerified = null;

@@ -31,7 +31,7 @@ class PasswordResetOtpService
     }
 
     /**
-     * @return array{reset_token: string, masked_phone: string}
+     * @return array{sent: bool, reset_token: string, masked_phone: string}
      *
      * @throws ValidationException
      */
@@ -47,9 +47,14 @@ class PasswordResetOtpService
         /** @var User|null $user */
         $user = $this->resolveUserByPhone($normalized, $phoneInput);
         if (! $user) {
-            throw ValidationException::withMessages([
-                'phone' => ['Nomor WhatsApp tidak terdaftar.'],
-            ]);
+            // Anti-enumerasi: respons sama seperti nomor terdaftar (token palsu tidak punya mapping OTP).
+            usleep(random_int(40_000, 120_000));
+
+            return [
+                'sent' => false,
+                'reset_token' => bin2hex(random_bytes(24)),
+                'masked_phone' => $this->maskPhone($normalized),
+            ];
         }
 
         if (Cache::has('pwd_otp_cooldown:'.$normalized)) {
@@ -85,7 +90,7 @@ class PasswordResetOtpService
             'app' => $appName,
         ], app()->getLocale());
 
-        SendWhatsAppTextJob::dispatchAfterResponse(
+        SendWhatsAppTextJob::dispatchCachedAfterResponse(
             $fonnteDial['target'],
             $message,
             $fonnteDial['country_calling_code'],
@@ -96,6 +101,7 @@ class PasswordResetOtpService
         RateLimiter::hit('pwd-otp-hour:'.$normalized, 3600);
 
         return [
+            'sent' => true,
             'reset_token' => $resetToken,
             'masked_phone' => $this->maskPhone($normalized),
         ];

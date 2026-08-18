@@ -20,14 +20,12 @@ final class AdminWhatsAppNotifier
                 return;
             }
 
-            $numbers = WhatsAppNotifySettings::adminNumbers();
-            if (! is_array($numbers) || $numbers === []) {
+            if (! WhatsAppNotifySettings::hasToken()) {
                 return;
             }
 
-            if (! WhatsAppNotifySettings::hasToken()) {
-                Log::debug('WhatsApp refund admin notify skipped: FONNTE_TOKEN kosong.');
-
+            $numbers = WhatsAppNotifySettings::adminNumbers();
+            if ($numbers === []) {
                 return;
             }
 
@@ -103,14 +101,12 @@ final class AdminWhatsAppNotifier
                 return;
             }
 
-            $numbers = WhatsAppNotifySettings::adminNumbers();
-            if (! is_array($numbers) || $numbers === []) {
+            if (! WhatsAppNotifySettings::hasToken()) {
                 return;
             }
 
-            if (! WhatsAppNotifySettings::hasToken()) {
-                Log::debug('WhatsApp muthowif registration admin notify skipped: FONNTE_TOKEN kosong.');
-
+            $numbers = WhatsAppNotifySettings::adminNumbers();
+            if ($numbers === []) {
                 return;
             }
 

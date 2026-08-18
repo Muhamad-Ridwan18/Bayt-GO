@@ -10,12 +10,12 @@ use App\Models\MuthowifSupportingDocument;
 use App\Jobs\SendWhatsAppTextJob;
 use App\Services\MuthowifReferralCodeService;
 use App\Support\IntlPhone;
+use App\Support\PrivateDocumentStorage;
 use App\Support\WhatsAppNotifySettings;
 use App\Support\MuthowifVerificationBroadcast;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Validation\Rule;
-use Illuminate\Support\Facades\Storage;
 use Illuminate\View\View;
 
 class MuthowifVerificationController extends Controller
@@ -81,19 +81,20 @@ class MuthowifVerificationController extends Controller
 
         $profile->loadMissing('user');
 
-        $profile->update([
+        $profile->forceFill([
             'verification_status' => MuthowifVerificationStatus::Approved,
             'verified_at' => now(),
             'rejection_reason' => null,
-        ]);
+        ])->save();
 
         app(MuthowifReferralCodeService::class)->ensureAssigned($profile->fresh());
         $fonnteDial = IntlPhone::fonnteDial($profile->phone);
-        if ($fonnteDial !== null && WhatsAppNotifySettings::hasToken()) {
-            $appName = config('app.name', 'BaytGo');
-            $name = $profile->user->name;
-            $message = "Halo *{$name}*,\n\nPendaftaran muthowif Anda di *{$appName}* telah *disetujui*.\n\nAnda sekarang dapat masuk ke akun menggunakan email terdaftar.\nDan menentukan rate card harian mu😉\nhttps://baytgo.id/login\n\nSilahkan bergabung dengan grup baytgo communication untuk informasi terupdate dari baytgo serta jika ada kendala dari muthowif bisa menginformasikan ke grup\nhttps://chat.whatsapp.com/DjbIrgD1jFaCrdlGeF1V7n\n\nTerima kasih.";
+        $appName = config('app.name', 'BaytGo');
+        $name = $profile->user->name;
+        $message = "Halo *{$name}*,\n\nPendaftaran muthowif Anda di *{$appName}* telah *disetujui*.\n\nAnda sekarang dapat masuk ke akun menggunakan email terdaftar.\nDan menentukan rate card harian mu😉\nhttps://baytgo.id/login\n\nSilahkan bergabung dengan grup baytgo communication untuk informasi terupdate dari baytgo serta jika ada kendala dari muthowif bisa menginformasikan ke grup\nhttps://chat.whatsapp.com/DjbIrgD1jFaCrdlGeF1V7n\n\nTerima kasih.";
 
+        $waFlash = '';
+        if ($fonnteDial !== null && WhatsAppNotifySettings::hasToken()) {
             SendWhatsAppTextJob::dispatchAfterResponse(
                 $fonnteDial['target'],
                 $message,
@@ -125,11 +126,11 @@ class MuthowifVerificationController extends Controller
             'rejection_reason' => ['nullable', 'string', 'max:5000'],
         ]);
 
-        $profile->update([
+        $profile->forceFill([
             'verification_status' => MuthowifVerificationStatus::Rejected,
             'verified_at' => null,
             'rejection_reason' => $validated['rejection_reason'] ?? null,
-        ]);
+        ])->save();
 
         MuthowifVerificationBroadcast::afterResponse($profile->fresh());
 
@@ -153,24 +154,12 @@ class MuthowifVerificationController extends Controller
         $note = trim((string) ($validated['rejection_note'] ?? ''));
 
         if ($note !== '' && $note !== (string) $profile->rejection_reason) {
-            $profile->update(['rejection_reason' => $note]);
+            $profile->forceFill(['rejection_reason' => $note])->save();
         }
 
         $profile->loadMissing('user');
 
         $fonnteDial = IntlPhone::fonnteDial($profile->phone);
-        if ($fonnteDial === null) {
-            return redirect()
-                ->route('admin.muthowif.show', $profile)
-                ->with('error', __('admin.muthowif.notify_rejection_invalid_phone'));
-        }
-
-        if (! WhatsAppNotifySettings::hasToken()) {
-            return redirect()
-                ->route('admin.muthowif.show', $profile)
-                ->with('error', __('admin.muthowif.notify_rejection_no_token'));
-        }
-
         $appName = config('app.name', 'BaytGo');
         $name = $profile->user->name;
         $message = "Halo *{$name}*,\n\nMohon maaf, pendaftaran muthowif Anda di *{$appName}* belum bisa kami setujui karena data atau dokumen yang Anda kirimkan (seperti CV dan dokumen pendukung lainnya) belum sesuai.";
@@ -180,6 +169,19 @@ class MuthowifVerificationController extends Controller
         }
 
         $message .= "\n\nSilakan perbaiki data/dokumen Anda, lalu mendaftar kembali.\n\nTerima kasih atas pengertiannya.";
+
+        $canWa = $fonnteDial !== null && WhatsAppNotifySettings::hasToken();
+        if ($fonnteDial === null) {
+            return redirect()
+                ->route('admin.muthowif.show', $profile)
+                ->with('error', __('admin.muthowif.notify_rejection_invalid_phone'));
+        }
+
+        if (! $canWa) {
+            return redirect()
+                ->route('admin.muthowif.show', $profile)
+                ->with('error', __('admin.muthowif.notify_rejection_no_token'));
+        }
 
         SendWhatsAppTextJob::dispatchAfterResponse(
             $fonnteDial['target'],
@@ -208,7 +210,7 @@ class MuthowifVerificationController extends Controller
             ? $validated['account_status']
             : MuthowifAccountStatus::from((string) $validated['account_status']);
 
-        $profile->update(['account_status' => $status]);
+        $profile->forceFill(['account_status' => $status])->save();
 
         return redirect()
             ->route('admin.muthowif.show', $profile)
@@ -237,22 +239,12 @@ class MuthowifVerificationController extends Controller
 
     public function photo(MuthowifProfile $profile)
     {
-        $disk = Storage::disk('local');
-        if (! $disk->exists($profile->photo_path)) {
-            abort(404);
-        }
-
-        return $disk->response($profile->photo_path);
+        return PrivateDocumentStorage::response($profile->photo_path);
     }
 
     public function ktp(MuthowifProfile $profile)
     {
-        $disk = Storage::disk('local');
-        if (! $disk->exists($profile->ktp_image_path)) {
-            abort(404);
-        }
-
-        return $disk->response($profile->ktp_image_path);
+        return PrivateDocumentStorage::response($profile->ktp_image_path);
     }
 
     public function supportingDocument(MuthowifProfile $profile, MuthowifSupportingDocument $document)
@@ -262,11 +254,9 @@ class MuthowifVerificationController extends Controller
             abort(404);
         }
 
-        $disk = Storage::disk('local');
-        if (! $disk->exists($document->path)) {
-            abort(404);
-        }
-
-        return $disk->response($document->path, $document->original_name ?? basename($document->path));
+        return PrivateDocumentStorage::response(
+            $document->path,
+            $document->original_name ?? basename((string) $document->path),
+        );
     }
 }

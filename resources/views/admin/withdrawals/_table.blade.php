@@ -72,12 +72,20 @@
                         </td>
                         <td class="px-4 py-3 text-right whitespace-nowrap">
                             @if ($w->status === 'pending_approval')
-                                <form method="POST" action="{{ route('admin.withdrawals.approve', $w) }}" onsubmit="return confirm(@json(__('admin.withdrawals.approve_confirm')));">
-                                    @csrf
-                                    <x-submit-button class="rounded-xl bg-brand-600 px-3 py-2 text-sm font-semibold text-white hover:bg-brand-700">
-                                        {{ __('admin.withdrawals.approve') }}
-                                    </x-submit-button>
-                                </form>
+                                <div class="inline-flex flex-col items-stretch gap-2 sm:min-w-[10rem]">
+                                    <form method="POST" action="{{ route('admin.withdrawals.approve', $w) }}" onsubmit="return confirm(@json(__('admin.withdrawals.approve_confirm')));">
+                                        @csrf
+                                        <x-submit-button class="inline-flex w-full items-center justify-center rounded-xl bg-brand-600 px-3 py-2 text-sm font-semibold text-white hover:bg-brand-700">
+                                            {{ __('admin.withdrawals.approve') }}
+                                        </x-submit-button>
+                                    </form>
+                                    <form method="POST" action="{{ route('admin.withdrawals.reject', $w) }}" onsubmit="return confirm(@json(__('admin.withdrawals.reject_confirm')));">
+                                        @csrf
+                                        <x-submit-button class="inline-flex w-full items-center justify-center rounded-xl border border-red-200 bg-white px-3 py-2 text-xs font-semibold text-red-700 shadow-sm transition hover:bg-red-50">
+                                            {{ __('admin.withdrawals.reject') }}
+                                        </x-submit-button>
+                                    </form>
+                                </div>
                             @elseif ($w->status === 'processing')
                                 <div class="flex flex-col items-end gap-2">
                                     <button

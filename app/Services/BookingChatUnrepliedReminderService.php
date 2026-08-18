@@ -229,10 +229,11 @@ final class BookingChatUnrepliedReminderService
 
         $name = $recipient['user']->name ?? __('whatsapp.fallback_pilgrim', [], $locale);
         $code = $booking->booking_code ?? '—';
+        $message = self::buildMessage($name, $code, $locale);
 
         SendWhatsAppTextJob::dispatchSync(
             $recipient['dial']['target'],
-            self::buildMessage($name, $code, $locale),
+            $message,
             $recipient['dial']['country_calling_code'],
             [],
             null,
@@ -288,14 +289,14 @@ final class BookingChatUnrepliedReminderService
 
         $query = \Illuminate\Support\Facades\DB::table(config('cache.stores.database.table', 'cache'))
             ->where(static function ($q): void {
-                $q->where('key', 'like', '%'.self::CACHE_PREFIX.'%')
-                    ->orWhere('key', 'like', '%'.self::FIRST_CACHE_PREFIX.'%');
+                $q->whereILike('key', '%'.self::CACHE_PREFIX.'%')
+                    ->orWhereILike('key', '%'.self::FIRST_CACHE_PREFIX.'%');
             });
 
         if ($bookingId !== null) {
             $query->where(static function ($q) use ($bookingId): void {
-                $q->where('key', 'like', '%'.self::CACHE_PREFIX.$bookingId.'%')
-                    ->orWhere('key', 'like', '%'.self::FIRST_CACHE_PREFIX.$bookingId.':%');
+                $q->whereILike('key', '%'.self::CACHE_PREFIX.$bookingId.'%')
+                    ->orWhereILike('key', '%'.self::FIRST_CACHE_PREFIX.$bookingId.':%');
             });
         }
 

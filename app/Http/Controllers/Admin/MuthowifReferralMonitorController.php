@@ -31,10 +31,10 @@ class MuthowifReferralMonitorController extends Controller
         if ($q !== '') {
             $like = '%'.$q.'%';
             $query->where(function ($builder) use ($like) {
-                $builder->where('referral_code', 'like', $like)
+                $builder->whereILike('referral_code', $like)
                     ->orWhereHas('user', function ($userQuery) use ($like) {
-                        $userQuery->where('name', 'like', $like)
-                            ->orWhere('email', 'like', $like);
+                        $userQuery->whereILike('name', $like)
+                            ->orWhereILike('email', $like);
                     });
             });
         }

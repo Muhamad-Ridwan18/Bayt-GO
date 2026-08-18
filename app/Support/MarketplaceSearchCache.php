@@ -118,7 +118,7 @@ final class MarketplaceSearchCache
                     ->where('ends_on', '>=', $startStr);
             })
             ->when($q !== '', function ($query) use ($q): void {
-                $query->whereHas('user', fn ($user) => $user->where('name', 'like', '%'.$q.'%'));
+                $query->whereHas('user', fn ($user) => $user->whereILike('name', '%'.$q.'%'));
             })
             ->orderByMarketplaceRanking();
     }
