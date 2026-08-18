@@ -43,11 +43,17 @@ export function parsePublicDeepLink(url) {
 
   if (path === '/layanan') return { screen: 'Directory' };
 
-  const layanan = path.match(/^\/layanan\/([A-Za-z0-9-]+)(?:\/booking)?$/);
+  const layanan = path.match(/^\/layanan\/([A-Za-z0-9-]+)(\/booking)?$/);
   if (layanan) {
+    const autoBook = Boolean(layanan[2]);
     return {
       screen: 'MuthowifDetail',
-      params: { id: layanan[1], startDate, endDate },
+      params: {
+        id: layanan[1],
+        startDate,
+        endDate,
+        ...(autoBook ? { autoBook: true } : {}),
+      },
     };
   }
 
