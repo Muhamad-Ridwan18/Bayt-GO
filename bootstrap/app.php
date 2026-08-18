@@ -5,6 +5,7 @@ use App\Http\Middleware\CaptureAffiliateReferral;
 use App\Http\Middleware\EnsureCustomerOrMuthowif;
 use App\Http\Middleware\EnsureUserRole;
 use App\Http\Middleware\EnsureVerifiedMuthowif;
+use App\Http\Middleware\SetLocaleApi;
 use App\Http\Middleware\SetLocale;
 use App\Support\RedirectExpiredSession;
 use App\Support\WhatsAppNotifySettings;
@@ -54,6 +55,9 @@ return Application::configure(basePath: dirname(__DIR__))
         $middleware->web(append: [
             SetLocale::class,
             CaptureAffiliateReferral::class,
+        ]);
+        $middleware->api(append: [
+            SetLocaleApi::class,
         ]);
         $middleware->redirectGuestsTo(fn () => route('login'));
         $middleware->validateCsrfTokens(except: [

@@ -1,6 +1,8 @@
 import { Linking } from 'react-native';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 import { captureAffiliateFromUrl } from './affiliateReferral';
 import { navigatePublicDeepLink } from '../navigation/rootNavigation';
+import { clearApiLocaleCache } from '../api/client';
 
 function parsedUrl(url) {
   if (!url) return null;
@@ -24,6 +26,20 @@ function pathFromUrl(url) {
   return path.replace(/\/+$/, '') || '/';
 }
 
+const LOCALE_KEY = '@baytgo_locale';
+
+async function captureLocaleFromUrl(url) {
+  if (!url) return null;
+  const text = String(url);
+  const match = text.match(/\/locale\/(en|id|ar)(?:[/?#]|$)/i);
+  if (!match) return null;
+
+  const locale = match[1].toLowerCase();
+  await AsyncStorage.setItem(LOCALE_KEY, locale);
+  clearApiLocaleCache();
+  return locale;
+}
+
 export function parsePublicDeepLink(url) {
   const path = pathFromUrl(url);
   if (!path || path === '/') return null;
@@ -39,6 +55,11 @@ export function parsePublicDeepLink(url) {
   if (path === '/artikel') return { screen: 'ArticlesList' };
 
   if (path === '/terms') return { screen: 'Terms' };
+
+  const locale = path.match(/^\/locale\/(en|id|ar)$/i);
+  if (locale) {
+    return { screen: 'DashboardMain' };
+  }
 
   const affiliateLanding = path.match(/^\/r\/([A-Za-z0-9]{3,32})$/);
   if (affiliateLanding) return { screen: 'DashboardMain' };
@@ -159,6 +180,7 @@ export function parsePublicDeepLink(url) {
 
 async function handleIncomingUrl(url) {
   if (!url) return;
+  await captureLocaleFromUrl(url);
   await captureAffiliateFromUrl(url);
   const target = parsePublicDeepLink(url);
   if (target) navigatePublicDeepLink(target);
