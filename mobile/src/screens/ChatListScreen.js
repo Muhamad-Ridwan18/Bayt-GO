@@ -10,8 +10,11 @@ import EmptyState from '../ui/EmptyState';
 import ErrorState from '../ui/ErrorState';
 import { SkeletonList } from '../ui/Skeleton';
 import { colors, layout, spacing, typography } from '../theme/tokens';
+import { useLocale } from '../utils/locale';
 
 export default function ChatListScreen({ navigation }) {
+  const locale = useLocale();
+  const isEn = locale === 'en';
   const { isVerifiedMuthowif } = useAuth();
   const {
     conversations,
@@ -41,13 +44,18 @@ export default function ChatListScreen({ navigation }) {
   ), [openConversation]);
 
   const listHeader = conversations.length > 0 ? (
-    <Text style={styles.resultCount}>{conversations.length} percakapan</Text>
+    <Text style={styles.resultCount}>
+      {isEn ? `${conversations.length} conversations` : `${conversations.length} percakapan`}
+    </Text>
   ) : null;
 
   if (loading && !refreshing) {
     return (
       <View style={styles.container}>
-        <TabPageHeader title="Chat" subtitle="Percakapan booking Anda" />
+        <TabPageHeader
+          title="Chat"
+          subtitle={isEn ? 'Your booking conversations' : 'Percakapan booking Anda'}
+        />
         <SkeletonList count={5} style={styles.skeleton} />
       </View>
     );
@@ -55,7 +63,10 @@ export default function ChatListScreen({ navigation }) {
 
   return (
     <View style={styles.container}>
-      <TabPageHeader title="Chat" subtitle="Percakapan booking Anda" />
+      <TabPageHeader
+        title="Chat"
+        subtitle={isEn ? 'Your booking conversations' : 'Percakapan booking Anda'}
+      />
 
       {error && conversations.length === 0 ? (
         <ErrorState description={error} onRetry={() => refresh(true)} />
@@ -76,9 +87,11 @@ export default function ChatListScreen({ navigation }) {
             ) : (
               <EmptyState
                 variant="chat"
-                title="Belum ada percakapan"
-                description="Chat tersedia setelah booking dikonfirmasi dan pembayaran berhasil."
-                actionLabel="Lihat pesanan saya"
+                title={isEn ? 'No conversations yet' : 'Belum ada percakapan'}
+                description={isEn
+                  ? 'Chat becomes available after a booking is confirmed and paid.'
+                  : 'Chat tersedia setelah booking dikonfirmasi dan pembayaran berhasil.'}
+                actionLabel={isEn ? 'View my bookings' : 'Lihat pesanan saya'}
                 onAction={() => navigation.getParent()?.navigate(
                   isVerifiedMuthowif ? 'MuthowifBookingsTab' : 'BookingsTab',
                 )}

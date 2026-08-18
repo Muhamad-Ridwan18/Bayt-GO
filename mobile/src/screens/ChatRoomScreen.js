@@ -22,9 +22,12 @@ import { SkeletonList } from '../ui/Skeleton';
 import MessageList from '../ui/MessageList';
 import SingleImagePreview from '../ui/SingleImagePreview';
 import { colors, gradients, layout, radius, spacing, typography } from '../theme/tokens';
+import { useLocale } from '../utils/locale';
 
 export default function ChatRoomScreen({ navigation, route }) {
   const { token } = useAuth();
+  const locale = useLocale();
+  const isEn = locale === 'en';
   const { setActiveBookingId, clearUnreadForBooking } = useChatInbox();
   const { bookingId, bookingCode, otherName } = route.params;
 
@@ -68,11 +71,11 @@ export default function ChatRoomScreen({ navigation, route }) {
       setChatOpen(data.chat_open !== false);
       lastIdRef.current = list[list.length - 1]?.id ?? null;
     } catch (err) {
-      setError(err.message || 'Gagal memuat chat');
+      setError(err.message || (isEn ? 'Failed to load chat' : 'Gagal memuat chat'));
     } finally {
       setLoading(false);
     }
-  }, [token, bookingId]);
+  }, [token, bookingId, isEn]);
 
   const pollNew = useCallback(async () => {
     try {
@@ -122,7 +125,10 @@ export default function ChatRoomScreen({ navigation, route }) {
   const pickImage = async () => {
     const permission = await ImagePicker.requestMediaLibraryPermissionsAsync();
     if (!permission.granted) {
-      Alert.alert('Izin diperlukan', 'Izinkan akses galeri untuk mengirim gambar.');
+      Alert.alert(
+        isEn ? 'Permission required' : 'Izin diperlukan',
+        isEn ? 'Allow gallery access to send images.' : 'Izinkan akses galeri untuk mengirim gambar.',
+      );
       return;
     }
     const result = await ImagePicker.launchImageLibraryAsync({ mediaTypes: ['images'], quality: 0.8 });
@@ -132,7 +138,12 @@ export default function ChatRoomScreen({ navigation, route }) {
   const handleSend = async () => {
     const body = text.trim();
     if (!chatOpen) {
-      Alert.alert('Chat ditutup', 'Pesan baru tidak bisa dikirim — layanan pesanan ini sudah selesai.');
+      Alert.alert(
+        isEn ? 'Chat closed' : 'Chat ditutup',
+        isEn
+          ? 'You cannot send new messages because this booking service is completed.'
+          : 'Pesan baru tidak bisa dikirim — layanan pesanan ini sudah selesai.',
+      );
       return;
     }
     if (!body && !pendingImage) return;
@@ -148,7 +159,10 @@ export default function ChatRoomScreen({ navigation, route }) {
       setText('');
       setPendingImage(null);
     } catch (err) {
-      Alert.alert('Gagal kirim', err.message || 'Pesan tidak terkirim. Coba lagi.');
+      Alert.alert(
+        isEn ? 'Send failed' : 'Gagal kirim',
+        err.message || (isEn ? 'Message was not sent. Please try again.' : 'Pesan tidak terkirim. Coba lagi.'),
+      );
     } finally {
       setSending(false);
     }
@@ -196,14 +210,24 @@ export default function ChatRoomScreen({ navigation, route }) {
         <View style={styles.closedBanner}>
           <Lock size={16} color={colors.baytgo} strokeWidth={2} />
           <View style={styles.bannerCopy}>
-            <Text style={styles.closedText}>Pesan baru tidak bisa dikirim — layanan pesanan ini sudah selesai.</Text>
-            <Text style={styles.introText}>Riwayat obrolan untuk pesanan ini. Obrolan ditutup otomatis setelah layanan selesai.</Text>
+            <Text style={styles.closedText}>
+              {isEn
+                ? 'You cannot send new messages because this booking service is completed.'
+                : 'Pesan baru tidak bisa dikirim — layanan pesanan ini sudah selesai.'}
+            </Text>
+            <Text style={styles.introText}>
+              {isEn
+                ? 'Conversation history for this booking. Chat closes automatically after service completion.'
+                : 'Riwayat obrolan untuk pesanan ini. Obrolan ditutup otomatis setelah layanan selesai.'}
+            </Text>
           </View>
         </View>
       ) : (
         <View style={styles.introBanner}>
           <Text style={styles.introText}>
-            Ngobrol dengan pihak lain tentang layanan ini. Chat aktif setelah pembayaran lunas sampai layanan diselesaikan.
+            {isEn
+              ? 'Chat with the other party about this service. Chat stays active after full payment until service is completed.'
+              : 'Ngobrol dengan pihak lain tentang layanan ini. Chat aktif setelah pembayaran lunas sampai layanan diselesaikan.'}
           </Text>
         </View>
       )}
@@ -223,8 +247,8 @@ export default function ChatRoomScreen({ navigation, route }) {
           ListEmptyComponent={(
             <EmptyState
               variant="chat"
-              title="Belum ada pesan"
-              description="Belum ada pesan. Mulai percakapan."
+              title={isEn ? 'No messages yet' : 'Belum ada pesan'}
+              description={isEn ? 'No messages yet. Start the conversation.' : 'Belum ada pesan. Mulai percakapan.'}
             />
           )}
         />
@@ -240,7 +264,7 @@ export default function ChatRoomScreen({ navigation, route }) {
             style={styles.pendingPreview}
           />
         ) : null}
-        {sending ? <Text style={styles.sendingHint}>Mengirim…</Text> : null}
+        {sending ? <Text style={styles.sendingHint}>{isEn ? 'Sending…' : 'Mengirim…'}</Text> : null}
         <View style={styles.inputRow}>
           <PressableScale
             onPress={pickImage}
@@ -254,7 +278,7 @@ export default function ChatRoomScreen({ navigation, route }) {
             style={styles.input}
             value={text}
             onChangeText={setText}
-            placeholder={chatOpen ? 'Tulis pesan…' : 'Chat ditutup'}
+            placeholder={chatOpen ? (isEn ? 'Type a message…' : 'Tulis pesan…') : (isEn ? 'Chat closed' : 'Chat ditutup')}
             placeholderTextColor={colors.textMuted}
             editable={chatOpen && !sending}
             multiline
@@ -286,7 +310,11 @@ export default function ChatRoomScreen({ navigation, route }) {
           </PressableScale>
         </View>
         {chatOpen ? (
-          <Text style={styles.imageHint}>Foto: JPG, PNG, GIF, atau WebP (maks. 5 MB). Bisa dikombinasikan dengan teks.</Text>
+          <Text style={styles.imageHint}>
+            {isEn
+              ? 'Photo: JPG, PNG, GIF, or WebP (max 5 MB). Can be combined with text.'
+              : 'Foto: JPG, PNG, GIF, atau WebP (maks. 5 MB). Bisa dikombinasikan dengan teks.'}
+          </Text>
         ) : null}
       </Card>
 
