@@ -352,6 +352,7 @@ class AuthController extends Controller
             'name' => $user->name,
             'email' => $user->email,
             'role' => $user->role,
+            'locale' => $user->locale,
         ];
 
         if ($user->isMuthowif() && $user->muthowifProfile !== null) {

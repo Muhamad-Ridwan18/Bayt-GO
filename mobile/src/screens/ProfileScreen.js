@@ -35,7 +35,7 @@ import {
 import TabPageHeader from '../components/TabPageHeader';
 import { useAuth } from '../context/AuthContext';
 import { useBrand } from '../context/BrandContext';
-import { fetchProfile, sendVerificationEmail } from '../api/profile';
+import { fetchProfile, sendVerificationEmail, updateProfileLocale } from '../api/profile';
 import { fetchCustomerDashboard, fetchMuthowifDashboard } from '../api/dashboard';
 import { resetRoot } from '../navigation/rootNavigation';
 import AppImage from '../ui/AppImage';
@@ -47,6 +47,8 @@ import StatTile from '../ui/StatTile';
 import { colors, gradients, layout, radius, spacing, typography } from '../theme/tokens';
 import { resolveMediaUrl } from '../utils/mediaUrl';
 import { notifyError, notifySuccess } from '../utils/feedback';
+import LanguageSwitcher from '../components/LanguageSwitcher';
+import { setStoredLocale } from '../utils/locale';
 
 const STAT_ICONS = {
   'Booking Aktif': Calendar,
@@ -106,6 +108,10 @@ export default function ProfileScreen({ navigation }) {
       ]);
       setProfile(profileData);
       setStats(dashboardData.stats || []);
+      if (profileData?.user?.locale) {
+        setStoredLocale(profileData.user.locale).catch(() => {});
+        updateLocalUser({ locale: profileData.user.locale });
+      }
       if (profileData?.user || profileData?.muthowif?.verification_status) {
         updateLocalUser({
           ...(profileData?.user?.email_verified_at !== undefined
@@ -317,6 +323,19 @@ export default function ProfileScreen({ navigation }) {
             isLast
           />
         </Section>
+
+        <View style={styles.section}>
+          <LanguageSwitcher
+            onChange={async (locale) => {
+              try {
+                await updateProfileLocale(token, locale);
+                updateLocalUser({ locale });
+              } catch {
+                // keep local locale even if sync fails
+              }
+            }}
+          />
+        </View>
 
         <Section title="Lainnya">
           <MenuRow

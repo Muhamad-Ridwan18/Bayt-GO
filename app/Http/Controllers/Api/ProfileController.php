@@ -35,6 +35,7 @@ class ProfileController extends Controller
                 'name' => $user->name,
                 'email' => $user->email,
                 'phone' => $user->phone,
+                'locale' => $user->locale,
                 'email_verified_at' => $user->email_verified_at?->toIso8601String(),
             ],
             'muthowif' => $muthowif ? [
@@ -92,8 +93,23 @@ class ProfileController extends Controller
                 'name' => $user->name,
                 'email' => $user->email,
                 'phone' => $user->phone,
+                'locale' => $user->locale,
                 'email_verified_at' => $user->email_verified_at?->toIso8601String(),
             ],
+        ]);
+    }
+
+    public function updateLocale(Request $request)
+    {
+        $validated = $request->validate([
+            'locale' => ['required', 'string', Rule::in(['id', 'en'])],
+        ]);
+
+        $request->user()->forceFill(['locale' => $validated['locale']])->save();
+
+        return response()->json([
+            'message' => __('nav.language'),
+            'locale' => $validated['locale'],
         ]);
     }
 

@@ -13,6 +13,10 @@ export async function updateProfile(token, { name, email, phone }) {
   });
 }
 
+export async function updateProfileLocale(token, locale) {
+  return apiFetch('/profile/locale', { token, method: 'PATCH', body: { locale } });
+}
+
 export async function sendVerificationEmail(token) {
   return apiFetch('/profile/verification-notification', { token, method: 'POST' });
 }

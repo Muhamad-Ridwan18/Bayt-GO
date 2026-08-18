@@ -45,6 +45,7 @@ Route::middleware('auth:sanctum')->group(function () {
             'name' => $user->name,
             'email' => $user->email,
             'role' => $user->role,
+            'locale' => $user->locale,
         ];
         if ($user->isMuthowif() && $user->muthowifProfile) {
             $payload['muthowif_verification_status'] = $user->muthowifProfile->verification_status->value;
@@ -146,6 +147,7 @@ Route::middleware('auth:sanctum')->group(function () {
 
     Route::get('/profile', [\App\Http\Controllers\Api\ProfileController::class, 'show']);
     Route::patch('/profile', [\App\Http\Controllers\Api\ProfileController::class, 'update']);
+    Route::patch('/profile/locale', [\App\Http\Controllers\Api\ProfileController::class, 'updateLocale']);
     Route::post('/profile/verification-notification', [\App\Http\Controllers\Api\ProfileController::class, 'sendVerificationEmail']);
     Route::delete('/profile', [\App\Http\Controllers\Api\ProfileController::class, 'destroy']);
     Route::patch('/profile/public', [\App\Http\Controllers\Api\ProfileController::class, 'updatePublic']);

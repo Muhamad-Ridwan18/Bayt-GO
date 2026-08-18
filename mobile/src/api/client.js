@@ -1,25 +1,11 @@
-import AsyncStorage from '@react-native-async-storage/async-storage';
 import { API_BASE_URL } from '../config/api';
-
-const LOCALE_KEY = '@baytgo_locale';
-let cachedLocale = null;
-
-async function getStoredLocale() {
-  if (cachedLocale) return cachedLocale;
-  const stored = await AsyncStorage.getItem(LOCALE_KEY);
-  cachedLocale = stored || null;
-  return cachedLocale;
-}
-
-export function clearApiLocaleCache() {
-  cachedLocale = null;
-}
+import { getStoredLocale } from '../utils/locale';
 
 export async function apiFetch(path, { token, method = 'GET', body, headers = {} } = {}) {
   const locale = await getStoredLocale();
   const requestHeaders = {
     Accept: 'application/json',
-    ...(locale ? { 'Accept-Language': locale } : {}),
+    'Accept-Language': locale,
     ...headers,
   };
 

@@ -14,6 +14,7 @@ import { parseIsoDate } from '../components/DatePickerField';
 import HeroCarousel from '../features/home/HeroCarousel';
 import SearchPanel from '../features/home/SearchPanel';
 import CustomerActivitySection from '../features/home/CustomerActivitySection';
+import HelpTicketCta from '../features/home/HelpTicketCta';
 import CampaignCarousel from '../features/home/CampaignCarousel';
 import FeatureChips from '../features/home/FeatureChips';
 import HomeGallery from '../features/home/HomeGallery';
@@ -242,6 +243,12 @@ export default function HomeScreen({ navigation }) {
             onPay={openNextPayment}
             onChat={openNextChat}
             onExplore={() => openDirectory()}
+          />
+        ) : null}
+
+        {isCustomer ? (
+          <HelpTicketCta
+            onPress={() => navigation.getParent()?.navigate('SupportTab', { screen: 'SupportList' })}
           />
         ) : null}
 

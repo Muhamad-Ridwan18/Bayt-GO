@@ -8,6 +8,7 @@ import Card from '../ui/Card';
 import PressableScale from '../ui/PressableScale';
 import { colors, layout, radius, spacing, typography } from '../theme/tokens';
 import { useBrand } from '../context/BrandContext';
+import LanguageSwitcher from '../components/LanguageSwitcher';
 
 const FEATURES = [
   { icon: Search, title: 'Cari Muthowif', sub: 'Temukan pendamping ibadah terpercaya' },
@@ -73,6 +74,10 @@ export default function ProfileGuestScreen({ navigation }) {
             </Card>
           );
         })}
+
+        <View style={styles.langWrap}>
+          <LanguageSwitcher />
+        </View>
 
         <View style={styles.links}>
           <PressableScale
@@ -190,6 +195,7 @@ const styles = StyleSheet.create({
     lineHeight: 17,
   },
   links: { marginTop: spacing.lg, marginBottom: spacing.md, gap: spacing.xs },
+  langWrap: { marginTop: spacing.xl },
   termsBtn: {
     flexDirection: 'row',
     alignItems: 'center',

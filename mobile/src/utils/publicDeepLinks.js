@@ -1,8 +1,7 @@
 import { Linking } from 'react-native';
-import AsyncStorage from '@react-native-async-storage/async-storage';
 import { captureAffiliateFromUrl } from './affiliateReferral';
 import { navigatePublicDeepLink } from '../navigation/rootNavigation';
-import { clearApiLocaleCache } from '../api/client';
+import { setStoredLocale } from './locale';
 
 function parsedUrl(url) {
   if (!url) return null;
@@ -26,18 +25,12 @@ function pathFromUrl(url) {
   return path.replace(/\/+$/, '') || '/';
 }
 
-const LOCALE_KEY = '@baytgo_locale';
-
 async function captureLocaleFromUrl(url) {
   if (!url) return null;
   const text = String(url);
-  const match = text.match(/\/locale\/(en|id|ar)(?:[/?#]|$)/i);
+  const match = text.match(/\/locale\/(en|id)(?:[/?#]|$)/i);
   if (!match) return null;
-
-  const locale = match[1].toLowerCase();
-  await AsyncStorage.setItem(LOCALE_KEY, locale);
-  clearApiLocaleCache();
-  return locale;
+  return setStoredLocale(match[1]);
 }
 
 export function parsePublicDeepLink(url) {
@@ -56,7 +49,7 @@ export function parsePublicDeepLink(url) {
 
   if (path === '/terms') return { screen: 'Terms' };
 
-  const locale = path.match(/^\/locale\/(en|id|ar)$/i);
+  const locale = path.match(/^\/locale\/(en|id)$/i);
   if (locale) {
     return { screen: 'DashboardMain' };
   }

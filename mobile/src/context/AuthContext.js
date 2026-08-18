@@ -3,6 +3,7 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 import * as authApi from '../api/auth';
 import { syncPushTokenWithBackend, removePushTokenFromBackend } from '../notifications/pushNotifications';
 import { flushPendingNavigation } from '../navigation/rootNavigation';
+import { setStoredLocale } from '../utils/locale';
 
 const TOKEN_KEY = '@baytgo_auth_token';
 const USER_KEY = '@baytgo_auth_user';
@@ -19,7 +20,11 @@ export function AuthProvider({ children }) {
       .then(([storedToken, storedUser]) => {
         if (storedToken && storedUser) {
           setToken(storedToken);
-          setUser(JSON.parse(storedUser));
+          const parsedUser = JSON.parse(storedUser);
+          setUser(parsedUser);
+          if (parsedUser?.locale) {
+            setStoredLocale(parsedUser.locale).catch(() => {});
+          }
           syncPushTokenWithBackend(storedToken).catch((error) => {
             if (__DEV__) console.warn('[push] sync on boot failed', error?.message ?? error);
           });
@@ -34,6 +39,9 @@ export function AuthProvider({ children }) {
     setUser(sessionUser);
     await AsyncStorage.setItem(TOKEN_KEY, sessionToken);
     await AsyncStorage.setItem(USER_KEY, JSON.stringify(sessionUser));
+    if (sessionUser?.locale) {
+      setStoredLocale(sessionUser.locale).catch(() => {});
+    }
     syncPushTokenWithBackend(sessionToken).catch((error) => {
       if (__DEV__) console.warn('[push] sync on login failed', error?.message ?? error);
     });
