@@ -30,8 +30,9 @@ import {
 import PaymentDeadlineBanner from '../features/booking/PaymentDeadlineBanner';
 import { CustomerPricingBreakdown } from '../components/BookingPricingBreakdown';
 import { useHideTabBarOnFocus } from '../hooks/useHideTabBarOnFocus';
+import { useLocale } from '../utils/locale';
 
-const METHOD_GROUP_LABELS = {
+const METHOD_GROUP_LABELS_ID = {
   moota: 'Rekening tujuan',
   bank: 'Transfer bank',
   qris: 'QRIS',
@@ -39,8 +40,17 @@ const METHOD_GROUP_LABELS = {
   other: 'Metode lain',
 };
 
-function groupedMethods(methods) {
+const METHOD_GROUP_LABELS_EN = {
+  moota: 'Destination account',
+  bank: 'Bank transfer',
+  qris: 'QRIS',
+  ewallet: 'E-wallet',
+  other: 'Other methods',
+};
+
+function groupedMethods(methods, isEn) {
   const order = ['moota', 'bank', 'qris', 'ewallet', 'other'];
+  const labels = isEn ? METHOD_GROUP_LABELS_EN : METHOD_GROUP_LABELS_ID;
   const map = {};
   methods.forEach((item) => {
     const key = item.group || 'other';
@@ -49,13 +59,14 @@ function groupedMethods(methods) {
   });
   return order.filter((key) => map[key]?.length).map((key) => ({
     key,
-    title: METHOD_GROUP_LABELS[key] || key,
+    title: labels[key] || key,
     items: map[key],
   }));
 }
 
 export default function BookingPaymentScreen({ navigation, route }) {
   const { token } = useAuth();
+  const locale = useLocale(); const isEn = locale === 'en';
   const { bookingId, bookingCode } = route.params;
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
@@ -88,7 +99,7 @@ export default function BookingPaymentScreen({ navigation, route }) {
         setSelectedMethodMeta(meta[0]);
       }
     } catch (err) {
-      setError(err.message || 'Gagal memuat metode pembayaran');
+      setError(err.message || (isEn ? 'Failed to load payment methods' : 'Gagal memuat metode pembayaran'));
     }
   }, [token, bookingId]);
 
@@ -111,7 +122,7 @@ export default function BookingPaymentScreen({ navigation, route }) {
       if (data.payment_status === 'paid') {
         clearInterval(pollRef.current);
         if (!silent) {
-          notifySuccess('Pembayaran berhasil. Pesanan sudah lunas.');
+          notifySuccess(isEn ? 'Payment successful. Order is paid.' : 'Pembayaran berhasil. Pesanan sudah lunas.');
           navigateToBookingDetail(navigation, bookingId);
         }
       }
@@ -154,7 +165,9 @@ export default function BookingPaymentScreen({ navigation, route }) {
 
   const handlePay = async () => {
     if (!selectedMethod) {
-      setError(driver === 'moota' ? 'Pilih rekening tujuan transfer.' : 'Pilih metode pembayaran.');
+      setError(driver === 'moota'
+        ? (isEn ? 'Select a destination account.' : 'Pilih rekening tujuan transfer.')
+        : (isEn ? 'Select a payment method.' : 'Pilih metode pembayaran.'));
       return;
     }
     setPaying(true);
@@ -167,10 +180,10 @@ export default function BookingPaymentScreen({ navigation, route }) {
         if (data.payment_environment) setPaymentEnvironment(data.payment_environment);
         setSelectedMethodMeta(data.method_meta || methods.find((m) => m.id === selectedMethod) || null);
       } else {
-        setError('Respons pembayaran tidak valid.');
+        setError(isEn ? 'Invalid payment response.' : 'Respons pembayaran tidak valid.');
       }
     } catch (err) {
-      setError(err.message || 'Gagal membuat instruksi pembayaran');
+      setError(err.message || (isEn ? 'Failed to create payment instructions' : 'Gagal membuat instruksi pembayaran'));
     } finally {
       setPaying(false);
     }
@@ -178,17 +191,17 @@ export default function BookingPaymentScreen({ navigation, route }) {
 
   const openUrl = (url) => {
     if (!url) {
-      Alert.alert('URL tidak tersedia', 'Hubungi admin jika masalah berlanjut.');
+      Alert.alert(isEn ? 'URL not available' : 'URL tidak tersedia', isEn ? 'Contact admin if the issue persists.' : 'Hubungi admin jika masalah berlanjut.');
       return;
     }
-    Linking.openURL(url).catch(() => Alert.alert('Gagal membuka', url));
+    Linking.openURL(url).catch(() => Alert.alert(isEn ? 'Failed to open' : 'Gagal membuka', url));
   };
 
   const copyValue = async (value) => {
     if (!value) return;
     try {
       await Share.share({ message: String(value) });
-      notifySuccess('Siap disalin / dibagikan.');
+      notifySuccess(isEn ? 'Ready to copy / share.' : 'Siap disalin / dibagikan.');
     } catch {
       /* dismissed */
     }
@@ -204,7 +217,7 @@ export default function BookingPaymentScreen({ navigation, route }) {
   if (loading) {
     return (
       <View style={styles.container}>
-        <ScreenHeader title="Pembayaran" subtitle={bookingCode} onBack={() => navigation.goBack()} />
+        <ScreenHeader title={isEn ? 'Payment' : 'Pembayaran'} subtitle={bookingCode} onBack={() => navigation.goBack()} />
         <SkeletonList count={2} style={styles.skeleton} />
       </View>
     );
@@ -213,12 +226,12 @@ export default function BookingPaymentScreen({ navigation, route }) {
   if (isPaid) {
     return (
       <View style={styles.container}>
-        <ScreenHeader title="Pembayaran" onBack={() => navigation.goBack()} />
+        <ScreenHeader title={isEn ? 'Payment' : 'Pembayaran'} onBack={() => navigation.goBack()} />
         <View style={styles.paidWrap}>
           <SuccessState
-            title="Pembayaran lunas"
-            description={`Pesanan ${bookingCode} sudah dibayar.`}
-            actionLabel="Lihat detail pesanan"
+            title={isEn ? 'Payment complete' : 'Pembayaran lunas'}
+            description={isEn ? `Order ${bookingCode} has been paid.` : `Pesanan ${bookingCode} sudah dibayar.`}
+            actionLabel={isEn ? 'View order details' : 'Lihat detail pesanan'}
             onAction={() => navigateToBookingDetail(navigation, bookingId)}
           />
         </View>
@@ -229,14 +242,14 @@ export default function BookingPaymentScreen({ navigation, route }) {
   if (awaitingMuthowif) {
     return (
       <View style={styles.container}>
-        <ScreenHeader title="Pembayaran" subtitle={bookingCode} onBack={() => navigation.goBack()} />
+        <ScreenHeader title={isEn ? 'Payment' : 'Pembayaran'} subtitle={bookingCode} onBack={() => navigation.goBack()} />
         <View style={styles.paidWrap}>
           <EmptyState
             variant="package"
             icon={<Clock size={30} color="#7C3AED" strokeWidth={1.8} />}
-            title="Menunggu konfirmasi muthowif"
-            description="Pembayaran akan tersedia setelah muthowif mengonfirmasi pesanan Anda."
-            actionLabel="Lihat detail pesanan"
+            title={isEn ? 'Awaiting muthowif confirmation' : 'Menunggu konfirmasi muthowif'}
+            description={isEn ? 'Payment will be available after the muthowif confirms your order.' : 'Pembayaran akan tersedia setelah muthowif mengonfirmasi pesanan Anda.'}
+            actionLabel={isEn ? 'View order details' : 'Lihat detail pesanan'}
             onAction={() => navigateToBookingDetail(navigation, bookingId)}
           />
         </View>
@@ -254,29 +267,31 @@ export default function BookingPaymentScreen({ navigation, route }) {
   const footerAction = instructions
     ? (driver === 'moota'
       ? (mootaAccountNumber
-        ? { label: 'Salin nomor rekening', onPress: () => copyValue(mootaAccountNumber) }
+        ? { label: isEn ? 'Copy account number' : 'Salin nomor rekening', onPress: () => copyValue(mootaAccountNumber) }
         : uniqueAmount
-          ? { label: 'Salin nominal transfer', onPress: () => copyValue(uniqueAmount) }
+          ? { label: isEn ? 'Copy transfer amount' : 'Salin nominal transfer', onPress: () => copyValue(uniqueAmount) }
           : null)
       : instructions.deeplink_url
-        ? { label: 'Buka aplikasi e-wallet', onPress: () => openUrl(instructions.deeplink_url) }
+        ? { label: isEn ? 'Open e-wallet app' : 'Buka aplikasi e-wallet', onPress: () => openUrl(instructions.deeplink_url) }
         : instructions.checkout_url
-          ? { label: 'Buka halaman pembayaran', onPress: () => openUrl(instructions.checkout_url) }
+          ? { label: isEn ? 'Open payment page' : 'Buka halaman pembayaran', onPress: () => openUrl(instructions.checkout_url) }
           : instructions.va_number
-            ? { label: 'Salin nomor VA', onPress: () => copyValue(instructions.va_number) }
+            ? { label: isEn ? 'Copy VA number' : 'Salin nomor VA', onPress: () => copyValue(instructions.va_number) }
             : null)
     : {
-      label: 'Lanjut ke pembayaran',
+      label: isEn ? 'Continue to payment' : 'Lanjut ke pembayaran',
       onPress: handlePay,
       loading: paying,
       disabled: methods.length === 0,
     };
 
-  const methodGroups = groupedMethods(methods);
-  const methodTitle = driver === 'moota' ? 'Pilih rekening tujuan' : 'Pilih metode pembayaran';
+  const methodGroups = groupedMethods(methods, isEn);
+  const methodTitle = driver === 'moota'
+    ? (isEn ? 'Select destination account' : 'Pilih rekening tujuan')
+    : (isEn ? 'Select payment method' : 'Pilih metode pembayaran');
   const methodSub = driver === 'moota'
-    ? 'Pilih rekening bank untuk transfer pembayaran Anda'
-    : 'Pilih virtual account, QRIS, atau e-wallet';
+    ? (isEn ? 'Select a bank account for your transfer' : 'Pilih rekening bank untuk transfer pembayaran Anda')
+    : (isEn ? 'Select virtual account, QRIS, or e-wallet' : 'Pilih virtual account, QRIS, atau e-wallet');
 
   const footerCta = footerAction ? (
     <Button
@@ -294,7 +309,7 @@ export default function BookingPaymentScreen({ navigation, route }) {
 
   return (
     <View style={styles.container}>
-      <ScreenHeader title="Pembayaran" subtitle={bookingCode} onBack={() => navigation.goBack()} />
+      <ScreenHeader title={isEn ? 'Payment' : 'Pembayaran'} subtitle={bookingCode} onBack={() => navigation.goBack()} />
 
       <ScrollView
         contentContainerStyle={[styles.scroll, styles.scrollWithFooter]}
@@ -313,7 +328,7 @@ export default function BookingPaymentScreen({ navigation, route }) {
         <Card style={styles.summaryCard} padding={spacing.xl}>
           <View style={styles.summaryTop}>
             <View>
-              <Text style={styles.summaryLabel}>Total pembayaran</Text>
+              <Text style={styles.summaryLabel}>{isEn ? 'Total payment' : 'Total pembayaran'}</Text>
               <Text style={styles.summaryAmount}>{formatIdr(displayAmount)}</Text>
             </View>
             <View style={styles.summaryIcon}>
@@ -321,12 +336,12 @@ export default function BookingPaymentScreen({ navigation, route }) {
             </View>
           </View>
           <View style={styles.summaryDivider} />
-          <PaymentInfoRow icon={Receipt} label="Kode pesanan" value={bookingCode || '—'} />
+          <PaymentInfoRow icon={Receipt} label={isEn ? 'Order code' : 'Kode pesanan'} value={bookingCode || '—'} />
           {booking?.muthowif_profile?.user?.name ? (
             <PaymentInfoRow icon={User} label="Muthowif" value={booking.muthowif_profile.user.name} />
           ) : null}
           {booking?.starts_on ? (
-            <PaymentInfoRow icon={Calendar} label="Tanggal" value={formatDateRange(booking.starts_on, booking.ends_on)} />
+            <PaymentInfoRow icon={Calendar} label={isEn ? 'Date' : 'Tanggal'} value={formatDateRange(booking.starts_on, booking.ends_on)} />
           ) : null}
           {bookingMeta && paymentMeta ? (
             <View style={styles.badgeRow}>
@@ -338,7 +353,7 @@ export default function BookingPaymentScreen({ navigation, route }) {
 
         {pricing ? (
           <Card style={styles.pricingCard} padding={spacing.lg}>
-            <Text style={styles.pricingTitle}>Rincian pembayaran</Text>
+            <Text style={styles.pricingTitle}>{isEn ? 'Payment details' : 'Rincian pembayaran'}</Text>
             <CustomerPricingBreakdown pricing={pricing} />
           </Card>
         ) : null}
@@ -354,18 +369,18 @@ export default function BookingPaymentScreen({ navigation, route }) {
           <Card style={styles.instructionsCard} padding={spacing.xl}>
             <View style={styles.instructionsHead}>
               <ArrowLeftRight size={20} color={colors.baytgo} strokeWidth={2} />
-              <Text style={styles.instructionsTitle}>Instruksi pembayaran</Text>
+              <Text style={styles.instructionsTitle}>{isEn ? 'Payment instructions' : 'Instruksi pembayaran'}</Text>
             </View>
             <Text style={styles.instructionsText}>
               {driver === 'moota'
-                ? 'Transfer tepat sesuai nominal unik ke rekening di bawah. Jangan dibulatkan. Status berubah otomatis setelah dana masuk.'
-                : 'Selesaikan pembayaran lewat virtual account, QRIS, atau aplikasi e-wallet yang dipilih.'}
+                ? (isEn ? 'Transfer the exact unique amount to the account below. Do not round. Status updates automatically after funds are received.' : 'Transfer tepat sesuai nominal unik ke rekening di bawah. Jangan dibulatkan. Status berubah otomatis setelah dana masuk.')
+                : (isEn ? 'Complete payment via the selected virtual account, QRIS, or e-wallet app.' : 'Selesaikan pembayaran lewat virtual account, QRIS, atau aplikasi e-wallet yang dipilih.')}
             </Text>
 
             {instructions.expected_transfer_total ? (
               <PressableScale onPress={() => copyValue(uniqueAmount)} haptic="light">
                 <View style={styles.amountHighlight}>
-                  <Text style={styles.amountHighlightLabel}>Nominal transfer (ketuk untuk salin)</Text>
+                  <Text style={styles.amountHighlightLabel}>{isEn ? 'Transfer amount (tap to copy)' : 'Nominal transfer (ketuk untuk salin)'}</Text>
                   <Text style={styles.amountHighlightValue}>
                     {formatIdr(instructions.expected_transfer_total)}
                   </Text>
@@ -376,7 +391,7 @@ export default function BookingPaymentScreen({ navigation, route }) {
             {selectedMethodMeta || instructions.bank_name ? (
               <View style={styles.selectedBankCard}>
                 <Text style={styles.selectedBankTitle}>
-                  {driver === 'moota' ? 'Rekening tujuan' : 'Metode'}
+                  {driver === 'moota' ? (isEn ? 'Destination account' : 'Rekening tujuan') : (isEn ? 'Method' : 'Metode')}
                 </Text>
                 <Text style={styles.selectedBankName}>
                   {instructions.bank_name || selectedMethodMeta?.bank_name || selectedMethodMeta?.label}
@@ -393,11 +408,11 @@ export default function BookingPaymentScreen({ navigation, route }) {
             ) : null}
 
             <CopyableValue
-              label="Nomor rekening"
+              label={isEn ? 'Account number' : 'Nomor rekening'}
               value={mootaAccountNumber}
               onCopy={copyValue}
             />
-            <CopyableValue label="Nomor VA" value={instructions.va_number} onCopy={copyValue} />
+            <CopyableValue label={isEn ? 'VA number' : 'Nomor VA'} value={instructions.va_number} onCopy={copyValue} />
             {instructions.bill_key && instructions.biller_code ? (
               <View style={styles.billRow}>
                 <View style={styles.billItem}>
@@ -405,7 +420,7 @@ export default function BookingPaymentScreen({ navigation, route }) {
                   <Text style={styles.selectedBankName}>{instructions.bill_key}</Text>
                 </View>
                 <View style={styles.billItem}>
-                  <Text style={styles.selectedBankTitle}>Kode biller</Text>
+                  <Text style={styles.selectedBankTitle}>{isEn ? 'Biller code' : 'Kode biller'}</Text>
                   <Text style={styles.selectedBankName}>{instructions.biller_code}</Text>
                 </View>
               </View>
@@ -414,7 +429,7 @@ export default function BookingPaymentScreen({ navigation, route }) {
             {driver !== 'moota' && instructions.deeplink_url && instructions.checkout_url ? (
               <View style={styles.secondaryLink}>
                 <Button
-                  label="Buka halaman pembayaran"
+                  label={isEn ? 'Open payment page' : 'Buka halaman pembayaran'}
                   variant="secondary"
                   icon={<ExternalLink size={16} color={colors.baytgo} strokeWidth={2} />}
                   onPress={() => openUrl(instructions.checkout_url)}
@@ -425,7 +440,7 @@ export default function BookingPaymentScreen({ navigation, route }) {
             {instructions.expiry_time ? (
               <View style={styles.expiryRow}>
                 <AlarmClock size={16} color={colors.textMuted} strokeWidth={2} />
-                <Text style={styles.expiryText}>Batas waktu: {instructions.expiry_time}</Text>
+                <Text style={styles.expiryText}>{isEn ? 'Deadline:' : 'Batas waktu:'} {instructions.expiry_time}</Text>
               </View>
             ) : null}
 
@@ -433,7 +448,7 @@ export default function BookingPaymentScreen({ navigation, route }) {
 
             <View style={styles.pollHint}>
               <ActivityIndicator color={colors.baytgo} size="small" />
-              <Text style={styles.waitHint}>Menunggu verifikasi pembayaran. Status diperbarui otomatis.</Text>
+              <Text style={styles.waitHint}>{isEn ? 'Waiting for payment verification. Status updates automatically.' : 'Menunggu verifikasi pembayaran. Status diperbarui otomatis.'}</Text>
             </View>
           </Card>
         ) : (
@@ -444,8 +459,8 @@ export default function BookingPaymentScreen({ navigation, route }) {
             {methods.length === 0 ? (
               <EmptyState
                 variant="package"
-                title="Metode belum tersedia"
-                description="Metode pembayaran belum tersedia untuk pesanan ini."
+                title={isEn ? 'Methods not available' : 'Metode belum tersedia'}
+                description={isEn ? 'Payment methods are not yet available for this order.' : 'Metode pembayaran belum tersedia untuk pesanan ini.'}
               />
             ) : (
               methodGroups.map((group) => (
@@ -469,7 +484,7 @@ export default function BookingPaymentScreen({ navigation, route }) {
         )}
       </ScrollView>
 
-      <StickyFooter priceLabel="Total transfer" priceValue={formatIdr(displayAmount)}>
+      <StickyFooter priceLabel={isEn ? 'Total transfer' : 'Total transfer'} priceValue={formatIdr(displayAmount)}>
         {footerCta}
       </StickyFooter>
     </View>

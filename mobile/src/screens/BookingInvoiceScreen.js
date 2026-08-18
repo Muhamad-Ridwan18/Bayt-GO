@@ -13,9 +13,11 @@ import { InvoiceDocument } from '../features/booking/BookingInvoiceParts';
 import { colors, layout, radius, spacing } from '../theme/tokens';
 import { formatIdr } from '../utils/format';
 import { formatDateRange } from '../utils/bookingLabels';
+import { useLocale } from '../utils/locale';
 
 export default function BookingInvoiceScreen({ navigation, route }) {
   const { token } = useAuth();
+  const locale = useLocale(); const isEn = locale === 'en';
   const { bookingId } = route.params;
   const [invoice, setInvoice] = useState(null);
   const [loading, setLoading] = useState(true);
@@ -28,7 +30,7 @@ export default function BookingInvoiceScreen({ navigation, route }) {
       setInvoice(data);
       setError(null);
     } catch (err) {
-      setError(err.message || 'Gagal memuat invoice');
+      setError(err.message || (isEn ? 'Failed to load invoice' : 'Gagal memuat invoice'));
     } finally {
       setLoading(false);
     }
@@ -39,7 +41,13 @@ export default function BookingInvoiceScreen({ navigation, route }) {
   const handleShare = async () => {
     if (!invoice) return;
     const period = invoice.service_period;
-    const lines = [
+    const lines = isEn ? [
+      `Invoice ${invoice.booking_code}`,
+      `Customer: ${invoice.customer?.name || '—'}`,
+      `Muthowif: ${invoice.muthowif?.name || '—'}`,
+      `Period: ${formatDateRange(period?.starts_on, period?.ends_on)}`,
+      `Total: ${formatIdr(invoice.amounts?.total || 0)}`,
+    ] : [
       `Invoice ${invoice.booking_code}`,
       `Pelanggan: ${invoice.customer?.name || '—'}`,
       `Muthowif: ${invoice.muthowif?.name || '—'}`,
@@ -66,7 +74,7 @@ export default function BookingInvoiceScreen({ navigation, route }) {
     return (
       <View style={styles.container}>
         <ScreenHeader title="Invoice" onBack={() => navigation.goBack()} />
-        <ErrorState description={error || 'Invoice tidak tersedia'} onRetry={load} />
+        <ErrorState description={error || (isEn ? 'Invoice not available' : 'Invoice tidak tersedia')} onRetry={load} />
       </View>
     );
   }
@@ -89,7 +97,7 @@ export default function BookingInvoiceScreen({ navigation, route }) {
 
         <View style={styles.shareCta}>
           <Button
-            label="Bagikan invoice"
+            label={isEn ? 'Share invoice' : 'Bagikan invoice'}
             icon={<Share2 size={18} color={colors.white} strokeWidth={2} />}
             onPress={handleShare}
           />

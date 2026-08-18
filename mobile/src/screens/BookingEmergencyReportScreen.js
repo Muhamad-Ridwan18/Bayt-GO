@@ -9,9 +9,11 @@ import { useAuth } from '../context/AuthContext';
 import { Button, Card, FilterChip, InlineAlert, PressableScale, UploadPreviewStrip } from '../ui';
 import { notifySuccessThen } from '../utils/feedback';
 import { colors, layout, radius, spacing, typography } from '../theme/tokens';
+import { useLocale } from '../utils/locale';
 
 export default function BookingEmergencyReportScreen({ navigation, route }) {
   const { token } = useAuth();
+  const locale = useLocale(); const isEn = locale === 'en';
   const { bookingId, caseTypes = [] } = route.params;
 
   const [caseType, setCaseType] = useState(caseTypes[0]?.value || 'unreachable');
@@ -22,13 +24,13 @@ export default function BookingEmergencyReportScreen({ navigation, route }) {
 
   const pickEvidence = async () => {
     if (evidence.length >= 5) {
-      Alert.alert('Maksimal 5 file', 'Hapus file lama untuk menambah bukti baru.');
+      Alert.alert(isEn ? 'Maximum 5 files' : 'Maksimal 5 file', isEn ? 'Remove old files to add new evidence.' : 'Hapus file lama untuk menambah bukti baru.');
       return;
     }
 
-    Alert.alert('Unggah bukti', 'Pilih sumber file', [
+    Alert.alert(isEn ? 'Upload evidence' : 'Unggah bukti', isEn ? 'Choose file source' : 'Pilih sumber file', [
       {
-        text: 'Galeri',
+        text: isEn ? 'Gallery' : 'Galeri',
         onPress: async () => {
           const permission = await ImagePicker.requestMediaLibraryPermissionsAsync();
           if (!permission.granted) return;
@@ -42,7 +44,7 @@ export default function BookingEmergencyReportScreen({ navigation, route }) {
         },
       },
       {
-        text: 'Dokumen',
+        text: isEn ? 'Document' : 'Dokumen',
         onPress: async () => {
           const result = await DocumentPicker.getDocumentAsync({
             type: ['image/*', 'application/pdf'],
@@ -54,18 +56,18 @@ export default function BookingEmergencyReportScreen({ navigation, route }) {
           }
         },
       },
-      { text: 'Batal', style: 'cancel' },
+      { text: isEn ? 'Cancel' : 'Batal', style: 'cancel' },
     ]);
   };
 
   const handleSubmit = () => {
     Alert.alert(
-      'Kirim laporan darurat?',
-      'Tim Bayt-GO akan segera meninjau laporan insiden ini.',
+      isEn ? 'Submit emergency report?' : 'Kirim laporan darurat?',
+      isEn ? 'The Bayt-GO team will review this incident report immediately.' : 'Tim Bayt-GO akan segera meninjau laporan insiden ini.',
       [
-        { text: 'Batal', style: 'cancel' },
+        { text: isEn ? 'Cancel' : 'Batal', style: 'cancel' },
         {
-          text: 'Kirim',
+          text: isEn ? 'Submit' : 'Kirim',
           style: 'destructive',
           onPress: async () => {
             setLoading(true);
@@ -74,12 +76,12 @@ export default function BookingEmergencyReportScreen({ navigation, route }) {
               await submitEmergencyReport(token, bookingId, { caseType, description, evidence });
               notifySuccessThen(
                 navigation,
-                'Laporan insiden darurat telah dikirim.',
+                isEn ? 'Emergency incident report has been submitted.' : 'Laporan insiden darurat telah dikirim.',
                 'BookingDetail',
                 { bookingId },
               );
             } catch (err) {
-              setError(err.message || 'Gagal mengirim laporan');
+              setError(err.message || (isEn ? 'Failed to submit report' : 'Gagal mengirim laporan'));
             } finally {
               setLoading(false);
             }
@@ -91,19 +93,19 @@ export default function BookingEmergencyReportScreen({ navigation, route }) {
 
   return (
     <View style={styles.container}>
-      <ScreenHeader title="Lapor Insiden Darurat" onBack={() => navigation.goBack()} />
+      <ScreenHeader title={isEn ? 'Report Emergency Incident' : 'Lapor Insiden Darurat'} onBack={() => navigation.goBack()} />
 
       <ScrollView contentContainerStyle={styles.scroll} keyboardShouldPersistTaps="handled">
         <Card style={styles.warning} padding={spacing.lg} elevated={false}>
           <AlertTriangle size={20} color={colors.error} strokeWidth={2} />
           <Text style={styles.warningText}>
-            Gunakan fitur ini jika muthowif tidak dapat dihubungi, meninggalkan tugas, atau melanggar kesepakatan layanan.
+            {isEn ? 'Use this feature if the muthowif is unreachable, has abandoned duty, or violated the service agreement.' : 'Gunakan fitur ini jika muthowif tidak dapat dihubungi, meninggalkan tugas, atau melanggar kesepakatan layanan.'}
           </Text>
         </Card>
 
         {error ? <InlineAlert variant="error">{error}</InlineAlert> : null}
 
-        <Text style={styles.label}>Jenis insiden *</Text>
+        <Text style={styles.label}>{isEn ? 'Incident type *' : 'Jenis insiden *'}</Text>
         <View style={styles.caseList}>
           {caseTypes.map((item) => (
             <FilterChip
@@ -115,23 +117,23 @@ export default function BookingEmergencyReportScreen({ navigation, route }) {
           ))}
         </View>
 
-        <Text style={styles.label}>Keterangan</Text>
+        <Text style={styles.label}>{isEn ? 'Description' : 'Keterangan'}</Text>
         <TextInput
           style={styles.textarea}
           value={description}
           onChangeText={setDescription}
-          placeholder="Jelaskan situasi yang terjadi..."
+          placeholder={isEn ? 'Describe the situation...' : 'Jelaskan situasi yang terjadi...'}
           placeholderTextColor={colors.textMuted}
           multiline
           maxLength={5000}
           textAlignVertical="top"
         />
 
-        <Text style={styles.label}>Bukti (opsional, max 5)</Text>
+        <Text style={styles.label}>{isEn ? 'Evidence (optional, max 5)' : 'Bukti (opsional, max 5)'}</Text>
         <PressableScale onPress={pickEvidence} haptic="light">
           <Card style={styles.uploadBtn} padding={spacing.lg} elevated={false}>
             <CloudUpload size={20} color={colors.baytgo} strokeWidth={2} />
-            <Text style={styles.uploadText}>Tambah foto / PDF</Text>
+            <Text style={styles.uploadText}>{isEn ? 'Add photo / PDF' : 'Tambah foto / PDF'}</Text>
           </Card>
         </PressableScale>
 
@@ -141,7 +143,7 @@ export default function BookingEmergencyReportScreen({ navigation, route }) {
           style={styles.previewStrip}
         />
 
-        <Button label="Kirim Laporan Darurat" onPress={handleSubmit} loading={loading} variant="danger" style={styles.cta} />
+        <Button label={isEn ? 'Submit Emergency Report' : 'Kirim Laporan Darurat'} onPress={handleSubmit} loading={loading} variant="danger" style={styles.cta} />
       </ScrollView>
     </View>
   );

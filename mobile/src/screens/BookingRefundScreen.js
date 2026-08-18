@@ -8,9 +8,11 @@ import { Button, InlineAlert } from '../ui';
 import ChangePolicyNote from '../features/booking/ChangePolicyNote';
 import { notifySuccessThen } from '../utils/feedback';
 import { colors, layout, radius, spacing, typography } from '../theme/tokens';
+import { useLocale } from '../utils/locale';
 
 export default function BookingRefundScreen({ navigation, route }) {
   const { token } = useAuth();
+  const locale = useLocale(); const isEn = locale === 'en';
   const { bookingId, changePolicy: initialPolicy } = route.params;
 
   const [policy, setPolicy] = useState(initialPolicy || null);
@@ -30,7 +32,7 @@ export default function BookingRefundScreen({ navigation, route }) {
 
   const handleSubmit = async () => {
     if (!bankName.trim() || !accountHolder.trim() || !accountNumber.trim()) {
-      setError('Data rekening refund wajib diisi.');
+      setError(isEn ? 'Refund account details are required.' : 'Data rekening refund wajib diisi.');
       return;
     }
 
@@ -45,12 +47,12 @@ export default function BookingRefundScreen({ navigation, route }) {
       });
       notifySuccessThen(
         navigation,
-        'Permintaan refund berhasil diajukan.',
+        isEn ? 'Refund request submitted successfully.' : 'Permintaan refund berhasil diajukan.',
         'BookingDetail',
         { bookingId },
       );
     } catch (err) {
-      setError(err.message || 'Gagal mengajukan refund');
+      setError(err.message || (isEn ? 'Failed to submit refund' : 'Gagal mengajukan refund'));
     } finally {
       setLoading(false);
     }
@@ -58,7 +60,7 @@ export default function BookingRefundScreen({ navigation, route }) {
 
   return (
     <View style={styles.container}>
-      <ScreenHeader title="Ajukan Refund" onBack={() => navigation.goBack()} />
+      <ScreenHeader title={isEn ? 'Request Refund' : 'Ajukan Refund'} onBack={() => navigation.goBack()} />
 
       <ScrollView contentContainerStyle={styles.scroll} keyboardShouldPersistTaps="handled">
         {policy ? (
@@ -67,29 +69,29 @@ export default function BookingRefundScreen({ navigation, route }) {
           </View>
         ) : (
           <Text style={styles.intro}>
-            Isi rekening tujuan refund. Permintaan akan diproses oleh tim Bayt-GO sesuai kebijakan.
+            {isEn ? 'Fill in the refund destination account. The request will be processed by the Bayt-GO team according to policy.' : 'Isi rekening tujuan refund. Permintaan akan diproses oleh tim Bayt-GO sesuai kebijakan.'}
           </Text>
         )}
 
         {error ? <InlineAlert variant="error">{error}</InlineAlert> : null}
 
-        <AuthInput label="Nama bank" icon="business-outline" value={bankName} onChangeText={setBankName} placeholder="Contoh: BCA" />
-        <AuthInput label="Nama pemilik rekening" icon="person-outline" value={accountHolder} onChangeText={setAccountHolder} placeholder="Sesuai buku tabungan" />
-        <AuthInput label="Nomor rekening" icon="card-outline" value={accountNumber} onChangeText={setAccountNumber} placeholder="Hanya angka" keyboardType="number-pad" />
+        <AuthInput label={isEn ? 'Bank name' : 'Nama bank'} icon="business-outline" value={bankName} onChangeText={setBankName} placeholder={isEn ? 'e.g. BCA' : 'Contoh: BCA'} />
+        <AuthInput label={isEn ? 'Account holder name' : 'Nama pemilik rekening'} icon="person-outline" value={accountHolder} onChangeText={setAccountHolder} placeholder={isEn ? 'As on bank book' : 'Sesuai buku tabungan'} />
+        <AuthInput label={isEn ? 'Account number' : 'Nomor rekening'} icon="card-outline" value={accountNumber} onChangeText={setAccountNumber} placeholder={isEn ? 'Numbers only' : 'Hanya angka'} keyboardType="number-pad" />
 
-        <Text style={styles.label}>Catatan (opsional)</Text>
+        <Text style={styles.label}>{isEn ? 'Note (optional)' : 'Catatan (opsional)'}</Text>
         <TextInput
           style={styles.textarea}
           value={note}
           onChangeText={setNote}
-          placeholder="Alasan atau informasi tambahan..."
+          placeholder={isEn ? 'Reason or additional info...' : 'Alasan atau informasi tambahan...'}
           placeholderTextColor={colors.textMuted}
           multiline
           maxLength={2000}
           textAlignVertical="top"
         />
 
-        <Button label="Kirim Permintaan Refund" onPress={handleSubmit} loading={loading} style={styles.submit} />
+        <Button label={isEn ? 'Submit Refund Request' : 'Kirim Permintaan Refund'} onPress={handleSubmit} loading={loading} style={styles.submit} />
       </ScrollView>
     </View>
   );

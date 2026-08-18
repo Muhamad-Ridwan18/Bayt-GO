@@ -15,6 +15,7 @@ import { colors, layout, spacing, typography } from '../theme/tokens';
 import { estimateBookingPricing } from '../utils/bookingEstimate';
 import { navigateToSuccess } from '../navigation/rootNavigation';
 import { clearAffiliateCode, useAffiliateReferralCode } from '../utils/affiliateReferral';
+import { useLocale } from '../utils/locale';
 
 async function pickDocument() {
   const result = await DocumentPicker.getDocumentAsync({
@@ -28,6 +29,7 @@ async function pickDocument() {
 
 export default function BookingFormScreen({ navigation, route }) {
   const { token } = useAuth();
+  const locale = useLocale(); const isEn = locale === 'en';
   const { profileId, profileName, startDate, endDate, services = [], affiliateCode: routeAffiliateCode } = route.params;
 
   const groupService = useMemo(() => services.find((s) => s.type === 'group'), [services]);
@@ -103,20 +105,20 @@ export default function BookingFormScreen({ navigation, route }) {
   };
 
   const validateStep1 = () => {
-    if (!activeService) return 'Layanan tidak tersedia.';
+    if (!activeService) return isEn ? 'Service not available.' : 'Layanan tidak tersedia.';
     const count = parseInt(pilgrimCount, 10);
     if (!count || count < minPax || count > maxPax) {
-      return `Jumlah jamaah harus ${minPax}–${maxPax}.`;
+      return isEn ? `Pilgrim count must be ${minPax}–${maxPax}.` : `Jumlah jamaah harus ${minPax}–${maxPax}.`;
     }
     return null;
   };
 
   const validateStep2 = () => {
     if (!ticketOutbound || !ticketReturn || !passport) {
-      return 'Tiket berangkat, tiket pulang, dan paspor wajib diupload.';
+      return isEn ? 'Outbound ticket, return ticket, and passport are required.' : 'Tiket berangkat, tiket pulang, dan paspor wajib diupload.';
     }
     if (serviceType === 'group' && !itinerary) {
-      return 'Itinerary wajib untuk layanan grup.';
+      return isEn ? 'Itinerary is required for group service.' : 'Itinerary wajib untuk layanan grup.';
     }
     return null;
   };
@@ -162,9 +164,11 @@ export default function BookingFormScreen({ navigation, route }) {
       await clearAffiliateCode();
 
       navigateToSuccess(navigation, {
-        title: 'Pemesanan berhasil',
-        description: `Kode pesanan ${data.booking_code}. Permintaan Anda telah dikirim ke muthowif untuk ditinjau. Anda bisa melihat statusnya di halaman Pesanan.`,
-        primaryLabel: 'Lihat pesanan',
+        title: isEn ? 'Booking successful' : 'Pemesanan berhasil',
+        description: isEn
+          ? `Order code ${data.booking_code}. Your request has been sent to the muthowif for review. You can check its status on the Bookings page.`
+          : `Kode pesanan ${data.booking_code}. Permintaan Anda telah dikirim ke muthowif untuk ditinjau. Anda bisa melihat statusnya di halaman Pesanan.`,
+        primaryLabel: isEn ? 'View bookings' : 'Lihat pesanan',
         primaryTarget: {
           root: true,
           name: 'Main',
@@ -175,7 +179,7 @@ export default function BookingFormScreen({ navigation, route }) {
         },
       });
     } catch (err) {
-      setError(err.message || 'Gagal membuat pemesanan');
+      setError(err.message || (isEn ? 'Failed to create booking' : 'Gagal membuat pemesanan'));
     } finally {
       setLoading(false);
     }
@@ -183,7 +187,7 @@ export default function BookingFormScreen({ navigation, route }) {
 
   return (
     <View style={styles.container}>
-      <ScreenHeader title="Pesan Muthowif" onBack={() => (step === 2 ? setStep(1) : navigation.goBack())} />
+      <ScreenHeader title={isEn ? 'Book Muthowif' : 'Pesan Muthowif'} onBack={() => (step === 2 ? setStep(1) : navigation.goBack())} />
 
       <ScrollView contentContainerStyle={styles.scroll} keyboardShouldPersistTaps="handled">
         <Card padding={spacing.lg} elevated={false} style={styles.headerCard}>
@@ -198,11 +202,11 @@ export default function BookingFormScreen({ navigation, route }) {
 
         {step === 1 ? (
           <>
-            <SectionTitle>Tipe layanan</SectionTitle>
+            <SectionTitle>{isEn ? 'Service type' : 'Tipe layanan'}</SectionTitle>
             <View style={styles.serviceRow}>
               {groupService ? (
                 <ServiceOption
-                  label="Grup"
+                  label={isEn ? 'Group' : 'Grup'}
                   price={groupService.price}
                   active={serviceType === 'group'}
                   onPress={() => setServiceType('group')}
@@ -210,7 +214,7 @@ export default function BookingFormScreen({ navigation, route }) {
               ) : null}
               {privateService ? (
                 <ServiceOption
-                  label="Privat"
+                  label={isEn ? 'Private' : 'Privat'}
                   price={privateService.price}
                   active={serviceType === 'private'}
                   onPress={() => setServiceType('private')}
@@ -218,7 +222,7 @@ export default function BookingFormScreen({ navigation, route }) {
               ) : null}
             </View>
 
-            <SectionTitle>Jumlah jamaah</SectionTitle>
+            <SectionTitle>{isEn ? 'Number of pilgrims' : 'Jumlah jamaah'}</SectionTitle>
             <PilgrimCounter value={pilgrimCount} minPax={minPax} maxPax={maxPax} onChange={setPilgrimCount} />
 
             <BookingAddonChoices
@@ -234,7 +238,7 @@ export default function BookingFormScreen({ navigation, route }) {
 
             {addOns.length > 0 ? (
               <>
-                <SectionTitle>Add-on</SectionTitle>
+                <SectionTitle>{isEn ? 'Add-ons' : 'Add-on'}</SectionTitle>
                 {addOns.map((addon) => (
                   <AddOnToggle
                     key={addon.id}
@@ -246,40 +250,40 @@ export default function BookingFormScreen({ navigation, route }) {
               </>
             ) : null}
 
-            <SectionTitle>Kode affiliate (opsional)</SectionTitle>
+            <SectionTitle>{isEn ? 'Affiliate code (optional)' : 'Kode affiliate (opsional)'}</SectionTitle>
             <AuthInput
               icon={Gift}
               value={affiliateCode}
               onChangeText={setAffiliateCode}
-              placeholder="Kode referral"
+              placeholder={isEn ? 'Referral code' : 'Kode referral'}
               autoCapitalize="characters"
             />
             <Text style={styles.affiliateHint}>
-              Isi jika Anda booking lewat tautan atau kode affiliate.
+              {isEn ? 'Fill in if you booked via an affiliate link or code.' : 'Isi jika Anda booking lewat tautan atau kode affiliate.'}
             </Text>
 
             <BookingEstimateCard estimate={priceEstimate} />
 
-            <Button label="Lanjut ke dokumen" onPress={handleNext} style={styles.cta} />
+            <Button label={isEn ? 'Continue to documents' : 'Lanjut ke dokumen'} onPress={handleNext} style={styles.cta} />
           </>
         ) : (
           <>
             <DocumentPickerField
-              label="Tiket berangkat"
+              label={isEn ? 'Outbound ticket' : 'Tiket berangkat'}
               required
               file={ticketOutbound}
               onPick={async () => setTicketOutbound(await pickDocument())}
               onClear={() => setTicketOutbound(null)}
             />
             <DocumentPickerField
-              label="Tiket pulang"
+              label={isEn ? 'Return ticket' : 'Tiket pulang'}
               required
               file={ticketReturn}
               onPick={async () => setTicketReturn(await pickDocument())}
               onClear={() => setTicketReturn(null)}
             />
             <DocumentPickerField
-              label="Paspor"
+              label={isEn ? 'Passport' : 'Paspor'}
               required
               file={passport}
               onPick={async () => setPassport(await pickDocument())}
@@ -302,12 +306,12 @@ export default function BookingFormScreen({ navigation, route }) {
             />
 
             <InlineAlert variant="warning">
-              Dokumen bersifat pribadi. Jangan bagikan ke pihak lain.
+              {isEn ? 'Documents are private. Do not share with others.' : 'Dokumen bersifat pribadi. Jangan bagikan ke pihak lain.'}
             </InlineAlert>
 
-            <Button label="Buat pemesanan" onPress={openTerms} loading={loading} style={styles.cta} />
+            <Button label={isEn ? 'Create booking' : 'Buat pemesanan'} onPress={openTerms} loading={loading} style={styles.cta} />
             <Text style={styles.consentHint}>
-              Dengan mengajukan, Anda setuju muthowif akan meninjau permintaan (status Menunggu).
+              {isEn ? 'By submitting, you agree that the muthowif will review your request (Pending status).' : 'Dengan mengajukan, Anda setuju muthowif akan meninjau permintaan (status Menunggu).'}
             </Text>
           </>
         )}

@@ -7,9 +7,11 @@ import { useAuth } from '../context/AuthContext';
 import { Button, Card, InlineAlert } from '../ui';
 import { notifySuccessThen } from '../utils/feedback';
 import { colors, layout, radius, spacing, typography } from '../theme/tokens';
+import { useLocale } from '../utils/locale';
 
 export default function BookingRatingScreen({ navigation, route }) {
   const { token } = useAuth();
+  const locale = useLocale(); const isEn = locale === 'en';
   const { bookingId, mode = 'review', initialRating = 5, initialComment = '' } = route.params;
 
   const isComplete = mode === 'complete';
@@ -20,7 +22,7 @@ export default function BookingRatingScreen({ navigation, route }) {
 
   const handleSubmit = async () => {
     if (rating < 1) {
-      setError('Pilih rating 1–5 bintang.');
+      setError(isEn ? 'Select a rating from 1–5 stars.' : 'Pilih rating 1–5 bintang.');
       return;
     }
 
@@ -31,16 +33,16 @@ export default function BookingRatingScreen({ navigation, route }) {
         await completeBooking(token, bookingId, { rating, comment: comment.trim() || null });
         notifySuccessThen(
           navigation,
-          'Layanan ditandai selesai. Terima kasih atas ulasannya.',
+          isEn ? 'Service marked complete. Thank you for your review.' : 'Layanan ditandai selesai. Terima kasih atas ulasannya.',
           'BookingDetail',
           { bookingId },
         );
       } else {
         await submitReview(token, bookingId, { rating, comment: comment.trim() || null });
-        notifySuccessThen(navigation, 'Ulasan berhasil disimpan.', () => navigation.goBack());
+        notifySuccessThen(navigation, isEn ? 'Review saved successfully.' : 'Ulasan berhasil disimpan.', () => navigation.goBack());
       }
     } catch (err) {
-      setError(err.message || 'Gagal menyimpan');
+      setError(err.message || (isEn ? 'Failed to save' : 'Gagal menyimpan'));
     } finally {
       setLoading(false);
     }
@@ -49,15 +51,15 @@ export default function BookingRatingScreen({ navigation, route }) {
   return (
     <View style={styles.container}>
       <ScreenHeader
-        title={isComplete ? 'Selesaikan Layanan' : 'Beri Ulasan'}
+        title={isComplete ? (isEn ? 'Complete Service' : 'Selesaikan Layanan') : (isEn ? 'Write Review' : 'Beri Ulasan')}
         onBack={() => navigation.goBack()}
       />
 
       <ScrollView contentContainerStyle={styles.scroll} keyboardShouldPersistTaps="handled">
         <Text style={styles.intro}>
           {isComplete
-            ? 'Konfirmasi bahwa layanan muthowif sudah selesai dan beri penilaian.'
-            : 'Bagikan pengalaman Anda dengan muthowif ini.'}
+            ? (isEn ? 'Confirm the muthowif service is complete and give a rating.' : 'Konfirmasi bahwa layanan muthowif sudah selesai dan beri penilaian.')
+            : (isEn ? 'Share your experience with this muthowif.' : 'Bagikan pengalaman Anda dengan muthowif ini.')}
         </Text>
 
         {error ? <InlineAlert variant="error">{error}</InlineAlert> : null}
@@ -66,12 +68,12 @@ export default function BookingRatingScreen({ navigation, route }) {
           <StarRatingPicker label="Rating *" value={rating} onChange={setRating} />
         </Card>
 
-        <Text style={styles.label}>Ulasan (opsional)</Text>
+        <Text style={styles.label}>{isEn ? 'Review (optional)' : 'Ulasan (opsional)'}</Text>
         <TextInput
           style={styles.textarea}
           value={comment}
           onChangeText={setComment}
-          placeholder="Ceritakan pengalaman ibadah Anda..."
+          placeholder={isEn ? 'Tell us about your worship experience...' : 'Ceritakan pengalaman ibadah Anda...'}
           placeholderTextColor={colors.textMuted}
           multiline
           maxLength={2000}
@@ -79,7 +81,7 @@ export default function BookingRatingScreen({ navigation, route }) {
         />
 
         <Button
-          label={isComplete ? 'Selesaikan & Kirim Ulasan' : 'Simpan Ulasan'}
+          label={isComplete ? (isEn ? 'Complete & Submit Review' : 'Selesaikan & Kirim Ulasan') : (isEn ? 'Save Review' : 'Simpan Ulasan')}
           onPress={handleSubmit}
           loading={loading}
         />

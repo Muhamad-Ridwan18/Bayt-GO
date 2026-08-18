@@ -10,6 +10,7 @@ import ChangePolicyNote from '../features/booking/ChangePolicyNote';
 import { notifySuccessThen } from '../utils/feedback';
 import { colors, layout, radius, spacing, typography } from '../theme/tokens';
 import { billingNights, formatDateRange } from '../utils/bookingLabels';
+import { useLocale } from '../utils/locale';
 
 function addDays(isoDate, days) {
   const d = parseIsoDate(isoDate);
@@ -19,6 +20,7 @@ function addDays(isoDate, days) {
 
 export default function BookingRescheduleScreen({ navigation, route }) {
   const { token } = useAuth();
+  const locale = useLocale(); const isEn = locale === 'en';
   const { bookingId, startsOn, endsOn, changePolicy: initialPolicy } = route.params;
 
   const nights = useMemo(() => billingNights(startsOn, endsOn), [startsOn, endsOn]);
@@ -45,7 +47,7 @@ export default function BookingRescheduleScreen({ navigation, route }) {
 
   const handleSubmit = async () => {
     if (!newStart) {
-      setError('Pilih tanggal mulai baru.');
+      setError(isEn ? 'Select a new start date.' : 'Pilih tanggal mulai baru.');
       return;
     }
 
@@ -59,12 +61,12 @@ export default function BookingRescheduleScreen({ navigation, route }) {
       });
       notifySuccessThen(
         navigation,
-        'Permintaan reschedule berhasil diajukan.',
+        isEn ? 'Reschedule request submitted successfully.' : 'Permintaan reschedule berhasil diajukan.',
         'BookingDetail',
         { bookingId },
       );
     } catch (err) {
-      setError(err.message || 'Gagal mengajukan reschedule');
+      setError(err.message || (isEn ? 'Failed to submit reschedule' : 'Gagal mengajukan reschedule'));
     } finally {
       setLoading(false);
     }
@@ -72,16 +74,16 @@ export default function BookingRescheduleScreen({ navigation, route }) {
 
   return (
     <View style={styles.container}>
-      <ScreenHeader title="Ajukan Reschedule" onBack={() => navigation.goBack()} />
+      <ScreenHeader title={isEn ? 'Request Reschedule' : 'Ajukan Reschedule'} onBack={() => navigation.goBack()} />
 
       <ScrollView contentContainerStyle={styles.scroll} keyboardShouldPersistTaps="handled">
         <Card padding={spacing.lg} elevated={false}>
           <View style={styles.infoHeader}>
             <Calendar size={16} color={colors.baytgo} strokeWidth={2} />
-            <Text style={styles.infoLabel}>Jadwal saat ini</Text>
+            <Text style={styles.infoLabel}>{isEn ? 'Current schedule' : 'Jadwal saat ini'}</Text>
           </View>
           <Text style={styles.infoValue}>{formatDateRange(startsOn, endsOn)}</Text>
-          <Text style={styles.infoHint}>{nights} hari — durasi harus sama setelah reschedule</Text>
+          <Text style={styles.infoHint}>{isEn ? `${nights} days — duration must remain the same after reschedule` : `${nights} hari — durasi harus sama setelah reschedule`}</Text>
         </Card>
 
         {policy ? (
@@ -91,39 +93,39 @@ export default function BookingRescheduleScreen({ navigation, route }) {
         ) : null}
 
         <Text style={styles.intro}>
-          Pilih tanggal mulai baru. Tanggal selesai dihitung otomatis ({nights} hari).
+          {isEn ? `Select a new start date. End date is calculated automatically (${nights} days).` : `Pilih tanggal mulai baru. Tanggal selesai dihitung otomatis (${nights} hari).`}
         </Text>
 
         {error ? <InlineAlert variant="error">{error}</InlineAlert> : null}
 
         <DatePickerField
-          label="Tanggal mulai baru"
+          label={isEn ? 'New start date' : 'Tanggal mulai baru'}
           value={newStart}
           onChange={setNewStart}
           minimumDate={minStartDate}
-          placeholder="Pilih tanggal"
+          placeholder={isEn ? 'Select date' : 'Pilih tanggal'}
         />
 
         {newStart ? (
           <Card style={styles.preview} padding={spacing.md} elevated={false}>
-            <Text style={styles.previewLabel}>Jadwal baru</Text>
+            <Text style={styles.previewLabel}>{isEn ? 'New schedule' : 'Jadwal baru'}</Text>
             <Text style={styles.previewValue}>{formatDateRange(newStart, newEnd)}</Text>
           </Card>
         ) : null}
 
-        <Text style={styles.label}>Catatan (opsional)</Text>
+        <Text style={styles.label}>{isEn ? 'Note (optional)' : 'Catatan (opsional)'}</Text>
         <TextInput
           style={styles.textarea}
           value={note}
           onChangeText={setNote}
-          placeholder="Alasan reschedule..."
+          placeholder={isEn ? 'Reason for reschedule...' : 'Alasan reschedule...'}
           placeholderTextColor={colors.textMuted}
           multiline
           maxLength={2000}
           textAlignVertical="top"
         />
 
-        <Button label="Kirim Permintaan Reschedule" onPress={handleSubmit} loading={loading} />
+        <Button label={isEn ? 'Submit Reschedule Request' : 'Kirim Permintaan Reschedule'} onPress={handleSubmit} loading={loading} />
       </ScrollView>
     </View>
   );
