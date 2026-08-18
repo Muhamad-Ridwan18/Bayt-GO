@@ -602,7 +602,7 @@ class RegisteredUserController extends Controller
             $role = UserRole::from($input['role']);
 
             $reregistration = app(MuthowifRejectedReregistration::class);
-            $existingRejected = $role === UserRole::Muthowif
+            $existingRejected = $role === UserRole::Muthowif    
                 ? $reregistration->findByEmail((string) $input['email'])
                 : null;
 
