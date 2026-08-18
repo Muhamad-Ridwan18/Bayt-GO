@@ -35,6 +35,7 @@ import {
 import { colors, gradients, layout, radius, spacing, typography } from '../theme/tokens';
 import { formatIdr } from '../utils/format';
 import { resolveMediaUrl } from '../utils/mediaUrl';
+import { useLocale } from '../utils/locale';
 import {
   bookingStatusMeta, paymentStatusMeta, formatDateRange,
   needsPayment, canCancelBooking, canCompleteBooking, canReviewBooking, canViewInvoice,
@@ -47,6 +48,8 @@ import { CustomerPricingBreakdown, customerPayableAmount } from '../components/B
 export default function BookingDetailScreen({ navigation, route }) {
   const { token, user } = useAuth();
   const { bookingId } = route.params;
+  const locale = useLocale();
+  const isEn = locale === 'en';
   const [booking, setBooking] = useState(null);
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
@@ -62,12 +65,12 @@ export default function BookingDetailScreen({ navigation, route }) {
       setBooking(data);
       setError(null);
     } catch (err) {
-      setError(err.message || 'Gagal memuat detail');
+      setError(err.message || (isEn ? 'Failed to load details' : 'Gagal memuat detail'));
     } finally {
       setLoading(false);
       setRefreshing(false);
     }
-  }, [token, bookingId]);
+  }, [token, bookingId, isEn]);
 
   useFocusEffect(useCallback(() => { load(); }, [load]));
   useHideTabBarOnFocus(navigation);
@@ -87,48 +90,51 @@ export default function BookingDetailScreen({ navigation, route }) {
 
     if (unpaid) {
       return {
-        label: 'Bayar sekarang',
+        label: isEn ? 'Pay now' : 'Bayar sekarang',
         icon: <Wallet size={18} color={colors.white} strokeWidth={2} />,
         onPress: () => navigation.navigate('BookingPayment', {
           bookingId: booking.id,
           bookingCode: booking.booking_code,
         }),
         gradient: true,
-        priceLabel: 'Total bayar',
+        priceLabel: isEn ? 'Total' : 'Total bayar',
         priceValue: payable,
       };
     }
     if (canCompleteBooking(booking)) {
       return {
-        label: 'Selesaikan layanan',
+        label: isEn ? 'Complete service' : 'Selesaikan layanan',
         icon: <CheckCircle size={18} color={colors.white} strokeWidth={2} />,
         onPress: () => navigation.navigate('BookingRating', { bookingId: booking.id, mode: 'complete' }),
       };
     }
     if (canReviewBooking(booking) && !booking.review) {
       return {
-        label: 'Beri ulasan',
+        label: isEn ? 'Leave a review' : 'Beri ulasan',
         variant: 'secondary',
         icon: <Star size={18} color={colors.baytgo} strokeWidth={2} />,
         onPress: () => navigation.navigate('BookingRating', { bookingId: booking.id, mode: 'review' }),
       };
     }
     return null;
-  }, [booking, navigation]);
+  }, [booking, navigation, isEn]);
 
   const handleSelectReplacement = (offer) => {
     const name = offer.muthowif?.name || 'Muthowif';
-    Alert.alert('Pilih muthowif pengganti?', `Layanan akan dilanjutkan dengan ${name}.`, [
-      { text: 'Batal', style: 'cancel' },
+    Alert.alert(
+      isEn ? 'Select replacement muthowif?' : 'Pilih muthowif pengganti?',
+      isEn ? `The service will continue with ${name}.` : `Layanan akan dilanjutkan dengan ${name}.`,
+      [
+      { text: isEn ? 'Cancel' : 'Batal', style: 'cancel' },
       {
-        text: 'Pilih',
+        text: isEn ? 'Select' : 'Pilih',
         onPress: async () => {
           try {
             await selectEmergencyReplacement(token, bookingId, offer.id);
-            notifySuccess('Muthowif pengganti telah dipilih.');
+            notifySuccess(isEn ? 'Replacement muthowif selected.' : 'Muthowif pengganti telah dipilih.');
             load(true);
           } catch (err) {
-            Alert.alert('Gagal', err.message || 'Tidak dapat memilih pengganti');
+            Alert.alert(isEn ? 'Failed' : 'Gagal', err.message || (isEn ? 'Unable to select replacement' : 'Tidak dapat memilih pengganti'));
           }
         },
       },
@@ -136,42 +142,45 @@ export default function BookingDetailScreen({ navigation, route }) {
   };
 
   const handleCancel = useCallback(() => {
-    Alert.alert('Batalkan pesanan?', 'Pesanan yang dibatalkan tidak dapat dipulihkan.', [
-      { text: 'Tidak', style: 'cancel' },
+    Alert.alert(
+      isEn ? 'Cancel order?' : 'Batalkan pesanan?',
+      isEn ? 'A cancelled order cannot be restored.' : 'Pesanan yang dibatalkan tidak dapat dipulihkan.',
+      [
+      { text: isEn ? 'No' : 'Tidak', style: 'cancel' },
       {
-        text: 'Ya, batalkan', style: 'destructive',
+        text: isEn ? 'Yes, cancel' : 'Ya, batalkan', style: 'destructive',
         onPress: async () => {
           setCancelling(true);
           try {
             await cancelBooking(token, bookingId);
-            notifySuccess('Pesanan berhasil dibatalkan.');
+            notifySuccess(isEn ? 'Order cancelled successfully.' : 'Pesanan berhasil dibatalkan.');
             load(true);
           } catch (err) {
-            Alert.alert('Gagal', err.message || 'Tidak dapat membatalkan pesanan');
+            Alert.alert(isEn ? 'Failed' : 'Gagal', err.message || (isEn ? 'Unable to cancel order' : 'Tidak dapat membatalkan pesanan'));
           } finally {
             setCancelling(false);
           }
         },
       },
     ]);
-  }, [token, bookingId, load]);
+  }, [token, bookingId, load, isEn]);
 
   const handleResendSupportCompletionCode = () => {
     Alert.alert(
-      'Kirim ulang kode verifikasi?',
-      'Kode baru akan dikirim ke WhatsApp Anda.',
+      isEn ? 'Resend verification code?' : 'Kirim ulang kode verifikasi?',
+      isEn ? 'A new code will be sent to your WhatsApp.' : 'Kode baru akan dikirim ke WhatsApp Anda.',
       [
-        { text: 'Batal', style: 'cancel' },
+        { text: isEn ? 'Cancel' : 'Batal', style: 'cancel' },
         {
-          text: 'Kirim ulang',
+          text: isEn ? 'Resend' : 'Kirim ulang',
           onPress: async () => {
             setRequestingCompletion(true);
             try {
               await resendSupportCompletionCode(token, bookingId);
-              notifySuccess('Kode verifikasi dikirim via WhatsApp.');
+              notifySuccess(isEn ? 'Verification code sent via WhatsApp.' : 'Kode verifikasi dikirim via WhatsApp.');
               load(true);
             } catch (err) {
-              Alert.alert('Gagal', err.message || 'Tidak dapat mengirim kode');
+              Alert.alert(isEn ? 'Failed' : 'Gagal', err.message || (isEn ? 'Unable to resend code' : 'Tidak dapat mengirim kode'));
             } finally {
               setRequestingCompletion(false);
             }
@@ -198,8 +207,8 @@ export default function BookingDetailScreen({ navigation, route }) {
     if (canViewInvoice(booking)) {
       actions.push({
         key: 'invoice',
-        label: 'Lihat invoice',
-        hint: 'Bukti pembayaran resmi',
+        label: isEn ? 'View invoice' : 'Lihat invoice',
+        hint: isEn ? 'Official payment proof' : 'Bukti pembayaran resmi',
         icon: FileText,
         onPress: () => navigation.navigate('BookingInvoice', { bookingId: booking.id }),
       });
@@ -207,8 +216,8 @@ export default function BookingDetailScreen({ navigation, route }) {
     if (canOpenBookingChat(booking)) {
       actions.push({
         key: 'chat',
-        label: 'Chat dengan muthowif',
-        hint: 'Diskusi terkait pesanan',
+        label: isEn ? 'Chat with muthowif' : 'Chat dengan muthowif',
+        hint: isEn ? 'Order-related discussion' : 'Diskusi terkait pesanan',
         icon: MessageCircle,
         tone: 'success',
         onPress: () => openChat(muthowifName),
@@ -217,8 +226,8 @@ export default function BookingDetailScreen({ navigation, route }) {
     if (canRequestRefund(booking)) {
       actions.push({
         key: 'refund',
-        label: 'Ajukan refund',
-        hint: 'Permintaan pengembalian dana',
+        label: isEn ? 'Request refund' : 'Ajukan refund',
+        hint: isEn ? 'Refund request' : 'Permintaan pengembalian dana',
         icon: Banknote,
         tone: 'warning',
         onPress: () => navigation.navigate('BookingRefund', {
@@ -230,8 +239,8 @@ export default function BookingDetailScreen({ navigation, route }) {
     if (canRequestReschedule(booking)) {
       actions.push({
         key: 'reschedule',
-        label: 'Ajukan reschedule',
-        hint: 'Ubah tanggal perjalanan',
+        label: isEn ? 'Request reschedule' : 'Ajukan reschedule',
+        hint: isEn ? 'Change travel date' : 'Ubah tanggal perjalanan',
         icon: Calendar,
         onPress: () => navigation.navigate('BookingReschedule', {
           bookingId: booking.id,
@@ -244,8 +253,8 @@ export default function BookingDetailScreen({ navigation, route }) {
     if (canCancelBooking(booking)) {
       actions.push({
         key: 'cancel',
-        label: cancelling ? 'Membatalkan pesanan...' : 'Batalkan pesanan',
-        hint: 'Pesanan tidak dapat dipulihkan',
+        label: cancelling ? (isEn ? 'Cancelling...' : 'Membatalkan pesanan...') : (isEn ? 'Cancel order' : 'Batalkan pesanan'),
+        hint: isEn ? 'Order cannot be restored' : 'Pesanan tidak dapat dipulihkan',
         icon: XCircle,
         tone: 'danger',
         disabled: cancelling,
@@ -254,12 +263,12 @@ export default function BookingDetailScreen({ navigation, route }) {
     }
 
     return actions;
-  }, [booking, cancelling, navigation, openChat, handleCancel]);
+  }, [booking, cancelling, navigation, openChat, handleCancel, isEn]);
 
   if (loading && !refreshing) {
     return (
       <View style={styles.container}>
-        <ScreenHeader title="Detail Pesanan" onBack={() => navigation.goBack()} />
+        <ScreenHeader title={isEn ? 'Order details' : 'Detail Pesanan'} onBack={() => navigation.goBack()} />
         <SkeletonList count={3} style={styles.skeleton} />
       </View>
     );
@@ -268,8 +277,8 @@ export default function BookingDetailScreen({ navigation, route }) {
   if (error || !booking) {
     return (
       <View style={styles.container}>
-        <ScreenHeader title="Detail Pesanan" onBack={() => navigation.goBack()} />
-        <ErrorState description={error || 'Pesanan tidak ditemukan'} onRetry={() => load()} />
+        <ScreenHeader title={isEn ? 'Order details' : 'Detail Pesanan'} onBack={() => navigation.goBack()} />
+        <ErrorState description={error || (isEn ? 'Order not found' : 'Pesanan tidak ditemukan')} onRetry={() => load()} />
       </View>
     );
   }
@@ -282,12 +291,14 @@ export default function BookingDetailScreen({ navigation, route }) {
   const emergency = booking.emergency || {};
   const showEmergencyZone = booking.status === 'confirmed' && booking.payment_status === 'paid';
   const feeHint = booking.pricing?.base > 0 && booking.pricing?.platform_fee > 0
-    ? `Termasuk biaya platform ${booking.pricing.platform_fee_percent || 7.5}%`
+    ? (isEn
+      ? `Includes platform fee ${booking.pricing.platform_fee_percent || 7.5}%`
+      : `Termasuk biaya platform ${booking.pricing.platform_fee_percent || 7.5}%`)
     : null;
 
   return (
     <View style={styles.container}>
-      <ScreenHeader title="Detail Pesanan" onBack={() => navigation.goBack()} />
+      <ScreenHeader title={isEn ? 'Order details' : 'Detail Pesanan'} onBack={() => navigation.goBack()} />
 
       <ScrollView
         contentContainerStyle={[styles.scroll, stickyAction && styles.scrollWithFooter]}
@@ -319,14 +330,14 @@ export default function BookingDetailScreen({ navigation, route }) {
 
         {hasPendingReschedule(booking) ? (
           <View style={styles.pendingBanner}>
-            <PendingBanner text="Permintaan reschedule sedang diproses" />
+            <PendingBanner text={isEn ? 'Reschedule request is being processed' : 'Permintaan reschedule sedang diproses'} />
           </View>
         ) : null}
 
         <TripSummaryGrid booking={booking} nights={nights} />
 
         {booking.change_policy && booking.status === 'confirmed' && booking.payment_status === 'paid' ? (
-          <BookingSection title="Refund & reschedule">
+          <BookingSection title={isEn ? 'Refund & reschedule' : 'Refund & reschedule'}>
             <ChangePolicyNote policy={booking.change_policy} />
           </BookingSection>
         ) : null}
@@ -334,35 +345,36 @@ export default function BookingDetailScreen({ navigation, route }) {
         <BookingActionList actions={quickActions} />
 
         {(booking.documents || []).length > 0 ? (
-          <BookingDocumentGallery token={token} bookingId={bookingId} documents={booking.documents} title="Dokumen Anda" />
+          <BookingDocumentGallery token={token} bookingId={bookingId} documents={booking.documents} title={isEn ? 'Your documents' : 'Dokumen Anda'} />
         ) : null}
 
-        <BookingSection title="Rincian biaya">
+        <BookingSection title={isEn ? 'Cost breakdown' : 'Rincian biaya'}>
           <CustomerPricingBreakdown pricing={booking.pricing} />
         </BookingSection>
 
         {booking.paid_at ? (
-          <BookingSection title="Pembayaran">
+          <BookingSection title={isEn ? 'Payment' : 'Pembayaran'}>
             <Text style={styles.paidText}>
-              Dibayar pada {new Date(booking.paid_at).toLocaleString('id-ID')}
+              {isEn ? 'Paid on ' : 'Dibayar pada '}
+              {new Date(booking.paid_at).toLocaleString(isEn ? 'en-US' : 'id-ID')}
             </Text>
           </BookingSection>
         ) : null}
 
         {(booking.refund_requests?.length > 0 || booking.reschedule_requests?.length > 0) ? (
-          <BookingSection title="Riwayat perubahan">
+          <BookingSection title={isEn ? 'Change history' : 'Riwayat perubahan'}>
             {booking.refund_requests?.map((req) => (
               <HistoryItemCard
                 key={req.id}
-                title={`Refund — ${changeRequestStatusLabel(req.status)}`}
+                title={isEn ? `Refund — ${changeRequestStatusLabel(req.status)}` : `Refund — ${changeRequestStatusLabel(req.status)}`}
                 lines={req.reason ? [req.reason] : []}
-                date={req.created_at ? new Date(req.created_at).toLocaleString('id-ID') : null}
+                date={req.created_at ? new Date(req.created_at).toLocaleString(isEn ? 'en-US' : 'id-ID') : null}
               />
             ))}
             {booking.reschedule_requests?.map((req) => (
               <HistoryItemCard
                 key={req.id}
-                title={`Reschedule — ${changeRequestStatusLabel(req.status)}`}
+                title={isEn ? `Reschedule — ${changeRequestStatusLabel(req.status)}` : `Reschedule — ${changeRequestStatusLabel(req.status)}`}
                 lines={[
                   formatDateRange(req.starts_on, req.ends_on),
                   ...(req.reason ? [req.reason] : []),
@@ -397,19 +409,25 @@ export default function BookingDetailScreen({ navigation, route }) {
         ) : null}
 
         {booking.is_support && booking.payment_status === 'paid' && ['confirmed', 'in_progress'].includes(booking.status) ? (
-          <BookingSection title="Kode verifikasi penyelesaian" variant="success">
+          <BookingSection title={isEn ? 'Completion verification code' : 'Kode verifikasi penyelesaian'} variant="success">
             <Text style={styles.supportIntro}>
-              Tunjukkan kode ini kepada muthowif agar layanan dapat diselesaikan.
+              {isEn ? 'Show this code to the muthowif so the service can be completed.' : 'Tunjukkan kode ini kepada muthowif agar layanan dapat diselesaikan.'}
             </Text>
             {booking.completion_code ? (
               <Text style={styles.completionCode}>{booking.completion_code}</Text>
             ) : (
-              <PendingBanner text="Kode belum tersedia. Kirim ulang atau tunggu konfirmasi pembayaran." />
+              <PendingBanner
+                text={
+                  isEn
+                    ? 'Code is not available yet. Resend it or wait for payment confirmation.'
+                    : 'Kode belum tersedia. Kirim ulang atau tunggu konfirmasi pembayaran.'
+                }
+              />
             )}
             {canResendSupportCompletionCode(booking) ? (
               <View style={{ marginTop: spacing.md }}>
                 <Button
-                  label={requestingCompletion ? 'Mengirim...' : 'Kirim ulang via WhatsApp'}
+                  label={requestingCompletion ? (isEn ? 'Sending...' : 'Mengirim...') : (isEn ? 'Resend via WhatsApp' : 'Kirim ulang via WhatsApp')}
                   icon={<CheckCheck size={18} color={colors.white} strokeWidth={2} />}
                   onPress={handleResendSupportCompletionCode}
                   loading={requestingCompletion}
