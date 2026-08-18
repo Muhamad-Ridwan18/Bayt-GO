@@ -2,6 +2,7 @@
   "expo": {
     "name": "BaytGo",
     "slug": "baytgo",
+    "scheme": "baytgo",
     "version": "1.0.0",
     "orientation": "portrait",
     "icon": "./assets/icon.png",
@@ -14,12 +15,29 @@
     "ios": {
       "supportsTablet": true,
       "bundleIdentifier": "id.baytgo.app",
+      "associatedDomains": [
+        "applinks:baytgo.id",
+        "applinks:www.baytgo.id",
+        "applinks:staging.baytgo.id"
+      ],
       "infoPlist": {
         "ITSAppUsesNonExemptEncryption": false
       }
     },
     "android": {
       "package": "id.baytgo.app",
+      "intentFilters": [
+        {
+          "action": "VIEW",
+          "autoVerify": true,
+          "data": [
+            { "scheme": "https", "host": "baytgo.id", "pathPrefix": "/" },
+            { "scheme": "https", "host": "www.baytgo.id", "pathPrefix": "/" },
+            { "scheme": "https", "host": "staging.baytgo.id", "pathPrefix": "/" }
+          ],
+          "category": ["BROWSABLE", "DEFAULT"]
+        }
+      ],
       "adaptiveIcon": {
         "backgroundColor": "#1A3D34",
         "foregroundImage": "./assets/android-icon-foreground.png",

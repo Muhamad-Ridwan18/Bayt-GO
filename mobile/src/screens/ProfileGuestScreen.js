@@ -1,12 +1,14 @@
 import React from 'react';
-import { ScrollView, StyleSheet, Text, View } from 'react-native';
-import { Calendar, LogIn, MessageCircle, Search, User } from 'lucide-react-native';
+import { ScrollView, StyleSheet, Text, View, Linking } from 'react-native';
+import { Calendar, FileText, LogIn, MessageCircle, Newspaper, Search, User } from 'lucide-react-native';
 import TabPageHeader from '../components/TabPageHeader';
 import { navigateRoot } from '../navigation/rootNavigation';
 import Button from '../ui/Button';
 import Card from '../ui/Card';
 import PressableScale from '../ui/PressableScale';
 import { colors, layout, radius, spacing, typography } from '../theme/tokens';
+import { WEB_BASE_URL } from '../config/api';
+import { useBrand } from '../context/BrandContext';
 
 const FEATURES = [
   { icon: Search, title: 'Cari Muthowif', sub: 'Temukan pendamping ibadah terpercaya' },
@@ -15,6 +17,8 @@ const FEATURES = [
 ];
 
 export default function ProfileGuestScreen({ navigation }) {
+  const { contactUrl } = useBrand();
+
   return (
     <View style={styles.container}>
       <TabPageHeader title="Profil" subtitle="Masuk untuk mengelola akun Anda" />
@@ -70,6 +74,35 @@ export default function ProfileGuestScreen({ navigation }) {
             </Card>
           );
         })}
+
+        <View style={styles.links}>
+          <PressableScale
+            onPress={() => navigation.getParent()?.navigate('HomeTab', { screen: 'ArticlesList' })}
+            haptic="light"
+            style={styles.termsBtn}
+          >
+            <Newspaper size={16} color={colors.baytgo} strokeWidth={2} />
+            <Text style={styles.termsText}>Artikel</Text>
+          </PressableScale>
+          {contactUrl ? (
+            <PressableScale
+              onPress={() => Linking.openURL(contactUrl)}
+              haptic="light"
+              style={styles.termsBtn}
+            >
+              <MessageCircle size={16} color={colors.baytgo} strokeWidth={2} />
+              <Text style={styles.termsText}>Hubungi kami</Text>
+            </PressableScale>
+          ) : null}
+          <PressableScale
+            onPress={() => Linking.openURL(`${WEB_BASE_URL}/terms`)}
+            haptic="light"
+            style={styles.termsBtn}
+          >
+            <FileText size={16} color={colors.baytgo} strokeWidth={2} />
+            <Text style={styles.termsText}>Syarat & Ketentuan</Text>
+          </PressableScale>
+        </View>
       </ScrollView>
     </View>
   );
@@ -156,5 +189,18 @@ const styles = StyleSheet.create({
     fontFamily: 'PlusJakartaSans_600SemiBold',
     color: colors.textSecondary,
     lineHeight: 17,
+  },
+  links: { marginTop: spacing.lg, marginBottom: spacing.md, gap: spacing.xs },
+  termsBtn: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: spacing.sm,
+    paddingVertical: spacing.md,
+  },
+  termsText: {
+    ...typography.caption,
+    fontFamily: 'PlusJakartaSans_800ExtraBold',
+    color: colors.baytgo,
   },
 });

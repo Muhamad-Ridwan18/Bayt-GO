@@ -3,6 +3,7 @@ import { createNavigationContainerRef, CommonActions } from '@react-navigation/n
 export const navigationRef = createNavigationContainerRef();
 
 let pendingChatNavigation = null;
+let pendingPublicLink = null;
 
 export function getRootNavigation(navigation) {
   let current = navigation;
@@ -49,6 +50,44 @@ export function flushPendingChatNavigation() {
   const params = pendingChatNavigation;
   pendingChatNavigation = null;
   navigateToChatRoom(params);
+}
+
+export function flushPendingPublicLink() {
+  if (!pendingPublicLink || !navigationRef.isReady() || !rootHasMainRoute()) {
+    return;
+  }
+
+  const target = pendingPublicLink;
+  pendingPublicLink = null;
+  navigatePublicDeepLink(target);
+}
+
+export function flushPendingNavigation() {
+  flushPendingChatNavigation();
+  flushPendingPublicLink();
+}
+
+export function navigateToHomeScreen(screen, params) {
+  const target = { screen, params };
+  if (!navigationRef.isReady() || !rootHasMainRoute()) {
+    pendingPublicLink = target;
+    return;
+  }
+
+  navigationRef.dispatch(
+    CommonActions.navigate({
+      name: 'Main',
+      params: {
+        screen: 'HomeTab',
+        params: params ? { screen, params } : { screen },
+      },
+    }),
+  );
+}
+
+export function navigatePublicDeepLink(target) {
+  if (!target?.screen) return;
+  navigateToHomeScreen(target.screen, target.params);
 }
 
 export function navigateToSuccess(navigation, params) {

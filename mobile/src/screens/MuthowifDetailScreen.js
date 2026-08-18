@@ -1,13 +1,13 @@
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import {
-  View, Text, StyleSheet, ScrollView, Alert,
+  View, Text, StyleSheet, ScrollView, Alert, Share,
 } from 'react-native';
 import { FlashList } from '@shopify/flash-list';
 import { LinearGradient } from 'expo-linear-gradient';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import {
   AlertCircle, Briefcase, Calendar, ChevronDown, ChevronLeft, ChevronUp,
-  CirclePlus, Headphones, Images, Lock, MapPin, ShieldCheck, Star, User,
+  CirclePlus, Headphones, Images, Lock, MapPin, Share2, ShieldCheck, Star, User,
 } from 'lucide-react-native';
 import { fetchMuthowifDetail } from '../api/directory';
 import { useAuth } from '../context/AuthContext';
@@ -20,6 +20,7 @@ import {
 import { colors, gradients, layout, radius, spacing, typography } from '../theme/tokens';
 import { formatIdr } from '../utils/format';
 import { resolveMediaUrl } from '../utils/mediaUrl';
+import { WEB_BASE_URL } from '../config/api';
 import { useHideTabBarOnFocus } from '../hooks/useHideTabBarOnFocus';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
@@ -137,14 +138,36 @@ export default function MuthowifDetailScreen({ navigation, route }) {
   const canBook = bookingIntent?.can_submit && services.length > 0;
   const hasReviews = profile.reviews_count > 0 && profile.rating;
   const reviewStat = hasReviews ? `${profile.rating} (${profile.reviews_count})` : 'Belum ada';
+  const profileKey = profile.slug || profile.id;
+  const profileUrl = profileKey
+    ? `${WEB_BASE_URL.replace(/\/$/, '')}/layanan/${profileKey}`
+    : null;
+
+  const handleShare = async () => {
+    if (!profileUrl) return;
+    try {
+      await Share.share({
+        message: `Lihat profil muthowif ${profile.name} di BaytGo: ${profileUrl}`,
+        url: profileUrl,
+      });
+    } catch { /* dismissed */ }
+  };
+
   const avatarUri = resolveMediaUrl(profile.avatar);
 
   return (
     <View style={styles.container}>
       <SafeAreaView edges={['top']} style={styles.topBar}>
-        <PressableScale onPress={() => navigation.goBack()} haptic="light" style={styles.backBtn}>
-          <ChevronLeft size={22} color={colors.baytgo} strokeWidth={2.2} />
-        </PressableScale>
+        <View style={styles.topBarRow}>
+          <PressableScale onPress={() => navigation.goBack()} haptic="light" style={styles.backBtn}>
+            <ChevronLeft size={22} color={colors.baytgo} strokeWidth={2.2} />
+          </PressableScale>
+          {profileUrl ? (
+            <PressableScale onPress={handleShare} haptic="light" style={styles.backBtn}>
+              <Share2 size={20} color={colors.baytgo} strokeWidth={2} />
+            </PressableScale>
+          ) : null}
+        </View>
       </SafeAreaView>
 
       <ScrollView contentContainerStyle={[styles.scroll, { paddingBottom: scrollBottomInset }]} showsVerticalScrollIndicator={false}>
@@ -404,6 +427,11 @@ const styles = StyleSheet.create({
     borderBottomColor: colors.border,
     paddingHorizontal: layout.screenPadding,
     paddingBottom: spacing.md,
+  },
+  topBarRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
   },
   backBtn: {
     width: 44,

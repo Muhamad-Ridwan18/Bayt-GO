@@ -19,6 +19,9 @@ import SupportPackageDetailScreen from '../screens/SupportPackageDetailScreen';
 import SupportPackageBookScreen from '../screens/SupportPackageBookScreen';
 import AffiliateScreen from '../screens/AffiliateScreen';
 import EditMuthowifProfileScreen from '../screens/EditMuthowifProfileScreen';
+import CampaignDetailScreen from '../screens/CampaignDetailScreen';
+import ArticleDetailScreen from '../screens/ArticleDetailScreen';
+import ArticlesListScreen from '../screens/ArticlesListScreen';
 
 const Stack = createNativeStackNavigator();
 
@@ -67,6 +70,9 @@ export default function DashboardStack() {
       <Stack.Screen name="Affiliate" component={AffiliateScreen} />
       <Stack.Screen name="EmergencyOffers" component={EmergencyOffersScreen} />
       <Stack.Screen name="EditMuthowifProfile" component={EditMuthowifProfileScreen} />
+      <Stack.Screen name="CampaignDetail" component={CampaignDetailScreen} />
+      <Stack.Screen name="ArticleDetail" component={ArticleDetailScreen} />
+      <Stack.Screen name="ArticlesList" component={ArticlesListScreen} />
     </Stack.Navigator>
   );
 }

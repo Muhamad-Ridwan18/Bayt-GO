@@ -72,6 +72,45 @@ class AffiliateReferralService
         return $click;
     }
 
+    public function captureFromApi(Request $request, string $rawCode, ?string $deviceKey = null): ?Affiliate
+    {
+        $code = $this->registration->normalizeCode($rawCode);
+        if ($code === null) {
+            return null;
+        }
+
+        /** @var Affiliate|null $affiliate */
+        $affiliate = Affiliate::query()
+            ->where('code', $code)
+            ->where('status', AffiliateStatus::Active->value)
+            ->first();
+
+        if ($affiliate === null) {
+            return null;
+        }
+
+        $visitorKey = $this->apiVisitorKey($request, $deviceKey);
+        $recent = AffiliateClick::query()
+            ->where('affiliate_id', $affiliate->id)
+            ->where('visitor_key', $visitorKey)
+            ->where('created_at', '>=', now()->subDay())
+            ->exists();
+
+        if (! $recent) {
+            AffiliateClick::query()->create([
+                'affiliate_id' => $affiliate->id,
+                'code_snapshot' => $affiliate->code,
+                'visitor_key' => $visitorKey,
+                'ip_hash' => $request->ip() ? hash('sha256', $request->ip()) : null,
+                'user_agent' => Str::limit((string) $request->userAgent(), 512, ''),
+                'landing_path' => Str::limit((string) ($request->input('landing_path') ?: 'api/affiliate/capture'), 512, ''),
+                'created_at' => now(),
+            ]);
+        }
+
+        return $affiliate;
+    }
+
     public function markConverted(MuthowifBooking $booking, ?Request $request = null): void
     {
         if ($booking->affiliate_id === null) {
@@ -121,5 +160,14 @@ class AffiliateReferralService
         $ua = (string) $request->userAgent();
 
         return substr(hash('sha256', 'anon:'.$ip.'|'.$ua), 0, 64);
+    }
+
+    private function apiVisitorKey(Request $request, ?string $deviceKey): string
+    {
+        if (is_string($deviceKey) && strlen(trim($deviceKey)) >= 8) {
+            return substr(hash('sha256', 'device:'.trim($deviceKey)), 0, 64);
+        }
+
+        return $this->visitorKey($request);
     }
 }

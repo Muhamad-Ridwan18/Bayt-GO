@@ -38,3 +38,10 @@ export async function storeAffiliateWithdrawal(token, payload) {
     body: payload,
   });
 }
+
+export async function captureAffiliateClick(payload) {
+  return apiFetch('/affiliate/capture', {
+    method: 'POST',
+    body: payload,
+  });
+}

@@ -13,8 +13,13 @@ import MuthowifSpotlightCard from '../components/MuthowifSpotlightCard';
 import { parseIsoDate } from '../components/DatePickerField';
 import HeroCarousel from '../features/home/HeroCarousel';
 import SearchPanel from '../features/home/SearchPanel';
-import UpcomingTripCard from '../features/home/UpcomingTripCard';
+import CustomerActivitySection from '../features/home/CustomerActivitySection';
+import CampaignCarousel from '../features/home/CampaignCarousel';
 import FeatureChips from '../features/home/FeatureChips';
+import HomeGallery from '../features/home/HomeGallery';
+import ArticleCards from '../features/home/ArticleCards';
+import HowItWorks from '../features/home/HowItWorks';
+import FaqSection from '../features/home/FaqSection';
 import TrustSection from '../features/home/TrustSection';
 import GuestCta from '../features/home/GuestCta';
 import { AppImage, EmptyState, ErrorState, PressableScale, SkeletonList } from '../ui';
@@ -34,7 +39,13 @@ export default function HomeScreen({ navigation }) {
   const [endDate, setEndDate] = useState('');
   const [searchName, setSearchName] = useState('');
   const [nextBooking, setNextBooking] = useState(null);
+  const [dashStats, setDashStats] = useState([]);
   const [unreadMessages, setUnreadMessages] = useState(0);
+  const [campaigns, setCampaigns] = useState([]);
+  const [articles, setArticles] = useState([]);
+  const [gallery, setGallery] = useState([]);
+  const [work, setWork] = useState(null);
+  const [faq, setFaq] = useState(null);
 
   const firstName = useMemo(() => user?.name?.split(' ')[0] || 'Jamaah', [user?.name]);
   const today = useMemo(() => { const d = new Date(); d.setHours(0, 0, 0, 0); return d; }, []);
@@ -97,14 +108,20 @@ export default function HomeScreen({ navigation }) {
     try {
       const homeData = await fetchHomeData();
       let list = homeData.featured_muthowifs || [];
+      setCampaigns(homeData.campaigns || []);
+      setArticles(homeData.articles || []);
+      setGallery(homeData.gallery || []);
+      setWork(homeData.work || null);
+      setFaq(homeData.faq || null);
       if (isCustomer && token) {
         try {
           const dash = await fetchCustomerDashboard(token);
           if (dash.top_muthowifs?.length) list = dash.top_muthowifs;
           setNextBooking(dash.next_booking || null);
+          setDashStats(dash.stats || []);
           setUnreadMessages(dash.unread_messages || 0);
-        } catch { setNextBooking(null); }
-      } else { setNextBooking(null); setUnreadMessages(0); }
+        } catch { setNextBooking(null); setDashStats([]); }
+      } else { setNextBooking(null); setDashStats([]); setUnreadMessages(0); }
       setMuthowifs(list);
       setError(null);
     } catch (err) {
@@ -114,6 +131,7 @@ export default function HomeScreen({ navigation }) {
 
   useEffect(() => { loadData(); }, [loadData]);
 
+  const goChat = () => navigation.getParent()?.navigate('ChatTab', { screen: 'ChatList' });
   const goBookings = () => navigation.getParent()?.navigate('BookingsTab', { screen: 'BookingsList' });
   const openNextBooking = () => nextBooking?.id && navigation.getParent()?.navigate('BookingsTab', {
     screen: 'BookingDetail', params: { bookingId: nextBooking.id },
@@ -123,6 +141,13 @@ export default function HomeScreen({ navigation }) {
     screen: 'ChatRoom',
     params: { bookingId: nextBooking.id, bookingCode: nextBooking.booking_code, otherName: nextBooking.muthowif_name || 'Muthowif' },
   });
+  const openStat = (stat) => {
+    if (stat?.label === 'Tiket Bantuan') {
+      navigation.getParent()?.navigate('SupportTab', { screen: 'SupportList' });
+      return;
+    }
+    goBookings();
+  };
 
   return (
     <View style={styles.container}>
@@ -135,7 +160,7 @@ export default function HomeScreen({ navigation }) {
           </View>
           <View style={styles.headerActions}>
             {isCustomer ? (
-              <PressableScale onPress={goBookings} haptic="light" style={styles.iconBtn}>
+              <PressableScale onPress={goChat} haptic="light" style={styles.iconBtn}>
                 <Bell size={20} color={colors.baytgo} strokeWidth={2} />
                 {unreadMessages > 0 ? (
                   <View style={styles.notifBadge}>
@@ -195,6 +220,11 @@ export default function HomeScreen({ navigation }) {
           onSearch={() => openDirectory()}
         />
 
+        <CampaignCarousel
+          campaigns={campaigns}
+          onPress={(item) => navigation.navigate('CampaignDetail', { slug: item.slug, preview: item })}
+        />
+
         <HeroCarousel
           onCta={() => openDirectory()}
           faces={heroFaces}
@@ -202,10 +232,17 @@ export default function HomeScreen({ navigation }) {
           ratingLabel={heroRatingLabel}
         />
 
-        {isCustomer && nextBooking ? (
-          <View style={styles.sectionPad}>
-            <UpcomingTripCard booking={nextBooking} onPress={openNextBooking} onPay={openNextPayment} onChat={openNextChat} />
-          </View>
+        {isCustomer ? (
+          <CustomerActivitySection
+            stats={dashStats}
+            booking={nextBooking}
+            onStatPress={openStat}
+            onSeeAll={goBookings}
+            onBookingPress={openNextBooking}
+            onPay={openNextPayment}
+            onChat={openNextChat}
+            onExplore={() => openDirectory()}
+          />
         ) : null}
 
         <FeatureChips
@@ -249,6 +286,21 @@ export default function HomeScreen({ navigation }) {
             </ScrollView>
           ) : null}
         </View>
+
+        <HomeGallery
+          items={gallery}
+          onPress={(item) => item.muthowif_id && navigation.navigate('MuthowifDetail', { id: item.muthowif_id })}
+        />
+
+        <HowItWorks work={work} />
+
+        <ArticleCards
+          articles={articles}
+          onPress={(item) => navigation.navigate('ArticleDetail', { slug: item.slug, preview: item })}
+          onSeeAll={() => navigation.navigate('ArticlesList')}
+        />
+
+        <FaqSection faq={faq} />
 
         <TrustSection />
 

@@ -12,8 +12,9 @@ import SuccessScreen from '../screens/SuccessScreen';
 import MainTabNavigator from './MainTabNavigator';
 import { ONBOARDING_KEY } from '../constants/onboarding';
 import { useAuth } from '../context/AuthContext';
-import { navigationRef, flushPendingChatNavigation } from './rootNavigation';
+import { navigationRef, flushPendingNavigation } from './rootNavigation';
 import { useNotificationNavigation } from '../notifications/useNotificationNavigation';
+import { listenAppLinks } from '../utils/publicDeepLinks';
 import { colors } from '../theme/tokens';
 
 const Stack = createNativeStackNavigator();
@@ -86,7 +87,11 @@ function RootNavigator() {
 
 export default function AppNavigator() {
   return (
-    <NavigationContainer ref={navigationRef} onReady={flushPendingChatNavigation}>
+    <NavigationContainer
+      ref={navigationRef}
+      onReady={flushPendingNavigation}
+      onStateChange={flushPendingNavigation}
+    >
       <NavigationRoot />
     </NavigationContainer>
   );
@@ -94,6 +99,7 @@ export default function AppNavigator() {
 
 function NavigationRoot() {
   useNotificationNavigation();
+  useEffect(() => listenAppLinks(), []);
   return <RootNavigator />;
 }
 

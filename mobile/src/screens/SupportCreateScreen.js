@@ -5,7 +5,7 @@ import AttachmentPicker from '../components/AttachmentPicker';
 import AuthInput from '../components/AuthInput';
 import { fetchSupportMeta, createSupportTicket } from '../api/support';
 import { useAuth } from '../context/AuthContext';
-import { Button, Card, SkeletonList } from '../ui';
+import { Button, Card, InlineAlert, SkeletonList } from '../ui';
 import { ChipPicker } from '../features/support/SupportFormParts';
 import { notifySuccessThen } from '../utils/feedback';
 import { colors, layout, radius, spacing, typography } from '../theme/tokens';
@@ -96,6 +96,9 @@ export default function SupportCreateScreen({ navigation }) {
           <ChipPicker label="Prioritas *" options={priorities} value={priority} onChange={setPriority} />
 
           <Text style={styles.label}>Pesan *</Text>
+          <Text style={styles.hint}>
+            Tuliskan langkah untuk mengulangi masalah (jika bisa), apa yang Anda harapkan vs yang terjadi, dan hindari menyertakan kata sandi atau nomor kartu lengkap.
+          </Text>
           <TextInput
             style={styles.textarea}
             value={body}
@@ -109,11 +112,15 @@ export default function SupportCreateScreen({ navigation }) {
 
           <AttachmentPicker
             label="Lampiran (opsional)"
-            hint="Maks. 5 file — foto atau PDF"
+            hint="Maks. 5 berkas: JPG, PNG, GIF, WebP atau PDF — tiap berkas maks. 5 MB"
             files={attachments}
             onChange={setAttachments}
             disabled={loading}
           />
+
+          <InlineAlert variant="warning">
+            Jangan menyisipkan kata sandi atau data kartu lengkap.
+          </InlineAlert>
 
           <Button label="Kirim Tiket" onPress={handleSubmit} loading={loading} />
         </ScrollView>
@@ -129,6 +136,13 @@ const styles = StyleSheet.create({
   errorCard: { backgroundColor: colors.errorLight, borderColor: '#FECACA', marginBottom: spacing.lg },
   errorText: { ...typography.caption, color: colors.error, fontWeight: '600' },
   label: { ...typography.label, color: colors.textSecondary, marginBottom: spacing.sm },
+  hint: {
+    marginTop: -spacing.xs,
+    marginBottom: spacing.sm,
+    ...typography.small,
+    color: colors.textSecondary,
+    lineHeight: 18,
+  },
   textarea: {
     minHeight: 140,
     backgroundColor: colors.card,

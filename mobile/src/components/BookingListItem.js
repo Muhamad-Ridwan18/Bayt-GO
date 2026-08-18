@@ -1,6 +1,6 @@
 import React, { memo } from 'react';
 import { StyleSheet, Text, View } from 'react-native';
-import { Calendar, ChevronRight, Wallet } from 'lucide-react-native';
+import { Calendar, ChevronRight, Clock, Wallet } from 'lucide-react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import AppImage from '../ui/AppImage';
 import Card from '../ui/Card';
@@ -16,6 +16,7 @@ import {
   isAwaitingMuthowifConfirmation,
 } from '../utils/bookingLabels';
 import { customerPayableAmount } from '../components/BookingPricingBreakdown';
+import { useCountdown } from '../hooks/useCountdown';
 
 function StatusBadge({ label, color }) {
   return (
@@ -30,6 +31,7 @@ function BookingListItem({ item, onPress, onPay }) {
   const paymentMeta = paymentStatusMeta(item.payment_status);
   const showPay = canPayBooking(item);
   const awaiting = isAwaitingMuthowifConfirmation(item);
+  const due = useCountdown(showPay ? item.payment_due_at : null);
 
   return (
     <PressableScale onPress={onPress} haptic="light" style={styles.press}>
@@ -73,6 +75,15 @@ function BookingListItem({ item, onPress, onPay }) {
             <Text style={styles.amount}>
               {formatIdr(customerPayableAmount(item.pricing, item.total_amount))}
             </Text>
+
+            {showPay && due.label ? (
+              <View style={styles.dueRow}>
+                <Clock size={12} color={due.expired ? colors.error : '#B45309'} strokeWidth={2} />
+                <Text style={[styles.dueText, due.expired && styles.dueExpired]}>
+                  {due.expired ? 'Waktu habis' : `Sisa ${due.label}`}
+                </Text>
+              </View>
+            ) : null}
 
             {showPay ? (
               <PressableScale
@@ -183,6 +194,20 @@ const styles = StyleSheet.create({
     ...typography.label,
     fontSize: 10,
   },
+  dueRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: spacing.xs,
+    marginTop: spacing.xs,
+  },
+  dueText: {
+    ...typography.label,
+    fontSize: 11,
+    color: '#B45309',
+    fontFamily: 'PlusJakartaSans_700Bold',
+    fontVariant: ['tabular-nums'],
+  },
+  dueExpired: { color: colors.error },
   amount: {
     ...typography.subtitle,
     fontSize: 18,

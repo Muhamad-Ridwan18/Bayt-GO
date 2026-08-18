@@ -276,10 +276,6 @@ class BookingApiController extends Controller
      */
     private function paymentEnvironmentPayload(): array
     {
-        if (config('services.booking.payment_driver') !== 'moota') {
-            return [];
-        }
-
         return ApiMootaPaymentMeta::environment();
     }
 
@@ -455,11 +451,14 @@ class BookingApiController extends Controller
                     'payment_type' => 'bank_transfer_moota',
                 ]);
 
+                $meta = $this->methodMetaFor($method);
+
                 PaymentFlowLog::info('api.payment.session_ok', [
                     'booking_id' => $booking->getKey(),
                     'order_id' => $orderId,
                     'driver' => 'moota',
                     'have_checkout_url' => true,
+                    'have_account_number' => ! empty($meta['account_number'] ?? null),
                 ]);
 
                 return response()->json([
@@ -467,9 +466,12 @@ class BookingApiController extends Controller
                     'driver' => 'moota',
                     'order_id' => $orderId,
                     'method' => $method,
-                    'method_meta' => $this->methodMetaFor($method),
+                    'method_meta' => $meta,
                     'gross_amount' => $payment->gross_amount,
                     'expected_transfer_total' => $result['moota_total'],
+                    'bank_name' => $meta['bank_name'] ?? $meta['label'] ?? null,
+                    'account_holder' => $meta['account_holder'] ?? null,
+                    'account_number' => $meta['account_number'] ?? null,
                     'trx_id' => $result['trx_id'],
                     'checkout_url' => $result['payment_url'],
                     'expiry_time' => $result['expiry_time'],
@@ -499,6 +501,7 @@ class BookingApiController extends Controller
                 'driver' => 'doku',
                 'order_id' => $orderId,
                 'method' => $method,
+                'method_meta' => $this->methodMetaFor($method),
                 'gross_amount' => $payment->gross_amount,
                 'expiry_time' => $session['expiry_time'],
                 'va_bank' => $session['va_bank'],
@@ -508,6 +511,7 @@ class BookingApiController extends Controller
                 'qr_string' => $session['qr_string'],
                 'deeplink_url' => $session['deeplink_url'],
                 'checkout_url' => $session['checkout_url'],
+                'payment_environment' => $this->paymentEnvironmentPayload(),
             ]);
 
         } catch (\Exception $e) {

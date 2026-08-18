@@ -21,6 +21,8 @@ import { notifySuccess } from '../utils/feedback';
 import BookingEmergencySection from '../features/booking/BookingEmergencySection';
 import BookingSection from '../features/booking/BookingSection';
 import PendingBanner from '../features/booking/PendingBanner';
+import PaymentDeadlineBanner from '../features/booking/PaymentDeadlineBanner';
+import ChangePolicyNote from '../features/booking/ChangePolicyNote';
 import {
   BookingActionList,
   BookingDetailHero,
@@ -219,7 +221,10 @@ export default function BookingDetailScreen({ navigation, route }) {
         hint: 'Permintaan pengembalian dana',
         icon: Banknote,
         tone: 'warning',
-        onPress: () => navigation.navigate('BookingRefund', { bookingId: booking.id }),
+        onPress: () => navigation.navigate('BookingRefund', {
+          bookingId: booking.id,
+          changePolicy: booking.change_policy,
+        }),
       });
     }
     if (canRequestReschedule(booking)) {
@@ -232,6 +237,7 @@ export default function BookingDetailScreen({ navigation, route }) {
           bookingId: booking.id,
           startsOn: booking.starts_on,
           endsOn: booking.ends_on,
+          changePolicy: booking.change_policy,
         }),
       });
     }
@@ -301,6 +307,12 @@ export default function BookingDetailScreen({ navigation, route }) {
 
         <BookingProgressBar status={booking.status} />
 
+        {needsPayment(booking) && booking.payment_due_at ? (
+          <View style={styles.pendingBanner}>
+            <PaymentDeadlineBanner dueAt={booking.payment_due_at} onExpire={() => load(true)} />
+          </View>
+        ) : null}
+
         {booking.status === 'cancelled' && hasMuthowifRejectionInfo(booking) ? (
           <BookingCancellationAlert booking={booking} muthowifName={muthowifName} />
         ) : null}
@@ -312,6 +324,12 @@ export default function BookingDetailScreen({ navigation, route }) {
         ) : null}
 
         <TripSummaryGrid booking={booking} nights={nights} />
+
+        {booking.change_policy && booking.status === 'confirmed' && booking.payment_status === 'paid' ? (
+          <BookingSection title="Refund & reschedule">
+            <ChangePolicyNote policy={booking.change_policy} />
+          </BookingSection>
+        ) : null}
 
         <BookingActionList actions={quickActions} />
 

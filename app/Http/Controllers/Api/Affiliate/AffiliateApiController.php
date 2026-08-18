@@ -13,6 +13,7 @@ use App\Models\AffiliateCommission;
 use App\Models\AffiliateWalletTransaction;
 use App\Models\AffiliateWithdrawal;
 use App\Services\AffiliateRegistrationService;
+use App\Services\AffiliateReferralService;
 use App\Services\AffiliateWalletService;
 use App\Support\AffiliateBankOptions;
 use App\Support\AffiliateSettings;
@@ -71,6 +72,30 @@ class AffiliateApiController extends Controller
             'message' => 'Affiliate diaktifkan',
             'affiliate' => $this->affiliatePayload($affiliate),
         ], 201);
+    }
+
+    public function capture(Request $request, AffiliateReferralService $referrals): JsonResponse
+    {
+        $validated = $request->validate([
+            'code' => ['required', 'string', 'max:32'],
+            'visitor_key' => ['nullable', 'string', 'max:128'],
+            'landing_path' => ['nullable', 'string', 'max:512'],
+        ]);
+
+        $affiliate = $referrals->captureFromApi(
+            $request,
+            $validated['code'],
+            $validated['visitor_key'] ?? null,
+        );
+
+        if ($affiliate === null) {
+            return response()->json(['captured' => false]);
+        }
+
+        return response()->json([
+            'captured' => true,
+            'code' => $affiliate->code,
+        ]);
     }
 
     public function dashboard(Request $request): JsonResponse

@@ -1,8 +1,8 @@
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import { ActivityIndicator, FlatList, StyleSheet, Text, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { ArrowLeft, Search, Star } from 'lucide-react-native';
-import DatePickerField from '../components/DatePickerField';
+import { ArrowLeft, Search, ShieldCheck, Star } from 'lucide-react-native';
+import DatePickerField, { parseIsoDateTime } from '../components/DatePickerField';
 import { fetchSupportPackages } from '../api/supportCatalog';
 import { useAuth } from '../context/AuthContext';
 import AppImage from '../ui/AppImage';
@@ -24,19 +24,44 @@ const DEFAULT_CATEGORIES = [
   { value: 'ziarah', label: 'Raudhah' },
 ];
 
+function formatSlot(value) {
+  if (!value) return '';
+  try {
+    return parseIsoDateTime(value).toLocaleString('id-ID', {
+      day: '2-digit',
+      month: 'short',
+      year: 'numeric',
+      hour: '2-digit',
+      minute: '2-digit',
+    });
+  } catch {
+    return value;
+  }
+}
+
 export default function SupportCatalogScreen({ navigation, route }) {
   const { token } = useAuth();
   const initial = route.params || {};
+  const initialStarts = String(initial.startsAt || initial.startsAtDate || '').trim();
+  const initialCategory = initial.category || 'mobility';
 
-  const [category, setCategory] = useState(initial.category || 'mobility');
+  const [category, setCategory] = useState(initialCategory);
   const [q, setQ] = useState(initial.q || '');
-  const [startsAt, setStartsAt] = useState(initial.startsAt || initial.startsAtDate || '');
+  const [startsAt, setStartsAt] = useState(initialStarts);
+  const [applied, setApplied] = useState(() => (
+    initialStarts
+      ? {
+          category: initialCategory,
+          q: String(initial.q || '').trim(),
+          startsAt: initialStarts,
+        }
+      : null
+  ));
   const [categories, setCategories] = useState(DEFAULT_CATEGORIES);
   const [items, setItems] = useState([]);
-  const [hasSearch, setHasSearch] = useState(false);
   const [page, setPage] = useState(1);
   const [lastPage, setLastPage] = useState(1);
-  const [loading, setLoading] = useState(false);
+  const [loading, setLoading] = useState(Boolean(initialStarts));
   const [loadingMore, setLoadingMore] = useState(false);
   const [error, setError] = useState(null);
   const [stats, setStats] = useState(null);
@@ -45,8 +70,16 @@ export default function SupportCatalogScreen({ navigation, route }) {
     const next = route.params || {};
     if (next.category) setCategory(next.category);
     if (next.q != null) setQ(next.q || '');
-    const nextStarts = next.startsAt ?? next.startsAtDate;
-    if (nextStarts != null) setStartsAt(nextStarts || '');
+    const nextStarts = String(next.startsAt ?? next.startsAtDate ?? '').trim();
+    if (next.startsAt == null && next.startsAtDate == null) return;
+    setStartsAt(nextStarts);
+    if (nextStarts) {
+      setApplied({
+        category: next.category || 'mobility',
+        q: String(next.q || '').trim(),
+        startsAt: nextStarts,
+      });
+    }
   }, [route.params?.category, route.params?.q, route.params?.startsAt, route.params?.startsAtDate]);
 
   const today = useMemo(() => {
@@ -55,27 +88,46 @@ export default function SupportCatalogScreen({ navigation, route }) {
     return d;
   }, []);
 
-  const startsAtParam = startsAt || '';
+  const hasSearch = Boolean(applied?.startsAt);
+
+  const applyMeta = (data) => {
+    if (Array.isArray(data.categories) && data.categories.length) {
+      setCategories(data.categories);
+    }
+    if (data.catalog_stats) setStats(data.catalog_stats);
+  };
+
+  useEffect(() => {
+    let cancelled = false;
+    fetchSupportPackages({ token, category: category || 'mobility' })
+      .then((data) => {
+        if (!cancelled) applyMeta(data);
+      })
+      .catch(() => {});
+    return () => { cancelled = true; };
+  }, [token]);
 
   const loadPage = useCallback(async (pageNum, { append = false } = {}) => {
-    if (!category) return;
+    const searchStart = String(applied?.startsAt || '').trim();
+    if (!searchStart || !applied?.category) {
+      setItems([]);
+      setLoading(false);
+      return;
+    }
+
     if (append) setLoadingMore(true);
     else setLoading(true);
 
     try {
       const data = await fetchSupportPackages({
         token,
-        category,
-        startsAt: startsAtParam,
-        q: String(q || '').trim(),
+        category: applied.category,
+        startsAt: searchStart,
+        q: String(applied.q || '').trim(),
         page: pageNum,
       });
 
-      if (Array.isArray(data.categories) && data.categories.length) {
-        setCategories(data.categories);
-      }
-      setStats(data.catalog_stats || null);
-      setHasSearch(Boolean(data.filters?.has_search));
+      applyMeta(data);
       setItems((prev) => (append ? [...prev, ...(data.data || [])] : data.data || []));
       setPage(data.meta?.current_page || pageNum);
       setLastPage(data.meta?.last_page || 1);
@@ -87,21 +139,60 @@ export default function SupportCatalogScreen({ navigation, route }) {
       setLoading(false);
       setLoadingMore(false);
     }
-  }, [token, category, startsAtParam, q]);
+  }, [token, applied]);
 
   useEffect(() => {
+    if (!applied?.startsAt) {
+      setItems([]);
+      setError(null);
+      setLoading(false);
+      return;
+    }
     loadPage(1);
-  }, [loadPage]);
+  }, [applied, loadPage]);
 
-  const handleSearch = () => loadPage(1);
+  const handleSearch = () => {
+    const nextStart = String(startsAt || '').trim();
+    if (!nextStart) {
+      setApplied(null);
+      return;
+    }
+    setApplied({
+      category,
+      q: String(q || '').trim(),
+      startsAt: nextStart,
+    });
+  };
+
+  const handleCategory = (value) => {
+    setCategory(value);
+    if (applied?.startsAt) {
+      setApplied((prev) => ({ ...prev, category: value }));
+    }
+  };
 
   const openDetail = (item) => {
     navigation.navigate('SupportPackageDetail', {
       id: item.id,
-      startsAt: startsAt || undefined,
+      startsAt: applied?.startsAt || startsAt || undefined,
       packagePreview: item,
     });
   };
+
+  const slotLabel = applied?.startsAt ? formatSlot(applied.startsAt) : '';
+  const categoryLabel = categories.find((c) => c.value === (applied?.category || category))?.label;
+
+  const listFooter = (
+    <View>
+      {loadingMore ? <ActivityIndicator color={colors.baytgo} style={styles.moreLoader} /> : null}
+      <View style={styles.trustStrip}>
+        <ShieldCheck size={16} color={colors.baytgo} strokeWidth={2} />
+        <Text style={styles.trustText}>
+          Semua muthowif telah diverifikasi oleh BaytGo untuk keamanan dan kenyamanan Anda.
+        </Text>
+      </View>
+    </View>
+  );
 
   return (
     <SafeAreaView style={styles.safe} edges={['top']}>
@@ -111,7 +202,9 @@ export default function SupportCatalogScreen({ navigation, route }) {
         </PressableScale>
         <View style={styles.flex}>
           <Text style={styles.title}>Layanan Pendukung</Text>
-          <Text style={styles.subtitle}>Kursi roda, umrah, ziarah, dll.</Text>
+          <Text style={styles.subtitle}>
+            Pilih tanggal & jam dulu — kami hanya menampilkan muthowif yang jadwalnya kosong di hari itu.
+          </Text>
         </View>
       </View>
 
@@ -119,7 +212,7 @@ export default function SupportCatalogScreen({ navigation, route }) {
         <ScrollChips
           categories={categories}
           category={category}
-          onSelect={(value) => setCategory(value)}
+          onSelect={handleCategory}
         />
         <DatePickerField
           label="Tanggal & jam mulai"
@@ -131,16 +224,32 @@ export default function SupportCatalogScreen({ navigation, route }) {
           clearable
           onClear={() => setStartsAt('')}
         />
+        <Text style={styles.hint}>
+          Ketersediaan dicek per hari kalender agar tidak bentrok dengan trip atau layanan lain.
+        </Text>
         <SearchBar
           value={q}
           onChangeText={setQ}
-          placeholder="Cari paket / muthowif"
+          placeholder="Cari layanan atau nama muthowif…"
         />
-        <Button label="Cari paket tersedia" onPress={handleSearch} icon={<Search size={16} color={colors.white} />} />
+        <Button
+          label="Cari"
+          onPress={handleSearch}
+          icon={<Search size={16} color={colors.white} />}
+        />
         {stats ? (
           <Text style={styles.statsText}>
             {stats.packages} paket · {stats.muthowifs} muthowif · rating {stats.avg_rating || 0}
           </Text>
+        ) : null}
+        {hasSearch && slotLabel ? (
+          <View style={styles.slotBanner}>
+            <Text style={styles.slotText}>
+              Ketersediaan: {slotLabel}
+              {' · '}Hanya muthowif yang tersedia di hari ini
+              {categoryLabel ? ` · ${categoryLabel}` : ''}
+            </Text>
+          </View>
         ) : null}
       </View>
 
@@ -148,19 +257,25 @@ export default function SupportCatalogScreen({ navigation, route }) {
       {!loading && error ? <ErrorState description={error} onRetry={handleSearch} /> : null}
 
       {!loading && !error && !hasSearch ? (
-        <EmptyState
-          variant="package"
-          title="Pilih tanggal & jam dulu"
-          description="Isi tanggal dan jam mulai layanan lalu cari untuk melihat paket yang tersedia."
-        />
+        <View style={styles.emptyWrap}>
+          <EmptyState
+            variant="schedule"
+            title="Pilih tanggal & jam layanan"
+            description="Isi waktu mulai di atas, lalu tekan Cari untuk melihat paket yang tersedia."
+          />
+          {listFooter}
+        </View>
       ) : null}
 
       {!loading && !error && hasSearch && items.length === 0 ? (
-        <EmptyState
-          variant="package"
-          title="Tidak ada paket"
-          description="Coba tanggal atau kategori lain."
-        />
+        <View style={styles.emptyWrap}>
+          <EmptyState
+            variant="package"
+            title="Tidak ada layanan tersedia di jadwal ini"
+            description="Coba tanggal atau jam lain, atau ubah filter kategori."
+          />
+          {listFooter}
+        </View>
       ) : null}
 
       {!loading && !error && items.length > 0 ? (
@@ -172,7 +287,7 @@ export default function SupportCatalogScreen({ navigation, route }) {
             if (!loadingMore && page < lastPage) loadPage(page + 1, { append: true });
           }}
           onEndReachedThreshold={0.4}
-          ListFooterComponent={loadingMore ? <ActivityIndicator color={colors.baytgo} style={{ marginVertical: 16 }} /> : null}
+          ListFooterComponent={listFooter}
           renderItem={({ item }) => (
             <PressableScale onPress={() => openDetail(item)} haptic="light">
               <Card style={styles.card}>
@@ -240,7 +355,7 @@ const styles = StyleSheet.create({
     fontFamily: 'PlusJakartaSans_800ExtraBold',
     color: colors.baytgo,
   },
-  subtitle: { ...typography.small, color: colors.textMuted },
+  subtitle: { ...typography.small, color: colors.textMuted, marginTop: 2 },
   filters: {
     paddingHorizontal: layout.screenPadding,
     gap: spacing.sm,
@@ -251,14 +366,52 @@ const styles = StyleSheet.create({
     flexWrap: 'wrap',
     gap: spacing.sm,
   },
+  hint: {
+    ...typography.small,
+    color: colors.textMuted,
+    lineHeight: 18,
+    marginTop: -spacing.xs,
+  },
   statsText: {
     ...typography.small,
     color: colors.textMuted,
   },
+  slotBanner: {
+    backgroundColor: colors.baytgoLight,
+    borderRadius: radius.sm,
+    paddingHorizontal: spacing.md,
+    paddingVertical: spacing.sm,
+  },
+  slotText: {
+    ...typography.small,
+    color: colors.baytgo,
+    fontFamily: 'PlusJakartaSans_600SemiBold',
+    lineHeight: 18,
+  },
+  emptyWrap: { flex: 1, paddingHorizontal: layout.screenPadding },
   list: {
     paddingHorizontal: layout.screenPadding,
-    paddingBottom: spacing.xxl,
+    paddingBottom: spacing['2xl'],
     gap: spacing.md,
+  },
+  moreLoader: { marginVertical: spacing.lg },
+  trustStrip: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: spacing.sm,
+    marginTop: spacing.lg,
+    marginBottom: spacing['2xl'],
+    paddingHorizontal: spacing.md,
+    paddingVertical: spacing.md,
+    borderRadius: radius.sm,
+    backgroundColor: colors.baytgoLight,
+  },
+  trustText: {
+    flex: 1,
+    ...typography.small,
+    color: colors.baytgo,
+    fontFamily: 'PlusJakartaSans_600SemiBold',
+    lineHeight: 18,
   },
   card: { gap: spacing.sm },
   cardTop: { flexDirection: 'row', gap: spacing.md, alignItems: 'flex-start' },

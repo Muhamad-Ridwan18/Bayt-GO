@@ -189,6 +189,29 @@ class MuthowifProfile extends Model
     }
 
     /**
+     * Cari nama, lokasi kerja, bahasa, atau nama layanan.
+     *
+     * @param  \Illuminate\Database\Eloquent\Builder<MuthowifProfile>  $query
+     * @return \Illuminate\Database\Eloquent\Builder<MuthowifProfile>
+     */
+    public function scopeMatchesSearch($query, string $q)
+    {
+        $term = trim($q);
+        if ($term === '') {
+            return $query;
+        }
+
+        $like = '%'.addcslashes($term, '%_\\').'%';
+
+        return $query->where(function ($inner) use ($like) {
+            $inner->whereHas('user', fn ($user) => $user->whereILike('name', $like))
+                ->orWhereILike('work_location', $like)
+                ->orWhereHas('services', fn ($service) => $service->whereILike('name', $like))
+                ->orWhereRaw('CAST(languages AS TEXT) ILIKE ?', [$like]);
+        });
+    }
+
+    /**
      * Urutan ranking lewat FK ke muthowif_profiles (mis. katalog paket).
      *
      * @param  \Illuminate\Database\Eloquent\Builder<\Illuminate\Database\Eloquent\Model>  $query

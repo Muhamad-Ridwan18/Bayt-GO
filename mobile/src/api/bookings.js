@@ -29,6 +29,10 @@ export async function createBooking(token, payload) {
   appendFile(formData, 'itinerary', payload.itinerary);
   appendFile(formData, 'visa', payload.visa);
 
+  if (payload.affiliateCode?.trim()) {
+    formData.append('affiliate_code', payload.affiliateCode.trim().toUpperCase());
+  }
+
   return apiFetch('/customer/bookings', { token, method: 'POST', body: formData });
 }
 

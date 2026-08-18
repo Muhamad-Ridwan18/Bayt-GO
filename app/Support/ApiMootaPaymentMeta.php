@@ -7,19 +7,36 @@ use App\Services\Moota\MootaApiClient;
 final class ApiMootaPaymentMeta
 {
     /**
-     * @return array{mode: string, is_sandbox: bool, label: string, hint: string}
+     * @return array{mode: string, is_sandbox: bool, label: string, hint: string, driver: string}
      */
     public static function environment(): array
     {
-        $isSandbox = filter_var(config('services.moota.is_sandbox', false), FILTER_VALIDATE_BOOLEAN);
+        $driver = (string) config('services.booking.payment_driver', 'doku');
+
+        if ($driver === 'moota') {
+            $isSandbox = filter_var(config('services.moota.is_sandbox', false), FILTER_VALIDATE_BOOLEAN);
+
+            return [
+                'mode' => $isSandbox ? 'sandbox' : 'production',
+                'is_sandbox' => $isSandbox,
+                'label' => $isSandbox ? 'Mode Uji (Sandbox)' : 'Produksi',
+                'hint' => $isSandbox
+                    ? 'Akun Moota sandbox — transfer simulasi, bukan rekening bank produksi.'
+                    : 'Akun Moota produksi — transfer ke rekening bank yang sebenarnya.',
+                'driver' => $driver,
+            ];
+        }
+
+        $isProduction = filter_var(config('services.doku.is_production', false), FILTER_VALIDATE_BOOLEAN);
 
         return [
-            'mode' => $isSandbox ? 'sandbox' : 'production',
-            'is_sandbox' => $isSandbox,
-            'label' => $isSandbox ? 'Mode Uji (Sandbox)' : 'Produksi',
-            'hint' => $isSandbox
-                ? 'Akun Moota sandbox — transfer simulasi, bukan rekening bank produksi.'
-                : 'Akun Moota produksi — transfer ke rekening bank yang sebenarnya.',
+            'mode' => $isProduction ? 'production' : 'sandbox',
+            'is_sandbox' => ! $isProduction,
+            'label' => $isProduction ? 'Produksi' : 'Mode Uji (Sandbox)',
+            'hint' => $isProduction
+                ? 'Pembayaran DOKU produksi.'
+                : 'Pembayaran DOKU sandbox — transaksi uji, bukan dana sungguhan.',
+            'driver' => $driver,
         ];
     }
 
@@ -54,8 +71,37 @@ final class ApiMootaPaymentMeta
                 return $merged;
             }
 
-            return ['id' => $id, 'label' => $id, 'group' => 'other'];
+            return self::dokuMethodMeta($id) ?? ['id' => $id, 'label' => $id, 'group' => 'other'];
         }, $methods);
+    }
+
+    /**
+     * @return array<string, mixed>|null
+     */
+    private static function dokuMethodMeta(string $id): ?array
+    {
+        $key = match ($id) {
+            'va_bca', 'va_bni', 'va_bri', 'va_permata', 'va_mandiri_bill', 'qris', 'gopay', 'shopeepay' => 'method_'.$id,
+            default => null,
+        };
+
+        if ($key === null) {
+            return null;
+        }
+
+        $group = match ($id) {
+            'qris' => 'qris',
+            'gopay', 'shopeepay' => 'ewallet',
+            default => 'bank',
+        };
+
+        return array_filter([
+            'id' => $id,
+            'label' => __('bookings.payment.'.$key.'.name'),
+            'group' => $group,
+            'description' => __('bookings.payment.'.$key.'.description'),
+            'logo_url' => AffiliateBankOptions::logoUrlForPaymentMethod($id),
+        ], static fn ($v) => $v !== null && $v !== '');
     }
 
     /**

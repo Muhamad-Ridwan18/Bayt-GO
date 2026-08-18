@@ -240,6 +240,16 @@ export default function EditMuthowifProfileScreen({ navigation, route }) {
     if (publicProfileUrl) Linking.openURL(publicProfileUrl);
   };
 
+  const handleShareProfile = async () => {
+    if (!publicProfileUrl) return;
+    try {
+      await Share.share({
+        message: `Halo! Saya ${name || 'saya'}, muthowif di BaytGo. Lihat profil dan layanan saya di sini: ${publicProfileUrl}`,
+        url: publicProfileUrl,
+      });
+    } catch { /* dismissed */ }
+  };
+
   return (
     <View style={styles.container}>
       <ScreenHeader
@@ -266,13 +276,22 @@ export default function EditMuthowifProfileScreen({ navigation, route }) {
           ) : null}
 
           {publicProfileUrl ? (
-            <PressableScale onPress={handlePreviewProfile} haptic="light">
-              <Card style={styles.previewCard} padding={spacing.lg} elevated={false}>
-                <Eye size={18} color={colors.baytgo} strokeWidth={2} />
-                <Text style={styles.previewCardText}>Preview profil publik</Text>
-                <ChevronRight size={16} color={colors.textMuted} strokeWidth={2} />
-              </Card>
-            </PressableScale>
+            <>
+              <PressableScale onPress={handlePreviewProfile} haptic="light">
+                <Card style={styles.previewCard} padding={spacing.lg} elevated={false}>
+                  <Eye size={18} color={colors.baytgo} strokeWidth={2} />
+                  <Text style={styles.previewCardText}>Preview profil publik</Text>
+                  <ChevronRight size={16} color={colors.textMuted} strokeWidth={2} />
+                </Card>
+              </PressableScale>
+              <PressableScale onPress={handleShareProfile} haptic="light">
+                <Card style={styles.previewCard} padding={spacing.lg} elevated={false}>
+                  <Share2 size={18} color={colors.baytgo} strokeWidth={2} />
+                  <Text style={styles.previewCardText}>Bagikan profil publik</Text>
+                  <ChevronRight size={16} color={colors.textMuted} strokeWidth={2} />
+                </Card>
+              </PressableScale>
+            </>
           ) : verificationStatus !== 'approved' ? (
             <Card style={styles.infoCard} padding={spacing.lg} elevated={false}>
               <Text style={styles.infoCardText}>

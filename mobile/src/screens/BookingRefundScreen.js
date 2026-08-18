@@ -1,23 +1,32 @@
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { View, Text, StyleSheet, ScrollView, TextInput } from 'react-native';
 import ScreenHeader from '../components/ScreenHeader';
 import AuthInput from '../components/AuthInput';
-import { submitRefundRequest } from '../api/bookings';
+import { fetchBooking, submitRefundRequest } from '../api/bookings';
 import { useAuth } from '../context/AuthContext';
-import { Button, Card, InlineAlert } from '../ui';
+import { Button, InlineAlert } from '../ui';
+import ChangePolicyNote from '../features/booking/ChangePolicyNote';
 import { notifySuccessThen } from '../utils/feedback';
 import { colors, layout, radius, spacing, typography } from '../theme/tokens';
 
 export default function BookingRefundScreen({ navigation, route }) {
   const { token } = useAuth();
-  const { bookingId } = route.params;
+  const { bookingId, changePolicy: initialPolicy } = route.params;
 
+  const [policy, setPolicy] = useState(initialPolicy || null);
   const [bankName, setBankName] = useState('');
   const [accountHolder, setAccountHolder] = useState('');
   const [accountNumber, setAccountNumber] = useState('');
   const [note, setNote] = useState('');
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
+
+  useEffect(() => {
+    if (initialPolicy || !token) return;
+    fetchBooking(token, bookingId)
+      .then((data) => setPolicy(data.change_policy || null))
+      .catch(() => {});
+  }, [token, bookingId, initialPolicy]);
 
   const handleSubmit = async () => {
     if (!bankName.trim() || !accountHolder.trim() || !accountNumber.trim()) {
@@ -52,9 +61,15 @@ export default function BookingRefundScreen({ navigation, route }) {
       <ScreenHeader title="Ajukan Refund" onBack={() => navigation.goBack()} />
 
       <ScrollView contentContainerStyle={styles.scroll} keyboardShouldPersistTaps="handled">
-        <Text style={styles.intro}>
-          Isi rekening tujuan refund. Permintaan akan diproses oleh tim Bayt-GO sesuai kebijakan.
-        </Text>
+        {policy ? (
+          <View style={styles.policy}>
+            <ChangePolicyNote policy={policy} mode="refund" />
+          </View>
+        ) : (
+          <Text style={styles.intro}>
+            Isi rekening tujuan refund. Permintaan akan diproses oleh tim Bayt-GO sesuai kebijakan.
+          </Text>
+        )}
 
         {error ? <InlineAlert variant="error">{error}</InlineAlert> : null}
 
@@ -74,7 +89,7 @@ export default function BookingRefundScreen({ navigation, route }) {
           textAlignVertical="top"
         />
 
-        <Button label="Kirim Permintaan Refund" onPress={handleSubmit} loading={loading} />
+        <Button label="Kirim Permintaan Refund" onPress={handleSubmit} loading={loading} style={styles.submit} />
       </ScrollView>
     </View>
   );
@@ -84,6 +99,8 @@ const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: colors.background },
   scroll: { padding: layout.screenPadding, paddingBottom: spacing['3xl'] },
   intro: { ...typography.caption, lineHeight: 22, color: colors.textSecondary, marginBottom: spacing.lg },
+  policy: { marginBottom: spacing.lg },
+  submit: { marginTop: spacing.md },
   label: { ...typography.label, color: colors.textSecondary, marginBottom: spacing.sm },
   textarea: {
     minHeight: 100,

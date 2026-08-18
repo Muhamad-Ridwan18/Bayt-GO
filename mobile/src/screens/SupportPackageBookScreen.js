@@ -9,15 +9,16 @@ import Card from '../ui/Card';
 import { colors, layout, radius, spacing, typography } from '../theme/tokens';
 import { formatIdr } from '../utils/format';
 import { notifyError, notifySuccess } from '../utils/feedback';
+import { clearAffiliateCode, useAffiliateReferralCode } from '../utils/affiliateReferral';
 
 export default function SupportPackageBookScreen({ navigation, route }) {
   const { token } = useAuth();
-  const { id, startsAt: initialStartsAt, startsAtDate, packagePreview } = route.params || {};
+  const { id, startsAt: initialStartsAt, startsAtDate, packagePreview, affiliateCode: routeAffiliateCode } = route.params || {};
   const pkg = packagePreview || {};
 
   const [startsAt, setStartsAt] = useState(initialStartsAt || startsAtDate || '');
   const [pilgrimCount, setPilgrimCount] = useState(String(pkg.min_pilgrims || 1));
-  const [affiliateCode, setAffiliateCode] = useState('');
+  const [affiliateCode, setAffiliateCode] = useAffiliateReferralCode(routeAffiliateCode);
   const [submitting, setSubmitting] = useState(false);
 
   const today = useMemo(() => {
@@ -49,6 +50,7 @@ export default function SupportPackageBookScreen({ navigation, route }) {
         affiliate_code: affiliateCode.trim() || null,
       });
       notifySuccess(result.message || 'Permintaan terkirim');
+      await clearAffiliateCode();
       navigation.getParent()?.navigate('BookingsTab', {
         screen: 'BookingDetail',
         params: { bookingId: result.booking_id },

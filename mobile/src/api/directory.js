@@ -11,12 +11,13 @@ function buildQuery(params) {
   return qs ? `?${qs}` : '';
 }
 
-export async function fetchDirectory({ token, q, startDate, endDate, page = 1 } = {}) {
+export async function fetchDirectory({ token, q, startDate, endDate, sort, page = 1 } = {}) {
   return apiFetch(
     `/directory${buildQuery({
       q,
       start_date: startDate,
       end_date: endDate,
+      sort,
       page,
     })}`,
     { token },
@@ -25,7 +26,7 @@ export async function fetchDirectory({ token, q, startDate, endDate, page = 1 } 
 
 export async function fetchMuthowifDetail({ token, id, startDate, endDate } = {}) {
   return apiFetch(
-    `/directory/${id}${buildQuery({
+    `/directory/${encodeURIComponent(id)}${buildQuery({
       start_date: startDate,
       end_date: endDate,
     })}`,

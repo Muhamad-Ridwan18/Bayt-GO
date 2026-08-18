@@ -4,7 +4,7 @@ import * as Notifications from 'expo-notifications';
 import { useAuth } from '../context/AuthContext';
 import {
   navigateToChatRoom,
-  flushPendingChatNavigation,
+  flushPendingNavigation,
   queueChatNavigation,
 } from '../navigation/rootNavigation';
 import { extractChatNavigationParams } from './pushNotifications';
@@ -51,7 +51,7 @@ export function useNotificationNavigation() {
     if (booting || !isAuthenticated) return undefined;
 
     const task = InteractionManager.runAfterInteractions(() => {
-      flushPendingChatNavigation();
+      flushPendingNavigation();
     });
 
     return () => task.cancel();

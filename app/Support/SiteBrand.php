@@ -40,4 +40,16 @@ final class SiteBrand
         }
         SiteSetting::putValue(self::SETTING_LOGO_PATH, null);
     }
+
+    public static function contactRaw(): string
+    {
+        return (string) (config('app.contact_whatsapp') ?: config('app.contact_phone'));
+    }
+
+    public static function contactWhatsappUrl(): ?string
+    {
+        $digits = preg_replace('/\D+/', '', self::contactRaw()) ?? '';
+
+        return $digits !== '' ? 'https://wa.me/'.$digits : null;
+    }
 }

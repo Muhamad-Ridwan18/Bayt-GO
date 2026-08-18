@@ -1,12 +1,12 @@
 import React from 'react';
 import { StyleSheet, Text, View } from 'react-native';
-import { Clock } from 'lucide-react-native';
+import { Clock, Compass, User } from 'lucide-react-native';
 import { useAuth } from '../context/AuthContext';
 import TabPageHeader from '../components/TabPageHeader';
-import { Card } from '../ui';
+import { Button, Card } from '../ui';
 import { colors, layout, radius, spacing, typography } from '../theme/tokens';
 
-export default function MuthowifPendingScreen() {
+export default function MuthowifPendingScreen({ navigation }) {
   const { user } = useAuth();
 
   return (
@@ -17,15 +17,30 @@ export default function MuthowifPendingScreen() {
           <View style={styles.iconWrap}>
             <Clock size={32} color={colors.warning} strokeWidth={1.8} />
           </View>
-          <Text style={styles.title}>Profil sedang ditinjau</Text>
+          <Text style={styles.kicker}>Akun muthowif sedang ditinjau</Text>
+          <Text style={styles.title}>Halo, {user?.name || 'Muthowif'}</Text>
           <Text style={styles.body}>
-            Pendaftaran muthowif Anda sudah kami terima. Tim admin akan memverifikasi dokumen dan profil Anda.
-            Setelah disetujui, Anda bisa menerima permintaan booking lewat aplikasi.
+            Tim admin akan memverifikasi dokumen Anda. Setelah disetujui, Anda mendapat akses penuh layanan, jadwal, dan saldo dompet.
           </Text>
+
+          <View style={styles.actions}>
+            <Button
+              label="Lihat marketplace"
+              onPress={() => navigation.navigate('Directory')}
+              icon={<Compass size={18} color={colors.white} strokeWidth={2} />}
+            />
+            <Button
+              label="Profil"
+              variant="secondary"
+              onPress={() => navigation.getParent()?.navigate('ProfileTab')}
+              icon={<User size={18} color={colors.baytgo} strokeWidth={2} />}
+            />
+          </View>
+
           <View style={styles.hintBox}>
             <Text style={styles.hintTitle}>Sementara ini</Text>
             <Text style={styles.hintText}>
-              • Pantau status lewat tab Profil{'\n'}• Anda akan mendapat notifikasi setelah disetujui
+              • Lengkapi profil dan dokumen di tab Profil{'\n'}• Anda akan mendapat notifikasi setelah disetujui
             </Text>
           </View>
         </Card>
@@ -47,6 +62,11 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     marginBottom: spacing.lg,
   },
+  kicker: {
+    ...typography.caption,
+    fontFamily: 'PlusJakartaSans_800ExtraBold',
+    color: colors.warning,
+  },
   title: {
     ...typography.title,
     fontSize: 22,
@@ -60,6 +80,7 @@ const styles = StyleSheet.create({
     lineHeight: 22,
     color: colors.textSecondary,
   },
+  actions: { marginTop: spacing.xl, gap: spacing.md },
   hintBox: {
     marginTop: spacing.xl,
     backgroundColor: colors.background,

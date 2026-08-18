@@ -1,11 +1,12 @@
-import React, { useMemo, useState } from 'react';
+import React, { useEffect, useMemo, useState } from 'react';
 import { View, Text, StyleSheet, ScrollView, TextInput } from 'react-native';
 import { Calendar } from 'lucide-react-native';
 import ScreenHeader from '../components/ScreenHeader';
 import DatePickerField, { parseIsoDate, toIsoDate } from '../components/DatePickerField';
-import { submitRescheduleRequest } from '../api/bookings';
+import { fetchBooking, submitRescheduleRequest } from '../api/bookings';
 import { useAuth } from '../context/AuthContext';
 import { Button, Card, InlineAlert } from '../ui';
+import ChangePolicyNote from '../features/booking/ChangePolicyNote';
 import { notifySuccessThen } from '../utils/feedback';
 import { colors, layout, radius, spacing, typography } from '../theme/tokens';
 import { billingNights, formatDateRange } from '../utils/bookingLabels';
@@ -18,21 +19,29 @@ function addDays(isoDate, days) {
 
 export default function BookingRescheduleScreen({ navigation, route }) {
   const { token } = useAuth();
-  const { bookingId, startsOn, endsOn } = route.params;
+  const { bookingId, startsOn, endsOn, changePolicy: initialPolicy } = route.params;
 
   const nights = useMemo(() => billingNights(startsOn, endsOn), [startsOn, endsOn]);
+  const [policy, setPolicy] = useState(initialPolicy || null);
   const [newStart, setNewStart] = useState('');
   const newEnd = newStart ? addDays(newStart, nights - 1) : '';
   const [note, setNote] = useState('');
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
 
-  const tomorrow = useMemo(() => {
+  useEffect(() => {
+    if (initialPolicy || !token) return;
+    fetchBooking(token, bookingId)
+      .then((data) => setPolicy(data.change_policy || null))
+      .catch(() => {});
+  }, [token, bookingId, initialPolicy]);
+
+  const minStartDate = useMemo(() => {
     const d = new Date();
-    d.setDate(d.getDate() + 1);
     d.setHours(0, 0, 0, 0);
+    d.setDate(d.getDate() + (policy?.reschedule_min_days ?? 30));
     return d;
-  }, []);
+  }, [policy]);
 
   const handleSubmit = async () => {
     if (!newStart) {
@@ -75,6 +84,12 @@ export default function BookingRescheduleScreen({ navigation, route }) {
           <Text style={styles.infoHint}>{nights} hari — durasi harus sama setelah reschedule</Text>
         </Card>
 
+        {policy ? (
+          <View style={styles.policy}>
+            <ChangePolicyNote policy={policy} mode="reschedule" />
+          </View>
+        ) : null}
+
         <Text style={styles.intro}>
           Pilih tanggal mulai baru. Tanggal selesai dihitung otomatis ({nights} hari).
         </Text>
@@ -85,7 +100,7 @@ export default function BookingRescheduleScreen({ navigation, route }) {
           label="Tanggal mulai baru"
           value={newStart}
           onChange={setNewStart}
-          minimumDate={tomorrow}
+          minimumDate={minStartDate}
           placeholder="Pilih tanggal"
         />
 
@@ -121,6 +136,7 @@ const styles = StyleSheet.create({
   infoLabel: { ...typography.label, color: colors.textSecondary },
   infoValue: { marginTop: spacing.sm, ...typography.caption, fontFamily: 'PlusJakartaSans_800ExtraBold', color: colors.baytgo },
   infoHint: { marginTop: spacing.xs, ...typography.small, color: colors.textSecondary, fontWeight: '500' },
+  policy: { marginTop: spacing.lg },
   intro: { ...typography.caption, lineHeight: 22, color: colors.textSecondary, marginVertical: spacing.lg },
   preview: { backgroundColor: colors.successLight, borderColor: '#A7F3D0', marginBottom: spacing.lg },
   previewLabel: { ...typography.label, color: colors.success },

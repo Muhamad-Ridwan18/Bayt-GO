@@ -92,12 +92,12 @@ export default function EditProfileScreen({ navigation, route }) {
 
         {isEmailUnverified ? (
           <Card style={styles.verifyBox} padding={spacing.md} elevated={false}>
-            <Text style={styles.verifyText}>Email belum terverifikasi.</Text>
+            <Text style={styles.verifyText}>Email Anda belum diverifikasi.</Text>
             <PressableScale onPress={handleResendVerification} disabled={sendingVerification} haptic="light">
               {sendingVerification ? (
                 <ActivityIndicator color={colors.baytgo} size="small" />
               ) : (
-                <Text style={styles.verifyLink}>Kirim ulang verifikasi</Text>
+                <Text style={styles.verifyLink}>Klik di sini untuk mengirim ulang email verifikasi.</Text>
               )}
             </PressableScale>
           </Card>

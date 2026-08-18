@@ -76,6 +76,9 @@ export async function registerMuthowif(payload) {
   formData.append('role', 'muthowif');
   formData.append('phone', payload.phone);
   formData.append('address', payload.address);
+  if (payload.workLocation) {
+    formData.append('work_location', payload.workLocation);
+  }
   if (payload.country) {
     formData.append('country', payload.country);
   }
@@ -100,13 +103,21 @@ export async function registerMuthowif(payload) {
 
   formData.append('photo', {
     uri: payload.photo.uri,
-    name: 'photo.jpg',
-    type: 'image/jpeg',
+    name: payload.photo.fileName || 'photo.jpg',
+    type: payload.photo.mimeType || 'image/jpeg',
   });
   formData.append('ktp_image', {
     uri: payload.ktp.uri,
-    name: 'ktp.jpg',
-    type: 'image/jpeg',
+    name: payload.ktp.fileName || 'ktp.jpg',
+    type: payload.ktp.mimeType || 'image/jpeg',
+  });
+
+  (payload.galleryImages || []).forEach((image, i) => {
+    formData.append(`gallery_images[${i}]`, {
+      uri: image.uri,
+      name: image.fileName || `gallery-${i}.jpg`,
+      type: image.mimeType || 'image/jpeg',
+    });
   });
 
   (payload.supportingDocuments || []).forEach((doc, i) => {

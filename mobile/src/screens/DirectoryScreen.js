@@ -2,7 +2,7 @@ import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import { ActivityIndicator, StyleSheet, Text, View } from 'react-native';
 import { FlashList } from '@shopify/flash-list';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { ArrowLeft, ArrowRight, Compass, Search, Users } from 'lucide-react-native';
+import { ArrowLeft, ArrowRight, Clock, Compass, Search, ShieldCheck, Users } from 'lucide-react-native';
 import DatePickerField, { parseIsoDate } from '../components/DatePickerField';
 import MuthowifListingCard from '../components/MuthowifListingCard';
 import { fetchDirectory } from '../api/directory';
@@ -11,6 +11,7 @@ import Button from '../ui/Button';
 import Card from '../ui/Card';
 import EmptyState from '../ui/EmptyState';
 import ErrorState from '../ui/ErrorState';
+import FilterChip from '../ui/FilterChip';
 import PressableScale from '../ui/PressableScale';
 import SearchBar from '../ui/SearchBar';
 import { SkeletonList } from '../ui/Skeleton';
@@ -20,14 +21,28 @@ export default function DirectoryScreen({ navigation, route }) {
   const { token } = useAuth();
   const initial = route.params || {};
 
+  const initialSort = initial.sort === 'newest' ? 'newest' : 'recommended';
+  const initialStart = String(initial.startDate || '').trim();
+
   const [q, setQ] = useState(initial.q || '');
   const [startDate, setStartDate] = useState(initial.startDate || '');
   const [endDate, setEndDate] = useState(initial.endDate || '');
+  const [sort, setSort] = useState(initialSort);
+  const [applied, setApplied] = useState(() => (
+    initialStart
+      ? {
+          q: String(initial.q || '').trim(),
+          startDate: initialStart,
+          endDate: String(initial.endDate || '').trim(),
+          sort: initialSort,
+        }
+      : null
+  ));
   const [items, setItems] = useState([]);
   const [page, setPage] = useState(1);
   const [lastPage, setLastPage] = useState(1);
   const [total, setTotal] = useState(0);
-  const [loading, setLoading] = useState(true);
+  const [loading, setLoading] = useState(Boolean(initialStart));
   const [loadingMore, setLoadingMore] = useState(false);
   const [refreshing, setRefreshing] = useState(false);
   const [error, setError] = useState(null);
@@ -51,21 +66,27 @@ export default function DirectoryScreen({ navigation, route }) {
     return max;
   }, [startDate]);
 
-  const loadPage = useCallback(async (pageNum, { append = false, refresh = false, overrides = {} } = {}) => {
+  const loadPage = useCallback(async (pageNum, { append = false, refresh = false } = {}) => {
+    const searchStart = String(applied?.startDate || '').trim();
+    if (!searchStart) {
+      setItems([]);
+      setTotal(0);
+      setLoading(false);
+      setRefreshing(false);
+      return;
+    }
+
     if (append) setLoadingMore(true);
     else if (refresh) setRefreshing(true);
     else setLoading(true);
 
-    const searchQ = overrides.q !== undefined ? overrides.q : q;
-    const searchStart = overrides.startDate !== undefined ? overrides.startDate : startDate;
-    const searchEnd = overrides.endDate !== undefined ? overrides.endDate : endDate;
-
     try {
       const data = await fetchDirectory({
         token,
-        q: String(searchQ || '').trim(),
-        startDate: String(searchStart || '').trim(),
-        endDate: String(searchEnd || '').trim(),
+        q: String(applied?.q || '').trim(),
+        startDate: searchStart,
+        endDate: String(applied?.endDate || '').trim(),
+        sort: applied?.sort || 'recommended',
         page: pageNum,
       });
 
@@ -82,23 +103,52 @@ export default function DirectoryScreen({ navigation, route }) {
       setLoadingMore(false);
       setRefreshing(false);
     }
-  }, [token, q, startDate, endDate]);
+  }, [token, applied]);
 
   useEffect(() => {
+    if (!applied?.startDate) {
+      setItems([]);
+      setTotal(0);
+      setError(null);
+      setLoading(false);
+      return;
+    }
     loadPage(1);
-  }, [loadPage]);
+  }, [applied, loadPage]);
 
-  const handleSearch = () => loadPage(1);
+  const handleSearch = () => {
+    const nextStart = String(startDate || '').trim();
+    if (!nextStart) {
+      setApplied(null);
+      return;
+    }
+    setApplied({
+      q: String(q || '').trim(),
+      startDate: nextStart,
+      endDate: String(endDate || '').trim(),
+      sort,
+    });
+  };
+
+  const handleSort = (next) => {
+    setSort(next);
+    if (applied?.startDate) {
+      setApplied((prev) => ({ ...prev, sort: next }));
+    }
+  };
 
   const handleLoadMore = () => {
     if (loadingMore || page >= lastPage) return;
     loadPage(page + 1, { append: true });
   };
 
+  const resultStart = applied?.startDate || startDate;
+  const resultEnd = applied?.endDate || endDate;
+
   const navParams = (item) => ({
     id: item.id,
-    startDate: startDate.trim() || undefined,
-    endDate: endDate.trim() || undefined,
+    startDate: String(resultStart || '').trim() || undefined,
+    endDate: String(resultEnd || '').trim() || undefined,
   });
 
   const openDetail = (item) => {
@@ -115,7 +165,7 @@ export default function DirectoryScreen({ navigation, route }) {
       onPressDetail={() => openDetail(item)}
       onPressBook={() => openBook(item)}
     />
-  ), [startDate, endDate, navigation]);
+  ), [resultStart, resultEnd, navigation]);
 
   const listHeader = (
     <View style={styles.listHeader}>
@@ -125,8 +175,8 @@ export default function DirectoryScreen({ navigation, route }) {
             <Compass size={18} color={colors.baytgo} strokeWidth={2} />
           </View>
           <View style={styles.searchCardHeadText}>
-            <Text style={styles.searchCardTitle}>Sesuaikan Pencarian</Text>
-            <Text style={styles.searchCardSub}>Atur tanggal dan kata kunci untuk hasil terbaik</Text>
+            <Text style={styles.searchCardTitle}>Cari ketersediaan</Text>
+            <Text style={styles.searchCardSub}>Pilih tanggal perjalanan dan filter nama (opsional).</Text>
           </View>
         </View>
 
@@ -162,13 +212,28 @@ export default function DirectoryScreen({ navigation, route }) {
         <SearchBar
           value={q}
           onChangeText={setQ}
-          placeholder="Nama muthowif, bahasa, atau kota..."
+          placeholder="Opsional — filter nama"
           style={styles.searchBar}
         />
 
+        <View style={styles.sortRow}>
+          <FilterChip
+            label="Rekomendasi"
+            icon={Compass}
+            active={sort === 'recommended'}
+            onPress={() => handleSort('recommended')}
+          />
+          <FilterChip
+            label="Terbaru"
+            icon={Clock}
+            active={sort === 'newest'}
+            onPress={() => handleSort('newest')}
+          />
+        </View>
+
         <View style={styles.searchCta}>
           <Button
-            label="Tampilkan hasil"
+            label="Cari muthowif"
             onPress={handleSearch}
             icon={<Search size={18} color={colors.white} strokeWidth={2} />}
           />
@@ -182,8 +247,8 @@ export default function DirectoryScreen({ navigation, route }) {
           </View>
           <View style={styles.resultCopy}>
             <Text style={styles.resultText}>
-              <Text style={styles.resultCount}>{total}</Text> muthowif ditemukan
-              {startDate ? ' untuk tanggal Anda' : ''}
+              <Text style={styles.resultCount}>{total}</Text> Muthowif tersedia
+              {applied?.startDate ? ' untuk tanggal Anda' : ''}
             </Text>
           </View>
         </View>
@@ -232,23 +297,37 @@ export default function DirectoryScreen({ navigation, route }) {
           ListEmptyComponent={
             error ? (
               <ErrorState description={error} onRetry={() => loadPage(1)} />
+            ) : !applied?.startDate ? (
+              <EmptyState
+                variant="schedule"
+                title="Pilih tanggal mulai (dan selesai jika lebih dari satu hari), lalu tekan Cari."
+                description="Daftar muthowif hanya muncul setelah tanggal diisi — supaya Anda tidak membuang waktu pada yang tidak available."
+              />
             ) : (
               <EmptyState
                 variant="search"
-                title="Tidak ada muthowif ditemukan"
-                description="Coba ubah tanggal perjalanan atau kata kunci pencarian."
+                title="Belum ada muthowif yang cocok pada rentang ini"
+                description="Semua sedang libur atau jadwal sudah terisi. Coba ubah tanggal atau kata kunci nama."
+                actionLabel="Cari muthowif"
+                onAction={handleSearch}
               />
             )
           }
           ListFooterComponent={
-            loadingMore ? (
-              <View style={styles.footerLoader}>
-                <ActivityIndicator color={colors.baytgo} />
-                <Text style={styles.footerText}>Memuat lebih banyak...</Text>
+            <View>
+              {loadingMore ? (
+                <View style={styles.footerLoader}>
+                  <ActivityIndicator color={colors.baytgo} />
+                  <Text style={styles.footerText}>Memuat lebih banyak...</Text>
+                </View>
+              ) : null}
+              <View style={styles.trustStrip}>
+                <ShieldCheck size={16} color={colors.baytgo} strokeWidth={2} />
+                <Text style={styles.trustText}>
+                  Identitas dan layanan diverifikasi tim BaytGo.
+                </Text>
               </View>
-            ) : (
-              <View style={styles.listBottom} />
-            )
+            </View>
           }
         />
       )}
@@ -340,6 +419,12 @@ const styles = StyleSheet.create({
     paddingTop: spacing.lg,
   },
   searchBar: { marginBottom: spacing.md },
+  sortRow: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    gap: spacing.sm,
+    marginBottom: spacing.md,
+  },
   searchCta: { marginTop: spacing.xs },
   resultBanner: {
     flexDirection: 'row',
@@ -382,5 +467,22 @@ const styles = StyleSheet.create({
     ...typography.caption,
     color: colors.textSecondary,
   },
-  listBottom: { height: spacing.sm },
+  trustStrip: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: spacing.sm,
+    marginTop: spacing.lg,
+    marginBottom: spacing.md,
+    paddingHorizontal: spacing.md,
+    paddingVertical: spacing.md,
+    borderRadius: radius.sm,
+    backgroundColor: colors.baytgoLight,
+  },
+  trustText: {
+    flex: 1,
+    ...typography.small,
+    color: colors.baytgo,
+    fontFamily: 'PlusJakartaSans_600SemiBold',
+    lineHeight: 18,
+  },
 });

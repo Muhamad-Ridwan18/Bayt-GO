@@ -18,6 +18,7 @@ import {
   ClipboardList,
   Gift,
   Images,
+  Link2,
   MessageCircle,
   Share2,
   Star,
@@ -155,6 +156,7 @@ export default function MuthowifDashboardScreen({ navigation }) {
   const [emergencyCount, setEmergencyCount] = useState(0);
   const [pendingCount, setPendingCount] = useState(0);
   const [referralCode, setReferralCode] = useState(null);
+  const [publicProfileUrl, setPublicProfileUrl] = useState(null);
   const [rating, setRating] = useState(null);
   const [reviewCount, setReviewCount] = useState(0);
   const [walletBalance, setWalletBalance] = useState(0);
@@ -173,6 +175,7 @@ export default function MuthowifDashboardScreen({ navigation }) {
       setEmergencyCount(data.emergency_offer_count || 0);
       setPendingCount(data.pending_booking_count || 0);
       setReferralCode(data.referral_code || null);
+      setPublicProfileUrl(data.public_profile_url || null);
       setRating(data.rating || null);
       setReviewCount(data.review_count || 0);
       setWalletBalance(data.wallet_balance ?? 0);
@@ -194,10 +197,24 @@ export default function MuthowifDashboardScreen({ navigation }) {
     screen: 'MuthowifBookingDetail', params: { bookingId: item.id },
   });
 
-  const shareReferral = async () => {
-    if (!referralCode) return;
+  const shareValue = async (value) => {
+    if (!value) return;
     try {
-      await Share.share({ message: `Daftar sebagai muthowif di BaytGo dengan kode referral saya: ${referralCode}` });
+      await Share.share({ message: String(value) });
+    } catch { /* ignore */ }
+  };
+
+  const shareProfile = async () => {
+    if (!publicProfileUrl) {
+      await shareValue(referralCode);
+      return;
+    }
+    const name = user?.name || 'saya';
+    try {
+      await Share.share({
+        message: `Halo! Saya ${name}, muthowif di BaytGo. Lihat profil dan layanan saya di sini: ${publicProfileUrl}`,
+        url: publicProfileUrl,
+      });
     } catch { /* ignore */ }
   };
 
@@ -294,6 +311,42 @@ export default function MuthowifDashboardScreen({ navigation }) {
 
           {!loading ? (
             <>
+              {(publicProfileUrl || referralCode) ? (
+                <Card style={styles.shareCard} padding={spacing.lg} elevated={false} variant="flat">
+                  <Text style={styles.shareHeading}>Bagikan profil Anda</Text>
+                  <Text style={styles.shareSub}>
+                    Bagikan profil publik dan kode referral ke jamaah atau rekan muthowif.
+                  </Text>
+
+                  {referralCode ? (
+                    <PressableScale onPress={() => shareValue(referralCode)} haptic="light" style={styles.shareRow}>
+                      <Gift size={18} color={colors.baytgo} strokeWidth={2} />
+                      <View style={styles.shareRowTexts}>
+                        <Text style={styles.shareRowLabel}>Referral Anda</Text>
+                        <Text style={styles.shareRowValue}>{referralCode}</Text>
+                      </View>
+                      <Share2 size={16} color={colors.baytgo} strokeWidth={2} />
+                    </PressableScale>
+                  ) : null}
+
+                  {publicProfileUrl ? (
+                    <PressableScale onPress={() => shareValue(publicProfileUrl)} haptic="light" style={styles.shareRow}>
+                      <Link2 size={18} color={colors.baytgo} strokeWidth={2} />
+                      <View style={styles.shareRowTexts}>
+                        <Text style={styles.shareRowLabel}>Tautan profil</Text>
+                        <Text style={styles.shareRowUrl} numberOfLines={1}>{publicProfileUrl}</Text>
+                      </View>
+                      <Share2 size={16} color={colors.baytgo} strokeWidth={2} />
+                    </PressableScale>
+                  ) : null}
+
+                  <PressableScale onPress={shareProfile} haptic="light" style={styles.shareCta}>
+                    <Share2 size={16} color={colors.white} strokeWidth={2} />
+                    <Text style={styles.shareCtaText}>Bagikan</Text>
+                  </PressableScale>
+                </Card>
+              ) : null}
+
               <Text style={styles.gridTitle}>Menu cepat</Text>
               <View style={styles.serviceGrid}>
                 {PRIMARY_SERVICES.map((item) => (
@@ -337,23 +390,6 @@ export default function MuthowifDashboardScreen({ navigation }) {
                   ))}
                 </>
               )}
-
-              {referralCode ? (
-                <PressableScale onPress={shareReferral} haptic="light" style={styles.referralCard}>
-                  <LinearGradient colors={[colors.baytgoLight, colors.white]} style={styles.referralGradient}>
-                    <View style={styles.referralLeft}>
-                      <Gift size={24} color={colors.baytgo} strokeWidth={2} />
-                      <View style={styles.referralTexts}>
-                        <Text style={styles.referralTitle}>Kode referral Anda</Text>
-                        <Text style={styles.referralCode}>{referralCode}</Text>
-                      </View>
-                    </View>
-                    <View style={styles.referralShare}>
-                      <Share2 size={18} color={colors.baytgo} strokeWidth={2} />
-                    </View>
-                  </LinearGradient>
-                </PressableScale>
-              ) : null}
             </>
           ) : null}
         </View>
@@ -543,20 +579,50 @@ const styles = StyleSheet.create({
   scheduleCompactRight: { alignItems: 'flex-end', gap: spacing.xs },
   statusDot: { width: 8, height: 8, borderRadius: 4 },
   scheduleStatus: { ...typography.label, fontSize: 10, color: colors.textSecondary },
-  referralCard: { borderRadius: radius.md - 2, overflow: 'hidden', marginTop: spacing.sm, borderWidth: 1, borderColor: colors.border },
-  referralGradient: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', padding: spacing.lg },
-  referralLeft: { flexDirection: 'row', alignItems: 'center', gap: spacing.md, flex: 1 },
-  referralTexts: { flex: 1 },
-  referralTitle: { ...typography.small, color: colors.textSecondary },
-  referralCode: { marginTop: spacing.xs, fontSize: 20, fontWeight: '900', color: colors.baytgo, letterSpacing: 2, fontFamily: 'PlusJakartaSans_800ExtraBold' },
-  referralShare: {
-    width: 40,
-    height: 40,
-    borderRadius: radius.sm,
-    backgroundColor: colors.card,
+  shareCard: { marginBottom: spacing.xl, borderRadius: radius.md },
+  shareHeading: {
+    ...typography.caption,
+    fontFamily: 'PlusJakartaSans_800ExtraBold',
+    fontWeight: '800',
+    color: colors.textPrimary,
+  },
+  shareSub: { marginTop: spacing.xs, ...typography.small, color: colors.textSecondary, lineHeight: 18 },
+  shareRow: {
+    flexDirection: 'row',
     alignItems: 'center',
-    justifyContent: 'center',
+    gap: spacing.md,
+    marginTop: spacing.md,
+    padding: spacing.md,
+    borderRadius: radius.sm,
+    backgroundColor: colors.background,
     borderWidth: 1,
     borderColor: colors.border,
+  },
+  shareRowTexts: { flex: 1, minWidth: 0 },
+  shareRowLabel: { ...typography.label, fontSize: 10, color: colors.textSecondary, textTransform: 'uppercase' },
+  shareRowValue: {
+    marginTop: 2,
+    fontSize: 16,
+    fontWeight: '800',
+    color: colors.baytgo,
+    letterSpacing: 1.2,
+    fontFamily: 'PlusJakartaSans_800ExtraBold',
+  },
+  shareRowUrl: { marginTop: 2, ...typography.small, color: colors.slate700 },
+  shareCta: {
+    marginTop: spacing.md,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: spacing.sm,
+    backgroundColor: colors.baytgo,
+    paddingVertical: spacing.md,
+    borderRadius: radius.sm,
+  },
+  shareCtaText: {
+    ...typography.caption,
+    fontFamily: 'PlusJakartaSans_800ExtraBold',
+    fontWeight: '800',
+    color: colors.white,
   },
 });

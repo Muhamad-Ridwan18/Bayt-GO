@@ -91,6 +91,7 @@ export default function RegisterScreen({ navigation, route }) {
   const [phoneCountryIso, setPhoneCountryIso] = useState(DEFAULT_PHONE_COUNTRY.iso);
   const [phone, setPhone] = useState('');
   const [address, setAddress] = useState('');
+  const [workLocation, setWorkLocation] = useState('');
   const [ppuiNumber, setPpuiNumber] = useState('');
 
   const [nik, setNik] = useState('');
@@ -105,6 +106,7 @@ export default function RegisterScreen({ navigation, route }) {
   const [termsModalOpen, setTermsModalOpen] = useState(false);
   const [photo, setPhoto] = useState(null);
   const [ktp, setKtp] = useState(null);
+  const [galleryImages, setGalleryImages] = useState([]);
   const [supportingDocs, setSupportingDocs] = useState([]);
 
   const [otp, setOtp] = useState('');
@@ -123,6 +125,23 @@ export default function RegisterScreen({ navigation, route }) {
     });
     if (!result.canceled && result.assets[0]) {
       setter(result.assets[0]);
+    }
+  };
+
+  const pickGalleryImages = async () => {
+    const permission = await ImagePicker.requestMediaLibraryPermissionsAsync();
+    if (!permission.granted) {
+      Alert.alert('Izin diperlukan', 'Izinkan akses galeri untuk upload foto.');
+      return;
+    }
+    const result = await ImagePicker.launchImageLibraryAsync({
+      mediaTypes: ['images'],
+      quality: 0.8,
+      allowsMultipleSelection: true,
+      selectionLimit: 20,
+    });
+    if (!result.canceled && result.assets?.length) {
+      setGalleryImages((prev) => [...prev, ...result.assets].slice(0, 20));
     }
   };
 
@@ -159,9 +178,11 @@ export default function RegisterScreen({ navigation, route }) {
       if (!nik.trim() || nik.trim().length !== 16) return 'NIK harus 16 digit.';
       if (!birthDate.trim()) return 'Tanggal lahir wajib diisi.';
       if (!passportNumber.trim()) return 'Nomor paspor wajib diisi.';
+      if (!workLocation.trim()) return 'Lokasi kerja wajib diisi.';
       if (!cleanRows(languages).length) return 'Isi minimal satu bahasa.';
       if (!cleanRows(workExperiences).length) return 'Isi minimal satu pengalaman kerja.';
       if (!photo || !ktp) return 'Foto profil dan KTP wajib diupload.';
+      if (galleryImages.length < 3) return 'Unggah minimal 3 foto galeri.';
     }
     return null;
   };
@@ -260,6 +281,7 @@ export default function RegisterScreen({ navigation, route }) {
           phone: fullPhone,
           country: phoneCountryIso,
           address: address.trim(),
+          workLocation: workLocation.trim(),
           nik: nik.trim(),
           birthDate: birthDate.trim(),
           passportNumber: passportNumber.trim(),
@@ -270,6 +292,7 @@ export default function RegisterScreen({ navigation, route }) {
           referralCode: referralCode.trim(),
           photo,
           ktp,
+          galleryImages,
           supportingDocuments: supportingDocs,
         });
         if (data.token) {
@@ -386,6 +409,16 @@ export default function RegisterScreen({ navigation, route }) {
 
       {role === 'muthowif' && (
         <>
+          <AuthInput
+            label="Lokasi kerja saat ini *"
+            icon={MapPin}
+            value={workLocation}
+            onChangeText={setWorkLocation}
+            placeholder="Contoh: Mekkah, Madinah, Jakarta"
+          />
+          <Text style={styles.fieldHint}>
+            Isi kota atau wilayah tempat Anda sedang bertugas saat ini.
+          </Text>
           <AuthInput label="NIK (16 digit)" icon={CreditCard} value={nik} onChangeText={setNik} keyboardType="number-pad" maxLength={16} />
           <DatePickerField label="Tanggal lahir" value={birthDate} onChange={setBirthDate} placeholder="Pilih tanggal lahir" maximumDate={new Date()} />
           <AuthInput label="Nomor paspor" icon={Plane} value={passportNumber} onChangeText={setPassportNumber} />
@@ -399,6 +432,22 @@ export default function RegisterScreen({ navigation, route }) {
           </Text>
           <ImagePickerField label="Foto profil *" image={photo} onPick={() => pickImage(setPhoto)} onClear={() => setPhoto(null)} />
           <ImagePickerField label="Foto KTP *" image={ktp} onPick={() => pickImage(setKtp)} onClear={() => setKtp(null)} />
+          <View style={styles.imageField}>
+            <Text style={styles.imageLabel}>Galeri (minimal 3 foto) *</Text>
+            <PressableScale onPress={pickGalleryImages} haptic="light" style={styles.imageBtn}>
+              <Text style={styles.imagePlaceholder}>
+                {galleryImages.length > 0 ? 'Tambah foto lagi' : 'Pilih foto galeri'}
+              </Text>
+            </PressableScale>
+            <UploadPreviewStrip
+              files={galleryImages}
+              onRemove={(index) => setGalleryImages((prev) => prev.filter((_, i) => i !== index))}
+              style={styles.docPreview}
+            />
+            <Text style={styles.fieldHint}>
+              Unggah minimal 3 foto kerja atau dokumentasi. Foto ini masuk ke portofolio Galeri.
+            </Text>
+          </View>
           <View style={styles.imageField}>
             <Text style={styles.imageLabel}>Dokumen pendukung (opsional)</Text>
             <PressableScale onPress={pickSupportingDocs} haptic="light" style={styles.imageBtn}>

@@ -85,10 +85,17 @@ class MuthowifDirectoryApiController extends Controller
         }
 
         if ($q !== '') {
-            $query->whereHas('user', fn ($u) => $u->whereILike('name', '%'.$q.'%'));
+            $query->matchesSearch($q);
         }
 
-        $profiles = $query->orderByMarketplaceRanking()->paginate(12)->withQueryString();
+        $sort = strtolower(trim((string) $request->query('sort', 'recommended')));
+        if ($sort === 'newest') {
+            $query->orderByDesc('created_at');
+        } else {
+            $query->orderByMarketplaceRanking();
+        }
+
+        $profiles = $query->paginate(12)->withQueryString();
 
         $formattedData = $profiles->getCollection()->map(
             fn ($profile) => ApiMuthowifCard::fromProfile($profile)
@@ -102,11 +109,14 @@ class MuthowifDirectoryApiController extends Controller
         ]);
     }
 
-    public function show(Request $request, $id): JsonResponse
+    public function show(Request $request, string $id): JsonResponse
     {
-        $publicProfile = MuthowifProfile::where('id', $id)
-            ->where('verification_status', MuthowifVerificationStatus::Approved)
-            ->firstOrFail();
+        $query = MuthowifProfile::query()
+            ->where('verification_status', MuthowifVerificationStatus::Approved);
+
+        $publicProfile = ctype_digit($id)
+            ? $query->where('id', (int) $id)->firstOrFail()
+            : $query->where('slug', $id)->firstOrFail();
 
         $publicProfile = MarketplaceProfileCache::forShow($publicProfile);
 

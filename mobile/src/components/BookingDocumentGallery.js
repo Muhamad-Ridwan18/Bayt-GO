@@ -220,6 +220,8 @@ export default function BookingDocumentGallery({ token, bookingId, documents, ti
         ))}
       </View>
 
+      <Text style={styles.privacyNote}>Dokumen bersifat pribadi. Jangan bagikan ke pihak lain.</Text>
+
       <PreviewModal
         visible={!!previewDoc}
         doc={previewDoc}
@@ -256,6 +258,12 @@ const styles = StyleSheet.create({
   sectionTitle: { ...typography.caption, fontSize: 15, fontWeight: '900', color: colors.baytgo },
   sectionSub: { marginTop: 2, ...typography.caption, fontWeight: '600', color: colors.textSecondary },
   grid: { flexDirection: 'row', flexWrap: 'wrap', gap: spacing.md },
+  privacyNote: {
+    marginTop: spacing.md,
+    ...typography.small,
+    color: colors.textSecondary,
+    lineHeight: 18,
+  },
   thumbCard: {
     width: THUMB_W,
     borderRadius: radius.sm,

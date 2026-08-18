@@ -122,6 +122,7 @@ class AuthController extends Controller
             'phone' => ['required', 'string', 'min:10', 'max:24'],
             'country' => ['nullable', 'string', 'size:2', 'regex:/^[A-Za-z]{2}$/'],
             'address' => ['required', 'string', 'max:2000'],
+            'work_location' => ['required_if:role,muthowif', 'nullable', 'string', 'max:255'],
             'ppui_number' => ['required_if:customer_type,company', 'nullable', 'string', 'max:64'],
             'nik' => ['required_if:role,muthowif', 'nullable', 'string', 'size:16', 'regex:/^\d{16}$/'],
             'birth_date' => ['required_if:role,muthowif', 'nullable', 'date', 'before:today', 'after:1900-01-01'],
@@ -136,6 +137,8 @@ class AuthController extends Controller
             'muthowif_referral_code' => ['nullable', 'string', 'max:16'],
             'photo' => ['required_if:role,muthowif', 'nullable', 'file', 'mimes:jpeg,jpg,png,webp', 'max:5120'],
             'ktp_image' => ['required_if:role,muthowif', 'nullable', 'file', 'mimes:jpeg,jpg,png,webp', 'max:5120'],
+            'gallery_images' => ['nullable', 'array', 'max:20'],
+            'gallery_images.*' => ['file', 'mimes:jpeg,jpg,png,webp', 'max:5120'],
             'supporting_documents' => ['nullable', 'array', 'max:20'],
             'supporting_documents.*' => ['file', 'mimes:pdf,jpeg,jpg,png,webp', 'max:10240'],
             'device_name' => ['required', 'string'],
@@ -152,6 +155,12 @@ class AuthController extends Controller
             if (count($languages) === 0) {
                 throw ValidationException::withMessages([
                     'languages' => 'Isi minimal satu bahasa.',
+                ]);
+            }
+
+            if (count($this->collectGalleryUploads($request)) < 3) {
+                throw ValidationException::withMessages([
+                    'gallery_images' => 'Unggah minimal 3 foto galeri.',
                 ]);
             }
 
@@ -172,6 +181,7 @@ class AuthController extends Controller
         }
 
         $storedDir = null;
+        $portfolioDir = null;
         $user = null;
         $muthowifProfileId = null;
         $existingRejected = null;
@@ -237,6 +247,9 @@ class AuthController extends Controller
                 $profilePayload = [
                     'phone' => $request->input('phone'),
                     'address' => $request->input('address'),
+                    'work_location' => filled($request->input('work_location'))
+                        ? trim((string) $request->input('work_location'))
+                        : null,
                     'nik' => $request->input('nik'),
                     'birth_date' => $request->input('birth_date'),
                     'passport_number' => $request->input('passport_number'),
@@ -280,14 +293,22 @@ class AuthController extends Controller
                         'sort_order' => (int) $index,
                     ]);
                 }
+
+                $portfolioDir = 'portfolio/'.$profile->getKey();
+                $this->createRegistrationGalleryPortfolio($profile, $request, $optimizer);
             }
 
             DB::commit();
         } catch (Throwable $e) {
             DB::rollBack();
 
-            if ($storedDir !== null && $existingRejected === null) {
-                Storage::disk('local')->deleteDirectory($storedDir);
+            if ($existingRejected === null) {
+                if ($storedDir !== null) {
+                    Storage::disk('local')->deleteDirectory($storedDir);
+                }
+                if ($portfolioDir !== null) {
+                    Storage::disk('local')->deleteDirectory($portfolioDir);
+                }
             }
 
             throw $e;
@@ -338,6 +359,63 @@ class AuthController extends Controller
         }
 
         return $payload;
+    }
+
+    /**
+     * @return list<\Illuminate\Http\UploadedFile>
+     */
+    private function collectGalleryUploads(Request $request): array
+    {
+        $files = $request->file('gallery_images', []);
+        if (! is_array($files)) {
+            $files = array_filter([$files]);
+        }
+
+        $valid = [];
+        foreach ($files as $file) {
+            if ($file && $file->isValid()) {
+                $valid[] = $file;
+            }
+        }
+
+        return $valid;
+    }
+
+    private function createRegistrationGalleryPortfolio(
+        MuthowifProfile $profile,
+        Request $request,
+        UploadedImageOptimizer $optimizer,
+    ): void {
+        $files = $this->collectGalleryUploads($request);
+        if ($files === []) {
+            return;
+        }
+
+        $profileId = (string) $profile->getKey();
+        $destDir = 'portfolio/'.$profileId;
+
+        $portfolio = $profile->portfolios()->create([
+            'title' => 'Galeri',
+            'description' => null,
+            'image_path' => '',
+            'sort_order' => $profile->portfolios()->count() + 1,
+        ]);
+
+        $coverPath = null;
+        foreach ($files as $index => $file) {
+            $path = $optimizer->store($file, $destDir, 'local', 'portfolio');
+            $portfolio->images()->create([
+                'path' => $path,
+                'original_name' => $file->getClientOriginalName(),
+                'sort_order' => (int) $index,
+            ]);
+            $coverPath ??= $path;
+        }
+
+        if (is_string($coverPath)) {
+            $portfolio->image_path = $coverPath;
+            $portfolio->save();
+        }
     }
 
     /**

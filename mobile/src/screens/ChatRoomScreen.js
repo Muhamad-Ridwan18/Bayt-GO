@@ -132,7 +132,7 @@ export default function ChatRoomScreen({ navigation, route }) {
   const handleSend = async () => {
     const body = text.trim();
     if (!chatOpen) {
-      Alert.alert('Chat ditutup', 'Percakapan tidak dapat dilanjutkan untuk booking ini.');
+      Alert.alert('Chat ditutup', 'Pesan baru tidak bisa dikirim — layanan pesanan ini sudah selesai.');
       return;
     }
     if (!body && !pendingImage) return;
@@ -148,7 +148,7 @@ export default function ChatRoomScreen({ navigation, route }) {
       setText('');
       setPendingImage(null);
     } catch (err) {
-      Alert.alert('Gagal kirim', err.message || 'Pesan tidak terkirim');
+      Alert.alert('Gagal kirim', err.message || 'Pesan tidak terkirim. Coba lagi.');
     } finally {
       setSending(false);
     }
@@ -195,9 +195,18 @@ export default function ChatRoomScreen({ navigation, route }) {
       {!chatOpen ? (
         <View style={styles.closedBanner}>
           <Lock size={16} color={colors.baytgo} strokeWidth={2} />
-          <Text style={styles.closedText}>Chat ditutup untuk booking ini.</Text>
+          <View style={styles.bannerCopy}>
+            <Text style={styles.closedText}>Pesan baru tidak bisa dikirim — layanan pesanan ini sudah selesai.</Text>
+            <Text style={styles.introText}>Riwayat obrolan untuk pesanan ini. Obrolan ditutup otomatis setelah layanan selesai.</Text>
+          </View>
         </View>
-      ) : null}
+      ) : (
+        <View style={styles.introBanner}>
+          <Text style={styles.introText}>
+            Ngobrol dengan pihak lain tentang layanan ini. Chat aktif setelah pembayaran lunas sampai layanan diselesaikan.
+          </Text>
+        </View>
+      )}
 
       {loading ? (
         <SkeletonList count={4} style={styles.skeleton} />
@@ -215,7 +224,7 @@ export default function ChatRoomScreen({ navigation, route }) {
             <EmptyState
               variant="chat"
               title="Belum ada pesan"
-              description={`Mulai percakapan dengan ${otherName || 'lawans bicara'}.`}
+              description="Mulai percakapan."
             />
           )}
         />
@@ -231,7 +240,7 @@ export default function ChatRoomScreen({ navigation, route }) {
             style={styles.pendingPreview}
           />
         ) : null}
-        {sending ? <Text style={styles.sendingHint}>Mengirim pesan…</Text> : null}
+        {sending ? <Text style={styles.sendingHint}>Mengirim…</Text> : null}
         <View style={styles.inputRow}>
           <PressableScale
             onPress={pickImage}
@@ -276,6 +285,9 @@ export default function ChatRoomScreen({ navigation, route }) {
             )}
           </PressableScale>
         </View>
+        {chatOpen ? (
+          <Text style={styles.imageHint}>Foto: JPG, PNG, GIF, atau WebP (maks. 5 MB). Bisa dikombinasikan dengan teks.</Text>
+        ) : null}
       </Card>
 
       <ImageLightbox
@@ -297,10 +309,25 @@ export default function ChatRoomScreen({ navigation, route }) {
 const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: colors.background },
   closedBanner: {
-    flexDirection: 'row', alignItems: 'center', gap: spacing.sm,
+    flexDirection: 'row', alignItems: 'flex-start', gap: spacing.sm,
     backgroundColor: colors.successLight, paddingHorizontal: layout.screenPadding, paddingVertical: spacing.md,
   },
-  closedText: { ...typography.small, color: colors.baytgo },
+  introBanner: {
+    paddingHorizontal: layout.screenPadding,
+    paddingVertical: spacing.sm + 2,
+    backgroundColor: colors.card,
+    borderBottomWidth: 1,
+    borderBottomColor: colors.border,
+  },
+  bannerCopy: { flex: 1 },
+  closedText: { ...typography.small, fontFamily: 'PlusJakartaSans_700Bold', color: colors.baytgo, lineHeight: 18 },
+  introText: { marginTop: 2, ...typography.small, color: colors.textSecondary, lineHeight: 17 },
+  imageHint: {
+    marginTop: spacing.sm,
+    ...typography.small,
+    color: colors.textMuted,
+    lineHeight: 16,
+  },
   skeleton: { padding: layout.screenPadding, flex: 1 },
   list: { padding: layout.screenPadding, paddingBottom: spacing.sm, flexGrow: 1 },
   composer: {

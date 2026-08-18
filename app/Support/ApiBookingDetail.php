@@ -125,6 +125,7 @@ final class ApiBookingDetail
             'total_amount' => (float) $booking->total_amount,
             'pricing' => self::pricing($booking),
             'created_at' => $booking->created_at?->toIso8601String(),
+            'payment_due_at' => $booking->payment_due_at?->toIso8601String(),
             'muthowif_name' => $profile?->user?->name ?? 'Muthowif',
             'muthowif_avatar' => $profile ? ApiMediaUrl::muthowifAvatar($profile) : null,
         ];
@@ -211,6 +212,24 @@ final class ApiBookingDetail
                     'phone' => $profile->phone ?? $profile->user->phone,
                 ] : null,
             ] : null;
+
+            if (! $booking->isSupport()) {
+                $preview = null;
+                if ($booking->isPaid() && $booking->status === \App\Enums\BookingStatus::Confirmed) {
+                    $payment = $booking->settledBookingPayment();
+                    if ($payment) {
+                        $preview = BookingRefundFee::snapshot($booking, $payment);
+                    }
+                }
+
+                $data['change_policy'] = [
+                    'refund_min_days' => BookingPostPayRules::refundMinDaysBeforeService(),
+                    'reschedule_min_days' => BookingPostPayRules::rescheduleMinDaysBeforeService(),
+                    'refund_platform_percent' => round(BookingRefundFee::getPlatformRefundRate() * 100, 2),
+                    'refund_muthowif_percent' => round(BookingRefundFee::getMuthowifRefundRate() * 100, 2),
+                    'refund_preview' => $preview,
+                ];
+            }
         }
 
         return $data;

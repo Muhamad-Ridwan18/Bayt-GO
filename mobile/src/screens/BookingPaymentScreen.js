@@ -1,10 +1,10 @@
 import React, { useCallback, useEffect, useRef, useState } from 'react';
 import {
-  View, Text, StyleSheet, ScrollView, Linking, Alert, RefreshControl, ActivityIndicator,
+  View, Text, StyleSheet, ScrollView, Linking, Alert, RefreshControl, ActivityIndicator, Share,
 } from 'react-native';
 import {
   Wallet, Receipt, User, Calendar, Clock, AlertCircle, ArrowLeftRight,
-  AlarmClock, ExternalLink, CircleArrowRight, CircleCheck,
+  AlarmClock, ExternalLink, CircleArrowRight, Copy,
 } from 'lucide-react-native';
 import ScreenHeader from '../components/ScreenHeader';
 import { fetchBooking, fetchPaymentMethods, initiatePayment } from '../api/bookings';
@@ -12,22 +12,47 @@ import { useAuth } from '../context/AuthContext';
 import { navigateToBookingDetail } from '../navigation/rootNavigation';
 import Button from '../ui/Button';
 import Card from '../ui/Card';
+import PressableScale from '../ui/PressableScale';
 import EmptyState from '../ui/EmptyState';
 import StickyFooter from '../ui/StickyFooter';
 import SuccessState from '../ui/SuccessState';
 import { SkeletonList } from '../ui/Skeleton';
+import {
+  StepIndicator, EnvironmentBanner, MethodCard, PaymentInfoRow, CopyableValue, PaymentHowToSteps,
+} from '../features/booking/PaymentScreenParts';
 import { notifySuccess } from '../utils/feedback';
 import StatusPill from '../features/booking/StatusPill';
-import {
-  StepIndicator, EnvironmentBanner, MethodCard, PaymentInfoRow,
-} from '../features/booking/PaymentScreenParts';
 import { colors, layout, radius, spacing, typography } from '../theme/tokens';
 import { formatIdr } from '../utils/format';
 import {
-  bookingStatusMeta, paymentStatusMeta, formatDateRange, isAwaitingMuthowifConfirmation,
+  bookingStatusMeta, paymentStatusMeta, formatDateRange, isAwaitingMuthowifConfirmation, needsPayment,
 } from '../utils/bookingLabels';
+import PaymentDeadlineBanner from '../features/booking/PaymentDeadlineBanner';
 import { CustomerPricingBreakdown } from '../components/BookingPricingBreakdown';
 import { useHideTabBarOnFocus } from '../hooks/useHideTabBarOnFocus';
+
+const METHOD_GROUP_LABELS = {
+  moota: 'Rekening tujuan',
+  bank: 'Transfer bank',
+  qris: 'QRIS',
+  ewallet: 'E-wallet',
+  other: 'Metode lain',
+};
+
+function groupedMethods(methods) {
+  const order = ['moota', 'bank', 'qris', 'ewallet', 'other'];
+  const map = {};
+  methods.forEach((item) => {
+    const key = item.group || 'other';
+    if (!map[key]) map[key] = [];
+    map[key].push(item);
+  });
+  return order.filter((key) => map[key]?.length).map((key) => ({
+    key,
+    title: METHOD_GROUP_LABELS[key] || key,
+    items: map[key],
+  }));
+}
 
 export default function BookingPaymentScreen({ navigation, route }) {
   const { token } = useAuth();
@@ -44,6 +69,7 @@ export default function BookingPaymentScreen({ navigation, route }) {
   const [booking, setBooking] = useState(null);
   const [paymentEnvironment, setPaymentEnvironment] = useState(null);
   const [selectedMethodMeta, setSelectedMethodMeta] = useState(null);
+  const [driver, setDriver] = useState('moota');
   const pollRef = useRef(null);
   const bookingRef = useRef(null);
 
@@ -51,10 +77,7 @@ export default function BookingPaymentScreen({ navigation, route }) {
     setError('');
     try {
       const data = await fetchPaymentMethods(token, bookingId);
-      if (data.driver !== 'moota') {
-        setError('Aplikasi mobile saat ini hanya mendukung pembayaran Moota.');
-        return;
-      }
+      setDriver(data.driver || 'doku');
       setAmount(data.amounts?.total || data.amount || 0);
       if (data.pricing) setPricing(data.pricing);
       const meta = data.methods_meta || (data.methods || []).map((id) => ({ id, label: id }));
@@ -131,15 +154,16 @@ export default function BookingPaymentScreen({ navigation, route }) {
 
   const handlePay = async () => {
     if (!selectedMethod) {
-      setError('Pilih rekening tujuan transfer.');
+      setError(driver === 'moota' ? 'Pilih rekening tujuan transfer.' : 'Pilih metode pembayaran.');
       return;
     }
     setPaying(true);
     setError('');
     try {
       const data = await initiatePayment(token, bookingId, selectedMethod);
-      if (data.step === 'payment_instructions' && data.driver === 'moota') {
+      if (data.step === 'payment_instructions') {
         setInstructions(data);
+        if (data.driver) setDriver(data.driver);
         if (data.payment_environment) setPaymentEnvironment(data.payment_environment);
         setSelectedMethodMeta(data.method_meta || methods.find((m) => m.id === selectedMethod) || null);
       } else {
@@ -152,13 +176,22 @@ export default function BookingPaymentScreen({ navigation, route }) {
     }
   };
 
-  const openCheckout = () => {
-    const url = instructions?.checkout_url;
+  const openUrl = (url) => {
     if (!url) {
       Alert.alert('URL tidak tersedia', 'Hubungi admin jika masalah berlanjut.');
       return;
     }
     Linking.openURL(url).catch(() => Alert.alert('Gagal membuka', url));
+  };
+
+  const copyValue = async (value) => {
+    if (!value) return;
+    try {
+      await Share.share({ message: String(value) });
+      notifySuccess('Siap disalin / dibagikan.');
+    } catch {
+      /* dismissed */
+    }
   };
 
   const isPaid = booking?.payment_status === 'paid';
@@ -211,21 +244,53 @@ export default function BookingPaymentScreen({ navigation, route }) {
     );
   }
 
-  const footerCta = instructions ? (
+  const mootaAccountNumber = instructions?.account_number
+    || selectedMethodMeta?.account_number
+    || null;
+  const uniqueAmount = instructions?.expected_transfer_total
+    ? String(instructions.expected_transfer_total)
+    : '';
+
+  const footerAction = instructions
+    ? (driver === 'moota'
+      ? (mootaAccountNumber
+        ? { label: 'Salin nomor rekening', onPress: () => copyValue(mootaAccountNumber) }
+        : uniqueAmount
+          ? { label: 'Salin nominal transfer', onPress: () => copyValue(uniqueAmount) }
+          : null)
+      : instructions.deeplink_url
+        ? { label: 'Buka aplikasi e-wallet', onPress: () => openUrl(instructions.deeplink_url) }
+        : instructions.checkout_url
+          ? { label: 'Buka halaman pembayaran', onPress: () => openUrl(instructions.checkout_url) }
+          : instructions.va_number
+            ? { label: 'Salin nomor VA', onPress: () => copyValue(instructions.va_number) }
+            : null)
+    : {
+      label: 'Lanjut ke pembayaran',
+      onPress: handlePay,
+      loading: paying,
+      disabled: methods.length === 0,
+    };
+
+  const methodGroups = groupedMethods(methods);
+  const methodTitle = driver === 'moota' ? 'Pilih rekening tujuan' : 'Pilih metode pembayaran';
+  const methodSub = driver === 'moota'
+    ? 'Pilih rekening bank untuk transfer pembayaran Anda'
+    : 'Pilih virtual account, QRIS, atau e-wallet';
+
+  const footerCta = footerAction ? (
     <Button
-      label="Buka halaman pembayaran Moota"
-      icon={<ExternalLink size={18} color={colors.white} strokeWidth={2} />}
-      onPress={openCheckout}
+      label={footerAction.label}
+      icon={instructions
+        ? (driver !== 'moota' && (instructions.deeplink_url || instructions.checkout_url)
+          ? <ExternalLink size={18} color={colors.white} strokeWidth={2} />
+          : <Copy size={18} color={colors.white} strokeWidth={2} />)
+        : <CircleArrowRight size={18} color={colors.white} strokeWidth={2} />}
+      onPress={footerAction.onPress}
+      loading={footerAction.loading}
+      disabled={footerAction.disabled}
     />
-  ) : (
-    <Button
-      label="Lanjut ke pembayaran"
-      icon={<CircleArrowRight size={18} color={colors.white} strokeWidth={2} />}
-      onPress={handlePay}
-      loading={paying}
-      disabled={methods.length === 0}
-    />
-  );
+  ) : null;
 
   return (
     <View style={styles.container}>
@@ -236,8 +301,14 @@ export default function BookingPaymentScreen({ navigation, route }) {
         refreshControl={<RefreshControl refreshing={refreshing} onRefresh={() => loadAll(true)} tintColor={colors.baytgo} />}
         showsVerticalScrollIndicator={false}
       >
-        <StepIndicator step={currentStep} />
+        <StepIndicator step={currentStep} driver={driver} />
         <EnvironmentBanner environment={paymentEnvironment} />
+
+        {needsPayment(booking) && booking?.payment_due_at ? (
+          <View style={styles.deadlineWrap}>
+            <PaymentDeadlineBanner dueAt={booking.payment_due_at} onExpire={() => loadAll(true)} />
+          </View>
+        ) : null}
 
         <Card style={styles.summaryCard} padding={spacing.xl}>
           <View style={styles.summaryTop}>
@@ -283,33 +354,71 @@ export default function BookingPaymentScreen({ navigation, route }) {
           <Card style={styles.instructionsCard} padding={spacing.xl}>
             <View style={styles.instructionsHead}>
               <ArrowLeftRight size={20} color={colors.baytgo} strokeWidth={2} />
-              <Text style={styles.instructionsTitle}>Instruksi transfer</Text>
+              <Text style={styles.instructionsTitle}>Instruksi pembayaran</Text>
             </View>
             <Text style={styles.instructionsText}>
-              Transfer sesuai nominal unik ke rekening yang ditampilkan di halaman Moota.
+              {driver === 'moota'
+                ? 'Transfer tepat sesuai nominal unik ke rekening di bawah. Jangan dibulatkan. Status berubah otomatis setelah dana masuk.'
+                : 'Selesaikan pembayaran lewat virtual account, QRIS, atau aplikasi e-wallet yang dipilih.'}
             </Text>
 
             {instructions.expected_transfer_total ? (
-              <View style={styles.amountHighlight}>
-                <Text style={styles.amountHighlightLabel}>Nominal transfer</Text>
-                <Text style={styles.amountHighlightValue}>
-                  {formatIdr(instructions.expected_transfer_total)}
+              <PressableScale onPress={() => copyValue(uniqueAmount)} haptic="light">
+                <View style={styles.amountHighlight}>
+                  <Text style={styles.amountHighlightLabel}>Nominal transfer (ketuk untuk salin)</Text>
+                  <Text style={styles.amountHighlightValue}>
+                    {formatIdr(instructions.expected_transfer_total)}
+                  </Text>
+                </View>
+              </PressableScale>
+            ) : null}
+
+            {selectedMethodMeta || instructions.bank_name ? (
+              <View style={styles.selectedBankCard}>
+                <Text style={styles.selectedBankTitle}>
+                  {driver === 'moota' ? 'Rekening tujuan' : 'Metode'}
                 </Text>
+                <Text style={styles.selectedBankName}>
+                  {instructions.bank_name || selectedMethodMeta?.bank_name || selectedMethodMeta?.label}
+                </Text>
+                {(instructions.account_holder || selectedMethodMeta?.account_holder) ? (
+                  <Text style={styles.selectedBankLine}>
+                    a.n. {instructions.account_holder || selectedMethodMeta?.account_holder}
+                  </Text>
+                ) : null}
+                {instructions.va_bank ? (
+                  <Text style={styles.selectedBankLine}>{instructions.va_bank}</Text>
+                ) : null}
               </View>
             ) : null}
 
-            {selectedMethodMeta ? (
-              <View style={styles.selectedBankCard}>
-                <Text style={styles.selectedBankTitle}>Rekening tujuan</Text>
-                <Text style={styles.selectedBankName}>
-                  {selectedMethodMeta.bank_name || selectedMethodMeta.label}
-                </Text>
-                {selectedMethodMeta.account_holder ? (
-                  <Text style={styles.selectedBankLine}>a.n. {selectedMethodMeta.account_holder}</Text>
-                ) : null}
-                {selectedMethodMeta.account_number ? (
-                  <Text style={styles.selectedBankLine}>No. {selectedMethodMeta.account_number}</Text>
-                ) : null}
+            <CopyableValue
+              label="Nomor rekening"
+              value={mootaAccountNumber}
+              onCopy={copyValue}
+            />
+            <CopyableValue label="Nomor VA" value={instructions.va_number} onCopy={copyValue} />
+            {instructions.bill_key && instructions.biller_code ? (
+              <View style={styles.billRow}>
+                <View style={styles.billItem}>
+                  <Text style={styles.selectedBankTitle}>Bill key</Text>
+                  <Text style={styles.selectedBankName}>{instructions.bill_key}</Text>
+                </View>
+                <View style={styles.billItem}>
+                  <Text style={styles.selectedBankTitle}>Kode biller</Text>
+                  <Text style={styles.selectedBankName}>{instructions.biller_code}</Text>
+                </View>
+              </View>
+            ) : null}
+
+            {driver !== 'moota' && instructions.deeplink_url && instructions.checkout_url ? (
+              <View style={styles.secondaryLink}>
+                <Button
+                  label="Buka halaman pembayaran"
+                  variant="secondary"
+                  icon={<ExternalLink size={16} color={colors.baytgo} strokeWidth={2} />}
+                  onPress={() => openUrl(instructions.checkout_url)}
+                />
               </View>
             ) : null}
 
@@ -320,15 +429,17 @@ export default function BookingPaymentScreen({ navigation, route }) {
               </View>
             ) : null}
 
+            <PaymentHowToSteps driver={driver} />
+
             <View style={styles.pollHint}>
               <ActivityIndicator color={colors.baytgo} size="small" />
-              <Text style={styles.waitHint}>Menunggu verifikasi transfer. Status diperbarui otomatis.</Text>
+              <Text style={styles.waitHint}>Menunggu verifikasi pembayaran. Status diperbarui otomatis.</Text>
             </View>
           </Card>
         ) : (
           <>
-            <Text style={styles.sectionTitle}>Pilih rekening tujuan</Text>
-            <Text style={styles.sectionSub}>Pilih rekening bank untuk transfer pembayaran Anda</Text>
+            <Text style={styles.sectionTitle}>{methodTitle}</Text>
+            <Text style={styles.sectionSub}>{methodSub}</Text>
 
             {methods.length === 0 ? (
               <EmptyState
@@ -337,17 +448,23 @@ export default function BookingPaymentScreen({ navigation, route }) {
                 description="Metode pembayaran belum tersedia untuk pesanan ini."
               />
             ) : (
-              methods.map((item) => (
-                <MethodCard
-                  key={item.id}
-                  item={item}
-                  environment={paymentEnvironment}
-                  selected={selectedMethod === item.id}
-                  onPress={() => { setSelectedMethod(item.id); setSelectedMethodMeta(item); }}
-                />
+              methodGroups.map((group) => (
+                <View key={group.key}>
+                  {methodGroups.length > 1 ? (
+                    <Text style={styles.groupTitle}>{group.title}</Text>
+                  ) : null}
+                  {group.items.map((item) => (
+                    <MethodCard
+                      key={item.id}
+                      item={item}
+                      environment={paymentEnvironment}
+                      selected={selectedMethod === item.id}
+                      onPress={() => { setSelectedMethod(item.id); setSelectedMethodMeta(item); }}
+                    />
+                  ))}
+                </View>
               ))
             )}
-
           </>
         )}
       </ScrollView>
@@ -364,6 +481,7 @@ const styles = StyleSheet.create({
   scroll: { padding: layout.screenPadding, paddingBottom: spacing['5xl'] },
   scrollWithFooter: { paddingBottom: 120 },
   skeleton: { padding: layout.screenPadding },
+  deadlineWrap: { marginBottom: spacing.lg },
   summaryCard: { marginBottom: spacing.lg },
   summaryTop: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'flex-start' },
   summaryLabel: { ...typography.label, color: colors.textSecondary, textTransform: 'uppercase' },
@@ -383,6 +501,10 @@ const styles = StyleSheet.create({
   errorText: { flex: 1, ...typography.caption, color: colors.error, lineHeight: 18 },
   sectionTitle: { ...typography.subtitle, fontSize: 16, color: colors.baytgo, marginBottom: spacing.xs },
   sectionSub: { ...typography.small, color: colors.textSecondary, marginBottom: spacing.lg },
+  groupTitle: {
+    ...typography.label, color: colors.textSecondary, textTransform: 'uppercase',
+    marginBottom: spacing.sm, marginTop: spacing.xs,
+  },
   instructionsCard: { marginBottom: spacing.lg },
   instructionsHead: { flexDirection: 'row', alignItems: 'center', gap: spacing.sm, marginBottom: spacing.md },
   instructionsTitle: { ...typography.subtitle, fontSize: 16, color: colors.baytgo },
@@ -400,6 +522,12 @@ const styles = StyleSheet.create({
   selectedBankTitle: { ...typography.label, color: colors.textSecondary, textTransform: 'uppercase' },
   selectedBankName: { marginTop: spacing.sm, ...typography.subtitle, color: colors.baytgo },
   selectedBankLine: { marginTop: spacing.xs, ...typography.caption, fontFamily: 'PlusJakartaSans_700Bold', color: colors.slate700 },
+  billRow: { marginTop: spacing.lg, flexDirection: 'row', gap: spacing.md },
+  billItem: {
+    flex: 1, backgroundColor: colors.background, borderRadius: radius.sm,
+    padding: spacing.lg, borderWidth: 1, borderColor: colors.border,
+  },
+  secondaryLink: { marginTop: spacing.lg },
   expiryRow: { flexDirection: 'row', alignItems: 'center', gap: spacing.sm, marginTop: spacing.md },
   expiryText: { ...typography.caption, color: colors.textSecondary },
   pollHint: { flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: spacing.sm, marginTop: spacing.lg },

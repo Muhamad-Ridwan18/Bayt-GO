@@ -1,5 +1,5 @@
 import React, { useCallback, useState } from 'react';
-import { RefreshControl, ScrollView, StyleSheet, Text, View } from 'react-native';
+import { ActivityIndicator, Linking, RefreshControl, ScrollView, StyleSheet, Text, View } from 'react-native';
 import { useFocusEffect } from '@react-navigation/native';
 import { LinearGradient } from 'expo-linear-gradient';
 import {
@@ -9,6 +9,7 @@ import {
   ChevronRight,
   ClipboardList,
   Clock,
+  FileText,
   Globe,
   Images,
   KeyRound,
@@ -17,6 +18,8 @@ import {
   LogOut,
   Mail,
   MapPin,
+  MessageCircle,
+  Newspaper,
   Pencil,
   Phone,
   Plane,
@@ -24,13 +27,15 @@ import {
   ShieldCheck,
   Star,
   Tag,
+  Trash2,
   User,
   Wallet,
   BellRing,
 } from 'lucide-react-native';
 import TabPageHeader from '../components/TabPageHeader';
 import { useAuth } from '../context/AuthContext';
-import { fetchProfile } from '../api/profile';
+import { useBrand } from '../context/BrandContext';
+import { fetchProfile, sendVerificationEmail } from '../api/profile';
 import { fetchCustomerDashboard, fetchMuthowifDashboard } from '../api/dashboard';
 import { resetRoot } from '../navigation/rootNavigation';
 import AppImage from '../ui/AppImage';
@@ -41,6 +46,8 @@ import { SkeletonList } from '../ui/Skeleton';
 import StatTile from '../ui/StatTile';
 import { colors, gradients, layout, radius, spacing, typography } from '../theme/tokens';
 import { resolveMediaUrl } from '../utils/mediaUrl';
+import { notifyError, notifySuccess } from '../utils/feedback';
+import { WEB_BASE_URL } from '../config/api';
 
 const STAT_ICONS = {
   'Booking Aktif': Calendar,
@@ -81,11 +88,13 @@ function Section({ title, children }) {
 
 export default function ProfileScreen({ navigation }) {
   const { user, token, logout, isMuthowif, isVerifiedMuthowif, updateLocalUser } = useAuth();
+  const { contactUrl } = useBrand();
 
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
   const [profile, setProfile] = useState(null);
   const [stats, setStats] = useState([]);
+  const [sendingVerification, setSendingVerification] = useState(false);
 
   const load = useCallback(async (refresh = false) => {
     if (refresh) setRefreshing(true);
@@ -98,8 +107,15 @@ export default function ProfileScreen({ navigation }) {
       ]);
       setProfile(profileData);
       setStats(dashboardData.stats || []);
-      if (profileData?.muthowif?.verification_status) {
-        updateLocalUser({ muthowif_verification_status: profileData.muthowif.verification_status });
+      if (profileData?.user || profileData?.muthowif?.verification_status) {
+        updateLocalUser({
+          ...(profileData?.user?.email_verified_at !== undefined
+            ? { email_verified_at: profileData.user.email_verified_at }
+            : {}),
+          ...(profileData?.muthowif?.verification_status
+            ? { muthowif_verification_status: profileData.muthowif.verification_status }
+            : {}),
+        });
       }
     } catch {
       setProfile(null);
@@ -119,6 +135,18 @@ export default function ProfileScreen({ navigation }) {
   const handleLogout = async () => {
     await logout();
     resetRoot(navigation, [{ name: 'Main' }]);
+  };
+
+  const handleResendVerification = async () => {
+    setSendingVerification(true);
+    try {
+      const data = await sendVerificationEmail(token);
+      notifySuccess(data.message || 'Tautan verifikasi baru telah dikirim ke email Anda.');
+    } catch (err) {
+      notifyError(err.message || 'Tidak dapat mengirim verifikasi');
+    } finally {
+      setSendingVerification(false);
+    }
   };
 
   const photoUri = resolveMediaUrl(profile?.muthowif?.photo_url);
@@ -213,6 +241,19 @@ export default function ProfileScreen({ navigation }) {
           </View>
         </Card>
 
+        {profile?.user && !profile.user.email_verified_at ? (
+          <Card style={styles.verifyBox} padding={spacing.lg} elevated={false}>
+            <Text style={styles.verifyText}>Email Anda belum diverifikasi.</Text>
+            <PressableScale onPress={handleResendVerification} disabled={sendingVerification} haptic="light">
+              {sendingVerification ? (
+                <ActivityIndicator color={colors.baytgo} size="small" style={styles.verifySpinner} />
+              ) : (
+                <Text style={styles.verifyLink}>Klik di sini untuk mengirim ulang email verifikasi.</Text>
+              )}
+            </PressableScale>
+          </Card>
+        ) : null}
+
         {stats.length > 0 ? (
           <View style={styles.statsGrid}>
             {stats.map((stat) => {
@@ -243,14 +284,22 @@ export default function ProfileScreen({ navigation }) {
               <MenuRow key={item.label} {...item} isLast={index === muthowifMenus.length - 1} />
             ))}
           </Section>
-        ) : null}
+        ) : (
+          <Section title="Kelola Muthowif">
+            <MenuRow
+              icon={Globe}
+              label="Profil Publik Muthowif"
+              onPress={() => navigation.navigate('EditMuthowifProfile', { profile })}
+              isLast
+            />
+          </Section>
+        )}
 
         <Section title="Keamanan">
           <MenuRow
             icon={KeyRound}
             label="Ganti Password"
             onPress={() => navigation.navigate('ChangePassword')}
-            isLast={!__DEV__}
           />
           {__DEV__ ? (
             <MenuRow
@@ -258,9 +307,36 @@ export default function ProfileScreen({ navigation }) {
               label="Test Push Notification"
               onPress={() => navigation.navigate('PushNotificationTest')}
               iconBg="#FEF3C7"
-              isLast
             />
           ) : null}
+          <MenuRow
+            icon={Trash2}
+            label="Hapus Akun"
+            onPress={() => navigation.navigate('DeleteAccount')}
+            danger
+            isLast
+          />
+        </Section>
+
+        <Section title="Lainnya">
+          <MenuRow
+            icon={Newspaper}
+            label="Artikel"
+            onPress={() => navigation.getParent()?.navigate('HomeTab', { screen: 'ArticlesList' })}
+          />
+          {contactUrl ? (
+            <MenuRow
+              icon={MessageCircle}
+              label="Hubungi kami"
+              onPress={() => Linking.openURL(contactUrl)}
+            />
+          ) : null}
+          <MenuRow
+            icon={FileText}
+            label="Syarat & Ketentuan"
+            onPress={() => Linking.openURL(`${WEB_BASE_URL}/terms`)}
+            isLast
+          />
         </Section>
 
         <View style={styles.section}>
@@ -343,6 +419,19 @@ const styles = StyleSheet.create({
     color: colors.slate600,
   },
   editBtn: { marginTop: spacing.lg },
+  verifyBox: {
+    marginBottom: spacing.lg,
+    backgroundColor: colors.warningLight,
+    borderColor: '#FDE68A',
+  },
+  verifyText: { ...typography.caption, color: '#92400E', fontWeight: '600' },
+  verifyLink: {
+    marginTop: spacing.sm,
+    ...typography.caption,
+    color: colors.baytgo,
+    fontFamily: 'PlusJakartaSans_800ExtraBold',
+  },
+  verifySpinner: { marginTop: spacing.sm, alignSelf: 'flex-start' },
   statsGrid: {
     flexDirection: 'row',
     flexWrap: 'wrap',

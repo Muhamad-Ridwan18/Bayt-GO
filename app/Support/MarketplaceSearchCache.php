@@ -11,7 +11,7 @@ use Illuminate\Support\Facades\Cache;
 
 final class MarketplaceSearchCache
 {
-    private const CACHE_VERSION = 'v2';
+    private const CACHE_VERSION = 'v3';
 
     public static function paginate(Request $request, string $startStr, string $endStr, string $q): LengthAwarePaginator
     {
@@ -117,9 +117,7 @@ final class MarketplaceSearchCache
                     ->where('starts_on', '<=', $endStr)
                     ->where('ends_on', '>=', $startStr);
             })
-            ->when($q !== '', function ($query) use ($q): void {
-                $query->whereHas('user', fn ($user) => $user->whereILike('name', '%'.$q.'%'));
-            })
+            ->when($q !== '', fn ($query) => $query->matchesSearch($q))
             ->orderByMarketplaceRanking();
     }
 }

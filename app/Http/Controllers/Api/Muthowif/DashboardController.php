@@ -83,6 +83,9 @@ class DashboardController extends Controller
             'pending_booking_count' => $pendingCount,
             'emergency_offer_count' => MuthowifEmergencyOfferCounts::pendingOfferedCountForUser($user),
             'referral_code' => $profile->referral_code,
+            'public_profile_url' => $profile->isApproved() && filled($profile->slug)
+                ? url('/layanan/'.$profile->slug)
+                : null,
             'rating' => $avgRating !== null ? number_format((float) $avgRating, 1) : null,
             'review_count' => (int) $profile->bookingReviews()->count(),
             'wallet_balance' => (float) ($profile->wallet_balance ?? 0),

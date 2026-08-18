@@ -4,6 +4,7 @@ import { FlashList } from '@shopify/flash-list';
 import { useFocusEffect } from '@react-navigation/native';
 import TabPageHeader from '../components/TabPageHeader';
 import ConversationListItem from '../components/ConversationListItem';
+import { useAuth } from '../context/AuthContext';
 import { useChatInbox } from '../context/ChatInboxContext';
 import EmptyState from '../ui/EmptyState';
 import ErrorState from '../ui/ErrorState';
@@ -11,6 +12,7 @@ import { SkeletonList } from '../ui/Skeleton';
 import { colors, layout, spacing, typography } from '../theme/tokens';
 
 export default function ChatListScreen({ navigation }) {
+  const { isVerifiedMuthowif } = useAuth();
   const {
     conversations,
     loading,
@@ -73,9 +75,13 @@ export default function ChatListScreen({ navigation }) {
               <ErrorState description={error} onRetry={() => refresh(true)} />
             ) : (
               <EmptyState
-              variant="chat"
-              title="Belum ada percakapan"
-                description="Chat tersedia setelah booking dikonfirmasi."
+                variant="chat"
+                title="Belum ada percakapan"
+                description="Chat tersedia setelah booking dikonfirmasi dan pembayaran berhasil."
+                actionLabel="Lihat pesanan saya"
+                onAction={() => navigation.getParent()?.navigate(
+                  isVerifiedMuthowif ? 'MuthowifBookingsTab' : 'BookingsTab',
+                )}
               />
             )
           }

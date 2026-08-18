@@ -3,15 +3,18 @@ import { View, Text, StyleSheet, ScrollView } from 'react-native';
 import * as DocumentPicker from 'expo-document-picker';
 import ScreenHeader from '../components/ScreenHeader';
 import DocumentPickerField from '../components/DocumentPickerField';
+import AuthInput from '../components/AuthInput';
+import { Gift } from 'lucide-react-native';
 import { createBooking } from '../api/bookings';
 import { useAuth } from '../context/AuthContext';
-import { Button, Card } from '../ui';
+import { Button, Card, InlineAlert } from '../ui';
 import {
   AddOnToggle, BookingAddonChoices, BookingEstimateCard, FormError, PilgrimCounter, SectionTitle, ServiceOption, StepBadges,
 } from '../features/booking/BookingFormParts';
 import { colors, layout, spacing, typography } from '../theme/tokens';
 import { estimateBookingPricing } from '../utils/bookingEstimate';
 import { navigateToSuccess } from '../navigation/rootNavigation';
+import { clearAffiliateCode, useAffiliateReferralCode } from '../utils/affiliateReferral';
 
 async function pickDocument() {
   const result = await DocumentPicker.getDocumentAsync({
@@ -25,7 +28,7 @@ async function pickDocument() {
 
 export default function BookingFormScreen({ navigation, route }) {
   const { token } = useAuth();
-  const { profileId, profileName, startDate, endDate, services = [] } = route.params;
+  const { profileId, profileName, startDate, endDate, services = [], affiliateCode: routeAffiliateCode } = route.params;
 
   const groupService = useMemo(() => services.find((s) => s.type === 'group'), [services]);
   const privateService = useMemo(() => services.find((s) => s.type === 'private'), [services]);
@@ -37,6 +40,7 @@ export default function BookingFormScreen({ navigation, route }) {
   const [selectedAddOns, setSelectedAddOns] = useState([]);
   const [withSameHotel, setWithSameHotel] = useState(false);
   const [withTransport, setWithTransport] = useState(false);
+  const [affiliateCode, setAffiliateCode] = useAffiliateReferralCode(routeAffiliateCode);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
 
@@ -143,7 +147,9 @@ export default function BookingFormScreen({ navigation, route }) {
         passport,
         itinerary: serviceType === 'group' ? itinerary : null,
         visa,
+        affiliateCode: affiliateCode.trim(),
       });
+      await clearAffiliateCode();
 
       navigateToSuccess(navigation, {
         title: 'Pemesanan berhasil',
@@ -230,6 +236,18 @@ export default function BookingFormScreen({ navigation, route }) {
               </>
             ) : null}
 
+            <SectionTitle>Kode affiliate (opsional)</SectionTitle>
+            <AuthInput
+              icon={Gift}
+              value={affiliateCode}
+              onChangeText={setAffiliateCode}
+              placeholder="Kode referral"
+              autoCapitalize="characters"
+            />
+            <Text style={styles.affiliateHint}>
+              Isi jika Anda booking lewat tautan atau kode affiliate.
+            </Text>
+
             <BookingEstimateCard estimate={priceEstimate} />
 
             <Button label="Lanjut ke dokumen" onPress={handleNext} style={styles.cta} />
@@ -273,6 +291,10 @@ export default function BookingFormScreen({ navigation, route }) {
               onClear={() => setVisa(null)}
             />
 
+            <InlineAlert variant="warning">
+              Dokumen bersifat pribadi. Jangan bagikan ke pihak lain.
+            </InlineAlert>
+
             <Button label="Buat pemesanan" onPress={handleSubmit} loading={loading} style={styles.cta} />
           </>
         )}
@@ -288,5 +310,12 @@ const styles = StyleSheet.create({
   profileName: { ...typography.subtitle, color: colors.baytgo },
   dates: { marginTop: spacing.xs, ...typography.small, color: colors.textSecondary, fontWeight: '500' },
   serviceRow: { flexDirection: 'row', gap: spacing.md },
+  affiliateHint: {
+    marginTop: -spacing.sm,
+    marginBottom: spacing.md,
+    ...typography.small,
+    color: colors.textMuted,
+    lineHeight: 16,
+  },
   cta: { marginTop: spacing['2xl'] },
 });
