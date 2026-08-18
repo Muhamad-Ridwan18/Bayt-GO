@@ -40,6 +40,9 @@ export function parsePublicDeepLink(url) {
 
   if (path === '/terms') return { screen: 'Terms' };
 
+  const affiliateLanding = path.match(/^\/r\/([A-Za-z0-9]{3,32})$/);
+  if (affiliateLanding) return { screen: 'DashboardMain' };
+
   const campaign = path.match(/^\/campaigns?\/([A-Za-z0-9-]+)$/);
   if (campaign) return { screen: 'CampaignDetail', params: { slug: campaign[1] } };
 
