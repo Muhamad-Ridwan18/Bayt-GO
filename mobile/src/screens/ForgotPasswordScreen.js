@@ -9,8 +9,11 @@ import { sendPasswordResetOtp, resetPassword } from '../api/auth';
 import { DEFAULT_PHONE_COUNTRY, buildFullPhone } from '../utils/phoneCountries';
 import { colors, radius, spacing, typography } from '../theme/tokens';
 import { navigateToSuccess } from '../navigation/rootNavigation';
+import { useLocale } from '../utils/locale';
 
 export default function ForgotPasswordScreen({ navigation }) {
+  const locale = useLocale();
+  const isEn = locale === 'en';
   const [step, setStep] = useState('phone');
   const [phoneDial, setPhoneDial] = useState(DEFAULT_PHONE_COUNTRY.d);
   const [phoneNational, setPhoneNational] = useState('');
@@ -34,7 +37,7 @@ export default function ForgotPasswordScreen({ navigation }) {
   const handleSendOtp = async () => {
     const fullPhone = phone || buildFullPhone(phoneDial, phoneNational);
     if (!fullPhone) {
-      setError('Masukkan nomor WhatsApp terdaftar.');
+      setError(isEn ? 'Enter your registered WhatsApp number.' : 'Masukkan nomor WhatsApp terdaftar.');
       return;
     }
 
@@ -46,7 +49,7 @@ export default function ForgotPasswordScreen({ navigation }) {
       setMaskedPhone(data.masked_phone || fullPhone);
       setStep('reset');
     } catch (err) {
-      setError(err.message || 'Gagal mengirim kode reset');
+      setError(err.message || (isEn ? 'Failed to send reset code' : 'Gagal mengirim kode reset'));
     } finally {
       setLoading(false);
     }
@@ -54,11 +57,11 @@ export default function ForgotPasswordScreen({ navigation }) {
 
   const handleReset = async () => {
     if (otp.length !== 6) {
-      setError('Kode OTP harus 6 digit.');
+      setError(isEn ? 'OTP code must be 6 digits.' : 'Kode OTP harus 6 digit.');
       return;
     }
     if (!password || password !== passwordConfirmation) {
-      setError('Password tidak cocok.');
+      setError(isEn ? 'Passwords do not match.' : 'Password tidak cocok.');
       return;
     }
 
@@ -72,13 +75,13 @@ export default function ForgotPasswordScreen({ navigation }) {
         passwordConfirmation,
       });
       navigateToSuccess(navigation, {
-        title: 'Password berhasil direset',
-        description: data.message || 'Silakan masuk dengan password baru Anda.',
-        primaryLabel: 'Masuk',
+        title: isEn ? 'Password reset successful' : 'Password berhasil direset',
+        description: data.message || (isEn ? 'You can now sign in with your new password.' : 'Silakan masuk dengan password baru Anda.'),
+        primaryLabel: isEn ? 'Sign in' : 'Masuk',
         primaryTarget: { replace: true, name: 'Login' },
       });
     } catch (err) {
-      setError(err.message || 'Gagal reset password');
+      setError(err.message || (isEn ? 'Failed to reset password' : 'Gagal reset password'));
     } finally {
       setLoading(false);
     }
@@ -88,33 +91,33 @@ export default function ForgotPasswordScreen({ navigation }) {
     return (
       <AuthScreenShell
         title="Reset Password"
-        subtitle={`Masukkan kode dari WhatsApp ${maskedPhone}`}
+        subtitle={isEn ? `Enter the code sent to WhatsApp ${maskedPhone}` : `Masukkan kode dari WhatsApp ${maskedPhone}`}
         onBack={() => setStep('phone')}
       >
         {error ? <Text style={styles.bannerError}>{error}</Text> : null}
-        <AuthInput label="Kode OTP" icon={KeyRound} value={otp} onChangeText={setOtp} keyboardType="number-pad" maxLength={6} />
-        <AuthInput label="Password baru" icon={Lock} value={password} onChangeText={setPassword} secureTextEntry />
-        <AuthInput label="Konfirmasi password" icon={Lock} value={passwordConfirmation} onChangeText={setPasswordConfirmation} secureTextEntry />
-        <Button label="Simpan password baru" onPress={handleReset} loading={loading} />
+        <AuthInput label={isEn ? 'OTP Code' : 'Kode OTP'} icon={KeyRound} value={otp} onChangeText={setOtp} keyboardType="number-pad" maxLength={6} />
+        <AuthInput label={isEn ? 'New password' : 'Password baru'} icon={Lock} value={password} onChangeText={setPassword} secureTextEntry />
+        <AuthInput label={isEn ? 'Confirm password' : 'Konfirmasi password'} icon={Lock} value={passwordConfirmation} onChangeText={setPasswordConfirmation} secureTextEntry />
+        <Button label={isEn ? 'Save new password' : 'Simpan password baru'} onPress={handleReset} loading={loading} />
       </AuthScreenShell>
     );
   }
 
   return (
     <AuthScreenShell
-      title="Lupa Password"
-      subtitle="Kami akan mengirim kode reset ke nomor WhatsApp terdaftar."
+      title={isEn ? 'Forgot Password' : 'Lupa Password'}
+      subtitle={isEn ? 'We will send a reset code to your registered WhatsApp number.' : 'Kami akan mengirim kode reset ke nomor WhatsApp terdaftar.'}
       onBack={() => navigation.goBack()}
     >
       {error ? <Text style={styles.bannerError}>{error}</Text> : null}
       <PhoneInternationalInput
-        label="Nomor WhatsApp"
+        label={isEn ? 'WhatsApp Number' : 'Nomor WhatsApp'}
         dial={phoneDial}
         national={phoneNational}
         countryIso={phoneCountryIso}
         onChange={handlePhoneChange}
       />
-      <Button label="Kirim kode reset" onPress={handleSendOtp} loading={loading} />
+      <Button label={isEn ? 'Send reset code' : 'Kirim kode reset'} onPress={handleSendOtp} loading={loading} />
     </AuthScreenShell>
   );
 }

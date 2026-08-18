@@ -26,10 +26,13 @@ import GuestCta from '../features/home/GuestCta';
 import { AppImage, EmptyState, ErrorState, PressableScale, SkeletonList } from '../ui';
 import { colors, layout, radius, spacing, typography } from '../theme/tokens';
 import { resolveMediaUrl } from '../utils/mediaUrl';
+import { useLocale } from '../utils/locale';
 
 export default function HomeScreen({ navigation }) {
   const { isAuthenticated, user, token } = useAuth();
   const { logoUrl, appName } = useBrand();
+  const locale = useLocale();
+  const isEn = locale === 'en';
   const isCustomer = isAuthenticated && user?.role !== 'muthowif';
 
   const [loading, setLoading] = useState(true);
@@ -48,7 +51,7 @@ export default function HomeScreen({ navigation }) {
   const [work, setWork] = useState(null);
   const [faq, setFaq] = useState(null);
 
-  const firstName = useMemo(() => user?.name?.split(' ')[0] || 'Jamaah', [user?.name]);
+  const firstName = useMemo(() => user?.name?.split(' ')[0] || (isEn ? 'Pilgrim' : 'Jamaah'), [user?.name, isEn]);
   const today = useMemo(() => { const d = new Date(); d.setHours(0, 0, 0, 0); return d; }, []);
   const endMinDate = startDate ? parseIsoDate(startDate) : today;
   const endMaxDate = useMemo(() => {
@@ -64,9 +67,10 @@ export default function HomeScreen({ navigation }) {
   );
 
   const heroCountLabel = useMemo(() => {
-    if (muthowifs.length >= 10) return `${muthowifs.length}+ Muthowif Aktif`;
-    return '1.200+ Muthowif Aktif';
-  }, [muthowifs.length]);
+    const suffix = isEn ? 'Active Muthowif' : 'Muthowif Aktif';
+    if (muthowifs.length >= 10) return `${muthowifs.length}+ ${suffix}`;
+    return `1.200+ ${suffix}`;
+  }, [muthowifs.length, isEn]);
 
   const heroRatingLabel = useMemo(() => {
     const rated = muthowifs.filter((m) => m.rating);
@@ -126,7 +130,7 @@ export default function HomeScreen({ navigation }) {
       setMuthowifs(list);
       setError(null);
     } catch (err) {
-      setError(err.message || 'Gagal memuat data');
+      setError(err.message || (isEn ? 'Failed to load data' : 'Gagal memuat data'));
     } finally { setLoading(false); setRefreshing(false); }
   }, [isCustomer, token]);
 
@@ -157,7 +161,7 @@ export default function HomeScreen({ navigation }) {
         <View style={styles.header}>
           <View style={styles.headerBrand}>
             <AppLogo url={logoUrl} name={appName} size={40} showName />
-            <Text style={styles.tagline}>Teman Ibadahmu</Text>
+            <Text style={styles.tagline}>{isEn ? 'Your Worship Companion' : 'Teman Ibadahmu'}</Text>
           </View>
           <View style={styles.headerActions}>
             {isCustomer ? (
@@ -200,10 +204,12 @@ export default function HomeScreen({ navigation }) {
           />
           <View style={styles.greetingOverlay} />
           <Text style={styles.greetingHi}>
-            {isCustomer ? `Assalamu'alaikum, ${firstName} 👋` : 'Assalamu\'alaikum 👋'}
+            {isCustomer ? `Assalamu'alaikum, ${firstName} 👋` : "Assalamu'alaikum 👋"}
           </Text>
           <Text style={styles.greetingTitle}>
-            Mau cari <Text style={styles.greetingAccent}>Muthowif</Text> untuk ibadahmu?
+            {isEn
+              ? <><Text>Looking for a </Text><Text style={styles.greetingAccent}>Muthowif</Text><Text> for your pilgrimage?</Text></>
+              : <>Mau cari <Text style={styles.greetingAccent}>Muthowif</Text> untuk ibadahmu?</>}
           </Text>
         </View>
 
@@ -262,7 +268,7 @@ export default function HomeScreen({ navigation }) {
             <Text style={styles.sectionTitle}>Muthowif Top Rated</Text>
             <PressableScale onPress={() => openDirectory({ sort: 'rating' })} haptic="light">
               <View style={styles.seeAllRow}>
-                <Text style={styles.seeAll}>Lihat semua</Text>
+                <Text style={styles.seeAll}>{isEn ? 'See all' : 'Lihat semua'}</Text>
                 <ChevronRight size={14} color={colors.goldMuted} strokeWidth={2.5} />
               </View>
             </PressableScale>
@@ -274,7 +280,7 @@ export default function HomeScreen({ navigation }) {
           ) : null}
           {error ? <ErrorState description={error} onRetry={() => loadData()} /> : null}
           {!loading && !error && muthowifs.length === 0 ? (
-            <EmptyState variant="search" title="Belum ada muthowif" description="Muthowif terverifikasi akan muncul di sini." />
+            <EmptyState variant="search" title={isEn ? 'No muthowif yet' : 'Belum ada muthowif'} description={isEn ? 'Verified muthowif will appear here.' : 'Muthowif terverifikasi akan muncul di sini.'} />
           ) : null}
           {!loading && !error && muthowifs.length > 0 ? (
             <ScrollView
