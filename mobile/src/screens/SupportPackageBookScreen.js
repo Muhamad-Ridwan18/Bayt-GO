@@ -11,8 +11,10 @@ import { colors, layout, radius, spacing, typography } from '../theme/tokens';
 import { formatIdr } from '../utils/format';
 import { notifyError, notifySuccess } from '../utils/feedback';
 import { clearAffiliateCode, useAffiliateReferralCode } from '../utils/affiliateReferral';
+import { useLocale } from '../utils/locale';
 
 export default function SupportPackageBookScreen({ navigation, route }) {
+  const locale = useLocale(); const isEn = locale === 'en';
   const { token } = useAuth();
   const { id, startsAt: initialStartsAt, startsAtDate, packagePreview, affiliateCode: routeAffiliateCode } = route.params || {};
   const pkg = packagePreview || {};
@@ -36,11 +38,11 @@ export default function SupportPackageBookScreen({ navigation, route }) {
     const max = Number(pkg.max_pilgrims || 500);
 
     if (!startsAt) {
-      Alert.alert('Validasi', 'Pilih tanggal & jam layanan');
+      Alert.alert(isEn ? 'Validation' : 'Validasi', isEn ? 'Select a service date & time' : 'Pilih tanggal & jam layanan');
       return;
     }
     if (!count || count < min || count > max) {
-      Alert.alert('Validasi', `Jumlah jamaah harus ${min}–${max}`);
+      Alert.alert(isEn ? 'Validation' : 'Validasi', isEn ? `Pilgrim count must be ${min}–${max}` : `Jumlah jamaah harus ${min}–${max}`);
       return;
     }
 
@@ -59,14 +61,14 @@ export default function SupportPackageBookScreen({ navigation, route }) {
         pilgrim_count: count,
         affiliate_code: affiliateCode.trim() || null,
       });
-      notifySuccess(result.message || 'Permintaan terkirim');
+      notifySuccess(result.message || (isEn ? 'Request sent' : 'Permintaan terkirim'));
       await clearAffiliateCode();
       navigation.getParent()?.navigate('BookingsTab', {
         screen: 'BookingDetail',
         params: { bookingId: result.booking_id },
       });
     } catch (err) {
-      notifyError(err.message || 'Gagal membuat booking');
+      notifyError(err.message || (isEn ? 'Failed to create booking' : 'Gagal membuat booking'));
     } finally {
       setSubmitting(false);
     }
@@ -74,7 +76,7 @@ export default function SupportPackageBookScreen({ navigation, route }) {
 
   return (
     <View style={styles.flex}>
-      <ScreenHeader title="Pesan paket" subtitle={pkg.name} onBack={() => navigation.goBack()} />
+      <ScreenHeader title={isEn ? 'Book package' : 'Pesan paket'} subtitle={pkg.name} onBack={() => navigation.goBack()} />
       <ScrollView contentContainerStyle={styles.content} keyboardShouldPersistTaps="handled">
         <Card style={styles.card}>
           <Text style={styles.pkgName}>{pkg.name}</Text>
@@ -84,15 +86,15 @@ export default function SupportPackageBookScreen({ navigation, route }) {
 
         <Card style={styles.card}>
           <DatePickerField
-            label="Tanggal & jam mulai"
+            label={isEn ? 'Start date & time' : 'Tanggal & jam mulai'}
             mode="datetime"
             value={startsAt}
             onChange={setStartsAt}
-            placeholder="Pilih tanggal & jam"
+            placeholder={isEn ? 'Select date & time' : 'Pilih tanggal & jam'}
             minimumDate={today}
           />
-          <Text style={styles.hint}>Layanan dimulai pada waktu ini.</Text>
-          <Text style={styles.label}>Jumlah jamaah ({pkg.min_pilgrims}–{pkg.max_pilgrims})</Text>
+          <Text style={styles.hint}>{isEn ? 'Service starts at this time.' : 'Layanan dimulai pada waktu ini.'}</Text>
+          <Text style={styles.label}>{isEn ? 'Pilgrim count' : 'Jumlah jamaah'} ({pkg.min_pilgrims}–{pkg.max_pilgrims})</Text>
           <TextInput
             value={pilgrimCount}
             onChangeText={setPilgrimCount}
@@ -100,20 +102,20 @@ export default function SupportPackageBookScreen({ navigation, route }) {
             style={styles.input}
             placeholderTextColor={colors.textMuted}
           />
-          <Text style={styles.label}>Kode affiliate (opsional)</Text>
+          <Text style={styles.label}>{isEn ? 'Affiliate code (optional)' : 'Kode affiliate (opsional)'}</Text>
           <TextInput
             value={affiliateCode}
             onChangeText={setAffiliateCode}
             autoCapitalize="characters"
             style={styles.input}
-            placeholder="Kode referral"
+            placeholder={isEn ? 'Referral code' : 'Kode referral'}
             placeholderTextColor={colors.textMuted}
           />
         </Card>
 
-        <Button label="Kirim permintaan" onPress={handleSubmit} loading={submitting} />
+        <Button label={isEn ? 'Submit request' : 'Kirim permintaan'} onPress={handleSubmit} loading={submitting} />
         <Text style={styles.consentHint}>
-          Dengan mengajukan, Anda setuju muthowif akan meninjau permintaan (status Menunggu).
+          {isEn ? 'By submitting, you agree that the muthowif will review your request (Pending status).' : 'Dengan mengajukan, Anda setuju muthowif akan meninjau permintaan (status Menunggu).'}
         </Text>
       </ScrollView>
 

@@ -16,6 +16,7 @@ import SearchBar from '../ui/SearchBar';
 import { SkeletonList } from '../ui/Skeleton';
 import { colors, layout, radius, spacing, typography } from '../theme/tokens';
 import { formatIdr } from '../utils/format';
+import { useLocale } from '../utils/locale';
 
 const DEFAULT_CATEGORIES = [
   { value: 'mobility', label: 'Kursi Roda' },
@@ -40,6 +41,7 @@ function formatSlot(value) {
 }
 
 export default function SupportCatalogScreen({ navigation, route }) {
+  const locale = useLocale(); const isEn = locale === 'en';
   const { token } = useAuth();
   const initial = route.params || {};
   const initialStarts = String(initial.startsAt || initial.startsAtDate || '').trim();
@@ -133,7 +135,7 @@ export default function SupportCatalogScreen({ navigation, route }) {
       setLastPage(data.meta?.last_page || 1);
       setError(null);
     } catch (err) {
-      setError(err.message || 'Gagal memuat layanan pendukung');
+      setError(err.message || (isEn ? 'Failed to load support services' : 'Gagal memuat layanan pendukung'));
       if (!append) setItems([]);
     } finally {
       setLoading(false);
@@ -188,7 +190,7 @@ export default function SupportCatalogScreen({ navigation, route }) {
       <View style={styles.trustStrip}>
         <ShieldCheck size={16} color={colors.baytgo} strokeWidth={2} />
         <Text style={styles.trustText}>
-          Semua muthowif telah diverifikasi oleh BaytGo untuk keamanan dan kenyamanan Anda.
+          {isEn ? 'All muthowifs have been verified by BaytGo for your safety and comfort.' : 'Semua muthowif telah diverifikasi oleh BaytGo untuk keamanan dan kenyamanan Anda.'}
         </Text>
       </View>
     </View>
@@ -201,9 +203,9 @@ export default function SupportCatalogScreen({ navigation, route }) {
           <ArrowLeft size={20} color={colors.baytgo} strokeWidth={2.2} />
         </PressableScale>
         <View style={styles.flex}>
-          <Text style={styles.title}>Layanan Pendukung</Text>
+          <Text style={styles.title}>{isEn ? 'Support Services' : 'Layanan Pendukung'}</Text>
           <Text style={styles.subtitle}>
-            Pilih tanggal & jam dulu — kami hanya menampilkan muthowif yang jadwalnya kosong di hari itu.
+            {isEn ? 'Pick a date & time first — we only show muthowifs available on that day.' : 'Pilih tanggal & jam dulu — kami hanya menampilkan muthowif yang jadwalnya kosong di hari itu.'}
           </Text>
         </View>
       </View>
@@ -215,38 +217,38 @@ export default function SupportCatalogScreen({ navigation, route }) {
           onSelect={handleCategory}
         />
         <DatePickerField
-          label="Tanggal & jam mulai"
+          label={isEn ? 'Start date & time' : 'Tanggal & jam mulai'}
           mode="datetime"
           value={startsAt}
           onChange={setStartsAt}
-          placeholder="Pilih tanggal & jam"
+          placeholder={isEn ? 'Select date & time' : 'Pilih tanggal & jam'}
           minimumDate={today}
           clearable
           onClear={() => setStartsAt('')}
         />
         <Text style={styles.hint}>
-          Ketersediaan dicek per hari kalender agar tidak bentrok dengan trip atau layanan lain.
+          {isEn ? 'Availability is checked per calendar day to avoid conflicts with other trips or services.' : 'Ketersediaan dicek per hari kalender agar tidak bentrok dengan trip atau layanan lain.'}
         </Text>
         <SearchBar
           value={q}
           onChangeText={setQ}
-          placeholder="Cari layanan atau nama muthowif…"
+          placeholder={isEn ? 'Search service or muthowif name…' : 'Cari layanan atau nama muthowif…'}
         />
         <Button
-          label="Cari"
+          label={isEn ? 'Search' : 'Cari'}
           onPress={handleSearch}
           icon={<Search size={16} color={colors.white} />}
         />
         {stats ? (
           <Text style={styles.statsText}>
-            {stats.packages} paket · {stats.muthowifs} muthowif · rating {stats.avg_rating || 0}
+            {stats.packages} {isEn ? 'packages' : 'paket'} · {stats.muthowifs} muthowif · rating {stats.avg_rating || 0}
           </Text>
         ) : null}
         {hasSearch && slotLabel ? (
           <View style={styles.slotBanner}>
             <Text style={styles.slotText}>
-              Ketersediaan: {slotLabel}
-              {' · '}Hanya muthowif yang tersedia di hari ini
+              {isEn ? 'Availability' : 'Ketersediaan'}: {slotLabel}
+              {' · '}{isEn ? 'Only muthowifs available on this day' : 'Hanya muthowif yang tersedia di hari ini'}
               {categoryLabel ? ` · ${categoryLabel}` : ''}
             </Text>
           </View>
@@ -260,8 +262,8 @@ export default function SupportCatalogScreen({ navigation, route }) {
         <View style={styles.emptyWrap}>
           <EmptyState
             variant="schedule"
-            title="Pilih tanggal & jam layanan"
-            description="Isi waktu mulai di atas, lalu tekan Cari untuk melihat paket yang tersedia."
+            title={isEn ? 'Select service date & time' : 'Pilih tanggal & jam layanan'}
+            description={isEn ? 'Fill in the start time above, then tap Search to see available packages.' : 'Isi waktu mulai di atas, lalu tekan Cari untuk melihat paket yang tersedia.'}
           />
           {listFooter}
         </View>
@@ -271,8 +273,8 @@ export default function SupportCatalogScreen({ navigation, route }) {
         <View style={styles.emptyWrap}>
           <EmptyState
             variant="package"
-            title="Tidak ada layanan tersedia di jadwal ini"
-            description="Coba tanggal atau jam lain, atau ubah filter kategori."
+            title={isEn ? 'No services available at this schedule' : 'Tidak ada layanan tersedia di jadwal ini'}
+            description={isEn ? 'Try a different date or time, or change the category filter.' : 'Coba tanggal atau jam lain, atau ubah filter kategori.'}
           />
           {listFooter}
         </View>

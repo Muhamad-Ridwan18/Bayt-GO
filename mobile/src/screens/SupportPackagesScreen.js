@@ -10,6 +10,7 @@ import { useAuth } from '../context/AuthContext';
 import { Button, Card, FilterChip, PressableScale, SkeletonList } from '../ui';
 import { colors, layout, radius, spacing, typography } from '../theme/tokens';
 import { notifyError, notifySuccess } from '../utils/feedback';
+import { useLocale } from '../utils/locale';
 
 function emptyPackage(categories) {
   return {
@@ -24,20 +25,20 @@ function emptyPackage(categories) {
   };
 }
 
-function PackageRow({ item, categories, onChange, onRemove }) {
+function PackageRow({ item, categories, onChange, onRemove, isEn }) {
   return (
     <Card style={styles.card} padding={spacing.lg} elevated={false}>
       <View style={styles.cardHeader}>
-        <Text style={styles.cardTitle}>{item.name || 'Paket baru'}</Text>
+        <Text style={styles.cardTitle}>{item.name || (isEn ? 'New package' : 'Paket baru')}</Text>
         <PressableScale onPress={onRemove} haptic="light">
           <Trash2 size={18} color={colors.error} strokeWidth={2} />
         </PressableScale>
       </View>
 
-      <Text style={styles.label}>Nama paket</Text>
+      <Text style={styles.label}>{isEn ? 'Package name' : 'Nama paket'}</Text>
       <TextInput style={styles.input} value={item.name} onChangeText={(v) => onChange({ ...item, name: v })} placeholderTextColor={colors.textMuted} />
 
-      <Text style={styles.label}>Kategori</Text>
+      <Text style={styles.label}>{isEn ? 'Category' : 'Kategori'}</Text>
       <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.chips}>
         {categories.map((cat) => (
           <FilterChip
@@ -49,21 +50,21 @@ function PackageRow({ item, categories, onChange, onRemove }) {
         ))}
       </ScrollView>
 
-      <Text style={styles.label}>Harga (Rp)</Text>
+      <Text style={styles.label}>{isEn ? 'Price (Rp)' : 'Harga (Rp)'}</Text>
       <TextInput style={styles.input} keyboardType="numeric" value={item.price} onChangeText={(v) => onChange({ ...item, price: v })} placeholderTextColor={colors.textMuted} />
 
       <View style={styles.row2}>
         <View style={styles.half}>
-          <Text style={styles.label}>Min jamaah</Text>
+          <Text style={styles.label}>{isEn ? 'Min pilgrims' : 'Min jamaah'}</Text>
           <TextInput style={styles.input} keyboardType="number-pad" value={item.min_pilgrims} onChangeText={(v) => onChange({ ...item, min_pilgrims: v })} placeholderTextColor={colors.textMuted} />
         </View>
         <View style={styles.half}>
-          <Text style={styles.label}>Max jamaah</Text>
+          <Text style={styles.label}>{isEn ? 'Max pilgrims' : 'Max jamaah'}</Text>
           <TextInput style={styles.input} keyboardType="number-pad" value={item.max_pilgrims} onChangeText={(v) => onChange({ ...item, max_pilgrims: v })} placeholderTextColor={colors.textMuted} />
         </View>
       </View>
 
-      <Text style={styles.label}>Deskripsi</Text>
+      <Text style={styles.label}>{isEn ? 'Description' : 'Deskripsi'}</Text>
       <TextInput
         style={[styles.input, styles.textarea]}
         value={item.description}
@@ -73,7 +74,7 @@ function PackageRow({ item, categories, onChange, onRemove }) {
       />
 
       <View style={styles.switchRow}>
-        <Text style={styles.switchLabel}>Aktif</Text>
+        <Text style={styles.switchLabel}>{isEn ? 'Active' : 'Aktif'}</Text>
         <Switch value={item.is_active} onValueChange={(v) => onChange({ ...item, is_active: v })} trackColor={{ true: colors.baytgo }} />
       </View>
     </Card>
@@ -81,6 +82,7 @@ function PackageRow({ item, categories, onChange, onRemove }) {
 }
 
 export default function SupportPackagesScreen() {
+  const locale = useLocale(); const isEn = locale === 'en';
   const { token } = useAuth();
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
@@ -104,7 +106,7 @@ export default function SupportPackagesScreen() {
         })),
       );
     } catch (err) {
-      Alert.alert('Gagal', err.message || 'Tidak dapat memuat paket');
+      Alert.alert(isEn ? 'Error' : 'Gagal', err.message || (isEn ? 'Unable to load packages' : 'Tidak dapat memuat paket'));
     } finally {
       setLoading(false);
       setRefreshing(false);
@@ -127,10 +129,10 @@ export default function SupportPackagesScreen() {
         is_active: !!p.is_active,
       }));
       await updateSupportPackages(token, payload);
-      notifySuccess('Paket layanan pendukung disimpan.');
+      notifySuccess(isEn ? 'Support packages saved.' : 'Paket layanan pendukung disimpan.');
       await load(true);
     } catch (err) {
-      notifyError(err.message || 'Tidak dapat menyimpan');
+      notifyError(err.message || (isEn ? 'Unable to save' : 'Tidak dapat menyimpan'));
     } finally {
       setSaving(false);
     }
@@ -138,7 +140,7 @@ export default function SupportPackagesScreen() {
 
   return (
     <View style={styles.container}>
-      <TabPageHeader title="Layanan pendukung" subtitle="Kelola paket layanan Anda" />
+      <TabPageHeader title={isEn ? 'Support services' : 'Layanan pendukung'} subtitle={isEn ? 'Manage your service packages' : 'Kelola paket layanan Anda'} />
 
       {loading && !refreshing ? (
         <SkeletonList count={3} style={styles.skeleton} />
@@ -154,6 +156,7 @@ export default function SupportPackagesScreen() {
               categories={categories}
               onChange={(next) => setPackages((prev) => prev.map((p, i) => (i === index ? next : p)))}
               onRemove={() => setPackages((prev) => prev.filter((_, i) => i !== index))}
+              isEn={isEn}
             />
           ))}
 
@@ -163,10 +166,10 @@ export default function SupportPackagesScreen() {
             style={styles.addBtn}
           >
             <CirclePlus size={20} color={colors.baytgo} strokeWidth={2} />
-            <Text style={styles.addBtnText}>Tambah paket</Text>
+            <Text style={styles.addBtnText}>{isEn ? 'Add package' : 'Tambah paket'}</Text>
           </PressableScale>
 
-          <Button label="Simpan semua paket" onPress={handleSave} loading={saving} />
+          <Button label={isEn ? 'Save all packages' : 'Simpan semua paket'} onPress={handleSave} loading={saving} />
         </ScrollView>
       )}
     </View>

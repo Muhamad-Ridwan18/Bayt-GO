@@ -15,8 +15,10 @@ import { SkeletonList } from '../ui/Skeleton';
 import { colors, layout, radius, spacing, typography } from '../theme/tokens';
 import { formatIdr } from '../utils/format';
 import { navigateRoot } from '../navigation/rootNavigation';
+import { useLocale } from '../utils/locale';
 
 export default function SupportPackageDetailScreen({ navigation, route }) {
+  const locale = useLocale(); const isEn = locale === 'en';
   const { token, isAuthenticated } = useAuth();
   const { id, startsAt: startsAtParam, startsAtDate, packagePreview } = route.params || {};
   const [loading, setLoading] = useState(true);
@@ -36,7 +38,7 @@ export default function SupportPackageDetailScreen({ navigation, route }) {
       setPkg(data.data || data);
       setError(null);
     } catch (err) {
-      setError(err.message || 'Gagal memuat detail paket');
+      setError(err.message || (isEn ? 'Failed to load package details' : 'Gagal memuat detail paket'));
     } finally {
       setLoading(false);
     }
@@ -78,7 +80,7 @@ export default function SupportPackageDetailScreen({ navigation, route }) {
 
   return (
     <View style={styles.flex}>
-      <ScreenHeader title="Detail paket" onBack={() => navigation.goBack()} />
+      <ScreenHeader title={isEn ? 'Package detail' : 'Detail paket'} onBack={() => navigation.goBack()} />
       {loading && !pkg ? <SkeletonList count={3} /> : null}
       {!loading && error && !pkg ? <ErrorState description={error} onRetry={load} /> : null}
 
@@ -95,7 +97,7 @@ export default function SupportPackageDetailScreen({ navigation, route }) {
             <View style={styles.metaRow}>
               <Users size={14} color={colors.textMuted} />
               <Text style={styles.meta}>
-                {pkg.min_pilgrims}–{pkg.max_pilgrims} jamaah
+                {pkg.min_pilgrims}–{pkg.max_pilgrims} {isEn ? 'pilgrims' : 'jamaah'}
               </Text>
             </View>
           </Card>
@@ -108,7 +110,7 @@ export default function SupportPackageDetailScreen({ navigation, route }) {
                 <View style={styles.metaRow}>
                   <Star size={12} color={colors.goldMuted} fill={colors.goldMuted} />
                   <Text style={styles.meta}>
-                    {pkg.muthowif?.average_rating || 0} · {pkg.muthowif?.reviews_count || 0} ulasan
+                    {pkg.muthowif?.average_rating || 0} · {pkg.muthowif?.reviews_count || 0} {isEn ? 'reviews' : 'ulasan'}
                   </Text>
                 </View>
                 {pkg.muthowif?.work_location ? (
@@ -118,7 +120,7 @@ export default function SupportPackageDetailScreen({ navigation, route }) {
             </View>
             {pkg.muthowif?.profile_id ? (
               <PressableScale onPress={openMuthowifProfile} haptic="light" style={styles.profileLink}>
-                <Text style={styles.profileLinkText}>Lihat profil muthowif</Text>
+                <Text style={styles.profileLinkText}>{isEn ? 'View muthowif profile' : 'Lihat profil muthowif'}</Text>
                 <ChevronRight size={16} color={colors.baytgo} strokeWidth={2} />
               </PressableScale>
             ) : null}
@@ -126,11 +128,11 @@ export default function SupportPackageDetailScreen({ navigation, route }) {
 
           {slotLabel ? (
             <View style={styles.slotBanner}>
-              <Text style={styles.slotText}>Ketersediaan dipilih: {slotLabel}</Text>
+              <Text style={styles.slotText}>{isEn ? 'Selected availability' : 'Ketersediaan dipilih'}: {slotLabel}</Text>
             </View>
           ) : null}
 
-          <Button label="Pesan layanan" onPress={handleBook} />
+          <Button label={isEn ? 'Book service' : 'Pesan layanan'} onPress={handleBook} />
         </ScrollView>
       ) : null}
     </View>

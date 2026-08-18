@@ -5,16 +5,18 @@ import AuthScreenShell from '../components/AuthScreenShell';
 import Button from '../ui/Button';
 import Card from '../ui/Card';
 import { colors, spacing, typography } from '../theme/tokens';
+import { useLocale } from '../utils/locale';
 
 export default function CompanyRegistrationPendingScreen({ navigation, route }) {
+  const locale = useLocale(); const isEn = locale === 'en';
   const message =
     route.params?.message ||
-    'Pendaftaran perusahaan Anda sedang ditinjau admin. Anda akan dapat masuk setelah akun disetujui.';
+    (isEn ? 'Your company registration is being reviewed by admin. You will be able to sign in once your account is approved.' : 'Pendaftaran perusahaan Anda sedang ditinjau admin. Anda akan dapat masuk setelah akun disetujui.');
 
   return (
     <AuthScreenShell
-      title="Menunggu persetujuan"
-      subtitle="Akun perusahaan Anda dalam proses verifikasi."
+      title={isEn ? 'Awaiting approval' : 'Menunggu persetujuan'}
+      subtitle={isEn ? 'Your company account is being verified.' : 'Akun perusahaan Anda dalam proses verifikasi.'}
       onBack={() => navigation.replace('Login')}
     >
       <Card style={styles.card} padding={spacing.xl} elevated={false} variant="flat">
@@ -23,12 +25,11 @@ export default function CompanyRegistrationPendingScreen({ navigation, route }) 
         </View>
         <Text style={styles.message}>{message}</Text>
         <Text style={styles.hint}>
-          Tim admin akan memverifikasi data perusahaan Anda. Setelah disetujui, gunakan email dan password yang
-          didaftarkan untuk masuk.
+          {isEn ? 'The admin team will verify your company data. Once approved, use the registered email and password to sign in.' : 'Tim admin akan memverifikasi data perusahaan Anda. Setelah disetujui, gunakan email dan password yang didaftarkan untuk masuk.'}
         </Text>
       </Card>
 
-      <Button label="Ke halaman masuk" onPress={() => navigation.replace('Login')} />
+      <Button label={isEn ? 'Go to login' : 'Ke halaman masuk'} onPress={() => navigation.replace('Login')} />
     </AuthScreenShell>
   );
 }

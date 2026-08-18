@@ -7,8 +7,10 @@ import { fetchArticle } from '../api/home';
 import { ErrorState, SkeletonList } from '../ui';
 import { colors, layout, spacing, typography } from '../theme/tokens';
 import { resolveMediaUrl } from '../utils/mediaUrl';
+import { useLocale } from '../utils/locale';
 
 export default function ArticleDetailScreen({ navigation, route }) {
+  const locale = useLocale(); const isEn = locale === 'en';
   const { slug, preview } = route.params || {};
   const [article, setArticle] = useState(preview || null);
   const [loading, setLoading] = useState(!preview);
@@ -21,7 +23,7 @@ export default function ArticleDetailScreen({ navigation, route }) {
       setArticle(data);
       setError(null);
     } catch (err) {
-      setError(err.message || 'Artikel tidak ditemukan');
+      setError(err.message || (isEn ? 'Article not found' : 'Artikel tidak ditemukan'));
     } finally {
       setLoading(false);
     }
@@ -36,7 +38,7 @@ export default function ArticleDetailScreen({ navigation, route }) {
 
   return (
     <View style={styles.container}>
-      <ScreenHeader title="Artikel" onBack={() => navigation.goBack()} />
+      <ScreenHeader title={isEn ? 'Article' : 'Artikel'} onBack={() => navigation.goBack()} />
       {loading ? <SkeletonList count={3} style={styles.pad} /> : null}
       {error && !article ? <ErrorState description={error} onRetry={load} /> : null}
       {article ? (
@@ -45,7 +47,7 @@ export default function ArticleDetailScreen({ navigation, route }) {
           <Text style={styles.title}>{article.title}</Text>
           {article.excerpt ? <Text style={styles.excerpt}>{article.excerpt}</Text> : null}
           <Text style={styles.meta}>
-            {[article.author, published, article.reading_minutes ? `${article.reading_minutes} menit baca` : null]
+            {[article.author, published, article.reading_minutes ? (isEn ? `${article.reading_minutes} min read` : `${article.reading_minutes} menit baca`) : null]
               .filter(Boolean)
               .join(' · ')}
           </Text>

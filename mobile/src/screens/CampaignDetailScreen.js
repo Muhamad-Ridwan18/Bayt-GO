@@ -9,6 +9,7 @@ import { colors, layout, spacing, typography } from '../theme/tokens';
 import { resolveMediaUrl } from '../utils/mediaUrl';
 import { WEB_BASE_URL } from '../config/api';
 import { useCountdown } from '../hooks/useCountdown';
+import { useLocale } from '../utils/locale';
 
 function openCta(url) {
   if (!url) return;
@@ -18,6 +19,7 @@ function openCta(url) {
 }
 
 export default function CampaignDetailScreen({ navigation, route }) {
+  const locale = useLocale(); const isEn = locale === 'en';
   const { slug, preview } = route.params || {};
   const [campaign, setCampaign] = useState(preview || null);
   const [loading, setLoading] = useState(!preview);
@@ -31,7 +33,7 @@ export default function CampaignDetailScreen({ navigation, route }) {
       setCampaign(data);
       setError(null);
     } catch (err) {
-      setError(err.message || 'Kampanye tidak ditemukan');
+      setError(err.message || (isEn ? 'Campaign not found' : 'Kampanye tidak ditemukan'));
     } finally {
       setLoading(false);
     }
@@ -43,7 +45,7 @@ export default function CampaignDetailScreen({ navigation, route }) {
 
   return (
     <View style={styles.container}>
-      <ScreenHeader title={campaign?.title || 'Kampanye'} onBack={() => navigation.goBack()} />
+      <ScreenHeader title={campaign?.title || (isEn ? 'Campaign' : 'Kampanye')} onBack={() => navigation.goBack()} />
       {loading ? <SkeletonList count={2} style={styles.pad} /> : null}
       {error && !campaign ? <ErrorState description={error} onRetry={load} /> : null}
       {campaign ? (
@@ -55,7 +57,7 @@ export default function CampaignDetailScreen({ navigation, route }) {
           )}
           <Text style={styles.title}>{campaign.title}</Text>
           {due.label && !due.expired ? (
-            <Text style={styles.remain}>Berakhir dalam {due.label}</Text>
+            <Text style={styles.remain}>{isEn ? `Ends in ${due.label}` : `Berakhir dalam ${due.label}`}</Text>
           ) : null}
           {campaign.body ? <Text style={styles.body}>{campaign.body}</Text> : null}
           {campaign.cta_text && campaign.cta_url ? (

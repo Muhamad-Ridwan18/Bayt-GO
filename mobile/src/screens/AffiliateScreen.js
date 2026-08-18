@@ -32,8 +32,10 @@ import StatTile from '../ui/StatTile';
 import { colors, gradients, layout, radius, spacing, typography } from '../theme/tokens';
 import { formatIdr } from '../utils/format';
 import { notifyError, notifySuccess } from '../utils/feedback';
+import { useLocale } from '../utils/locale';
 
 export default function AffiliateScreen({ navigation }) {
+  const locale = useLocale(); const isEn = locale === 'en';
   const { token, isAuthenticated } = useAuth();
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
@@ -57,7 +59,7 @@ export default function AffiliateScreen({ navigation }) {
   const load = useCallback(async (refresh = false) => {
     if (!token) {
       setLoading(false);
-      setError('Login diperlukan untuk membuka Affiliate');
+      setError(isEn ? 'Login required to access Affiliate' : 'Login diperlukan untuk membuka Affiliate');
       return;
     }
     if (refresh) setRefreshing(true);
@@ -82,7 +84,7 @@ export default function AffiliateScreen({ navigation }) {
       }
       setError(null);
     } catch (err) {
-      setError(err.message || 'Gagal memuat affiliate');
+      setError(err.message || (isEn ? 'Failed to load affiliate' : 'Gagal memuat affiliate'));
     } finally {
       setLoading(false);
       setRefreshing(false);
@@ -104,10 +106,10 @@ export default function AffiliateScreen({ navigation }) {
     setSubmitting(true);
     try {
       await registerAffiliate(token, registerCode.trim());
-      notifySuccess('Affiliate diaktifkan');
+      notifySuccess(isEn ? 'Affiliate activated' : 'Affiliate diaktifkan');
       await load(true);
     } catch (err) {
-      notifyError(err.message || 'Gagal mendaftar');
+      notifyError(err.message || (isEn ? 'Registration failed' : 'Gagal mendaftar'));
     } finally {
       setSubmitting(false);
     }
@@ -119,7 +121,7 @@ export default function AffiliateScreen({ navigation }) {
     if (!url && !code) return;
     try {
       await Share.share({
-        message: `Gabung BaytGo lewat tautan saya: ${url || code}`,
+        message: isEn ? `Join BaytGo via my link: ${url || code}` : `Gabung BaytGo lewat tautan saya: ${url || code}`,
       });
     } catch {
       // ignore
@@ -128,7 +130,7 @@ export default function AffiliateScreen({ navigation }) {
 
   const handleAddBank = async () => {
     if (!accountHolder.trim() || !accountNumber.trim() || !bankCode) {
-      Alert.alert('Validasi', 'Lengkapi data rekening');
+      Alert.alert(isEn ? 'Validation' : 'Validasi', isEn ? 'Complete the bank account details' : 'Lengkapi data rekening');
       return;
     }
     setSubmitting(true);
@@ -139,31 +141,31 @@ export default function AffiliateScreen({ navigation }) {
         account_number: accountNumber.replace(/\D/g, ''),
         is_primary: true,
       });
-      notifySuccess('Rekening ditambahkan');
+      notifySuccess(isEn ? 'Bank account added' : 'Rekening ditambahkan');
       setShowBankForm(false);
       setAccountHolder('');
       setAccountNumber('');
       await load(true);
     } catch (err) {
-      notifyError(err.message || 'Gagal menambah rekening');
+      notifyError(err.message || (isEn ? 'Failed to add account' : 'Gagal menambah rekening'));
     } finally {
       setSubmitting(false);
     }
   };
 
   const handleDeleteBank = (bank) => {
-    Alert.alert('Hapus rekening', `Hapus ${bank.bank_name} · ${bank.account_number}?`, [
-      { text: 'Batal', style: 'cancel' },
+    Alert.alert(isEn ? 'Delete account' : 'Hapus rekening', `${isEn ? 'Delete' : 'Hapus'} ${bank.bank_name} · ${bank.account_number}?`, [
+      { text: isEn ? 'Cancel' : 'Batal', style: 'cancel' },
       {
-        text: 'Hapus',
+        text: isEn ? 'Delete' : 'Hapus',
         style: 'destructive',
         onPress: async () => {
           try {
             await deleteAffiliateBankAccount(token, bank.id);
-            notifySuccess('Rekening dihapus');
+            notifySuccess(isEn ? 'Account deleted' : 'Rekening dihapus');
             await load(true);
           } catch (err) {
-            notifyError(err.message || 'Gagal menghapus');
+            notifyError(err.message || (isEn ? 'Failed to delete' : 'Gagal menghapus'));
           }
         },
       },
@@ -174,11 +176,11 @@ export default function AffiliateScreen({ navigation }) {
     const amount = Number(String(withdrawAmount).replace(/\D/g, ''));
     const min = Number(stats.min_withdraw || 0);
     if (!amount || amount < min) {
-      Alert.alert('Validasi', `Minimum penarikan ${formatIdr(min)}`);
+      Alert.alert(isEn ? 'Validation' : 'Validasi', isEn ? `Minimum withdrawal ${formatIdr(min)}` : `Minimum penarikan ${formatIdr(min)}`);
       return;
     }
     if (!withdrawBankId) {
-      Alert.alert('Validasi', 'Pilih rekening tujuan');
+      Alert.alert(isEn ? 'Validation' : 'Validasi', isEn ? 'Select a destination account' : 'Pilih rekening tujuan');
       return;
     }
     setSubmitting(true);
@@ -188,13 +190,13 @@ export default function AffiliateScreen({ navigation }) {
         bank_account_id: withdrawBankId,
         notes: withdrawNotes.trim() || null,
       });
-      notifySuccess('Withdraw diajukan');
+      notifySuccess(isEn ? 'Withdrawal submitted' : 'Withdraw diajukan');
       setShowWithdraw(false);
       setWithdrawAmount('');
       setWithdrawNotes('');
       await load(true);
     } catch (err) {
-      notifyError(err.message || 'Gagal mengajukan withdraw');
+      notifyError(err.message || (isEn ? 'Failed to submit withdrawal' : 'Gagal mengajukan withdraw'));
     } finally {
       setSubmitting(false);
     }
@@ -205,8 +207,8 @@ export default function AffiliateScreen({ navigation }) {
       <View style={styles.flex}>
         <ScreenHeader title="Affiliate" onBack={() => navigation.goBack()} />
         <EmptyState
-          title="Login diperlukan"
-          description="Masuk untuk mendaftar dan mengelola affiliate."
+          title={isEn ? 'Login required' : 'Login diperlukan'}
+          description={isEn ? 'Sign in to register and manage your affiliate.' : 'Masuk untuk mendaftar dan mengelola affiliate.'}
         />
       </View>
     );
@@ -214,7 +216,7 @@ export default function AffiliateScreen({ navigation }) {
 
   return (
     <View style={styles.flex}>
-      <ScreenHeader title="Affiliate" subtitle="Komisi referral" onBack={() => navigation.goBack()} />
+      <ScreenHeader title="Affiliate" subtitle={isEn ? 'Referral commission' : 'Komisi referral'} onBack={() => navigation.goBack()} />
 
       {loading ? <SkeletonList count={4} /> : null}
       {!loading && error ? <ErrorState description={error} onRetry={() => load()} /> : null}
@@ -222,9 +224,9 @@ export default function AffiliateScreen({ navigation }) {
       {!loading && !error && !registered ? (
         <ScrollView contentContainerStyle={styles.content} keyboardShouldPersistTaps="handled">
           <LinearGradient colors={gradients.primary} style={styles.hero}>
-            <Text style={styles.heroTitle}>Jadi Affiliate BaytGo</Text>
+            <Text style={styles.heroTitle}>{isEn ? 'Become a BaytGo Affiliate' : 'Jadi Affiliate BaytGo'}</Text>
             <Text style={styles.heroSub}>
-              Bagikan kode referral dan dapatkan komisi dari booking yang sukses.
+              {isEn ? 'Share your referral code and earn commissions from successful bookings.' : 'Bagikan kode referral dan dapatkan komisi dari booking yang sukses.'}
             </Text>
             <Text style={styles.heroMeta}>
               Rate default {(Number(statusMeta?.default_rate || 0) * 100).toFixed(1)}% · Min withdraw{' '}
@@ -233,16 +235,16 @@ export default function AffiliateScreen({ navigation }) {
           </LinearGradient>
 
           <Card style={styles.card}>
-            <Text style={styles.label}>Kode kustom (opsional)</Text>
+            <Text style={styles.label}>{isEn ? 'Custom code (optional)' : 'Kode kustom (opsional)'}</Text>
             <TextInput
               value={registerCode}
               onChangeText={setRegisterCode}
-              placeholder="Contoh: BAYTGO01"
+              placeholder={isEn ? 'e.g. BAYTGO01' : 'Contoh: BAYTGO01'}
               autoCapitalize="characters"
               style={styles.input}
               placeholderTextColor={colors.textMuted}
             />
-            <Button label="Aktifkan Affiliate" onPress={handleRegister} loading={submitting} />
+            <Button label={isEn ? 'Activate Affiliate' : 'Aktifkan Affiliate'} onPress={handleRegister} loading={submitting} />
           </Card>
         </ScrollView>
       ) : null}
@@ -260,7 +262,7 @@ export default function AffiliateScreen({ navigation }) {
             <View style={styles.heroActions}>
               <View style={styles.heroBtn}>
                 <Button
-                  label="Bagikan"
+                  label={isEn ? 'Share' : 'Bagikan'}
                   onPress={handleShare}
                   variant="secondary"
                   size="sm"
@@ -271,18 +273,18 @@ export default function AffiliateScreen({ navigation }) {
           </LinearGradient>
 
           <View style={styles.statsRow}>
-            <StatTile label="Saldo" value={formatIdr(stats.available_balance || 0)} icon={Wallet} color={colors.baytgo} />
+            <StatTile label={isEn ? 'Balance' : 'Saldo'} value={formatIdr(stats.available_balance || 0)} icon={Wallet} color={colors.baytgo} />
             <StatTile label="Pending" value={formatIdr(stats.pending_commission || 0)} icon={Link2} color={colors.goldMuted} />
           </View>
           <View style={styles.statsRow}>
-            <StatTile label="Booking sukses" value={String(stats.success_booking || 0)} color={colors.baytgo} />
-            <StatTile label="Klik" value={String(stats.total_clicks || 0)} color={colors.baytgo} />
+            <StatTile label={isEn ? 'Successful bookings' : 'Booking sukses'} value={String(stats.success_booking || 0)} color={colors.baytgo} />
+            <StatTile label={isEn ? 'Clicks' : 'Klik'} value={String(stats.total_clicks || 0)} color={colors.baytgo} />
           </View>
 
           <Card style={styles.card}>
-            <Text style={styles.sectionTitle}>Rekening</Text>
+            <Text style={styles.sectionTitle}>{isEn ? 'Bank Accounts' : 'Rekening'}</Text>
             {(dashboard?.bank_accounts || []).length === 0 ? (
-              <Text style={styles.muted}>Belum ada rekening. Tambahkan untuk withdraw.</Text>
+              <Text style={styles.muted}>{isEn ? 'No bank accounts yet. Add one to withdraw.' : 'Belum ada rekening. Tambahkan untuk withdraw.'}</Text>
             ) : (
               (dashboard?.bank_accounts || []).map((bank) => (
                 <View key={bank.id} style={styles.bankRow}>
@@ -290,18 +292,18 @@ export default function AffiliateScreen({ navigation }) {
                     <Text style={styles.bankName}>{bank.bank_name}</Text>
                     <Text style={styles.muted}>{bank.account_holder} · {bank.account_number}</Text>
                   </View>
-                  <Button label="Hapus" variant="ghost" size="sm" fullWidth={false} onPress={() => handleDeleteBank(bank)} />
+                  <Button label={isEn ? 'Delete' : 'Hapus'} variant="ghost" size="sm" fullWidth={false} onPress={() => handleDeleteBank(bank)} />
                 </View>
               ))
             )}
             <Button
-              label={showBankForm ? 'Tutup form' : 'Tambah rekening'}
+              label={showBankForm ? (isEn ? 'Close form' : 'Tutup form') : (isEn ? 'Add account' : 'Tambah rekening')}
               variant="secondary"
               onPress={() => setShowBankForm((v) => !v)}
             />
             {showBankForm ? (
               <View style={styles.formBlock}>
-                <Text style={styles.label}>Bank</Text>
+                <Text style={styles.label}>{isEn ? 'Bank' : 'Bank'}</Text>
                 <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.chips}>
                   {bankKeys.map((key) => (
                     <FilterChip
@@ -315,33 +317,33 @@ export default function AffiliateScreen({ navigation }) {
                 <TextInput
                   value={accountHolder}
                   onChangeText={setAccountHolder}
-                  placeholder="Nama pemilik rekening"
+                  placeholder={isEn ? 'Account holder name' : 'Nama pemilik rekening'}
                   style={styles.input}
                   placeholderTextColor={colors.textMuted}
                 />
                 <TextInput
                   value={accountNumber}
                   onChangeText={setAccountNumber}
-                  placeholder="Nomor rekening"
+                  placeholder={isEn ? 'Account number' : 'Nomor rekening'}
                   keyboardType="number-pad"
                   style={styles.input}
                   placeholderTextColor={colors.textMuted}
                 />
-                <Button label="Simpan rekening" onPress={handleAddBank} loading={submitting} />
+                <Button label={isEn ? 'Save account' : 'Simpan rekening'} onPress={handleAddBank} loading={submitting} />
               </View>
             ) : null}
           </Card>
 
           <Card style={styles.card}>
-            <Text style={styles.sectionTitle}>Withdraw</Text>
+            <Text style={styles.sectionTitle}>{isEn ? 'Withdraw' : 'Withdraw'}</Text>
             <Text style={styles.muted}>Min. {formatIdr(stats.min_withdraw || 0)}</Text>
             <Button
-              label={showWithdraw ? 'Tutup form' : 'Ajukan withdraw'}
+              label={showWithdraw ? (isEn ? 'Close form' : 'Tutup form') : (isEn ? 'Request withdrawal' : 'Ajukan withdraw')}
               onPress={() => setShowWithdraw((v) => !v)}
             />
             {showWithdraw ? (
               <View style={styles.formBlock}>
-                <Text style={styles.label}>Rekening tujuan</Text>
+                <Text style={styles.label}>{isEn ? 'Destination account' : 'Rekening tujuan'}</Text>
                 <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.chips}>
                   {(dashboard?.bank_accounts || []).map((bank) => (
                     <FilterChip
@@ -355,7 +357,7 @@ export default function AffiliateScreen({ navigation }) {
                 <TextInput
                   value={withdrawAmount}
                   onChangeText={setWithdrawAmount}
-                  placeholder="Nominal"
+                  placeholder={isEn ? 'Amount' : 'Nominal'}
                   keyboardType="number-pad"
                   style={styles.input}
                   placeholderTextColor={colors.textMuted}
@@ -363,19 +365,19 @@ export default function AffiliateScreen({ navigation }) {
                 <TextInput
                   value={withdrawNotes}
                   onChangeText={setWithdrawNotes}
-                  placeholder="Catatan (opsional)"
+                  placeholder={isEn ? 'Notes (optional)' : 'Catatan (opsional)'}
                   style={styles.input}
                   placeholderTextColor={colors.textMuted}
                 />
-                <Button label="Kirim permintaan" onPress={handleWithdraw} loading={submitting} />
+                <Button label={isEn ? 'Submit request' : 'Kirim permintaan'} onPress={handleWithdraw} loading={submitting} />
               </View>
             ) : null}
           </Card>
 
           <Card style={styles.card}>
-            <Text style={styles.sectionTitle}>Komisi terbaru</Text>
+            <Text style={styles.sectionTitle}>{isEn ? 'Recent commissions' : 'Komisi terbaru'}</Text>
             {(dashboard?.commissions || []).length === 0 ? (
-              <Text style={styles.muted}>Belum ada komisi.</Text>
+              <Text style={styles.muted}>{isEn ? 'No commissions yet.' : 'Belum ada komisi.'}</Text>
             ) : (
               (dashboard?.commissions || []).slice(0, 8).map((row) => (
                 <View key={row.id} style={styles.listRow}>

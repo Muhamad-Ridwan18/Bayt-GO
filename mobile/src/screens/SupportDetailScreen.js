@@ -13,8 +13,10 @@ import { Card, EmptyState, ErrorState, PressableScale, SkeletonList } from '../u
 import MessageList from '../ui/MessageList';
 import { MessageBubble, TicketInfoCard } from '../features/support/SupportDetailParts';
 import { colors, layout, radius, spacing, typography } from '../theme/tokens';
+import { useLocale } from '../utils/locale';
 
 export default function SupportDetailScreen({ navigation, route }) {
+  const locale = useLocale(); const isEn = locale === 'en';
   const { token } = useAuth();
   const { ticketId } = route.params;
 
@@ -38,7 +40,7 @@ export default function SupportDetailScreen({ navigation, route }) {
       setMessages(data.ticket?.messages || []);
       setCanReply(data.can_reply === true);
     } catch (err) {
-      setError(err.message || 'Gagal memuat tiket');
+      setError(err.message || (isEn ? 'Failed to load ticket' : 'Gagal memuat tiket'));
     } finally {
       setLoading(false);
     }
@@ -63,7 +65,7 @@ export default function SupportDetailScreen({ navigation, route }) {
       setReplyAttachments([]);
       await load();
     } catch (err) {
-      Alert.alert('Gagal kirim', err.message || 'Balasan tidak terkirim');
+      Alert.alert(isEn ? 'Send failed' : 'Gagal kirim', err.message || (isEn ? 'Reply was not sent' : 'Balasan tidak terkirim'));
     } finally {
       setSending(false);
     }
@@ -88,7 +90,7 @@ export default function SupportDetailScreen({ navigation, route }) {
       keyboardVerticalOffset={Platform.OS === 'ios' ? 8 : 0}
     >
       <ScreenHeader
-        title={ticket?.subject || 'Detail Tiket'}
+        title={ticket?.subject || (isEn ? 'Ticket Detail' : 'Detail Tiket')}
         subtitle={subtitle}
         onBack={() => navigation.goBack()}
       />
@@ -96,7 +98,7 @@ export default function SupportDetailScreen({ navigation, route }) {
       {!canReply && ticket ? (
         <Card style={styles.closedBanner} padding={spacing.md} elevated={false}>
           <Lock size={16} color={colors.baytgo} strokeWidth={2} />
-          <Text style={styles.closedText}>Tiket ini tidak dapat dibalas lagi.</Text>
+          <Text style={styles.closedText}>{isEn ? 'This ticket can no longer be replied to.' : 'Tiket ini tidak dapat dibalas lagi.'}</Text>
         </Card>
       ) : null}
 
@@ -114,7 +116,7 @@ export default function SupportDetailScreen({ navigation, route }) {
           contentContainerStyle={styles.list}
           ListHeaderComponent={listHeader}
           ListEmptyComponent={
-            <EmptyState variant="chat" title="Belum ada pesan" description="Belum ada pesan pada tiket ini." />
+            <EmptyState variant="chat" title={isEn ? 'No messages yet' : 'Belum ada pesan'} description={isEn ? 'No messages in this ticket yet.' : 'Belum ada pesan pada tiket ini.'} />
           }
         />
       )}
@@ -125,14 +127,14 @@ export default function SupportDetailScreen({ navigation, route }) {
             files={replyAttachments}
             onChange={setReplyAttachments}
             disabled={sending}
-            hint="Lampiran balasan (opsional)"
+            hint={isEn ? 'Reply attachments (optional)' : 'Lampiran balasan (opsional)'}
           />
           <View style={styles.inputRow}>
             <TextInput
               style={styles.input}
               value={text}
               onChangeText={setText}
-              placeholder="Tulis balasan…"
+              placeholder={isEn ? 'Write a reply…' : 'Tulis balasan…'}
               placeholderTextColor={colors.textMuted}
               editable={!sending}
               multiline

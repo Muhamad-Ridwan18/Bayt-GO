@@ -7,8 +7,10 @@ import { fetchArticles } from '../api/home';
 import { EmptyState, ErrorState, PressableScale, SkeletonList } from '../ui';
 import { colors, layout, radius, spacing, typography } from '../theme/tokens';
 import { resolveMediaUrl } from '../utils/mediaUrl';
+import { useLocale } from '../utils/locale';
 
 export default function ArticlesListScreen({ navigation }) {
+  const locale = useLocale(); const isEn = locale === 'en';
   const [articles, setArticles] = useState([]);
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
@@ -22,7 +24,7 @@ export default function ArticlesListScreen({ navigation }) {
       setArticles(data.data || data || []);
       setError(null);
     } catch (err) {
-      setError(err.message || 'Gagal memuat artikel');
+      setError(err.message || (isEn ? 'Failed to load articles' : 'Gagal memuat artikel'));
     } finally {
       setLoading(false);
       setRefreshing(false);
@@ -33,11 +35,11 @@ export default function ArticlesListScreen({ navigation }) {
 
   return (
     <View style={styles.container}>
-      <ScreenHeader title="Artikel & Panduan" onBack={() => navigation.goBack()} />
+      <ScreenHeader title={isEn ? 'Articles & Guides' : 'Artikel & Panduan'} onBack={() => navigation.goBack()} />
       {loading && !refreshing ? <SkeletonList count={4} style={styles.pad} /> : null}
       {error && !articles.length ? <ErrorState description={error} onRetry={() => load()} /> : null}
       {!loading && !error && articles.length === 0 ? (
-        <EmptyState title="Belum ada artikel" description="Artikel terbaru akan muncul di sini." />
+        <EmptyState title={isEn ? 'No articles yet' : 'Belum ada artikel'} description={isEn ? 'Latest articles will appear here.' : 'Artikel terbaru akan muncul di sini.'} />
       ) : null}
       {articles.length ? (
         <ScrollView

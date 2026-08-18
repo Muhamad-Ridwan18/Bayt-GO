@@ -6,6 +6,7 @@ import SuccessState from '../ui/SuccessState';
 import Button from '../ui/Button';
 import { colors, layout, spacing } from '../theme/tokens';
 import { navigateRoot } from '../navigation/rootNavigation';
+import { useLocale } from '../utils/locale';
 
 function runTarget(navigation, target) {
   if (!target) {
@@ -32,10 +33,11 @@ function runTarget(navigation, target) {
 }
 
 export default function SuccessScreen({ navigation, route }) {
+  const locale = useLocale(); const isEn = locale === 'en';
   const {
-    title = 'Berhasil',
+    title = isEn ? 'Success' : 'Berhasil',
     description,
-    primaryLabel = 'Lanjut',
+    primaryLabel = isEn ? 'Continue' : 'Lanjut',
     primaryTarget,
     secondaryLabel,
     secondaryTarget,

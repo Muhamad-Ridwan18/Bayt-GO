@@ -5,8 +5,10 @@ import ScreenHeader from '../components/ScreenHeader';
 import { fetchTerms } from '../api/home';
 import { ErrorState, SkeletonList } from '../ui';
 import { colors, layout, spacing, typography } from '../theme/tokens';
+import { useLocale } from '../utils/locale';
 
 export default function TermsScreen({ navigation }) {
+  const locale = useLocale(); const isEn = locale === 'en';
   const [data, setData] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
@@ -17,7 +19,7 @@ export default function TermsScreen({ navigation }) {
       setData(next);
       setError(null);
     } catch (err) {
-      setError(err.message || 'Gagal memuat syarat dan ketentuan');
+      setError(err.message || (isEn ? 'Failed to load terms and conditions' : 'Gagal memuat syarat dan ketentuan'));
     } finally {
       setLoading(false);
     }
@@ -30,7 +32,7 @@ export default function TermsScreen({ navigation }) {
   return (
     <View style={styles.container}>
       <ScreenHeader
-        title={data?.title || 'Syarat dan ketentuan'}
+        title={data?.title || (isEn ? 'Terms and conditions' : 'Syarat dan ketentuan')}
         onBack={() => navigation.goBack()}
       />
       {loading ? <SkeletonList count={4} style={styles.pad} /> : null}
