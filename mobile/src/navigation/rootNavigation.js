@@ -53,7 +53,10 @@ export function flushPendingChatNavigation() {
 }
 
 export function flushPendingPublicLink() {
-  if (!pendingPublicLink || !navigationRef.isReady() || !rootHasMainRoute()) {
+  if (!pendingPublicLink || !navigationRef.isReady()) {
+    return;
+  }
+  if (!pendingPublicLink.root && !rootHasMainRoute()) {
     return;
   }
 
@@ -86,7 +89,37 @@ export function navigateToHomeScreen(screen, params) {
 }
 
 export function navigatePublicDeepLink(target) {
-  if (!target?.screen) return;
+  if (!target) return;
+
+  if (target.root) {
+    if (!navigationRef.isReady()) {
+      pendingPublicLink = target;
+      return;
+    }
+    navigationRef.navigate(target.root, target.params);
+    return;
+  }
+
+  if (target.tab) {
+    if (!navigationRef.isReady() || !rootHasMainRoute()) {
+      pendingPublicLink = target;
+      return;
+    }
+    navigationRef.dispatch(
+      CommonActions.navigate({
+        name: 'Main',
+        params: {
+          screen: target.tab,
+          params: target.screen
+            ? (target.params ? { screen: target.screen, params: target.params } : { screen: target.screen })
+            : undefined,
+        },
+      }),
+    );
+    return;
+  }
+
+  if (!target.screen) return;
   navigateToHomeScreen(target.screen, target.params);
 }
 

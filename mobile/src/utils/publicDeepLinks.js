@@ -41,6 +41,57 @@ export function parsePublicDeepLink(url) {
   const campaign = path.match(/^\/campaigns?\/([A-Za-z0-9-]+)$/);
   if (campaign) return { screen: 'CampaignDetail', params: { slug: campaign[1] } };
 
+  if (path === '/login') return { root: 'Login' };
+  if (path === '/register') {
+    const role = params?.get('role') === 'muthowif' ? 'muthowif' : 'customer';
+    return { root: 'Register', params: { role } };
+  }
+  if (path === '/forgot-password') return { root: 'ForgotPassword' };
+
+  if (path === '/chat') return { tab: 'ChatTab', screen: 'ChatList' };
+
+  if (path === '/bookings') return { tab: 'BookingsTab', screen: 'BookingsList' };
+
+  const bookingPay = path.match(/^\/bookings\/(\d+)\/pembayaran$/);
+  if (bookingPay) {
+    return {
+      tab: 'BookingsTab',
+      screen: 'BookingPayment',
+      params: { bookingId: Number(bookingPay[1]) },
+    };
+  }
+
+  const bookingInvoice = path.match(/^\/bookings\/(\d+)\/invoice$/);
+  if (bookingInvoice) {
+    return {
+      tab: 'BookingsTab',
+      screen: 'BookingInvoice',
+      params: { bookingId: Number(bookingInvoice[1]) },
+    };
+  }
+
+  const booking = path.match(/^\/bookings\/(\d+)$/);
+  if (booking) {
+    return {
+      tab: 'BookingsTab',
+      screen: 'BookingDetail',
+      params: { bookingId: Number(booking[1]) },
+    };
+  }
+
+  const muthowifBooking = path.match(/^\/muthowif\/bookings\/(\d+)$/);
+  if (muthowifBooking) {
+    return {
+      tab: 'MuthowifBookingsTab',
+      screen: 'MuthowifBookingDetail',
+      params: { bookingId: Number(muthowifBooking[1]) },
+    };
+  }
+
+  if (path === '/muthowif/bookings') {
+    return { tab: 'MuthowifBookingsTab', screen: 'MuthowifBookingsList' };
+  }
+
   if (path === '/layanan') return { screen: 'Directory' };
 
   const layanan = path.match(/^\/layanan\/([A-Za-z0-9-]+)(\/booking)?$/);

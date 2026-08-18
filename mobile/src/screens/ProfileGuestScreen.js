@@ -13,7 +13,7 @@ import { useBrand } from '../context/BrandContext';
 const FEATURES = [
   { icon: Search, title: 'Cari Muthowif', sub: 'Temukan pendamping ibadah terpercaya' },
   { icon: Calendar, title: 'Kelola Booking', sub: 'Pantau pesanan dan jadwal perjalanan' },
-  { icon: MessageCircle, title: 'Chat Langsung', sub: 'Komunikasi dengan muthowif sebelum pesan' },
+  { icon: MessageCircle, title: 'Chat Langsung', sub: 'Chat tersedia setelah booking dikonfirmasi dan pembayaran berhasil.' },
 ];
 
 export default function ProfileGuestScreen({ navigation }) {

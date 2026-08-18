@@ -6,6 +6,7 @@ import { createSupportBooking } from '../api/supportCatalog';
 import { useAuth } from '../context/AuthContext';
 import Button from '../ui/Button';
 import Card from '../ui/Card';
+import { TermsConsentSheet } from '../features/booking/BookingFormParts';
 import { colors, layout, radius, spacing, typography } from '../theme/tokens';
 import { formatIdr } from '../utils/format';
 import { notifyError, notifySuccess } from '../utils/feedback';
@@ -20,6 +21,8 @@ export default function SupportPackageBookScreen({ navigation, route }) {
   const [pilgrimCount, setPilgrimCount] = useState(String(pkg.min_pilgrims || 1));
   const [affiliateCode, setAffiliateCode] = useAffiliateReferralCode(routeAffiliateCode);
   const [submitting, setSubmitting] = useState(false);
+  const [tcOpen, setTcOpen] = useState(false);
+  const [tcAgree, setTcAgree] = useState(false);
 
   const today = useMemo(() => {
     const d = new Date();
@@ -27,7 +30,7 @@ export default function SupportPackageBookScreen({ navigation, route }) {
     return d;
   }, []);
 
-  const handleSubmit = async () => {
+  const handleSubmit = async (agreed = false) => {
     const count = Number(pilgrimCount);
     const min = Number(pkg.min_pilgrims || 1);
     const max = Number(pkg.max_pilgrims || 500);
@@ -41,6 +44,13 @@ export default function SupportPackageBookScreen({ navigation, route }) {
       return;
     }
 
+    if (!agreed) {
+      setTcAgree(false);
+      setTcOpen(true);
+      return;
+    }
+
+    setTcOpen(false);
     setSubmitting(true);
     try {
       const result = await createSupportBooking(token, {
@@ -102,7 +112,22 @@ export default function SupportPackageBookScreen({ navigation, route }) {
         </Card>
 
         <Button label="Kirim permintaan" onPress={handleSubmit} loading={submitting} />
+        <Text style={styles.consentHint}>
+          Dengan mengajukan, Anda setuju muthowif akan meninjau permintaan (status Menunggu).
+        </Text>
       </ScrollView>
+
+      <TermsConsentSheet
+        visible={tcOpen}
+        agreed={tcAgree}
+        loading={submitting}
+        onClose={() => setTcOpen(false)}
+        onAgreeChange={setTcAgree}
+        onConfirm={() => {
+          if (!tcAgree) return;
+          handleSubmit(true);
+        }}
+      />
     </View>
   );
 }
@@ -146,5 +171,11 @@ const styles = StyleSheet.create({
     backgroundColor: colors.card,
     color: colors.textPrimary,
     ...typography.body,
+  },
+  consentHint: {
+    ...typography.small,
+    color: colors.textMuted,
+    textAlign: 'center',
+    lineHeight: 18,
   },
 });

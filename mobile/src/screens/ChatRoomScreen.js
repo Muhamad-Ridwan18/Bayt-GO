@@ -224,7 +224,7 @@ export default function ChatRoomScreen({ navigation, route }) {
             <EmptyState
               variant="chat"
               title="Belum ada pesan"
-              description="Mulai percakapan."
+              description="Belum ada pesan. Mulai percakapan."
             />
           )}
         />
