@@ -22,6 +22,7 @@ import AppLogo from '../components/AppLogo';
 import { useBrand } from '../context/BrandContext';
 import Button from '../ui/Button';
 import PressableScale from '../ui/PressableScale';
+import { useLocale } from '../utils/locale';
 import { colors, gradients, layout, radius, shadows, spacing, typography } from '../theme/tokens';
 import { ONBOARDING_KEY, ONBOARDING_SLIDES } from '../constants/onboarding';
 
@@ -63,6 +64,7 @@ function Slide({ item }) {
 }
 
 export default function OnboardingScreen({ navigation }) {
+  const locale = useLocale(); const isEn = locale === 'en';
   const { logoUrl, appName } = useBrand();
   const listRef = useRef(null);
   const [index, setIndex] = useState(0);
@@ -94,7 +96,7 @@ export default function OnboardingScreen({ navigation }) {
           <AppLogo url={logoUrl} name={appName} size={36} showName />
           {!isLast && (
             <PressableScale onPress={finish} haptic="light">
-              <Text style={styles.skipText}>Lewati</Text>
+              <Text style={styles.skipText}>{isEn ? 'Skip' : 'Lewati'}</Text>
             </PressableScale>
           )}
         </View>
@@ -126,7 +128,7 @@ export default function OnboardingScreen({ navigation }) {
           </View>
 
           <Button
-            label={isLast ? 'Mulai Sekarang' : 'Lanjut'}
+            label={isLast ? (isEn ? 'Get Started' : 'Mulai Sekarang') : (isEn ? 'Next' : 'Lanjut')}
             onPress={goNext}
             icon={
               isLast ? (

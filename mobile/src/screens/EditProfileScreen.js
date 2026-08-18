@@ -6,9 +6,11 @@ import { fetchProfile, sendVerificationEmail, updateProfile } from '../api/profi
 import { useAuth } from '../context/AuthContext';
 import { Button, Card, PressableScale } from '../ui';
 import { notifyError, notifySuccess, notifySuccessThen } from '../utils/feedback';
+import { useLocale } from '../utils/locale';
 import { colors, layout, radius, spacing, typography } from '../theme/tokens';
 
 export default function EditProfileScreen({ navigation, route }) {
+  const locale = useLocale(); const isEn = locale === 'en';
   const { token, user, updateLocalUser } = useAuth();
   const initial = route.params?.profile?.user || user || {};
 
@@ -38,7 +40,7 @@ export default function EditProfileScreen({ navigation, route }) {
 
   const handleSave = async () => {
     if (!name.trim() || !email.trim()) {
-      setError('Nama dan email wajib diisi.');
+      setError(isEn ? 'Name and email are required.' : 'Nama dan email wajib diisi.');
       return;
     }
 
@@ -54,9 +56,9 @@ export default function EditProfileScreen({ navigation, route }) {
         await updateLocalUser({ name: data.user.name, email: data.user.email });
         setEmailVerifiedAt(data.user.email_verified_at || null);
       }
-      notifySuccessThen(navigation, 'Profil berhasil diperbarui.', () => navigation.goBack());
+      notifySuccessThen(navigation, isEn ? 'Profile updated successfully.' : 'Profil berhasil diperbarui.', () => navigation.goBack());
     } catch (err) {
-      setError(err.message || 'Gagal menyimpan profil');
+      setError(err.message || (isEn ? 'Failed to save profile' : 'Gagal menyimpan profil'));
     } finally {
       setLoading(false);
     }
@@ -66,9 +68,9 @@ export default function EditProfileScreen({ navigation, route }) {
     setSendingVerification(true);
     try {
       const data = await sendVerificationEmail(token);
-      notifySuccess(data.message || 'Link verifikasi telah dikirim.');
+      notifySuccess(data.message || (isEn ? 'Verification link sent.' : 'Link verifikasi telah dikirim.'));
     } catch (err) {
-      notifyError(err.message || 'Tidak dapat mengirim verifikasi');
+      notifyError(err.message || (isEn ? 'Unable to send verification' : 'Tidak dapat mengirim verifikasi'));
     } finally {
       setSendingVerification(false);
     }
@@ -78,7 +80,7 @@ export default function EditProfileScreen({ navigation, route }) {
 
   return (
     <View style={styles.container}>
-      <ScreenHeader title="Edit Profil" onBack={() => navigation.goBack()} />
+      <ScreenHeader title={isEn ? 'Edit Profile' : 'Edit Profil'} onBack={() => navigation.goBack()} />
 
       <ScrollView contentContainerStyle={styles.form} keyboardShouldPersistTaps="handled">
         {error ? (
@@ -87,32 +89,32 @@ export default function EditProfileScreen({ navigation, route }) {
           </Card>
         ) : null}
 
-        <AuthInput label="Nama" icon="person-outline" value={name} onChangeText={setName} placeholder="Nama lengkap" />
+        <AuthInput label={isEn ? 'Name' : 'Nama'} icon="person-outline" value={name} onChangeText={setName} placeholder={isEn ? 'Full name' : 'Nama lengkap'} />
         <AuthInput label="Email" icon="mail-outline" value={email} onChangeText={setEmail} placeholder="nama@email.com" keyboardType="email-address" autoCapitalize="none" />
 
         {isEmailUnverified ? (
           <Card style={styles.verifyBox} padding={spacing.md} elevated={false}>
-            <Text style={styles.verifyText}>Email Anda belum diverifikasi.</Text>
+            <Text style={styles.verifyText}>{isEn ? 'Your email is not verified.' : 'Email Anda belum diverifikasi.'}</Text>
             <PressableScale onPress={handleResendVerification} disabled={sendingVerification} haptic="light">
               {sendingVerification ? (
                 <ActivityIndicator color={colors.baytgo} size="small" />
               ) : (
-                <Text style={styles.verifyLink}>Klik di sini untuk mengirim ulang email verifikasi.</Text>
+                <Text style={styles.verifyLink}>{isEn ? 'Click here to resend verification email.' : 'Klik di sini untuk mengirim ulang email verifikasi.'}</Text>
               )}
             </PressableScale>
           </Card>
         ) : null}
 
-        <AuthInput label="Nomor WhatsApp" icon="call-outline" value={phone} onChangeText={setPhone} placeholder="08xxxxxxxxxx" keyboardType="phone-pad" />
+        <AuthInput label={isEn ? 'WhatsApp Number' : 'Nomor WhatsApp'} icon="call-outline" value={phone} onChangeText={setPhone} placeholder="08xxxxxxxxxx" keyboardType="phone-pad" />
 
-        <Button label="Simpan" onPress={handleSave} loading={loading} style={styles.saveBtn} />
+        <Button label={isEn ? 'Save' : 'Simpan'} onPress={handleSave} loading={loading} style={styles.saveBtn} />
 
         <Card style={styles.dangerSection} padding={spacing.lg} elevated={false}>
-          <Text style={styles.dangerTitle}>Zona berbahaya</Text>
-          <Text style={styles.dangerHint}>Hapus akun secara permanen beserta data terkait.</Text>
+          <Text style={styles.dangerTitle}>{isEn ? 'Danger zone' : 'Zona berbahaya'}</Text>
+          <Text style={styles.dangerHint}>{isEn ? 'Permanently delete your account and related data.' : 'Hapus akun secara permanen beserta data terkait.'}</Text>
           <PressableScale onPress={() => navigation.navigate('DeleteAccount')} haptic="medium">
             <View style={styles.dangerBtn}>
-              <Text style={styles.dangerBtnText}>Hapus akun</Text>
+              <Text style={styles.dangerBtnText}>{isEn ? 'Delete account' : 'Hapus akun'}</Text>
             </View>
           </PressableScale>
         </Card>

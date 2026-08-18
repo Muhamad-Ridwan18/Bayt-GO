@@ -4,12 +4,14 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { StatusBar } from 'expo-status-bar';
 import { Lock } from 'lucide-react-native';
 import { navigateRoot } from '../navigation/rootNavigation';
+import { useLocale } from '../utils/locale';
 import ScreenHeader from '../components/ScreenHeader';
 import Button from '../ui/Button';
 import PressableScale from '../ui/PressableScale';
 import { colors, layout, radius, shadows, spacing, typography } from '../theme/tokens';
 
 export default function AuthGateScreen({ navigation, title, message }) {
+  const locale = useLocale(); const isEn = locale === 'en';
   const nested = navigation?.canGoBack?.();
 
   return (
@@ -23,13 +25,13 @@ export default function AuthGateScreen({ navigation, title, message }) {
         <Text style={styles.title}>{title}</Text>
         <Text style={styles.message}>{message}</Text>
         <View style={styles.btnWrap}>
-          <Button label="Masuk" onPress={() => navigateRoot(navigation, 'Login')} />
+          <Button label={isEn ? 'Sign In' : 'Masuk'} onPress={() => navigateRoot(navigation, 'Login')} />
         </View>
         <PressableScale
           onPress={() => navigateRoot(navigation, 'Register', { role: 'customer' })}
           haptic="light"
         >
-          <Text style={styles.link}>Belum punya akun? Daftar</Text>
+          <Text style={styles.link}>{isEn ? "Don't have an account? Register" : 'Belum punya akun? Daftar'}</Text>
         </PressableScale>
       </View>
     </SafeAreaView>

@@ -7,9 +7,11 @@ import Button from '../ui/Button';
 import { deleteAccount } from '../api/profile';
 import { useAuth } from '../context/AuthContext';
 import { resetRoot } from '../navigation/rootNavigation';
+import { useLocale } from '../utils/locale';
 import { colors, layout, radius, spacing, typography } from '../theme/tokens';
 
 export default function DeleteAccountScreen({ navigation }) {
+  const locale = useLocale(); const isEn = locale === 'en';
   const { token, logout } = useAuth();
   const [password, setPassword] = useState('');
   const [loading, setLoading] = useState(false);
@@ -17,17 +19,17 @@ export default function DeleteAccountScreen({ navigation }) {
 
   const handleDelete = () => {
     if (!password) {
-      setError('Masukkan password untuk konfirmasi.');
+      setError(isEn ? 'Enter your password to confirm.' : 'Masukkan password untuk konfirmasi.');
       return;
     }
 
     Alert.alert(
-      'Hapus akun?',
-      'Tindakan ini permanen. Semua data akun Anda akan dihapus.',
+      isEn ? 'Delete account?' : 'Hapus akun?',
+      isEn ? 'This action is permanent. All your account data will be deleted.' : 'Tindakan ini permanen. Semua data akun Anda akan dihapus.',
       [
-        { text: 'Batal', style: 'cancel' },
+        { text: isEn ? 'Cancel' : 'Batal', style: 'cancel' },
         {
-          text: 'Hapus',
+          text: isEn ? 'Delete' : 'Hapus',
           style: 'destructive',
           onPress: async () => {
             setLoading(true);
@@ -37,7 +39,7 @@ export default function DeleteAccountScreen({ navigation }) {
               await logout();
               resetRoot(navigation, [{ name: 'Login' }]);
             } catch (err) {
-              setError(err.message || 'Gagal menghapus akun');
+              setError(err.message || (isEn ? 'Failed to delete account' : 'Gagal menghapus akun'));
             } finally {
               setLoading(false);
             }
@@ -49,11 +51,11 @@ export default function DeleteAccountScreen({ navigation }) {
 
   return (
     <View style={styles.container}>
-      <ScreenHeader title="Hapus Akun" onBack={() => navigation.goBack()} />
+      <ScreenHeader title={isEn ? 'Delete Account' : 'Hapus Akun'} onBack={() => navigation.goBack()} />
 
       <View style={styles.form}>
         <Text style={styles.warning}>
-          Setelah dihapus, akun dan data terkait tidak dapat dipulihkan. Masukkan password untuk mengonfirmasi.
+          {isEn ? 'Once deleted, your account and related data cannot be recovered. Enter your password to confirm.' : 'Setelah dihapus, akun dan data terkait tidak dapat dipulihkan. Masukkan password untuk mengonfirmasi.'}
         </Text>
 
         {error ? <Text style={styles.error}>{error}</Text> : null}
@@ -64,11 +66,11 @@ export default function DeleteAccountScreen({ navigation }) {
           value={password}
           onChangeText={setPassword}
           secureTextEntry
-          placeholder="Password akun Anda"
+          placeholder={isEn ? 'Your account password' : 'Password akun Anda'}
         />
 
         <Button
-          label="Hapus akun permanen"
+          label={isEn ? 'Delete account permanently' : 'Hapus akun permanen'}
           onPress={handleDelete}
           loading={loading}
           variant="danger"

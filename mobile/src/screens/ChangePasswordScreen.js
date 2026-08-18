@@ -7,9 +7,11 @@ import Button from '../ui/Button';
 import { updatePassword } from '../api/profile';
 import { useAuth } from '../context/AuthContext';
 import { notifySuccessThen } from '../utils/feedback';
+import { useLocale } from '../utils/locale';
 import { colors, layout, radius, spacing, typography } from '../theme/tokens';
 
 export default function ChangePasswordScreen({ navigation }) {
+  const locale = useLocale(); const isEn = locale === 'en';
   const { token } = useAuth();
   const [currentPassword, setCurrentPassword] = useState('');
   const [password, setPassword] = useState('');
@@ -19,11 +21,11 @@ export default function ChangePasswordScreen({ navigation }) {
 
   const handleSave = async () => {
     if (!currentPassword || !password || !passwordConfirmation) {
-      setError('Semua field wajib diisi.');
+      setError(isEn ? 'All fields are required.' : 'Semua field wajib diisi.');
       return;
     }
     if (password !== passwordConfirmation) {
-      setError('Konfirmasi password tidak cocok.');
+      setError(isEn ? 'Password confirmation does not match.' : 'Konfirmasi password tidak cocok.');
       return;
     }
 
@@ -31,9 +33,9 @@ export default function ChangePasswordScreen({ navigation }) {
     setError('');
     try {
       await updatePassword(token, { currentPassword, password, passwordConfirmation });
-      notifySuccessThen(navigation, 'Password berhasil diperbarui.', () => navigation.goBack());
+      notifySuccessThen(navigation, isEn ? 'Password updated successfully.' : 'Password berhasil diperbarui.', () => navigation.goBack());
     } catch (err) {
-      setError(err.message || 'Gagal memperbarui password');
+      setError(err.message || (isEn ? 'Failed to update password' : 'Gagal memperbarui password'));
     } finally {
       setLoading(false);
     }
@@ -41,37 +43,37 @@ export default function ChangePasswordScreen({ navigation }) {
 
   return (
     <View style={styles.container}>
-      <ScreenHeader title="Ganti Password" onBack={() => navigation.goBack()} />
+      <ScreenHeader title={isEn ? 'Change Password' : 'Ganti Password'} onBack={() => navigation.goBack()} />
 
       <ScrollView contentContainerStyle={styles.scroll} keyboardShouldPersistTaps="handled">
         {error ? <Text style={styles.error}>{error}</Text> : null}
 
         <AuthInput
-          label="Password saat ini"
+          label={isEn ? 'Current password' : 'Password saat ini'}
           icon={Lock}
           secureTextEntry
           value={currentPassword}
           onChangeText={setCurrentPassword}
-          placeholder="Password lama"
+          placeholder={isEn ? 'Old password' : 'Password lama'}
         />
         <AuthInput
-          label="Password baru"
+          label={isEn ? 'New password' : 'Password baru'}
           icon={KeyRound}
           secureTextEntry
           value={password}
           onChangeText={setPassword}
-          placeholder="Minimal 8 karakter"
+          placeholder={isEn ? 'Minimum 8 characters' : 'Minimal 8 karakter'}
         />
         <AuthInput
-          label="Konfirmasi password baru"
+          label={isEn ? 'Confirm new password' : 'Konfirmasi password baru'}
           icon={KeyRound}
           secureTextEntry
           value={passwordConfirmation}
           onChangeText={setPasswordConfirmation}
-          placeholder="Ulangi password baru"
+          placeholder={isEn ? 'Repeat new password' : 'Ulangi password baru'}
         />
 
-        <Button label="Simpan Password" onPress={handleSave} loading={loading} />
+        <Button label={isEn ? 'Save Password' : 'Simpan Password'} onPress={handleSave} loading={loading} />
       </ScrollView>
     </View>
   );
