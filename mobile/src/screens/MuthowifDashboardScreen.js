@@ -377,10 +377,10 @@ export default function MuthowifDashboardScreen({ navigation }) {
               {!nextSchedule ? (
                 <EmptyState
                   variant="schedule"
-                  title="Belum ada jadwal aktif"
-                  description="Permintaan yang disetujui akan muncul di sini"
-                  actionLabel="Atur jadwal libur"
-                  onAction={() => navigation.navigate('Schedule')}
+                  title="Belum ada pesanan aktif"
+                  description="Jadwal dan permintaan jamaah akan terlihat di sini begitu ada pesanan mendatang."
+                  actionLabel="Kelola pesanan"
+                  onAction={goRequests}
                 />
               ) : (
                 <>

@@ -162,6 +162,8 @@ export default function MuthowifBookingsListScreen({ navigation }) {
                 variant="bookings"
                 title="Belum ada permintaan"
                 description="Permintaan booking dari jamaah akan muncul di sini."
+                actionLabel="Atur jadwal libur"
+                onAction={() => navigation.getParent()?.navigate('HomeTab', { screen: 'Schedule' })}
               />
             )
           }

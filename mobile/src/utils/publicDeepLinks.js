@@ -53,11 +53,18 @@ export function parsePublicDeepLink(url) {
 
   if (path === '/layanan-pendukung') return { screen: 'SupportCatalog' };
 
-  const supportPkg = path.match(/^\/layanan-pendukung\/(\d+)$/);
+  const supportPkg = path.match(/^\/layanan-pendukung\/(\d+)(?:\/pesan)?$/);
   if (supportPkg) {
+    const id = Number(supportPkg[1]);
+    if (path.endsWith('/pesan')) {
+      return {
+        screen: 'SupportPackageBook',
+        params: { id, startsAt },
+      };
+    }
     return {
       screen: 'SupportPackageDetail',
-      params: { id: Number(supportPkg[1]), startsAt },
+      params: { id, startsAt },
     };
   }
 

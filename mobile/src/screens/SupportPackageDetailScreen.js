@@ -1,14 +1,16 @@
 import React, { useCallback, useState } from 'react';
 import { RefreshControl, ScrollView, StyleSheet, Text, View } from 'react-native';
 import { useFocusEffect } from '@react-navigation/native';
-import { Star, Users } from 'lucide-react-native';
+import { ChevronRight, Star, Users } from 'lucide-react-native';
 import ScreenHeader from '../components/ScreenHeader';
+import { parseIsoDateTime } from '../components/DatePickerField';
 import { fetchSupportPackageDetail } from '../api/supportCatalog';
 import { useAuth } from '../context/AuthContext';
 import AppImage from '../ui/AppImage';
 import Button from '../ui/Button';
 import Card from '../ui/Card';
 import ErrorState from '../ui/ErrorState';
+import PressableScale from '../ui/PressableScale';
 import { SkeletonList } from '../ui/Skeleton';
 import { colors, layout, radius, spacing, typography } from '../theme/tokens';
 import { formatIdr } from '../utils/format';
@@ -58,6 +60,22 @@ export default function SupportPackageDetailScreen({ navigation, route }) {
     });
   };
 
+  const openMuthowifProfile = () => {
+    const profileId = pkg?.muthowif?.profile_id;
+    if (!profileId) return;
+    navigation.navigate('MuthowifDetail', { id: profileId });
+  };
+
+  const slotLabel = startsAt
+    ? parseIsoDateTime(startsAt).toLocaleString('id-ID', {
+      day: '2-digit',
+      month: 'short',
+      year: 'numeric',
+      hour: '2-digit',
+      minute: '2-digit',
+    })
+    : null;
+
   return (
     <View style={styles.flex}>
       <ScreenHeader title="Detail paket" onBack={() => navigation.goBack()} />
@@ -98,9 +116,21 @@ export default function SupportPackageDetailScreen({ navigation, route }) {
                 ) : null}
               </View>
             </View>
+            {pkg.muthowif?.profile_id ? (
+              <PressableScale onPress={openMuthowifProfile} haptic="light" style={styles.profileLink}>
+                <Text style={styles.profileLinkText}>Lihat profil muthowif</Text>
+                <ChevronRight size={16} color={colors.baytgo} strokeWidth={2} />
+              </PressableScale>
+            ) : null}
           </Card>
 
-          <Button label="Pesan paket ini" onPress={handleBook} />
+          {slotLabel ? (
+            <View style={styles.slotBanner}>
+              <Text style={styles.slotText}>Ketersediaan dipilih: {slotLabel}</Text>
+            </View>
+          ) : null}
+
+          <Button label="Pesan layanan" onPress={handleBook} />
         </ScrollView>
       ) : null}
     </View>
@@ -136,5 +166,31 @@ const styles = StyleSheet.create({
     ...typography.caption,
     fontWeight: '800',
     color: colors.textPrimary,
+  },
+  profileLink: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    marginTop: spacing.md,
+    paddingTop: spacing.md,
+    borderTopWidth: 1,
+    borderTopColor: colors.border,
+  },
+  profileLinkText: {
+    ...typography.caption,
+    color: colors.baytgo,
+    fontFamily: 'PlusJakartaSans_700Bold',
+  },
+  slotBanner: {
+    backgroundColor: colors.baytgoLight,
+    borderRadius: radius.sm,
+    paddingHorizontal: spacing.md,
+    paddingVertical: spacing.sm,
+  },
+  slotText: {
+    ...typography.small,
+    color: colors.baytgo,
+    fontFamily: 'PlusJakartaSans_600SemiBold',
+    lineHeight: 18,
   },
 });
