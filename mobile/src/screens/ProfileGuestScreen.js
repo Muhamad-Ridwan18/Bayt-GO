@@ -9,6 +9,7 @@ import PressableScale from '../ui/PressableScale';
 import { colors, layout, radius, spacing, typography } from '../theme/tokens';
 import { useBrand } from '../context/BrandContext';
 import LanguageSwitcher from '../components/LanguageSwitcher';
+import { useLocale } from '../utils/locale';
 
 const FEATURES = [
   { icon: Search, title: 'Cari Muthowif', sub: 'Temukan pendamping ibadah terpercaya' },
@@ -18,24 +19,38 @@ const FEATURES = [
 
 export default function ProfileGuestScreen({ navigation }) {
   const { contactUrl } = useBrand();
+  const locale = useLocale();
+  const isEn = locale === 'en';
+
+  const tabTitle = isEn ? 'Profile' : 'Profil';
+  const tabSubtitle = isEn ? 'Sign in to manage your account' : 'Masuk untuk mengelola akun Anda';
+  const heroTitle = isEn ? 'Welcome to BaytGo' : 'Selamat datang di BaytGo';
+  const heroSub = isEn
+    ? 'Sign in or register to book muthowif and manage your worship travel.'
+    : 'Masuk atau daftar untuk memesan muthowif dan mengelola perjalanan ibadah Anda.';
+  const btnSignIn = isEn ? 'Sign in' : 'Masuk';
+  const btnRegisterCustomer = isEn ? 'Register as Pilgrim' : 'Daftar sebagai Jamaah';
+  const btnRegisterMuthowif = isEn ? 'Register as Muthowif' : 'Daftar sebagai Muthowif';
+  const canDoTitle = isEn ? 'What you can do' : 'Yang bisa Anda lakukan';
+  const linkArticles = isEn ? 'Articles' : 'Artikel';
+  const linkContact = isEn ? 'Contact us' : 'Hubungi kami';
+  const linkTerms = isEn ? 'Terms & Conditions' : 'Syarat & Ketentuan';
 
   return (
     <View style={styles.container}>
-      <TabPageHeader title="Profil" subtitle="Masuk untuk mengelola akun Anda" />
+      <TabPageHeader title={tabTitle} subtitle={tabSubtitle} />
 
       <ScrollView contentContainerStyle={styles.scroll} showsVerticalScrollIndicator={false}>
         <Card style={styles.heroCard} padding={spacing['2xl']} elevated>
           <View style={styles.avatar}>
             <User size={40} color={colors.gold} strokeWidth={1.8} />
           </View>
-          <Text style={styles.title}>Selamat datang di BaytGo</Text>
-          <Text style={styles.sub}>
-            Masuk atau daftar untuk memesan muthowif dan mengelola perjalanan ibadah Anda.
-          </Text>
+          <Text style={styles.title}>{heroTitle}</Text>
+          <Text style={styles.sub}>{heroSub}</Text>
 
           <View style={styles.primaryBtn}>
             <Button
-              label="Masuk"
+              label={btnSignIn}
               onPress={() => navigateRoot(navigation, 'Login')}
               icon={<LogIn size={18} color={colors.white} strokeWidth={2} />}
             />
@@ -43,7 +58,7 @@ export default function ProfileGuestScreen({ navigation }) {
 
           <View style={styles.secondaryBtn}>
             <Button
-              label="Daftar sebagai Jamaah"
+              label={btnRegisterCustomer}
               onPress={() => navigateRoot(navigation, 'Register', { role: 'customer' })}
               variant="secondary"
             />
@@ -53,11 +68,11 @@ export default function ProfileGuestScreen({ navigation }) {
             onPress={() => navigateRoot(navigation, 'Register', { role: 'muthowif' })}
             haptic="light"
           >
-            <Text style={styles.link}>Daftar sebagai Muthowif ›</Text>
+            <Text style={styles.link}>{btnRegisterMuthowif} ›</Text>
           </PressableScale>
         </Card>
 
-        <Text style={styles.sectionTitle}>Yang bisa Anda lakukan</Text>
+        <Text style={styles.sectionTitle}>{canDoTitle}</Text>
         {FEATURES.map((feat) => {
           const Icon = feat.icon;
           return (
@@ -86,7 +101,7 @@ export default function ProfileGuestScreen({ navigation }) {
             style={styles.termsBtn}
           >
             <Newspaper size={16} color={colors.baytgo} strokeWidth={2} />
-            <Text style={styles.termsText}>Artikel</Text>
+            <Text style={styles.termsText}>{linkArticles}</Text>
           </PressableScale>
           {contactUrl ? (
             <PressableScale
@@ -95,7 +110,7 @@ export default function ProfileGuestScreen({ navigation }) {
               style={styles.termsBtn}
             >
               <MessageCircle size={16} color={colors.baytgo} strokeWidth={2} />
-              <Text style={styles.termsText}>Hubungi kami</Text>
+              <Text style={styles.termsText}>{linkContact}</Text>
             </PressableScale>
           ) : null}
           <PressableScale
@@ -104,7 +119,7 @@ export default function ProfileGuestScreen({ navigation }) {
             style={styles.termsBtn}
           >
             <FileText size={16} color={colors.baytgo} strokeWidth={2} />
-            <Text style={styles.termsText}>Syarat & Ketentuan</Text>
+            <Text style={styles.termsText}>{linkTerms}</Text>
           </PressableScale>
         </View>
       </ScrollView>

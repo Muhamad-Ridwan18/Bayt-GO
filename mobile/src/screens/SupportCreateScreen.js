@@ -9,9 +9,12 @@ import { Button, Card, InlineAlert, SkeletonList } from '../ui';
 import { ChipPicker } from '../features/support/SupportFormParts';
 import { notifySuccessThen } from '../utils/feedback';
 import { colors, layout, radius, spacing, typography } from '../theme/tokens';
+import { useLocale } from '../utils/locale';
 
 export default function SupportCreateScreen({ navigation }) {
   const { token } = useAuth();
+  const locale = useLocale();
+  const isEn = locale === 'en';
 
   const [metaLoading, setMetaLoading] = useState(true);
   const [categories, setCategories] = useState([]);
@@ -23,6 +26,18 @@ export default function SupportCreateScreen({ navigation }) {
   const [attachments, setAttachments] = useState([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
+
+  const headerTitle = isEn ? 'New ticket' : 'Tiket baru';
+  const headerSubtitle = isEn
+    ? 'Describe the issue so we can help quickly.'
+    : 'Jelaskan masalah agar kami bisa membantu lebih cepat.';
+  const validationSubject = isEn ? 'Subject is required.' : 'Subjek wajib diisi.';
+  const validationMessage = isEn ? 'Message is required.' : 'Pesan wajib diisi.';
+  const validationCategoryPriority = isEn
+    ? 'Category and priority are required.'
+    : 'Kategori dan prioritas wajib dipilih.';
+  const submitSuccessMessage = isEn ? 'Ticket created.' : 'Tiket bantuan berhasil dibuat.';
+  const submitErrorFallback = isEn ? 'Failed to create ticket' : 'Gagal membuat tiket';
 
   useEffect(() => {
     (async () => {
@@ -43,9 +58,9 @@ export default function SupportCreateScreen({ navigation }) {
   }, [token]);
 
   const handleSubmit = async () => {
-    if (!subject.trim()) { setError('Subjek wajib diisi.'); return; }
-    if (!body.trim()) { setError('Pesan wajib diisi.'); return; }
-    if (!category || !priority) { setError('Kategori dan prioritas wajib dipilih.'); return; }
+    if (!subject.trim()) { setError(validationSubject); return; }
+    if (!body.trim()) { setError(validationMessage); return; }
+    if (!category || !priority) { setError(validationCategoryPriority); return; }
 
     setLoading(true);
     setError('');
@@ -59,11 +74,11 @@ export default function SupportCreateScreen({ navigation }) {
       });
       notifySuccessThen(
         navigation,
-        'Tiket bantuan berhasil dibuat.',
+        submitSuccessMessage,
         () => navigation.replace('SupportDetail', { ticketId: data.ticket?.id }),
       );
     } catch (err) {
-      setError(err.message || 'Gagal membuat tiket');
+      setError(err.message || submitErrorFallback);
     } finally {
       setLoading(false);
     }
@@ -71,7 +86,11 @@ export default function SupportCreateScreen({ navigation }) {
 
   return (
     <View style={styles.container}>
-      <ScreenHeader title="Tiket baru" subtitle="Jelaskan masalah agar kami bisa membantu lebih cepat." onBack={() => navigation.goBack()} />
+      <ScreenHeader
+        title={headerTitle}
+        subtitle={headerSubtitle}
+        onBack={() => navigation.goBack()}
+      />
 
       {metaLoading ? (
         <SkeletonList count={4} style={styles.skeleton} />
@@ -84,26 +103,28 @@ export default function SupportCreateScreen({ navigation }) {
           ) : null}
 
           <AuthInput
-            label="Subjek"
+            label={isEn ? 'Subject' : 'Subjek'}
             icon="document-text-outline"
             value={subject}
             onChangeText={setSubject}
-            placeholder="Ringkasan masalah Anda"
+            placeholder={isEn ? 'Briefly describe the issue' : 'Ringkasan masalah Anda'}
             maxLength={160}
           />
 
-          <ChipPicker label="Kategori *" options={categories} value={category} onChange={setCategory} />
-          <ChipPicker label="Prioritas *" options={priorities} value={priority} onChange={setPriority} />
+          <ChipPicker label={isEn ? 'Category *' : 'Kategori *'} options={categories} value={category} onChange={setCategory} />
+          <ChipPicker label={isEn ? 'Priority *' : 'Prioritas *'} options={priorities} value={priority} onChange={setPriority} />
 
-          <Text style={styles.label}>Pesan *</Text>
+          <Text style={styles.label}>{isEn ? 'Message *' : 'Pesan *'}</Text>
           <Text style={styles.hint}>
-            Tuliskan langkah untuk mengulangi masalah (jika bisa), apa yang Anda harapkan vs yang terjadi, dan hindari menyertakan kata sandi atau nomor kartu lengkap.
+            {isEn
+              ? 'Include steps to reproduce, expected vs actual behaviour, and avoid sharing passwords or full card numbers.'
+              : 'Tuliskan langkah untuk mengulangi masalah (jika bisa), apa yang Anda harapkan vs yang terjadi, dan hindari menyertakan kata sandi atau nomor kartu lengkap.'}
           </Text>
           <TextInput
             style={styles.textarea}
             value={body}
             onChangeText={setBody}
-            placeholder="Jelaskan masalah atau pertanyaan Anda secara detail..."
+            placeholder={isEn ? 'Describe your issue or question in detail...' : 'Jelaskan masalah atau pertanyaan Anda secara detail...'}
             placeholderTextColor={colors.textMuted}
             multiline
             maxLength={12000}
@@ -111,18 +132,18 @@ export default function SupportCreateScreen({ navigation }) {
           />
 
           <AttachmentPicker
-            label="Lampiran (opsional)"
-            hint="Maks. 5 berkas: JPG, PNG, GIF, WebP atau PDF — tiap berkas maks. 5 MB"
+            label={isEn ? 'Attachments (optional)' : 'Lampiran (opsional)'}
+            hint={isEn ? 'Up to 5 files: JPG, PNG, GIF, WebP or PDF — max 5 MB each.' : 'Maks. 5 berkas: JPG, PNG, GIF, WebP atau PDF — tiap berkas maks. 5 MB'}
             files={attachments}
             onChange={setAttachments}
             disabled={loading}
           />
 
           <InlineAlert variant="warning">
-            Jangan menyisipkan kata sandi atau data kartu lengkap.
+            {isEn ? 'Do not paste passwords or complete payment-card details.' : 'Jangan menyisipkan kata sandi atau data kartu lengkap.'}
           </InlineAlert>
 
-          <Button label="Kirim Tiket" onPress={handleSubmit} loading={loading} />
+          <Button label={isEn ? 'Submit ticket' : 'Kirim Tiket'} onPress={handleSubmit} loading={loading} />
         </ScrollView>
       )}
     </View>

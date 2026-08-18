@@ -24,9 +24,12 @@ import { SkeletonList } from '../ui/Skeleton';
 import { colors, gradients, layout, radius, spacing, typography } from '../theme/tokens';
 import { formatIdr } from '../utils/format';
 import { notifyError, notifySuccess } from '../utils/feedback';
+import { useLocale } from '../utils/locale';
 
 export default function WalletScreen() {
   const { token } = useAuth();
+  const locale = useLocale();
+  const isEn = locale === 'en';
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
   const [error, setError] = useState(null);
@@ -103,10 +106,17 @@ export default function WalletScreen() {
     }
   };
 
+  const headerTitle = isEn ? 'Wallet' : 'Dompet';
+  const headerSubtitle = isEn ? 'Balance activity' : 'Saldo & riwayat mutasi';
+  const emptyTitle = isEn ? 'No balance movements yet.' : 'Belum ada pergerakan saldo.';
+  const emptyDescription = isEn
+    ? 'Credits and withdrawals history will appear here.'
+    : 'Riwayat kredit dan penarikan akan muncul di sini.';
+
   if (loading && !refreshing) {
     return (
       <View style={styles.container}>
-        <TabPageHeader title="Dompet" subtitle="Saldo & riwayat mutasi" />
+        <TabPageHeader title={headerTitle} subtitle={headerSubtitle} />
         <SkeletonList count={3} style={styles.skeleton} />
       </View>
     );
@@ -115,7 +125,7 @@ export default function WalletScreen() {
   if (error && ledger.length === 0 && balance === 0) {
     return (
       <View style={styles.container}>
-        <TabPageHeader title="Dompet" subtitle="Saldo & riwayat mutasi" />
+        <TabPageHeader title={headerTitle} subtitle={headerSubtitle} />
         <ErrorState description={error} onRetry={() => load()} />
       </View>
     );
@@ -123,7 +133,7 @@ export default function WalletScreen() {
 
   return (
     <View style={styles.container}>
-      <TabPageHeader title="Dompet" subtitle="Saldo & riwayat mutasi" />
+      <TabPageHeader title={headerTitle} subtitle={headerSubtitle} />
 
       <ScrollView
         contentContainerStyle={styles.scroll}
@@ -216,8 +226,8 @@ export default function WalletScreen() {
         {ledger.length === 0 ? (
           <EmptyState
             variant="default"
-            title="Belum ada pergerakan saldo."
-            description="Riwayat kredit dan penarikan akan muncul di sini."
+            title={emptyTitle}
+            description={emptyDescription}
           />
         ) : (
           ledger.map((entry, idx) => (

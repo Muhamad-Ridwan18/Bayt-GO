@@ -5,6 +5,7 @@ import AuthGateScreen from '../screens/AuthGateScreen';
 import SupportListScreen from '../screens/SupportListScreen';
 import SupportCreateScreen from '../screens/SupportCreateScreen';
 import SupportDetailScreen from '../screens/SupportDetailScreen';
+import { useLocale } from '../utils/locale';
 
 const Stack = createNativeStackNavigator();
 
@@ -18,13 +19,17 @@ const stackScreenOptions = {
 
 function withSupportAuth(Screen) {
   return function SupportAuthGate(props) {
+    const locale = useLocale();
+    const isEn = locale === 'en';
     const { isAuthenticated } = useAuth();
     if (!isAuthenticated) {
       return (
         <AuthGateScreen
           {...props}
-          title="Bantuan"
-          message="Masuk untuk melihat dan mengelola tiket bantuan Anda."
+          title={isEn ? 'Support' : 'Bantuan'}
+          message={isEn
+            ? 'Sign in to view and manage your support tickets.'
+            : 'Masuk untuk melihat dan mengelola tiket bantuan Anda.'}
         />
       );
     }

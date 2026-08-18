@@ -14,13 +14,26 @@ import ErrorState from '../ui/ErrorState';
 import PressableScale from '../ui/PressableScale';
 import { SkeletonList } from '../ui/Skeleton';
 import { colors, gradients, layout, radius, shadows, spacing } from '../theme/tokens';
+import { useLocale } from '../utils/locale';
 
 export default function SupportListScreen({ navigation }) {
   const { token } = useAuth();
+  const locale = useLocale();
+  const isEn = locale === 'en';
   const [items, setItems] = useState([]);
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
   const [error, setError] = useState(null);
+
+  const title = isEn ? 'Support' : 'Bantuan';
+  const subtitle = isEn
+    ? 'Report issues and follow replies from our team.'
+    : 'Laporkan masalah dan pantau balasan tim kami.';
+  const emptyTitle = isEn ? 'No tickets yet.' : 'Belum ada tiket.';
+  const emptyDescription = isEn
+    ? 'Create a new ticket if you need help.'
+    : 'Buat tiket baru jika Anda membutuhkan bantuan.';
+  const emptyActionLabel = isEn ? 'New ticket' : 'Buat tiket';
 
   const load = useCallback(async (refresh = false) => {
     if (refresh) setRefreshing(true);
@@ -31,7 +44,7 @@ export default function SupportListScreen({ navigation }) {
       setItems(data.data || []);
       setError(null);
     } catch (err) {
-      setError(err.message || 'Gagal memuat tiket bantuan');
+      setError(err.message || (isEn ? 'Failed to load support tickets' : 'Gagal memuat tiket bantuan'));
       if (!refresh) setItems([]);
     } finally {
       setLoading(false);
@@ -55,12 +68,12 @@ export default function SupportListScreen({ navigation }) {
   const nested = navigation.canGoBack();
   const header = nested ? (
     <ScreenHeader
-      title="Bantuan"
-      subtitle="Laporkan masalah dan pantau balasan tim kami."
+      title={title}
+      subtitle={subtitle}
       onBack={() => navigation.goBack()}
     />
   ) : (
-    <TabPageHeader title="Bantuan" subtitle="Laporkan masalah dan pantau balasan tim kami." />
+    <TabPageHeader title={title} subtitle={subtitle} />
   );
 
   if (loading && !refreshing) {
@@ -94,9 +107,9 @@ export default function SupportListScreen({ navigation }) {
             ) : (
               <EmptyState
                 variant="default"
-                title="Belum ada tiket."
-                description="Buat tiket baru jika Anda membutuhkan bantuan."
-                actionLabel="Buat tiket"
+                title={emptyTitle}
+                description={emptyDescription}
+                actionLabel={emptyActionLabel}
                 onAction={() => navigation.navigate('SupportCreate')}
               />
             )

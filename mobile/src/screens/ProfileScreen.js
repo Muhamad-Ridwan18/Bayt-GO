@@ -49,6 +49,7 @@ import { resolveMediaUrl } from '../utils/mediaUrl';
 import { notifyError, notifySuccess } from '../utils/feedback';
 import LanguageSwitcher from '../components/LanguageSwitcher';
 import { setStoredLocale } from '../utils/locale';
+import { useLocale } from '../utils/locale';
 
 const STAT_ICONS = {
   'Booking Aktif': Calendar,
@@ -90,6 +91,8 @@ function Section({ title, children }) {
 export default function ProfileScreen({ navigation }) {
   const { user, token, logout, isMuthowif, isVerifiedMuthowif, updateLocalUser } = useAuth();
   const { contactUrl } = useBrand();
+  const locale = useLocale();
+  const isEn = locale === 'en';
 
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
@@ -183,7 +186,7 @@ export default function ProfileScreen({ navigation }) {
   if (loading && !refreshing) {
     return (
       <View style={styles.container}>
-        <TabPageHeader title="Profil" />
+        <TabPageHeader title={isEn ? 'Profile' : 'Profil'} />
         <SkeletonList count={3} style={styles.skeleton} />
       </View>
     );
@@ -191,7 +194,7 @@ export default function ProfileScreen({ navigation }) {
 
   return (
     <View style={styles.container}>
-      <TabPageHeader title="Profil" />
+      <TabPageHeader title={isEn ? 'Profile' : 'Profil'} />
 
       <ScrollView
         contentContainerStyle={styles.scroll}
