@@ -8,9 +8,12 @@ import PressableScale from '../ui/PressableScale';
 import { useAuth } from '../context/AuthContext';
 import { resetRoot } from '../navigation/rootNavigation';
 import { colors, radius, spacing, typography } from '../theme/tokens';
+import { useLocale } from '../utils/locale';
 
 export default function LoginScreen({ navigation }) {
   const { login } = useAuth();
+  const locale = useLocale();
+  const isEn = locale === 'en';
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [loading, setLoading] = useState(false);
@@ -18,7 +21,7 @@ export default function LoginScreen({ navigation }) {
 
   const handleLogin = async () => {
     if (!email.trim() || !password) {
-      setError('Email dan password wajib diisi.');
+      setError(isEn ? 'Email and password are required.' : 'Email dan password wajib diisi.');
       return;
     }
 
@@ -28,7 +31,7 @@ export default function LoginScreen({ navigation }) {
       await login(email.trim(), password);
       resetRoot(navigation, [{ name: 'Main' }]);
     } catch (err) {
-      setError(err.message || 'Gagal login');
+      setError(err.message || (isEn ? 'Login failed' : 'Gagal login'));
     } finally {
       setLoading(false);
     }
@@ -36,8 +39,8 @@ export default function LoginScreen({ navigation }) {
 
   return (
     <AuthScreenShell
-      title="Masuk"
-      subtitle="Selamat datang kembali. Masuk untuk mengelola pemesanan dan profil Anda."
+      title={isEn ? 'Sign in' : 'Masuk'}
+      subtitle={isEn ? 'Welcome back. Sign in to manage your bookings and profile.' : 'Selamat datang kembali. Masuk untuk mengelola pemesanan dan profil Anda.'}
       onBack={() => navigation.goBack()}
     >
       {error ? <Text style={styles.bannerError}>{error}</Text> : null}
@@ -57,7 +60,7 @@ export default function LoginScreen({ navigation }) {
         icon={Lock}
         value={password}
         onChangeText={setPassword}
-        placeholder="Password Anda"
+        placeholder={isEn ? 'Your password' : 'Password Anda'}
         secureTextEntry
       />
 
@@ -66,15 +69,15 @@ export default function LoginScreen({ navigation }) {
         haptic="light"
         style={styles.forgotBtn}
       >
-        <Text style={styles.forgotText}>Lupa password?</Text>
+        <Text style={styles.forgotText}>{isEn ? 'Forgot password?' : 'Lupa password?'}</Text>
       </PressableScale>
 
-      <Button label="Masuk" onPress={handleLogin} loading={loading} />
+      <Button label={isEn ? 'Sign in' : 'Masuk'} onPress={handleLogin} loading={loading} />
 
       <View style={styles.footerRow}>
-        <Text style={styles.footerText}>Belum punya akun? </Text>
+        <Text style={styles.footerText}>{isEn ? "Don't have an account? " : 'Belum punya akun? '}</Text>
         <PressableScale onPress={() => navigation.replace('Register')} haptic="light">
-          <Text style={styles.footerLink}>Daftar</Text>
+          <Text style={styles.footerLink}>{isEn ? 'Register' : 'Daftar'}</Text>
         </PressableScale>
       </View>
     </AuthScreenShell>

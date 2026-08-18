@@ -20,8 +20,9 @@ import { colors, layout, radius, spacing, typography } from '../theme/tokens';
 import { canPayBooking, canOpenBookingChat } from '../utils/bookingLabels';
 import SwipeableRow from '../ui/SwipeableRow';
 import { navigateToChatRoom } from '../navigation/rootNavigation';
+import { useLocale } from '../utils/locale';
 
-function UnpaidBanner({ count, onPress }) {
+function UnpaidBanner({ count, onPress, isEn }) {
   if (count < 1) return null;
 
   return (
@@ -31,8 +32,8 @@ function UnpaidBanner({ count, onPress }) {
           <Wallet size={18} color={colors.warning} strokeWidth={2} />
         </View>
         <View style={styles.bannerCopy}>
-          <Text style={styles.bannerTitle}>{count} pesanan menunggu pembayaran</Text>
-          <Text style={styles.bannerSub}>Selesaikan pembayaran agar booking diproses</Text>
+          <Text style={styles.bannerTitle}>{count} {isEn ? 'orders awaiting payment' : 'pesanan menunggu pembayaran'}</Text>
+          <Text style={styles.bannerSub}>{isEn ? 'Complete payment to process your booking' : 'Selesaikan pembayaran agar booking diproses'}</Text>
         </View>
         <ChevronRight size={18} color={colors.warning} strokeWidth={2} />
       </View>
@@ -42,6 +43,8 @@ function UnpaidBanner({ count, onPress }) {
 
 export default function BookingsListScreen({ navigation }) {
   const { token } = useAuth();
+  const locale = useLocale();
+  const isEn = locale === 'en';
   const [items, setItems] = useState([]);
   const [statusFilter, setStatusFilter] = useState('all');
   const [filterSheetOpen, setFilterSheetOpen] = useState(false);
@@ -58,7 +61,7 @@ export default function BookingsListScreen({ navigation }) {
       setItems(data.data || []);
       setError(null);
     } catch (err) {
-      setError(err.message || 'Gagal memuat booking');
+      setError(err.message || (isEn ? 'Failed to load bookings' : 'Gagal memuat booking'));
       if (!refresh) setItems([]);
     } finally {
       setLoading(false);
@@ -106,7 +109,7 @@ export default function BookingsListScreen({ navigation }) {
     if (canPayBooking(item)) {
       rightActions.push({
         key: 'pay',
-        label: 'Bayar',
+        label: isEn ? 'Pay' : 'Bayar',
         backgroundColor: '#D97706',
         width: 92,
         onPress: () => openPayment(item),
@@ -133,14 +136,27 @@ export default function BookingsListScreen({ navigation }) {
     );
   }, [navigation, openPayment, openChat]);
 
+  const localizedFilters = useMemo(() => {
+    const labels = isEn ? {
+      all: 'All', unpaid: 'Unpaid', pending: 'Pending',
+      confirmed: 'Confirmed', in_progress: 'In progress',
+      completed: 'Completed', cancelled: 'Cancelled',
+    } : {
+      all: 'Semua', unpaid: 'Belum bayar', pending: 'Menunggu',
+      confirmed: 'Dikonfirmasi', in_progress: 'Berlangsung',
+      completed: 'Selesai', cancelled: 'Dibatalkan',
+    };
+    return BOOKING_STATUS_FILTERS.map((f) => ({ ...f, label: labels[f.value] || f.label }));
+  }, [isEn]);
+
   const listHeader = (
     <View style={styles.headerBlock}>
-      <UnpaidBanner count={stats.unpaid} onPress={() => setStatusFilter('unpaid')} />
+      <UnpaidBanner count={stats.unpaid} onPress={() => setStatusFilter('unpaid')} isEn={isEn} />
 
       <View style={styles.statsRow}>
-        <StatTile label="Belum bayar" value={stats.unpaid} color={colors.warning} icon={Wallet} />
-        <StatTile label="Aktif" value={stats.active} color="#0284C7" icon={CalendarCheck} />
-        <StatTile label="Selesai" value={stats.done} color={colors.success} icon={CalendarCheck} />
+        <StatTile label={isEn ? 'Unpaid' : 'Belum bayar'} value={stats.unpaid} color={colors.warning} icon={Wallet} />
+        <StatTile label={isEn ? 'Active' : 'Aktif'} value={stats.active} color="#0284C7" icon={CalendarCheck} />
+        <StatTile label={isEn ? 'Done' : 'Selesai'} value={stats.done} color={colors.success} icon={CalendarCheck} />
       </View>
 
       <ScrollView
@@ -154,7 +170,7 @@ export default function BookingsListScreen({ navigation }) {
             <Text style={styles.filterSheetText}>Filter</Text>
           </View>
         </PressableScale>
-        {BOOKING_STATUS_FILTERS.map((filter) => (
+        {localizedFilters.map((filter) => (
           <FilterChip
             key={filter.value}
             label={filter.label}
@@ -166,7 +182,7 @@ export default function BookingsListScreen({ navigation }) {
       </ScrollView>
 
       {filteredItems.length > 0 ? (
-        <Text style={styles.resultCount}>{filteredItems.length} pesanan</Text>
+        <Text style={styles.resultCount}>{filteredItems.length} {isEn ? 'orders' : 'pesanan'}</Text>
       ) : null}
     </View>
   );
@@ -174,7 +190,7 @@ export default function BookingsListScreen({ navigation }) {
   if (loading && !refreshing) {
     return (
       <View style={styles.container}>
-        <TabPageHeader title="Pesanan Saya" subtitle="Kelola booking muthowif Anda" />
+        <TabPageHeader title={isEn ? 'My Orders' : 'Pesanan Saya'} subtitle={isEn ? 'Manage your muthowif bookings' : 'Kelola booking muthowif Anda'} />
         <SkeletonList count={4} style={styles.skeleton} />
       </View>
     );
@@ -182,7 +198,7 @@ export default function BookingsListScreen({ navigation }) {
 
   return (
     <View style={styles.container}>
-      <TabPageHeader title="Pesanan Saya" subtitle="Kelola booking muthowif Anda" />
+      <TabPageHeader title={isEn ? 'My Orders' : 'Pesanan Saya'} subtitle={isEn ? 'Manage your muthowif bookings' : 'Kelola booking muthowif Anda'} />
 
       {error && items.length === 0 ? (
         <ErrorState description={error} onRetry={() => load()} />
@@ -203,9 +219,9 @@ export default function BookingsListScreen({ navigation }) {
             ) : (
               <EmptyState
                 variant="bookings"
-                title="Belum ada pesanan"
-                description="Cari muthowif terpercaya dan mulai rencanakan perjalanan ibadah Anda."
-                actionLabel="Cari Muthowif"
+                title={isEn ? 'No orders yet' : 'Belum ada pesanan'}
+                description={isEn ? 'Find a trusted muthowif and start planning your pilgrimage.' : 'Cari muthowif terpercaya dan mulai rencanakan perjalanan ibadah Anda.'}
+                actionLabel={isEn ? 'Find a Muthowif' : 'Cari Muthowif'}
                 onAction={() => navigation.getParent()?.navigate('HomeTab', { screen: 'Directory' })}
               />
             )
@@ -216,13 +232,13 @@ export default function BookingsListScreen({ navigation }) {
       <FilterSheet
         visible={filterSheetOpen}
         onClose={() => setFilterSheetOpen(false)}
-        title="Filter pesanan"
-        subtitle={`${filteredItems.length} dari ${items.length} pesanan`}
+        title={isEn ? 'Filter orders' : 'Filter pesanan'}
+        subtitle={isEn ? `${filteredItems.length} of ${items.length} orders` : `${filteredItems.length} dari ${items.length} pesanan`}
         footer={(
-          <Button label="Terapkan" onPress={() => setFilterSheetOpen(false)} />
+          <Button label={isEn ? 'Apply' : 'Terapkan'} onPress={() => setFilterSheetOpen(false)} />
         )}
       >
-        {BOOKING_STATUS_FILTERS.map((filter) => (
+        {localizedFilters.map((filter) => (
           <FilterChip
             key={`sheet-${filter.value}`}
             label={filter.label}
