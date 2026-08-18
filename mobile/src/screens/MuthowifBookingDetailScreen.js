@@ -23,6 +23,7 @@ import { notifyError, notifySuccess } from '../utils/feedback';
 import { colors, layout, radius, spacing, typography } from '../theme/tokens';
 import { formatIdr } from '../utils/format';
 import { MuthowifPricingBreakdown } from '../components/BookingPricingBreakdown';
+import { useLocale } from '../utils/locale';
 import {
   bookingStatusMeta, paymentStatusMeta, serviceTypeLabel, formatDateRange,
   billingNights, changeRequestStatusLabel, canCompleteSupportWithCode,
@@ -58,6 +59,8 @@ function AlertCard({ icon: Icon, title, body, children }) {
 export default function MuthowifBookingDetailScreen({ navigation, route }) {
   const { bookingId } = route.params;
   const { token } = useAuth();
+  const locale = useLocale();
+  const isEn = locale === 'en';
   const [booking, setBooking] = useState(null);
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
@@ -78,29 +81,29 @@ export default function MuthowifBookingDetailScreen({ navigation, route }) {
       setBooking(data);
       setError(null);
     } catch (err) {
-      setError(err.message || 'Gagal memuat detail');
+      setError(err.message || (isEn ? 'Failed to load details' : 'Gagal memuat detail'));
     } finally {
       setLoading(false);
       setRefreshing(false);
     }
-  }, [token, bookingId]);
+  }, [token, bookingId, isEn]);
 
   useFocusEffect(useCallback(() => { load(); }, [load]));
   useHideTabBarOnFocus(navigation);
 
   const handleConfirm = () => {
-    Alert.alert('Setujui booking?', 'Jamaah akan diminta membayar setelah disetujui.', [
-      { text: 'Batal', style: 'cancel' },
+    Alert.alert(isEn ? 'Approve booking?' : 'Setujui booking?', isEn ? 'The pilgrim will be asked to pay after approval.' : 'Jamaah akan diminta membayar setelah disetujui.', [
+      { text: isEn ? 'Cancel' : 'Batal', style: 'cancel' },
       {
-        text: 'Setujui',
+        text: isEn ? 'Approve' : 'Setujui',
         onPress: async () => {
           setActing(true);
           try {
             await confirmMuthowifBooking(token, bookingId);
-            notifySuccess('Booking disetujui.');
+            notifySuccess(isEn ? 'Booking approved.' : 'Booking disetujui.');
             await load(true);
           } catch (err) {
-            notifyError(err.message || 'Tidak dapat menyetujui');
+            notifyError(err.message || (isEn ? 'Unable to approve booking' : 'Tidak dapat menyetujui'));
           } finally {
             setActing(false);
           }
@@ -111,17 +114,17 @@ export default function MuthowifBookingDetailScreen({ navigation, route }) {
 
   const submitReject = async () => {
     if (!rejectKind) {
-      notifyError('Pilih alasan penolakan.');
+      notifyError(isEn ? 'Select a rejection reason.' : 'Pilih alasan penolakan.');
       return;
     }
 
     Alert.alert(
-      'Tolak booking?',
-      'Jamaah akan menerima notifikasi beserta alasan penolakan Anda.',
+      isEn ? 'Reject booking?' : 'Tolak booking?',
+      isEn ? 'The pilgrim will receive a notification with your rejection reason.' : 'Jamaah akan menerima notifikasi beserta alasan penolakan Anda.',
       [
-        { text: 'Batal', style: 'cancel' },
+        { text: isEn ? 'Cancel' : 'Batal', style: 'cancel' },
         {
-          text: 'Tolak',
+          text: isEn ? 'Reject' : 'Tolak',
           style: 'destructive',
           onPress: async () => {
             setActing(true);
@@ -130,10 +133,10 @@ export default function MuthowifBookingDetailScreen({ navigation, route }) {
                 muthowif_rejection_kind: rejectKind,
                 muthowif_rejection_note: rejectNote.trim() || null,
               });
-              notifySuccess('Booking ditolak.');
+              notifySuccess(isEn ? 'Booking rejected.' : 'Booking ditolak.');
               await load(true);
             } catch (err) {
-              notifyError(err.message || 'Tidak dapat menolak');
+              notifyError(err.message || (isEn ? 'Unable to reject booking' : 'Tidak dapat menolak'));
             } finally {
               setActing(false);
             }
@@ -161,10 +164,12 @@ export default function MuthowifBookingDetailScreen({ navigation, route }) {
       } else {
         await rejectReschedule(token, bookingId, rescheduleReq.id, note);
       }
-      notifySuccess(rescheduleApprove ? 'Reschedule disetujui.' : 'Reschedule ditolak.');
+      notifySuccess(rescheduleApprove
+        ? (isEn ? 'Reschedule approved.' : 'Reschedule disetujui.')
+        : (isEn ? 'Reschedule rejected.' : 'Reschedule ditolak.'));
       await load(true);
     } catch (err) {
-      notifyError(err.message || 'Tidak dapat memproses');
+      notifyError(err.message || (isEn ? 'Unable to process request' : 'Tidak dapat memproses'));
     } finally {
       setActing(false);
       setRescheduleReq(null);
@@ -175,22 +180,22 @@ export default function MuthowifBookingDetailScreen({ navigation, route }) {
   const handleCompleteSupportWithCode = () => {
     const code = String(supportCode || '').replace(/\D+/g, '');
     if (code.length !== 6) {
-      notifyError('Masukkan 6 digit kode verifikasi dari jamaah.');
+      notifyError(isEn ? 'Enter the 6-digit verification code from the pilgrim.' : 'Masukkan 6 digit kode verifikasi dari jamaah.');
       return;
     }
-    Alert.alert('Selesaikan layanan?', 'Kode benar akan menutup booking dan mencatat saldo.', [
-      { text: 'Batal', style: 'cancel' },
+    Alert.alert(isEn ? 'Complete service?' : 'Selesaikan layanan?', isEn ? 'A valid code will close the booking and record the balance.' : 'Kode benar akan menutup booking dan mencatat saldo.', [
+      { text: isEn ? 'Cancel' : 'Batal', style: 'cancel' },
       {
-        text: 'Selesaikan',
+        text: isEn ? 'Complete' : 'Selesaikan',
         onPress: async () => {
           setActing(true);
           try {
             await completeSupportWithCode(token, bookingId, code);
-            notifySuccess('Layanan ditandai selesai.');
+            notifySuccess(isEn ? 'Service marked as completed.' : 'Layanan ditandai selesai.');
             setSupportCode('');
             await load(true);
           } catch (err) {
-            notifyError(err.message || 'Kode tidak valid');
+            notifyError(err.message || (isEn ? 'Invalid code' : 'Kode tidak valid'));
           } finally {
             setActing(false);
           }
@@ -203,9 +208,9 @@ export default function MuthowifBookingDetailScreen({ navigation, route }) {
     setActing(true);
     try {
       await resendSupportCompletionCode(token, bookingId);
-      notifySuccess('Kode dikirim ulang ke WhatsApp jamaah.');
+      notifySuccess(isEn ? 'Code resent to pilgrim WhatsApp.' : 'Kode dikirim ulang ke WhatsApp jamaah.');
     } catch (err) {
-      notifyError(err.message || 'Tidak dapat mengirim ulang kode');
+      notifyError(err.message || (isEn ? 'Unable to resend code' : 'Tidak dapat mengirim ulang kode'));
     } finally {
       setActing(false);
     }
@@ -217,7 +222,7 @@ export default function MuthowifBookingDetailScreen({ navigation, route }) {
       params: {
         bookingId,
         bookingCode: booking?.booking_code || '--',
-        otherName: booking?.customer?.name || 'Jamaah',
+        otherName: booking?.customer?.name || (isEn ? 'Pilgrim' : 'Jamaah'),
       },
     });
   };
@@ -225,7 +230,7 @@ export default function MuthowifBookingDetailScreen({ navigation, route }) {
   if (loading && !booking) {
     return (
       <View style={styles.container}>
-        <ScreenHeader title="Detail permintaan" onBack={() => navigation.goBack()} />
+        <ScreenHeader title={isEn ? 'Request details' : 'Detail permintaan'} onBack={() => navigation.goBack()} />
         <SkeletonList count={3} style={styles.skeleton} />
       </View>
     );
@@ -234,7 +239,7 @@ export default function MuthowifBookingDetailScreen({ navigation, route }) {
   if (error && !booking) {
     return (
       <View style={styles.container}>
-        <ScreenHeader title="Detail permintaan" onBack={() => navigation.goBack()} />
+        <ScreenHeader title={isEn ? 'Request details' : 'Detail permintaan'} onBack={() => navigation.goBack()} />
         <ErrorState description={error} onRetry={() => load()} />
       </View>
     );
@@ -251,7 +256,7 @@ export default function MuthowifBookingDetailScreen({ navigation, route }) {
     <View style={styles.container}>
       <ScreenHeader
         title={booking.booking_code || 'Booking'}
-        subtitle="Detail permintaan jamaah"
+        subtitle={isEn ? 'Pilgrim request details' : 'Detail permintaan jamaah'}
         onBack={() => navigation.goBack()}
       />
 
@@ -268,7 +273,7 @@ export default function MuthowifBookingDetailScreen({ navigation, route }) {
               <User size={28} color={colors.baytgo} strokeWidth={2} />
             </View>
             <View style={styles.heroCopy}>
-              <Text style={styles.customerName}>{booking.customer?.name || 'Jamaah'}</Text>
+              <Text style={styles.customerName}>{booking.customer?.name || (isEn ? 'Pilgrim' : 'Jamaah')}</Text>
               <Text style={styles.customerMeta}>
                 {booking.customer?.phone || booking.customer?.email || '—'}
               </Text>
@@ -279,49 +284,51 @@ export default function MuthowifBookingDetailScreen({ navigation, route }) {
             <StatusPill label={paymentMeta.label} color={paymentMeta.color} />
           </View>
           <View style={styles.totalRow}>
-            <Text style={styles.totalLabel}>Subtotal layanan</Text>
+            <Text style={styles.totalLabel}>{isEn ? 'Service subtotal' : 'Subtotal layanan'}</Text>
             <Text style={styles.totalValue}>{formatIdr(booking.pricing?.base ?? booking.total_amount)}</Text>
           </View>
           {booking.pricing?.net_after_referral != null ? (
             <View style={styles.netRow}>
-              <Text style={styles.netLabel}>Estimasi diterima</Text>
+              <Text style={styles.netLabel}>{isEn ? 'Estimated payout' : 'Estimasi diterima'}</Text>
               <Text style={styles.netValue}>{formatIdr(booking.pricing.net_after_referral)}</Text>
             </View>
           ) : null}
         </Card>
 
-        <BookingSection title="Rincian pendapatan">
+        <BookingSection title={isEn ? 'Earnings details' : 'Rincian pendapatan'}>
           <MuthowifPricingBreakdown pricing={booking.pricing} />
         </BookingSection>
 
-        <BookingSection title="Informasi perjalanan">
-          <InfoCell icon={Briefcase} label="Layanan" value={serviceTypeLabel(booking.service_type)} />
-          <InfoCell icon={Calendar} label="Tanggal" value={formatDateRange(booking.starts_on, booking.ends_on)} />
-          <InfoCell icon={Clock} label="Durasi" value={`${nights} hari`} />
-          <InfoCell icon={Users} label="Jumlah jamaah" value={`${booking.pilgrim_count || 1} orang`} />
-          {booking.with_same_hotel ? <InfoCell icon={Bed} label="Hotel sama" value="Ya" /> : null}
-          {booking.with_transport ? <InfoCell icon={Car} label="Transport" value="Ya" /> : null}
+        <BookingSection title={isEn ? 'Trip information' : 'Informasi perjalanan'}>
+          <InfoCell icon={Briefcase} label={isEn ? 'Service' : 'Layanan'} value={serviceTypeLabel(booking.service_type)} />
+          <InfoCell icon={Calendar} label={isEn ? 'Dates' : 'Tanggal'} value={formatDateRange(booking.starts_on, booking.ends_on)} />
+          <InfoCell icon={Clock} label={isEn ? 'Duration' : 'Durasi'} value={`${nights} ${isEn ? 'days' : 'hari'}`} />
+          <InfoCell icon={Users} label={isEn ? 'Pilgrim count' : 'Jumlah jamaah'} value={`${booking.pilgrim_count || 1} ${isEn ? 'people' : 'orang'}`} />
+          {booking.with_same_hotel ? <InfoCell icon={Bed} label={isEn ? 'Same hotel' : 'Hotel sama'} value={isEn ? 'Yes' : 'Ya'} /> : null}
+          {booking.with_transport ? <InfoCell icon={Car} label="Transport" value={isEn ? 'Yes' : 'Ya'} /> : null}
         </BookingSection>
 
         {pendingReschedule ? (
           <AlertCard
             icon={Calendar}
-            title="Pengajuan reschedule"
-            body={`Jadwal baru: ${formatDateRange(pendingReschedule.starts_on, pendingReschedule.ends_on)}\nStatus: ${changeRequestStatusLabel(pendingReschedule.status)}`}
+            title={isEn ? 'Reschedule request' : 'Pengajuan reschedule'}
+            body={`${isEn ? 'New schedule' : 'Jadwal baru'}: ${formatDateRange(pendingReschedule.starts_on, pendingReschedule.ends_on)}\nStatus: ${changeRequestStatusLabel(pendingReschedule.status)}`}
           >
             <View style={styles.actionRow}>
-              <View style={styles.actionBtn}><Button label="Setujui" size="sm" icon={<CheckCircle size={16} color={colors.white} strokeWidth={2} />}
+              <View style={styles.actionBtn}><Button label={isEn ? 'Approve' : 'Setujui'} size="sm" icon={<CheckCircle size={16} color={colors.white} strokeWidth={2} />}
                 onPress={() => openRescheduleModal(pendingReschedule, true)} fullWidth={false} /></View>
-              <View style={styles.actionBtn}><Button label="Tolak" size="sm" variant="danger" icon={<XCircle size={16} color={colors.error} strokeWidth={2} />}
+              <View style={styles.actionBtn}><Button label={isEn ? 'Reject' : 'Tolak'} size="sm" variant="danger" icon={<XCircle size={16} color={colors.error} strokeWidth={2} />}
                 onPress={() => openRescheduleModal(pendingReschedule, false)} fullWidth={false} /></View>
             </View>
           </AlertCard>
         ) : null}
 
         {showSupportCompletion ? (
-          <BookingSection title="Selesaikan dengan kode" variant="success">
+          <BookingSection title={isEn ? 'Complete with code' : 'Selesaikan dengan kode'} variant="success">
             <Text style={styles.supportIntro}>
-              Minta kode 6 digit dari jamaah, lalu masukkan di bawah untuk menutup layanan.
+              {isEn
+                ? 'Ask for the 6-digit code from the pilgrim, then enter it below to close the service.'
+                : 'Minta kode 6 digit dari jamaah, lalu masukkan di bawah untuk menutup layanan.'}
             </Text>
             <TextInput
               value={supportCode}
@@ -332,14 +339,14 @@ export default function MuthowifBookingDetailScreen({ navigation, route }) {
               style={styles.codeInput}
             />
             <Button
-              label={acting ? 'Memproses...' : 'Selesaikan layanan'}
+              label={acting ? (isEn ? 'Processing...' : 'Memproses...') : (isEn ? 'Complete service' : 'Selesaikan layanan')}
               icon={<CheckCircle size={18} color={colors.white} strokeWidth={2} />}
               onPress={handleCompleteSupportWithCode}
               loading={acting}
             />
             <View style={{ marginTop: spacing.sm }}>
               <Button
-                label="Kirim ulang kode ke jamaah"
+                label={isEn ? 'Resend code to pilgrim' : 'Kirim ulang kode ke jamaah'}
                 variant="secondary"
                 onPress={handleResendSupportCode}
                 disabled={acting}
@@ -348,12 +355,14 @@ export default function MuthowifBookingDetailScreen({ navigation, route }) {
           </BookingSection>
         ) : null}
 
-        <BookingDocumentGallery token={token} bookingId={bookingId} documents={booking.documents || []} title="Dokumen jamaah" />
+        <BookingDocumentGallery token={token} bookingId={bookingId} documents={booking.documents || []} title={isEn ? 'Pilgrim documents' : 'Dokumen jamaah'} />
 
         {isPendingDecision ? (
-          <BookingSection title="Keputusan booking" style={styles.decisionCard}>
+          <BookingSection title={isEn ? 'Booking decision' : 'Keputusan booking'} style={styles.decisionCard}>
             <Text style={styles.decisionSub}>
-              Tinjau dokumen jamaah, pilih alasan jika menolak, lalu setujui atau tolak permintaan ini.
+              {isEn
+                ? 'Review the pilgrim documents, choose a reason if rejecting, then approve or reject this request.'
+                : 'Tinjau dokumen jamaah, pilih alasan jika menolak, lalu setujui atau tolak permintaan ini.'}
             </Text>
             <RejectBookingForm
               rejectKind={rejectKind}
@@ -363,14 +372,14 @@ export default function MuthowifBookingDetailScreen({ navigation, route }) {
             />
             <View style={styles.decisionActions}>
               <Button
-                label="Setujui booking"
+                label={isEn ? 'Approve booking' : 'Setujui booking'}
                 icon={<CheckCircle size={18} color={colors.white} strokeWidth={2} />}
                 onPress={handleConfirm}
                 loading={acting}
                 disabled={acting}
               />
               <Button
-                label="Tolak booking"
+                label={isEn ? 'Reject booking' : 'Tolak booking'}
                 variant="danger"
                 icon={<XCircle size={18} color={colors.error} strokeWidth={2} />}
                 onPress={submitReject}
@@ -381,7 +390,7 @@ export default function MuthowifBookingDetailScreen({ navigation, route }) {
         ) : null}
 
         {booking.payment_status === 'paid' ? (
-          <Button label="Chat jamaah" variant="secondary"
+          <Button label={isEn ? 'Chat pilgrim' : 'Chat jamaah'} variant="secondary"
             icon={<MessagesSquare size={18} color={colors.baytgo} strokeWidth={2} />}
             onPress={openChat} />
         ) : null}
