@@ -54,7 +54,7 @@ export default function SupportListScreen({ navigation }) {
   if (loading && !refreshing) {
     return (
       <View style={styles.container}>
-        <TabPageHeader title="Bantuan" subtitle="Tiket dukungan Anda" />
+        <TabPageHeader title="Bantuan" subtitle="Laporkan masalah dan pantau balasan tim kami." />
         <SkeletonList count={4} style={styles.skeleton} />
       </View>
     );
@@ -62,7 +62,7 @@ export default function SupportListScreen({ navigation }) {
 
   return (
     <View style={styles.container}>
-      <TabPageHeader title="Bantuan" subtitle="Tiket dukungan Anda" />
+      <TabPageHeader title="Bantuan" subtitle="Laporkan masalah dan pantau balasan tim kami." />
 
       {error && items.length === 0 ? (
         <ErrorState description={error} onRetry={() => load()} />
@@ -82,7 +82,7 @@ export default function SupportListScreen({ navigation }) {
             ) : (
               <EmptyState
                 variant="default"
-                title="Belum ada tiket bantuan"
+                title="Belum ada tiket."
                 description="Buat tiket baru jika Anda membutuhkan bantuan."
                 actionLabel="Buat tiket"
                 onAction={() => navigation.navigate('SupportCreate')}

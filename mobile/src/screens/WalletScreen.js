@@ -216,7 +216,7 @@ export default function WalletScreen() {
         {ledger.length === 0 ? (
           <EmptyState
             variant="default"
-            title="Belum ada mutasi"
+            title="Belum ada pergerakan saldo."
             description="Riwayat kredit dan penarikan akan muncul di sini."
           />
         ) : (

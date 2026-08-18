@@ -71,7 +71,7 @@ export default function SupportCreateScreen({ navigation }) {
 
   return (
     <View style={styles.container}>
-      <ScreenHeader title="Buat Tiket" subtitle="Ajukan bantuan ke tim Bayt-GO" onBack={() => navigation.goBack()} />
+      <ScreenHeader title="Tiket baru" subtitle="Jelaskan masalah agar kami bisa membantu lebih cepat." onBack={() => navigation.goBack()} />
 
       {metaLoading ? (
         <SkeletonList count={4} style={styles.skeleton} />

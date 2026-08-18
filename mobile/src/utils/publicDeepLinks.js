@@ -50,6 +50,31 @@ export function parsePublicDeepLink(url) {
 
   if (path === '/chat') return { tab: 'ChatTab', screen: 'ChatList' };
 
+  if (path === '/affiliate') {
+    return { tab: 'ProfileTab', screen: 'Affiliate' };
+  }
+
+  if (path === '/support') {
+    return { tab: 'SupportTab', screen: 'SupportList' };
+  }
+
+  if (path === '/support/baru') {
+    return { tab: 'SupportTab', screen: 'SupportCreate' };
+  }
+
+  const supportTicket = path.match(/^\/support\/([0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12})$/i);
+  if (supportTicket) {
+    return {
+      tab: 'SupportTab',
+      screen: 'SupportDetail',
+      params: { ticketId: supportTicket[1] },
+    };
+  }
+
+  if (path === '/muthowif/emergency-offers') {
+    return { screen: 'EmergencyOffers' };
+  }
+
   if (path === '/bookings') return { tab: 'BookingsTab', screen: 'BookingsList' };
 
   const bookingPay = path.match(/^\/bookings\/(\d+)\/pembayaran$/);
