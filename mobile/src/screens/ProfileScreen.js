@@ -47,7 +47,6 @@ import StatTile from '../ui/StatTile';
 import { colors, gradients, layout, radius, spacing, typography } from '../theme/tokens';
 import { resolveMediaUrl } from '../utils/mediaUrl';
 import { notifyError, notifySuccess } from '../utils/feedback';
-import { WEB_BASE_URL } from '../config/api';
 
 const STAT_ICONS = {
   'Booking Aktif': Calendar,
@@ -172,6 +171,7 @@ export default function ProfileScreen({ navigation }) {
     { icon: Briefcase, label: 'Paket Layanan Pendukung', onPress: () => navigation.getParent()?.navigate('HomeTab', { screen: 'SupportPackages' }) },
     { icon: Images, label: 'Portfolio', onPress: () => navigation.getParent()?.navigate('HomeTab', { screen: 'Portfolio' }) },
     { icon: Globe, label: 'Profil Publik Muthowif', onPress: () => navigation.navigate('EditMuthowifProfile', { profile }) },
+    { icon: LifeBuoy, label: 'Tiket Bantuan', onPress: () => navigation.getParent()?.navigate('HomeTab', { screen: 'SupportList' }) },
   ];
 
   if (loading && !refreshing) {
@@ -334,7 +334,7 @@ export default function ProfileScreen({ navigation }) {
           <MenuRow
             icon={FileText}
             label="Syarat & Ketentuan"
-            onPress={() => Linking.openURL(`${WEB_BASE_URL}/terms`)}
+            onPress={() => navigation.getParent()?.navigate('HomeTab', { screen: 'Terms' })}
             isLast
           />
         </Section>

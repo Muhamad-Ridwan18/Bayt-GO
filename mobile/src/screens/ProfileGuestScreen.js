@@ -7,7 +7,6 @@ import Button from '../ui/Button';
 import Card from '../ui/Card';
 import PressableScale from '../ui/PressableScale';
 import { colors, layout, radius, spacing, typography } from '../theme/tokens';
-import { WEB_BASE_URL } from '../config/api';
 import { useBrand } from '../context/BrandContext';
 
 const FEATURES = [
@@ -95,7 +94,7 @@ export default function ProfileGuestScreen({ navigation }) {
             </PressableScale>
           ) : null}
           <PressableScale
-            onPress={() => Linking.openURL(`${WEB_BASE_URL}/terms`)}
+            onPress={() => navigation.getParent()?.navigate('HomeTab', { screen: 'Terms' })}
             haptic="light"
             style={styles.termsBtn}
           >

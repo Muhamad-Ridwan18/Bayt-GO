@@ -9,6 +9,7 @@ import RegisterScreen from '../screens/RegisterScreen';
 import ForgotPasswordScreen from '../screens/ForgotPasswordScreen';
 import CompanyRegistrationPendingScreen from '../screens/CompanyRegistrationPendingScreen';
 import SuccessScreen from '../screens/SuccessScreen';
+import TermsScreen from '../screens/TermsScreen';
 import MainTabNavigator from './MainTabNavigator';
 import { ONBOARDING_KEY } from '../constants/onboarding';
 import { useAuth } from '../context/AuthContext';
@@ -81,6 +82,7 @@ function RootNavigator() {
         component={SuccessScreen}
         options={{ animation: 'fade', gestureEnabled: false }}
       />
+      <Stack.Screen name="Terms" component={TermsScreen} />
     </Stack.Navigator>
   );
 }

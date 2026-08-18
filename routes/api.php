@@ -24,6 +24,7 @@ Route::get('/home', [\App\Http\Controllers\Api\HomeApiController::class, 'index'
 Route::get('/articles', [\App\Http\Controllers\Api\ContentApiController::class, 'articles']);
 Route::get('/articles/{slug}', [\App\Http\Controllers\Api\ContentApiController::class, 'showArticle']);
 Route::get('/campaigns/{slug}', [\App\Http\Controllers\Api\ContentApiController::class, 'showCampaign']);
+Route::get('/terms', [\App\Http\Controllers\Api\ContentApiController::class, 'terms']);
 
 Route::post('/affiliate/capture', [\App\Http\Controllers\Api\Affiliate\AffiliateApiController::class, 'capture'])
     ->middleware('throttle:30,1');

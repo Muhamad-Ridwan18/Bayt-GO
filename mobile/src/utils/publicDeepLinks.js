@@ -38,6 +38,8 @@ export function parsePublicDeepLink(url) {
 
   if (path === '/artikel') return { screen: 'ArticlesList' };
 
+  if (path === '/terms') return { screen: 'Terms' };
+
   const campaign = path.match(/^\/campaigns?\/([A-Za-z0-9-]+)$/);
   if (campaign) return { screen: 'CampaignDetail', params: { slug: campaign[1] } };
 
@@ -55,17 +57,16 @@ export function parsePublicDeepLink(url) {
   }
 
   if (path === '/support') {
-    return { tab: 'SupportTab', screen: 'SupportList' };
+    return { screen: 'SupportList' };
   }
 
   if (path === '/support/baru') {
-    return { tab: 'SupportTab', screen: 'SupportCreate' };
+    return { screen: 'SupportCreate' };
   }
 
   const supportTicket = path.match(/^\/support\/([0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12})$/i);
   if (supportTicket) {
     return {
-      tab: 'SupportTab',
       screen: 'SupportDetail',
       params: { ticketId: supportTicket[1] },
     };

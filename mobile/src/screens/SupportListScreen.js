@@ -5,6 +5,7 @@ import { useFocusEffect } from '@react-navigation/native';
 import { LinearGradient } from 'expo-linear-gradient';
 import { Plus } from 'lucide-react-native';
 import TabPageHeader from '../components/TabPageHeader';
+import ScreenHeader from '../components/ScreenHeader';
 import SupportTicketListItem from '../components/SupportTicketListItem';
 import { fetchSupportTickets } from '../api/support';
 import { useAuth } from '../context/AuthContext';
@@ -51,10 +52,21 @@ export default function SupportListScreen({ navigation }) {
     />
   ), [navigation]);
 
+  const nested = navigation.canGoBack();
+  const header = nested ? (
+    <ScreenHeader
+      title="Bantuan"
+      subtitle="Laporkan masalah dan pantau balasan tim kami."
+      onBack={() => navigation.goBack()}
+    />
+  ) : (
+    <TabPageHeader title="Bantuan" subtitle="Laporkan masalah dan pantau balasan tim kami." />
+  );
+
   if (loading && !refreshing) {
     return (
       <View style={styles.container}>
-        <TabPageHeader title="Bantuan" subtitle="Laporkan masalah dan pantau balasan tim kami." />
+        {header}
         <SkeletonList count={4} style={styles.skeleton} />
       </View>
     );
@@ -62,7 +74,7 @@ export default function SupportListScreen({ navigation }) {
 
   return (
     <View style={styles.container}>
-      <TabPageHeader title="Bantuan" subtitle="Laporkan masalah dan pantau balasan tim kami." />
+      {header}
 
       {error && items.length === 0 ? (
         <ErrorState description={error} onRetry={() => load()} />

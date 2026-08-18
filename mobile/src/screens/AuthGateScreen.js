@@ -4,14 +4,18 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { StatusBar } from 'expo-status-bar';
 import { Lock } from 'lucide-react-native';
 import { navigateRoot } from '../navigation/rootNavigation';
+import ScreenHeader from '../components/ScreenHeader';
 import Button from '../ui/Button';
 import PressableScale from '../ui/PressableScale';
 import { colors, layout, radius, shadows, spacing, typography } from '../theme/tokens';
 
 export default function AuthGateScreen({ navigation, title, message }) {
+  const nested = navigation?.canGoBack?.();
+
   return (
-    <SafeAreaView style={styles.safe} edges={['top', 'bottom']}>
+    <SafeAreaView style={styles.safe} edges={nested ? ['bottom'] : ['top', 'bottom']}>
       <StatusBar style="dark" />
+      {nested ? <ScreenHeader title={title} onBack={() => navigation.goBack()} /> : null}
       <View style={styles.content}>
         <View style={styles.iconWrap}>
           <Lock size={32} color={colors.gold} strokeWidth={2} />

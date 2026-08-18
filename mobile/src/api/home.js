@@ -27,3 +27,7 @@ export function fetchCampaign(slug) {
   return apiFetch(`/campaigns/${encodeURIComponent(slug)}`);
 }
 
+export function fetchTerms() {
+  return apiFetch('/terms');
+}
+

@@ -4,7 +4,6 @@ import {
   Text,
   StyleSheet,
   Alert,
-  Linking,
   Modal,
 } from 'react-native';
 import {
@@ -35,7 +34,6 @@ import { DEFAULT_PHONE_COUNTRY, buildFullPhone } from '../utils/phoneCountries';
 import { useAuth } from '../context/AuthContext';
 import { sendOtp, verifyOtp } from '../api/auth';
 import { colors, radius, spacing, typography } from '../theme/tokens';
-import { WEB_BASE_URL } from '../config/api';
 import { resetRoot, navigateToSuccess } from '../navigation/rootNavigation';
 
 function RoleTab({ label, active, onPress }) {
@@ -470,7 +468,7 @@ export default function RegisterScreen({ navigation, route }) {
         </View>
         <Text style={styles.termsText}>
           Saya telah membaca dan menyetujui{' '}
-          <Text style={styles.termsLink} onPress={() => Linking.openURL(`${WEB_BASE_URL}/terms`)}>
+          <Text style={styles.termsLink} onPress={() => navigation.navigate('Terms')}>
             Syarat & Ketentuan
           </Text>
         </Text>
@@ -492,7 +490,7 @@ export default function RegisterScreen({ navigation, route }) {
             <Text style={styles.modalBody}>
               Sebelum mendaftar, pastikan Anda sudah membaca dan menyetujui syarat & ketentuan BaytGo.
             </Text>
-            <PressableScale onPress={() => Linking.openURL(`${WEB_BASE_URL}/terms`)} haptic="light">
+            <PressableScale onPress={() => navigation.navigate('Terms')} haptic="light">
               <Text style={styles.modalLink}>Baca Syarat & Ketentuan</Text>
             </PressableScale>
             <View style={styles.modalActions}>

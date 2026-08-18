@@ -38,4 +38,15 @@ class ContentApiController extends Controller
 
         return response()->json(ApiContentPayload::campaign($campaign, true));
     }
+
+    public function terms(): JsonResponse
+    {
+        $sections = __('terms.sections');
+
+        return response()->json([
+            'title' => __('terms.page_title'),
+            'intro' => __('terms.intro'),
+            'sections' => is_array($sections) ? array_values($sections) : [],
+        ]);
+    }
 }

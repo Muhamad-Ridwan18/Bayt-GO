@@ -16,26 +16,32 @@ const stackScreenOptions = {
   gestureDirection: 'horizontal',
 };
 
-function SupportGate(props) {
-  const { isAuthenticated } = useAuth();
-  if (!isAuthenticated) {
-    return (
-      <AuthGateScreen
-        {...props}
-        title="Bantuan"
-        message="Masuk untuk melihat dan mengelola tiket bantuan Anda."
-      />
-    );
-  }
-  return <SupportListScreen {...props} />;
+function withSupportAuth(Screen) {
+  return function SupportAuthGate(props) {
+    const { isAuthenticated } = useAuth();
+    if (!isAuthenticated) {
+      return (
+        <AuthGateScreen
+          {...props}
+          title="Bantuan"
+          message="Masuk untuk melihat dan mengelola tiket bantuan Anda."
+        />
+      );
+    }
+    return <Screen {...props} />;
+  };
 }
+
+export const SupportListGate = withSupportAuth(SupportListScreen);
+export const SupportCreateGate = withSupportAuth(SupportCreateScreen);
+export const SupportDetailGate = withSupportAuth(SupportDetailScreen);
 
 export default function SupportStack() {
   return (
     <Stack.Navigator screenOptions={stackScreenOptions}>
-      <Stack.Screen name="SupportList" component={SupportGate} />
-      <Stack.Screen name="SupportCreate" component={SupportCreateScreen} />
-      <Stack.Screen name="SupportDetail" component={SupportDetailScreen} />
+      <Stack.Screen name="SupportList" component={SupportListGate} />
+      <Stack.Screen name="SupportCreate" component={SupportCreateGate} />
+      <Stack.Screen name="SupportDetail" component={SupportDetailGate} />
     </Stack.Navigator>
   );
 }

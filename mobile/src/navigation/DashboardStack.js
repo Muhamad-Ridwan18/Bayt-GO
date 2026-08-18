@@ -22,6 +22,8 @@ import EditMuthowifProfileScreen from '../screens/EditMuthowifProfileScreen';
 import CampaignDetailScreen from '../screens/CampaignDetailScreen';
 import ArticleDetailScreen from '../screens/ArticleDetailScreen';
 import ArticlesListScreen from '../screens/ArticlesListScreen';
+import TermsScreen from '../screens/TermsScreen';
+import { SupportCreateGate, SupportDetailGate, SupportListGate } from './SupportStack';
 
 const Stack = createNativeStackNavigator();
 
@@ -73,6 +75,10 @@ export default function DashboardStack() {
       <Stack.Screen name="CampaignDetail" component={CampaignDetailScreen} />
       <Stack.Screen name="ArticleDetail" component={ArticleDetailScreen} />
       <Stack.Screen name="ArticlesList" component={ArticlesListScreen} />
+      <Stack.Screen name="Terms" component={TermsScreen} />
+      <Stack.Screen name="SupportList" component={SupportListGate} />
+      <Stack.Screen name="SupportCreate" component={SupportCreateGate} />
+      <Stack.Screen name="SupportDetail" component={SupportDetailGate} />
     </Stack.Navigator>
   );
 }
