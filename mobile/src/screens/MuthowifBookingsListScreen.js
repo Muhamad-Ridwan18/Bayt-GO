@@ -16,8 +16,9 @@ import { SkeletonList } from '../ui/Skeleton';
 import StatTile from '../ui/StatTile';
 import { colors, layout, spacing, typography } from '../theme/tokens';
 import { bookingStatusMeta } from '../utils/bookingLabels';
+import { useLocale } from '../utils/locale';
 
-function PendingBanner({ count, color, onPress }) {
+function PendingBanner({ count, color, onPress, isEn }) {
   if (count < 1) return null;
 
   return (
@@ -27,8 +28,12 @@ function PendingBanner({ count, color, onPress }) {
           <Bell size={18} color={color} strokeWidth={2} />
         </View>
         <View style={styles.bannerCopy}>
-          <Text style={[styles.bannerTitle, { color }]}>{count} permintaan menunggu konfirmasi</Text>
-          <Text style={styles.bannerSub}>Tinjau dan konfirmasi permintaan jamaah</Text>
+          <Text style={[styles.bannerTitle, { color }]}>
+            {count} {isEn ? 'requests awaiting confirmation' : 'permintaan menunggu konfirmasi'}
+          </Text>
+          <Text style={styles.bannerSub}>
+            {isEn ? 'Review and confirm incoming pilgrim requests' : 'Tinjau dan konfirmasi permintaan jamaah'}
+          </Text>
         </View>
         <ChevronRight size={18} color={color} strokeWidth={2} />
       </View>
@@ -38,6 +43,8 @@ function PendingBanner({ count, color, onPress }) {
 
 export default function MuthowifBookingsListScreen({ navigation }) {
   const { token } = useAuth();
+  const locale = useLocale();
+  const isEn = locale === 'en';
   const [items, setItems] = useState([]);
   const [statusFilter, setStatusFilter] = useState('all');
   const [loading, setLoading] = useState(true);
@@ -57,7 +64,7 @@ export default function MuthowifBookingsListScreen({ navigation }) {
       setItems(data.bookings || []);
       setError(null);
     } catch (err) {
-      setError(err.message || 'Gagal memuat permintaan');
+      setError(err.message || (isEn ? 'Failed to load requests' : 'Gagal memuat permintaan'));
       if (!refresh) setItems([]);
     } finally {
       setLoading(false);
@@ -82,6 +89,30 @@ export default function MuthowifBookingsListScreen({ navigation }) {
     return items.filter((item) => item.status === statusFilter);
   }, [items, statusFilter]);
 
+  const localizedFilters = useMemo(() => {
+    const labels = isEn
+      ? {
+          all: 'All',
+          pending: 'Pending',
+          confirmed: 'Confirmed',
+          in_progress: 'In progress',
+          completed: 'Completed',
+          cancelled: 'Cancelled',
+        }
+      : {
+          all: 'Semua',
+          pending: 'Menunggu',
+          confirmed: 'Dikonfirmasi',
+          in_progress: 'Berlangsung',
+          completed: 'Selesai',
+          cancelled: 'Dibatalkan',
+        };
+    return MUTHOWIF_BOOKING_FILTERS.map((filter) => ({
+      ...filter,
+      label: labels[filter.value] || filter.label,
+    }));
+  }, [isEn]);
+
   const renderItem = useCallback(({ item }) => (
     <MuthowifBookingListItem
       item={item}
@@ -94,13 +125,14 @@ export default function MuthowifBookingsListScreen({ navigation }) {
       <PendingBanner
         count={stats.pending}
         color={pendingMeta.color}
+        isEn={isEn}
         onPress={() => setStatusFilter('pending')}
       />
 
       <View style={styles.statsRow}>
-        <StatTile label="Menunggu" value={stats.pending} color={pendingMeta.color} icon={Bell} />
-        <StatTile label="Aktif" value={stats.active} color={confirmedMeta.color} icon={CalendarCheck} />
-        <StatTile label="Selesai" value={stats.done} color={completedMeta.color} icon={CheckCircle2} />
+        <StatTile label={isEn ? 'Pending' : 'Menunggu'} value={stats.pending} color={pendingMeta.color} icon={Bell} />
+        <StatTile label={isEn ? 'Active' : 'Aktif'} value={stats.active} color={confirmedMeta.color} icon={CalendarCheck} />
+        <StatTile label={isEn ? 'Done' : 'Selesai'} value={stats.done} color={completedMeta.color} icon={CheckCircle2} />
       </View>
 
       <ScrollView
@@ -108,7 +140,7 @@ export default function MuthowifBookingsListScreen({ navigation }) {
         showsHorizontalScrollIndicator={false}
         contentContainerStyle={styles.filters}
       >
-        {MUTHOWIF_BOOKING_FILTERS.map((filter) => (
+        {localizedFilters.map((filter) => (
           <FilterChip
             key={filter.value}
             label={filter.label}
@@ -120,7 +152,7 @@ export default function MuthowifBookingsListScreen({ navigation }) {
       </ScrollView>
 
       {filteredItems.length > 0 ? (
-        <Text style={styles.resultCount}>{filteredItems.length} permintaan</Text>
+        <Text style={styles.resultCount}>{filteredItems.length} {isEn ? 'requests' : 'permintaan'}</Text>
       ) : null}
     </View>
   );
@@ -128,7 +160,7 @@ export default function MuthowifBookingsListScreen({ navigation }) {
   if (loading && !refreshing) {
     return (
       <View style={styles.container}>
-        <TabPageHeader title="Permintaan" subtitle="Kelola booking jamaah" />
+        <TabPageHeader title={isEn ? 'Requests' : 'Permintaan'} subtitle={isEn ? 'Manage pilgrim bookings' : 'Kelola booking jamaah'} />
         <SkeletonList count={4} style={styles.skeleton} />
       </View>
     );
@@ -137,8 +169,10 @@ export default function MuthowifBookingsListScreen({ navigation }) {
   return (
     <View style={styles.container}>
       <TabPageHeader
-        title="Permintaan"
-        subtitle={stats.pending > 0 ? `${stats.pending} menunggu konfirmasi` : 'Kelola booking jamaah'}
+        title={isEn ? 'Requests' : 'Permintaan'}
+        subtitle={stats.pending > 0
+          ? `${stats.pending} ${isEn ? 'awaiting confirmation' : 'menunggu konfirmasi'}`
+          : (isEn ? 'Manage pilgrim bookings' : 'Kelola booking jamaah')}
       />
 
       {error && items.length === 0 ? (
@@ -160,9 +194,9 @@ export default function MuthowifBookingsListScreen({ navigation }) {
             ) : (
               <EmptyState
                 variant="bookings"
-                title="Belum ada permintaan"
-                description="Permintaan booking dari jamaah akan muncul di sini."
-                actionLabel="Atur jadwal libur"
+                title={isEn ? 'No requests yet' : 'Belum ada permintaan'}
+                description={isEn ? 'Pilgrim booking requests will appear here.' : 'Permintaan booking dari jamaah akan muncul di sini.'}
+                actionLabel={isEn ? 'Set time off schedule' : 'Atur jadwal libur'}
                 onAction={() => navigation.getParent()?.navigate('HomeTab', { screen: 'Schedule' })}
               />
             )

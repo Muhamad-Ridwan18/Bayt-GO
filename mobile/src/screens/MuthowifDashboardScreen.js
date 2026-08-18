@@ -40,33 +40,50 @@ import {
 import { bookingStatusMeta, formatDateRange } from '../utils/bookingLabels';
 import { formatIdr } from '../utils/format';
 import { colors, gradients, layout, radius, shadows, spacing, typography } from '../theme/tokens';
+import { useLocale } from '../utils/locale';
 
 const { width: SCREEN_W } = Dimensions.get('window');
 
-const PRIMARY_SERVICES = [
-  { key: 'requests', Icon: ClipboardList, label: 'Permintaan', bg: '#EDE9FE', color: '#7C3AED' },
-  { key: 'wallet', Icon: Wallet, label: 'Dompet', bg: colors.warningLight, color: colors.warning },
-  { key: 'chat', Icon: MessageCircle, label: 'Chat', bg: colors.successLight, color: colors.success },
-  { key: 'emergency', Icon: HeartPulse, label: 'Darurat', bg: colors.errorLight, color: colors.error },
-];
+const PRIMARY_SERVICES = {
+  id: [
+    { key: 'requests', Icon: ClipboardList, label: 'Permintaan', bg: '#EDE9FE', color: '#7C3AED' },
+    { key: 'wallet', Icon: Wallet, label: 'Dompet', bg: colors.warningLight, color: colors.warning },
+    { key: 'chat', Icon: MessageCircle, label: 'Chat', bg: colors.successLight, color: colors.success },
+    { key: 'emergency', Icon: HeartPulse, label: 'Darurat', bg: colors.errorLight, color: colors.error },
+  ],
+  en: [
+    { key: 'requests', Icon: ClipboardList, label: 'Requests', bg: '#EDE9FE', color: '#7C3AED' },
+    { key: 'wallet', Icon: Wallet, label: 'Wallet', bg: colors.warningLight, color: colors.warning },
+    { key: 'chat', Icon: MessageCircle, label: 'Chat', bg: colors.successLight, color: colors.success },
+    { key: 'emergency', Icon: HeartPulse, label: 'Emergency', bg: colors.errorLight, color: colors.error },
+  ],
+};
 
-const SECONDARY_SERVICES = [
-  { key: 'schedule', Icon: Calendar, label: 'Libur', bg: '#E0F2FE', color: '#0284C7' },
-  { key: 'services', Icon: Tag, label: 'Layanan', bg: '#FCE7F3', color: '#DB2777' },
-  { key: 'portfolio', Icon: Images, label: 'Portfolio', bg: '#F3E8FF', color: '#9333EA' },
-  { key: 'profile', Icon: User, label: 'Profil', bg: colors.primaryLight, color: colors.primary },
-];
+const SECONDARY_SERVICES = {
+  id: [
+    { key: 'schedule', Icon: Calendar, label: 'Libur', bg: '#E0F2FE', color: '#0284C7' },
+    { key: 'services', Icon: Tag, label: 'Layanan', bg: '#FCE7F3', color: '#DB2777' },
+    { key: 'portfolio', Icon: Images, label: 'Portfolio', bg: '#F3E8FF', color: '#9333EA' },
+    { key: 'profile', Icon: User, label: 'Profil', bg: colors.primaryLight, color: colors.primary },
+  ],
+  en: [
+    { key: 'schedule', Icon: Calendar, label: 'Time off', bg: '#E0F2FE', color: '#0284C7' },
+    { key: 'services', Icon: Tag, label: 'Services', bg: '#FCE7F3', color: '#DB2777' },
+    { key: 'portfolio', Icon: Images, label: 'Portfolio', bg: '#F3E8FF', color: '#9333EA' },
+    { key: 'profile', Icon: User, label: 'Profile', bg: colors.primaryLight, color: colors.primary },
+  ],
+};
 
-function daysUntil(iso) {
+function daysUntil(iso, isEn = false) {
   if (!iso) return null;
   const today = new Date();
   today.setHours(0, 0, 0, 0);
   const target = new Date(`${iso}T00:00:00`);
   const diff = Math.ceil((target - today) / 86400000);
   if (diff < 0) return null;
-  if (diff === 0) return 'Hari ini';
-  if (diff === 1) return 'Besok';
-  return `${diff} hari lagi`;
+  if (diff === 0) return isEn ? 'Today' : 'Hari ini';
+  if (diff === 1) return isEn ? 'Tomorrow' : 'Besok';
+  return isEn ? `${diff} days away` : `${diff} hari lagi`;
 }
 
 function ServiceTile({ item, badge, onPress }) {
@@ -96,16 +113,16 @@ function StatPill({ label, value, color }) {
   );
 }
 
-function ScheduleCard({ item, featured, onPress }) {
+function ScheduleCard({ item, featured, onPress, isEn }) {
   const statusMeta = bookingStatusMeta(item.status);
-  const countdown = featured ? daysUntil(item.starts_on) : null;
+  const countdown = featured ? daysUntil(item.starts_on, isEn) : null;
 
   if (featured) {
     return (
       <PressableScale onPress={onPress} haptic="light" style={styles.scheduleCard}>
         <LinearGradient colors={gradients.primary} style={styles.scheduleFeatured}>
           <View style={styles.scheduleFeaturedTop}>
-            <Text style={styles.scheduleFeaturedKicker}>Jadwal terdekat</Text>
+            <Text style={styles.scheduleFeaturedKicker}>{isEn ? 'Up next' : 'Jadwal terdekat'}</Text>
             {countdown ? <Text style={styles.scheduleCountdown}>{countdown}</Text> : null}
           </View>
           <View style={styles.scheduleFeaturedBody}>
@@ -115,7 +132,7 @@ function ScheduleCard({ item, featured, onPress }) {
               <Text style={styles.scheduleDatesFeatured}>{formatDateRange(item.starts_on, item.ends_on)}</Text>
               <Text style={styles.scheduleMetaFeatured}>
                 {item.duration}
-                {item.pilgrim_count ? ` · ${item.pilgrim_count} jamaah` : ''}
+                {item.pilgrim_count ? ` · ${item.pilgrim_count} ${isEn ? 'pilgrims' : 'jamaah'}` : ''}
               </Text>
             </View>
             <View style={[styles.scheduleStatusBadge, { backgroundColor: `${statusMeta.color}40` }]}>
@@ -147,6 +164,8 @@ function ScheduleCard({ item, featured, onPress }) {
 
 export default function MuthowifDashboardScreen({ navigation }) {
   const { user, token } = useAuth();
+  const locale = useLocale();
+  const isEn = locale === 'en';
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
   const [error, setError] = useState(null);
@@ -181,12 +200,12 @@ export default function MuthowifDashboardScreen({ navigation }) {
       setWalletBalance(data.wallet_balance ?? 0);
       setError(null);
     } catch (err) {
-      setError(err.message || 'Gagal memuat dashboard');
+      setError(err.message || (isEn ? 'Failed to load dashboard' : 'Gagal memuat dashboard'));
     } finally {
       setLoading(false);
       setRefreshing(false);
     }
-  }, [token]);
+  }, [isEn, token]);
 
   useEffect(() => { loadDashboard(); }, [loadDashboard]);
 
@@ -209,10 +228,12 @@ export default function MuthowifDashboardScreen({ navigation }) {
       await shareValue(referralCode);
       return;
     }
-    const name = user?.name || 'saya';
+    const name = user?.name || (isEn ? 'me' : 'saya');
     try {
       await Share.share({
-        message: `Halo! Saya ${name}, muthowif di BaytGo. Lihat profil dan layanan saya di sini: ${publicProfileUrl}`,
+        message: isEn
+          ? `Hi! I am ${name}, a muthowif on BaytGo. Check out my profile and services here: ${publicProfileUrl}`
+          : `Halo! Saya ${name}, muthowif di BaytGo. Lihat profil dan layanan saya di sini: ${publicProfileUrl}`,
         url: publicProfileUrl,
       });
     } catch { /* ignore */ }
@@ -250,7 +271,7 @@ export default function MuthowifDashboardScreen({ navigation }) {
               <View style={styles.ratingChip}>
                 <Star size={12} color={colors.gold} fill={colors.gold} strokeWidth={2} />
                 <Text style={styles.ratingText}>{rating}</Text>
-                <Text style={styles.ratingReviews}>({reviewCount} ulasan)</Text>
+                <Text style={styles.ratingReviews}>({reviewCount} {isEn ? 'reviews' : 'ulasan'})</Text>
               </View>
             ) : null}
           </View>
@@ -263,7 +284,7 @@ export default function MuthowifDashboardScreen({ navigation }) {
             ) : null}
           </PressableScale>
         </View>
-        <Text style={styles.heroTagline}>Kelola jadwal dan pendapatan Anda</Text>
+        <Text style={styles.heroTagline}>{isEn ? 'Manage your schedule and earnings' : 'Kelola jadwal dan pendapatan Anda'}</Text>
       </SafeAreaView>
 
       <ScrollView
@@ -275,7 +296,7 @@ export default function MuthowifDashboardScreen({ navigation }) {
           <LinearGradient colors={gradients.gold} start={{ x: 0, y: 0 }} end={{ x: 1, y: 1 }} style={styles.walletGradient}>
             <View style={styles.walletTop}>
               <View>
-                <Text style={styles.walletLabel}>Saldo dompet</Text>
+                <Text style={styles.walletLabel}>{isEn ? 'Wallet balance' : 'Saldo dompet'}</Text>
                 <Text style={styles.walletAmount}>{formatIdr(walletBalance)}</Text>
               </View>
               <View style={styles.walletIconWrap}>
@@ -283,9 +304,9 @@ export default function MuthowifDashboardScreen({ navigation }) {
               </View>
             </View>
             <View style={styles.walletFooter}>
-              <Text style={styles.walletHint}>Tarik saldo kapan saja</Text>
+              <Text style={styles.walletHint}>{isEn ? 'Withdraw anytime' : 'Tarik saldo kapan saja'}</Text>
               <View style={styles.walletCta}>
-                <Text style={styles.walletCtaText}>Buka dompet</Text>
+                <Text style={styles.walletCtaText}>{isEn ? 'Open wallet' : 'Buka dompet'}</Text>
                 <ArrowRight size={14} color={colors.baytgoDark} strokeWidth={2.5} />
               </View>
             </View>
@@ -298,8 +319,8 @@ export default function MuthowifDashboardScreen({ navigation }) {
               <ClipboardList size={20} color="#7C3AED" strokeWidth={2} />
             </View>
             <View style={styles.alertTexts}>
-              <Text style={styles.alertTitle}>{pendingCount} permintaan baru</Text>
-              <Text style={styles.alertSub}>Jamaah menunggu konfirmasi Anda</Text>
+              <Text style={styles.alertTitle}>{pendingCount} {isEn ? 'new requests' : 'permintaan baru'}</Text>
+              <Text style={styles.alertSub}>{isEn ? 'Pilgrims are waiting for your confirmation' : 'Jamaah menunggu konfirmasi Anda'}</Text>
             </View>
             <ChevronRight size={18} color={colors.textMuted} strokeWidth={2} />
           </PressableScale>
@@ -313,16 +334,18 @@ export default function MuthowifDashboardScreen({ navigation }) {
             <>
               {(publicProfileUrl || referralCode) ? (
                 <Card style={styles.shareCard} padding={spacing.lg} elevated={false} variant="flat">
-                  <Text style={styles.shareHeading}>Bagikan profil Anda</Text>
+                  <Text style={styles.shareHeading}>{isEn ? 'Share your profile' : 'Bagikan profil Anda'}</Text>
                   <Text style={styles.shareSub}>
-                    Bagikan profil publik dan kode referral ke jamaah atau rekan muthowif.
+                    {isEn
+                      ? 'Share your public profile and referral code with pilgrims or peers.'
+                      : 'Bagikan profil publik dan kode referral ke jamaah atau rekan muthowif.'}
                   </Text>
 
                   {referralCode ? (
                     <PressableScale onPress={() => shareValue(referralCode)} haptic="light" style={styles.shareRow}>
                       <Gift size={18} color={colors.baytgo} strokeWidth={2} />
                       <View style={styles.shareRowTexts}>
-                        <Text style={styles.shareRowLabel}>Referral Anda</Text>
+                        <Text style={styles.shareRowLabel}>{isEn ? 'Your referral' : 'Referral Anda'}</Text>
                         <Text style={styles.shareRowValue}>{referralCode}</Text>
                       </View>
                       <Share2 size={16} color={colors.baytgo} strokeWidth={2} />
@@ -333,7 +356,7 @@ export default function MuthowifDashboardScreen({ navigation }) {
                     <PressableScale onPress={() => shareValue(publicProfileUrl)} haptic="light" style={styles.shareRow}>
                       <Link2 size={18} color={colors.baytgo} strokeWidth={2} />
                       <View style={styles.shareRowTexts}>
-                        <Text style={styles.shareRowLabel}>Tautan profil</Text>
+                        <Text style={styles.shareRowLabel}>{isEn ? 'Profile link' : 'Tautan profil'}</Text>
                         <Text style={styles.shareRowUrl} numberOfLines={1}>{publicProfileUrl}</Text>
                       </View>
                       <Share2 size={16} color={colors.baytgo} strokeWidth={2} />
@@ -342,19 +365,19 @@ export default function MuthowifDashboardScreen({ navigation }) {
 
                   <PressableScale onPress={shareProfile} haptic="light" style={styles.shareCta}>
                     <Share2 size={16} color={colors.white} strokeWidth={2} />
-                    <Text style={styles.shareCtaText}>Bagikan</Text>
+                    <Text style={styles.shareCtaText}>{isEn ? 'Share' : 'Bagikan'}</Text>
                   </PressableScale>
                 </Card>
               ) : null}
 
-              <Text style={styles.gridTitle}>Menu cepat</Text>
+              <Text style={styles.gridTitle}>{isEn ? 'Quick actions' : 'Menu cepat'}</Text>
               <View style={styles.serviceGrid}>
-                {PRIMARY_SERVICES.map((item) => (
+                {(PRIMARY_SERVICES[locale] || PRIMARY_SERVICES.id).map((item) => (
                   <ServiceTile key={item.key} item={item} badge={serviceBadge(item.key)} onPress={() => handleService(item.key)} />
                 ))}
               </View>
               <View style={[styles.serviceGrid, styles.serviceGridSecond]}>
-                {SECONDARY_SERVICES.map((item) => (
+                {(SECONDARY_SERVICES[locale] || SECONDARY_SERVICES.id).map((item) => (
                   <ServiceTile key={item.key} item={item} onPress={() => handleService(item.key)} />
                 ))}
               </View>
@@ -368,25 +391,27 @@ export default function MuthowifDashboardScreen({ navigation }) {
               ) : null}
 
               <View style={styles.sectionHead}>
-                <Text style={styles.sectionTitle}>Jadwal mendatang</Text>
+                <Text style={styles.sectionTitle}>{isEn ? 'Upcoming schedule' : 'Jadwal mendatang'}</Text>
                 <PressableScale onPress={goRequests} haptic="light">
-                  <Text style={styles.seeAll}>Lihat semua</Text>
+                  <Text style={styles.seeAll}>{isEn ? 'See all' : 'Lihat semua'}</Text>
                 </PressableScale>
               </View>
 
               {!nextSchedule ? (
                 <EmptyState
                   variant="schedule"
-                  title="Belum ada pesanan aktif"
-                  description="Jadwal dan permintaan jamaah akan terlihat di sini begitu ada pesanan mendatang."
-                  actionLabel="Kelola pesanan"
+                  title={isEn ? 'No active bookings yet' : 'Belum ada pesanan aktif'}
+                  description={isEn
+                    ? 'Schedules and pilgrim requests will appear here when you have upcoming trips.'
+                    : 'Jadwal dan permintaan jamaah akan terlihat di sini begitu ada pesanan mendatang.'}
+                  actionLabel={isEn ? 'Manage bookings' : 'Kelola pesanan'}
                   onAction={goRequests}
                 />
               ) : (
                 <>
-                  <ScheduleCard item={nextSchedule} featured onPress={() => openSchedule(nextSchedule)} />
+                  <ScheduleCard item={nextSchedule} featured isEn={isEn} onPress={() => openSchedule(nextSchedule)} />
                   {moreSchedules.map((item) => (
-                    <ScheduleCard key={item.id} item={item} onPress={() => openSchedule(item)} />
+                    <ScheduleCard key={item.id} item={item} isEn={isEn} onPress={() => openSchedule(item)} />
                   ))}
                 </>
               )}
