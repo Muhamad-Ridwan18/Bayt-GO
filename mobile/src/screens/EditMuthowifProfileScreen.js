@@ -23,6 +23,7 @@ import { Button, Card, PressableScale, SkeletonList } from '../ui';
 import { DocumentsSection, UploadField } from '../features/profile/EditMuthowifProfileParts';
 import { colors, layout, radius, spacing, typography } from '../theme/tokens';
 import { notifyError, notifySuccess, notifySuccessThen } from '../utils/feedback';
+import { useLocale } from '../utils/locale';
 
 function rowsFromList(items) {
   if (!items?.length) return [''];
@@ -36,6 +37,7 @@ function cleanRows(rows) {
 
 export default function EditMuthowifProfileScreen({ navigation, route }) {
   const { token, updateLocalUser } = useAuth();
+  const locale = useLocale(); const isEn = locale === 'en';
   const initialMuthowif = route.params?.profile?.muthowif;
   const initialUser = route.params?.profile?.user;
   const initialPhone = parsePhoneForInput(initialMuthowif?.phone);
@@ -105,7 +107,7 @@ export default function EditMuthowifProfileScreen({ navigation, route }) {
       applyMuthowif(data.muthowif, data.user);
       setError('');
     } catch (err) {
-      setError(err.message || 'Gagal memuat profil publik');
+      setError(err.message || (isEn ? 'Failed to load public profile' : 'Gagal memuat profil publik'));
     } finally {
       setLoading(false);
     }
@@ -116,7 +118,7 @@ export default function EditMuthowifProfileScreen({ navigation, route }) {
   const pickImage = async () => {
     const permission = await ImagePicker.requestMediaLibraryPermissionsAsync();
     if (!permission.granted) {
-      Alert.alert('Izin diperlukan', 'Izinkan akses galeri untuk mengunggah foto.');
+      Alert.alert(isEn ? 'Permission required' : 'Izin diperlukan', isEn ? 'Allow gallery access to upload photos.' : 'Izinkan akses galeri untuk mengunggah foto.');
       return null;
     }
     const result = await ImagePicker.launchImageLibraryAsync({ mediaTypes: ['images'], quality: 0.85 });
@@ -131,9 +133,9 @@ export default function EditMuthowifProfileScreen({ navigation, route }) {
     try {
       const data = await uploadProfilePhoto(token, asset);
       setPhotoUrl(data.photo_url || photoUrl);
-      notifySuccess(data.message || 'Foto profil diunggah.');
+      notifySuccess(data.message || (isEn ? 'Profile photo uploaded.' : 'Foto profil diunggah.'));
     } catch (err) {
-      notifyError(err.message || 'Tidak dapat mengunggah foto');
+      notifyError(err.message || (isEn ? 'Cannot upload photo' : 'Tidak dapat mengunggah foto'));
     } finally {
       setUploadingPhoto(false);
     }
@@ -146,9 +148,9 @@ export default function EditMuthowifProfileScreen({ navigation, route }) {
     try {
       const data = await uploadProfileKtp(token, asset);
       setKtpUrl(data.ktp_url || ktpUrl);
-      notifySuccess(data.message || 'KTP diunggah.');
+      notifySuccess(data.message || (isEn ? 'ID card uploaded.' : 'KTP diunggah.'));
     } catch (err) {
-      notifyError(err.message || 'Tidak dapat mengunggah KTP');
+      notifyError(err.message || (isEn ? 'Cannot upload ID card' : 'Tidak dapat mengunggah KTP'));
     } finally {
       setUploadingKtp(false);
     }
@@ -174,19 +176,19 @@ export default function EditMuthowifProfileScreen({ navigation, route }) {
       const data = await uploadSupportingDocument(token, result.assets[0]);
       if (data.document) setDocuments((prev) => [...prev, data.document]);
       else await load();
-      notifySuccess(data.message || 'Dokumen diunggah.');
+      notifySuccess(data.message || (isEn ? 'Document uploaded.' : 'Dokumen diunggah.'));
     } catch (err) {
-      notifyError(err.message || 'Tidak dapat mengunggah dokumen');
+      notifyError(err.message || (isEn ? 'Cannot upload document' : 'Tidak dapat mengunggah dokumen'));
     } finally {
       setUploadingDoc(false);
     }
   };
 
   const handleDeleteDocument = (doc) => {
-    Alert.alert('Hapus dokumen?', doc.name || 'Dokumen ini akan dihapus permanen.', [
-      { text: 'Batal', style: 'cancel' },
+    Alert.alert(isEn ? 'Delete document?' : 'Hapus dokumen?', doc.name || (isEn ? 'This document will be permanently deleted.' : 'Dokumen ini akan dihapus permanen.'), [
+      { text: isEn ? 'Cancel' : 'Batal', style: 'cancel' },
       {
-        text: 'Hapus',
+        text: isEn ? 'Delete' : 'Hapus',
         style: 'destructive',
         onPress: async () => {
           setDeletingDocId(doc.id);
@@ -194,7 +196,7 @@ export default function EditMuthowifProfileScreen({ navigation, route }) {
             await deleteSupportingDocument(token, doc.id);
             setDocuments((prev) => prev.filter((d) => d.id !== doc.id));
           } catch (err) {
-            notifyError(err.message || 'Tidak dapat menghapus dokumen');
+            notifyError(err.message || (isEn ? 'Cannot delete document' : 'Tidak dapat menghapus dokumen'));
           } finally {
             setDeletingDocId(null);
           }
@@ -223,9 +225,9 @@ export default function EditMuthowifProfileScreen({ navigation, route }) {
         ...(hasInviter ? {} : { inviter_referral_code: inviterCode.trim() || null }),
       });
       if (data.user) await updateLocalUser({ name: data.user.name, email: data.user.email });
-      notifySuccessThen(navigation, 'Profil publik berhasil diperbarui.', () => navigation.goBack());
+      notifySuccessThen(navigation, isEn ? 'Public profile updated successfully.' : 'Profil publik berhasil diperbarui.', () => navigation.goBack());
     } catch (err) {
-      setError(err.message || 'Gagal menyimpan profil publik');
+      setError(err.message || (isEn ? 'Failed to save public profile' : 'Gagal menyimpan profil publik'));
     } finally {
       setSaving(false);
     }
@@ -244,7 +246,7 @@ export default function EditMuthowifProfileScreen({ navigation, route }) {
     if (!publicProfileUrl) return;
     try {
       await Share.share({
-        message: `Halo! Saya ${name || 'saya'}, muthowif di BaytGo. Lihat profil dan layanan saya di sini: ${publicProfileUrl}`,
+        message: isEn ? `Hello! I'm ${name || 'a muthowif'} on BaytGo. Check out my profile and services here: ${publicProfileUrl}` : `Halo! Saya ${name || 'saya'}, muthowif di BaytGo. Lihat profil dan layanan saya di sini: ${publicProfileUrl}`,
         url: publicProfileUrl,
       });
     } catch { /* dismissed */ }
@@ -253,8 +255,8 @@ export default function EditMuthowifProfileScreen({ navigation, route }) {
   return (
     <View style={styles.container}>
       <ScreenHeader
-        title="Profil publik"
-        subtitle="Info tampil di marketplace"
+        title={isEn ? 'Public profile' : 'Profil publik'}
+        subtitle={isEn ? 'Info shown on marketplace' : 'Info tampil di marketplace'}
         onBack={() => navigation.goBack()}
         rightAction={
           publicProfileUrl ? (
@@ -280,14 +282,14 @@ export default function EditMuthowifProfileScreen({ navigation, route }) {
               <PressableScale onPress={handlePreviewProfile} haptic="light">
                 <Card style={styles.previewCard} padding={spacing.lg} elevated={false}>
                   <Eye size={18} color={colors.baytgo} strokeWidth={2} />
-                  <Text style={styles.previewCardText}>Preview profil publik</Text>
+                  <Text style={styles.previewCardText}>{isEn ? 'Preview public profile' : 'Preview profil publik'}</Text>
                   <ChevronRight size={16} color={colors.textMuted} strokeWidth={2} />
                 </Card>
               </PressableScale>
               <PressableScale onPress={handleShareProfile} haptic="light">
                 <Card style={styles.previewCard} padding={spacing.lg} elevated={false}>
                   <Share2 size={18} color={colors.baytgo} strokeWidth={2} />
-                  <Text style={styles.previewCardText}>Bagikan profil publik</Text>
+                  <Text style={styles.previewCardText}>{isEn ? 'Share public profile' : 'Bagikan profil publik'}</Text>
                   <ChevronRight size={16} color={colors.textMuted} strokeWidth={2} />
                 </Card>
               </PressableScale>
@@ -295,14 +297,14 @@ export default function EditMuthowifProfileScreen({ navigation, route }) {
           ) : verificationStatus !== 'approved' ? (
             <Card style={styles.infoCard} padding={spacing.lg} elevated={false}>
               <Text style={styles.infoCardText}>
-                Preview profil tersedia setelah admin menyetujui akun muthowif Anda.
+                {isEn ? 'Profile preview available after admin approves your muthowif account.' : 'Preview profil tersedia setelah admin menyetujui akun muthowif Anda.'}
               </Text>
             </Card>
           ) : null}
 
-          <Text style={styles.sectionTitle}>Dokumen verifikasi</Text>
-          <UploadField label="Foto profil" imageUrl={photoUrl} uploading={uploadingPhoto} onPick={handleUploadPhoto} />
-          <UploadField label="Foto KTP" imageUrl={ktpUrl} uploading={uploadingKtp} onPick={handleUploadKtp} />
+          <Text style={styles.sectionTitle}>{isEn ? 'Verification documents' : 'Dokumen verifikasi'}</Text>
+          <UploadField label={isEn ? 'Profile photo' : 'Foto profil'} imageUrl={photoUrl} uploading={uploadingPhoto} onPick={handleUploadPhoto} />
+          <UploadField label={isEn ? 'ID card photo' : 'Foto KTP'} imageUrl={ktpUrl} uploading={uploadingKtp} onPick={handleUploadKtp} />
 
           <DocumentsSection
             documents={documents}
@@ -312,51 +314,51 @@ export default function EditMuthowifProfileScreen({ navigation, route }) {
             deletingDocId={deletingDocId}
           />
 
-          <Text style={styles.sectionTitle}>Informasi publik</Text>
-          <AuthInput label="Nama lengkap" icon="person-outline" value={name} onChangeText={setName} />
-          <AuthInput label="Email" icon="mail-outline" value={email} onChangeText={setEmail} keyboardType="email-address" autoCapitalize="none" />
-          <PhoneInternationalInput label="Telepon / WhatsApp" dial={phoneDial} national={phoneNational} countryIso={phoneCountryIso} onChange={handlePhoneChange} />
-          <AuthInput label="Nomor paspor" icon="airplane-outline" value={passportNumber} onChangeText={setPassportNumber} />
-          <DatePickerField label="Tanggal lahir" value={birthDate} onChange={setBirthDate} placeholder="Pilih tanggal lahir" maximumDate={new Date()} />
-          <AuthInput label="Alamat" icon="location-outline" value={address} onChangeText={setAddress} placeholder="Alamat domisili" multiline />
-          <AuthInput label="Lokasi kerja" icon="business-outline" value={workLocation} onChangeText={setWorkLocation} placeholder="Contoh: Makkah, Madinah" />
-          <RepeatingTextField label="Bahasa" items={languages} onChange={setLanguages} placeholder="Contoh: Arab (fasih), Inggris" addLabel="Tambah bahasa" />
-          <RepeatingTextField label="Pendidikan" items={educations} onChange={setEducations} placeholder="Riwayat studi atau pendidikan formal" addLabel="Tambah pendidikan" optional />
-          <RepeatingTextField label="Pengalaman kerja" items={workExperiences} onChange={setWorkExperiences} placeholder="Pengalaman sebagai muthowif" addLabel="Tambah pengalaman" />
-          <AuthInput label="Referensi / bio" icon="document-text-outline" value={referenceText} onChangeText={setReferenceText} placeholder="Ceritakan pengalaman Anda" multiline />
+          <Text style={styles.sectionTitle}>{isEn ? 'Public information' : 'Informasi publik'}</Text>
+          <AuthInput label={isEn ? 'Full name' : 'Nama lengkap'} icon="person-outline" value={name} onChangeText={setName} />
+          <AuthInput label={isEn ? 'Email' : 'Email'} icon="mail-outline" value={email} onChangeText={setEmail} keyboardType="email-address" autoCapitalize="none" />
+          <PhoneInternationalInput label={isEn ? 'Phone / WhatsApp' : 'Telepon / WhatsApp'} dial={phoneDial} national={phoneNational} countryIso={phoneCountryIso} onChange={handlePhoneChange} />
+          <AuthInput label={isEn ? 'Passport number' : 'Nomor paspor'} icon="airplane-outline" value={passportNumber} onChangeText={setPassportNumber} />
+          <DatePickerField label={isEn ? 'Date of birth' : 'Tanggal lahir'} value={birthDate} onChange={setBirthDate} placeholder={isEn ? 'Select date of birth' : 'Pilih tanggal lahir'} maximumDate={new Date()} />
+          <AuthInput label={isEn ? 'Address' : 'Alamat'} icon="location-outline" value={address} onChangeText={setAddress} placeholder={isEn ? 'Home address' : 'Alamat domisili'} multiline />
+          <AuthInput label={isEn ? 'Work location' : 'Lokasi kerja'} icon="business-outline" value={workLocation} onChangeText={setWorkLocation} placeholder={isEn ? 'E.g.: Makkah, Madinah' : 'Contoh: Makkah, Madinah'} />
+          <RepeatingTextField label={isEn ? 'Languages' : 'Bahasa'} items={languages} onChange={setLanguages} placeholder={isEn ? 'E.g.: Arabic (fluent), English' : 'Contoh: Arab (fasih), Inggris'} addLabel={isEn ? 'Add language' : 'Tambah bahasa'} />
+          <RepeatingTextField label={isEn ? 'Education' : 'Pendidikan'} items={educations} onChange={setEducations} placeholder={isEn ? 'Study or formal education history' : 'Riwayat studi atau pendidikan formal'} addLabel={isEn ? 'Add education' : 'Tambah pendidikan'} optional />
+          <RepeatingTextField label={isEn ? 'Work experience' : 'Pengalaman kerja'} items={workExperiences} onChange={setWorkExperiences} placeholder={isEn ? 'Experience as muthowif' : 'Pengalaman sebagai muthowif'} addLabel={isEn ? 'Add experience' : 'Tambah pengalaman'} />
+          <AuthInput label={isEn ? 'Reference / bio' : 'Referensi / bio'} icon="document-text-outline" value={referenceText} onChangeText={setReferenceText} placeholder={isEn ? 'Tell about your experience' : 'Ceritakan pengalaman Anda'} multiline />
 
           {!hasInviter ? (
-            <AuthInput label="Kode referral pengundang" icon="gift-outline" value={inviterCode} onChangeText={setInviterCode} placeholder="Opsional" />
+            <AuthInput label={isEn ? 'Inviter referral code' : 'Kode referral pengundang'} icon="gift-outline" value={inviterCode} onChangeText={setInviterCode} placeholder={isEn ? 'Optional' : 'Opsional'} />
           ) : (
             <Card style={styles.lockedCard} padding={spacing.lg} elevated={false}>
-              <Text style={styles.lockedTitle}>Anda terhubung dengan muthowif pengundang</Text>
+              <Text style={styles.lockedTitle}>{isEn ? 'You are connected with the inviting muthowif' : 'Anda terhubung dengan muthowif pengundang'}</Text>
               <Text style={styles.lockedValue}>
                 {inviterName || '—'}
                 {inviterCode ? ` · ${inviterCode}` : ''}
               </Text>
-              <Text style={styles.lockedHint}>Kode pengundang hanya bisa disimpan sekali dan sudah tercatat.</Text>
+              <Text style={styles.lockedHint}>{isEn ? 'Inviter code can only be saved once and has been recorded.' : 'Kode pengundang hanya bisa disimpan sekali dan sudah tercatat.'}</Text>
             </Card>
           )}
 
           <Card style={styles.referralCard} padding={spacing.lg} elevated={false}>
-            <Text style={styles.referralTitle}>Kode referral Anda</Text>
+            <Text style={styles.referralTitle}>{isEn ? 'Your referral code' : 'Kode referral Anda'}</Text>
             {referralCode ? (
               <>
                 <Text style={styles.referralCode}>{referralCode}</Text>
-                <Text style={styles.referralHint}>Bagikan kode ini saat rekan mendaftar sebagai muthowif.</Text>
+                <Text style={styles.referralHint}>{isEn ? 'Share this code when a colleague registers as muthowif.' : 'Bagikan kode ini saat rekan mendaftar sebagai muthowif.'}</Text>
                 <PressableScale onPress={handleShareReferralCode} haptic="light" style={styles.shareBtn}>
                   <Share2 size={16} color={colors.baytgo} strokeWidth={2} />
-                  <Text style={styles.shareBtnText}>Bagikan kode</Text>
+                  <Text style={styles.shareBtnText}>{isEn ? 'Share code' : 'Bagikan kode'}</Text>
                 </PressableScale>
               </>
             ) : (
               <Text style={styles.referralPending}>
-                Kode Anda akan tersedia setelah profil muthowif disetujui admin.
+                {isEn ? 'Your code will be available after the admin approves your muthowif profile.' : 'Kode Anda akan tersedia setelah profil muthowif disetujui admin.'}
               </Text>
             )}
           </Card>
 
-          <Button label="Simpan informasi" onPress={handleSave} loading={saving} />
+          <Button label={isEn ? 'Save information' : 'Simpan informasi'} onPress={handleSave} loading={saving} />
         </ScrollView>
       )}
     </View>

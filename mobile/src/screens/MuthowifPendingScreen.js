@@ -5,32 +5,34 @@ import { useAuth } from '../context/AuthContext';
 import TabPageHeader from '../components/TabPageHeader';
 import { Button, Card } from '../ui';
 import { colors, layout, radius, spacing, typography } from '../theme/tokens';
+import { useLocale } from '../utils/locale';
 
 export default function MuthowifPendingScreen({ navigation }) {
   const { user } = useAuth();
+  const locale = useLocale(); const isEn = locale === 'en';
 
   return (
     <View style={styles.safe}>
-      <TabPageHeader title="Beranda" subtitle={`Halo, ${user?.name || 'Muthowif'}`} />
+      <TabPageHeader title={isEn ? 'Home' : 'Beranda'} subtitle={`${isEn ? 'Hello' : 'Halo'}, ${user?.name || 'Muthowif'}`} />
       <View style={styles.content}>
         <Card style={styles.card} padding={spacing['2xl']} elevated={false}>
           <View style={styles.iconWrap}>
             <Clock size={32} color={colors.warning} strokeWidth={1.8} />
           </View>
-          <Text style={styles.kicker}>Akun muthowif sedang ditinjau</Text>
-          <Text style={styles.title}>Halo, {user?.name || 'Muthowif'}</Text>
+          <Text style={styles.kicker}>{isEn ? 'Muthowif account under review' : 'Akun muthowif sedang ditinjau'}</Text>
+          <Text style={styles.title}>{isEn ? 'Hello' : 'Halo'}, {user?.name || 'Muthowif'}</Text>
           <Text style={styles.body}>
-            Tim admin akan memverifikasi dokumen Anda. Setelah disetujui, Anda mendapat akses penuh layanan, jadwal, dan saldo dompet.
+            {isEn ? 'The admin team will verify your documents. Once approved, you get full access to services, schedule, and wallet balance.' : 'Tim admin akan memverifikasi dokumen Anda. Setelah disetujui, Anda mendapat akses penuh layanan, jadwal, dan saldo dompet.'}
           </Text>
 
           <View style={styles.actions}>
             <Button
-              label="Lihat marketplace"
+              label={isEn ? 'View marketplace' : 'Lihat marketplace'}
               onPress={() => navigation.navigate('Directory')}
               icon={<Compass size={18} color={colors.white} strokeWidth={2} />}
             />
             <Button
-              label="Profil"
+              label={isEn ? 'Profile' : 'Profil'}
               variant="secondary"
               onPress={() => navigation.getParent()?.navigate('ProfileTab')}
               icon={<User size={18} color={colors.baytgo} strokeWidth={2} />}
@@ -38,9 +40,9 @@ export default function MuthowifPendingScreen({ navigation }) {
           </View>
 
           <View style={styles.hintBox}>
-            <Text style={styles.hintTitle}>Sementara ini</Text>
+            <Text style={styles.hintTitle}>{isEn ? 'In the meantime' : 'Sementara ini'}</Text>
             <Text style={styles.hintText}>
-              • Lengkapi profil dan dokumen di tab Profil{'\n'}• Anda akan mendapat notifikasi setelah disetujui
+              {isEn ? '• Complete your profile and documents in the Profile tab\n• You will be notified once approved' : '• Lengkapi profil dan dokumen di tab Profil\n• Anda akan mendapat notifikasi setelah disetujui'}
             </Text>
           </View>
         </Card>

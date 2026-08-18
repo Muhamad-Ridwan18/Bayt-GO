@@ -13,10 +13,12 @@ import { Button, Card, SkeletonList } from '../ui';
 import { GalleryGrid } from '../features/portfolio/PortfolioEditParts';
 import { notifySuccessThen, notifyError } from '../utils/feedback';
 import { colors, layout, radius, spacing, typography } from '../theme/tokens';
+import { useLocale } from '../utils/locale';
 
 export default function PortfolioEditScreen({ navigation, route }) {
   const { portfolioId } = route.params;
   const { token } = useAuth();
+  const locale = useLocale(); const isEn = locale === 'en';
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [title, setTitle] = useState('');
@@ -37,7 +39,7 @@ export default function PortfolioEditScreen({ navigation, route }) {
       setDeleteIds([]);
       setNewImages([]);
     } catch (err) {
-      Alert.alert('Gagal', err.message || 'Tidak dapat memuat album');
+      Alert.alert(isEn ? 'Failed' : 'Gagal', err.message || (isEn ? 'Cannot load album' : 'Tidak dapat memuat album'));
       navigation.goBack();
     } finally {
       setLoading(false);
@@ -49,7 +51,7 @@ export default function PortfolioEditScreen({ navigation, route }) {
   const pickNewImages = async () => {
     const permission = await ImagePicker.requestMediaLibraryPermissionsAsync();
     if (!permission.granted) {
-      Alert.alert('Izin diperlukan', 'Izinkan akses galeri.');
+      Alert.alert(isEn ? 'Permission required' : 'Izin diperlukan', isEn ? 'Allow gallery access.' : 'Izinkan akses galeri.');
       return;
     }
     const result = await ImagePicker.launchImageLibraryAsync({
@@ -65,13 +67,13 @@ export default function PortfolioEditScreen({ navigation, route }) {
 
   const handleSave = async () => {
     if (!title.trim()) {
-      Alert.alert('Validasi', 'Judul wajib diisi.');
+      Alert.alert(isEn ? 'Validation' : 'Validasi', isEn ? 'Title is required.' : 'Judul wajib diisi.');
       return;
     }
 
     const remaining = images.filter((img) => !deleteIds.includes(img.id)).length + newImages.length;
     if (remaining === 0) {
-      Alert.alert('Validasi', 'Album harus memiliki minimal satu foto.');
+      Alert.alert(isEn ? 'Validation' : 'Validasi', isEn ? 'Album must have at least one photo.' : 'Album harus memiliki minimal satu foto.');
       return;
     }
 
@@ -83,9 +85,9 @@ export default function PortfolioEditScreen({ navigation, route }) {
         newImages,
         deleteImageIds: deleteIds,
       });
-      notifySuccessThen(navigation, 'Album diperbarui.', () => navigation.goBack());
+      notifySuccessThen(navigation, isEn ? 'Album updated.' : 'Album diperbarui.', () => navigation.goBack());
     } catch (err) {
-      notifyError(err.message || 'Tidak dapat menyimpan');
+      notifyError(err.message || (isEn ? 'Cannot save' : 'Tidak dapat menyimpan'));
     } finally {
       setSaving(false);
     }
@@ -99,7 +101,7 @@ export default function PortfolioEditScreen({ navigation, route }) {
 
   return (
     <View style={styles.container}>
-      <ScreenHeader title="Edit album" subtitle={title || 'Kelola foto album'} onBack={() => navigation.goBack()} />
+      <ScreenHeader title={isEn ? 'Edit album' : 'Edit album'} subtitle={title || (isEn ? 'Manage album photos' : 'Kelola foto album')} onBack={() => navigation.goBack()} />
 
       {loading ? (
         <SkeletonList count={2} style={styles.skeleton} />
@@ -111,19 +113,19 @@ export default function PortfolioEditScreen({ navigation, route }) {
             keyboardShouldPersistTaps="handled"
           >
             <Card padding={spacing.lg} elevated={false}>
-              <Text style={styles.fieldLabel}>Judul kegiatan</Text>
+              <Text style={styles.fieldLabel}>{isEn ? 'Activity title' : 'Judul kegiatan'}</Text>
               <TextInput
                 style={styles.input}
-                placeholder="Judul album"
+                placeholder={isEn ? 'Album title' : 'Judul album'}
                 placeholderTextColor={colors.textMuted}
                 value={title}
                 onChangeText={setTitle}
               />
 
-              <Text style={styles.fieldLabel}>Deskripsi (opsional)</Text>
+              <Text style={styles.fieldLabel}>{isEn ? 'Description (optional)' : 'Deskripsi (opsional)'}</Text>
               <TextInput
                 style={[styles.input, styles.textarea]}
-                placeholder="Ceritakan singkat pelayanan..."
+                placeholder={isEn ? 'Briefly describe the service...' : 'Ceritakan singkat pelayanan...'}
                 placeholderTextColor={colors.textMuted}
                 value={description}
                 onChangeText={setDescription}
@@ -144,7 +146,7 @@ export default function PortfolioEditScreen({ navigation, route }) {
             />
 
             <Button
-              label="Simpan perubahan"
+              label={isEn ? 'Save changes' : 'Simpan perubahan'}
               onPress={handleSave}
               loading={saving}
               icon={<CheckCircle2 size={18} color={colors.white} strokeWidth={2} />}

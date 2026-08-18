@@ -11,6 +11,7 @@ import { useAuth } from '../context/AuthContext';
 import { Button, Card, EmptyState, PressableScale, SkeletonList } from '../ui';
 import { colors, layout, radius, spacing, typography } from '../theme/tokens';
 import { notifyError, notifySuccess } from '../utils/feedback';
+import { useLocale } from '../utils/locale';
 
 function BlockedDateRow({ item, onDelete, deleting }) {
   return (
@@ -28,6 +29,7 @@ function BlockedDateRow({ item, onDelete, deleting }) {
 
 export default function ScheduleScreen() {
   const { token } = useAuth();
+  const locale = useLocale(); const isEn = locale === 'en';
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
   const [submitting, setSubmitting] = useState(false);
@@ -45,7 +47,7 @@ export default function ScheduleScreen() {
       const data = await fetchBlockedDates(token);
       setItems(data.blocked_dates || []);
     } catch (err) {
-      Alert.alert('Gagal', err.message || 'Tidak dapat memuat jadwal libur');
+      Alert.alert(isEn ? 'Failed' : 'Gagal', err.message || (isEn ? 'Cannot load off-day schedule' : 'Tidak dapat memuat jadwal libur'));
     } finally {
       setLoading(false);
       setRefreshing(false);
@@ -56,7 +58,7 @@ export default function ScheduleScreen() {
 
   const handleAdd = async () => {
     if (!startDate) {
-      Alert.alert('Validasi', 'Pilih tanggal mulai libur.');
+      Alert.alert(isEn ? 'Validation' : 'Validasi', isEn ? 'Select start date for off day.' : 'Pilih tanggal mulai libur.');
       return;
     }
 
@@ -67,23 +69,23 @@ export default function ScheduleScreen() {
         end_date: endDate || startDate,
         note: note.trim() || null,
       });
-      notifySuccess('Jadwal libur berhasil disimpan.');
+      notifySuccess(isEn ? 'Off-day schedule saved.' : 'Jadwal libur berhasil disimpan.');
       setStartDate('');
       setEndDate('');
       setNote('');
       await load(true);
     } catch (err) {
-      notifyError(err.message || 'Tidak dapat menyimpan jadwal libur');
+      notifyError(err.message || (isEn ? 'Cannot save off-day schedule' : 'Tidak dapat menyimpan jadwal libur'));
     } finally {
       setSubmitting(false);
     }
   };
 
   const handleDelete = (item) => {
-    Alert.alert('Hapus libur?', `Hapus tanggal ${item.date}?`, [
-      { text: 'Batal', style: 'cancel' },
+    Alert.alert(isEn ? 'Delete off day?' : 'Hapus libur?', isEn ? `Delete date ${item.date}?` : `Hapus tanggal ${item.date}?`, [
+      { text: isEn ? 'Cancel' : 'Batal', style: 'cancel' },
       {
-        text: 'Hapus',
+        text: isEn ? 'Delete' : 'Hapus',
         style: 'destructive',
         onPress: async () => {
           setDeletingId(item.id);
@@ -91,7 +93,7 @@ export default function ScheduleScreen() {
             await removeBlockedDate(token, item.id);
             await load(true);
           } catch (err) {
-            Alert.alert('Gagal', err.message || 'Tidak dapat menghapus jadwal libur');
+            Alert.alert(isEn ? 'Failed' : 'Gagal', err.message || (isEn ? 'Cannot delete off-day schedule' : 'Tidak dapat menghapus jadwal libur'));
           } finally {
             setDeletingId(null);
           }
@@ -102,7 +104,7 @@ export default function ScheduleScreen() {
 
   return (
     <View style={styles.container}>
-      <TabPageHeader title="Jadwal libur" subtitle="Blokir tanggal tidak tersedia" />
+      <TabPageHeader title={isEn ? 'Off-day schedule' : 'Jadwal libur'} subtitle={isEn ? 'Block unavailable dates' : 'Blokir tanggal tidak tersedia'} />
 
       {loading && !refreshing ? (
         <SkeletonList count={3} style={styles.skeleton} />
@@ -114,38 +116,38 @@ export default function ScheduleScreen() {
           }
         >
           <Card padding={spacing.lg} elevated={false}>
-            <Text style={styles.formTitle}>Tambah libur</Text>
+            <Text style={styles.formTitle}>{isEn ? 'Add off day' : 'Tambah libur'}</Text>
             <DatePickerField
-              label="Tanggal mulai"
+              label={isEn ? 'Start date' : 'Tanggal mulai'}
               value={startDate}
               onChange={setStartDate}
-              placeholder="Pilih tanggal mulai"
+              placeholder={isEn ? 'Select start date' : 'Pilih tanggal mulai'}
               variant="soft"
             />
             <DatePickerField
-              label="Tanggal selesai"
+              label={isEn ? 'End date' : 'Tanggal selesai'}
               value={endDate}
               onChange={setEndDate}
-              placeholder="Sama dengan mulai (opsional)"
+              placeholder={isEn ? 'Same as start (optional)' : 'Sama dengan mulai (opsional)'}
               minimumDate={startDate ? parseIsoDate(startDate) : undefined}
               variant="soft"
             />
             <TextInput
               style={styles.input}
-              placeholder="Catatan (opsional)"
+              placeholder={isEn ? 'Note (optional)' : 'Catatan (opsional)'}
               placeholderTextColor={colors.textMuted}
               value={note}
               onChangeText={setNote}
             />
-            <Button label="Simpan libur" onPress={handleAdd} loading={submitting} />
+            <Button label={isEn ? 'Save off day' : 'Simpan libur'} onPress={handleAdd} loading={submitting} />
           </Card>
 
-          <Text style={styles.sectionTitle}>Tanggal diblokir</Text>
+          <Text style={styles.sectionTitle}>{isEn ? 'Blocked dates' : 'Tanggal diblokir'}</Text>
           {items.length === 0 ? (
             <EmptyState
               variant="schedule"
-              title="Belum ada jadwal libur"
-              description="Tambahkan tanggal libur agar jamaah tidak bisa memesan pada hari tersebut."
+              title={isEn ? 'No off days yet' : 'Belum ada jadwal libur'}
+              description={isEn ? 'Add off days so pilgrims cannot book on those dates.' : 'Tambahkan tanggal libur agar jamaah tidak bisa memesan pada hari tersebut.'}
             />
           ) : (
             items.map((item) => (

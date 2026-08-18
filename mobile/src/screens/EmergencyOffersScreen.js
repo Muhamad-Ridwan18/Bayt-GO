@@ -16,9 +16,11 @@ import ErrorState from '../ui/ErrorState';
 import { SkeletonList } from '../ui/Skeleton';
 import { colors, layout, spacing, typography } from '../theme/tokens';
 import { notifyError, notifySuccess } from '../utils/feedback';
+import { useLocale } from '../utils/locale';
 
 export default function EmergencyOffersScreen() {
   const { token } = useAuth();
+  const locale = useLocale(); const isEn = locale === 'en';
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
   const [offers, setOffers] = useState([]);
@@ -34,7 +36,7 @@ export default function EmergencyOffersScreen() {
       setOffers(data.data || []);
       setError(null);
     } catch (err) {
-      setError(err.message || 'Gagal memuat penawaran darurat');
+      setError(err.message || (isEn ? 'Failed to load emergency offers' : 'Gagal memuat penawaran darurat'));
       if (!refresh) setOffers([]);
     } finally {
       setLoading(false);
@@ -49,18 +51,18 @@ export default function EmergencyOffersScreen() {
   );
 
   const handleAccept = useCallback((offer) => {
-    Alert.alert('Terima penawaran?', 'Anda akan ditugaskan menggantikan muthowif pada booking ini.', [
-      { text: 'Batal', style: 'cancel' },
+    Alert.alert(isEn ? 'Accept offer?' : 'Terima penawaran?', isEn ? 'You will be assigned to replace the muthowif on this booking.' : 'Anda akan ditugaskan menggantikan muthowif pada booking ini.', [
+      { text: isEn ? 'Cancel' : 'Batal', style: 'cancel' },
       {
-        text: 'Terima',
+        text: isEn ? 'Accept' : 'Terima',
         onPress: async () => {
           setBusyId(offer.id);
           try {
             await acceptEmergencyOffer(token, offer.id);
-            notifySuccess('Penawaran darurat diterima.');
+            notifySuccess(isEn ? 'Emergency offer accepted.' : 'Penawaran darurat diterima.');
             await load(true);
           } catch (err) {
-            notifyError(err.message || 'Tidak dapat menerima penawaran');
+            notifyError(err.message || (isEn ? 'Cannot accept offer' : 'Tidak dapat menerima penawaran'));
           } finally {
             setBusyId(null);
           }
@@ -70,19 +72,19 @@ export default function EmergencyOffersScreen() {
   }, [load, token]);
 
   const handleDecline = useCallback((offer) => {
-    Alert.alert('Tolak penawaran?', 'Penawaran ini akan dilewati.', [
-      { text: 'Batal', style: 'cancel' },
+    Alert.alert(isEn ? 'Decline offer?' : 'Tolak penawaran?', isEn ? 'This offer will be skipped.' : 'Penawaran ini akan dilewati.', [
+      { text: isEn ? 'Cancel' : 'Batal', style: 'cancel' },
       {
-        text: 'Tolak',
+        text: isEn ? 'Decline' : 'Tolak',
         style: 'destructive',
         onPress: async () => {
           setBusyId(offer.id);
           try {
             await declineEmergencyOffer(token, offer.id);
-            notifySuccess('Penawaran darurat ditolak.');
+            notifySuccess(isEn ? 'Emergency offer declined.' : 'Penawaran darurat ditolak.');
             await load(true);
           } catch (err) {
-            notifyError(err.message || 'Tidak dapat menolak penawaran');
+            notifyError(err.message || (isEn ? 'Cannot decline offer' : 'Tidak dapat menolak penawaran'));
           } finally {
             setBusyId(null);
           }
@@ -105,7 +107,7 @@ export default function EmergencyOffersScreen() {
   const listHeader = pendingCount > 0 ? (
     <View style={styles.alert}>
       <AlertTriangle size={18} color={colors.warning} strokeWidth={2} />
-      <Text style={styles.alertText}>{pendingCount} penawaran menunggu respons Anda</Text>
+      <Text style={styles.alertText}>{pendingCount} {isEn ? 'offers waiting for your response' : 'penawaran menunggu respons Anda'}</Text>
     </View>
   ) : null;
 
@@ -113,8 +115,8 @@ export default function EmergencyOffersScreen() {
     return (
       <View style={styles.container}>
         <TabPageHeader
-          title="Penawaran darurat"
-          subtitle="Ganti muthowif darurat"
+          title={isEn ? 'Emergency offers' : 'Penawaran darurat'}
+          subtitle={isEn ? 'Emergency muthowif replacement' : 'Ganti muthowif darurat'}
         />
         <SkeletonList count={3} style={styles.skeleton} />
       </View>
@@ -124,8 +126,8 @@ export default function EmergencyOffersScreen() {
   return (
     <View style={styles.container}>
       <TabPageHeader
-        title="Penawaran darurat"
-        subtitle={pendingCount > 0 ? `${pendingCount} menunggu respons` : 'Ganti muthowif darurat'}
+          title={isEn ? 'Emergency offers' : 'Penawaran darurat'}
+          subtitle={pendingCount > 0 ? (isEn ? `${pendingCount} awaiting response` : `${pendingCount} menunggu respons`) : (isEn ? 'Emergency muthowif replacement' : 'Ganti muthowif darurat')}
       />
 
       {error && offers.length === 0 ? (
@@ -147,8 +149,8 @@ export default function EmergencyOffersScreen() {
             ) : (
               <EmptyState
                 variant="default"
-                title="Belum ada penawaran darurat"
-                description="Penawaran penggantian muthowif akan muncul di sini."
+                title={isEn ? 'No emergency offers yet' : 'Belum ada penawaran darurat'}
+                description={isEn ? 'Muthowif replacement offers will appear here.' : 'Penawaran penggantian muthowif akan muncul di sini.'}
               />
             )
           }

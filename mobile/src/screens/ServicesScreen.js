@@ -13,9 +13,11 @@ import {
 } from '../features/services/ServiceScreenParts';
 import { colors, layout, radius, spacing, typography } from '../theme/tokens';
 import { notifyError, notifySuccess } from '../utils/feedback';
+import { useLocale } from '../utils/locale';
 
 export default function ServicesScreen() {
   const { token } = useAuth();
+  const locale = useLocale(); const isEn = locale === 'en';
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
   const [services, setServices] = useState([]);
@@ -35,7 +37,7 @@ export default function ServicesScreen() {
       list.forEach((s) => { nextDrafts[s.id] = draftFromService(s); });
       setDrafts(nextDrafts);
     } catch (err) {
-      Alert.alert('Gagal', err.message || 'Tidak dapat memuat layanan');
+      Alert.alert(isEn ? 'Failed' : 'Gagal', err.message || (isEn ? 'Cannot load services' : 'Tidak dapat memuat layanan'));
     } finally {
       setLoading(false);
       setRefreshing(false);
@@ -55,7 +57,7 @@ export default function ServicesScreen() {
     const draft = drafts[activeService.id] || {};
     const name = draft.name?.trim();
     if (!name) {
-      Alert.alert('Validasi', 'Nama layanan wajib diisi.');
+      Alert.alert(isEn ? 'Validation' : 'Validasi', isEn ? 'Service name is required.' : 'Nama layanan wajib diisi.');
       return;
     }
 
@@ -66,7 +68,7 @@ export default function ServicesScreen() {
     const maxP = parseInt(draft.max_pilgrims, 10);
 
     if (!daily || minP < 1 || maxP < minP) {
-      Alert.alert('Validasi', 'Periksa harga harian dan jumlah jamaah.');
+      Alert.alert(isEn ? 'Validation' : 'Validasi', isEn ? 'Check daily price and pilgrim count.' : 'Periksa harga harian dan jumlah jamaah.');
       return;
     }
 
@@ -84,10 +86,10 @@ export default function ServicesScreen() {
           .filter((a) => a.name?.trim())
           .map((a) => ({ name: a.name.trim(), price: parseRupiahInput(a.price) || 0 })),
       });
-      notifySuccess('Layanan diperbarui.');
+      notifySuccess(isEn ? 'Service updated.' : 'Layanan diperbarui.');
       await load(true);
     } catch (err) {
-      notifyError(err.message || 'Tidak dapat menyimpan layanan');
+      notifyError(err.message || (isEn ? 'Cannot save service' : 'Tidak dapat menyimpan layanan'));
     } finally {
       setSaving(false);
     }
@@ -95,7 +97,7 @@ export default function ServicesScreen() {
 
   return (
     <View style={styles.container}>
-      <TabPageHeader title="Layanan" subtitle="Atur layanan group & private untuk jamaah" />
+      <TabPageHeader title={isEn ? 'Services' : 'Layanan'} subtitle={isEn ? 'Manage group & private services for pilgrims' : 'Atur layanan group & private untuk jamaah'} />
 
       {loading && !refreshing ? (
         <SkeletonList count={3} style={styles.skeleton} />
@@ -112,7 +114,7 @@ export default function ServicesScreen() {
             <Card style={styles.infoBanner} padding={spacing.lg} elevated={false}>
               <Lightbulb size={18} color={colors.baytgo} strokeWidth={2} />
               <Text style={styles.infoText}>
-                Lengkapi kedua jenis layanan agar profil Anda siap menerima permintaan booking dari jamaah.
+                {isEn ? 'Complete both service types so your profile is ready to receive booking requests from pilgrims.' : 'Lengkapi kedua jenis layanan agar profil Anda siap menerima permintaan booking dari jamaah.'}
               </Text>
             </Card>
 
@@ -143,8 +145,8 @@ export default function ServicesScreen() {
             ) : (
               <EmptyState
                 variant="package"
-                title="Layanan belum tersedia"
-                description="Hubungi admin jika layanan group atau private belum muncul di akun Anda."
+                title={isEn ? 'Service not available yet' : 'Layanan belum tersedia'}
+                description={isEn ? 'Contact admin if group or private services are not showing in your account.' : 'Hubungi admin jika layanan group atau private belum muncul di akun Anda.'}
               />
             )}
           </ScrollView>

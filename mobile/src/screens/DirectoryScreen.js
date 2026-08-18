@@ -16,9 +16,11 @@ import PressableScale from '../ui/PressableScale';
 import SearchBar from '../ui/SearchBar';
 import { SkeletonList } from '../ui/Skeleton';
 import { colors, layout, radius, spacing, typography } from '../theme/tokens';
+import { useLocale } from '../utils/locale';
 
 export default function DirectoryScreen({ navigation, route }) {
   const { token } = useAuth();
+  const locale = useLocale(); const isEn = locale === 'en';
   const initial = route.params || {};
 
   const initialSort = initial.sort === 'newest' ? 'newest' : 'recommended';
@@ -96,7 +98,7 @@ export default function DirectoryScreen({ navigation, route }) {
       setTotal(data.total || 0);
       setError(null);
     } catch (err) {
-      setError(err.message || 'Gagal memuat direktori');
+      setError(err.message || (isEn ? 'Failed to load directory' : 'Gagal memuat direktori'));
       if (!append) setItems([]);
     } finally {
       setLoading(false);
@@ -175,18 +177,18 @@ export default function DirectoryScreen({ navigation, route }) {
             <Compass size={18} color={colors.baytgo} strokeWidth={2} />
           </View>
           <View style={styles.searchCardHeadText}>
-            <Text style={styles.searchCardTitle}>Cari ketersediaan</Text>
-            <Text style={styles.searchCardSub}>Pilih tanggal perjalanan dan filter nama (opsional).</Text>
+            <Text style={styles.searchCardTitle}>{isEn ? 'Check availability' : 'Cari ketersediaan'}</Text>
+            <Text style={styles.searchCardSub}>{isEn ? 'Select travel dates and filter by name (optional).' : 'Pilih tanggal perjalanan dan filter nama (opsional).'}</Text>
           </View>
         </View>
 
         <View style={styles.dateRow}>
           <View style={styles.dateField}>
             <DatePickerField
-              label="Berangkat"
+              label={isEn ? 'Departure' : 'Berangkat'}
               value={startDate}
               onChange={handleStartDateChange}
-              placeholder="Pilih"
+              placeholder={isEn ? 'Select' : 'Pilih'}
               minimumDate={today}
               variant="chip"
             />
@@ -196,10 +198,10 @@ export default function DirectoryScreen({ navigation, route }) {
           </View>
           <View style={styles.dateField}>
             <DatePickerField
-              label="Pulang"
+              label={isEn ? 'Return' : 'Pulang'}
               value={endDate}
               onChange={setEndDate}
-              placeholder="Opsional"
+              placeholder={isEn ? 'Optional' : 'Opsional'}
               minimumDate={endMinDate}
               maximumDate={endMaxDate}
               clearable
@@ -212,19 +214,19 @@ export default function DirectoryScreen({ navigation, route }) {
         <SearchBar
           value={q}
           onChangeText={setQ}
-          placeholder="Opsional — filter nama"
+          placeholder={isEn ? 'Optional — filter by name' : 'Opsional — filter nama'}
           style={styles.searchBar}
         />
 
         <View style={styles.sortRow}>
           <FilterChip
-            label="Rekomendasi"
+            label={isEn ? 'Recommended' : 'Rekomendasi'}
             icon={Compass}
             active={sort === 'recommended'}
             onPress={() => handleSort('recommended')}
           />
           <FilterChip
-            label="Terbaru"
+            label={isEn ? 'Newest' : 'Terbaru'}
             icon={Clock}
             active={sort === 'newest'}
             onPress={() => handleSort('newest')}
@@ -233,7 +235,7 @@ export default function DirectoryScreen({ navigation, route }) {
 
         <View style={styles.searchCta}>
           <Button
-            label="Cari muthowif"
+            label={isEn ? 'Search muthowif' : 'Cari muthowif'}
             onPress={handleSearch}
             icon={<Search size={18} color={colors.white} strokeWidth={2} />}
           />
@@ -247,8 +249,8 @@ export default function DirectoryScreen({ navigation, route }) {
           </View>
           <View style={styles.resultCopy}>
             <Text style={styles.resultText}>
-              <Text style={styles.resultCount}>{total}</Text> Muthowif tersedia
-              {applied?.startDate ? ' untuk tanggal Anda' : ''}
+              <Text style={styles.resultCount}>{total}</Text> {isEn ? 'Muthowif available' : 'Muthowif tersedia'}
+              {applied?.startDate ? (isEn ? ' for your dates' : ' untuk tanggal Anda') : ''}
             </Text>
           </View>
         </View>
@@ -263,7 +265,7 @@ export default function DirectoryScreen({ navigation, route }) {
           <PressableScale onPress={() => navigation.goBack()} haptic="light" style={styles.backBtn}>
             <ArrowLeft size={22} color={colors.baytgo} strokeWidth={2} />
           </PressableScale>
-          <Text style={styles.pageTitle}>Cari Muthowif</Text>
+          <Text style={styles.pageTitle}>{isEn ? 'Find Muthowif' : 'Cari Muthowif'}</Text>
         </SafeAreaView>
         <SkeletonList count={4} style={styles.skeleton} />
       </View>
@@ -276,7 +278,7 @@ export default function DirectoryScreen({ navigation, route }) {
         <PressableScale onPress={() => navigation.goBack()} haptic="light" style={styles.backBtn}>
           <ArrowLeft size={22} color={colors.baytgo} strokeWidth={2} />
         </PressableScale>
-        <Text style={styles.pageTitle}>Cari Muthowif</Text>
+        <Text style={styles.pageTitle}>{isEn ? 'Find Muthowif' : 'Cari Muthowif'}</Text>
       </SafeAreaView>
 
       {error && items.length === 0 ? (
@@ -300,15 +302,15 @@ export default function DirectoryScreen({ navigation, route }) {
             ) : !applied?.startDate ? (
               <EmptyState
                 variant="schedule"
-                title="Pilih tanggal mulai (dan selesai jika lebih dari satu hari), lalu tekan Cari."
-                description="Daftar muthowif hanya muncul setelah tanggal diisi — supaya Anda tidak membuang waktu pada yang tidak available."
+                title={isEn ? 'Select a start date (and end date if more than one day), then tap Search.' : 'Pilih tanggal mulai (dan selesai jika lebih dari satu hari), lalu tekan Cari.'}
+                description={isEn ? 'The muthowif list only appears after dates are filled — so you don\'t waste time on unavailable ones.' : 'Daftar muthowif hanya muncul setelah tanggal diisi — supaya Anda tidak membuang waktu pada yang tidak available.'}
               />
             ) : (
               <EmptyState
                 variant="search"
-                title="Belum ada muthowif yang cocok pada rentang ini"
-                description="Semua sedang libur atau jadwal sudah terisi. Coba ubah tanggal atau kata kunci nama."
-                actionLabel="Cari muthowif"
+                title={isEn ? 'No matching muthowif for this date range' : 'Belum ada muthowif yang cocok pada rentang ini'}
+                description={isEn ? 'All are on leave or fully booked. Try changing the dates or name keyword.' : 'Semua sedang libur atau jadwal sudah terisi. Coba ubah tanggal atau kata kunci nama.'}
+                actionLabel={isEn ? 'Search muthowif' : 'Cari muthowif'}
                 onAction={handleSearch}
               />
             )
@@ -318,13 +320,13 @@ export default function DirectoryScreen({ navigation, route }) {
               {loadingMore ? (
                 <View style={styles.footerLoader}>
                   <ActivityIndicator color={colors.baytgo} />
-                  <Text style={styles.footerText}>Memuat lebih banyak...</Text>
+                  <Text style={styles.footerText}>{isEn ? 'Loading more...' : 'Memuat lebih banyak...'}</Text>
                 </View>
               ) : null}
               <View style={styles.trustStrip}>
                 <ShieldCheck size={16} color={colors.baytgo} strokeWidth={2} />
                 <Text style={styles.trustText}>
-                  Identitas dan layanan diverifikasi tim BaytGo.
+                  {isEn ? 'Identity and services verified by the BaytGo team.' : 'Identitas dan layanan diverifikasi tim BaytGo.'}
                 </Text>
               </View>
             </View>

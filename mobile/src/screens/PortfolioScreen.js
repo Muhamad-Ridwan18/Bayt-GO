@@ -16,9 +16,11 @@ import { Card, EmptyState, SkeletonList } from '../ui';
 import { AlbumCard, PortfolioCreateSection, StatCard } from '../features/portfolio/PortfolioScreenParts';
 import { notifyError, notifySuccess } from '../utils/feedback';
 import { colors, layout, spacing, typography } from '../theme/tokens';
+import { useLocale } from '../utils/locale';
 
 export default function PortfolioScreen({ navigation }) {
   const { token } = useAuth();
+  const locale = useLocale(); const isEn = locale === 'en';
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
   const [submitting, setSubmitting] = useState(false);
@@ -39,7 +41,7 @@ export default function PortfolioScreen({ navigation }) {
       const data = await fetchPortfolio(token);
       setAlbums(data.portfolios || []);
     } catch (err) {
-      Alert.alert('Gagal', err.message || 'Tidak dapat memuat portofolio');
+      Alert.alert(isEn ? 'Failed' : 'Gagal', err.message || (isEn ? 'Cannot load portfolio' : 'Tidak dapat memuat portofolio'));
     } finally {
       setLoading(false);
       setRefreshing(false);
@@ -56,7 +58,7 @@ export default function PortfolioScreen({ navigation }) {
   const pickImages = async () => {
     const permission = await ImagePicker.requestMediaLibraryPermissionsAsync();
     if (!permission.granted) {
-      Alert.alert('Izin diperlukan', 'Izinkan akses galeri untuk menambah foto.');
+      Alert.alert(isEn ? 'Permission required' : 'Izin diperlukan', isEn ? 'Allow gallery access to add photos.' : 'Izinkan akses galeri untuk menambah foto.');
       return;
     }
 
@@ -78,11 +80,11 @@ export default function PortfolioScreen({ navigation }) {
 
   const handleAdd = async () => {
     if (!title.trim()) {
-      Alert.alert('Validasi', 'Judul album wajib diisi.');
+      Alert.alert(isEn ? 'Validation' : 'Validasi', isEn ? 'Album title is required.' : 'Judul album wajib diisi.');
       return;
     }
     if (images.length === 0) {
-      Alert.alert('Validasi', 'Pilih minimal satu foto.');
+      Alert.alert(isEn ? 'Validation' : 'Validasi', isEn ? 'Select at least one photo.' : 'Pilih minimal satu foto.');
       return;
     }
 
@@ -100,24 +102,24 @@ export default function PortfolioScreen({ navigation }) {
     setSubmitting(true);
     try {
       await createPortfolio(token, formData);
-      notifySuccess('Album portofolio ditambahkan.');
+      notifySuccess(isEn ? 'Portfolio album added.' : 'Album portofolio ditambahkan.');
       setTitle('');
       setDescription('');
       setImages([]);
       setFormOpen(false);
       await load(true);
     } catch (err) {
-      notifyError(err.message || 'Tidak dapat menambah portofolio');
+      notifyError(err.message || (isEn ? 'Cannot add portfolio' : 'Tidak dapat menambah portofolio'));
     } finally {
       setSubmitting(false);
     }
   };
 
   const handleDelete = (item) => {
-    Alert.alert('Hapus album?', `Hapus "${item.title}"?`, [
-      { text: 'Batal', style: 'cancel' },
+    Alert.alert(isEn ? 'Delete album?' : 'Hapus album?', isEn ? `Delete "${item.title}"?` : `Hapus "${item.title}"?`, [
+      { text: isEn ? 'Cancel' : 'Batal', style: 'cancel' },
       {
-        text: 'Hapus',
+        text: isEn ? 'Delete' : 'Hapus',
         style: 'destructive',
         onPress: async () => {
           setDeletingId(item.id);
@@ -125,7 +127,7 @@ export default function PortfolioScreen({ navigation }) {
             await deletePortfolio(token, item.id);
             await load(true);
           } catch (err) {
-            Alert.alert('Gagal', err.message || 'Tidak dapat menghapus album');
+            Alert.alert(isEn ? 'Failed' : 'Gagal', err.message || (isEn ? 'Cannot delete album' : 'Tidak dapat menghapus album'));
           } finally {
             setDeletingId(null);
           }
@@ -141,12 +143,12 @@ export default function PortfolioScreen({ navigation }) {
       const urls = (data.portfolio?.images || []).map((img) => img.url);
       if (urls.length === 0 && item.cover_url) urls.push(item.cover_url);
       if (urls.length === 0) {
-        Alert.alert('Info', 'Album belum memiliki foto.');
+        Alert.alert('Info', isEn ? 'Album has no photos yet.' : 'Album belum memiliki foto.');
         return;
       }
       setLightbox({ visible: true, images: urls, index: 0, title: item.title });
     } catch (err) {
-      Alert.alert('Gagal', err.message || 'Tidak dapat memuat foto album');
+      Alert.alert(isEn ? 'Failed' : 'Gagal', err.message || (isEn ? 'Cannot load album photos' : 'Tidak dapat memuat foto album'));
     } finally {
       setPreviewingId(null);
     }
@@ -154,7 +156,7 @@ export default function PortfolioScreen({ navigation }) {
 
   return (
     <View style={styles.container}>
-      <TabPageHeader title="Portofolio" subtitle="Galeri dokumentasi layanan Anda" />
+      <TabPageHeader title={isEn ? 'Portfolio' : 'Portofolio'} subtitle={isEn ? 'Your service documentation gallery' : 'Galeri dokumentasi layanan Anda'} />
 
       {loading && !refreshing ? (
         <SkeletonList count={3} style={styles.skeleton} />
@@ -171,13 +173,13 @@ export default function PortfolioScreen({ navigation }) {
             <Card style={styles.infoBanner} padding={spacing.lg} elevated={false}>
               <Images size={18} color={colors.baytgo} strokeWidth={2} />
               <Text style={styles.infoText}>
-                Unggah foto terbaik saat membimbing jamaah. Album ini tampil di profil publik Anda.
+                {isEn ? 'Upload your best photos while guiding pilgrims. These albums appear on your public profile.' : 'Unggah foto terbaik saat membimbing jamaah. Album ini tampil di profil publik Anda.'}
               </Text>
             </Card>
 
             <View style={styles.statsRow}>
-              <StatCard label="Album" value={albums.length} Icon={Images} />
-              <StatCard label="Total foto" value={totalPhotos} Icon={Camera} />
+              <StatCard label={isEn ? 'Albums' : 'Album'} value={albums.length} Icon={Images} />
+              <StatCard label={isEn ? 'Total photos' : 'Total foto'} value={totalPhotos} Icon={Camera} />
             </View>
 
             <PortfolioCreateSection
@@ -194,13 +196,13 @@ export default function PortfolioScreen({ navigation }) {
               onSubmit={handleAdd}
             />
 
-            <Text style={styles.sectionTitle}>Album saya</Text>
+            <Text style={styles.sectionTitle}>{isEn ? 'My albums' : 'Album saya'}</Text>
 
             {albums.length === 0 ? (
               <EmptyState
                 variant="package"
-                title="Belum ada album"
-                description="Tambahkan album pertama untuk menampilkan dokumentasi layanan ke jamaah."
+                title={isEn ? 'No albums yet' : 'Belum ada album'}
+                description={isEn ? 'Add your first album to showcase your service documentation to pilgrims.' : 'Tambahkan album pertama untuk menampilkan dokumentasi layanan ke jamaah.'}
               />
             ) : (
               <View style={styles.grid}>

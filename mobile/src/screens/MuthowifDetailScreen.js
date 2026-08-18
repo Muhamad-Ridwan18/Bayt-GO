@@ -23,9 +23,11 @@ import { resolveMediaUrl } from '../utils/mediaUrl';
 import { WEB_BASE_URL } from '../config/api';
 import { useHideTabBarOnFocus } from '../hooks/useHideTabBarOnFocus';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import { useLocale } from '../utils/locale';
 
 export default function MuthowifDetailScreen({ navigation, route }) {
   const { token, isAuthenticated, user } = useAuth();
+  const locale = useLocale(); const isEn = locale === 'en';
   const { id, startDate, endDate, autoBook } = route.params || {};
 
   const [loading, setLoading] = useState(true);
@@ -65,7 +67,7 @@ export default function MuthowifDetailScreen({ navigation, route }) {
       setBookingIntent(data.bookingIntent || null);
       setError(null);
     } catch (err) {
-      setError(err.message || 'Gagal memuat profil');
+      setError(err.message || (isEn ? 'Failed to load profile' : 'Gagal memuat profil'));
     } finally {
       setLoading(false);
     }
@@ -98,24 +100,24 @@ export default function MuthowifDetailScreen({ navigation, route }) {
 
   const handleBook = () => {
     if (!isAuthenticated) {
-      Alert.alert('Masuk diperlukan', 'Silakan masuk sebagai jamaah untuk memesan.', [
-        { text: 'Batal', style: 'cancel' },
-        { text: 'Masuk', onPress: () => navigateRoot(navigation, 'Login') },
+      Alert.alert(isEn ? 'Login required' : 'Masuk diperlukan', isEn ? 'Please log in as a pilgrim to book.' : 'Silakan masuk sebagai jamaah untuk memesan.', [
+        { text: isEn ? 'Cancel' : 'Batal', style: 'cancel' },
+        { text: isEn ? 'Login' : 'Masuk', onPress: () => navigateRoot(navigation, 'Login') },
       ]);
       return;
     }
     if (user?.role !== 'customer') {
-      Alert.alert('Akses terbatas', 'Hanya akun jamaah yang dapat memesan muthowif.');
+      Alert.alert(isEn ? 'Restricted access' : 'Akses terbatas', isEn ? 'Only pilgrim accounts can book a muthowif.' : 'Hanya akun jamaah yang dapat memesan muthowif.');
       return;
     }
     if (!bookingIntent?.can_submit) {
       const reason = bookingIntent?.reason;
       if (reason === 'missing_dates') {
-        Alert.alert('Pilih tanggal', 'Kembali ke pencarian dan isi tanggal perjalanan terlebih dahulu.');
+        Alert.alert(isEn ? 'Select dates' : 'Pilih tanggal', isEn ? 'Go back to search and fill in travel dates first.' : 'Kembali ke pencarian dan isi tanggal perjalanan terlebih dahulu.');
       } else if (reason === 'jadwal_tidak_tersedia') {
-        Alert.alert('Tidak tersedia', 'Muthowif tidak tersedia pada tanggal yang dipilih.');
+        Alert.alert(isEn ? 'Not available' : 'Tidak tersedia', isEn ? 'Muthowif is not available on the selected dates.' : 'Muthowif tidak tersedia pada tanggal yang dipilih.');
       } else {
-        Alert.alert('Pilih tanggal', 'Isi tanggal perjalanan di halaman pencarian sebelum memesan.');
+        Alert.alert(isEn ? 'Select dates' : 'Pilih tanggal', isEn ? 'Fill in travel dates on the search page before booking.' : 'Isi tanggal perjalanan di halaman pencarian sebelum memesan.');
       }
       return;
     }
@@ -151,16 +153,16 @@ export default function MuthowifDetailScreen({ navigation, route }) {
             <ChevronLeft size={22} color={colors.baytgo} strokeWidth={2.2} />
           </PressableScale>
         </SafeAreaView>
-        <ErrorState description={error || 'Profil tidak ditemukan'} onRetry={loadDetail} />
+        <ErrorState description={error || (isEn ? 'Profile not found' : 'Profil tidak ditemukan')} onRetry={loadDetail} />
       </View>
     );
   }
 
   const langs = profile.languages || [];
-  const pilgrimStat = profile.confirmed_bookings >= 500 ? '500+' : profile.confirmed_bookings > 0 ? String(profile.confirmed_bookings) : 'Belum ada';
+  const pilgrimStat = profile.confirmed_bookings >= 500 ? '500+' : profile.confirmed_bookings > 0 ? String(profile.confirmed_bookings) : (isEn ? 'None yet' : 'Belum ada');
   const canBook = bookingIntent?.can_submit && services.length > 0;
   const hasReviews = profile.reviews_count > 0 && profile.rating;
-  const reviewStat = hasReviews ? `${profile.rating} (${profile.reviews_count})` : 'Belum ada';
+  const reviewStat = hasReviews ? `${profile.rating} (${profile.reviews_count})` : (isEn ? 'None yet' : 'Belum ada');
   const profileKey = profile.slug || profile.id;
   const profileUrl = profileKey
     ? `${WEB_BASE_URL.replace(/\/$/, '')}/layanan/${profileKey}`
@@ -170,7 +172,7 @@ export default function MuthowifDetailScreen({ navigation, route }) {
     if (!profileUrl) return;
     try {
       await Share.share({
-        message: `Lihat profil muthowif ${profile.name} di BaytGo: ${profileUrl}`,
+        message: isEn ? `Check out ${profile.name}'s muthowif profile on BaytGo: ${profileUrl}` : `Lihat profil muthowif ${profile.name} di BaytGo: ${profileUrl}`,
         url: profileUrl,
       });
     } catch { /* dismissed */ }
@@ -202,7 +204,7 @@ export default function MuthowifDetailScreen({ navigation, route }) {
             {profile.is_verified !== false ? (
               <View style={styles.verifiedBelow}>
                 <ShieldCheck size={12} color={colors.success} strokeWidth={2.5} />
-                <Text style={styles.verifiedBelowText}>Terverifikasi</Text>
+                <Text style={styles.verifiedBelowText}>{isEn ? 'Verified' : 'Terverifikasi'}</Text>
               </View>
             ) : null}
           </View>
@@ -214,7 +216,7 @@ export default function MuthowifDetailScreen({ navigation, route }) {
 
             {profile.is_new ? (
               <View style={styles.newChip}>
-                <Text style={styles.newChipText}>Baru di marketplace</Text>
+                <Text style={styles.newChipText}>{isEn ? 'New on marketplace' : 'Baru di marketplace'}</Text>
               </View>
             ) : null}
 
@@ -223,11 +225,11 @@ export default function MuthowifDetailScreen({ navigation, route }) {
                 <>
                   <Stars rating={parseFloat(profile.rating) || 0} size={15} />
                   <Text style={styles.profileRatingText}>
-                    {profile.rating} · {profile.reviews_count} ulasan
+                    {profile.rating} · {profile.reviews_count} {isEn ? 'reviews' : 'ulasan'}
                   </Text>
                 </>
               ) : (
-                <Text style={styles.profileRatingEmpty}>Belum ada ulasan</Text>
+                <Text style={styles.profileRatingEmpty}>{isEn ? 'No reviews yet' : 'Belum ada ulasan'}</Text>
               )}
             </View>
 
@@ -249,11 +251,11 @@ export default function MuthowifDetailScreen({ navigation, route }) {
             ) : null}
 
             <View style={styles.statBar}>
-              <StatCell icon={Briefcase} label="Pengalaman" value={profile.experience_summary || 'Belum diisi'} />
+              <StatCell icon={Briefcase} label={isEn ? 'Experience' : 'Pengalaman'} value={profile.experience_summary || (isEn ? 'Not filled' : 'Belum diisi')} />
               <View style={styles.statDivider} />
-              <StatCell icon={User} label="Jamaah" value={pilgrimStat} />
+              <StatCell icon={User} label={isEn ? 'Pilgrims' : 'Jamaah'} value={pilgrimStat} />
               <View style={styles.statDivider} />
-              <StatCell icon={Star} label="Ulasan" value={reviewStat} />
+              <StatCell icon={Star} label={isEn ? 'Reviews' : 'Ulasan'} value={reviewStat} />
             </View>
           </Card>
 
@@ -273,16 +275,16 @@ export default function MuthowifDetailScreen({ navigation, route }) {
                   {startDate}{endDate && endDate !== startDate ? ` — ${endDate}` : ''}
                 </Text>
                 {bookingIntent?.reason === 'jadwal_tidak_tersedia' ? (
-                  <Text style={styles.dateBannerWarnText}>Tidak tersedia pada tanggal ini</Text>
+                  <Text style={styles.dateBannerWarnText}>{isEn ? 'Not available on these dates' : 'Tidak tersedia pada tanggal ini'}</Text>
                 ) : bookingIntent?.can_submit ? (
-                  <Text style={styles.dateBannerOkText}>Jadwal tersedia</Text>
+                  <Text style={styles.dateBannerOkText}>{isEn ? 'Schedule available' : 'Jadwal tersedia'}</Text>
                 ) : null}
               </View>
             </Card>
           ) : null}
 
           {services.length > 0 ? (
-            <SectionCard title="Paket Layanan" subtitle="Grup atau private — pilih saat pemesanan" icon={Briefcase}>
+            <SectionCard title={isEn ? 'Service Packages' : 'Paket Layanan'} subtitle={isEn ? 'Group or private — choose when booking' : 'Grup atau private — pilih saat pemesanan'} icon={Briefcase}>
               {services.map((service) => (
                 <PackageCard key={service.id} service={service} />
               ))}
@@ -290,8 +292,8 @@ export default function MuthowifDetailScreen({ navigation, route }) {
           ) : null}
 
           <SectionCard
-            title="Layanan Tambahan (Add-on)"
-            subtitle={allAddOns.length > 0 ? `${allAddOns.length} opsi tersedia · pilih saat booking` : 'Belum ada add-on dipublikasikan'}
+            title={isEn ? 'Add-on Services' : 'Layanan Tambahan (Add-on)'}
+            subtitle={allAddOns.length > 0 ? (isEn ? `${allAddOns.length} options available · select when booking` : `${allAddOns.length} opsi tersedia · pilih saat booking`) : (isEn ? 'No add-ons published yet' : 'Belum ada add-on dipublikasikan')}
             icon={CirclePlus}
             iconBg={colors.goldLight}
           >
@@ -304,18 +306,18 @@ export default function MuthowifDetailScreen({ navigation, route }) {
             ) : (
               <EmptyState
                 variant="package"
-                title="Belum ada add-on"
-                description="Muthowif belum menambahkan layanan tambahan. Hotel same-day & transport sudah termasuk di paket jika tersedia."
+                title={isEn ? 'No add-ons yet' : 'Belum ada add-on'}
+                description={isEn ? 'Muthowif has not added extra services. Same-day hotel & transport are included in the package if available.' : 'Muthowif belum menambahkan layanan tambahan. Hotel same-day & transport sudah termasuk di paket jika tersedia.'}
               />
             )}
           </SectionCard>
 
           {profile.bio || (profile.specializations || []).length > 0 ? (
-            <SectionCard title="Tentang muthowif" icon={User}>
+            <SectionCard title={isEn ? 'About muthowif' : 'Tentang muthowif'} icon={User}>
               {profile.bio ? <Text style={partStyles.bioText}>{profile.bio}</Text> : null}
               {(profile.specializations || []).length > 0 ? (
                 <>
-                  <Text style={partStyles.tagsLabel}>Spesialisasi</Text>
+                  <Text style={partStyles.tagsLabel}>{isEn ? 'Specializations' : 'Spesialisasi'}</Text>
                   <View style={partStyles.tagsRow}>
                     {profile.specializations.map((tag) => (
                       <View key={tag} style={partStyles.tag}>
@@ -328,14 +330,14 @@ export default function MuthowifDetailScreen({ navigation, route }) {
             </SectionCard>
           ) : null}
 
-          <SectionCard title="Studi & pengalaman" icon={GraduationCap} iconBg={colors.goldLight}>
+          <SectionCard title={isEn ? 'Education & experience' : 'Studi & pengalaman'} icon={GraduationCap} iconBg={colors.goldLight}>
             {(profile.educations || []).length === 0 && (profile.work_experiences || []).length === 0 ? (
-              <Text style={partStyles.muted}>Belum diisi oleh muthowif.</Text>
+              <Text style={partStyles.muted}>{isEn ? 'Not filled by muthowif.' : 'Belum diisi oleh muthowif.'}</Text>
             ) : (
               <View style={styles.timeline}>
                 {(profile.educations || []).length > 0 ? (
                   <View style={styles.timelineBlock}>
-                    <Text style={styles.timelineLabel}>Pendidikan</Text>
+                    <Text style={styles.timelineLabel}>{isEn ? 'Education' : 'Pendidikan'}</Text>
                     {(profile.educations || []).map((item) => (
                       <Text key={item} style={styles.timelineItem}>{item}</Text>
                     ))}
@@ -343,7 +345,7 @@ export default function MuthowifDetailScreen({ navigation, route }) {
                 ) : null}
                 {(profile.work_experiences || []).length > 0 ? (
                   <View style={styles.timelineBlock}>
-                    <Text style={styles.timelineLabel}>Pengalaman</Text>
+                    <Text style={styles.timelineLabel}>{isEn ? 'Experience' : 'Pengalaman'}</Text>
                     {(profile.work_experiences || []).map((item) => (
                       <Text key={item} style={styles.timelineItem}>{item}</Text>
                     ))}
@@ -354,13 +356,13 @@ export default function MuthowifDetailScreen({ navigation, route }) {
           </SectionCard>
 
           <SectionCard
-            title="Galeri foto"
-            subtitle={portfoliosCount > 0 ? `${portfoliosCount} album` : null}
+            title={isEn ? 'Photo gallery' : 'Galeri foto'}
+            subtitle={portfoliosCount > 0 ? `${portfoliosCount} ${isEn ? 'albums' : 'album'}` : null}
             icon={Images}
             iconBg="#F3E8FF"
           >
             {portfolios.length === 0 ? (
-              <Text style={partStyles.muted}>Muthowif belum menambahkan foto portfolio.</Text>
+              <Text style={partStyles.muted}>{isEn ? 'Muthowif has not added portfolio photos.' : 'Muthowif belum menambahkan foto portfolio.'}</Text>
             ) : (
               <>
                 <FlashList
@@ -382,22 +384,22 @@ export default function MuthowifDetailScreen({ navigation, route }) {
                 />
                 {portfoliosCount > portfolios.length ? (
                   <PressableScale onPress={loadAllPortfolios} haptic="light" style={styles.seeAllBtn}>
-                    <Text style={styles.seeAllText}>Lihat semua foto ({portfoliosCount})</Text>
+                    <Text style={styles.seeAllText}>{isEn ? `See all photos (${portfoliosCount})` : `Lihat semua foto (${portfoliosCount})`}</Text>
                   </PressableScale>
                 ) : null}
               </>
             )}
           </SectionCard>
 
-          <SectionCard title="Ulasan Jamaah" icon={Star} iconBg={colors.goldLight}>
+          <SectionCard title={isEn ? 'Pilgrim Reviews' : 'Ulasan Jamaah'} icon={Star} iconBg={colors.goldLight}>
             {reviews.length === 0 ? (
-              <Text style={partStyles.muted}>Belum ada ulasan untuk muthowif ini.</Text>
+              <Text style={partStyles.muted}>{isEn ? 'No reviews for this muthowif yet.' : 'Belum ada ulasan untuk muthowif ini.'}</Text>
             ) : (
               <>
                 <View style={partStyles.reviewSummary}>
                   <Text style={partStyles.reviewSummaryScore}>{profile.rating}</Text>
                   <Stars rating={parseFloat(profile.rating) || 0} size={16} />
-                  <Text style={partStyles.reviewSummaryCount}>{profile.reviews_count} ulasan</Text>
+                  <Text style={partStyles.reviewSummaryCount}>{profile.reviews_count} {isEn ? 'reviews' : 'ulasan'}</Text>
                 </View>
                 {reviews.map((review) => (
                   <ReviewItem key={review.id} review={review} />
@@ -409,32 +411,32 @@ export default function MuthowifDetailScreen({ navigation, route }) {
           <Card style={styles.trustBar} padding={spacing.lg} elevated={false}>
             <View style={styles.trustItem}>
               <ShieldCheck size={18} color={colors.success} strokeWidth={2} />
-              <Text style={styles.trustText}>Identitas terverifikasi</Text>
+              <Text style={styles.trustText}>{isEn ? 'Verified identity' : 'Identitas terverifikasi'}</Text>
             </View>
             <View style={styles.trustItem}>
               <Lock size={18} color={colors.success} strokeWidth={2} />
-              <Text style={styles.trustText}>Pembayaran aman</Text>
+              <Text style={styles.trustText}>{isEn ? 'Secure payment' : 'Pembayaran aman'}</Text>
             </View>
             <View style={styles.trustItem}>
               <Headphones size={18} color={colors.success} strokeWidth={2} />
-              <Text style={styles.trustText}>Dukungan Bayt-GO</Text>
+              <Text style={styles.trustText}>{isEn ? 'Bayt-GO support' : 'Dukungan Bayt-GO'}</Text>
             </View>
           </Card>
 
           <SectionCard
-            title="Jadwal tidak tersedia (libur)"
-            subtitle="Tanggal berikut muthowif tidak tersedia. Di luar itu, jadwal bisa sudah terisi — gunakan pencarian tanggal di daftar."
+            title={isEn ? 'Unavailable schedule (off days)' : 'Jadwal tidak tersedia (libur)'}
+            subtitle={isEn ? 'The following dates the muthowif is unavailable. Outside of these, the schedule may already be full — use date search in the listing.' : 'Tanggal berikut muthowif tidak tersedia. Di luar itu, jadwal bisa sudah terisi — gunakan pencarian tanggal di daftar.'}
             icon={Calendar}
             iconBg={colors.warningLight}
           >
             {blockedDates.length === 0 ? (
-              <Text style={partStyles.muted}>Belum ada tanggal libur yang diumumkan (atau semua tanggal sudah lewat).</Text>
+              <Text style={partStyles.muted}>{isEn ? 'No off days announced (or all dates have passed).' : 'Belum ada tanggal libur yang diumumkan (atau semua tanggal sudah lewat).'}</Text>
             ) : (
               <>
                 <PressableScale onPress={() => setShowBlocked((v) => !v)} haptic="light">
                   <View style={styles.blockedToggleRow}>
                     <Text style={styles.blockedToggleText}>
-                      {blockedDates.length} tanggal libur / tidak tersedia
+                      {blockedDates.length} {isEn ? 'off days / unavailable' : 'tanggal libur / tidak tersedia'}
                     </Text>
                     {showBlocked ? (
                       <ChevronUp size={18} color={colors.textSecondary} strokeWidth={2} />
@@ -460,12 +462,12 @@ export default function MuthowifDetailScreen({ navigation, route }) {
       </ScrollView>
 
       <StickyFooter
-        priceLabel="Mulai dari"
+        priceLabel={isEn ? 'Starting from' : 'Mulai dari'}
         priceValue={formatIdr(profile.start_price)}
-        priceSuffix="/hari"
+        priceSuffix={isEn ? '/day' : '/hari'}
       >
         <Button
-          label={canBook ? 'Pesan Muthowif' : isAuthenticated ? 'Pilih Tanggal Dulu' : 'Masuk & Pesan'}
+          label={canBook ? (isEn ? 'Book Muthowif' : 'Pesan Muthowif') : isAuthenticated ? (isEn ? 'Select Dates First' : 'Pilih Tanggal Dulu') : (isEn ? 'Login & Book' : 'Masuk & Pesan')}
           onPress={handleBook}
           icon={<Calendar size={18} color={colors.white} strokeWidth={2} />}
           disabled={isAuthenticated && !canBook}
