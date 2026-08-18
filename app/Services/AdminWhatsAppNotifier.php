@@ -5,6 +5,8 @@ namespace App\Services;
 use App\Jobs\SendWhatsAppTextJob;
 use App\Models\BookingRefundRequest;
 use App\Models\MuthowifProfile;
+use App\Models\MuthowifWithdrawal;
+use App\Support\AffiliateBankOptions;
 use App\Support\IndonesianNumber;
 use App\Support\IntlPhone;
 use App\Support\WhatsAppNotifySettings;
@@ -89,6 +91,67 @@ final class AdminWhatsAppNotifier
         } catch (Throwable $e) {
             Log::warning('WhatsApp refund admin notify failed', [
                 'refund_id' => $refund->getKey(),
+                'error' => $e->getMessage(),
+            ]);
+        }
+    }
+
+    public function notifyWithdrawalRequested(MuthowifWithdrawal $withdrawal): void
+    {
+        try {
+            if (! WhatsAppNotifySettings::enabled('withdrawal_admin')) {
+                return;
+            }
+
+            if (! WhatsAppNotifySettings::hasToken()) {
+                return;
+            }
+
+            $numbers = WhatsAppNotifySettings::adminNumbers();
+            if ($numbers === []) {
+                return;
+            }
+
+            $withdrawal->loadMissing('muthowifProfile.user');
+
+            $locale = config('app.locale');
+            $message = $this->withLocale($locale, function () use ($withdrawal, $locale): string {
+                $muthowifName = $withdrawal->muthowifProfile?->user?->name ?? __('whatsapp.fallback_muthowif', [], $locale);
+                $amountFmt = IndonesianNumber::formatThousands((string) (int) round((float) $withdrawal->amount));
+                $bankLabel = AffiliateBankOptions::label((string) $withdrawal->beneficiary_bank);
+                $appName = config('app.name', 'BaytGo');
+                $url = route('admin.withdrawals.index');
+
+                $lines = [
+                    __('whatsapp.admin.withdrawal_requested.headline', ['app' => $appName], $locale),
+                    '',
+                    __('whatsapp.admin.withdrawal_requested.body', ['name' => $muthowifName], $locale),
+                    '',
+                    __('whatsapp.admin.withdrawal_requested.amount', ['amount' => $amountFmt], $locale),
+                    __('whatsapp.admin.withdrawal_requested.bank', [
+                        'bank' => $bankLabel,
+                        'holder' => $withdrawal->beneficiary_name,
+                        'number' => $withdrawal->beneficiary_account,
+                    ], $locale),
+                ];
+
+                if (filled($withdrawal->notes)) {
+                    $lines[] = '';
+                    $lines[] = __('whatsapp.admin.withdrawal_requested.note_heading', [], $locale);
+                    $lines[] = $withdrawal->notes;
+                }
+
+                $lines[] = '';
+                $lines[] = __('whatsapp.admin.withdrawal_requested.open', [], $locale);
+                $lines[] = $url;
+
+                return implode("\n", $lines);
+            });
+
+            $this->sendToPhoneNumbers($numbers, $message, (string) $withdrawal->getKey());
+        } catch (Throwable $e) {
+            Log::warning('WhatsApp withdrawal admin notify failed', [
+                'withdrawal_id' => $withdrawal->getKey(),
                 'error' => $e->getMessage(),
             ]);
         }

@@ -533,6 +533,7 @@ return [
             'refund_transfer_proof' => 'Refund transfer proof → pilgrim',
             'withdrawal_transfer_proof' => 'Withdrawal transfer proof → muthowif',
             'refund_admin' => 'Refund request → admin',
+            'withdrawal_admin' => 'Muthowif withdrawal request → admin',
             'muthowif_registration_admin' => 'New muthowif registration → admin',
             'emergency_admin_report' => 'Incident report → admin',
             'emergency_customer_report' => 'Incident status update → pilgrim',

@@ -96,6 +96,11 @@ class WhatsAppNotifySettings
                 'group' => 'admin',
                 'default' => true,
             ],
+            'withdrawal_admin' => [
+                'label' => 'admin.whatsapp_notify.toggles.withdrawal_admin',
+                'group' => 'admin',
+                'default' => true,
+            ],
             'muthowif_registration_admin' => [
                 'label' => 'admin.whatsapp_notify.toggles.muthowif_registration_admin',
                 'group' => 'admin',

@@ -4,6 +4,7 @@ namespace App\Http\Controllers\Api\Muthowif;
 
 use App\Events\WithdrawalRequested;
 use App\Http\Controllers\Controller;
+use App\Jobs\NotifyAdminsOfWithdrawalRequested;
 use App\Models\MuthowifProfile;
 use App\Models\MuthowifWithdrawal;
 use App\Services\MuthowifWalletLedger;
@@ -84,6 +85,7 @@ class WalletController extends Controller
         ]);
 
         WithdrawalRequested::dispatch($withdrawal);
+        NotifyAdminsOfWithdrawalRequested::afterWithdrawalRequested((string) $withdrawal->getKey());
 
         return response()->json([
             'message' => 'Permintaan withdraw berhasil diajukan.',

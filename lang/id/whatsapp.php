@@ -31,6 +31,14 @@ return [
             'note_heading' => '*Catatan jamaah:*',
             'open' => '*Proses di panel admin:*',
         ],
+        'withdrawal_requested' => [
+            'headline' => '*:app* — permintaan withdraw muthowif',
+            'body' => 'Muthowif *:name* mengajukan pencairan dana.',
+            'amount' => '*Nominal:* Rp :amount',
+            'bank' => '*Rekening tujuan:* :bank — :holder (:number)',
+            'note_heading' => '*Catatan:*',
+            'open' => '*Proses di panel admin:*',
+        ],
     ],
     'chat_unreplied' => [
         'greeting' => 'Assalamualaikum :name',

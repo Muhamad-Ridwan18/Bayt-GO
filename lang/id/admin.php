@@ -533,6 +533,7 @@ return [
             'refund_transfer_proof' => 'Bukti transfer refund → jamaah',
             'withdrawal_transfer_proof' => 'Bukti transfer withdraw → muthowif',
             'refund_admin' => 'Pengajuan refund → admin',
+            'withdrawal_admin' => 'Pengajuan withdraw muthowif → admin',
             'muthowif_registration_admin' => 'Pendaftaran muthowif baru → admin',
             'emergency_admin_report' => 'Laporan insiden → admin',
             'emergency_customer_report' => 'Update status insiden → jamaah',

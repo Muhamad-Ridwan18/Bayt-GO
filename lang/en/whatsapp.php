@@ -31,6 +31,14 @@ return [
             'note_heading' => '*Pilgrim note:*',
             'open' => '*Process in admin panel:*',
         ],
+        'withdrawal_requested' => [
+            'headline' => '*:app* — muthowif withdrawal request',
+            'body' => 'Muthowif *:name* requested a payout.',
+            'amount' => '*Amount:* Rp :amount',
+            'bank' => '*Destination account:* :bank — :holder (:number)',
+            'note_heading' => '*Note:*',
+            'open' => '*Process in admin panel:*',
+        ],
     ],
     'chat_unreplied' => [
         'greeting' => 'Assalamualaikum :name',
