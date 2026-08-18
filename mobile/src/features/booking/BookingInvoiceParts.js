@@ -6,6 +6,7 @@ import Card from '../../ui/Card';
 import { colors, gradients, radius, shadows, spacing, typography } from '../../theme/tokens';
 import { formatIdr } from '../../utils/format';
 import { formatDateRange, serviceTypeLabel } from '../../utils/bookingLabels';
+import { useLocale } from '../../utils/locale';
 
 function PartyRow({ icon: Icon, label, value }) {
   return (
@@ -31,8 +32,10 @@ function LineItem({ label, value, bold, accent }) {
 }
 
 export function InvoiceDocument({ invoice }) {
+  const locale = useLocale();
+  const isEn = locale === 'en';
   const paidAt = invoice.paid_at
-    ? new Date(invoice.paid_at).toLocaleString('id-ID', { dateStyle: 'long', timeStyle: 'short' })
+    ? new Date(invoice.paid_at).toLocaleString(isEn ? 'en-US' : 'id-ID', { dateStyle: 'long', timeStyle: 'short' })
     : '—';
 
   return (
@@ -44,61 +47,63 @@ export function InvoiceDocument({ invoice }) {
           </View>
           <View>
             <Text style={styles.brandName}>Bayt-GO</Text>
-            <Text style={styles.brandSub}>Invoice resmi pembayaran</Text>
+            <Text style={styles.brandSub}>{isEn ? 'Official payment invoice' : 'Invoice resmi pembayaran'}</Text>
           </View>
         </View>
         <View style={styles.paidBadge}>
           <BadgeCheck size={14} color={colors.success} strokeWidth={2.5} />
-          <Text style={styles.paidBadgeText}>Lunas</Text>
+          <Text style={styles.paidBadgeText}>{isEn ? 'Paid' : 'Lunas'}</Text>
         </View>
       </LinearGradient>
 
       <View style={styles.paperBody}>
         <View style={styles.amountBlock}>
-          <Text style={styles.amountEyebrow}>Total dibayar</Text>
+          <Text style={styles.amountEyebrow}>{isEn ? 'Total paid' : 'Total dibayar'}</Text>
           <Text style={styles.amountValue}>{formatIdr(invoice.amounts?.total || 0)}</Text>
           <Text style={styles.amountMeta}>{invoice.booking_code}</Text>
-          <Text style={styles.amountDate}>Dibayar {paidAt}</Text>
+          <Text style={styles.amountDate}>{isEn ? 'Paid ' : 'Dibayar '}{paidAt}</Text>
         </View>
 
         <View style={styles.section}>
-          <Text style={styles.sectionTitle}>Pelanggan</Text>
-          <PartyRow icon={User} label="Nama" value={invoice.customer?.name} />
+          <Text style={styles.sectionTitle}>{isEn ? 'Customer' : 'Pelanggan'}</Text>
+          <PartyRow icon={User} label={isEn ? 'Name' : 'Nama'} value={invoice.customer?.name} />
           <PartyRow icon={Mail} label="Email" value={invoice.customer?.email} />
-          <PartyRow icon={Phone} label="Telepon" value={invoice.customer?.phone} />
+          <PartyRow icon={Phone} label={isEn ? 'Phone' : 'Telepon'} value={invoice.customer?.phone} />
         </View>
 
         <View style={styles.section}>
-          <Text style={styles.sectionTitle}>Layanan</Text>
+          <Text style={styles.sectionTitle}>{isEn ? 'Service' : 'Layanan'}</Text>
           <PartyRow icon={User} label="Muthowif" value={invoice.muthowif?.name} />
           <PartyRow
             icon={Building2}
-            label="Periode"
+            label={isEn ? 'Period' : 'Periode'}
             value={formatDateRange(invoice.service_period?.starts_on, invoice.service_period?.ends_on)}
           />
-          <PartyRow icon={User} label="Jamaah" value={String(invoice.pilgrim_count || '—')} />
-          <PartyRow icon={Building2} label="Tipe layanan" value={serviceTypeLabel(invoice.service_type)} />
+          <PartyRow icon={User} label={isEn ? 'Pilgrims' : 'Jamaah'} value={String(invoice.pilgrim_count || '—')} />
+          <PartyRow icon={Building2} label={isEn ? 'Service type' : 'Tipe layanan'} value={serviceTypeLabel(invoice.service_type)} />
         </View>
 
         <View style={styles.section}>
-          <Text style={styles.sectionTitle}>Rincian biaya</Text>
+          <Text style={styles.sectionTitle}>{isEn ? 'Cost breakdown' : 'Rincian biaya'}</Text>
           <View style={styles.linesBox}>
-            <LineItem label="Biaya layanan" value={formatIdr(invoice.amounts?.base || 0)} />
-            <LineItem label="Biaya platform" value={formatIdr(invoice.amounts?.platform_fee || 0)} />
-            <LineItem label="Total dibayar" value={formatIdr(invoice.amounts?.total || 0)} bold accent />
+            <LineItem label={isEn ? 'Service fee' : 'Biaya layanan'} value={formatIdr(invoice.amounts?.base || 0)} />
+            <LineItem label={isEn ? 'Platform fee' : 'Biaya platform'} value={formatIdr(invoice.amounts?.platform_fee || 0)} />
+            <LineItem label={isEn ? 'Total paid' : 'Total dibayar'} value={formatIdr(invoice.amounts?.total || 0)} bold accent />
           </View>
         </View>
 
         {invoice.payment ? (
           <View style={styles.section}>
-            <Text style={styles.sectionTitle}>Pembayaran</Text>
+            <Text style={styles.sectionTitle}>{isEn ? 'Payment' : 'Pembayaran'}</Text>
             <PartyRow icon={CreditCard} label="Order ID" value={invoice.payment.order_id} />
-            <PartyRow icon={CreditCard} label="Metode" value={invoice.payment.payment_type} />
+            <PartyRow icon={CreditCard} label={isEn ? 'Method' : 'Metode'} value={invoice.payment.payment_type} />
           </View>
         ) : null}
 
         <Text style={styles.footerNote}>
-          Dokumen ini diterbitkan secara elektronik oleh Bayt-GO dan sah tanpa tanda tangan basah.
+          {isEn
+            ? 'This document is issued electronically by Bayt-GO and is valid without a wet signature.'
+            : 'Dokumen ini diterbitkan secara elektronik oleh Bayt-GO dan sah tanpa tanda tangan basah.'}
         </Text>
       </View>
     </Card>

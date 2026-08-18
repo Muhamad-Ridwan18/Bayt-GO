@@ -1,6 +1,7 @@
 import React from 'react';
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
 import { useAuth } from '../context/AuthContext';
+import { useLocale } from '../utils/locale';
 import AuthGateScreen from '../screens/AuthGateScreen';
 import ChatListScreen from '../screens/ChatListScreen';
 import ChatRoomScreen from '../screens/ChatRoomScreen';
@@ -17,12 +18,16 @@ const stackScreenOptions = {
 
 function ChatGate(props) {
   const { isAuthenticated } = useAuth();
+  const locale = useLocale();
+  const isEn = locale === 'en';
   if (!isAuthenticated) {
     return (
       <AuthGateScreen
         {...props}
         title="Chat"
-        message="Masuk untuk membaca dan mengirim pesan terkait booking Anda."
+        message={isEn
+          ? 'Sign in to read and send messages related to your bookings.'
+          : 'Masuk untuk membaca dan mengirim pesan terkait booking Anda.'}
       />
     );
   }

@@ -6,6 +6,7 @@ import {
 import { Button, Card, FilterChip, PressableScale } from '../../ui';
 import { colors, radius, spacing, typography } from '../../theme/tokens';
 import { formatIdr } from '../../utils/format';
+import { useLocale } from '../../utils/locale';
 
 export const TABS = [
   { key: 'group', label: 'Group', Icon: Users, types: ['group'] },
@@ -13,15 +14,29 @@ export const TABS = [
 ];
 
 export const TAB_META = {
-  group: {
-    title: 'Layanan Group',
-    subtitle: 'Untuk jemaah bertipe rombongan (group)',
-    hotelHint: 'Harga hotel & transport di bawah hanya dipakai untuk booking group.',
+  id: {
+    group: {
+      title: 'Layanan Group',
+      subtitle: 'Untuk jemaah bertipe rombongan (group)',
+      hotelHint: 'Harga hotel & transport di bawah hanya dipakai untuk booking group.',
+    },
+    private: {
+      title: 'Layanan Private',
+      subtitle: 'Untuk jemaah privat / keluarga',
+      hotelHint: 'Harga hotel & transport di bawah hanya dipakai untuk booking private.',
+    },
   },
-  private: {
-    title: 'Layanan Private',
-    subtitle: 'Untuk jemaah privat / keluarga',
-    hotelHint: 'Harga hotel & transport di bawah hanya dipakai untuk booking private.',
+  en: {
+    group: {
+      title: 'Group Service',
+      subtitle: 'For group-type pilgrims',
+      hotelHint: 'Hotel and transport pricing below is only used for group bookings.',
+    },
+    private: {
+      title: 'Private Service',
+      subtitle: 'For private pilgrims / families',
+      hotelHint: 'Hotel and transport pricing below is only used for private bookings.',
+    },
   },
 };
 
@@ -85,6 +100,8 @@ function CurrencyInput({ value, onChangeText, placeholder }) {
 }
 
 export function ServiceSummary({ service }) {
+  const locale = useLocale();
+  const isEn = locale === 'en';
   const daily = parseRupiahInput(service.daily_price);
   const addOnCount = (service.add_ons || []).length;
   const isComplete = daily > 0 && service.min_pilgrims > 0 && service.max_pilgrims >= service.min_pilgrims;
@@ -96,12 +113,12 @@ export function ServiceSummary({ service }) {
           <Tag size={18} color={colors.baytgo} strokeWidth={2} />
         </View>
         <View style={styles.summaryCopy}>
-          <Text style={styles.summaryTitle}>{service.name || 'Belum diatur'}</Text>
-          <Text style={styles.summaryPrice}>{daily > 0 ? `${formatIdr(daily)} / hari` : 'Harga belum diisi'}</Text>
+          <Text style={styles.summaryTitle}>{service.name || (isEn ? 'Not set yet' : 'Belum diatur')}</Text>
+          <Text style={styles.summaryPrice}>{daily > 0 ? `${formatIdr(daily)} / ${isEn ? 'day' : 'hari'}` : (isEn ? 'Price not set yet' : 'Harga belum diisi')}</Text>
         </View>
         <View style={[styles.statusChip, isComplete ? styles.statusChipOk : styles.statusChipWarn]}>
           <Text style={[styles.statusChipText, isComplete ? styles.statusChipTextOk : styles.statusChipTextWarn]}>
-            {isComplete ? 'Siap' : 'Lengkapi'}
+            {isComplete ? (isEn ? 'Ready' : 'Siap') : (isEn ? 'Complete' : 'Lengkapi')}
           </Text>
         </View>
       </View>
@@ -109,7 +126,7 @@ export function ServiceSummary({ service }) {
         <View style={styles.summaryStat}>
           <Users size={14} color={colors.textSecondary} strokeWidth={2} />
           <Text style={styles.summaryStatText}>
-            {service.min_pilgrims || '—'}–{service.max_pilgrims || '—'} jamaah
+            {service.min_pilgrims || '—'}–{service.max_pilgrims || '—'} {isEn ? 'pilgrims' : 'jamaah'}
           </Text>
         </View>
         {isPrivateType(service.type) ? (
@@ -124,7 +141,9 @@ export function ServiceSummary({ service }) {
 }
 
 export function ServiceForm({ tabKey, service, draft, onDraftChange, onSave, saving }) {
-  const meta = TAB_META[tabKey];
+  const locale = useLocale();
+  const isEn = locale === 'en';
+  const meta = (TAB_META[locale] || TAB_META.id)[tabKey];
   const showAddOns = isPrivateType(service.type);
 
   return (
@@ -134,16 +153,16 @@ export function ServiceForm({ tabKey, service, draft, onDraftChange, onSave, sav
         <Text style={styles.formSub}>{meta.subtitle}</Text>
       </View>
 
-      <FieldLabel>Nama layanan</FieldLabel>
+      <FieldLabel>{isEn ? 'Service name' : 'Nama layanan'}</FieldLabel>
       <TextInput
         style={styles.input}
         value={draft.name}
         onChangeText={(v) => onDraftChange({ ...draft, name: v })}
-        placeholder="Contoh: Layanan Umrah Eksekutif 9 Hari"
+        placeholder={isEn ? 'Example: 9-Day Executive Umrah Service' : 'Contoh: Layanan Umrah Eksekutif 9 Hari'}
         placeholderTextColor={colors.textMuted}
       />
 
-      <FieldLabel>Harga harian</FieldLabel>
+      <FieldLabel>{isEn ? 'Daily price' : 'Harga harian'}</FieldLabel>
       <CurrencyInput
         value={draft.daily_price}
         onChangeText={(v) => onDraftChange({ ...draft, daily_price: v })}
@@ -152,7 +171,7 @@ export function ServiceForm({ tabKey, service, draft, onDraftChange, onSave, sav
 
       <View style={styles.pilgrimRow}>
         <View style={styles.pilgrimField}>
-          <FieldLabel>Min jamaah</FieldLabel>
+          <FieldLabel>{isEn ? 'Min pilgrims' : 'Min jamaah'}</FieldLabel>
           <TextInput
             style={styles.input}
             keyboardType="number-pad"
@@ -163,7 +182,7 @@ export function ServiceForm({ tabKey, service, draft, onDraftChange, onSave, sav
           />
         </View>
         <View style={styles.pilgrimField}>
-          <FieldLabel>Max jamaah</FieldLabel>
+          <FieldLabel>{isEn ? 'Max pilgrims' : 'Max jamaah'}</FieldLabel>
           <TextInput
             style={styles.input}
             keyboardType="number-pad"
@@ -175,12 +194,12 @@ export function ServiceForm({ tabKey, service, draft, onDraftChange, onSave, sav
         </View>
       </View>
 
-      <FieldLabel>Deskripsi</FieldLabel>
+      <FieldLabel>{isEn ? 'Description' : 'Deskripsi'}</FieldLabel>
       <TextInput
         style={[styles.input, styles.textarea]}
         value={draft.description}
         onChangeText={(v) => onDraftChange({ ...draft, description: v })}
-        placeholder="Jelaskan layanan, fasilitas, pendampingan, dll."
+        placeholder={isEn ? 'Explain the service, facilities, assistance, etc.' : 'Jelaskan layanan, fasilitas, pendampingan, dll.'}
         placeholderTextColor={colors.textMuted}
         multiline
         textAlignVertical="top"
@@ -191,14 +210,14 @@ export function ServiceForm({ tabKey, service, draft, onDraftChange, onSave, sav
         <Text style={styles.sectionHint}>{meta.hotelHint}</Text>
       </View>
 
-      <FieldLabel>Harga hotel sama / hari</FieldLabel>
+      <FieldLabel>{isEn ? 'Same hotel price / day' : 'Harga hotel sama / hari'}</FieldLabel>
       <CurrencyInput
         value={draft.same_hotel_price_per_day}
         onChangeText={(v) => onDraftChange({ ...draft, same_hotel_price_per_day: v })}
         placeholder="100.000"
       />
 
-      <FieldLabel>Harga transportasi (flat)</FieldLabel>
+      <FieldLabel>{isEn ? 'Transport price (flat)' : 'Harga transportasi (flat)'}</FieldLabel>
       <CurrencyInput
         value={draft.transport_price_flat}
         onChangeText={(v) => onDraftChange({ ...draft, transport_price_flat: v })}
@@ -207,14 +226,14 @@ export function ServiceForm({ tabKey, service, draft, onDraftChange, onSave, sav
 
       {showAddOns ? (
         <View style={styles.addOnSection}>
-          <FieldLabel hint="Opsi tambahan untuk layanan private beserta harganya">
-            Add-on layanan
+          <FieldLabel hint={isEn ? 'Additional options for private services along with their prices' : 'Opsi tambahan untuk layanan private beserta harganya'}>
+            {isEn ? 'Service add-ons' : 'Add-on layanan'}
           </FieldLabel>
           {(draft.add_ons || []).map((addon, index) => (
             <View key={`addon-${index}`} style={styles.addOnRow}>
               <TextInput
                 style={[styles.input, styles.addOnName]}
-                placeholder="Nama add-on"
+                placeholder={isEn ? 'Add-on name' : 'Nama add-on'}
                 placeholderTextColor={colors.textMuted}
                 value={addon.name}
                 onChangeText={(v) => {
@@ -252,13 +271,15 @@ export function ServiceForm({ tabKey, service, draft, onDraftChange, onSave, sav
             style={styles.addOnBtn}
           >
             <CirclePlus size={18} color={colors.baytgo} strokeWidth={2} />
-            <Text style={styles.addOnBtnText}>Tambah add-on</Text>
+            <Text style={styles.addOnBtnText}>{isEn ? 'Add add-on' : 'Tambah add-on'}</Text>
           </PressableScale>
         </View>
       ) : null}
 
       <Button
-        label={`Simpan ${tabKey === 'group' ? 'Layanan Group' : 'Layanan Private'}`}
+        label={isEn
+          ? `Save ${tabKey === 'group' ? 'Group Service' : 'Private Service'}`
+          : `Simpan ${tabKey === 'group' ? 'Layanan Group' : 'Layanan Private'}`}
         onPress={onSave}
         loading={saving}
         icon={<CheckCircle2 size={18} color={colors.white} strokeWidth={2} />}

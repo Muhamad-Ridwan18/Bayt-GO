@@ -17,6 +17,7 @@ import {
 } from '../utils/phoneCountries';
 import { PressableScale } from '../ui';
 import { colors, spacing, radius, typography } from '../theme/tokens';
+import { useLocale } from '../utils/locale';
 
 export default function PhoneInternationalInput({
   label,
@@ -26,6 +27,8 @@ export default function PhoneInternationalInput({
   onChange,
   hint,
 }) {
+  const locale = useLocale();
+  const isEn = locale === 'en';
   const [pickerOpen, setPickerOpen] = useState(false);
   const [query, setQuery] = useState('');
 
@@ -91,7 +94,7 @@ export default function PhoneInternationalInput({
       <Modal visible={pickerOpen} animationType="slide" onRequestClose={() => setPickerOpen(false)}>
         <View style={styles.modal}>
           <View style={styles.modalHeader}>
-            <Text style={styles.modalTitle}>Pilih negara</Text>
+            <Text style={styles.modalTitle}>{isEn ? 'Select country' : 'Pilih negara'}</Text>
             <PressableScale onPress={() => setPickerOpen(false)} haptic="light">
               <X size={24} color={colors.slate600} strokeWidth={2} />
             </PressableScale>
@@ -100,7 +103,7 @@ export default function PhoneInternationalInput({
             style={styles.search}
             value={query}
             onChangeText={setQuery}
-            placeholder="Cari negara atau kode..."
+            placeholder={isEn ? 'Search country or code...' : 'Cari negara atau kode...'}
             autoCapitalize="none"
           />
           <FlashList
@@ -115,7 +118,7 @@ export default function PhoneInternationalInput({
               </PressableScale>
             )}
             ListEmptyComponent={
-              <Text style={styles.empty}>Negara tidak ditemukan.</Text>
+              <Text style={styles.empty}>{isEn ? 'Country not found.' : 'Negara tidak ditemukan.'}</Text>
             }
           />
         </View>

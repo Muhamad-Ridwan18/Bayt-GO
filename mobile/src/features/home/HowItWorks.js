@@ -1,21 +1,35 @@
 import React from 'react';
 import { StyleSheet, Text, View } from 'react-native';
 import { colors, layout, radius, spacing, typography } from '../../theme/tokens';
+import { useLocale } from '../../utils/locale';
 
 const FALLBACK = {
-  title: 'Cara kerja BaytGo',
-  subtitle: 'Tiga langkah mudah menemukan pendamping ibadah terbaik.',
-  steps: [
-    { title: 'Cari & Pilih', desc: 'Pilih jenis layanan, tanggal, dan pendamping yang sesuai kebutuhan Anda.' },
-    { title: 'Booking & Konfirmasi', desc: 'Selesaikan pemesanan dengan mudah dan dapatkan konfirmasi instan.' },
-    { title: 'Berangkat dengan Tenang', desc: 'Pendamping terverifikasi siap mendampingi perjalanan ibadah Anda.' },
-  ],
+  id: {
+    title: 'Cara kerja BaytGo',
+    subtitle: 'Tiga langkah mudah menemukan pendamping ibadah terbaik.',
+    steps: [
+      { title: 'Cari & Pilih', desc: 'Pilih jenis layanan, tanggal, dan pendamping yang sesuai kebutuhan Anda.' },
+      { title: 'Booking & Konfirmasi', desc: 'Selesaikan pemesanan dengan mudah dan dapatkan konfirmasi instan.' },
+      { title: 'Berangkat dengan Tenang', desc: 'Pendamping terverifikasi siap mendampingi perjalanan ibadah Anda.' },
+    ],
+  },
+  en: {
+    title: 'How BaytGo works',
+    subtitle: 'Three easy steps to find the best worship companion.',
+    steps: [
+      { title: 'Search & Choose', desc: 'Choose the service type, dates, and companion that fit your needs.' },
+      { title: 'Book & Confirm', desc: 'Complete your booking easily and get instant confirmation.' },
+      { title: 'Travel with Peace of Mind', desc: 'Verified companions are ready to assist your pilgrimage.' },
+    ],
+  },
 };
 
 export default function HowItWorks({ work }) {
-  const title = work?.title || FALLBACK.title;
-  const subtitle = work?.subtitle || FALLBACK.subtitle;
-  const steps = (work?.steps?.length ? work.steps : FALLBACK.steps).slice(0, 3);
+  const locale = useLocale();
+  const fallback = FALLBACK[locale] || FALLBACK.id;
+  const title = work?.title || fallback.title;
+  const subtitle = work?.subtitle || fallback.subtitle;
+  const steps = (work?.steps?.length ? work.steps : fallback.steps).slice(0, 3);
 
   return (
     <View style={styles.wrap}>

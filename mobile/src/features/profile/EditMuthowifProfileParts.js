@@ -6,8 +6,11 @@ import { Card, PressableScale, SingleImagePreview } from '../../ui';
 import { colors, radius, spacing, typography } from '../../theme/tokens';
 import { isImageUpload } from '../../utils/uploadPreview';
 import { resolveMediaUrl } from '../../utils/mediaUrl';
+import { useLocale } from '../../utils/locale';
 
 export function UploadField({ label, imageUrl, localUri, uploading, onPick, onClear }) {
+  const locale = useLocale();
+  const isEn = locale === 'en';
   const uri = localUri || (imageUrl ? resolveMediaUrl(imageUrl) : null);
 
   return (
@@ -27,7 +30,7 @@ export function UploadField({ label, imageUrl, localUri, uploading, onPick, onCl
           <Card style={styles.uploadBtn} padding={0} elevated={false}>
             <View style={styles.uploadPlaceholder}>
               <Camera size={28} color={colors.textMuted} strokeWidth={1.8} />
-              <Text style={styles.uploadPlaceholderText}>Pilih foto</Text>
+              <Text style={styles.uploadPlaceholderText}>{isEn ? 'Choose photo' : 'Pilih foto'}</Text>
             </View>
             {uploading ? (
               <View style={styles.uploadOverlay}>
@@ -39,7 +42,7 @@ export function UploadField({ label, imageUrl, localUri, uploading, onPick, onCl
       )}
       {uri ? (
         <PressableScale onPress={onPick} disabled={uploading} haptic="light" style={styles.changeBtn}>
-          <Text style={styles.changeText}>{uploading ? 'Mengunggah…' : 'Ganti foto'}</Text>
+          <Text style={styles.changeText}>{uploading ? (isEn ? 'Uploading…' : 'Mengunggah…') : (isEn ? 'Change photo' : 'Ganti foto')}</Text>
         </PressableScale>
       ) : null}
     </View>
@@ -47,6 +50,8 @@ export function UploadField({ label, imageUrl, localUri, uploading, onPick, onCl
 }
 
 export function DocumentRow({ doc, onDelete, deleting }) {
+  const locale = useLocale();
+  const isEn = locale === 'en';
   const url = doc.url ? resolveMediaUrl(doc.url) : doc.uri;
   const showImage = url && (isImageUpload(doc) || doc.url);
 
@@ -60,7 +65,7 @@ export function DocumentRow({ doc, onDelete, deleting }) {
         </View>
       )}
       <Text style={styles.docName} numberOfLines={2}>
-        {doc.name || 'Dokumen pendukung'}
+        {doc.name || (isEn ? 'Supporting document' : 'Dokumen pendukung')}
       </Text>
       <PressableScale onPress={() => onDelete(doc)} disabled={deleting} haptic="light">
         <Trash2 size={20} color={colors.error} strokeWidth={2} />
@@ -70,23 +75,25 @@ export function DocumentRow({ doc, onDelete, deleting }) {
 }
 
 export function DocumentsSection({ documents, uploadingDoc, onAdd, onDelete, deletingDocId }) {
+  const locale = useLocale();
+  const isEn = locale === 'en';
   return (
     <Card style={styles.docsSection} padding={spacing.lg} elevated={false}>
       <View style={styles.docsHeader}>
-        <Text style={styles.uploadLabel}>Dokumen pendukung</Text>
+        <Text style={styles.uploadLabel}>{isEn ? 'Supporting documents' : 'Dokumen pendukung'}</Text>
         <PressableScale onPress={onAdd} disabled={uploadingDoc} haptic="light" style={styles.addDocBtn}>
           {uploadingDoc ? (
             <ActivityIndicator color={colors.baytgo} size="small" />
           ) : (
             <>
               <CirclePlus size={18} color={colors.baytgo} strokeWidth={2} />
-              <Text style={styles.addDocText}>Tambah</Text>
+              <Text style={styles.addDocText}>{isEn ? 'Add' : 'Tambah'}</Text>
             </>
           )}
         </PressableScale>
       </View>
       {documents.length === 0 ? (
-        <Text style={styles.docsEmpty}>Belum ada dokumen pendukung.</Text>
+        <Text style={styles.docsEmpty}>{isEn ? 'No supporting documents yet.' : 'Belum ada dokumen pendukung.'}</Text>
       ) : (
         documents.map((doc) => (
           <DocumentRow

@@ -3,26 +3,44 @@ import { StyleSheet, Text, View } from 'react-native';
 import { ChevronDown } from 'lucide-react-native';
 import PressableScale from '../../ui/PressableScale';
 import { colors, layout, radius, spacing, typography } from '../../theme/tokens';
+import { useLocale } from '../../utils/locale';
 
-const FALLBACK = [
-  {
-    q: 'Bagaimana cara pesan?',
-    a: 'Pilih tanggal perjalanan, jelajahi muthowif yang tersedia, buka profil, dan ikuti langkah pemesanan.',
-  },
-  {
-    q: 'Apakah pembayaran aman?',
-    a: 'Pembayaran diproses melalui mitra checkout terintegrasi; data kartu tidak disimpan di BaytGo.',
-  },
-  {
-    q: 'Bisa batal atau jadwal ulang?',
-    a: 'Kebijakan tergantung tahap pesanan dan layanan; cek ketentuan di tiket Anda atau hubungi support.',
-  },
-];
+const FALLBACK = {
+  id: [
+    {
+      q: 'Bagaimana cara pesan?',
+      a: 'Pilih tanggal perjalanan, jelajahi muthowif yang tersedia, buka profil, dan ikuti langkah pemesanan.',
+    },
+    {
+      q: 'Apakah pembayaran aman?',
+      a: 'Pembayaran diproses melalui mitra checkout terintegrasi; data kartu tidak disimpan di BaytGo.',
+    },
+    {
+      q: 'Bisa batal atau jadwal ulang?',
+      a: 'Kebijakan tergantung tahap pesanan dan layanan; cek ketentuan di tiket Anda atau hubungi support.',
+    },
+  ],
+  en: [
+    {
+      q: 'How do I book?',
+      a: 'Choose your travel dates, browse available muthowif, open a profile, and follow the booking steps.',
+    },
+    {
+      q: 'Is payment secure?',
+      a: 'Payments are processed through integrated checkout partners; card data is not stored in BaytGo.',
+    },
+    {
+      q: 'Can I cancel or reschedule?',
+      a: 'Policies depend on the order stage and service; check the terms on your ticket or contact support.',
+    },
+  ],
+};
 
 export default function FaqSection({ faq }) {
+  const locale = useLocale();
   const [open, setOpen] = useState(0);
   const title = faq?.title || 'FAQ';
-  const items = faq?.items?.length ? faq.items : FALLBACK;
+  const items = faq?.items?.length ? faq.items : (FALLBACK[locale] || FALLBACK.id);
 
   return (
     <View style={styles.wrap}>

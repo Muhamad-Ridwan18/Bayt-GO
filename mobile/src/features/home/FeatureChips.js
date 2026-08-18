@@ -3,11 +3,13 @@ import { Dimensions, ScrollView, StyleSheet, Text, View } from 'react-native';
 import { Accessibility, Camera, MapPin, Moon, User } from 'lucide-react-native';
 import { PressableScale } from '../../ui';
 import { colors, layout, radius, spacing, typography } from '../../theme/tokens';
+import { useLocale } from '../../utils/locale';
 
 const { width: SCREEN_W } = Dimensions.get('window');
 
 /** Mirror web WelcomePageData::buildCategories() */
-export const HOME_CATEGORIES = [
+export const HOME_CATEGORIES = {
+  id: [
   {
     key: 'umroh',
     type: 'layanan',
@@ -57,16 +59,71 @@ export const HOME_CATEGORIES = [
     bg: '#FFF7ED',
     color: '#EA580C',
   },
-];
+  ],
+  en: [
+    {
+      key: 'umroh',
+      type: 'layanan',
+      title: 'Umrah Companion',
+      sub: 'Private & group',
+      Icon: User,
+      bg: '#ECFDF5',
+      color: '#059669',
+    },
+    {
+      key: 'mobility',
+      type: 'support',
+      category: 'mobility',
+      title: 'Wheelchair',
+      sub: 'Mobility in Haram',
+      Icon: Accessibility,
+      bg: '#EFF6FF',
+      color: '#2563EB',
+    },
+    {
+      key: 'umrah',
+      type: 'support',
+      category: 'umrah',
+      title: 'Prayer Companion',
+      sub: 'Worship guidance',
+      Icon: Moon,
+      bg: '#F0FDF4',
+      color: '#16A34A',
+    },
+    {
+      key: 'other',
+      type: 'support',
+      category: 'other',
+      title: 'Photographer & Videographer',
+      sub: 'Trip documentation',
+      Icon: Camera,
+      bg: '#F5F3FF',
+      color: '#7C3AED',
+    },
+    {
+      key: 'ziarah',
+      type: 'support',
+      category: 'ziarah',
+      title: 'Raudhah',
+      sub: 'Pilgrimage companion',
+      Icon: MapPin,
+      bg: '#FFF7ED',
+      color: '#EA580C',
+    },
+  ],
+};
 
 export default function FeatureChips({ onCategoryPress, onSeeAll }) {
+  const locale = useLocale();
+  const isEn = locale === 'en';
+  const categories = HOME_CATEGORIES[locale] || HOME_CATEGORIES.id;
   return (
     <View style={styles.wrap}>
       <View style={styles.head}>
-        <Text style={styles.sectionTitle}>Pilih Layanan yang Kamu Butuhkan</Text>
+        <Text style={styles.sectionTitle}>{isEn ? 'Choose the service you need' : 'Pilih Layanan yang Kamu Butuhkan'}</Text>
         {onSeeAll ? (
           <PressableScale onPress={onSeeAll} haptic="light">
-            <Text style={styles.seeAll}>Lihat semua</Text>
+            <Text style={styles.seeAll}>{isEn ? 'See all' : 'Lihat semua'}</Text>
           </PressableScale>
         ) : null}
       </View>
@@ -76,7 +133,7 @@ export default function FeatureChips({ onCategoryPress, onSeeAll }) {
         contentContainerStyle={styles.row}
         nestedScrollEnabled
       >
-        {HOME_CATEGORIES.map((feat) => (
+        {categories.map((feat) => (
           <PressableScale
             key={feat.key}
             onPress={() => onCategoryPress?.(feat)}

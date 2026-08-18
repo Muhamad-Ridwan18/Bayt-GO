@@ -12,7 +12,7 @@ import { colors, motion, radius, shadows, spacing, typography } from '../theme/t
 export default function SearchBar({
   value,
   onChangeText,
-  placeholder = 'Cari…',
+  placeholder = 'Search…',
   style,
   onFocus,
   onBlur,

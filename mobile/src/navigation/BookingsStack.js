@@ -1,6 +1,7 @@
 import React from 'react';
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
 import { useAuth } from '../context/AuthContext';
+import { useLocale } from '../utils/locale';
 import AuthGateScreen from '../screens/AuthGateScreen';
 import BookingsListScreen from '../screens/BookingsListScreen';
 import BookingDetailScreen from '../screens/BookingDetailScreen';
@@ -23,12 +24,16 @@ const stackScreenOptions = {
 
 function BookingsGate(props) {
   const { isAuthenticated } = useAuth();
+  const locale = useLocale();
+  const isEn = locale === 'en';
   if (!isAuthenticated) {
     return (
       <AuthGateScreen
         {...props}
-        title="Pesanan"
-        message="Masuk untuk melihat dan mengelola pesanan muthowif Anda."
+        title={isEn ? 'Orders' : 'Pesanan'}
+        message={isEn
+          ? 'Sign in to view and manage your muthowif orders.'
+          : 'Masuk untuk melihat dan mengelola pesanan muthowif Anda.'}
       />
     );
   }

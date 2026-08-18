@@ -5,14 +5,24 @@ import { Button, Card, FilterSheet, PressableScale } from '../../ui';
 import { colors, radius, spacing, typography } from '../../theme/tokens';
 import { formatIdr } from '../../utils/format';
 import { WEB_BASE_URL } from '../../config/api';
+import { useLocale } from '../../utils/locale';
 
-const TC_POINTS = [
-  'Permintaan pesanan bersifat mengikat setelah muthowif menyetujui dan Anda menyelesaikan pembayaran sesuai ketentuan BaytGo.',
-  'Data dan dokumen yang Anda unggah digunakan untuk verifikasi layanan; pastikan tiket dan dokumen sesuai jadwal perjalanan.',
-  'Muthowif dapat menolak atau membatalkan jika jadwal bentrok, tidak tersedia, atau tidak memenuhi kebijakan.',
-  'Pembayaran, pembatalan, refund, dan reschedule mengikuti kebijakan platform dan yang tercantum pada halaman pesanan.',
-  'Dengan melanjutkan, Anda menyatakan data yang diisi benar dan memahami alur persetujuan serta pembayaran.',
-];
+const TC_POINTS = {
+  id: [
+    'Permintaan pesanan bersifat mengikat setelah muthowif menyetujui dan Anda menyelesaikan pembayaran sesuai ketentuan BaytGo.',
+    'Data dan dokumen yang Anda unggah digunakan untuk verifikasi layanan; pastikan tiket dan dokumen sesuai jadwal perjalanan.',
+    'Muthowif dapat menolak atau membatalkan jika jadwal bentrok, tidak tersedia, atau tidak memenuhi kebijakan.',
+    'Pembayaran, pembatalan, refund, dan reschedule mengikuti kebijakan platform dan yang tercantum pada halaman pesanan.',
+    'Dengan melanjutkan, Anda menyatakan data yang diisi benar dan memahami alur persetujuan serta pembayaran.',
+  ],
+  en: [
+    'Your booking request becomes binding after the muthowif approves it and you complete payment under BaytGo terms.',
+    'The data and documents you upload are used for service verification; make sure tickets and documents match your travel schedule.',
+    'The muthowif may reject or cancel if the schedule conflicts, they are unavailable, or the request does not meet policy.',
+    'Payment, cancellation, refund, and reschedule follow platform policies and what is stated on the order page.',
+    'By continuing, you confirm the submitted data is correct and you understand the approval and payment flow.',
+  ],
+};
 
 export function ServiceOption({ label, active, price, onPress }) {
   return (
@@ -30,19 +40,23 @@ export function ServiceOption({ label, active, price, onPress }) {
 }
 
 export function StepBadges({ step }) {
+  const locale = useLocale();
+  const isEn = locale === 'en';
   return (
     <View style={styles.stepRow}>
       <View style={[styles.stepBadge, step === 1 && styles.stepBadgeActive]}>
-        <Text style={[styles.stepBadgeText, step === 1 && styles.stepBadgeTextActive]}>1 Layanan</Text>
+        <Text style={[styles.stepBadgeText, step === 1 && styles.stepBadgeTextActive]}>1 {isEn ? 'Service' : 'Layanan'}</Text>
       </View>
       <View style={[styles.stepBadge, step === 2 && styles.stepBadgeActive]}>
-        <Text style={[styles.stepBadgeText, step === 2 && styles.stepBadgeTextActive]}>2 Dokumen</Text>
+        <Text style={[styles.stepBadgeText, step === 2 && styles.stepBadgeTextActive]}>2 {isEn ? 'Documents' : 'Dokumen'}</Text>
       </View>
     </View>
   );
 }
 
 export function PilgrimCounter({ value, minPax, maxPax, onChange }) {
+  const locale = useLocale();
+  const isEn = locale === 'en';
   const count = parseInt(value, 10) || minPax;
 
   const handleChangeText = (text) => {
@@ -95,7 +109,9 @@ export function PilgrimCounter({ value, minPax, maxPax, onChange }) {
           <Plus size={20} color={colors.baytgo} strokeWidth={2.5} />
         </PressableScale>
       </View>
-      <Text style={styles.hint}>Min {minPax}, max {maxPax} jamaah — bisa ketik langsung</Text>
+      <Text style={styles.hint}>
+        {isEn ? `Min ${minPax}, max ${maxPax} pilgrims — you can type directly` : `Min ${minPax}, max ${maxPax} jamaah — bisa ketik langsung`}
+      </Text>
     </>
   );
 }
@@ -154,6 +170,8 @@ export function BookingAddonChoices({
   onHotelChange,
   onTransportChange,
 }) {
+  const locale = useLocale();
+  const isEn = locale === 'en';
   if (!canHotel && !canTransport) return null;
 
   const hotelAmount = formatIdr(hotelPricePerDay).replace(/^Rp\s?/, '');
@@ -162,26 +180,26 @@ export function BookingAddonChoices({
     <View style={styles.addonChoices}>
       {canHotel ? (
         <AddonChoiceGroup
-          question="Apakah Anda menyediakan hotel untuk Muthowif?"
+          question={isEn ? 'Will you provide a hotel for the muthowif?' : 'Apakah Anda menyediakan hotel untuk Muthowif?'}
           value={withSameHotel ? 'no' : 'yes'}
           onChange={(next) => onHotelChange(next === 'no')}
           options={[
-            { value: 'yes', label: 'Ya' },
-            { value: 'no', label: `Tidak (+Rp ${hotelAmount}/hari)` },
+            { value: 'yes', label: isEn ? 'Yes' : 'Ya' },
+            { value: 'no', label: isEn ? `No (+Rp ${hotelAmount}/day)` : `Tidak (+Rp ${hotelAmount}/hari)` },
           ]}
         />
       ) : null}
       {canTransport ? (
         <AddonChoiceGroup
-          question="Gunakan layanan penyambutan Muthowif?"
+          question={isEn ? 'Use muthowif pickup service?' : 'Gunakan layanan penyambutan Muthowif?'}
           value={withTransport ? 'yes' : 'no'}
           onChange={(next) => onTransportChange(next === 'yes')}
           options={[
             {
               value: 'yes',
-              label: `Ya (+${formatIdr(transportPriceFlat)} biaya perjalanan Muthowif)`,
+              label: isEn ? `Yes (+${formatIdr(transportPriceFlat)} muthowif travel fee)` : `Ya (+${formatIdr(transportPriceFlat)} biaya perjalanan Muthowif)`,
             },
-            { value: 'no', label: 'Tidak (Bertemu langsung di hotel)' },
+            { value: 'no', label: isEn ? 'No (Meet directly at the hotel)' : 'Tidak (Bertemu langsung di hotel)' },
           ]}
         />
       ) : null}
@@ -200,11 +218,13 @@ export function AddOnToggle({ addon, value, onValueChange }) {
 }
 
 export function BookingEstimateCard({ estimate }) {
+  const locale = useLocale();
+  const isEn = locale === 'en';
   if (!estimate) return null;
 
   return (
     <Card style={styles.estimateCard} padding={spacing.lg} elevated={false}>
-      <Text style={styles.estimateTitle}>Estimasi biaya</Text>
+      <Text style={styles.estimateTitle}>{isEn ? 'Estimated cost' : 'Estimasi biaya'}</Text>
       {estimate.lines.map((line) => (
         <View key={line.key} style={styles.estimateRow}>
           <Text style={styles.estimateLabel}>{line.label}</Text>
@@ -213,22 +233,22 @@ export function BookingEstimateCard({ estimate }) {
       ))}
       <View style={styles.estimateDivider} />
       <View style={styles.estimateRow}>
-        <Text style={styles.estimateLabel}>Subtotal layanan</Text>
+        <Text style={styles.estimateLabel}>{isEn ? 'Service subtotal' : 'Subtotal layanan'}</Text>
         <Text style={styles.estimateValue}>{formatIdr(estimate.base)}</Text>
       </View>
       {estimate.platform_fee > 0 ? (
         <View style={styles.estimateRow}>
           <Text style={styles.estimateLabel}>
-            {`Biaya platform (${estimate.platform_fee_percent}%)`}
+            {isEn ? `Platform fee (${estimate.platform_fee_percent}%)` : `Biaya platform (${estimate.platform_fee_percent}%)`}
           </Text>
           <Text style={styles.estimateValue}>{formatIdr(estimate.platform_fee)}</Text>
         </View>
       ) : null}
       <View style={[styles.estimateRow, styles.estimateTotalRow]}>
-        <Text style={styles.estimateTotalLabel}>Total estimasi</Text>
+        <Text style={styles.estimateTotalLabel}>{isEn ? 'Estimated total' : 'Total estimasi'}</Text>
         <Text style={styles.estimateTotalValue}>{formatIdr(estimate.total_payable)}</Text>
       </View>
-      <Text style={styles.estimateHint}>Perkiraan sebelum konfirmasi muthowif</Text>
+      <Text style={styles.estimateHint}>{isEn ? 'Estimate before muthowif confirmation' : 'Perkiraan sebelum konfirmasi muthowif'}</Text>
     </Card>
   );
 }
@@ -265,16 +285,19 @@ export function TermsConsentSheet({
   onAgreeChange,
   onConfirm,
 }) {
+  const locale = useLocale();
+  const isEn = locale === 'en';
+  const points = TC_POINTS[locale] || TC_POINTS.id;
   return (
     <FilterSheet
       visible={visible}
       onClose={onClose}
-      title="Syarat & ketentuan"
+      title={isEn ? 'Terms & conditions' : 'Syarat & ketentuan'}
       footer={(
         <>
-          <Button label="Batal" variant="secondary" onPress={onClose} />
+          <Button label={isEn ? 'Cancel' : 'Batal'} variant="secondary" onPress={onClose} />
           <Button
-            label="Setuju dan kirim"
+            label={isEn ? 'Agree and submit' : 'Setuju dan kirim'}
             onPress={onConfirm}
             disabled={!agreed}
             loading={loading}
@@ -283,7 +306,7 @@ export function TermsConsentSheet({
       )}
     >
       <ScrollView style={styles.tcScroll} showsVerticalScrollIndicator={false}>
-        {TC_POINTS.map((point) => (
+        {points.map((point) => (
           <View key={point} style={styles.tcPoint}>
             <Text style={styles.tcBullet}>•</Text>
             <Text style={styles.tcPointText}>{point}</Text>
@@ -293,7 +316,7 @@ export function TermsConsentSheet({
           onPress={() => Linking.openURL(`${WEB_BASE_URL.replace(/\/$/, '')}/terms`)}
           haptic="light"
         >
-          <Text style={styles.tcLink}>Baca syarat dan ketentuan lengkap</Text>
+          <Text style={styles.tcLink}>{isEn ? 'Read the full terms and conditions' : 'Baca syarat dan ketentuan lengkap'}</Text>
         </PressableScale>
         <PressableScale
           onPress={() => onAgreeChange(!agreed)}
@@ -303,7 +326,7 @@ export function TermsConsentSheet({
           <View style={[styles.tcBox, agreed && styles.tcBoxOn]}>
             {agreed ? <Check size={14} color={colors.white} strokeWidth={3} /> : null}
           </View>
-          <Text style={styles.tcCheckLabel}>Saya telah membaca dan menyetujui syarat & ketentuan di atas.</Text>
+          <Text style={styles.tcCheckLabel}>{isEn ? 'I have read and agree to the terms and conditions above.' : 'Saya telah membaca dan menyetujui syarat & ketentuan di atas.'}</Text>
         </PressableScale>
       </ScrollView>
     </FilterSheet>

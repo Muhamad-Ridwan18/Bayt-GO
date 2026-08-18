@@ -3,13 +3,22 @@ import { Modal, StyleSheet, Text, TextInput, View } from 'react-native';
 import Button from '../../ui/Button';
 import PressableScale from '../../ui/PressableScale';
 import { colors, radius, spacing, typography } from '../../theme/tokens';
+import { useLocale } from '../../utils/locale';
 
-const REJECTION_OPTIONS = [
-  { value: 'jadwal_full', label: 'Jadwal muthowif penuh' },
-  { value: 'illness', label: 'Sakit / berhalangan' },
-  { value: 'force_majeure', label: 'Force majeure' },
-  { value: 'other', label: 'Alasan lain' },
-];
+const REJECTION_OPTIONS = {
+  id: [
+    { value: 'jadwal_full', label: 'Jadwal muthowif penuh' },
+    { value: 'illness', label: 'Sakit / berhalangan' },
+    { value: 'force_majeure', label: 'Force majeure' },
+    { value: 'other', label: 'Alasan lain' },
+  ],
+  en: [
+    { value: 'jadwal_full', label: 'Muthowif schedule is full' },
+    { value: 'illness', label: 'Illness / unavailable' },
+    { value: 'force_majeure', label: 'Force majeure' },
+    { value: 'other', label: 'Other reason' },
+  ],
+};
 
 export { REJECTION_OPTIONS };
 
@@ -19,11 +28,14 @@ export function RejectBookingForm({
   onChangeKind,
   onChangeNote,
 }) {
+  const locale = useLocale();
+  const isEn = locale === 'en';
+  const options = REJECTION_OPTIONS[locale] || REJECTION_OPTIONS.id;
   return (
     <View style={styles.rejectForm}>
-      <Text style={styles.label}>Alasan penolakan</Text>
+      <Text style={styles.label}>{isEn ? 'Rejection reason' : 'Alasan penolakan'}</Text>
       <View style={styles.chipRow}>
-        {REJECTION_OPTIONS.map((opt) => (
+        {options.map((opt) => (
           <PressableScale
             key={opt.value}
             onPress={() => onChangeKind(opt.value)}
@@ -35,12 +47,12 @@ export function RejectBookingForm({
           </PressableScale>
         ))}
       </View>
-      <Text style={styles.label}>Catatan untuk jamaah (opsional)</Text>
+      <Text style={styles.label}>{isEn ? 'Note for pilgrim (optional)' : 'Catatan untuk jamaah (opsional)'}</Text>
       <TextInput
         style={styles.input}
         value={rejectNote}
         onChangeText={onChangeNote}
-        placeholder="Jelaskan alasan penolakan kepada jamaah"
+        placeholder={isEn ? 'Explain the rejection reason to the pilgrim' : 'Jelaskan alasan penolakan kepada jamaah'}
         placeholderTextColor={colors.textMuted}
         multiline
         maxLength={2000}
@@ -57,29 +69,31 @@ export function RescheduleDecisionModal({
   onClose,
   onSubmit,
 }) {
+  const locale = useLocale();
+  const isEn = locale === 'en';
   return (
     <Modal visible={visible} transparent animationType="fade" onRequestClose={onClose}>
       <View style={styles.backdrop}>
         <View style={styles.card}>
-          <Text style={styles.title}>{approve ? 'Setujui reschedule' : 'Tolak reschedule'}</Text>
-          <Text style={styles.label}>Catatan untuk jamaah (opsional)</Text>
+          <Text style={styles.title}>{approve ? (isEn ? 'Approve reschedule' : 'Setujui reschedule') : (isEn ? 'Reject reschedule' : 'Tolak reschedule')}</Text>
+          <Text style={styles.label}>{isEn ? 'Note for pilgrim (optional)' : 'Catatan untuk jamaah (opsional)'}</Text>
           <TextInput
             style={styles.input}
             value={note}
             onChangeText={onChangeNote}
             placeholder={
               approve
-                ? 'Contoh: Jadwal baru sudah saya sesuaikan'
-                : 'Jelaskan alasan penolakan reschedule'
+                ? (isEn ? 'Example: I have adjusted to the new schedule' : 'Contoh: Jadwal baru sudah saya sesuaikan')
+                : (isEn ? 'Explain why the reschedule is rejected' : 'Jelaskan alasan penolakan reschedule')
             }
             placeholderTextColor={colors.textMuted}
             multiline
             maxLength={2000}
           />
           <View style={styles.actions}>
-            <View style={styles.actionBtn}><Button label="Batal" onPress={onClose} variant="secondary" fullWidth={false} /></View>
+            <View style={styles.actionBtn}><Button label={isEn ? 'Cancel' : 'Batal'} onPress={onClose} variant="secondary" fullWidth={false} /></View>
             <View style={styles.actionBtn}>
-              <Button label={approve ? 'Setujui' : 'Tolak'} onPress={onSubmit} variant={approve ? 'primary' : 'danger'} fullWidth={false} />
+              <Button label={approve ? (isEn ? 'Approve' : 'Setujui') : (isEn ? 'Reject' : 'Tolak')} onPress={onSubmit} variant={approve ? 'primary' : 'danger'} fullWidth={false} />
             </View>
           </View>
         </View>

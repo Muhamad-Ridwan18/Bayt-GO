@@ -14,6 +14,7 @@ class DashboardController extends Controller
     public function index(Request $request): JsonResponse
     {
         $user = $request->user();
+        $isEn = app()->getLocale() === 'en';
 
         if (! $user->isMuthowif()) {
             return response()->json(['message' => 'Unauthorized'], 403);
@@ -29,17 +30,20 @@ class DashboardController extends Controller
 
         $stats = [
             [
-                'label' => 'Permintaan Baru',
+                'key' => 'new_requests',
+                'label' => $isEn ? 'New Requests' : 'Permintaan Baru',
                 'value' => (string) $pendingCount,
                 'color' => '#6c5ce7',
             ],
             [
-                'label' => 'Jadwal Aktif',
+                'key' => 'active_schedules',
+                'label' => $isEn ? 'Active Schedules' : 'Jadwal Aktif',
                 'value' => (string) MuthowifBooking::where('muthowif_profile_id', $profile->id)->whereIn('status', ['confirmed', 'in_progress'])->count(),
                 'color' => '#0984e3',
             ],
             [
-                'label' => 'Saldo (IDR)',
+                'key' => 'wallet_balance',
+                'label' => $isEn ? 'Balance (IDR)' : 'Saldo (IDR)',
                 'value' => 'Rp '.number_format($profile->wallet_balance ?? 0, 0, ',', '.'),
                 'color' => '#f39c12',
             ],
@@ -51,7 +55,7 @@ class DashboardController extends Controller
             ->orderBy('starts_on', 'asc')
             ->take(5)
             ->get()
-            ->map(function ($booking) {
+            ->map(function ($booking) use ($isEn) {
                 $customerName = $booking->customer->name ?? 'Jamaah';
 
                 return [
@@ -63,7 +67,7 @@ class DashboardController extends Controller
                     'starts_on' => $booking->starts_on?->toDateString(),
                     'ends_on' => $booking->ends_on?->toDateString(),
                     'raw_date' => $booking->starts_on ? $booking->starts_on->format('Y-m-d') : null,
-                    'duration' => $booking->billingNightsInclusive().' Hari',
+                    'duration' => $booking->billingNightsInclusive().($isEn ? ' Days' : ' Hari'),
                     'status' => $booking->status->value,
                     'pilgrim_count' => (int) $booking->pilgrim_count,
                 ];

@@ -6,6 +6,7 @@ import { ArrowRight, Star } from 'lucide-react-native';
 import AppImage from '../../ui/AppImage';
 import PressableScale from '../../ui/PressableScale';
 import { colors, layout, radius, shadows, spacing, typography } from '../../theme/tokens';
+import { useLocale } from '../../utils/locale';
 
 const { width: SCREEN_W } = Dimensions.get('window');
 const HERO_W = SCREEN_W - layout.screenPadding * 2;
@@ -13,7 +14,8 @@ const HERO_H = 168;
 const SURFACE = '#1A3D34';
 const BLEND_LOCATIONS = [0, 0.14, 0.28, 0.42, 0.58, 0.76];
 
-const HERO_SLIDES = [
+const HERO_SLIDES = {
+  id: [
   {
     id: '1',
     kicker: 'Terpercaya • Transparan • Real-time',
@@ -30,7 +32,26 @@ const HERO_SLIDES = [
     image: require('../../../assets/hero/hero-welcome.png'),
     imagePosition: 'right center',
   },
-];
+  ],
+  en: [
+    {
+      id: '1',
+      kicker: 'Trusted • Transparent • Real-time',
+      title: 'Find the Best Muthowif for Your Pilgrimage',
+      cta: 'See All Muthowif',
+      image: require('../../../assets/hero/hero-muthowif.png'),
+      imagePosition: 'right center',
+    },
+    {
+      id: '2',
+      kicker: 'Secure Booking • Clear Pricing',
+      title: 'Choose a Muthowif That Fits Your Needs and Worship Schedule',
+      cta: 'Start Searching',
+      image: require('../../../assets/hero/hero-welcome.png'),
+      imagePosition: 'right center',
+    },
+  ],
+};
 
 const BLEND = [
   SURFACE,
@@ -110,8 +131,10 @@ function HeroSlide({ slide, onCta, dotCount, activeIndex, faces, countLabel, rat
   );
 }
 
-export default function HeroCarousel({ onCta, faces = [], countLabel = '1.200+ Muthowif Aktif', ratingLabel = '4.9/5 (1.200 review)' }) {
+export default function HeroCarousel({ onCta, faces = [], countLabel = '1.200+ Active Muthowif', ratingLabel = '4.9/5 (1.200 reviews)' }) {
+  const locale = useLocale();
   const [active, setActive] = useState(0);
+  const slides = HERO_SLIDES[locale] || HERO_SLIDES.id;
 
   const displayFaces = useMemo(() => {
     const list = faces.filter(Boolean).slice(0, 3);
@@ -137,12 +160,12 @@ export default function HeroCarousel({ onCta, faces = [], countLabel = '1.200+ M
         snapToInterval={HERO_W + spacing.md}
         contentContainerStyle={styles.scroll}
       >
-        {HERO_SLIDES.map((slide) => (
+        {slides.map((slide) => (
           <HeroSlide
             key={slide.id}
             slide={slide}
             onCta={onCta}
-            dotCount={HERO_SLIDES.length}
+            dotCount={slides.length}
             activeIndex={active}
             faces={displayFaces}
             countLabel={countLabel}

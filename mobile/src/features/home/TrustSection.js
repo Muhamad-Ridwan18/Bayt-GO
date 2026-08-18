@@ -2,18 +2,29 @@ import React from 'react';
 import { StyleSheet, Text, View } from 'react-native';
 import { Calendar, Headphones, ShieldCheck, Tag } from 'lucide-react-native';
 import { colors, layout, radius, spacing, typography } from '../../theme/tokens';
+import { useLocale } from '../../utils/locale';
 
-const TRUST_USPS = [
-  { Icon: ShieldCheck, title: 'Muthowif Terverifikasi' },
-  { Icon: Tag, title: 'Harga Transparan' },
-  { Icon: Calendar, title: 'Real-time Update' },
-  { Icon: Headphones, title: 'Bantuan 24/7' },
-];
+const TRUST_USPS = {
+  id: [
+    { Icon: ShieldCheck, title: 'Muthowif Terverifikasi' },
+    { Icon: Tag, title: 'Harga Transparan' },
+    { Icon: Calendar, title: 'Real-time Update' },
+    { Icon: Headphones, title: 'Bantuan 24/7' },
+  ],
+  en: [
+    { Icon: ShieldCheck, title: 'Verified Muthowif' },
+    { Icon: Tag, title: 'Transparent Pricing' },
+    { Icon: Calendar, title: 'Real-time Updates' },
+    { Icon: Headphones, title: '24/7 Support' },
+  ],
+};
 
 export default function TrustSection() {
+  const locale = useLocale();
+  const items = TRUST_USPS[locale] || TRUST_USPS.id;
   return (
     <View style={styles.wrap}>
-      {TRUST_USPS.map((usp) => (
+      {items.map((usp) => (
         <View key={usp.title} style={styles.item}>
           <View style={styles.icon}>
             <usp.Icon size={18} color={colors.baytgo} strokeWidth={2} />

@@ -4,6 +4,7 @@ import { ArrowRight } from 'lucide-react-native';
 import DatePickerField from '../../components/DatePickerField';
 import { Button, SearchBar } from '../../ui';
 import { colors, layout, radius, shadows, spacing } from '../../theme/tokens';
+import { useLocale } from '../../utils/locale';
 
 export default function SearchPanel({
   searchName,
@@ -18,25 +19,27 @@ export default function SearchPanel({
   endMaxDate,
   onSearch,
 }) {
+  const locale = useLocale();
+  const isEn = locale === 'en';
   return (
     <View style={styles.card}>
       <View style={styles.topRow}>
         <View style={styles.dateCol}>
           <DatePickerField
-            label="Berangkat"
+            label={isEn ? 'Departure' : 'Berangkat'}
             value={startDate}
             onChange={onStartDateChange}
-            placeholder="Pilih tanggal"
+            placeholder={isEn ? 'Select date' : 'Pilih tanggal'}
             minimumDate={today}
             variant="chip"
           />
         </View>
         <View style={styles.dateCol}>
           <DatePickerField
-            label="Pulang"
+            label={isEn ? 'Return' : 'Pulang'}
             value={endDate}
             onChange={onEndDateChange}
-            placeholder="Opsional"
+            placeholder={isEn ? 'Optional' : 'Opsional'}
             minimumDate={endMinDate}
             maximumDate={endMaxDate}
             clearable
@@ -49,12 +52,12 @@ export default function SearchPanel({
       <SearchBar
         value={searchName}
         onChangeText={onSearchNameChange}
-        placeholder="Cari nama muthowif atau bahasa"
+        placeholder={isEn ? 'Search muthowif name or language' : 'Cari nama muthowif atau bahasa'}
         style={styles.searchBar}
       />
 
       <Button
-        label="Cari Muthowif"
+        label={isEn ? 'Find a Muthowif' : 'Cari Muthowif'}
         onPress={onSearch}
         icon={<ArrowRight size={16} color={colors.white} strokeWidth={2.4} />}
       />

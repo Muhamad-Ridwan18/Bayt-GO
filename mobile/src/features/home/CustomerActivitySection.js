@@ -4,6 +4,7 @@ import { LinearGradient } from 'expo-linear-gradient';
 import { Button, Card, PressableScale } from '../../ui';
 import { colors, gradients, layout, radius, spacing, typography } from '../../theme/tokens';
 import UpcomingTripCard from './UpcomingTripCard';
+import { useLocale } from '../../utils/locale';
 
 export default function CustomerActivitySection({
   stats = [],
@@ -15,6 +16,8 @@ export default function CustomerActivitySection({
   onChat,
   onExplore,
 }) {
+  const locale = useLocale();
+  const isEn = locale === 'en';
   return (
     <View style={styles.wrap}>
       {stats.length > 0 ? (
@@ -24,8 +27,8 @@ export default function CustomerActivitySection({
           end={{ x: 1, y: 1 }}
           style={styles.statsCard}
         >
-          <Text style={styles.statsTitle}>Ringkasan aktivitas</Text>
-          <Text style={styles.statsSub}>Ikhtisar singkat perjalanan dan tiket Anda.</Text>
+          <Text style={styles.statsTitle}>{isEn ? 'Activity summary' : 'Ringkasan aktivitas'}</Text>
+          <Text style={styles.statsSub}>{isEn ? 'A quick overview of your trips and tickets.' : 'Ikhtisar singkat perjalanan dan tiket Anda.'}</Text>
           <View style={styles.statsGrid}>
             {stats.map((stat) => (
               <PressableScale
@@ -43,10 +46,10 @@ export default function CustomerActivitySection({
       ) : null}
 
       <View style={styles.upcomingHead}>
-        <Text style={styles.upcomingTitle}>Perjalanan mendatang</Text>
+        <Text style={styles.upcomingTitle}>{isEn ? 'Upcoming trip' : 'Perjalanan mendatang'}</Text>
         {onSeeAll ? (
           <PressableScale onPress={onSeeAll} haptic="light">
-            <Text style={styles.seeAll}>Lihat semua</Text>
+            <Text style={styles.seeAll}>{isEn ? 'See all' : 'Lihat semua'}</Text>
           </PressableScale>
         ) : null}
       </View>
@@ -56,9 +59,11 @@ export default function CustomerActivitySection({
       ) : (
         <Card style={styles.emptyCard} padding={spacing.xl} elevated={false} variant="flat">
           <Text style={styles.emptyText}>
-            Belum ada jadwal mendatang. Temukan muthowif untuk tanggal Anda.
+            {isEn
+              ? 'No upcoming trips yet. Find a muthowif for your dates.'
+              : 'Belum ada jadwal mendatang. Temukan muthowif untuk tanggal Anda.'}
           </Text>
-          <Button label="Jelajahi muthowif" onPress={onExplore} style={styles.emptyCta} />
+          <Button label={isEn ? 'Explore muthowif' : 'Jelajahi muthowif'} onPress={onExplore} style={styles.emptyCta} />
         </Card>
       )}
     </View>

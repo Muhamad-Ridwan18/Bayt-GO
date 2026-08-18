@@ -5,21 +5,24 @@ import { ChevronRight } from 'lucide-react-native';
 import PressableScale from '../../ui/PressableScale';
 import { colors, layout, radius, spacing, typography } from '../../theme/tokens';
 import { resolveMediaUrl } from '../../utils/mediaUrl';
+import { useLocale } from '../../utils/locale';
 
 const { width: SCREEN_W } = Dimensions.get('window');
 const CARD_W = SCREEN_W * 0.62;
 
 export default function ArticleCards({ articles = [], onPress, onSeeAll }) {
+  const locale = useLocale();
+  const isEn = locale === 'en';
   if (!articles.length) return null;
 
   return (
     <View style={styles.wrap}>
       <View style={styles.head}>
-        <Text style={styles.sectionTitle}>Artikel & Panduan</Text>
+        <Text style={styles.sectionTitle}>{isEn ? 'Articles & Guides' : 'Artikel & Panduan'}</Text>
         {onSeeAll ? (
           <PressableScale onPress={onSeeAll} haptic="light">
             <View style={styles.seeAllRow}>
-              <Text style={styles.seeAll}>Lihat semua</Text>
+              <Text style={styles.seeAll}>{isEn ? 'See all' : 'Lihat semua'}</Text>
               <ChevronRight size={14} color={colors.goldMuted} strokeWidth={2.5} />
             </View>
           </PressableScale>

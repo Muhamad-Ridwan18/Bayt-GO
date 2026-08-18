@@ -16,25 +16,30 @@ class DashboardController extends Controller
     {
         $user = $request->user();
         $dash = CustomerDashboardCache::stats($user);
+        $isEn = app()->getLocale() === 'en';
 
         $stats = [
             [
-                'label' => 'Booking Aktif',
+                'key' => 'active_bookings',
+                'label' => $isEn ? 'Active Bookings' : 'Booking Aktif',
                 'value' => (string) $dash['activeBookingCount'],
                 'color' => '#0984e3',
             ],
             [
-                'label' => 'Tiket Bantuan',
+                'key' => 'support_tickets',
+                'label' => $isEn ? 'Support Tickets' : 'Tiket Bantuan',
                 'value' => (string) $dash['supportOpenCount'],
                 'color' => '#6c5ce7',
             ],
             [
-                'label' => 'Perjalanan Mendatang',
+                'key' => 'upcoming_trips',
+                'label' => $isEn ? 'Upcoming Trips' : 'Perjalanan Mendatang',
                 'value' => (string) $dash['upcomingTripCount'],
                 'color' => '#00b894',
             ],
             [
-                'label' => 'Ulasan Diberikan',
+                'key' => 'reviews_given',
+                'label' => $isEn ? 'Reviews Given' : 'Ulasan Diberikan',
                 'value' => (string) $dash['reviewsGivenCount'],
                 'color' => '#f39c12',
             ],

@@ -4,6 +4,7 @@ import { Camera, ChevronDown, ChevronUp, CirclePlus, CloudUpload, Expand, Images
 import AuthenticatedImage from '../../components/AuthenticatedImage';
 import { Button, Card, PressableScale, UploadPreviewStrip } from '../../ui';
 import { colors, radius, spacing, typography } from '../../theme/tokens';
+import { useLocale } from '../../utils/locale';
 
 const { width: SCREEN_W } = Dimensions.get('window');
 export const CARD_W = (SCREEN_W - 40 - 12) / 2;
@@ -125,6 +126,8 @@ export function PortfolioCreateSection({
   formOpen, onToggleForm, title, description, images, submitting,
   onChangeTitle, onChangeDescription, onPickImages, onRemoveImage, onSubmit,
 }) {
+  const locale = useLocale();
+  const isEn = locale === 'en';
   return (
     <>
       <PressableScale onPress={onToggleForm} haptic="light">
@@ -134,8 +137,8 @@ export function PortfolioCreateSection({
               <CirclePlus size={18} color={colors.baytgo} strokeWidth={2} />
             </View>
             <View>
-              <Text style={formStyles.formToggleTitle}>Tambah album baru</Text>
-              <Text style={formStyles.formToggleSub}>Judul kegiatan + beberapa foto sekaligus</Text>
+              <Text style={formStyles.formToggleTitle}>{isEn ? 'Add new album' : 'Tambah album baru'}</Text>
+              <Text style={formStyles.formToggleSub}>{isEn ? 'Activity title + multiple photos at once' : 'Judul kegiatan + beberapa foto sekaligus'}</Text>
             </View>
           </View>
           {formOpen ? (
@@ -148,30 +151,32 @@ export function PortfolioCreateSection({
 
       {formOpen ? (
         <Card style={formStyles.formCard} padding={spacing.lg} elevated={false}>
-          <Text style={formStyles.fieldLabel}>Judul kegiatan</Text>
+          <Text style={formStyles.fieldLabel}>{isEn ? 'Activity title' : 'Judul kegiatan'}</Text>
           <TextInput
             style={formStyles.input}
-            placeholder="Misal: Ziarah Jabal Rahmah Jamaah VIP"
+            placeholder={isEn ? 'Example: VIP Pilgrim Visit to Jabal Rahmah' : 'Misal: Ziarah Jabal Rahmah Jamaah VIP'}
             placeholderTextColor={colors.textMuted}
             value={title}
             onChangeText={onChangeTitle}
           />
-          <Text style={formStyles.fieldLabel}>Deskripsi (opsional)</Text>
+          <Text style={formStyles.fieldLabel}>{isEn ? 'Description (optional)' : 'Deskripsi (opsional)'}</Text>
           <TextInput
             style={[formStyles.input, formStyles.textarea]}
-            placeholder="Ceritakan singkat pelayanan di foto ini..."
+            placeholder={isEn ? 'Briefly describe the service shown in these photos...' : 'Ceritakan singkat pelayanan di foto ini...'}
             placeholderTextColor={colors.textMuted}
             value={description}
             onChangeText={onChangeDescription}
             multiline
             textAlignVertical="top"
           />
-          <Text style={formStyles.fieldLabel}>Foto album</Text>
+          <Text style={formStyles.fieldLabel}>{isEn ? 'Album photos' : 'Foto album'}</Text>
           <PressableScale onPress={onPickImages} haptic="light">
             <View style={formStyles.pickBtn}>
               <Images size={20} color={colors.baytgo} strokeWidth={2} />
               <Text style={formStyles.pickBtnText}>
-                {images.length > 0 ? `Tambah foto (${images.length}/10)` : 'Pilih foto dari galeri'}
+                {images.length > 0
+                  ? (isEn ? `Add photos (${images.length}/10)` : `Tambah foto (${images.length}/10)`)
+                  : (isEn ? 'Choose photos from gallery' : 'Pilih foto dari galeri')}
               </Text>
             </View>
           </PressableScale>
@@ -181,7 +186,7 @@ export function PortfolioCreateSection({
             style={formStyles.previewStrip}
           />
           <Button
-            label="Simpan album"
+            label={isEn ? 'Save album' : 'Simpan album'}
             onPress={onSubmit}
             loading={submitting}
             icon={<CloudUpload size={18} color={colors.white} strokeWidth={2} />}

@@ -11,17 +11,26 @@ import StatusPill from './StatusPill';
 import { colors, gradients, layout, radius, shadows, spacing, typography } from '../../theme/tokens';
 import { formatIdr } from '../../utils/format';
 import { formatDateRange, serviceTypeLabel, muthowifRejectionKindLabel } from '../../utils/bookingLabels';
+import { useLocale } from '../../utils/locale';
 
-const STEPS = [
-  { key: 'pending', label: 'Menunggu' },
-  { key: 'confirmed', label: 'Dikonfirmasi' },
-  { key: 'in_progress', label: 'Berlangsung' },
-  { key: 'completed', label: 'Selesai' },
-];
+const STEPS = {
+  id: [
+    { key: 'pending', label: 'Menunggu' },
+    { key: 'confirmed', label: 'Dikonfirmasi' },
+    { key: 'in_progress', label: 'Berlangsung' },
+    { key: 'completed', label: 'Selesai' },
+  ],
+  en: [
+    { key: 'pending', label: 'Pending' },
+    { key: 'confirmed', label: 'Confirmed' },
+    { key: 'in_progress', label: 'In progress' },
+    { key: 'completed', label: 'Completed' },
+  ],
+};
 
-function stepIndex(status) {
+function stepIndex(status, steps) {
   if (status === 'cancelled') return -1;
-  const idx = STEPS.findIndex((s) => s.key === status);
+  const idx = steps.findIndex((s) => s.key === status);
   return idx >= 0 ? idx : 0;
 }
 
@@ -35,11 +44,13 @@ export function BookingDetailHero({
   feeHint,
   onPressMuthowif,
 }) {
+  const locale = useLocale();
+  const isEn = locale === 'en';
   return (
     <View style={styles.heroWrap}>
       <LinearGradient colors={gradients.primary} style={styles.heroGradient}>
         <View style={styles.heroTop}>
-          <Text style={styles.heroEyebrow}>Kode pesanan</Text>
+          <Text style={styles.heroEyebrow}>{isEn ? 'Order code' : 'Kode pesanan'}</Text>
           <Text style={styles.heroCode}>{bookingCode}</Text>
         </View>
 
@@ -54,7 +65,7 @@ export function BookingDetailHero({
               {onPressMuthowif ? (
                 <View style={styles.chatHint}>
                   <MessageCircle size={12} color="rgba(255,255,255,0.85)" strokeWidth={2} />
-                  <Text style={styles.chatHintText}>Ketuk untuk chat</Text>
+                  <Text style={styles.chatHintText}>{isEn ? 'Tap to chat' : 'Ketuk untuk chat'}</Text>
                 </View>
               ) : null}
             </View>
@@ -67,7 +78,7 @@ export function BookingDetailHero({
         </View>
 
         <View style={styles.heroAmountBox}>
-          <Text style={styles.heroAmountLabel}>Total pesanan</Text>
+          <Text style={styles.heroAmountLabel}>{isEn ? 'Order total' : 'Total pesanan'}</Text>
           <Text style={styles.heroAmount}>{formatIdr(amount)}</Text>
           {feeHint ? <Text style={styles.heroFeeHint}>{feeHint}</Text> : null}
         </View>
@@ -77,20 +88,23 @@ export function BookingDetailHero({
 }
 
 export function BookingProgressBar({ status }) {
+  const locale = useLocale();
+  const isEn = locale === 'en';
+  const steps = STEPS[locale] || STEPS.id;
   if (status === 'cancelled') {
     return (
       <Card style={styles.progressCard} padding={spacing.lg} elevated={false}>
-        <Text style={styles.progressCancelled}>Pesanan dibatalkan</Text>
+        <Text style={styles.progressCancelled}>{isEn ? 'Order cancelled' : 'Pesanan dibatalkan'}</Text>
       </Card>
     );
   }
 
-  const active = stepIndex(status);
+  const active = stepIndex(status, steps);
 
   return (
     <Card style={styles.progressCard} padding={spacing.lg} elevated={false}>
       <View style={styles.progressRow}>
-        {STEPS.map((step, index) => {
+        {steps.map((step, index) => {
           const done = index <= active;
           const current = index === active;
           return (
@@ -113,6 +127,8 @@ export function BookingProgressBar({ status }) {
 }
 
 export function BookingCancellationAlert({ booking, muthowifName }) {
+  const locale = useLocale();
+  const isEn = locale === 'en';
   const isJadwalFull = booking.muthowif_rejection_kind === 'jadwal_full';
   const kindLabel = muthowifRejectionKindLabel(
     booking.muthowif_rejection_kind,
@@ -127,19 +143,23 @@ export function BookingCancellationAlert({ booking, muthowifName }) {
         </View>
         <View style={styles.cancellationCopy}>
           <Text style={styles.cancellationTitle}>
-            {isJadwalFull ? 'Jadwal muthowif penuh' : 'Pesanan ditolak muthowif'}
+            {isJadwalFull
+              ? (isEn ? 'Muthowif schedule is full' : 'Jadwal muthowif penuh')
+              : (isEn ? 'Order rejected by muthowif' : 'Pesanan ditolak muthowif')}
           </Text>
           <Text style={styles.cancellationBody}>
             {isJadwalFull
-              ? `Mohon maaf — ${muthowifName} tidak dapat menerima pesanan ini karena jadwal pada tanggal tersebut sudah penuh.`
-              : `Pesanan ini ditolak oleh ${muthowifName}.`}
+              ? (isEn
+                ? `Sorry — ${muthowifName} cannot accept this order because the requested dates are already full.`
+                : `Mohon maaf — ${muthowifName} tidak dapat menerima pesanan ini karena jadwal pada tanggal tersebut sudah penuh.`)
+              : (isEn ? `This order was rejected by ${muthowifName}.` : `Pesanan ini ditolak oleh ${muthowifName}.`)}
           </Text>
           {kindLabel && kindLabel !== '—' ? (
-            <Text style={styles.cancellationKind}>Alasan: {kindLabel}</Text>
+            <Text style={styles.cancellationKind}>{isEn ? 'Reason' : 'Alasan'}: {kindLabel}</Text>
           ) : null}
           {booking.muthowif_rejection_note ? (
             <View style={styles.cancellationNoteBox}>
-              <Text style={styles.cancellationNoteLabel}>Catatan muthowif</Text>
+              <Text style={styles.cancellationNoteLabel}>{isEn ? 'Muthowif note' : 'Catatan muthowif'}</Text>
               <Text style={styles.cancellationNote}>{booking.muthowif_rejection_note}</Text>
             </View>
           ) : null}
@@ -162,16 +182,18 @@ function TripTile({ icon: Icon, label, value }) {
 }
 
 export function TripSummaryGrid({ booking, nights }) {
+  const locale = useLocale();
+  const isEn = locale === 'en';
   return (
     <Card style={styles.tripCard} padding={spacing.lg} elevated>
-      <Text style={styles.tripTitle}>Ringkasan perjalanan</Text>
+      <Text style={styles.tripTitle}>{isEn ? 'Trip summary' : 'Ringkasan perjalanan'}</Text>
       <View style={styles.tripGrid}>
-        <TripTile icon={Calendar} label="Tanggal" value={formatDateRange(booking.starts_on, booking.ends_on)} />
-        <TripTile icon={Clock} label="Durasi" value={`${nights} hari`} />
-        <TripTile icon={MapPin} label="Layanan" value={serviceTypeLabel(booking.service_type)} />
-        <TripTile icon={Users} label="Jamaah" value={`${booking.pilgrim_count} orang`} />
-        {booking.with_same_hotel ? <TripTile icon={Bed} label="Hotel" value="Sama dengan muthowif" /> : null}
-        {booking.with_transport ? <TripTile icon={Bus} label="Transport" value="Termasuk" /> : null}
+        <TripTile icon={Calendar} label={isEn ? 'Dates' : 'Tanggal'} value={formatDateRange(booking.starts_on, booking.ends_on)} />
+        <TripTile icon={Clock} label={isEn ? 'Duration' : 'Durasi'} value={`${nights} ${isEn ? 'days' : 'hari'}`} />
+        <TripTile icon={MapPin} label={isEn ? 'Service' : 'Layanan'} value={serviceTypeLabel(booking.service_type)} />
+        <TripTile icon={Users} label={isEn ? 'Pilgrims' : 'Jamaah'} value={`${booking.pilgrim_count} ${isEn ? 'people' : 'orang'}`} />
+        {booking.with_same_hotel ? <TripTile icon={Bed} label="Hotel" value={isEn ? 'Same as muthowif' : 'Sama dengan muthowif'} /> : null}
+        {booking.with_transport ? <TripTile icon={Bus} label="Transport" value={isEn ? 'Included' : 'Termasuk'} /> : null}
       </View>
     </Card>
   );
@@ -207,6 +229,8 @@ function ActionRow({ action, showDivider }) {
 }
 
 export function BookingActionList({ actions }) {
+  const locale = useLocale();
+  const isEn = locale === 'en';
   if (!actions.length) return null;
 
   const primary = actions.filter((a) => a.tone !== 'danger');
@@ -215,7 +239,7 @@ export function BookingActionList({ actions }) {
   return (
     <Card style={styles.actionCard} padding={0} elevated>
       <View style={styles.actionHeader}>
-        <Text style={styles.actionTitle}>Layanan & tindakan</Text>
+        <Text style={styles.actionTitle}>{isEn ? 'Services & actions' : 'Layanan & tindakan'}</Text>
       </View>
       {primary.map((action, index) => (
         <ActionRow
@@ -236,13 +260,15 @@ export function BookingActionList({ actions }) {
 }
 
 export function ReviewCard({ review, onEdit }) {
+  const locale = useLocale();
+  const isEn = locale === 'en';
   return (
     <Card style={styles.reviewCard} padding={spacing.lg} elevated={false}>
       <View style={styles.reviewHeader}>
-        <Text style={styles.reviewTitle}>Ulasan Anda</Text>
+        <Text style={styles.reviewTitle}>{isEn ? 'Your review' : 'Ulasan Anda'}</Text>
         {onEdit ? (
           <PressableScale onPress={onEdit} haptic="light">
-            <Text style={styles.reviewEdit}>Edit</Text>
+            <Text style={styles.reviewEdit}>{isEn ? 'Edit' : 'Edit'}</Text>
           </PressableScale>
         ) : null}
       </View>

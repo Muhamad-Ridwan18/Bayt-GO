@@ -7,14 +7,23 @@ import {
 import PressableScale from '../../ui/PressableScale';
 import Card from '../../ui/Card';
 import { colors, radius, spacing, typography } from '../../theme/tokens';
+import { useLocale } from '../../utils/locale';
 
 const STEP_LABELS = {
-  moota: ['Pilih rekening', 'Transfer'],
-  doku: ['Pilih metode', 'Bayar'],
+  id: {
+    moota: ['Pilih rekening', 'Transfer'],
+    doku: ['Pilih metode', 'Bayar'],
+  },
+  en: {
+    moota: ['Choose account', 'Transfer'],
+    doku: ['Choose method', 'Pay'],
+  },
 };
 
 export function StepIndicator({ step, driver = 'moota' }) {
-  const labels = STEP_LABELS[driver] || STEP_LABELS.doku;
+  const locale = useLocale();
+  const labelsByLocale = STEP_LABELS[locale] || STEP_LABELS.id;
+  const labels = labelsByLocale[driver] || labelsByLocale.doku;
 
   return (
     <View style={styles.steps}>
@@ -70,6 +79,8 @@ function guessMethodIcon(idOrName) {
 }
 
 export function MethodCard({ item, selected, environment, onPress }) {
+  const locale = useLocale();
+  const isEn = locale === 'en';
   const displayLabel = item.bank_name || item.label;
   const isSandbox = environment?.is_sandbox;
   const Icon = guessMethodIcon(item.id || item.bank_name);
@@ -77,7 +88,7 @@ export function MethodCard({ item, selected, environment, onPress }) {
   const logoUrl = item.logo_url || null;
   const hint = item.account_number
     ? null
-    : (item.description || (item.group === 'moota' ? 'Transfer bank via Moota' : null));
+    : (item.description || (item.group === 'moota' ? (isEn ? 'Bank transfer via Moota' : 'Transfer bank via Moota') : null));
 
   return (
     <PressableScale onPress={onPress} haptic="light">
@@ -100,9 +111,9 @@ export function MethodCard({ item, selected, environment, onPress }) {
               </View>
             ) : null}
           </View>
-          {item.account_holder ? <Text style={styles.methodDetail}>a.n. {item.account_holder}</Text> : null}
+          {item.account_holder ? <Text style={styles.methodDetail}>{isEn ? 'a/n.' : 'a.n.'} {item.account_holder}</Text> : null}
           {item.account_number ? (
-            <Text style={styles.methodAccount}>No. rekening {item.account_number}</Text>
+            <Text style={styles.methodAccount}>{isEn ? 'Account no.' : 'No. rekening'} {item.account_number}</Text>
           ) : hint ? (
             <Text style={styles.methodHint}>{hint}</Text>
           ) : null}
@@ -156,7 +167,24 @@ const PAY_STEPS = {
 };
 
 export function PaymentHowToSteps({ driver = 'doku' }) {
-  const steps = PAY_STEPS[driver] || PAY_STEPS.doku;
+  const locale = useLocale();
+  const stepsByLocale = locale === 'en'
+    ? {
+        moota: [
+          'Copy the account number and exact unique amount.',
+          'Transfer the exact amount shown — do not round it.',
+          'Keep the transfer receipt if your bank requires it.',
+          'Order status will update automatically after funds are received.',
+        ],
+        doku: [
+          'Choose the channel that matches your selected payment method.',
+          'Enter the reference/virtual account number as instructed.',
+          'Confirm the payment amount until the transaction succeeds.',
+          'Order status will update automatically after payment is verified.',
+        ],
+      }
+    : PAY_STEPS;
+  const steps = stepsByLocale[driver] || stepsByLocale.doku;
 
   return (
     <View style={styles.howTo}>

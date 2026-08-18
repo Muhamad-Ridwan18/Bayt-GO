@@ -159,28 +159,30 @@ export default function ProfileScreen({ navigation }) {
 
   const photoUri = resolveMediaUrl(profile?.muthowif?.photo_url);
   const roleLabel = isMuthowif
-    ? (isVerifiedMuthowif ? 'Muthowif Terverifikasi' : 'Muthowif · Menunggu verifikasi')
-    : 'Jamaah';
+    ? (isVerifiedMuthowif
+      ? (isEn ? 'Verified Muthowif' : 'Muthowif Terverifikasi')
+      : (isEn ? 'Muthowif · Pending verification' : 'Muthowif · Menunggu verifikasi'))
+    : (isEn ? 'Pilgrim' : 'Jamaah');
   const RoleIcon = isVerifiedMuthowif ? ShieldCheck : isMuthowif ? Clock : User;
   const roleColor = isVerifiedMuthowif ? colors.success : isMuthowif ? colors.warning : colors.baytgo;
 
   const customerMenus = [
-    { icon: Receipt, label: 'Pesanan Saya', onPress: () => navigation.getParent()?.navigate('BookingsTab', { screen: 'BookingsList' }) },
+    { icon: Receipt, label: isEn ? 'My Orders' : 'Pesanan Saya', onPress: () => navigation.getParent()?.navigate('BookingsTab', { screen: 'BookingsList' }) },
     { icon: Link2, label: 'Affiliate', onPress: () => navigation.navigate('Affiliate') },
-    { icon: Briefcase, label: 'Layanan Pendukung', onPress: () => navigation.getParent()?.navigate('HomeTab', { screen: 'SupportCatalog' }) },
-    { icon: LifeBuoy, label: 'Tiket Bantuan', onPress: () => navigation.getParent()?.navigate('SupportTab', { screen: 'SupportList' }) },
+    { icon: Briefcase, label: isEn ? 'Support Services' : 'Layanan Pendukung', onPress: () => navigation.getParent()?.navigate('HomeTab', { screen: 'SupportCatalog' }) },
+    { icon: LifeBuoy, label: isEn ? 'Support Tickets' : 'Tiket Bantuan', onPress: () => navigation.getParent()?.navigate('SupportTab', { screen: 'SupportList' }) },
   ];
 
   const muthowifMenus = [
-    { icon: ClipboardList, label: 'Permintaan Booking', onPress: () => navigation.getParent()?.navigate('MuthowifBookingsTab', { screen: 'MuthowifBookingsList' }) },
-    { icon: Wallet, label: 'Dompet', onPress: () => navigation.getParent()?.navigate('WalletTab', { screen: 'WalletMain' }) },
+    { icon: ClipboardList, label: isEn ? 'Booking Requests' : 'Permintaan Booking', onPress: () => navigation.getParent()?.navigate('MuthowifBookingsTab', { screen: 'MuthowifBookingsList' }) },
+    { icon: Wallet, label: isEn ? 'Wallet' : 'Dompet', onPress: () => navigation.getParent()?.navigate('WalletTab', { screen: 'WalletMain' }) },
     { icon: Link2, label: 'Affiliate', onPress: () => navigation.getParent()?.navigate('HomeTab', { screen: 'Affiliate' }) },
-    { icon: Calendar, label: 'Jadwal Libur', onPress: () => navigation.getParent()?.navigate('HomeTab', { screen: 'Schedule' }) },
-    { icon: Tag, label: 'Kelola Layanan', onPress: () => navigation.getParent()?.navigate('HomeTab', { screen: 'Services' }) },
-    { icon: Briefcase, label: 'Paket Layanan Pendukung', onPress: () => navigation.getParent()?.navigate('HomeTab', { screen: 'SupportPackages' }) },
+    { icon: Calendar, label: isEn ? 'Time Off Schedule' : 'Jadwal Libur', onPress: () => navigation.getParent()?.navigate('HomeTab', { screen: 'Schedule' }) },
+    { icon: Tag, label: isEn ? 'Manage Services' : 'Kelola Layanan', onPress: () => navigation.getParent()?.navigate('HomeTab', { screen: 'Services' }) },
+    { icon: Briefcase, label: isEn ? 'Support Service Packages' : 'Paket Layanan Pendukung', onPress: () => navigation.getParent()?.navigate('HomeTab', { screen: 'SupportPackages' }) },
     { icon: Images, label: 'Portfolio', onPress: () => navigation.getParent()?.navigate('HomeTab', { screen: 'Portfolio' }) },
-    { icon: Globe, label: 'Profil Publik Muthowif', onPress: () => navigation.navigate('EditMuthowifProfile', { profile }) },
-    { icon: LifeBuoy, label: 'Tiket Bantuan', onPress: () => navigation.getParent()?.navigate('HomeTab', { screen: 'SupportList' }) },
+    { icon: Globe, label: isEn ? 'Public Muthowif Profile' : 'Profil Publik Muthowif', onPress: () => navigation.navigate('EditMuthowifProfile', { profile }) },
+    { icon: LifeBuoy, label: isEn ? 'Support Tickets' : 'Tiket Bantuan', onPress: () => navigation.getParent()?.navigate('HomeTab', { screen: 'SupportList' }) },
   ];
 
   if (loading && !refreshing) {

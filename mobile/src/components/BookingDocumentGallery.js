@@ -30,6 +30,7 @@ import {
   downloadBookingDocument,
   shareBookingDocument,
 } from '../utils/bookingDocuments';
+import { useLocale } from '../utils/locale';
 
 const { width: SCREEN_W, height: SCREEN_H } = Dimensions.get('window');
 
@@ -41,7 +42,7 @@ const DOC_ICONS = {
   visa: FileText,
 };
 
-function DocumentThumb({ token, bookingId, doc, onPress }) {
+function DocumentThumb({ token, bookingId, doc, onPress, isEn }) {
   const [loading, setLoading] = useState(true);
   const [preview, setPreview] = useState(null);
   const [failed, setFailed] = useState(false);
@@ -84,7 +85,7 @@ function DocumentThumb({ token, bookingId, doc, onPress }) {
             ) : (
               <File size={28} color={colors.baytgo} strokeWidth={2} />
             )}
-            <Text style={styles.pdfTag}>{failed ? 'Gagal' : 'PDF'}</Text>
+            <Text style={styles.pdfTag}>{failed ? (isEn ? 'Failed' : 'Gagal') : 'PDF'}</Text>
           </View>
         )}
         <View style={styles.thumbOverlay}>
@@ -99,7 +100,7 @@ function DocumentThumb({ token, bookingId, doc, onPress }) {
   );
 }
 
-function PreviewModal({ visible, doc, preview, token, bookingId, onClose }) {
+function PreviewModal({ visible, doc, preview, token, bookingId, onClose, isEn }) {
   const [loading, setLoading] = useState(false);
   const [file, setFile] = useState(preview);
 
@@ -124,7 +125,7 @@ function PreviewModal({ visible, doc, preview, token, bookingId, onClose }) {
       const current = await ensureFile();
       await shareBookingDocument(current.uri, doc.label);
     } catch (err) {
-      Alert.alert('Gagal', err.message || 'Tidak dapat membuka dokumen');
+      Alert.alert(isEn ? 'Failed' : 'Gagal', err.message || (isEn ? 'Unable to open document' : 'Tidak dapat membuka dokumen'));
     }
   };
 
@@ -166,10 +167,10 @@ function PreviewModal({ visible, doc, preview, token, bookingId, onClose }) {
                   <FileText size={48} color={colors.baytgo} strokeWidth={2} />
                 </View>
                 <Text style={styles.pdfTitle}>{doc.label}</Text>
-                <Text style={styles.pdfSub}>File PDF — ketuk tombol di bawah untuk membuka atau membagikan</Text>
+                <Text style={styles.pdfSub}>{isEn ? 'PDF file — tap the button below to open or share it' : 'File PDF — ketuk tombol di bawah untuk membuka atau membagikan'}</Text>
                 <PressableScale style={styles.openPdfBtn} onPress={handleShare} haptic="medium">
                   <ExternalLink size={18} color={colors.white} strokeWidth={2} />
-                  <Text style={styles.openPdfText}>Buka dokumen</Text>
+                  <Text style={styles.openPdfText}>{isEn ? 'Open document' : 'Buka dokumen'}</Text>
                 </PressableScale>
               </View>
             )}
@@ -181,6 +182,8 @@ function PreviewModal({ visible, doc, preview, token, bookingId, onClose }) {
 }
 
 export default function BookingDocumentGallery({ token, bookingId, documents, title = 'Dokumen jamaah' }) {
+  const locale = useLocale();
+  const isEn = locale === 'en';
   const [previewDoc, setPreviewDoc] = useState(null);
   const [previewFile, setPreviewFile] = useState(null);
 
@@ -204,7 +207,7 @@ export default function BookingDocumentGallery({ token, bookingId, documents, ti
         </View>
         <View style={styles.sectionCopy}>
           <Text style={styles.sectionTitle}>{title}</Text>
-          <Text style={styles.sectionSub}>{documents.length} file diunggah jamaah</Text>
+          <Text style={styles.sectionSub}>{documents.length} {isEn ? 'files uploaded by pilgrim' : 'file diunggah jamaah'}</Text>
         </View>
       </View>
 
@@ -215,12 +218,13 @@ export default function BookingDocumentGallery({ token, bookingId, documents, ti
             token={token}
             bookingId={bookingId}
             doc={doc}
+            isEn={isEn}
             onPress={openPreview}
           />
         ))}
       </View>
 
-      <Text style={styles.privacyNote}>Dokumen bersifat pribadi. Jangan bagikan ke pihak lain.</Text>
+      <Text style={styles.privacyNote}>{isEn ? 'These documents are private. Do not share them with others.' : 'Dokumen bersifat pribadi. Jangan bagikan ke pihak lain.'}</Text>
 
       <PreviewModal
         visible={!!previewDoc}
@@ -229,6 +233,7 @@ export default function BookingDocumentGallery({ token, bookingId, documents, ti
         token={token}
         bookingId={bookingId}
         onClose={closePreview}
+        isEn={isEn}
       />
     </View>
   );

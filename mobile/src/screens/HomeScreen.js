@@ -147,7 +147,13 @@ export default function HomeScreen({ navigation }) {
     params: { bookingId: nextBooking.id, bookingCode: nextBooking.booking_code, otherName: nextBooking.muthowif_name || 'Muthowif' },
   });
   const openStat = (stat) => {
-    if (stat?.label === 'Tiket Bantuan') {
+    const statKey = String(stat?.key || '').toLowerCase();
+    const statLabel = String(stat?.label || '').toLowerCase();
+    if (
+      statKey === 'support_tickets'
+      || statLabel === 'tiket bantuan'
+      || statLabel === 'support tickets'
+    ) {
       navigation.getParent()?.navigate('SupportTab', { screen: 'SupportList' });
       return;
     }

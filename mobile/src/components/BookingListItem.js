@@ -17,6 +17,7 @@ import {
 } from '../utils/bookingLabels';
 import { customerPayableAmount } from '../components/BookingPricingBreakdown';
 import { useCountdown } from '../hooks/useCountdown';
+import { useLocale } from '../utils/locale';
 
 function StatusBadge({ label, color }) {
   return (
@@ -27,6 +28,8 @@ function StatusBadge({ label, color }) {
 }
 
 function BookingListItem({ item, onPress, onPay }) {
+  const locale = useLocale();
+  const isEn = locale === 'en';
   const bookingMeta = bookingStatusMeta(item.status);
   const paymentMeta = paymentStatusMeta(item.payment_status);
   const showPay = canPayBooking(item);
@@ -51,11 +54,11 @@ function BookingListItem({ item, onPress, onPay }) {
               <Text style={styles.code}>{item.booking_code}</Text>
               {showPay ? (
                 <View style={styles.payChip}>
-                  <Text style={styles.payChipText}>Belum bayar</Text>
+                  <Text style={styles.payChipText}>{isEn ? 'Unpaid' : 'Belum bayar'}</Text>
                 </View>
               ) : awaiting ? (
                 <View style={styles.waitChip}>
-                  <Text style={styles.waitChipText}>Menunggu</Text>
+                  <Text style={styles.waitChipText}>{isEn ? 'Pending' : 'Menunggu'}</Text>
                 </View>
               ) : null}
             </View>
@@ -80,7 +83,7 @@ function BookingListItem({ item, onPress, onPay }) {
               <View style={styles.dueRow}>
                 <Clock size={12} color={due.expired ? colors.error : '#B45309'} strokeWidth={2} />
                 <Text style={[styles.dueText, due.expired && styles.dueExpired]}>
-                  {due.expired ? 'Waktu habis' : `Sisa ${due.label}`}
+                  {due.expired ? (isEn ? 'Expired' : 'Waktu habis') : (isEn ? `${due.label} left` : `Sisa ${due.label}`)}
                 </Text>
               </View>
             ) : null}
@@ -93,7 +96,7 @@ function BookingListItem({ item, onPress, onPay }) {
               >
                 <LinearGradient colors={gradients.gold} style={styles.payGradient}>
                   <Wallet size={16} color={colors.white} strokeWidth={2} />
-                  <Text style={styles.payBtnText}>Bayar sekarang</Text>
+                  <Text style={styles.payBtnText}>{isEn ? 'Pay now' : 'Bayar sekarang'}</Text>
                 </LinearGradient>
               </PressableScale>
             ) : null}
