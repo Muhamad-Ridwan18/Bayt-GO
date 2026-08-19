@@ -82,6 +82,7 @@ class StoreExternalArticleRequest extends FormRequest
         if (is_string($decoded)) {
             $decoded = json_decode($decoded, true);
         }
+        $decoded = $this->unwrapArticleArray($decoded);
         if (! is_array($decoded)) {
             return;
         }
@@ -89,8 +90,30 @@ class StoreExternalArticleRequest extends FormRequest
         $this->merge($decoded);
     }
 
+    /**
+     * @param  mixed  $decoded
+     * @return mixed
+     */
+    private function unwrapArticleArray(mixed $decoded): mixed
+    {
+        if (! is_array($decoded)) {
+            return $decoded;
+        }
+
+        if (array_is_list($decoded) && isset($decoded[0]) && is_array($decoded[0])) {
+            return $decoded[0];
+        }
+
+        return $decoded;
+    }
+
     private function unwrapNestedPayload(): void
     {
+        $first = $this->input(0);
+        if (is_array($first) && (isset($first['title']) || isset($first['slug']) || isset($first['body_md']))) {
+            $this->merge($first);
+        }
+
         foreach (['data', 'json', 'article', 'payload'] as $wrap) {
             $inner = $this->input($wrap);
             if (is_string($inner)) {

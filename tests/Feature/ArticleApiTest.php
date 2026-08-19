@@ -156,6 +156,19 @@ class ArticleApiTest extends TestCase
             ->assertJsonPath('data.translations.id.title', 'Artikel Nested Data');
     }
 
+    public function test_accepts_json_array_wrapper(): void
+    {
+        $this->withToken('testing-articles-token')
+            ->postJson('/api/articles', [
+                [
+                    'title' => 'Artikel Array Wrapper',
+                    'body_md' => 'Isi',
+                ],
+            ])
+            ->assertCreated()
+            ->assertJsonPath('data.translations.id.title', 'Artikel Array Wrapper');
+    }
+
     public function test_downloads_image_url(): void
     {
         $png = base64_decode('iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mP8z8BQDwAEhQGAhKmMIQAAAABJRU5ErkJggg==', true);
