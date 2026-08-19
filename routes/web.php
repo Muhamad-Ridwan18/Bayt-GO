@@ -3,6 +3,7 @@
 use App\Enums\MuthowifVerificationStatus;
 use App\Http\Controllers\Admin\AdminSettingsHubController;
 use App\Http\Controllers\Admin\ArticleGenerateAdminController;
+use App\Http\Controllers\Admin\ArticlesAdminController;
 use App\Http\Controllers\Admin\BookingPaymentDeadlineSettingsController;
 use App\Http\Controllers\Admin\BookingEmergencyController;
 use App\Http\Controllers\Admin\BookingNotificationController;
