@@ -69,6 +69,10 @@ return [
         'token' => trim((string) env('ARTICLES_API_TOKEN', '')),
     ],
 
+    'n8n_articles' => [
+        'webhook_url' => trim((string) env('N8N_ARTICLES_WEBHOOK_URL', '')),
+    ],
+
     'doku' => [
         'client_id' => trim((string) env('DOKU_CLIENT_ID', '')),
         'secret_key' => trim((string) env('DOKU_SECRET_KEY', '')),

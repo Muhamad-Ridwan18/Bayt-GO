@@ -11,6 +11,9 @@
                     <a href="{{ route('admin.settings.index') }}" class="inline-flex items-center rounded-xl border border-slate-200 bg-white px-4 py-2.5 text-sm font-semibold text-slate-700 shadow-sm transition hover:border-slate-300">
                         {{ __('admin.articles.back_settings') }}
                     </a>
+                    <a href="{{ route('admin.articles.generate') }}" class="inline-flex items-center rounded-xl border border-slate-200 bg-white px-4 py-2.5 text-sm font-semibold text-slate-700 shadow-sm transition hover:border-slate-300">
+                        {{ __('admin.article_generate.nav') }}
+                    </a>
                     <a href="{{ route('admin.articles.create') }}" class="inline-flex items-center rounded-xl bg-baytgo px-4 py-2.5 text-sm font-semibold text-white shadow-md shadow-baytgo/20 transition hover:bg-baytgo-800">
                         {{ __('admin.articles.new') }}
                     </a>

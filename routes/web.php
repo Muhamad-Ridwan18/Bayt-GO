@@ -2,7 +2,7 @@
 
 use App\Enums\MuthowifVerificationStatus;
 use App\Http\Controllers\Admin\AdminSettingsHubController;
-use App\Http\Controllers\Admin\ArticlesAdminController;
+use App\Http\Controllers\Admin\ArticleGenerateAdminController;
 use App\Http\Controllers\Admin\BookingPaymentDeadlineSettingsController;
 use App\Http\Controllers\Admin\BookingEmergencyController;
 use App\Http\Controllers\Admin\BookingNotificationController;
@@ -343,6 +343,10 @@ Route::middleware('auth')->group(function () {
         Route::post('whatsapp-broadcast/kirim', [WhatsAppBroadcastController::class, 'send'])->name('whatsapp-broadcast.send');
         Route::post('artikel/ckeditor/unggah', [ArticlesAdminController::class, 'ckeditorUpload'])->name('articles.ckeditor_upload');
         Route::post('artikel/editorjs/unggah', [ArticlesAdminController::class, 'editorjsUpload'])->name('articles.editorjs_upload');
+        Route::get('artikel/generate', [ArticleGenerateAdminController::class, 'create'])->name('articles.generate');
+        Route::post('artikel/generate', [ArticleGenerateAdminController::class, 'store'])
+            ->middleware('throttle:5,1')
+            ->name('articles.generate.store');
         Route::resource('artikel', ArticlesAdminController::class)
             ->parameters(['artikel' => 'article'])
             ->except(['show'])
