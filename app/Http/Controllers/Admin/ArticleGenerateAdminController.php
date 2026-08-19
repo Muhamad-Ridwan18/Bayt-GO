@@ -64,11 +64,17 @@ class ArticleGenerateAdminController extends Controller
         }
 
         if (! $response->successful()) {
+            $n8nMessage = $response->json('message');
+            $n8nHint = $response->json('hint');
+            $detail = collect([$n8nMessage, $n8nHint])
+                ->filter(fn ($part) => is_string($part) && trim($part) !== '')
+                ->implode(' ');
+
             return back()
                 ->withInput()
-                ->with('error', __('admin.article_generate.http_error', [
-                    'status' => $response->status(),
-                ]));
+                ->with('error', $detail !== ''
+                    ? $detail
+                    : __('admin.article_generate.http_error', ['status' => $response->status()]));
         }
 
         $message = $response->json('message');

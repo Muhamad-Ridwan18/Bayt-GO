@@ -138,6 +138,7 @@ final class WelcomePageCache
             $featuredIds,
             MuthowifProfile::query()
                 ->with(['user:id,name', 'services:id,muthowif_profile_id,daily_price,name,type'])
+                ->withMarketplaceStats()
                 ->whereIn((new MuthowifProfile)->getQualifiedKeyName(), $featuredIds)
                 ->get(),
         );
@@ -155,6 +156,7 @@ final class WelcomePageCache
             MuthowifProfile::query()
                 ->approved()
                 ->with('user:id,name')
+                ->withMarketplaceStats()
                 ->whereIn((new MuthowifProfile)->getQualifiedKeyName(), $serviceIds)
                 ->get(),
         );
