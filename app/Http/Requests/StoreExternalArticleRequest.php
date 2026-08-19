@@ -20,9 +20,13 @@ class StoreExternalArticleRequest extends FormRequest
 
     protected function prepareForValidation(): void
     {
+        $this->hydrateJsonBody();
+        $this->unwrapNestedPayload();
+
         $translations = $this->input('translations', []);
         if (! is_array($translations)) {
-            $translations = [];
+            $decodedTranslations = json_decode((string) $translations, true);
+            $translations = is_array($decodedTranslations) ? $decodedTranslations : [];
         }
 
         $flat = [
@@ -65,6 +69,55 @@ class StoreExternalArticleRequest extends FormRequest
         }
 
         $this->merge(['translations' => $translations]);
+    }
+
+    private function hydrateJsonBody(): void
+    {
+        $raw = ltrim((string) $this->getContent(), "\xEF\xBB\xBF");
+        if ($raw === '' || ($raw[0] !== '{' && $raw[0] !== '[' && $raw[0] !== '"')) {
+            return;
+        }
+
+        $decoded = json_decode($raw, true);
+        if (is_string($decoded)) {
+            $decoded = json_decode($decoded, true);
+        }
+        if (! is_array($decoded)) {
+            return;
+        }
+
+        $this->merge($decoded);
+    }
+
+    private function unwrapNestedPayload(): void
+    {
+        foreach (['data', 'json', 'article', 'payload'] as $wrap) {
+            $inner = $this->input($wrap);
+            if (is_string($inner)) {
+                $parsed = json_decode($inner, true);
+                $inner = is_array($parsed) ? $parsed : null;
+            }
+            if (! is_array($inner)) {
+                continue;
+            }
+            if (! isset($inner['title']) && ! isset($inner['slug']) && ! isset($inner['body_md']) && ! isset($inner['translations'])) {
+                continue;
+            }
+            $this->merge($inner);
+
+            return;
+        }
+
+        $body = $this->input('body');
+        if (is_string($body)) {
+            $trimmed = ltrim($body);
+            if ($trimmed !== '' && ($trimmed[0] === '{' || $trimmed[0] === '[')) {
+                $parsed = json_decode($body, true);
+                if (is_array($parsed) && (isset($parsed['title']) || isset($parsed['body_md']))) {
+                    $this->merge($parsed);
+                }
+            }
+        }
     }
 
     /**

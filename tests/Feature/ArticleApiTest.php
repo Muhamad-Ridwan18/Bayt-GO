@@ -99,6 +99,63 @@ class ArticleApiTest extends TestCase
         $this->assertStringContainsString('<strong>tebal</strong>', $body);
     }
 
+    public function test_accepts_json_without_json_content_type(): void
+    {
+        $payload = json_encode([
+            'title' => 'Artikel Tanpa Content Type JSON',
+            'body_md' => 'Isi markdown',
+        ], JSON_THROW_ON_ERROR);
+
+        $this->call(
+            'POST',
+            '/api/articles',
+            [],
+            [],
+            [],
+            [
+                'HTTP_AUTHORIZATION' => 'Bearer testing-articles-token',
+                'CONTENT_TYPE' => 'text/plain',
+            ],
+            $payload,
+        )->assertCreated()
+            ->assertJsonPath('data.translations.id.title', 'Artikel Tanpa Content Type JSON');
+    }
+
+    public function test_accepts_double_encoded_json(): void
+    {
+        $inner = json_encode([
+            'title' => 'Artikel Double Encode',
+            'body' => '<p>Isi</p>',
+        ], JSON_THROW_ON_ERROR);
+
+        $this->call(
+            'POST',
+            '/api/articles',
+            [],
+            [],
+            [],
+            [
+                'HTTP_AUTHORIZATION' => 'Bearer testing-articles-token',
+                'CONTENT_TYPE' => 'application/json',
+            ],
+            json_encode($inner, JSON_THROW_ON_ERROR),
+        )->assertCreated()
+            ->assertJsonPath('data.translations.id.title', 'Artikel Double Encode');
+    }
+
+    public function test_accepts_n8n_wrapped_data_object(): void
+    {
+        $this->withToken('testing-articles-token')
+            ->postJson('/api/articles', [
+                'data' => [
+                    'title' => 'Artikel Nested Data',
+                    'body_md' => 'Isi',
+                ],
+            ])
+            ->assertCreated()
+            ->assertJsonPath('data.translations.id.title', 'Artikel Nested Data');
+    }
+
     public function test_downloads_image_url(): void
     {
         $png = base64_decode('iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mP8z8BQDwAEhQGAhKmMIQAAAABJRU5ErkJggg==', true);
