@@ -642,6 +642,7 @@ return [
         'field_category' => 'Category label',
         'field_author' => 'Author / byline',
         'field_body_html' => 'Article body',
+        'field_body_placeholder' => 'Start writing…',
         'upload_missing_file' => 'No file was uploaded.',
         'upload_failed' => 'Upload failed. Try again or check storage permissions.',
         'section_meta' => 'Article information',

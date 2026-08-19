@@ -642,6 +642,7 @@ return [
         'field_category' => 'Label kategori',
         'field_author' => 'Penulis / byline',
         'field_body_html' => 'Isi artikel',
+        'field_body_placeholder' => 'Mulai menulis…',
         'upload_missing_file' => 'Tidak ada berkas yang diunggah.',
         'upload_failed' => 'Unggah gagal. Coba lagi atau periksa izin folder storage.',
         'section_meta' => 'Informasi artikel',
