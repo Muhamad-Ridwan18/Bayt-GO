@@ -140,7 +140,7 @@ export default function SupportPackagesScreen() {
 
   return (
     <View style={styles.container}>
-      <TabPageHeader title={isEn ? 'Support services' : 'Layanan pendukung'} subtitle={isEn ? 'Manage your service packages' : 'Kelola paket layanan Anda'} />
+      <TabPageHeader variant="brand" title={isEn ? 'Support services' : 'Layanan pendukung'} subtitle={isEn ? 'Manage your service packages' : 'Kelola paket layanan Anda'} />
 
       {loading && !refreshing ? (
         <SkeletonList count={3} style={styles.skeleton} />

@@ -262,30 +262,32 @@ export default function MuthowifDashboardScreen({ navigation }) {
 
   return (
     <View style={styles.root}>
-      <SafeAreaView edges={['top']} style={styles.topBar}>
-        <View style={styles.heroTop}>
-          <View style={styles.heroLeft}>
-            <Text style={styles.heroGreet}>Assalamu'alaikum,</Text>
-            <Text style={styles.heroName}>{firstName}</Text>
-            {rating ? (
-              <View style={styles.ratingChip}>
-                <Star size={12} color={colors.gold} fill={colors.gold} strokeWidth={2} />
-                <Text style={styles.ratingText}>{rating}</Text>
-                <Text style={styles.ratingReviews}>({reviewCount} {isEn ? 'reviews' : 'ulasan'})</Text>
-              </View>
-            ) : null}
+      <LinearGradient colors={gradients.primary} start={{ x: 0, y: 0 }} end={{ x: 1, y: 1 }}>
+        <SafeAreaView edges={['top']} style={styles.topBar}>
+          <View style={styles.heroTop}>
+            <View style={styles.heroLeft}>
+              <Text style={styles.heroGreet}>Assalamu'alaikum,</Text>
+              <Text style={styles.heroName}>{firstName}</Text>
+              {rating ? (
+                <View style={styles.ratingChip}>
+                  <Star size={12} color={colors.gold} fill={colors.gold} strokeWidth={2} />
+                  <Text style={styles.ratingText}>{rating}</Text>
+                  <Text style={styles.ratingReviews}>({reviewCount} {isEn ? 'reviews' : 'ulasan'})</Text>
+                </View>
+              ) : null}
+            </View>
+            <PressableScale onPress={goRequests} haptic="light" style={styles.bellBtn}>
+              <Bell size={22} color={colors.white} strokeWidth={2} />
+              {pendingCount > 0 ? (
+                <View style={styles.bellBadge}>
+                  <Text style={styles.bellBadgeText}>{pendingCount > 9 ? '9+' : pendingCount}</Text>
+                </View>
+              ) : null}
+            </PressableScale>
           </View>
-          <PressableScale onPress={goRequests} haptic="light" style={styles.bellBtn}>
-            <Bell size={22} color={colors.baytgo} strokeWidth={2} />
-            {pendingCount > 0 ? (
-              <View style={styles.bellBadge}>
-                <Text style={styles.bellBadgeText}>{pendingCount > 9 ? '9+' : pendingCount}</Text>
-              </View>
-            ) : null}
-          </PressableScale>
-        </View>
-        <Text style={styles.heroTagline}>{isEn ? 'Manage your schedule and earnings' : 'Kelola jadwal dan pendapatan Anda'}</Text>
-      </SafeAreaView>
+          <Text style={styles.heroTagline}>{isEn ? 'Manage your schedule and earnings' : 'Kelola jadwal dan pendapatan Anda'}</Text>
+        </SafeAreaView>
+      </LinearGradient>
 
       <ScrollView
         showsVerticalScrollIndicator={false}
@@ -293,14 +295,15 @@ export default function MuthowifDashboardScreen({ navigation }) {
         refreshControl={<RefreshControl refreshing={refreshing} onRefresh={() => loadDashboard(true)} tintColor={colors.baytgo} />}
       >
         <PressableScale onPress={goWallet} haptic="light" style={styles.walletCard}>
-          <LinearGradient colors={gradients.gold} start={{ x: 0, y: 0 }} end={{ x: 1, y: 1 }} style={styles.walletGradient}>
+          <LinearGradient colors={gradients.primary} start={{ x: 0, y: 0 }} end={{ x: 1, y: 1 }} style={styles.walletGradient}>
             <View style={styles.walletTop}>
               <View>
+                <Text style={styles.walletBrand}>BAYTGO</Text>
                 <Text style={styles.walletLabel}>{isEn ? 'Wallet balance' : 'Saldo dompet'}</Text>
                 <Text style={styles.walletAmount}>{formatIdr(walletBalance)}</Text>
               </View>
-              <View style={styles.walletIconWrap}>
-                <Wallet size={28} color={colors.baytgoDark} strokeWidth={1.8} />
+              <View style={styles.walletChip}>
+                <Wallet size={20} color={colors.baytgoDark} strokeWidth={1.8} />
               </View>
             </View>
             <View style={styles.walletFooter}>
@@ -426,19 +429,17 @@ export default function MuthowifDashboardScreen({ navigation }) {
 const styles = StyleSheet.create({
   root: { flex: 1, backgroundColor: colors.background },
   topBar: {
-    backgroundColor: colors.card,
-    borderBottomWidth: 1,
-    borderBottomColor: colors.border,
+    backgroundColor: 'transparent',
     paddingHorizontal: layout.screenPadding,
     paddingTop: spacing.sm,
     paddingBottom: spacing.md + 2,
   },
   heroTop: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'flex-start' },
   heroLeft: { flex: 1 },
-  heroGreet: { ...typography.caption, color: colors.textSecondary },
+  heroGreet: { ...typography.caption, color: 'rgba(232, 220, 184, 0.92)' },
   heroName: {
     ...typography.title,
-    color: colors.baytgo,
+    color: colors.white,
     marginTop: 2,
     letterSpacing: -0.5,
     fontFamily: 'PlusJakartaSans_800ExtraBold',
@@ -450,23 +451,23 @@ const styles = StyleSheet.create({
     gap: spacing.xs,
     alignSelf: 'flex-start',
     marginTop: spacing.sm,
-    backgroundColor: colors.baytgoLight,
+    backgroundColor: 'rgba(255,255,255,0.12)',
     paddingHorizontal: spacing.md,
     paddingVertical: spacing.xs + 1,
     borderRadius: radius.full,
   },
   ratingText: { ...typography.caption, fontWeight: '900', color: colors.gold },
-  ratingReviews: { ...typography.small, color: colors.textSecondary },
-  heroTagline: { marginTop: spacing.md - 2, ...typography.caption, color: colors.textSecondary },
+  ratingReviews: { ...typography.small, color: 'rgba(255,255,255,0.7)' },
+  heroTagline: { marginTop: spacing.md - 2, ...typography.caption, color: 'rgba(255,255,255,0.7)' },
   bellBtn: {
     width: 44,
     height: 44,
     borderRadius: radius.sm,
-    backgroundColor: colors.background,
+    backgroundColor: 'rgba(255,255,255,0.12)',
     alignItems: 'center',
     justifyContent: 'center',
     borderWidth: 1,
-    borderColor: colors.border,
+    borderColor: 'rgba(255,255,255,0.18)',
   },
   bellBadge: {
     position: 'absolute',
@@ -489,34 +490,40 @@ const styles = StyleSheet.create({
     borderRadius: radius.md,
     overflow: 'hidden',
     ...shadows.lg,
-    shadowColor: colors.goldMuted,
+    shadowColor: colors.baytgoDark,
   },
   walletGradient: { padding: spacing.xl },
   walletTop: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'flex-start' },
-  walletLabel: { ...typography.small, color: colors.baytgoDark, opacity: 0.75 },
+  walletBrand: {
+    ...typography.label,
+    color: colors.gold,
+    letterSpacing: 2.2,
+    marginBottom: spacing.sm,
+  },
+  walletLabel: { ...typography.small, color: 'rgba(255,255,255,0.55)' },
   walletAmount: {
     marginTop: spacing.xs,
     fontSize: 28,
     fontWeight: '900',
-    color: colors.baytgoDark,
+    color: colors.white,
     letterSpacing: -0.5,
     fontFamily: 'PlusJakartaSans_800ExtraBold',
   },
-  walletIconWrap: {
-    width: 52,
-    height: 52,
-    borderRadius: radius.sm,
-    backgroundColor: 'rgba(255,255,255,0.45)',
+  walletChip: {
+    width: 44,
+    height: 36,
+    borderRadius: 8,
+    backgroundColor: colors.gold,
     alignItems: 'center',
     justifyContent: 'center',
   },
   walletFooter: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginTop: spacing.lg },
-  walletHint: { ...typography.small, color: colors.baytgoDark, opacity: 0.7 },
+  walletHint: { ...typography.small, color: 'rgba(255,255,255,0.55)' },
   walletCta: {
     flexDirection: 'row',
     alignItems: 'center',
     gap: spacing.xs,
-    backgroundColor: 'rgba(255,255,255,0.5)',
+    backgroundColor: colors.gold,
     paddingHorizontal: spacing.md,
     paddingVertical: spacing.sm - 2,
     borderRadius: radius.sm - 2,

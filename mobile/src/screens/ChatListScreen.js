@@ -53,6 +53,7 @@ export default function ChatListScreen({ navigation }) {
     return (
       <View style={styles.container}>
         <TabPageHeader
+          variant={isVerifiedMuthowif ? 'brand' : 'light'}
           title="Chat"
           subtitle={isEn ? 'Your booking conversations' : 'Percakapan booking Anda'}
         />
@@ -64,6 +65,7 @@ export default function ChatListScreen({ navigation }) {
   return (
     <View style={styles.container}>
       <TabPageHeader
+        variant={isVerifiedMuthowif ? 'brand' : 'light'}
         title="Chat"
         subtitle={isEn ? 'Your booking conversations' : 'Percakapan booking Anda'}
       />

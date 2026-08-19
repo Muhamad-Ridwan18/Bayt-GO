@@ -12,7 +12,7 @@ import { colors, layout, radius, spacing, typography } from '../theme/tokens';
 import { useLocale } from '../utils/locale';
 
 export default function SupportCreateScreen({ navigation }) {
-  const { token } = useAuth();
+  const { token, isVerifiedMuthowif } = useAuth();
   const locale = useLocale();
   const isEn = locale === 'en';
 
@@ -87,6 +87,7 @@ export default function SupportCreateScreen({ navigation }) {
   return (
     <View style={styles.container}>
       <ScreenHeader
+        variant={isVerifiedMuthowif ? 'brand' : 'light'}
         title={headerTitle}
         subtitle={headerSubtitle}
         onBack={() => navigation.goBack()}

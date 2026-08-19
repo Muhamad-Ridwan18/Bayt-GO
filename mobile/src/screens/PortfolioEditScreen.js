@@ -101,7 +101,7 @@ export default function PortfolioEditScreen({ navigation, route }) {
 
   return (
     <View style={styles.container}>
-      <ScreenHeader title={isEn ? 'Edit album' : 'Edit album'} subtitle={title || (isEn ? 'Manage album photos' : 'Kelola foto album')} onBack={() => navigation.goBack()} />
+      <ScreenHeader variant="brand" title={isEn ? 'Edit album' : 'Edit album'} subtitle={title || (isEn ? 'Manage album photos' : 'Kelola foto album')} onBack={() => navigation.goBack()} />
 
       {loading ? (
         <SkeletonList count={2} style={styles.skeleton} />

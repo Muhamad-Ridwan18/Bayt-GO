@@ -156,7 +156,7 @@ export default function PortfolioScreen({ navigation }) {
 
   return (
     <View style={styles.container}>
-      <TabPageHeader title={isEn ? 'Portfolio' : 'Portofolio'} subtitle={isEn ? 'Your service documentation gallery' : 'Galeri dokumentasi layanan Anda'} />
+      <TabPageHeader variant="brand" title={isEn ? 'Portfolio' : 'Portofolio'} subtitle={isEn ? 'Your service documentation gallery' : 'Galeri dokumentasi layanan Anda'} />
 
       {loading && !refreshing ? (
         <SkeletonList count={3} style={styles.skeleton} />

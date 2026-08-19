@@ -17,7 +17,7 @@ import { colors, gradients, layout, radius, shadows, spacing } from '../theme/to
 import { useLocale } from '../utils/locale';
 
 export default function SupportListScreen({ navigation }) {
-  const { token } = useAuth();
+  const { token, isVerifiedMuthowif } = useAuth();
   const locale = useLocale();
   const isEn = locale === 'en';
   const [items, setItems] = useState([]);
@@ -66,14 +66,16 @@ export default function SupportListScreen({ navigation }) {
   ), [navigation]);
 
   const nested = navigation.canGoBack();
+  const headerVariant = isVerifiedMuthowif ? 'brand' : 'light';
   const header = nested ? (
     <ScreenHeader
+      variant={headerVariant}
       title={title}
       subtitle={subtitle}
       onBack={() => navigation.goBack()}
     />
   ) : (
-    <TabPageHeader title={title} subtitle={subtitle} />
+    <TabPageHeader variant={headerVariant} title={title} subtitle={subtitle} />
   );
 
   if (loading && !refreshing) {

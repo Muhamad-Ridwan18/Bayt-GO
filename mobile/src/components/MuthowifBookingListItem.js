@@ -35,9 +35,11 @@ function MuthowifBookingListItem({ item, onPress }) {
             backgroundColor: `${bookingMeta.color}08`,
           },
         ]}
-        padding={spacing.lg}
+        padding={0}
         elevated
       >
+        <View style={[styles.accent, { backgroundColor: isPending ? colors.gold : colors.baytgo }]} />
+        <View style={styles.inner}>
         <View style={styles.row}>
           <View style={styles.avatarWrap}>
             <View style={[styles.avatar, { backgroundColor: `${bookingMeta.color}18` }]}>
@@ -89,6 +91,7 @@ function MuthowifBookingListItem({ item, onPress }) {
 
           <ChevronRight size={20} color={colors.textMuted} strokeWidth={2} />
         </View>
+        </View>
       </Card>
     </PressableScale>
   );
@@ -98,7 +101,9 @@ export default memo(MuthowifBookingListItem);
 
 const styles = StyleSheet.create({
   press: { marginBottom: spacing.lg },
-  card: { borderRadius: radius.md },
+  card: { borderRadius: radius.md, overflow: 'hidden', flexDirection: 'row' },
+  accent: { width: 4 },
+  inner: { flex: 1, padding: spacing.lg },
   row: { flexDirection: 'row', alignItems: 'flex-start', gap: spacing.md },
   avatarWrap: { position: 'relative' },
   avatar: {

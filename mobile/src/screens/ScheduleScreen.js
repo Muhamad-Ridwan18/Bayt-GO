@@ -15,14 +15,17 @@ import { useLocale } from '../utils/locale';
 
 function BlockedDateRow({ item, onDelete, deleting }) {
   return (
-    <Card style={styles.row} padding={spacing.lg} elevated={false}>
-      <View style={styles.rowMeta}>
-        <Text style={styles.rowDate}>{item.date}</Text>
-        {item.note ? <Text style={styles.rowNote}>{item.note}</Text> : null}
+    <Card style={styles.row} padding={0} elevated={false}>
+      <View style={styles.rowAccent} />
+      <View style={styles.rowInner}>
+        <View style={styles.rowMeta}>
+          <Text style={styles.rowDate}>{item.date}</Text>
+          {item.note ? <Text style={styles.rowNote}>{item.note}</Text> : null}
+        </View>
+        <PressableScale onPress={() => onDelete(item)} disabled={deleting} haptic="light" style={styles.deleteBtn}>
+          <Trash2 size={18} color={colors.error} strokeWidth={2} />
+        </PressableScale>
       </View>
-      <PressableScale onPress={() => onDelete(item)} disabled={deleting} haptic="light" style={styles.deleteBtn}>
-        <Trash2 size={18} color={colors.error} strokeWidth={2} />
-      </PressableScale>
     </Card>
   );
 }
@@ -104,7 +107,7 @@ export default function ScheduleScreen() {
 
   return (
     <View style={styles.container}>
-      <TabPageHeader title={isEn ? 'Off-day schedule' : 'Jadwal libur'} subtitle={isEn ? 'Block unavailable dates' : 'Blokir tanggal tidak tersedia'} />
+      <TabPageHeader variant="brand" title={isEn ? 'Off-day schedule' : 'Jadwal libur'} subtitle={isEn ? 'Block unavailable dates' : 'Blokir tanggal tidak tersedia'} />
 
       {loading && !refreshing ? (
         <SkeletonList count={3} style={styles.skeleton} />
@@ -182,7 +185,9 @@ const styles = StyleSheet.create({
     borderColor: colors.border,
   },
   sectionTitle: { ...typography.subtitle, color: colors.baytgo, marginTop: spacing.xl, marginBottom: spacing.md },
-  row: { flexDirection: 'row', alignItems: 'center', gap: spacing.md, marginBottom: spacing.sm },
+  row: { flexDirection: 'row', alignItems: 'stretch', marginBottom: spacing.sm, overflow: 'hidden' },
+  rowAccent: { width: 4, backgroundColor: colors.gold },
+  rowInner: { flex: 1, flexDirection: 'row', alignItems: 'center', gap: spacing.md, padding: spacing.lg },
   rowMeta: { flex: 1 },
   rowDate: { ...typography.caption, fontFamily: 'PlusJakartaSans_800ExtraBold', color: colors.textPrimary },
   rowNote: { marginTop: spacing.xs, ...typography.small, color: colors.textSecondary, fontWeight: '500' },

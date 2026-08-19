@@ -160,7 +160,7 @@ export default function MuthowifBookingsListScreen({ navigation }) {
   if (loading && !refreshing) {
     return (
       <View style={styles.container}>
-        <TabPageHeader title={isEn ? 'Requests' : 'Permintaan'} subtitle={isEn ? 'Manage pilgrim bookings' : 'Kelola booking jamaah'} />
+        <TabPageHeader variant="brand" title={isEn ? 'Requests' : 'Permintaan'} subtitle={isEn ? 'Manage pilgrim bookings' : 'Kelola booking jamaah'} />
         <SkeletonList count={4} style={styles.skeleton} />
       </View>
     );
@@ -169,6 +169,7 @@ export default function MuthowifBookingsListScreen({ navigation }) {
   return (
     <View style={styles.container}>
       <TabPageHeader
+        variant="brand"
         title={isEn ? 'Requests' : 'Permintaan'}
         subtitle={stats.pending > 0
           ? `${stats.pending} ${isEn ? 'awaiting confirmation' : 'menunggu konfirmasi'}`

@@ -25,7 +25,7 @@ import { colors, gradients, layout, radius, spacing, typography } from '../theme
 import { useLocale } from '../utils/locale';
 
 export default function ChatRoomScreen({ navigation, route }) {
-  const { token } = useAuth();
+  const { token, isVerifiedMuthowif } = useAuth();
   const locale = useLocale();
   const isEn = locale === 'en';
   const { setActiveBookingId, clearUnreadForBooking } = useChatInbox();
@@ -204,7 +204,7 @@ export default function ChatRoomScreen({ navigation, route }) {
       behavior={Platform.OS === 'ios' ? 'padding' : undefined}
       keyboardVerticalOffset={Platform.OS === 'ios' ? 8 : 0}
     >
-      <ScreenHeader title={title} subtitle={subtitle} onBack={() => navigation.goBack()} />
+      <ScreenHeader variant={isVerifiedMuthowif ? 'brand' : 'light'} title={title} subtitle={subtitle} onBack={() => navigation.goBack()} />
 
       {!chatOpen ? (
         <View style={styles.closedBanner}>

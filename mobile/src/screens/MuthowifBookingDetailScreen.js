@@ -1,6 +1,7 @@
 import React, { useCallback, useState } from 'react';
 import { StyleSheet, Text, View, ScrollView, RefreshControl, Alert, TextInput } from 'react-native';
 import { useFocusEffect } from '@react-navigation/native';
+import { LinearGradient } from 'expo-linear-gradient';
 import {
   User, Briefcase, Calendar, Clock, Users, Bed, Car, CheckCircle, XCircle, MessagesSquare,
 } from 'lucide-react-native';
@@ -13,14 +14,13 @@ import {
 import { useAuth } from '../context/AuthContext';
 import { useHideTabBarOnFocus } from '../hooks/useHideTabBarOnFocus';
 import Button from '../ui/Button';
-import Card from '../ui/Card';
 import ErrorState from '../ui/ErrorState';
 import { SkeletonList } from '../ui/Skeleton';
 import BookingSection from '../features/booking/BookingSection';
 import StatusPill from '../features/booking/StatusPill';
 import { REJECTION_OPTIONS, RejectBookingForm, RescheduleDecisionModal } from '../features/booking/MuthowifBookingModals';
 import { notifyError, notifySuccess } from '../utils/feedback';
-import { colors, layout, radius, spacing, typography } from '../theme/tokens';
+import { colors, gradients, layout, radius, spacing, typography } from '../theme/tokens';
 import { formatIdr } from '../utils/format';
 import { MuthowifPricingBreakdown } from '../components/BookingPricingBreakdown';
 import { useLocale } from '../utils/locale';
@@ -230,7 +230,7 @@ export default function MuthowifBookingDetailScreen({ navigation, route }) {
   if (loading && !booking) {
     return (
       <View style={styles.container}>
-        <ScreenHeader title={isEn ? 'Request details' : 'Detail permintaan'} onBack={() => navigation.goBack()} />
+        <ScreenHeader variant="brand" title={isEn ? 'Request details' : 'Detail permintaan'} onBack={() => navigation.goBack()} />
         <SkeletonList count={3} style={styles.skeleton} />
       </View>
     );
@@ -239,7 +239,7 @@ export default function MuthowifBookingDetailScreen({ navigation, route }) {
   if (error && !booking) {
     return (
       <View style={styles.container}>
-        <ScreenHeader title={isEn ? 'Request details' : 'Detail permintaan'} onBack={() => navigation.goBack()} />
+        <ScreenHeader variant="brand" title={isEn ? 'Request details' : 'Detail permintaan'} onBack={() => navigation.goBack()} />
         <ErrorState description={error} onRetry={() => load()} />
       </View>
     );
@@ -255,6 +255,7 @@ export default function MuthowifBookingDetailScreen({ navigation, route }) {
   return (
     <View style={styles.container}>
       <ScreenHeader
+        variant="brand"
         title={booking.booking_code || 'Booking'}
         subtitle={isEn ? 'Pilgrim request details' : 'Detail permintaan jamaah'}
         onBack={() => navigation.goBack()}
@@ -267,10 +268,10 @@ export default function MuthowifBookingDetailScreen({ navigation, route }) {
           <RefreshControl refreshing={refreshing} onRefresh={() => { setRefreshing(true); load(true); }} tintColor={colors.baytgo} />
         }
       >
-        <Card style={styles.hero} padding={spacing.xl}>
+        <LinearGradient colors={gradients.primary} start={{ x: 0, y: 0 }} end={{ x: 1, y: 1 }} style={styles.hero}>
           <View style={styles.heroTop}>
             <View style={styles.avatar}>
-              <User size={28} color={colors.baytgo} strokeWidth={2} />
+              <User size={28} color={colors.baytgoDark} strokeWidth={2} />
             </View>
             <View style={styles.heroCopy}>
               <Text style={styles.customerName}>{booking.customer?.name || (isEn ? 'Pilgrim' : 'Jamaah')}</Text>
@@ -293,7 +294,7 @@ export default function MuthowifBookingDetailScreen({ navigation, route }) {
               <Text style={styles.netValue}>{formatIdr(booking.pricing.net_after_referral)}</Text>
             </View>
           ) : null}
-        </Card>
+        </LinearGradient>
 
         <BookingSection title={isEn ? 'Earnings details' : 'Rincian pendapatan'}>
           <MuthowifPricingBreakdown pricing={booking.pricing} />
@@ -412,28 +413,33 @@ const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: colors.background },
   scroll: { padding: layout.screenPadding, paddingBottom: spacing['4xl'] },
   skeleton: { padding: layout.screenPadding },
-  hero: { marginBottom: spacing.md },
+  hero: {
+    marginBottom: spacing.md,
+    borderRadius: radius.md,
+    padding: spacing.xl,
+    overflow: 'hidden',
+  },
   heroTop: { flexDirection: 'row', alignItems: 'center', gap: spacing.lg },
   avatar: {
     width: 56, height: 56, borderRadius: radius.sm,
-    backgroundColor: colors.baytgoLight, alignItems: 'center', justifyContent: 'center',
+    backgroundColor: colors.gold, alignItems: 'center', justifyContent: 'center',
   },
   heroCopy: { flex: 1 },
-  customerName: { ...typography.subtitle, color: colors.baytgo },
-  customerMeta: { marginTop: spacing.xs, ...typography.caption, color: colors.textSecondary },
+  customerName: { ...typography.subtitle, color: colors.white },
+  customerMeta: { marginTop: spacing.xs, ...typography.caption, color: 'rgba(255,255,255,0.7)' },
   badgeRow: { flexDirection: 'row', flexWrap: 'wrap', gap: spacing.sm, marginTop: spacing.lg },
   totalRow: {
     flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center',
-    marginTop: spacing.lg, paddingTop: spacing.lg, borderTopWidth: 1, borderTopColor: colors.border,
+    marginTop: spacing.lg, paddingTop: spacing.lg, borderTopWidth: 1, borderTopColor: 'rgba(255,255,255,0.15)',
   },
-  totalLabel: { ...typography.caption, color: colors.textSecondary },
-  totalValue: { ...typography.subtitle, color: colors.baytgo },
+  totalLabel: { ...typography.caption, color: 'rgba(255,255,255,0.65)' },
+  totalValue: { ...typography.subtitle, color: colors.white },
   netRow: {
-    marginTop: spacing.md, paddingTop: spacing.md, borderTopWidth: 1, borderTopColor: colors.border,
+    marginTop: spacing.md, paddingTop: spacing.md, borderTopWidth: 1, borderTopColor: 'rgba(255,255,255,0.15)',
     flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center',
   },
-  netLabel: { ...typography.caption, color: colors.textSecondary },
-  netValue: { ...typography.title, fontSize: 20, color: colors.success },
+  netLabel: { ...typography.caption, color: 'rgba(232,220,184,0.9)' },
+  netValue: { ...typography.title, fontSize: 20, color: colors.gold },
   infoCell: { flexDirection: 'row', alignItems: 'flex-start', gap: spacing.md, paddingVertical: spacing.sm },
   infoIcon: {
     width: 34, height: 34, borderRadius: radius.sm,

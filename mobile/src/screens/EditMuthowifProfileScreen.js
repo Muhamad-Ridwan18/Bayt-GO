@@ -255,13 +255,14 @@ export default function EditMuthowifProfileScreen({ navigation, route }) {
   return (
     <View style={styles.container}>
       <ScreenHeader
+        variant="brand"
         title={isEn ? 'Public profile' : 'Profil publik'}
         subtitle={isEn ? 'Info shown on marketplace' : 'Info tampil di marketplace'}
         onBack={() => navigation.goBack()}
         rightAction={
           publicProfileUrl ? (
             <PressableScale onPress={handlePreviewProfile} haptic="light" style={styles.previewBtn}>
-              <ExternalLink size={20} color={colors.baytgo} strokeWidth={2} />
+              <ExternalLink size={20} color={colors.white} strokeWidth={2} />
             </PressableScale>
           ) : null
         }

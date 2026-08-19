@@ -97,7 +97,7 @@ export default function ServicesScreen() {
 
   return (
     <View style={styles.container}>
-      <TabPageHeader title={isEn ? 'Services' : 'Layanan'} subtitle={isEn ? 'Manage group & private services for pilgrims' : 'Atur layanan group & private untuk jamaah'} />
+      <TabPageHeader variant="brand" title={isEn ? 'Services' : 'Layanan'} subtitle={isEn ? 'Manage group & private services for pilgrims' : 'Atur layanan group & private untuk jamaah'} />
 
       {loading && !refreshing ? (
         <SkeletonList count={3} style={styles.skeleton} />

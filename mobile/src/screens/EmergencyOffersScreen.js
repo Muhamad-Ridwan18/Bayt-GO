@@ -115,6 +115,7 @@ export default function EmergencyOffersScreen() {
     return (
       <View style={styles.container}>
         <TabPageHeader
+          variant="brand"
           title={isEn ? 'Emergency offers' : 'Penawaran darurat'}
           subtitle={isEn ? 'Emergency muthowif replacement' : 'Ganti muthowif darurat'}
         />
@@ -126,6 +127,7 @@ export default function EmergencyOffersScreen() {
   return (
     <View style={styles.container}>
       <TabPageHeader
+          variant="brand"
           title={isEn ? 'Emergency offers' : 'Penawaran darurat'}
           subtitle={pendingCount > 0 ? (isEn ? `${pendingCount} awaiting response` : `${pendingCount} menunggu respons`) : (isEn ? 'Emergency muthowif replacement' : 'Ganti muthowif darurat')}
       />

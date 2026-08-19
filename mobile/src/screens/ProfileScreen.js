@@ -188,7 +188,7 @@ export default function ProfileScreen({ navigation }) {
   if (loading && !refreshing) {
     return (
       <View style={styles.container}>
-        <TabPageHeader title={isEn ? 'Profile' : 'Profil'} />
+        <TabPageHeader variant={isVerifiedMuthowif ? 'brand' : 'light'} title={isEn ? 'Profile' : 'Profil'} />
         <SkeletonList count={3} style={styles.skeleton} />
       </View>
     );
@@ -196,7 +196,7 @@ export default function ProfileScreen({ navigation }) {
 
   return (
     <View style={styles.container}>
-      <TabPageHeader title={isEn ? 'Profile' : 'Profil'} />
+      <TabPageHeader variant={isVerifiedMuthowif ? 'brand' : 'light'} title={isEn ? 'Profile' : 'Profil'} />
 
       <ScrollView
         contentContainerStyle={styles.scroll}

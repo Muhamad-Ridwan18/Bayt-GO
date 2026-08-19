@@ -17,7 +17,7 @@ import { useLocale } from '../utils/locale';
 
 export default function SupportDetailScreen({ navigation, route }) {
   const locale = useLocale(); const isEn = locale === 'en';
-  const { token } = useAuth();
+  const { token, isVerifiedMuthowif } = useAuth();
   const { ticketId } = route.params;
 
   const [ticket, setTicket] = useState(null);
@@ -90,6 +90,7 @@ export default function SupportDetailScreen({ navigation, route }) {
       keyboardVerticalOffset={Platform.OS === 'ios' ? 8 : 0}
     >
       <ScreenHeader
+        variant={isVerifiedMuthowif ? 'brand' : 'light'}
         title={ticket?.subject || (isEn ? 'Ticket Detail' : 'Detail Tiket')}
         subtitle={subtitle}
         onBack={() => navigation.goBack()}

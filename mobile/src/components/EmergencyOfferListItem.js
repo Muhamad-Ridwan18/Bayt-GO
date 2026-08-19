@@ -20,7 +20,9 @@ function EmergencyOfferListItem({ offer, onAccept, onDecline, busy }) {
   };
 
   return (
-    <Card style={styles.card} padding={spacing.lg} elevated>
+    <Card style={styles.card} padding={0} elevated>
+      <View style={styles.goldBar} />
+      <View style={styles.inner}>
       <View style={styles.header}>
         <Text style={styles.bookingCode}>{offer.booking_code || 'Booking'}</Text>
         <View style={[styles.badge, { backgroundColor: statusMeta.bg }]}>
@@ -68,6 +70,7 @@ function EmergencyOfferListItem({ offer, onAccept, onDecline, busy }) {
           </View>
         </View>
       ) : null}
+      </View>
     </Card>
   );
 }
@@ -78,6 +81,14 @@ const styles = StyleSheet.create({
   card: {
     borderRadius: radius.md,
     marginBottom: spacing.lg,
+    overflow: 'hidden',
+  },
+  goldBar: {
+    height: 4,
+    backgroundColor: colors.gold,
+  },
+  inner: {
+    padding: spacing.lg,
   },
   header: {
     flexDirection: 'row',

@@ -13,11 +13,11 @@ export default function MuthowifPendingScreen({ navigation }) {
 
   return (
     <View style={styles.safe}>
-      <TabPageHeader title={isEn ? 'Home' : 'Beranda'} subtitle={`${isEn ? 'Hello' : 'Halo'}, ${user?.name || 'Muthowif'}`} />
+      <TabPageHeader variant="brand" title={isEn ? 'Home' : 'Beranda'} subtitle={`${isEn ? 'Hello' : 'Halo'}, ${user?.name || 'Muthowif'}`} />
       <View style={styles.content}>
         <Card style={styles.card} padding={spacing['2xl']} elevated={false}>
           <View style={styles.iconWrap}>
-            <Clock size={32} color={colors.warning} strokeWidth={1.8} />
+            <Clock size={32} color={colors.gold} strokeWidth={1.8} />
           </View>
           <Text style={styles.kicker}>{isEn ? 'Muthowif account under review' : 'Akun muthowif sedang ditinjau'}</Text>
           <Text style={styles.title}>{isEn ? 'Hello' : 'Halo'}, {user?.name || 'Muthowif'}</Text>
@@ -54,12 +54,12 @@ export default function MuthowifPendingScreen({ navigation }) {
 const styles = StyleSheet.create({
   safe: { flex: 1, backgroundColor: colors.background },
   content: { padding: layout.screenPadding, paddingBottom: spacing['3xl'] },
-  card: { borderRadius: radius.lg, borderColor: '#FDE68A' },
+  card: { borderRadius: radius.lg, borderColor: 'rgba(197,160,89,0.35)' },
   iconWrap: {
     width: 64,
     height: 64,
     borderRadius: radius.md - 4,
-    backgroundColor: colors.warningLight,
+    backgroundColor: colors.goldLight,
     alignItems: 'center',
     justifyContent: 'center',
     marginBottom: spacing.lg,
@@ -67,7 +67,7 @@ const styles = StyleSheet.create({
   kicker: {
     ...typography.caption,
     fontFamily: 'PlusJakartaSans_800ExtraBold',
-    color: colors.warning,
+    color: colors.goldMuted,
   },
   title: {
     ...typography.title,
