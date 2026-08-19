@@ -10,13 +10,13 @@ import { useBrand } from '../context/BrandContext';
 import { navigateRoot } from '../navigation/rootNavigation';
 import AppLogo from '../components/AppLogo';
 import MuthowifSpotlightCard from '../components/MuthowifSpotlightCard';
-import { parseIsoDate } from '../components/DatePickerField';
+import { parseIsoDate, toIsoDateTime } from '../components/DatePickerField';
 import HeroCarousel from '../features/home/HeroCarousel';
 import SearchPanel from '../features/home/SearchPanel';
 import CustomerActivitySection from '../features/home/CustomerActivitySection';
 import HelpTicketCta from '../features/home/HelpTicketCta';
 import CampaignCarousel from '../features/home/CampaignCarousel';
-import FeatureChips from '../features/home/FeatureChips';
+import { HOME_CATEGORIES } from '../features/home/FeatureChips';
 import HomeGallery from '../features/home/HomeGallery';
 import ArticleCards from '../features/home/ArticleCards';
 import HowItWorks from '../features/home/HowItWorks';
@@ -41,7 +41,14 @@ export default function HomeScreen({ navigation }) {
   const [error, setError] = useState(null);
   const [startDate, setStartDate] = useState('');
   const [endDate, setEndDate] = useState('');
-  const [searchName, setSearchName] = useState('');
+  const [startsAt, setStartsAt] = useState(() => {
+    const d = new Date();
+    d.setDate(d.getDate() + 1);
+    d.setHours(9, 0, 0, 0);
+    return toIsoDateTime(d);
+  });
+  const [selectedCategoryKey, setSelectedCategoryKey] = useState('umroh');
+  const [dateError, setDateError] = useState('');
   const [nextBooking, setNextBooking] = useState(null);
   const [dashStats, setDashStats] = useState([]);
   const [unreadMessages, setUnreadMessages] = useState(0);
@@ -80,28 +87,54 @@ export default function HomeScreen({ navigation }) {
     return `${avg.toFixed(1)}/5 (${reviews || '1.200'} review)`;
   }, [muthowifs]);
 
+  const homeCategories = HOME_CATEGORIES[locale] || HOME_CATEGORIES.id;
+  const selectedCategory = homeCategories.find((c) => c.key === selectedCategoryKey) || homeCategories[0];
+
   const openDirectory = useCallback((params = {}) => {
     navigation.navigate('Directory', {
-      q: params.q ?? searchName.trim(),
+      q: params.q ?? '',
       startDate: params.startDate ?? startDate.trim(),
       endDate: params.endDate ?? endDate.trim(),
       sort: params.sort,
       minRating: params.minRating,
     });
-  }, [navigation, searchName, startDate, endDate]);
+  }, [navigation, startDate, endDate]);
 
-  const openCategory = useCallback((cat) => {
+  const selectCategory = useCallback((cat) => {
     if (!cat) return;
-    if (cat.type === 'support') {
-      navigation.navigate('SupportCatalog', {
-        category: cat.category || cat.key,
-        startsAt: startDate.trim() ? `${startDate.trim()}T09:00` : undefined,
-        q: searchName.trim() || undefined,
-      });
+    setSelectedCategoryKey(cat.key);
+    setDateError('');
+  }, []);
+
+  const runHomeSearch = useCallback(() => {
+    const cat = selectedCategory;
+    if (!cat) return;
+    setDateError('');
+
+    if (cat.type === 'layanan') {
+      const start = startDate.trim();
+      if (!start) {
+        setDateError(isEn
+          ? 'Please choose departure and return dates first.'
+          : 'Pilih tanggal berangkat dan pulang terlebih dahulu.');
+        return;
+      }
+      openDirectory({ startDate: start, endDate: endDate.trim() || start });
       return;
     }
-    openDirectory();
-  }, [navigation, openDirectory, searchName, startDate]);
+
+    const slot = startsAt.trim();
+    if (!slot) {
+      setDateError(isEn
+        ? 'Please choose a start date and time first.'
+        : 'Pilih tanggal dan jam mulai terlebih dahulu.');
+      return;
+    }
+    navigation.navigate('SupportCatalog', {
+      category: cat.category || cat.key,
+      startsAt: slot,
+    });
+  }, [selectedCategory, startDate, endDate, startsAt, isEn, openDirectory, navigation]);
 
   const openMuthowifDetail = (item) => navigation.navigate('MuthowifDetail', {
     id: item.id, startDate: startDate.trim() || undefined, endDate: endDate.trim() || undefined,
@@ -201,37 +234,50 @@ export default function HomeScreen({ navigation }) {
         contentContainerStyle={{ paddingBottom: spacing.lg }}
         refreshControl={<RefreshControl refreshing={refreshing} onRefresh={() => loadData(true)} tintColor={colors.baytgo} />}
       >
-        <View style={styles.greetingWrap}>
+        <View style={styles.hero}>
           <Image
             source={require('../../assets/hero/hero-welcome.png')}
-            style={styles.greetingBg}
+            style={styles.heroBg}
             contentFit="cover"
             contentPosition="center"
           />
-          <View style={styles.greetingOverlay} />
-          <Text style={styles.greetingHi}>
-            {isCustomer ? `Assalamu'alaikum, ${firstName} 👋` : "Assalamu'alaikum 👋"}
+          <View style={styles.heroOverlay} />
+          <Text style={styles.heroIntro}>
+            {isCustomer
+              ? `${isEn ? 'Assalamu alaikum,' : "Assalamu'alaikum,"} ${firstName}`
+              : (isEn ? 'Assalamu alaikum,' : "Assalamu'alaikum,")}
           </Text>
-          <Text style={styles.greetingTitle}>
+          <Text style={styles.heroTitle}>
+            {isEn ? 'Book a Trusted ' : 'Pesan Pendamping Ibadah '}
+            <Text style={styles.heroAccent}>{isEn ? 'Umrah Companion.' : 'Umroh Terpercaya.'}</Text>
+          </Text>
+          <Text style={styles.heroSub}>
             {isEn
-              ? <><Text>Looking for a </Text><Text style={styles.greetingAccent}>Muthowif</Text><Text> for your pilgrimage?</Text></>
-              : <>Mau cari <Text style={styles.greetingAccent}>Muthowif</Text> untuk ibadahmu?</>}
+              ? 'Find verified muthowif, compare prices, and book for your travel dates.'
+              : 'Temukan muthowif terverifikasi, bandingkan harga, dan pesan sesuai tanggal perjalanan Anda.'}
           </Text>
-        </View>
 
-        <SearchPanel
-          searchName={searchName}
-          onSearchNameChange={setSearchName}
-          startDate={startDate}
-          endDate={endDate}
-          onStartDateChange={(iso) => { setStartDate(iso); if (endDate && iso && endDate < iso) setEndDate(''); }}
-          onEndDateChange={setEndDate}
-          onClearEndDate={() => setEndDate('')}
-          today={today}
-          endMinDate={endMinDate}
-          endMaxDate={endMaxDate}
-          onSearch={() => openDirectory()}
-        />
+          <SearchPanel
+            selectedKey={selectedCategoryKey}
+            onSelectCategory={selectCategory}
+            startDate={startDate}
+            endDate={endDate}
+            onStartDateChange={(iso) => {
+              setStartDate(iso);
+              setDateError('');
+              if (endDate && iso && endDate < iso) setEndDate('');
+            }}
+            onEndDateChange={(iso) => { setEndDate(iso); setDateError(''); }}
+            onClearEndDate={() => setEndDate('')}
+            startsAt={startsAt}
+            onStartsAtChange={(iso) => { setStartsAt(iso); setDateError(''); }}
+            today={today}
+            endMinDate={endMinDate}
+            endMaxDate={endMaxDate}
+            dateError={dateError}
+            onSearch={runHomeSearch}
+          />
+        </View>
 
         <CampaignCarousel
           campaigns={campaigns}
@@ -263,11 +309,6 @@ export default function HomeScreen({ navigation }) {
             onPress={() => navigation.getParent()?.navigate('SupportTab', { screen: 'SupportList' })}
           />
         ) : null}
-
-        <FeatureChips
-          onCategoryPress={openCategory}
-          onSeeAll={() => openDirectory()}
-        />
 
         <View style={styles.sectionPad}>
           <View style={styles.sectionHead}>
@@ -372,36 +413,39 @@ const styles = StyleSheet.create({
     borderColor: colors.white,
   },
   notifBadgeText: { fontSize: 9, fontWeight: '900', color: colors.white },
-  greetingWrap: {
-    marginHorizontal: layout.screenPadding,
-    marginTop: spacing.sm,
-    borderRadius: radius.md,
+  hero: {
+    backgroundColor: colors.baytgo,
+    paddingHorizontal: layout.screenPadding,
+    paddingTop: spacing.xl,
+    paddingBottom: spacing.xl,
     overflow: 'hidden',
-    padding: spacing.md + 2,
-    minHeight: 84,
-    justifyContent: 'flex-end',
   },
-  greetingBg: { ...StyleSheet.absoluteFillObject, opacity: 0.22 },
-  greetingOverlay: {
+  heroBg: { ...StyleSheet.absoluteFillObject },
+  heroOverlay: {
     ...StyleSheet.absoluteFillObject,
-    backgroundColor: 'rgba(255,255,255,0.72)',
+    backgroundColor: 'rgba(15, 34, 29, 0.72)',
   },
-  greetingHi: {
+  heroIntro: {
     ...typography.caption,
-    fontWeight: '700',
-    fontFamily: 'PlusJakartaSans_700Bold',
-    color: colors.baytgo,
+    fontWeight: '600',
+    color: 'rgba(255,255,255,0.8)',
   },
-  greetingTitle: {
-    marginTop: spacing.xs + 2,
-    fontSize: 20,
-    lineHeight: 26,
+  heroTitle: {
+    marginTop: spacing.sm,
+    fontSize: 24,
+    lineHeight: 30,
     fontFamily: 'PlusJakartaSans_800ExtraBold',
     fontWeight: '800',
-    color: colors.textPrimary,
-    letterSpacing: -0.3,
+    color: colors.white,
+    letterSpacing: -0.4,
   },
-  greetingAccent: { color: colors.primary },
+  heroAccent: { color: colors.gold },
+  heroSub: {
+    marginTop: spacing.md,
+    ...typography.caption,
+    color: 'rgba(255,255,255,0.85)',
+    lineHeight: 20,
+  },
   sectionPad: { marginTop: spacing.xl },
   sectionHead: {
     flexDirection: 'row',
