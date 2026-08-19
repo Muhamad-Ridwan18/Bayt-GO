@@ -36,7 +36,7 @@
                 </div>
                 @include('admin.articles._preview')
             </div>
-        </div>
+        </x-page-container>
     </div>
     @include('admin.articles._editorjs')
 </x-app-layout>
