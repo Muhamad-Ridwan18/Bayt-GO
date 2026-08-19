@@ -65,6 +65,10 @@ return [
         'enabled' => filter_var(env('EXPO_PUSH_ENABLED', true), FILTER_VALIDATE_BOOLEAN),
     ],
 
+    'articles_api' => [
+        'token' => trim((string) env('ARTICLES_API_TOKEN', '')),
+    ],
+
     'doku' => [
         'client_id' => trim((string) env('DOKU_CLIENT_ID', '')),
         'secret_key' => trim((string) env('DOKU_SECRET_KEY', '')),

@@ -25,6 +25,11 @@ Route::get('/home', [\App\Http\Controllers\Api\HomeApiController::class, 'index'
 Route::get('/directory', [\App\Http\Controllers\Api\MuthowifDirectoryApiController::class, 'index']);
 Route::get('/directory/{id}', [\App\Http\Controllers\Api\MuthowifDirectoryApiController::class, 'show']);
 
+Route::middleware(['articles.api', 'throttle:30,1'])->group(function () {
+    Route::post('/articles', [\App\Http\Controllers\Api\ArticleApiController::class, 'store']);
+    Route::put('/articles/{article:slug}', [\App\Http\Controllers\Api\ArticleApiController::class, 'update']);
+});
+
 Route::middleware('auth:sanctum')->group(function () {
     Route::get('/user', function (Request $request) {
         $user = $request->user();

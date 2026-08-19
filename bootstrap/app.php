@@ -1,6 +1,7 @@
 <?php
 
 use App\Http\Middleware\AllowMootaWebhookIp;
+use App\Http\Middleware\AuthenticateArticlesApi;
 use App\Http\Middleware\CaptureAffiliateReferral;
 use App\Http\Middleware\EnsureCustomerOrMuthowif;
 use App\Http\Middleware\EnsureUserRole;
@@ -66,6 +67,7 @@ return Application::configure(basePath: dirname(__DIR__))
             'role' => EnsureUserRole::class,
             'reporter' => EnsureCustomerOrMuthowif::class,
             'verified.muthowif' => EnsureVerifiedMuthowif::class,
+            'articles.api' => AuthenticateArticlesApi::class,
         ]);
     })
     ->withExceptions(function (Exceptions $exceptions): void {

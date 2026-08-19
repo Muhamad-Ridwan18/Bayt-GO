@@ -33,5 +33,6 @@
         <env name="TELESCOPE_ENABLED" value="false"/>
         <env name="NIGHTWATCH_ENABLED" value="false"/>
         <env name="FONNTE_OTP_ENABLED" value="false"/>
+        <env name="ARTICLES_API_TOKEN" value="testing-articles-token"/>
     </php>
 </phpunit>
