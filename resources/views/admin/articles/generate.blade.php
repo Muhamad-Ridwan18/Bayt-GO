@@ -67,12 +67,13 @@
                     </fieldset>
 
                     <div class="pt-2">
-                        <x-submit-button
-                            class="inline-flex items-center rounded-xl bg-baytgo px-4 py-2.5 text-sm font-semibold text-white shadow-md shadow-baytgo/20 transition hover:bg-baytgo-800"
+                        <button
+                            type="submit"
+                            class="inline-flex items-center justify-center gap-2 rounded-xl bg-baytgo px-4 py-2.5 text-sm font-semibold text-white shadow-md shadow-baytgo/20 transition hover:bg-baytgo-800 disabled:cursor-not-allowed disabled:opacity-70"
                             @disabled(! $webhookConfigured)
                         >
                             {{ __('admin.article_generate.submit') }}
-                        </x-submit-button>
+                        </button>
                     </div>
                 </form>
             </div>
