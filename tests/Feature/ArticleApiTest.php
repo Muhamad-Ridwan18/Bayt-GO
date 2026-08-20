@@ -11,6 +11,40 @@ class ArticleApiTest extends TestCase
 {
     use RefreshDatabase;
 
+    public function test_can_check_slug_existence(): void
+    {
+        Article::query()->create([
+            'slug' => 'slug-cek',
+            'is_published' => true,
+            'is_featured' => false,
+            'sort_order' => 0,
+            'published_at' => now(),
+            'translations' => [
+                'id' => [
+                    'title' => 'Cek',
+                    'excerpt' => '',
+                    'category' => '',
+                    'author' => '',
+                    'body' => '<p>Isi</p>',
+                    'body_json' => '',
+                    'body_md' => '',
+                ],
+            ],
+        ]);
+
+        $this->withToken('testing-articles-token')
+            ->getJson('/api/articles?slug=slug-cek')
+            ->assertOk()
+            ->assertJsonPath('exists', true)
+            ->assertJsonPath('data.slug', 'slug-cek');
+
+        $this->withToken('testing-articles-token')
+            ->getJson('/api/articles?slug=slug-belum-ada')
+            ->assertOk()
+            ->assertJsonPath('exists', false)
+            ->assertJsonPath('data', null);
+    }
+
     public function test_rejects_missing_token(): void
     {
         $this->postJson('/api/articles', [

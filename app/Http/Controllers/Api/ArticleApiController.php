@@ -8,6 +8,7 @@ use App\Models\Article;
 use App\Services\UploadedImageOptimizer;
 use App\Support\ArticleBodyMarkdown;
 use Illuminate\Http\JsonResponse;
+use Illuminate\Http\Request;
 use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Str;
@@ -16,6 +17,24 @@ use Stevebauman\Purify\Facades\Purify;
 
 class ArticleApiController extends Controller
 {
+    public function show(Request $request): JsonResponse
+    {
+        $slug = trim((string) $request->query('slug', ''));
+        if ($slug === '') {
+            return response()->json([
+                'exists' => false,
+                'message' => 'Query parameter slug is required.',
+            ], 422);
+        }
+
+        $article = Article::query()->where('slug', $slug)->first();
+
+        return response()->json([
+            'exists' => $article !== null,
+            'data' => $article ? $this->serialize($article) : null,
+        ]);
+    }
+
     public function store(StoreExternalArticleRequest $request): JsonResponse
     {
         $existing = $request->existingArticle();
