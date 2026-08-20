@@ -19,7 +19,7 @@ class ArticleGenerateAdminController extends Controller
             'webhookConfigured' => $url !== '',
             'defaults' => [
                 'niche' => 'Umroh',
-                'keywords' => 'umroh, travel umroh, muthowif, jamaah, paket umroh, Tanah Suci, Makkah, Madinah',
+                'keywords' => '',
                 'target_audience' => 'jamaah umroh',
                 'language' => ['Indonesia', 'English', 'Arabic'],
             ],
@@ -37,7 +37,7 @@ class ArticleGenerateAdminController extends Controller
 
         $validated = $request->validate([
             'niche' => ['required', 'string', 'max:120'],
-            'keywords' => ['required', 'string', 'max:2000'],
+            'keywords' => ['nullable', 'string', 'max:2000'],
             'target_audience' => ['required', 'string', 'max:255'],
             'language' => ['required', 'array', 'min:1'],
             'language.*' => ['in:Indonesia,English,Arabic'],
@@ -45,7 +45,7 @@ class ArticleGenerateAdminController extends Controller
 
         $payload = [
             'niche' => $validated['niche'],
-            'keywords' => $validated['keywords'],
+            'keywords' => trim((string) ($validated['keywords'] ?? '')),
             'target_audience' => $validated['target_audience'],
             'language' => array_values($validated['language']),
         ];

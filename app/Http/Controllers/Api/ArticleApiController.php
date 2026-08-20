@@ -214,8 +214,15 @@ class ArticleApiController extends Controller
         }
 
         try {
-            $response = Http::timeout(15)
-                ->withOptions(['allow_redirects' => false])
+            $response = Http::timeout(20)
+                ->withOptions([
+                    'allow_redirects' => [
+                        'max' => 5,
+                        'strict' => true,
+                        'referer' => true,
+                        'track_redirects' => true,
+                    ],
+                ])
                 ->get($url);
         } catch (\Throwable) {
             throw ValidationException::withMessages([
@@ -226,6 +233,27 @@ class ArticleApiController extends Controller
         if (! $response->successful()) {
             throw ValidationException::withMessages([
                 'image_url' => 'Gagal mengunduh gambar.',
+            ]);
+        }
+
+        $finalUrl = $url;
+        $historyHeader = $response->header('X-Guzzle-Redirect-History');
+        if (is_string($historyHeader) && trim($historyHeader) !== '') {
+            $parts = array_values(array_filter(array_map('trim', explode(',', $historyHeader))));
+            if ($parts !== []) {
+                $finalUrl = (string) end($parts);
+            }
+        } elseif (is_object($response->transferStats) && method_exists($response->transferStats, 'getEffectiveUri')) {
+            $effective = $response->transferStats->getEffectiveUri();
+            if ($effective !== null) {
+                $finalUrl = (string) $effective;
+            }
+        }
+
+        $finalHost = strtolower((string) (parse_url($finalUrl, PHP_URL_HOST) ?: ''));
+        if ($finalHost === '' || $this->isBlockedImageHost($finalHost)) {
+            throw ValidationException::withMessages([
+                'image_url' => 'URL gambar tidak diizinkan.',
             ]);
         }
 
@@ -245,6 +273,24 @@ class ArticleApiController extends Controller
             'image/gif' => 'gif',
             default => null,
         };
+
+        if ($extension === null) {
+            $extension = match (true) {
+                str_starts_with($contents, "\xFF\xD8\xFF") => 'jpg',
+                str_starts_with($contents, "\x89PNG\r\n\x1A\n") => 'png',
+                str_starts_with($contents, 'GIF87a') || str_starts_with($contents, 'GIF89a') => 'gif',
+                str_starts_with($contents, 'RIFF') && str_contains(substr($contents, 0, 16), 'WEBP') => 'webp',
+                default => null,
+            };
+            $mime = match ($extension) {
+                'jpg' => 'image/jpeg',
+                'png' => 'image/png',
+                'gif' => 'image/gif',
+                'webp' => 'image/webp',
+                default => '',
+            };
+        }
+
         if ($extension === null) {
             throw ValidationException::withMessages([
                 'image_url' => 'URL harus mengarah ke file gambar.',

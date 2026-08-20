@@ -43,7 +43,8 @@
 
                     <div>
                         <x-input-label for="keywords" :value="__('admin.article_generate.field_keywords')" />
-                        <textarea id="keywords" name="keywords" rows="3" required maxlength="2000" class="mt-1 block w-full rounded-xl border-slate-300 shadow-sm focus:border-emerald-500 focus:ring-emerald-500">{{ old('keywords', $defaults['keywords']) }}</textarea>
+                        <textarea id="keywords" name="keywords" rows="3" maxlength="2000" class="mt-1 block w-full rounded-xl border-slate-300 shadow-sm focus:border-emerald-500 focus:ring-emerald-500" placeholder="{{ __('admin.article_generate.keywords_placeholder') }}">{{ old('keywords', $defaults['keywords']) }}</textarea>
+                        <p class="mt-1 text-xs text-slate-500">{{ __('admin.article_generate.keywords_hint') }}</p>
                         <x-input-error class="mt-2" :messages="$errors->get('keywords')" />
                     </div>
 
