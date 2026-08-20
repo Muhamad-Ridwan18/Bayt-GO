@@ -187,6 +187,8 @@ class StoreExternalArticleRequest extends FormRequest
             'sort_order' => ['sometimes', 'integer', 'min:0', 'max:99999'],
             'published_at' => ['nullable', 'date'],
             'image_url' => ['nullable', 'string', 'max:2048', 'url:http,https'],
+            'image_urls' => ['nullable', 'array', 'max:8'],
+            'image_urls.*' => ['nullable', 'string', 'max:2048', 'url:http,https'],
             'translations' => ['sometimes', 'array'],
             'translations.id.title' => ['nullable', 'string', 'max:255'],
             'translations.id.excerpt' => ['nullable', 'string', 'max:65535'],

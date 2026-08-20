@@ -214,12 +214,39 @@ class ArticleApiController extends Controller
             return $this->storedImageHtml($file);
         }
 
-        $imageUrl = trim((string) $request->input('image_url', ''));
-        if ($imageUrl === '') {
-            return '';
+        foreach ($this->coverImageUrls($request) as $imageUrl) {
+            try {
+                return $this->storedImageHtml($this->downloadImage($imageUrl));
+            } catch (ValidationException) {
+                continue;
+            }
         }
 
-        return $this->storedImageHtml($this->downloadImage($imageUrl));
+        return '';
+    }
+
+    /**
+     * @return list<string>
+     */
+    private function coverImageUrls(StoreExternalArticleRequest $request): array
+    {
+        $urls = [];
+        $primary = trim((string) $request->input('image_url', ''));
+        if ($primary !== '') {
+            $urls[] = $primary;
+        }
+
+        $extra = $request->input('image_urls', []);
+        if (is_array($extra)) {
+            foreach ($extra as $url) {
+                $url = trim((string) $url);
+                if ($url !== '') {
+                    $urls[] = $url;
+                }
+            }
+        }
+
+        return array_values(array_unique($urls));
     }
 
     private function storedImageHtml(UploadedFile $file): string
@@ -241,10 +268,15 @@ class ArticleApiController extends Controller
 
         try {
             $response = Http::timeout(20)
+                ->withHeaders([
+                    'User-Agent' => 'BaytGoArticleBot/1.0 (https://baytgo.id; hello@baytgo.id)',
+                    'Accept' => 'image/avif,image/webp,image/apng,image/jpeg,image/png,image/gif,*/*;q=0.8',
+                    'Accept-Language' => 'en,id;q=0.8',
+                ])
                 ->withOptions([
                     'allow_redirects' => [
                         'max' => 5,
-                        'strict' => true,
+                        'strict' => false,
                         'referer' => true,
                         'track_redirects' => true,
                     ],
@@ -290,24 +322,25 @@ class ArticleApiController extends Controller
             ]);
         }
 
+        $trimStart = ltrim($contents);
+        if (str_starts_with($trimStart, '<') || str_starts_with($trimStart, '<!DOCTYPE') || str_starts_with($trimStart, '<html')) {
+            throw ValidationException::withMessages([
+                'image_url' => 'URL harus mengarah ke file gambar.',
+            ]);
+        }
+
         $mime = strtolower((string) ($response->header('Content-Type') ?: ''));
         $mime = trim(explode(';', $mime)[0]);
         $extension = match ($mime) {
-            'image/jpeg', 'image/jpg' => 'jpg',
-            'image/png' => 'png',
+            'image/jpeg', 'image/jpg', 'image/pjpeg' => 'jpg',
+            'image/png', 'image/x-png' => 'png',
             'image/webp' => 'webp',
             'image/gif' => 'gif',
             default => null,
         };
 
         if ($extension === null) {
-            $extension = match (true) {
-                str_starts_with($contents, "\xFF\xD8\xFF") => 'jpg',
-                str_starts_with($contents, "\x89PNG\r\n\x1A\n") => 'png',
-                str_starts_with($contents, 'GIF87a') || str_starts_with($contents, 'GIF89a') => 'gif',
-                str_starts_with($contents, 'RIFF') && str_contains(substr($contents, 0, 16), 'WEBP') => 'webp',
-                default => null,
-            };
+            $extension = $this->imageExtensionFromBytes($contents);
             $mime = match ($extension) {
                 'jpg' => 'image/jpeg',
                 'png' => 'image/png',
@@ -332,6 +365,24 @@ class ArticleApiController extends Controller
         file_put_contents($tmp, $contents);
 
         return new UploadedFile($tmp, 'cover.'.$extension, $mime, UPLOAD_ERR_OK, true);
+    }
+
+    private function imageExtensionFromBytes(string $contents): ?string
+    {
+        if (str_starts_with($contents, "\xFF\xD8\xFF")) {
+            return 'jpg';
+        }
+        if (str_starts_with($contents, "\x89PNG\r\n\x1A\n")) {
+            return 'png';
+        }
+        if (str_starts_with($contents, 'GIF87a') || str_starts_with($contents, 'GIF89a')) {
+            return 'gif';
+        }
+        if (str_starts_with($contents, 'RIFF') && str_contains(substr($contents, 0, 16), 'WEBP')) {
+            return 'webp';
+        }
+
+        return null;
     }
 
     private function isBlockedImageHost(string $host): bool

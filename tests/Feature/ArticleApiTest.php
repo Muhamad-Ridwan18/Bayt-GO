@@ -223,6 +223,49 @@ class ArticleApiTest extends TestCase
         $this->assertStringContainsString('storage/articles/images/', $body);
     }
 
+    public function test_skips_invalid_image_url_without_failing(): void
+    {
+        Http::fake([
+            'https://example.com/not-image' => Http::response('<html>page</html>', 200, ['Content-Type' => 'text/html']),
+        ]);
+
+        $this->withToken('testing-articles-token')
+            ->postJson('/api/articles', [
+                'title' => 'Artikel Tanpa Cover Valid',
+                'body' => '<p>Isi</p>',
+                'image_url' => 'https://example.com/not-image',
+            ])
+            ->assertCreated()
+            ->assertJsonPath('created', true);
+
+        $body = Article::query()->first()?->translations['id']['body'] ?? '';
+        $this->assertStringNotContainsString('<img', $body);
+    }
+
+    public function test_uses_fallback_image_urls(): void
+    {
+        $png = base64_decode('iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mP8z8BQDwAEhQGAhKmMIQAAAABJRU5ErkJggg==', true);
+        Http::fake([
+            'https://example.com/page.html' => Http::response('<html>nope</html>', 200, ['Content-Type' => 'text/html']),
+            'https://cdn.example.com/real.png' => Http::response($png, 200, ['Content-Type' => 'application/octet-stream']),
+        ]);
+
+        $this->withToken('testing-articles-token')
+            ->postJson('/api/articles', [
+                'title' => 'Artikel Fallback Gambar',
+                'body' => '<p>Isi</p>',
+                'image_url' => 'https://example.com/page.html',
+                'image_urls' => [
+                    'https://example.com/page.html',
+                    'https://cdn.example.com/real.png',
+                ],
+            ])
+            ->assertCreated();
+
+        $body = Article::query()->first()?->translations['id']['body'] ?? '';
+        $this->assertStringContainsString('<img', $body);
+    }
+
     public function test_lists_recent_articles_for_dedup(): void
     {
         Article::query()->create([
