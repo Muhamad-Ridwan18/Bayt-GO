@@ -222,4 +222,52 @@ class ArticleApiTest extends TestCase
         $this->assertStringContainsString('<img', $body);
         $this->assertStringContainsString('storage/articles/images/', $body);
     }
+
+    public function test_lists_recent_articles_for_dedup(): void
+    {
+        Article::query()->create([
+            'slug' => 'artikel-satu',
+            'is_published' => true,
+            'is_featured' => false,
+            'sort_order' => 0,
+            'published_at' => now(),
+            'translations' => [
+                'id' => [
+                    'title' => 'Artikel Satu',
+                    'excerpt' => '',
+                    'category' => 'Umroh',
+                    'author' => 'BaytGo',
+                    'body' => '<p>Satu</p>',
+                    'body_json' => '',
+                    'body_md' => '',
+                ],
+            ],
+        ]);
+
+        Article::query()->create([
+            'slug' => 'artikel-dua',
+            'is_published' => false,
+            'is_featured' => false,
+            'sort_order' => 0,
+            'published_at' => null,
+            'translations' => [
+                'id' => [
+                    'title' => 'Artikel Dua',
+                    'excerpt' => '',
+                    'category' => 'Muthowif',
+                    'author' => 'BaytGo',
+                    'body' => '<p>Dua</p>',
+                    'body_json' => '',
+                    'body_md' => '',
+                ],
+            ],
+        ]);
+
+        $this->withToken('testing-articles-token')
+            ->getJson('/api/articles?limit=10')
+            ->assertOk()
+            ->assertJsonPath('meta.count', 2)
+            ->assertJsonFragment(['slug' => 'artikel-satu', 'title' => 'Artikel Satu'])
+            ->assertJsonFragment(['slug' => 'artikel-dua', 'title' => 'Artikel Dua']);
+    }
 }

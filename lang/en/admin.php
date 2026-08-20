@@ -666,7 +666,7 @@ return [
     'article_generate' => [
         'badge' => 'Content',
         'title' => 'Generate article',
-        'subtitle' => 'Send a brief to n8n. The workflow writes the article into BaytGo.',
+        'subtitle' => 'Send a brief to n8n. Articles are saved as drafts for CMS review.',
         'nav' => 'Generate via n8n',
         'back_articles' => '← Articles',
         'field_niche' => 'Niche',

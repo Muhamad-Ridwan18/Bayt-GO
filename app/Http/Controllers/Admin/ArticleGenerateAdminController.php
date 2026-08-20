@@ -48,6 +48,7 @@ class ArticleGenerateAdminController extends Controller
             'keywords' => trim((string) ($validated['keywords'] ?? '')),
             'target_audience' => $validated['target_audience'],
             'language' => array_values($validated['language']),
+            'is_published' => false,
         ];
 
         try {

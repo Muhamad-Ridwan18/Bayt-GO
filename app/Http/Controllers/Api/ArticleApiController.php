@@ -21,10 +21,7 @@ class ArticleApiController extends Controller
     {
         $slug = trim((string) $request->query('slug', ''));
         if ($slug === '') {
-            return response()->json([
-                'exists' => false,
-                'message' => 'Query parameter slug is required.',
-            ], 422);
+            return $this->index($request);
         }
 
         $article = Article::query()->where('slug', $slug)->first();
@@ -32,6 +29,35 @@ class ArticleApiController extends Controller
         return response()->json([
             'exists' => $article !== null,
             'data' => $article ? $this->serialize($article) : null,
+        ]);
+    }
+
+    public function index(Request $request): JsonResponse
+    {
+        $limit = min(max((int) $request->query('limit', 50), 1), 100);
+
+        $articles = Article::query()
+            ->orderByDesc('updated_at')
+            ->limit($limit)
+            ->get(['id', 'slug', 'is_published', 'translations', 'published_at', 'updated_at']);
+
+        return response()->json([
+            'data' => $articles->map(function (Article $article): array {
+                $idBlock = $article->translationBlock('id');
+
+                return [
+                    'slug' => $article->slug,
+                    'title' => trim((string) ($idBlock['title'] ?? '')),
+                    'category' => trim((string) ($idBlock['category'] ?? '')),
+                    'is_published' => $article->is_published,
+                    'url' => route('articles.show', $article->slug),
+                    'updated_at' => $article->updated_at?->toIso8601String(),
+                ];
+            })->values()->all(),
+            'meta' => [
+                'count' => $articles->count(),
+                'limit' => $limit,
+            ],
         ]);
     }
 
