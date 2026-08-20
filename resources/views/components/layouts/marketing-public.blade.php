@@ -3,6 +3,8 @@
     'metaDescription' => null,
     'activeNav' => null,
     'schema' => null,
+    'image' => null,
+    'type' => 'website',
 ])
 @php
     $rtl = app()->getLocale() === 'ar';
@@ -12,8 +14,8 @@
 <head>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
-    
-    <x-seo-meta :title="$title" :description="$metaDescription" :schema="$schema" />
+
+    <x-seo-meta :title="$title" :description="$metaDescription" :image="$image" :type="$type" :schema="$schema" />
 
     <link rel="preconnect" href="https://fonts.bunny.net">
     <link href="https://fonts.bunny.net/css?family=inter:400,500,600,700&family=plus-jakarta-sans:400,500,600,700&display=swap" rel="stylesheet">

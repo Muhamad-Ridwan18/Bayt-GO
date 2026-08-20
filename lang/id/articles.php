@@ -20,6 +20,8 @@ return [
     'related_services_title' => 'Layanan relevan',
     'related_services_subtitle' => 'Muthowif yang paling cocok berdasarkan topik artikel ini.',
     'view_all_services' => 'Lihat semua layanan',
+    'related_articles_kicker' => 'Baca selanjutnya',
+    'related_articles_title' => 'Artikel terkait',
 
     'permalink_title' => 'Tautan ke bagian ini',
 ];

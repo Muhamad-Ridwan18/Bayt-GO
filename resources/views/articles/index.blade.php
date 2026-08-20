@@ -35,7 +35,7 @@
                                     <span>{{ $featured->published_at?->translatedFormat('d M Y') }}</span>
                                     <span class="h-1 w-1 rounded-full bg-white/40" aria-hidden="true"></span>
                                     <span>{{ __('articles.reading_minutes', ['count' => $featured->readingMinutes()]) }}</span>
-                                </x-page-container>
+                                </div>
                             </div>
                         </div>
                         <div class="flex flex-col justify-center p-8 lg:col-span-7 lg:p-12">
@@ -65,5 +65,5 @@
                 @endforeach
             </div>
         @endif
-    </div>
+    </x-page-container>
 </x-layouts.marketing-public>

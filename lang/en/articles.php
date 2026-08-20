@@ -17,6 +17,12 @@ return [
     'cta_browse' => 'Explore directory',
     'back_to_list' => 'More articles',
 
+    'related_services_title' => 'Related services',
+    'related_services_subtitle' => 'Muthowif matches based on this article topic.',
+    'view_all_services' => 'View all services',
+    'related_articles_kicker' => 'Keep reading',
+    'related_articles_title' => 'Related articles',
+
     /** a11y: permalink next to headings */
     'permalink_title' => 'Link to this section',
 ];

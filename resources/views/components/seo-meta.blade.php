@@ -52,7 +52,12 @@
 
 <!-- Tag JSON-LD Schema -->
 @if ($schema)
-    <script type="application/ld+json">
-        {!! json_encode($schema, JSON_UNESCAPED_SLASHES | JSON_PRETTY_PRINT) !!}
-    </script>
+    @php
+        $schemaPayload = is_array($schema) && array_is_list($schema) ? $schema : [$schema];
+    @endphp
+    @foreach ($schemaPayload as $schemaItem)
+        <script type="application/ld+json">
+            {!! json_encode($schemaItem, JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE | JSON_PRETTY_PRINT) !!}
+        </script>
+    @endforeach
 @endif

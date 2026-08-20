@@ -1,32 +1,15 @@
 @php
     $rtl = app()->getLocale() === 'ar';
-    $title = $article->localized('title');
+    $title = $title ?? $article->localized('title');
     $author = $article->localized('author');
-
-    $articleSchema = [
-        '@context' => 'https://schema.org',
-        '@type' => 'BlogPosting',
-        'headline' => $title,
-        'description' => $metaDescription,
-        'datePublished' => $article->published_at?->toIso8601String(),
-        'author' => [
-            '@type' => 'Person',
-            'name' => $author ?: 'Tim Bayt-GO',
-        ],
-        'publisher' => [
-            '@type' => 'Organization',
-            'name' => config('app.name', 'Bayt-GO'),
-            'logo' => [
-                '@type' => 'ImageObject',
-                'url' => asset('images/logo.png'),
-            ]
-        ]
-    ];
+    $coverImage = $ogImage ?? $article->coverImageUrl();
 @endphp
 <x-layouts.marketing-public
     :title="$title"
     :meta-description="$metaDescription"
-    :schema="$articleSchema"
+    :schema="$schema"
+    :image="$coverImage"
+    type="article"
     active-nav="articles"
 >
     <article class="border-b border-slate-100 bg-gradient-to-b from-welcomeCanvas to-white">
@@ -37,7 +20,7 @@
                     <li aria-hidden="true" class="text-slate-300">/</li>
                     <li><a href="{{ route('articles.index') }}" class="font-medium hover:text-baytgo">{{ __('articles.index_title') }}</a></li>
                     <li aria-hidden="true" class="text-slate-300">/</li>
-                    <li class="font-semibold text-slate-700 max-w-[12rem] truncate sm:max-w-none" title="{{ $title }}">{{ $title }}</li>
+                    <li class="max-w-[12rem] truncate font-semibold text-slate-700 sm:max-w-none" title="{{ $title }}">{{ $title }}</li>
                 </ol>
             </nav>
 
@@ -55,7 +38,7 @@
                     <span>{{ __('articles.reading_minutes', ['count' => $article->readingMinutes()]) }}</span>
                 </div>
             </header>
-        </div>
+        </x-page-container>
     </article>
 
     <x-page-container class="py-12">
@@ -63,7 +46,35 @@
             {!! $article->localized('body') !!}
         </div>
 
-        @if(isset($relatedServices) && $relatedServices->isNotEmpty())
+        @if (isset($relatedArticles) && $relatedArticles->isNotEmpty())
+            <section class="mt-16 border-t border-slate-200 pt-12" aria-labelledby="related-articles-heading">
+                <div class="flex flex-col gap-2 sm:flex-row sm:items-end sm:justify-between">
+                    <div>
+                        <p class="text-sm font-semibold uppercase tracking-[0.24em] text-baytgo">{{ __('articles.related_articles_kicker') }}</p>
+                        <h2 id="related-articles-heading" class="mt-2 text-2xl font-bold text-slate-900">{{ __('articles.related_articles_title') }}</h2>
+                    </div>
+                    <a href="{{ route('articles.index') }}" class="text-sm font-semibold text-baytgo hover:text-baytgo-700">{{ __('articles.back_to_list') }}</a>
+                </div>
+                <div class="mt-8 grid gap-5 sm:grid-cols-2 lg:grid-cols-4">
+                    @foreach ($relatedArticles as $related)
+                        <article class="group flex flex-col rounded-2xl border border-slate-200 bg-white p-5 shadow-sm transition hover:border-baytgo/30 hover:shadow-md">
+                            <span class="text-xs font-bold uppercase tracking-wide text-baytgo/80">{{ $related->localized('category') }}</span>
+                            <h3 class="mt-2 text-base font-bold leading-snug text-slate-900 transition group-hover:text-baytgo">
+                                <a href="{{ route('articles.show', $related->slug) }}" class="rounded-md focus:outline-none focus-visible:ring-2 focus-visible:ring-baytgo/30">
+                                    {{ $related->localized('title') }}
+                                </a>
+                            </h3>
+                            <p class="mt-2 flex-1 text-sm leading-relaxed text-slate-600 line-clamp-3">{{ $related->localized('excerpt') }}</p>
+                            <time class="mt-4 text-xs text-slate-500" datetime="{{ $related->published_at?->toIso8601String() }}">
+                                {{ $related->published_at?->translatedFormat('d M Y') }}
+                            </time>
+                        </article>
+                    @endforeach
+                </div>
+            </section>
+        @endif
+
+        @if (isset($relatedServices) && $relatedServices->isNotEmpty())
             <section class="mt-16 rounded-3xl border border-slate-200 bg-white p-8 shadow-sm">
                 <div class="flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
                     <div>
@@ -76,10 +87,10 @@
                     </a>
                 </div>
                 <div class="mt-8 grid gap-4 md:grid-cols-2 xl:grid-cols-3">
-                    @foreach($relatedServices as $service)
+                    @foreach ($relatedServices as $service)
                         <x-marketplace.profile-card :profile="$service" />
                     @endforeach
-                </x-page-container>
+                </div>
             </section>
         @endif
 
@@ -89,7 +100,7 @@
             <div class="mt-6 flex flex-wrap justify-center gap-3">
                 <a href="{{ route('layanan.index') }}" class="inline-flex items-center justify-center rounded-xl bg-baytgo px-5 py-3 text-sm font-bold text-white shadow-md shadow-baytgo/25 transition hover:bg-baytgo-800">{{ __('articles.cta_browse') }}</a>
                 <a href="{{ route('articles.index') }}" class="inline-flex items-center justify-center rounded-xl border-2 border-slate-200 bg-white px-5 py-3 text-sm font-bold text-slate-800 transition hover:border-baytgo/30">{{ __('articles.back_to_list') }}</a>
-            </x-page-container>
+            </div>
         </div>
-    </div>
+    </x-page-container>
 </x-layouts.marketing-public>

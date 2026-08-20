@@ -17,5 +17,11 @@ return [
     'cta_browse' => 'استكشف الدليل',
     'back_to_list' => 'المزيد من المقالات',
 
+    'related_services_title' => 'خدمات ذات صلة',
+    'related_services_subtitle' => 'مرافقون الأنسب حسب موضوع هذا المقال.',
+    'view_all_services' => 'عرض كل الخدمات',
+    'related_articles_kicker' => 'واصل القراءة',
+    'related_articles_title' => 'مقالات ذات صلة',
+
     'permalink_title' => 'رابط لهذا القسم',
 ];
