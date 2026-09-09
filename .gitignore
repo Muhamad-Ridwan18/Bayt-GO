@@ -34,3 +34,7 @@ frankenphp-worker.php
 # n8n workflow exports: berisi API key yang di-hardcode di node code
 My workflow.json
 BaytGo Content Autogen.json
+
+# Salinan workflow dengan kredensial tertanam untuk diimport ke n8n.
+# Template bersihnya ada di n8n/baytgo-content-autogen.json dan itu yang diversi.
+n8n/*.local.json
