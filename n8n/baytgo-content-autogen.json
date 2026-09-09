@@ -730,7 +730,7 @@
                     "conditions": [
                         {
                             "id": "cbcf87e0-5a4c-4345-8717-0d1e45d9df33",
-                            "leftValue": "={{ $json._is_valid === true }}",
+                            "leftValue": "={{ $json._is_valid === true && String($json.title || '').trim() !== '' && String($json.body_md || '').trim() !== '' }}",
                             "rightValue": true,
                             "operator": {
                                 "type": "boolean",
