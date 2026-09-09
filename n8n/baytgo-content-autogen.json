@@ -1,0 +1,1080 @@
+{
+    "name": "BaytGo Content Autogen",
+    "nodes": [
+        {
+            "parameters": {
+                "httpMethod": "POST",
+                "path": "baytgo-content",
+                "options": []
+            },
+            "type": "n8n-nodes-base.webhook",
+            "typeVersion": 2.1,
+            "position": [
+                -6992,
+                1648
+            ],
+            "id": "15e1ac6a-4e99-4aa0-a1cb-fbcb3fa72bfe",
+            "name": "Webhook",
+            "webhookId": "8c1baac4-4d5b-42cf-bd83-97d1bbb6dc83"
+        },
+        {
+            "parameters": {
+                "jsCode": "const rotation = [\n  { niche: 'Umroh', target_audience: 'jamaah umroh', content_hint: 'persiapan dan pelaksanaan umroh' },\n  { niche: 'Muthowif', target_audience: 'jamaah yang mencari pendamping ibadah', content_hint: 'memilih muthowif dan peran pendamping' },\n  { niche: 'Travel Umroh', target_audience: 'calon jamaah Indonesia', content_hint: 'tips perjalanan dan itinerary Tanah Suci' },\n  { niche: 'Kesehatan Jamaah', target_audience: 'jamaah lansia dan keluarga', content_hint: 'kesehatan dan stamina saat ibadah' },\n  { niche: 'Etika Ibadah', target_audience: 'jamaah pemula', content_hint: 'adab dan etika di Masjidil Haram dan Nabawi' },\n  { niche: 'Makkah & Madinah', target_audience: 'jamaah umroh', content_hint: 'ziyarah dan lokasi penting di Tanah Suci' },\n  { niche: 'Paket Umroh', target_audience: 'calon jamaah', content_hint: 'memahami komponen paket umroh tanpa hard-sell' }\n];\n\nconst languageInput = $json?.body?.language;\nconst language = Array.isArray(languageInput)\n  ? languageInput\n  : (languageInput ? [String(languageInput)] : ['Indonesia', 'English']);\n\nconst keywords = String($json?.body?.keywords ?? '').trim();\nconst autoTopic = !keywords;\nconst bodyNiche = String($json?.body?.niche ?? '').trim();\n\nlet niche = bodyNiche || 'Umroh';\nlet targetAudience = String($json?.body?.target_audience ?? 'jamaah umroh');\nlet contentHint = String($json?.body?.content_hint ?? '').trim();\n\nif (autoTopic && (!bodyNiche || bodyNiche === 'Umroh')) {\n  const picked = rotation[new Date().getDay() % rotation.length];\n  niche = picked.niche;\n  targetAudience = picked.target_audience;\n  contentHint = picked.content_hint;\n}\n\nreturn [\n  {\n    json: {\n      niche,\n      keywords,\n      target_audience: targetAudience,\n      content_hint: contentHint,\n      language,\n      auto_topic: autoTopic,\n      auto_publish: true,\n      source: String($json?.body?.source ?? $json?.source ?? 'automation')\n    }\n  }\n];"
+            },
+            "type": "n8n-nodes-base.code",
+            "typeVersion": 2,
+            "position": [
+                -6768,
+                1392
+            ],
+            "id": "90227722-7ebe-4afd-8a3c-d9b36260b3f9",
+            "name": "Proses Payload"
+        },
+        {
+            "parameters": {
+                "mode": "raw",
+                "jsonOutput": "={\n  \"niche\": \"{{ $json.niche }}\",\n  \"keywords\": \"{{ $json.keywords }}\",\n  \"target_audience\": \"{{ $json.target_audience }}\",\n  \"content_hint\": \"{{ $json.content_hint }}\",\n  \"language\": {{ $json.language }},\n  \"auto_topic\": {{ $json.auto_topic }},\n  \"is_published\": {{ $json.is_published }},\n  \"source\": \"{{ $json.source }}\"\n}",
+                "options": []
+            },
+            "type": "n8n-nodes-base.set",
+            "typeVersion": 3.5,
+            "position": [
+                -6544,
+                1392
+            ],
+            "id": "b77f6ad2-e579-4434-89f7-6f632dfac839",
+            "name": "Data From User"
+        },
+        {
+            "parameters": {
+                "method": "POST",
+                "url": "https://api.tavily.com/search",
+                "sendHeaders": true,
+                "headerParameters": {
+                    "parameters": [
+                        {
+                            "name": "Authorization",
+                            "value": "=Bearer {{ $env.TAVILY_API_KEY }}"
+                        },
+                        {
+                            "name": "Content-Type",
+                            "value": "application/json"
+                        }
+                    ]
+                },
+                "sendBody": true,
+                "bodyParameters": {
+                    "parameters": [
+                        {
+                            "name": "query",
+                            "value": "={{ $('Parse Proposed Topic').item.json.search_query || $('Parse Proposed Topic').item.json.topic }}"
+                        },
+                        {
+                            "name": "search_depth",
+                            "value": "basic"
+                        },
+                        {
+                            "name": "topic",
+                            "value": "general"
+                        },
+                        {
+                            "name": "max_results",
+                            "value": "5"
+                        },
+                        {
+                            "name": "include_answer",
+                            "value": "basic"
+                        },
+                        {
+                            "name": "include_raw_content",
+                            "value": "markdown"
+                        },
+                        {
+                            "name": "include_images",
+                            "value": "true"
+                        }
+                    ]
+                },
+                "options": []
+            },
+            "type": "n8n-nodes-base.httpRequest",
+            "typeVersion": 4.5,
+            "position": [
+                -5200,
+                1392
+            ],
+            "id": "307862ad-af85-46c2-969c-d20f0e1611e3",
+            "name": "Hit Tavily",
+            "retryOnFail": true,
+            "maxTries": 3,
+            "waitBetweenTries": 2000
+        },
+        {
+            "parameters": {
+                "mode": "runOnceForEachItem",
+                "jsCode": "const makeSlug = (title) => String(title || '')\n  .toLowerCase()\n  .normalize('NFKD')\n  .replace(/[\\u0300-\\u036f]/g, '')\n  .replace(/[^a-z0-9\\s-]/g, '')\n  .trim()\n  .replace(/\\s+/g, '-')\n  .replace(/-+/g, '-')\n  .slice(0, 120);\n\nconst fail = (errors, preview = '') => ({\n  json: {\n    _is_valid: false,\n    _errors: errors,\n    _raw_preview: preview.slice(0, 1200),\n    _revision_round: Number($json._revision_round ?? 0)\n  }\n});\n\nconst finishReason = $json.candidates?.[0]?.finishReason || $json.candidates?.[0]?.finish_reason || '';\nconst rawText = $json.candidates?.[0]?.content?.parts?.[0]?.text ?? '';\nif (!rawText.trim()) {\n  return fail([`Output AI kosong${finishReason ? ` (finishReason: ${finishReason})` : ''}`]);\n}\n\nconst cleanText = rawText.replace(/```(?:json)?/gi, '').replace(/```/g, '').trim();\nconst start = cleanText.indexOf('{');\nconst end = cleanText.lastIndexOf('}');\n\nif (start === -1 || end === -1 || end <= start) {\n  const reasonText = finishReason ? `Output AI terpotong (finishReason: ${finishReason})` : 'AI output tidak mengandung JSON object valid';\n  return fail([reasonText], cleanText);\n}\n\nconst jsonText = cleanText.slice(start, end + 1);\n\nlet data;\ntry {\n  data = JSON.parse(jsonText);\n} catch (error) {\n  const normalized = jsonText.replace(/\\r?\\n/g, '\\\\n');\n  try {\n    data = JSON.parse(normalized);\n  } catch (fallbackError) {\n    return fail([`JSON AI invalid: ${fallbackError.message}${finishReason ? ` (finishReason: ${finishReason})` : ''}`], jsonText);\n  }\n}\n\nconst requiredFields = [\n  'title', 'excerpt', 'category', 'author', 'body_md',\n  'title_en', 'excerpt_en', 'category_en', 'author_en', 'body_md_en'\n];\n\nconst errors = [];\nfor (const field of requiredFields) {\n  if (data[field] === undefined || data[field] === null || String(data[field]).trim() === '') {\n    errors.push(`Field wajib kosong: ${field}`);\n  }\n}\n\nconst bodyMd = String(data.body_md ?? '').trim();\nconst bodyMdEn = String(data.body_md_en ?? '').trim();\n\nif (bodyMd.length < 600) errors.push('body_md terlalu pendek (< 600 karakter)');\nif (bodyMdEn.length < 600) errors.push('body_md_en terlalu pendek (< 600 karakter)');\n\nconst title = String(data.title ?? '').trim();\nconst slug = String(data.slug ?? '').trim() || makeSlug(title);\n\nif (!slug) errors.push('Slug gagal dibuat');\n\nconst payload = {\n  title,\n  slug,\n  excerpt: String(data.excerpt ?? '').trim(),\n  category: String(data.category ?? 'Umroh').trim(),\n  author: String(data.author ?? 'BaytGo').trim(),\n  body_md: bodyMd,\n\n  auto_publish: true,\n  is_featured: data.is_featured ?? false,\n  sort_order: Number.isFinite(Number(data.sort_order)) ? Number(data.sort_order) : 0,\n\n  title_en: String(data.title_en ?? '').trim(),\n  excerpt_en: String(data.excerpt_en ?? '').trim(),\n  category_en: String(data.category_en ?? 'Umrah').trim(),\n  author_en: String(data.author_en ?? 'BaytGo').trim(),\n  body_md_en: bodyMdEn\n};\n\ntry {\n  const research = $('Attach Research').item.json;\n  const cover = String(research.image_url || '').trim();\n  const covers = Array.isArray(research.image_urls) ? research.image_urls : [];\n  if (cover) payload.image_url = cover;\n  if (covers.length) payload.image_urls = covers.filter(Boolean);\n} catch (e) {}\n\nreturn {\n  json: {\n    ...payload,\n    _is_valid: errors.length === 0,\n    _errors: errors,\n    _revision_round: Number(data.revision_round ?? $json._revision_round ?? 0)\n  }\n};"
+            },
+            "type": "n8n-nodes-base.code",
+            "typeVersion": 2,
+            "position": [
+                -4528,
+                1392
+            ],
+            "id": "361867f7-d17b-4bd4-83ec-14a544c5fb4e",
+            "name": "Process Payload AI"
+        },
+        {
+            "parameters": {
+                "method": "POST",
+                "url": "https://baytgo.id/api/articles",
+                "sendHeaders": true,
+                "headerParameters": {
+                    "parameters": [
+                        {
+                            "name": "Authorization",
+                            "value": "=Bearer {{ $env.BAYTGO_ARTICLES_TOKEN }}"
+                        }
+                    ]
+                },
+                "sendBody": true,
+                "contentType": "raw",
+                "rawContentType": "application/json",
+                "body": "={{ JSON.stringify({ ...$json, auto_publish: true, keywords: $('Data From User').item.json.keywords }) }}",
+                "options": []
+            },
+            "type": "n8n-nodes-base.httpRequest",
+            "typeVersion": 4.5,
+            "position": [
+                -3184,
+                1840
+            ],
+            "id": "8e4eae39-8a28-4e64-a515-cb6d70f6ee22",
+            "name": "Send To Baytgo",
+            "retryOnFail": true,
+            "maxTries": 3,
+            "waitBetweenTries": 2000
+        },
+        {
+            "parameters": {
+                "mode": "runOnceForEachItem",
+                "jsCode": "// Key Gemini dibaca dari environment n8n, dipisah koma.\n// Di n8n Cloud $env diblokir: isi array `fallback` di bawah bila perlu.\nconst fallback = [];\n\nlet raw = '';\ntry {\n  raw = String($env.GEMINI_API_KEYS || '');\n} catch (e) {\n  raw = '';\n}\n\nconst keys = raw\n  .split(',')\n  .map((k) => k.trim())\n  .filter(Boolean)\n  .concat(fallback);\n\nif (keys.length === 0) {\n  throw new Error('GEMINI_API_KEYS belum diset di environment n8n.');\n}\n\nconst index = Math.floor(Math.random() * keys.length);\n\nreturn {\n  json: {\n    ...$json,\n    geminiKey: keys[index],\n    geminiKeyIndex: index,\n    _meta: {\n      selectedGeminiKey: index,\n      totalGeminiKeys: keys.length\n    }\n  }\n};"
+            },
+            "type": "n8n-nodes-base.code",
+            "typeVersion": 2,
+            "position": [
+                -5872,
+                1392
+            ],
+            "id": "4e876bbc-3ec4-4e78-82e0-e3d1da88a9d9",
+            "name": "Prepare AI Key"
+        },
+        {
+            "parameters": {
+                "method": "POST",
+                "url": "=https://generativelanguage.googleapis.com/v1beta/models/gemini-3.6-flash:generateContent?key={{ $json.geminiKey }}",
+                "sendHeaders": true,
+                "headerParameters": {
+                    "parameters": [
+                        {
+                            "name": "Content-Type",
+                            "value": "application/json"
+                        }
+                    ]
+                },
+                "sendBody": true,
+                "specifyBody": "json",
+                "jsonBody": "={{ JSON.stringify({\n  contents: [\n    {\n      parts: [\n        {\n          text: `Kamu adalah AI Content Writer untuk website BaytGo.\n\nTENTANG BAYTGO:\nBaytGo adalah marketplace muthowif/pendamping ibadah untuk jamaah umroh dan haji.\nFokus konten: edukasi jamaah, umroh, haji, muthowif, persiapan ibadah, tip Tanah Suci.\n\nKONFIGURASI KONTEN:\n- Niche: ${$('Data From User').item.json.niche}\n- Keywords: ${$('Data From User').item.json.keywords || '(auto)'}\n- Target Audience: ${$('Data From User').item.json.target_audience}\n- Language: ${Array.isArray($('Data From User').item.json.language) ? $('Data From User').item.json.language.join(', ') : String($('Data From User').item.json.language ?? '')}\n\nTOPIK YANG HARUS DITULIS (dari AI Topic Planner):\n- Topic: ${$('Parse Proposed Topic').item.json.topic}\n- Angle: ${$('Parse Proposed Topic').item.json.angle}\n- Category hint: ${$('Parse Proposed Topic').item.json.category}\n- Why relevant: ${$('Parse Proposed Topic').item.json.why_relevant}\n\nGunakan topik di atas sebagai judul/arah artikel.\nJangan mengganti topik menjadi sesuatu yang keluar dari ekosistem BaytGo.\n\nINFORMASI DARI TAVILY (sumber fakta saja):\nRingkasan Tavily:\n${$json.answer}\n\nHasil pencarian Tavily:\n${JSON.stringify(($json.results || []).map((r) => ({ title: r.title, url: r.url, content: String(r.content || '').slice(0, 700) })))}\n\nCOVER IMAGE:\nCover image akan dilampirkan terpisah via image_url API (jangan embed URL gambar di body_md).\n\nTAUTAN INTERNAL (WAJIB):\nSisipkan minimal 2 tautan internal di dalam body_md, dan minimal satu di antaranya ke halaman bertanda [layanan].\nGunakan HANYA path dari daftar di bawah, disalin persis apa adanya.\nJangan pernah mengarang path lain: tautan ke halaman yang tidak ada membuat artikel ditolak otomatis.\nTempatkan tautan di tengah kalimat yang memang relevan, bukan sebagai blok \"baca juga\" di akhir artikel.\nUntuk versi Inggris, gunakan path yang sama.\n\nHalaman yang boleh ditautkan:\n${$('Prepare Dedup Context').item.json.link_targets_text}\n\nGAYA PENULISAN (WAJIB — JANGAN KAKU):\n1. JANGAN pakai heading generik: Pendahuluan, Introduction, Kesimpulan, Conclusion, Penutup, Ringkasan, Overview.\n2. Jangan buka artikel dengan \"## Pendahuluan\" atau paragraf klise seperti \"Dalam artikel ini kita akan membahas...\".\n3. Mulai langsung dengan hook natural: situasi jamaah, pertanyaan, tip praktis, atau fakta singkat yang relevan.\n4. Heading (## / ###) harus spesifik ke isi, contoh: \"Checklist dokumen sebelum berangkat\", \"Apa yang biasanya dilupakan jamaah pemula\".\n5. Variasikan struktur tiap artikel (list, Q&A singkat, langkah-langkah, tips berpoin) — jangan template sama terus.\n6. Nada: hangat, jelas, seperti panduan orang berpengalaman — bukan makalah sekolah.\n7. Excerpt harus terasa manusiawi, bukan \"Artikel ini membahas...\".\\n\\nTUGAS:\n1. Buat artikel mengikuti TOPIK dan ANGLE di atas.\n2. Gunakan hasil Tavily sebagai sumber fakta; jangan mengarang klaim.\n3. Artikel utama dalam Bahasa Indonesia, ditambah versi Bahasa Inggris yang lengkap dan berdiri sendiri.\n4. Boleh sebut konteks muthowif/BaytGo secara natural tanpa hard-sell.\n5. Markdown saja, tanpa HTML, tanpa code fence.\n6. Output HARUS JSON valid dengan field tetap.\n\nOUTPUT WAJIB (contoh struktur — JANGAN salin heading contoh):\n{\n  \"slug\": \"slug-artikel\",\n  \"title\": \"Judul spesifik dan menarik\",\n  \"excerpt\": \"Ringkasan 1–2 kalimat yang langsung berguna bagi jamaah\",\n  \"category\": \"Umroh\",\n  \"author\": \"BaytGo\",\n  \"body_md\": \"Paragraf pembuka natural tanpa heading generik.\\n\\n## Heading spesifik sesuai topik\\n\\nIsi praktis...\\n\\n## Heading spesifik lain\\n\\nIsi...\",\n  \"title_en\": \"Specific English Title\",\n  \"excerpt_en\": \"Useful 1–2 sentence summary for pilgrims\",\n  \"category_en\": \"Umrah\",\n  \"author_en\": \"BaytGo\",\n  \"body_md_en\": \"Natural opening paragraph.\\n\\n## Specific heading\\n\\nPractical content...\"\n}\\n\\nOutput hanya JSON valid.`\n        }\n      ]\n    }\n  ],\n  generationConfig: {\n    temperature: 0.7,\n    maxOutputTokens: 8192,\n    responseMimeType: 'application/json'\n  }\n}) }}",
+                "options": []
+            },
+            "type": "n8n-nodes-base.httpRequest",
+            "typeVersion": 4.5,
+            "position": [
+                -4752,
+                1392
+            ],
+            "id": "c7c1b04e-8610-45a7-8891-60e9cb58d06f",
+            "name": "HTTP Request",
+            "retryOnFail": true,
+            "maxTries": 3,
+            "waitBetweenTries": 3000
+        },
+        {
+            "parameters": [],
+            "type": "n8n-nodes-base.manualTrigger",
+            "typeVersion": 1,
+            "position": [
+                -7216,
+                1456
+            ],
+            "id": "27557787-62b1-41f8-b7a0-abc4f789a196",
+            "name": "When clicking ‘Execute workflow’"
+        },
+        {
+            "parameters": {
+                "mode": "raw",
+                "jsonOutput": "{\n  \"body\": {\n    \"niche\": \"\",\n    \"keywords\": \"\",\n    \"target_audience\": \"\",\n    \"language\": [\"Indonesia\", \"English\", \"Arabic\"],\n    \"source\": \"manual-test\"\n  }\n}",
+                "options": []
+            },
+            "type": "n8n-nodes-base.set",
+            "typeVersion": 3.5,
+            "position": [
+                -6992,
+                1456
+            ],
+            "id": "d1f7b52e-19a0-4041-84a7-e04b98c96bed",
+            "name": "Edit Fields"
+        },
+        {
+            "parameters": {
+                "conditions": {
+                    "options": {
+                        "caseSensitive": true,
+                        "leftValue": "",
+                        "typeValidation": "strict",
+                        "version": 2
+                    },
+                    "conditions": [
+                        {
+                            "id": "e7f7fe99-fa80-43a2-a18f-f7f2b6c50195",
+                            "leftValue": "={{ $json._is_valid === true && $json._qa?.decision !== 'blocked' }}",
+                            "rightValue": true,
+                            "operator": {
+                                "type": "boolean",
+                                "operation": "true",
+                                "singleValue": true
+                            }
+                        }
+                    ],
+                    "combinator": "and"
+                },
+                "options": []
+            },
+            "type": "n8n-nodes-base.if",
+            "typeVersion": 2.2,
+            "position": [
+                -4080,
+                1360
+            ],
+            "id": "1cc7bcc5-5038-4d29-a6bb-d2049b0b7c07",
+            "name": "Ready To Publish?"
+        },
+        {
+            "parameters": {
+                "mode": "raw",
+                "jsonOutput": "={{ JSON.stringify({\n  status: 'blocked',\n  message: 'Payload AI tidak lolos validasi/editorial QA, publish dibatalkan.',\n  slug: $json.slug || '',\n  title: $json.title || '',\n  topic: $('Parse Proposed Topic').item.json.topic || '',\n  errors: $json._errors || [],\n  qa: $json._qa || {},\n  preview: $json._raw_preview || '',\n  generated_at: $now.toISO()\n}) }}",
+                "options": []
+            },
+            "type": "n8n-nodes-base.set",
+            "typeVersion": 3.5,
+            "position": [
+                -3632,
+                1488
+            ],
+            "id": "4f2d5086-25a8-4819-95f1-c31e4823edea",
+            "name": "Publish Blocked"
+        },
+        {
+            "parameters": {
+                "mode": "raw",
+                "jsonOutput": "={{ JSON.stringify({\n  status: $json.qa?.decision === 'publish' ? 'published' : 'draft_saved',\n  message: $json.qa?.decision === 'publish'\n    ? 'Artikel lolos QA dan langsung terbit.'\n    : 'Artikel disimpan sebagai draft, perlu review di admin.',\n  slug: $json.data?.slug || '',\n  title: $('Ready To Publish?').item.json.title || '',\n  topic: $('Parse Proposed Topic').item.json.topic || '',\n  url: $json.data?.url || '',\n  qa: $json.qa || {},\n  is_published: $json.data?.is_published === true,\n  saved_at: $now.toISO()\n}) }}",
+                "options": []
+            },
+            "type": "n8n-nodes-base.set",
+            "typeVersion": 3.5,
+            "position": [
+                -2960,
+                1840
+            ],
+            "id": "1f8c1e66-dd7c-46fa-b548-d528db9fd250",
+            "name": "Publish Success"
+        },
+        {
+            "parameters": {
+                "conditions": {
+                    "options": {
+                        "caseSensitive": true,
+                        "leftValue": "",
+                        "typeValidation": "strict",
+                        "version": 2
+                    },
+                    "conditions": [
+                        {
+                            "id": "278f82f2-f3a8-46ca-962c-f56ce09cfc3f",
+                            "leftValue": "={{ ($json._revision_round ?? 0) < 2 }}",
+                            "rightValue": true,
+                            "operator": {
+                                "type": "boolean",
+                                "operation": "true",
+                                "singleValue": true
+                            }
+                        }
+                    ],
+                    "combinator": "and"
+                },
+                "options": []
+            },
+            "type": "n8n-nodes-base.if",
+            "typeVersion": 2.2,
+            "position": [
+                -3856,
+                1216
+            ],
+            "id": "240b91d7-e3b5-4be6-9734-8f26597afd98",
+            "name": "Can Auto Revise?"
+        },
+        {
+            "parameters": {
+                "method": "POST",
+                "url": "=https://generativelanguage.googleapis.com/v1beta/models/gemini-3.6-flash:generateContent?key={{ $('Prepare AI Key').item.json.geminiKey }}",
+                "sendHeaders": true,
+                "headerParameters": {
+                    "parameters": [
+                        {
+                            "name": "Content-Type",
+                            "value": "application/json"
+                        }
+                    ]
+                },
+                "sendBody": true,
+                "specifyBody": "json",
+                "jsonBody": "={{ JSON.stringify({\n  contents: [\n    {\n      parts: [\n        {\n          text: `Perbaiki artikel berikut agar lolos editorial QA.\n\nNiche: ${$('Data From User').item.json.niche}\nKeywords: ${$('Data From User').item.json.keywords || '(auto)'}\nTarget Audience: ${$('Data From User').item.json.target_audience}\nTopic: ${$('Parse Proposed Topic').item.json.topic || ''}\nAngle: ${$('Parse Proposed Topic').item.json.angle || ''}\n\nMasalah sebelumnya:\n${JSON.stringify($json._errors || [])}\n\nSkor QA sebelumnya: ${$json._qa?.score ?? '-'} (minimum ${$json._qa?.min_score ?? 75})\nCatatan penilai per kriteria:\n${JSON.stringify($json._qa?.notes || [])}\nPelanggaran serius yang wajib dihapus:\n${JSON.stringify($json._qa?.hard_fail_reasons || [])}\n\nArtikel saat ini:\n${JSON.stringify({\n  slug: $json.slug,\n  title: $json.title,\n  excerpt: $json.excerpt,\n  category: $json.category,\n  author: $json.author,\n  body_md: $json.body_md,\n  title_en: $json.title_en,\n  excerpt_en: $json.excerpt_en,\n  category_en: $json.category_en,\n  author_en: $json.author_en,\n  body_md_en: $json.body_md_en\n})}\n\nHalaman internal yang boleh ditautkan (salin path persis, jangan mengarang):\n${$('Prepare Dedup Context').item.json.link_targets_text}\n\nTugas:\n1) Perbaiki kualitas artikel agar lebih natural dan enak dibaca (bukan makalah).\\n1b) Hapus heading generik seperti Pendahuluan/Kesimpulan/Introduction/Conclusion jika ada; ganti heading spesifik atau mulai langsung dengan paragraf.\n2) Pertahankan topik BaytGo dan fakta riset; jangan mengarang.\n3) Pastikan output JSON valid, tanpa code fence.\n4) Tambahkan field \"revision_round\": 1.\n5) Pastikan ada minimal 2 tautan internal dari daftar di atas, minimal satu ke halaman [layanan].\n\nOutput wajib JSON dengan field:\nslug,title,excerpt,category,author,body_md,title_en,excerpt_en,category_en,author_en,body_md_en,revision_round`\n        }\n      ]\n    }\n  ],\n  generationConfig: {\n    temperature: 0.5,\n    maxOutputTokens: 8192,\n    responseMimeType: 'application/json'\n  }\n}) }}",
+                "options": []
+            },
+            "type": "n8n-nodes-base.httpRequest",
+            "typeVersion": 4.5,
+            "position": [
+                -3632,
+                1296
+            ],
+            "id": "605d84a4-9c57-4ce2-b2dc-c0e8f986499e",
+            "name": "HTTP Request Revision",
+            "retryOnFail": true,
+            "maxTries": 2,
+            "waitBetweenTries": 3000
+        },
+        {
+            "parameters": {
+                "url": "=https://baytgo.id/api/articles?slug={{ encodeURIComponent($json.slug) }}",
+                "sendHeaders": true,
+                "headerParameters": {
+                    "parameters": [
+                        {
+                            "name": "Authorization",
+                            "value": "=Bearer {{ $env.BAYTGO_ARTICLES_TOKEN }}"
+                        }
+                    ]
+                },
+                "options": []
+            },
+            "type": "n8n-nodes-base.httpRequest",
+            "typeVersion": 4.5,
+            "position": [
+                -3856,
+                1584
+            ],
+            "id": "aca0f6eb-60e6-4452-a934-2726d4402d76",
+            "name": "Check Existing Slug",
+            "retryOnFail": true,
+            "maxTries": 2,
+            "waitBetweenTries": 1500
+        },
+        {
+            "parameters": {
+                "mode": "runOnceForEachItem",
+                "jsCode": "const payload = $json;\n\nlet isDuplicate = false;\nif (Array.isArray(payload) && payload.length > 0) {\n  isDuplicate = true;\n} else if (Array.isArray(payload?.data) && payload.data.length > 0) {\n  isDuplicate = true;\n} else if (payload?.data?.id || payload?.id) {\n  isDuplicate = true;\n}\n\nreturn {\n  json: {\n    ...$('Ready To Publish?').item.json,\n    _duplicate_found: isDuplicate,\n    _duplicate_raw: payload\n  }\n};"
+            },
+            "type": "n8n-nodes-base.code",
+            "typeVersion": 2,
+            "position": [
+                -3632,
+                1744
+            ],
+            "id": "2344c2bf-1656-4f57-a546-9392a5ad6977",
+            "name": "Evaluate Duplicate"
+        },
+        {
+            "parameters": {
+                "conditions": {
+                    "options": {
+                        "caseSensitive": true,
+                        "leftValue": "",
+                        "typeValidation": "strict",
+                        "version": 2
+                    },
+                    "conditions": [
+                        {
+                            "id": "f8380749-9df5-4f09-a414-ca2b2891f99a",
+                            "leftValue": "={{ $json._duplicate_found }}",
+                            "rightValue": true,
+                            "operator": {
+                                "type": "boolean",
+                                "operation": "true",
+                                "singleValue": true
+                            }
+                        }
+                    ],
+                    "combinator": "and"
+                },
+                "options": []
+            },
+            "type": "n8n-nodes-base.if",
+            "typeVersion": 2.2,
+            "position": [
+                -3408,
+                1744
+            ],
+            "id": "8b861fd5-f066-4b5d-acd4-670d34ffb825",
+            "name": "Slug Duplicate?"
+        },
+        {
+            "parameters": {
+                "mode": "raw",
+                "jsonOutput": "={{ JSON.stringify({\n  status: 'blocked',\n  message: 'Slug sudah ada di BaytGo. Publish dibatalkan untuk mencegah duplikat.',\n  slug: $json.slug || '',\n  title: $json.title || '',\n  topic: $('Parse Proposed Topic').item.json.topic || '',\n  duplicate_found: $json._duplicate_found || false,\n  duplicate_source: $json._duplicate_raw || {},\n  generated_at: $now.toISO()\n}) }}",
+                "options": []
+            },
+            "type": "n8n-nodes-base.set",
+            "typeVersion": 3.5,
+            "position": [
+                -2960,
+                1648
+            ],
+            "id": "48f04ddd-e9a8-4fad-8463-b92ff2c87629",
+            "name": "Blocked Duplicate Slug"
+        },
+        {
+            "parameters": {
+                "mode": "runOnceForEachItem",
+                "jsCode": "// Penilaian editorial dikerjakan Laravel (POST /api/articles/evaluate).\n// Node ini hanya menyatukan verdict itu kembali ke payload artikel, supaya\n// node-node berikutnya tetap bisa membaca slug/title/_qa seperti sebelumnya.\nconst article = $('Process Payload AI').item.json;\nconst verdict = $json.qa || {};\n\nreturn {\n  json: {\n    ...article,\n    _qa: verdict,\n    _errors: article._errors || []\n  }\n};"
+            },
+            "type": "n8n-nodes-base.code",
+            "typeVersion": 2,
+            "position": [
+                -4304,
+                1360
+            ],
+            "id": "8a4df1d7-b283-438e-9859-004d4fb80231",
+            "name": "Editorial QA"
+        },
+        {
+            "parameters": {
+                "method": "POST",
+                "url": "=https://generativelanguage.googleapis.com/v1beta/models/gemini-3.6-flash:generateContent?key={{ $json.geminiKey }}",
+                "sendHeaders": true,
+                "headerParameters": {
+                    "parameters": [
+                        {
+                            "name": "Content-Type",
+                            "value": "application/json"
+                        }
+                    ]
+                },
+                "sendBody": true,
+                "specifyBody": "json",
+                "jsonBody": "={{ JSON.stringify({\n  contents: [\n    {\n      parts: [\n        {\n          text: `Kamu adalah content strategist untuk website BaytGo.\n\nTENTANG BAYTGO:\nBaytGo adalah marketplace muthowif/pendamping ibadah untuk jamaah umroh dan haji.\nKonten relevan: umroh, haji, muthowif, persiapan ibadah, Makkah-Madinah, tip travel religi, paket umroh, etika ibadah, kesehatan jamaah, tips praktis di Tanah Suci.\n\nINPUT DARI ADMIN:\n- Niche: ${$('Prepare Dedup Context').item.json.niche}\n- Content hint: ${$('Prepare Dedup Context').item.json.content_hint || '(auto)'}\n- Keywords: ${$('Prepare Dedup Context').item.json.keywords || '(kosong — cari topik sendiri)'}\n- Target Audience: ${$('Prepare Dedup Context').item.json.target_audience}\n- Language: ${Array.isArray($('Prepare Dedup Context').item.json.language) ? $('Prepare Dedup Context').item.json.language.join(', ') : String($('Prepare Dedup Context').item.json.language ?? '')}\n\nARTIKEL YANG SUDAH ADA (JANGAN ULANGI TOPIK MIRIP):\n${$('Prepare Dedup Context').item.json.existing_titles_text}\n\nTUGAS:\n1. Pilih 1 topik artikel BARU yang relevan kuat dengan BaytGo.\n2. Topik harus berbeda dari daftar artikel existing di atas.\n3. Topik berguna untuk jamaah / calon jamaah.\n4. Hindari topik generic travel biasa, politik, atau di luar umroh/haji/muthowif.\n5. Jika keywords kosong, invent topik segar dalam ekosistem BaytGo.\n6. Buat search_query efektif untuk riset Tavily.\n\nOUTPUT JSON SAJA:\n{\n  \"topic\": \"judul topik singkat Bahasa Indonesia\",\n  \"angle\": \"sudut pandang 1 kalimat\",\n  \"search_query\": \"query riset untuk Tavily\",\n  \"category\": \"Umroh\",\n  \"why_relevant\": \"kenapa cocok untuk BaytGo dan berbeda dari artikel existing\"\n}`\n        }\n      ]\n    }\n  ],\n  generationConfig: {\n    temperature: 0.9,\n    maxOutputTokens: 1024,\n    responseMimeType: 'application/json'\n  }\n}) }}",
+                "options": []
+            },
+            "type": "n8n-nodes-base.httpRequest",
+            "typeVersion": 4.5,
+            "position": [
+                -5648,
+                1392
+            ],
+            "id": "c373ad32-a5f4-46ca-979b-2290ad5a7570",
+            "name": "Propose Topic",
+            "retryOnFail": true,
+            "maxTries": 3,
+            "waitBetweenTries": 2500
+        },
+        {
+            "parameters": {
+                "mode": "runOnceForEachItem",
+                "jsCode": "const fail = (errors, preview = '') => ({\n  json: {\n    topic: '',\n    angle: '',\n    search_query: [String($('Data From User').item.json.niche || 'Umroh'), 'umroh muthowif jamaah BaytGo'].join(' '),\n    category: 'Umroh',\n    why_relevant: '',\n    geminiKey: $('Prepare AI Key').item.json.geminiKey,\n    _topic_ok: false,\n    _topic_errors: errors,\n    _topic_preview: String(preview).slice(0, 800)\n  }\n});\n\nconst rawText = $json.candidates?.[0]?.content?.parts?.[0]?.text ?? '';\nif (!String(rawText).trim()) {\n  return fail(['Propose Topic: output AI kosong']);\n}\n\nconst cleanText = String(rawText).replace(/```(?:json)?/gi, '').replace(/```/g, '').trim();\nconst start = cleanText.indexOf('{');\nconst end = cleanText.lastIndexOf('}');\nif (start === -1 || end === -1 || end <= start) {\n  return fail(['Propose Topic: JSON tidak ditemukan'], cleanText);\n}\n\nlet data;\ntry {\n  data = JSON.parse(cleanText.slice(start, end + 1));\n} catch (e) {\n  return fail([`Propose Topic: JSON invalid: ${e.message}`], cleanText);\n}\n\nconst niche = String($('Data From User').item.json.niche || 'Umroh');\nconst keywords = String($('Data From User').item.json.keywords || '').trim();\nconst topic = String(data.topic || '').trim();\nconst angle = String(data.angle || '').trim();\nconst category = String(data.category || niche || 'Umroh').trim();\nconst why = String(data.why_relevant || '').trim();\nlet searchQuery = String(data.search_query || '').trim();\n\nif (!topic) {\n  return fail(['Propose Topic: field topic kosong'], cleanText);\n}\n\nif (!searchQuery) {\n  searchQuery = [topic, niche, 'umroh muthowif jamaah', keywords].filter(Boolean).join(' ');\n}\n\nreturn {\n  json: {\n    topic,\n    angle,\n    search_query: searchQuery,\n    category,\n    why_relevant: why,\n    geminiKey: $('Prepare AI Key').item.json.geminiKey,\n    _topic_ok: true,\n    _topic_errors: []\n  }\n};"
+            },
+            "type": "n8n-nodes-base.code",
+            "typeVersion": 2,
+            "position": [
+                -5424,
+                1392
+            ],
+            "id": "11f7e1ce-7571-40a2-871f-3d143df91054",
+            "name": "Parse Proposed Topic"
+        },
+        {
+            "parameters": {
+                "mode": "runOnceForEachItem",
+                "jsCode": "const topic = $('Parse Proposed Topic').item.json;\nconst tavily = $json;\n\nconst collect = [];\nconst pushUrl = (v) => {\n  if (!v) return;\n  if (typeof v === 'string' && /^https?:\\/\\//i.test(v)) collect.push(v.trim());\n  else if (typeof v === 'object' && typeof v.url === 'string' && /^https?:\\/\\//i.test(v.url)) {\n    collect.push(v.url.trim());\n  }\n};\n\nfor (const img of (tavily.images || [])) pushUrl(img);\nfor (const r of (tavily.results || [])) {\n  for (const img of (r.images || [])) pushUrl(img);\n}\n\nconst isDirectImage = (url) => {\n  const lower = url.toLowerCase();\n  if (/\\.(svg|ico|gif)(\\?|$)/i.test(lower)) return false;\n  if (/wikipedia\\.org\\/wiki\\/|commons\\.wikimedia\\.org\\/wiki\\//i.test(lower)) return false;\n  if (/favicon|sprite|logo|icon|1x1|pixel|avatar|badge/i.test(lower)) return false;\n  return true;\n};\n\nconst scored = [...new Set(collect)]\n  .filter(isDirectImage)\n  .map((url) => {\n    const lower = url.toLowerCase();\n    let score = 0;\n    if (/\\.(jpe?g|png|webp)(\\?|$)/i.test(lower)) score += 5;\n    if (/upload\\.wikimedia\\.org|images\\.unsplash\\.com|cdn\\.pixabay\\.com|images\\.pexels\\.com|i\\.imgur\\.com/i.test(lower)) score += 4;\n    if (/\\.(html?|php|aspx)(\\?|$)/i.test(lower)) score -= 8;\n    return { url, score };\n  })\n  .sort((a, b) => b.score - a.score);\n\nconst fallbacks = [\n  'https://upload.wikimedia.org/wikipedia/commons/0/0e/Masjid_al-Haram_at_night.jpg',\n  'https://upload.wikimedia.org/wikipedia/commons/thumb/d/d2/Kaaba_during_Hajj.jpg/1280px-Kaaba_during_Hajj.jpg'\n];\n\nconst ranked = scored.map((x) => x.url).concat(fallbacks.filter((url) => !scored.some((x) => x.url === url)));\nconst image_url = ranked[0] || '';\nconst image_urls = ranked.slice(0, 6);\n\nreturn {\n  json: {\n    topic: topic.topic,\n    angle: topic.angle,\n    search_query: topic.search_query,\n    category: topic.category,\n    why_relevant: topic.why_relevant,\n    geminiKey: topic.geminiKey || $('Prepare AI Key').item.json.geminiKey,\n    answer: tavily.answer ?? '',\n    results: tavily.results ?? [],\n    image_url,\n    image_urls,\n    image_candidates: image_urls,\n    tavily_raw: {\n      query: tavily.query,\n      response_time: tavily.response_time,\n      images_found: collect.length\n    }\n  }\n};"
+            },
+            "type": "n8n-nodes-base.code",
+            "typeVersion": 2,
+            "position": [
+                -4976,
+                1392
+            ],
+            "id": "4d0513c4-fd4f-4ff9-ab95-ddda227e1f3b",
+            "name": "Attach Research"
+        },
+        {
+            "parameters": {
+                "url": "https://baytgo.id/api/articles?limit=500",
+                "sendHeaders": true,
+                "headerParameters": {
+                    "parameters": [
+                        {
+                            "name": "Authorization",
+                            "value": "=Bearer {{ $env.BAYTGO_ARTICLES_TOKEN }}"
+                        }
+                    ]
+                },
+                "options": []
+            },
+            "type": "n8n-nodes-base.httpRequest",
+            "typeVersion": 4.5,
+            "position": [
+                -6320,
+                1392
+            ],
+            "id": "2da167f9-0750-457b-9a22-062d59ecc750",
+            "name": "Fetch Existing Articles",
+            "retryOnFail": true,
+            "maxTries": 2,
+            "waitBetweenTries": 1500
+        },
+        {
+            "parameters": {
+                "mode": "runOnceForEachItem",
+                "jsCode": "const resp = $json;\nconst items = Array.isArray(resp?.data) ? resp.data : [];\nconst existing = items.map((row) => ({\n  slug: String(row.slug || ''),\n  title: String(row.title || ''),\n  category: String(row.category || ''),\n  is_published: row.is_published === true,\n  url: String(row.url || '')\n}));\n\nconst titles = existing\n  .map((row) => row.title.trim())\n  .filter(Boolean)\n  .slice(0, 40);\n\n// Tujuan tautan internal datang dari Laravel (link_targets), bukan dari daftar\n// dedup, karena hanya halaman yang benar-benar terbit yang boleh ditautkan.\nconst targets = Array.isArray(resp?.link_targets) ? resp.link_targets : [];\nconst linkLines = targets\n  .map((t) => {\n    const p = String(t.path || '').trim();\n    const title = String(t.title || '').trim();\n    if (!p || !title) return '';\n    const tag = String(t.kind || '') === 'article' ? '[artikel]' : '[layanan]';\n    const desc = String(t.description || '').trim();\n    return `${tag} ${title} -> ${p}${desc ? ` (${desc})` : ''}`;\n  })\n  .filter(Boolean);\n\nconst user = $('Data From User').item.json;\n\nreturn {\n  json: {\n    ...user,\n    existing_articles: existing,\n    existing_titles_text: titles.length\n      ? titles.map((title, index) => `${index + 1}. ${title}`).join('\\n')\n      : '(belum ada artikel)',\n    existing_count: existing.length,\n    link_targets: targets,\n    link_targets_text: linkLines.length\n      ? linkLines.join('\\n')\n      : '(belum ada halaman yang bisa ditautkan)',\n    link_targets_count: linkLines.length\n  }\n};"
+            },
+            "type": "n8n-nodes-base.code",
+            "typeVersion": 2,
+            "position": [
+                -6096,
+                1392
+            ],
+            "id": "6f1ba334-7ef7-4f79-95ef-a29ab46a9dec",
+            "name": "Prepare Dedup Context"
+        },
+        {
+            "parameters": {
+                "rule": {
+                    "interval": [
+                        {
+                            "triggerAtHour": 6
+                        }
+                    ]
+                }
+            },
+            "type": "n8n-nodes-base.scheduleTrigger",
+            "typeVersion": 1.2,
+            "position": [
+                -7216,
+                1264
+            ],
+            "id": "70c6ee19-b3e2-46d0-94e3-9ce62b7d42d5",
+            "name": "Schedule Daily 06:00"
+        },
+        {
+            "parameters": {
+                "mode": "runOnceForEachItem",
+                "jsCode": "// Kredensial dibaca dari environment n8n. Di n8n Cloud $env diblokir:\n// ganti kedua baris ini dengan nilai literal bila perlu.\nlet TELEGRAM_BOT_TOKEN = '';\nlet TELEGRAM_CHAT_ID = '';\ntry {\n  TELEGRAM_BOT_TOKEN = String($env.TELEGRAM_BOT_TOKEN || '');\n  TELEGRAM_CHAT_ID = String($env.TELEGRAM_CHAT_ID || '');\n} catch (e) {}\nconst ADMIN_ARTICLES_URL = 'https://baytgo.id/admin/artikel';\n\nconst payload = $json;\nconst topicNode = $('Parse Proposed Topic').first()?.json || {};\nconst dedupNode = $('Prepare Dedup Context').first()?.json || {};\n\nconst status = String(payload.status || 'unknown');\nconst slug = String(payload.slug || '').trim();\nconst title = String(payload.title || topicNode.topic || '').trim();\nconst message = String(payload.message || '').trim();\n\nconst qa = payload.qa || payload._qa || {};\nconst score = qa.score ?? null;\nconst minScore = qa.min_score ?? null;\nconst published = payload.is_published === true;\nconst liveUrl = String(payload.url || (slug ? `https://baytgo.id/artikel/${slug}` : '')).trim();\n\nconst emoji = published ? '🚀' : status === 'blocked' ? '⛔' : 'ℹ️';\n\nconst lines = [\n  `${emoji} <b>BaytGo Content Bot</b>`,\n  `<b>Status:</b> ${published ? 'TERBIT' : status}`,\n  `<b>Judul:</b> ${title || '-'}`,\n  `<b>Niche:</b> ${dedupNode.niche || '-'}`,\n  `<b>Skor QA:</b> ${score ?? '-'}${minScore !== null ? ` (min ${minScore})` : ''}`\n];\n\nif (published && liveUrl) {\n  lines.push(`<b>Live:</b> ${liveUrl}`);\n}\n\nif (message) {\n  lines.push(`<b>Catatan:</b> ${message}`);\n}\n\n// Tanpa tahap review, alasan kegagalan harus sampai ke Telegram supaya tidak\n// perlu membuka n8n untuk tahu kenapa hari ini tidak ada artikel.\nif (!published) {\n  const weakNotes = (qa.notes || []).filter((note) => /\\(\\+0|dari \\d+\\)/.test(String(note)));\n  const reasons = []\n    .concat(qa.hard_fail_reasons || [])\n    .concat(payload.errors || [])\n    .concat(weakNotes);\n\n  if (reasons.length) {\n    lines.push(`<b>Kenapa gagal:</b>\\n• ${reasons.slice(0, 6).join('\\n• ')}`);\n  }\n}\n\nlines.push(`<b>Admin:</b> ${ADMIN_ARTICLES_URL}`);\n\nconst notifyText = lines.join('\\n');\nconst enabled = TELEGRAM_BOT_TOKEN.trim() !== '' && TELEGRAM_CHAT_ID.trim() !== '';\n\nreturn {\n  json: {\n    ...payload,\n    notify_enabled: enabled,\n    notify_text: notifyText,\n    telegram_bot_token: TELEGRAM_BOT_TOKEN.trim(),\n    telegram_chat_id: TELEGRAM_CHAT_ID.trim()\n  }\n};"
+            },
+            "type": "n8n-nodes-base.code",
+            "typeVersion": 2,
+            "position": [
+                -2736,
+                1648
+            ],
+            "id": "7442a2a7-1993-4f4d-aa4b-1f2d17db5eb7",
+            "name": "Format Notification"
+        },
+        {
+            "parameters": {
+                "conditions": {
+                    "options": {
+                        "caseSensitive": true,
+                        "leftValue": "",
+                        "typeValidation": "strict",
+                        "version": 2
+                    },
+                    "conditions": [
+                        {
+                            "id": "notify-enabled-check",
+                            "leftValue": "={{ $json.notify_enabled === true }}",
+                            "rightValue": true,
+                            "operator": {
+                                "type": "boolean",
+                                "operation": "true",
+                                "singleValue": true
+                            }
+                        }
+                    ],
+                    "combinator": "and"
+                },
+                "options": []
+            },
+            "type": "n8n-nodes-base.if",
+            "typeVersion": 2.2,
+            "position": [
+                -2512,
+                1648
+            ],
+            "id": "761d4eca-75d0-475e-8738-41375331fce4",
+            "name": "Notify Enabled?"
+        },
+        {
+            "parameters": {
+                "method": "POST",
+                "url": "=https://api.telegram.org/bot{{ $json.telegram_bot_token }}/sendMessage",
+                "sendBody": true,
+                "specifyBody": "json",
+                "jsonBody": "={{ JSON.stringify({ chat_id: $json.telegram_chat_id, text: $json.notify_text, parse_mode: 'HTML', disable_web_page_preview: true }) }}",
+                "options": []
+            },
+            "type": "n8n-nodes-base.httpRequest",
+            "typeVersion": 4.5,
+            "position": [
+                -2288,
+                1552
+            ],
+            "id": "2c5d23a3-517a-440f-9310-836458601d7b",
+            "name": "Send Telegram",
+            "retryOnFail": true,
+            "maxTries": 2,
+            "waitBetweenTries": 2000
+        },
+        {
+            "parameters": {
+                "mode": "raw",
+                "jsonOutput": "={{ JSON.stringify({ status: \"notify_skipped\", reason: \"Telegram belum dikonfigurasi\", payload: $json }) }}",
+                "options": []
+            },
+            "type": "n8n-nodes-base.set",
+            "typeVersion": 3.5,
+            "position": [
+                -2288,
+                1744
+            ],
+            "id": "5e0ff614-2465-44a1-81a9-4580a6e52eba",
+            "name": "Notify Skipped"
+        },
+        {
+            "parameters": {
+                "mode": "raw",
+                "jsonOutput": "{\n  \"body\": {\n    \"niche\": \"\",\n    \"keywords\": \"\",\n    \"target_audience\": \"\",\n    \"language\": [\"Indonesia\", \"English\"],\n    \"source\": \"schedule-daily\"\n  }\n}",
+                "options": []
+            },
+            "type": "n8n-nodes-base.set",
+            "typeVersion": 3.5,
+            "position": [
+                -6992,
+                1264
+            ],
+            "id": "7b63d6cc-5bd2-4ee0-8e42-bb3c8a3e7959",
+            "name": "Schedule Payload"
+        },
+        {
+            "parameters": {
+                "method": "POST",
+                "url": "https://baytgo.id/api/articles/evaluate",
+                "sendHeaders": true,
+                "headerParameters": {
+                    "parameters": [
+                        {
+                            "name": "Authorization",
+                            "value": "=Bearer {{ $env.BAYTGO_ARTICLES_TOKEN }}"
+                        }
+                    ]
+                },
+                "sendBody": true,
+                "contentType": "raw",
+                "rawContentType": "application/json",
+                "body": "={{ JSON.stringify({ ...$json, keywords: $('Data From User').item.json.keywords }) }}",
+                "options": []
+            },
+            "type": "n8n-nodes-base.httpRequest",
+            "typeVersion": 4.5,
+            "position": [
+                -4416,
+                1180
+            ],
+            "id": "9f2c1d70-5b43-4a18-9e6c-2d7a41cb8e55",
+            "name": "Evaluate QA",
+            "retryOnFail": true,
+            "maxTries": 3,
+            "waitBetweenTries": 2000
+        }
+    ],
+    "pinData": [],
+    "connections": {
+        "Webhook": {
+            "main": [
+                [
+                    {
+                        "node": "Proses Payload",
+                        "type": "main",
+                        "index": 0
+                    }
+                ]
+            ]
+        },
+        "Proses Payload": {
+            "main": [
+                [
+                    {
+                        "node": "Data From User",
+                        "type": "main",
+                        "index": 0
+                    }
+                ]
+            ]
+        },
+        "Data From User": {
+            "main": [
+                [
+                    {
+                        "node": "Fetch Existing Articles",
+                        "type": "main",
+                        "index": 0
+                    }
+                ]
+            ]
+        },
+        "Hit Tavily": {
+            "main": [
+                [
+                    {
+                        "node": "Attach Research",
+                        "type": "main",
+                        "index": 0
+                    }
+                ]
+            ]
+        },
+        "Process Payload AI": {
+            "main": [
+                [
+                    {
+                        "node": "Evaluate QA",
+                        "type": "main",
+                        "index": 0
+                    }
+                ]
+            ]
+        },
+        "Prepare AI Key": {
+            "main": [
+                [
+                    {
+                        "node": "Propose Topic",
+                        "type": "main",
+                        "index": 0
+                    }
+                ]
+            ]
+        },
+        "HTTP Request": {
+            "main": [
+                [
+                    {
+                        "node": "Process Payload AI",
+                        "type": "main",
+                        "index": 0
+                    }
+                ]
+            ]
+        },
+        "When clicking ‘Execute workflow’": {
+            "main": [
+                [
+                    {
+                        "node": "Edit Fields",
+                        "type": "main",
+                        "index": 0
+                    }
+                ]
+            ]
+        },
+        "Edit Fields": {
+            "main": [
+                [
+                    {
+                        "node": "Proses Payload",
+                        "type": "main",
+                        "index": 0
+                    }
+                ]
+            ]
+        },
+        "Ready To Publish?": {
+            "main": [
+                [
+                    {
+                        "node": "Check Existing Slug",
+                        "type": "main",
+                        "index": 0
+                    }
+                ],
+                [
+                    {
+                        "node": "Can Auto Revise?",
+                        "type": "main",
+                        "index": 0
+                    }
+                ]
+            ]
+        },
+        "Editorial QA": {
+            "main": [
+                [
+                    {
+                        "node": "Ready To Publish?",
+                        "type": "main",
+                        "index": 0
+                    }
+                ]
+            ]
+        },
+        "Can Auto Revise?": {
+            "main": [
+                [
+                    {
+                        "node": "HTTP Request Revision",
+                        "type": "main",
+                        "index": 0
+                    }
+                ],
+                [
+                    {
+                        "node": "Publish Blocked",
+                        "type": "main",
+                        "index": 0
+                    }
+                ]
+            ]
+        },
+        "HTTP Request Revision": {
+            "main": [
+                [
+                    {
+                        "node": "Process Payload AI",
+                        "type": "main",
+                        "index": 0
+                    }
+                ]
+            ]
+        },
+        "Check Existing Slug": {
+            "main": [
+                [
+                    {
+                        "node": "Evaluate Duplicate",
+                        "type": "main",
+                        "index": 0
+                    }
+                ]
+            ]
+        },
+        "Evaluate Duplicate": {
+            "main": [
+                [
+                    {
+                        "node": "Slug Duplicate?",
+                        "type": "main",
+                        "index": 0
+                    }
+                ]
+            ]
+        },
+        "Slug Duplicate?": {
+            "main": [
+                [
+                    {
+                        "node": "Blocked Duplicate Slug",
+                        "type": "main",
+                        "index": 0
+                    }
+                ],
+                [
+                    {
+                        "node": "Send To Baytgo",
+                        "type": "main",
+                        "index": 0
+                    }
+                ]
+            ]
+        },
+        "Send To Baytgo": {
+            "main": [
+                [
+                    {
+                        "node": "Publish Success",
+                        "type": "main",
+                        "index": 0
+                    }
+                ]
+            ]
+        },
+        "Propose Topic": {
+            "main": [
+                [
+                    {
+                        "node": "Parse Proposed Topic",
+                        "type": "main",
+                        "index": 0
+                    }
+                ]
+            ]
+        },
+        "Parse Proposed Topic": {
+            "main": [
+                [
+                    {
+                        "node": "Hit Tavily",
+                        "type": "main",
+                        "index": 0
+                    }
+                ]
+            ]
+        },
+        "Attach Research": {
+            "main": [
+                [
+                    {
+                        "node": "HTTP Request",
+                        "type": "main",
+                        "index": 0
+                    }
+                ]
+            ]
+        },
+        "Fetch Existing Articles": {
+            "main": [
+                [
+                    {
+                        "node": "Prepare Dedup Context",
+                        "type": "main",
+                        "index": 0
+                    }
+                ]
+            ]
+        },
+        "Prepare Dedup Context": {
+            "main": [
+                [
+                    {
+                        "node": "Prepare AI Key",
+                        "type": "main",
+                        "index": 0
+                    }
+                ]
+            ]
+        },
+        "Schedule Daily 06:00": {
+            "main": [
+                [
+                    {
+                        "node": "Schedule Payload",
+                        "type": "main",
+                        "index": 0
+                    }
+                ]
+            ]
+        },
+        "Schedule Payload": {
+            "main": [
+                [
+                    {
+                        "node": "Proses Payload",
+                        "type": "main",
+                        "index": 0
+                    }
+                ]
+            ]
+        },
+        "Publish Success": {
+            "main": [
+                [
+                    {
+                        "node": "Format Notification",
+                        "type": "main",
+                        "index": 0
+                    }
+                ]
+            ]
+        },
+        "Publish Blocked": {
+            "main": [
+                [
+                    {
+                        "node": "Format Notification",
+                        "type": "main",
+                        "index": 0
+                    }
+                ]
+            ]
+        },
+        "Blocked Duplicate Slug": {
+            "main": [
+                [
+                    {
+                        "node": "Format Notification",
+                        "type": "main",
+                        "index": 0
+                    }
+                ]
+            ]
+        },
+        "Format Notification": {
+            "main": [
+                [
+                    {
+                        "node": "Notify Enabled?",
+                        "type": "main",
+                        "index": 0
+                    }
+                ]
+            ]
+        },
+        "Notify Enabled?": {
+            "main": [
+                [
+                    {
+                        "node": "Send Telegram",
+                        "type": "main",
+                        "index": 0
+                    }
+                ],
+                [
+                    {
+                        "node": "Notify Skipped",
+                        "type": "main",
+                        "index": 0
+                    }
+                ]
+            ]
+        },
+        "Evaluate QA": {
+            "main": [
+                [
+                    {
+                        "node": "Editorial QA",
+                        "type": "main",
+                        "index": 0
+                    }
+                ]
+            ]
+        }
+    },
+    "active": false,
+    "settings": {
+        "executionOrder": "v1",
+        "binaryMode": "separate",
+        "availableInMCP": false
+    },
+    "versionId": "3b8facad-2828-4bf0-9399-6a56716f4fb2",
+    "meta": {
+        "templateCredsSetupCompleted": true
+    },
+    "nodeGroups": [],
+    "id": "l4qh1k5ShutNbg3v",
+    "tags": []
+}

@@ -182,6 +182,10 @@ class StoreExternalArticleRequest extends FormRequest
             'body_md' => ['nullable', 'string'],
             'body_md_en' => ['nullable', 'string'],
             'body_md_ar' => ['nullable', 'string'],
+            // Saat auto_publish aktif, status terbit ditentukan server dari skor QA.
+            'auto_publish' => ['sometimes', 'boolean'],
+            // Keyword acuan dipakai untuk penilaian QA, tidak disimpan.
+            'keywords' => ['nullable', 'string', 'max:2000'],
             'is_published' => ['sometimes', 'boolean'],
             'is_featured' => ['sometimes', 'boolean'],
             'sort_order' => ['sometimes', 'integer', 'min:0', 'max:99999'],

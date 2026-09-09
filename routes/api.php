@@ -27,6 +27,7 @@ Route::get('/directory/{id}', [\App\Http\Controllers\Api\MuthowifDirectoryApiCon
 
 Route::middleware(['articles.api', 'throttle:30,1'])->group(function () {
     Route::get('/articles', [\App\Http\Controllers\Api\ArticleApiController::class, 'show']);
+    Route::post('/articles/evaluate', [\App\Http\Controllers\Api\ArticleApiController::class, 'evaluate']);
     Route::post('/articles', [\App\Http\Controllers\Api\ArticleApiController::class, 'store']);
     Route::put('/articles/{article:slug}', [\App\Http\Controllers\Api\ArticleApiController::class, 'update']);
 });

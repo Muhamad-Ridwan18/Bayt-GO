@@ -5,8 +5,10 @@ namespace App\Http\Controllers\Api;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\StoreExternalArticleRequest;
 use App\Models\Article;
+use App\Services\Articles\EditorialQa;
 use App\Services\UploadedImageOptimizer;
 use App\Support\ArticleBodyMarkdown;
+use App\Support\InternalLinkTargets;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Http\UploadedFile;
@@ -34,7 +36,9 @@ class ArticleApiController extends Controller
 
     public function index(Request $request): JsonResponse
     {
-        $limit = min(max((int) $request->query('limit', 50), 1), 100);
+        // Batas dinaikkan agar konteks dedup automation tetap melihat seluruh
+        // perpustakaan artikel, bukan hanya yang terbaru.
+        $limit = min(max((int) $request->query('limit', 50), 1), 500);
 
         $articles = Article::query()
             ->orderByDesc('updated_at')
@@ -54,6 +58,9 @@ class ArticleApiController extends Controller
                     'updated_at' => $article->updated_at?->toIso8601String(),
                 ];
             })->values()->all(),
+            // Tujuan tautan internal disajikan terpisah: `data` boleh memuat draft
+            // untuk keperluan dedup, tapi menautkan ke draft berarti tautan 404.
+            'link_targets' => InternalLinkTargets::all(),
             'meta' => [
                 'count' => $articles->count(),
                 'limit' => $limit,
@@ -61,40 +68,84 @@ class ArticleApiController extends Controller
         ]);
     }
 
+    /**
+     * Menilai draft tanpa menyimpannya, supaya automation bisa memutuskan revisi
+     * sebelum artikel masuk ke database.
+     */
+    public function evaluate(StoreExternalArticleRequest $request): JsonResponse
+    {
+        return response()->json(['qa' => $this->qaVerdict($request, force: true)]);
+    }
+
     public function store(StoreExternalArticleRequest $request): JsonResponse
     {
+        $qa = $this->qaVerdict($request);
         $existing = $request->existingArticle();
-        if ($existing !== null) {
-            $existing->update($this->payload($request, $existing));
 
-            return response()->json([
+        if ($existing !== null) {
+            $existing->update($this->payload($request, $existing, $qa));
+
+            return response()->json($this->withQa([
                 'created' => false,
                 'data' => $this->serialize($existing->fresh()),
-            ]);
+            ], $qa));
         }
 
-        $article = Article::query()->create($this->payload($request));
+        $article = Article::query()->create($this->payload($request, null, $qa));
 
-        return response()->json([
+        return response()->json($this->withQa([
             'created' => true,
             'data' => $this->serialize($article),
-        ], 201);
+        ], $qa), 201);
     }
 
     public function update(StoreExternalArticleRequest $request, Article $article): JsonResponse
     {
-        $article->update($this->payload($request, $article));
+        $qa = $this->qaVerdict($request);
+        $article->update($this->payload($request, $article, $qa));
 
-        return response()->json([
+        return response()->json($this->withQa([
             'created' => false,
             'data' => $this->serialize($article->fresh()),
-        ]);
+        ], $qa));
+    }
+
+    /**
+     * Verdict hanya dihitung bila automation memintanya lewat `auto_publish`,
+     * sehingga penyuntingan manual lewat API tetap berperilaku seperti sebelumnya.
+     *
+     * @return array<string, mixed>|null
+     */
+    private function qaVerdict(StoreExternalArticleRequest $request, bool $force = false): ?array
+    {
+        if (! $force && ! $request->boolean('auto_publish')) {
+            return null;
+        }
+
+        return app(EditorialQa::class)->evaluate(
+            (array) $request->input('translations', []),
+            (string) $request->input('keywords', ''),
+        );
+    }
+
+    /**
+     * @param  array<string, mixed>  $response
+     * @param  array<string, mixed>|null  $qa
+     * @return array<string, mixed>
+     */
+    private function withQa(array $response, ?array $qa): array
+    {
+        if ($qa !== null) {
+            $response['qa'] = $qa;
+        }
+
+        return $response;
     }
 
     /**
      * @return array<string, mixed>
      */
-    private function payload(StoreExternalArticleRequest $request, ?Article $existing = null): array
+    private function payload(StoreExternalArticleRequest $request, ?Article $existing = null, ?array $qa = null): array
     {
         $validated = $request->validated();
         $title = trim((string) ($validated['translations']['id']['title'] ?? $validated['title'] ?? $existing?->translationBlock('id')['title'] ?? ''));
@@ -103,9 +154,13 @@ class ArticleApiController extends Controller
             $slug = $existing?->slug ?: $this->uniqueSlug($title, $existing?->id);
         }
 
-        $isPublished = array_key_exists('is_published', $validated)
-            ? $request->boolean('is_published')
-            : ($existing?->is_published ?? true);
+        // Keputusan QA mengalahkan is_published dari luar agar kebijakan editorial
+        // tidak bisa dilewati oleh pemanggil.
+        $isPublished = match (true) {
+            $qa !== null => $qa['decision'] === EditorialQa::DECISION_PUBLISH,
+            array_key_exists('is_published', $validated) => $request->boolean('is_published'),
+            default => $existing?->is_published ?? true,
+        };
         $publishedAt = $validated['published_at'] ?? $existing?->published_at;
         if ($publishedAt === null && $isPublished) {
             $publishedAt = now();
