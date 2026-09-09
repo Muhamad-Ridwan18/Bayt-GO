@@ -627,7 +627,7 @@
                 "sendBody": true,
                 "specifyBody": "json",
                 "jsonBody": "={{ JSON.stringify($json.discord_payload) }}",
-                "options": {}
+                "options": []
             },
             "type": "n8n-nodes-base.httpRequest",
             "typeVersion": 4.5,
@@ -701,6 +701,40 @@
             "retryOnFail": true,
             "maxTries": 3,
             "waitBetweenTries": 2000
+        },
+        {
+            "parameters": {
+                "conditions": {
+                    "options": {
+                        "caseSensitive": true,
+                        "leftValue": "",
+                        "typeValidation": "strict",
+                        "version": 2
+                    },
+                    "conditions": [
+                        {
+                            "id": "cbcf87e0-5a4c-4345-8717-0d1e45d9df33",
+                            "leftValue": "={{ $json._is_valid === true }}",
+                            "rightValue": true,
+                            "operator": {
+                                "type": "boolean",
+                                "operation": "true",
+                                "singleValue": true
+                            }
+                        }
+                    ],
+                    "combinator": "and"
+                },
+                "options": {}
+            },
+            "type": "n8n-nodes-base.if",
+            "typeVersion": 2.2,
+            "position": [
+                -4352,
+                1264
+            ],
+            "id": "dac1ff00-35e1-4293-bd26-725b7409544a",
+            "name": "AI Output Valid?"
         }
     ],
     "pinData": [],
@@ -753,7 +787,7 @@
             "main": [
                 [
                     {
-                        "node": "Evaluate QA",
+                        "node": "AI Output Valid?",
                         "type": "main",
                         "index": 0
                     }
@@ -1057,6 +1091,24 @@
                 [
                     {
                         "node": "Editorial QA",
+                        "type": "main",
+                        "index": 0
+                    }
+                ]
+            ]
+        },
+        "AI Output Valid?": {
+            "main": [
+                [
+                    {
+                        "node": "Evaluate QA",
+                        "type": "main",
+                        "index": 0
+                    }
+                ],
+                [
+                    {
+                        "node": "Can Auto Revise?",
                         "type": "main",
                         "index": 0
                     }
