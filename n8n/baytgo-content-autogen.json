@@ -575,7 +575,7 @@
         {
             "parameters": {
                 "mode": "runOnceForEachItem",
-                "jsCode": "// Kredensial dibaca dari environment n8n. Di n8n Cloud $env diblokir:\n// ganti kedua baris ini dengan nilai literal bila perlu.\nlet TELEGRAM_BOT_TOKEN = '';\nlet TELEGRAM_CHAT_ID = '';\ntry {\n  TELEGRAM_BOT_TOKEN = String($env.TELEGRAM_BOT_TOKEN || '');\n  TELEGRAM_CHAT_ID = String($env.TELEGRAM_CHAT_ID || '');\n} catch (e) {}\nconst ADMIN_ARTICLES_URL = 'https://baytgo.id/admin/artikel';\n\nconst payload = $json;\nconst topicNode = $('Parse Proposed Topic').first()?.json || {};\nconst dedupNode = $('Prepare Dedup Context').first()?.json || {};\n\nconst status = String(payload.status || 'unknown');\nconst slug = String(payload.slug || '').trim();\nconst title = String(payload.title || topicNode.topic || '').trim();\nconst message = String(payload.message || '').trim();\n\nconst qa = payload.qa || payload._qa || {};\nconst score = qa.score ?? null;\nconst minScore = qa.min_score ?? null;\nconst published = payload.is_published === true;\nconst liveUrl = String(payload.url || (slug ? `https://baytgo.id/artikel/${slug}` : '')).trim();\n\nconst emoji = published ? '🚀' : status === 'blocked' ? '⛔' : 'ℹ️';\n\nconst lines = [\n  `${emoji} <b>BaytGo Content Bot</b>`,\n  `<b>Status:</b> ${published ? 'TERBIT' : status}`,\n  `<b>Judul:</b> ${title || '-'}`,\n  `<b>Niche:</b> ${dedupNode.niche || '-'}`,\n  `<b>Skor QA:</b> ${score ?? '-'}${minScore !== null ? ` (min ${minScore})` : ''}`\n];\n\nif (published && liveUrl) {\n  lines.push(`<b>Live:</b> ${liveUrl}`);\n}\n\nif (message) {\n  lines.push(`<b>Catatan:</b> ${message}`);\n}\n\n// Tanpa tahap review, alasan kegagalan harus sampai ke Telegram supaya tidak\n// perlu membuka n8n untuk tahu kenapa hari ini tidak ada artikel.\nif (!published) {\n  const weakNotes = (qa.notes || []).filter((note) => /\\(\\+0|dari \\d+\\)/.test(String(note)));\n  const reasons = []\n    .concat(qa.hard_fail_reasons || [])\n    .concat(payload.errors || [])\n    .concat(weakNotes);\n\n  if (reasons.length) {\n    lines.push(`<b>Kenapa gagal:</b>\\n• ${reasons.slice(0, 6).join('\\n• ')}`);\n  }\n}\n\nlines.push(`<b>Admin:</b> ${ADMIN_ARTICLES_URL}`);\n\nconst notifyText = lines.join('\\n');\nconst enabled = TELEGRAM_BOT_TOKEN.trim() !== '' && TELEGRAM_CHAT_ID.trim() !== '';\n\nreturn {\n  json: {\n    ...payload,\n    notify_enabled: enabled,\n    notify_text: notifyText,\n    telegram_bot_token: TELEGRAM_BOT_TOKEN.trim(),\n    telegram_chat_id: TELEGRAM_CHAT_ID.trim()\n  }\n};"
+                "jsCode": "// Webhook Discord dibaca dari environment n8n.\nlet DISCORD_WEBHOOK_URL = '';\ntry {\n  DISCORD_WEBHOOK_URL = String($env.DISCORD_WEBHOOK_URL || '');\n} catch (e) {}\n\nconst ADMIN_ARTICLES_URL = 'https://baytgo.id/admin/artikel';\n\nconst payload = $json;\nconst topicNode = $('Parse Proposed Topic').first()?.json || {};\nconst dedupNode = $('Prepare Dedup Context').first()?.json || {};\n\nconst status = String(payload.status || 'unknown');\nconst slug = String(payload.slug || '').trim();\nconst title = String(payload.title || topicNode.topic || '').trim();\nconst message = String(payload.message || '').trim();\n\nconst qa = payload.qa || payload._qa || {};\nconst score = qa.score ?? null;\nconst minScore = qa.min_score ?? null;\nconst published = payload.is_published === true;\nconst liveUrl = String(payload.url || (slug ? `https://baytgo.id/artikel/${slug}` : '')).trim();\n\nconst cut = (text) => String(text).slice(0, 1024);\n\nconst fields = [\n  { name: 'Status', value: published ? 'Terbit' : status, inline: true },\n  { name: 'Skor QA', value: `${score ?? '-'}${minScore !== null ? ` / min ${minScore}` : ''}`, inline: true },\n  { name: 'Niche', value: String(dedupNode.niche || '-'), inline: true }\n];\n\nif (topicNode.topic) {\n  fields.push({ name: 'Topik', value: cut(topicNode.topic), inline: false });\n}\n\nif (message) {\n  fields.push({ name: 'Catatan', value: cut(message), inline: false });\n}\n\n// Tanpa tahap review, alasan kegagalan harus sampai ke Discord supaya tidak\n// perlu membuka n8n untuk tahu kenapa hari ini tidak ada artikel.\nif (!published) {\n  const weak = (qa.notes || []).filter((note) => /\\(\\+0|dari \\d+\\)/.test(String(note)));\n  const reasons = []\n    .concat(qa.hard_fail_reasons || [])\n    .concat(payload.errors || [])\n    .concat(weak);\n\n  if (reasons.length) {\n    fields.push({\n      name: 'Kenapa gagal',\n      value: cut(reasons.slice(0, 6).map((r) => `• ${r}`).join('\\n')),\n      inline: false\n    });\n  }\n}\n\nconst embed = {\n  title: cut((published ? '🚀 ' : status === 'blocked' ? '⛔ ' : 'ℹ️ ') + (title || 'Tanpa judul')).slice(0, 256),\n  color: published ? 3066993 : status === 'blocked' ? 15158332 : 9807270,\n  fields,\n  footer: { text: 'BaytGo Content Bot' },\n  timestamp: new Date().toISOString(),\n  description: published && liveUrl\n    ? `[Buka artikel](${liveUrl}) · [Kelola di admin](${ADMIN_ARTICLES_URL})`\n    : `[Kelola di admin](${ADMIN_ARTICLES_URL})`\n};\n\nif (published && liveUrl) {\n  embed.url = liveUrl;\n}\n\nreturn {\n  json: {\n    ...payload,\n    notify_enabled: DISCORD_WEBHOOK_URL.trim() !== '',\n    discord_webhook_url: DISCORD_WEBHOOK_URL.trim(),\n    discord_payload: { embeds: [embed] }\n  }\n};"
             },
             "type": "n8n-nodes-base.code",
             "typeVersion": 2,
@@ -623,11 +623,11 @@
         {
             "parameters": {
                 "method": "POST",
-                "url": "=https://api.telegram.org/bot{{ $json.telegram_bot_token }}/sendMessage",
+                "url": "={{ $json.discord_webhook_url }}",
                 "sendBody": true,
                 "specifyBody": "json",
-                "jsonBody": "={{ JSON.stringify({ chat_id: $json.telegram_chat_id, text: $json.notify_text, parse_mode: 'HTML', disable_web_page_preview: true }) }}",
-                "options": []
+                "jsonBody": "={{ JSON.stringify($json.discord_payload) }}",
+                "options": {}
             },
             "type": "n8n-nodes-base.httpRequest",
             "typeVersion": 4.5,
@@ -636,9 +636,9 @@
                 1552
             ],
             "id": "2c5d23a3-517a-440f-9310-836458601d7b",
-            "name": "Send Telegram",
+            "name": "Send Discord",
             "retryOnFail": true,
-            "maxTries": 2,
+            "maxTries": 3,
             "waitBetweenTries": 2000
         },
         {
@@ -1038,7 +1038,7 @@
             "main": [
                 [
                     {
-                        "node": "Send Telegram",
+                        "node": "Send Discord",
                         "type": "main",
                         "index": 0
                     }
