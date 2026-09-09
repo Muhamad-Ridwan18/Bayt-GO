@@ -37,6 +37,8 @@ return Application::configure(basePath: dirname(__DIR__))
         $schedule->command('bookings:auto-complete-service')->everyMinute();
         $schedule->command('bookings:process-support-lifecycle')->everyMinute();
         $schedule->command('chat:notify-unreplied')->everyMinute();
+        // Data GSC baru final setelah beberapa hari, jadi cukup sekali sehari.
+        $schedule->command('seo:gsc-report')->dailyAt('07:30');
     })
     ->withMiddleware(function (Middleware $middleware): void {
         $trustedProxiesRaw = (string) env('TRUSTED_PROXIES', '*');

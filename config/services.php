@@ -78,6 +78,24 @@ return [
         'analytics_key' => trim((string) env('AHREFS_ANALYTICS_KEY', '')),
     ],
 
+    /** Search Console (read-only) untuk `seo:gsc-report`. */
+    'google_search_console' => [
+        /** Properti domain: `sc-domain:baytgo.id`. Properti URL: `https://baytgo.id/`. */
+        'site_url' => trim((string) env('GSC_SITE_URL', '')),
+        /** Path file JSON service account, relatif ke root proyek atau absolut. */
+        'credentials_path' => trim((string) env('GSC_CREDENTIALS_PATH', '')),
+        /** Alternatif: isi JSON service account yang di-base64 (private key punya newline). */
+        'credentials_json' => trim((string) env('GSC_CREDENTIALS_JSON', '')),
+        'discord_webhook_url' => trim((string) env('SEO_DISCORD_WEBHOOK_URL', '')),
+        /** Kuota URL Inspection 2000/hari; batasi jumlah artikel yang dicek per run. */
+        'inspect_limit' => (int) env('GSC_INSPECT_LIMIT', 20),
+        /** Artikel dianggap bermasalah bila belum terindeks setelah tenggang ini. */
+        'indexing_grace_days' => (int) env('GSC_INDEXING_GRACE_DAYS', 14),
+        /** Ambang halaman "sudah muncul tapi jarang diklik". */
+        'opportunity_min_impressions' => (int) env('GSC_OPPORTUNITY_MIN_IMPRESSIONS', 30),
+        'opportunity_max_ctr' => (float) env('GSC_OPPORTUNITY_MAX_CTR', 2.0),
+    ],
+
     'doku' => [
         'client_id' => trim((string) env('DOKU_CLIENT_ID', '')),
         'secret_key' => trim((string) env('DOKU_SECRET_KEY', '')),
