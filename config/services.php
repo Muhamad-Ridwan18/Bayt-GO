@@ -73,6 +73,11 @@ return [
         'webhook_url' => trim((string) env('N8N_ARTICLES_WEBHOOK_URL', '')),
     ],
 
+    /** Ahrefs Web Analytics — data-key memang publik. Kosong = skrip tidak dirender (dev lokal tidak terhitung). */
+    'ahrefs' => [
+        'analytics_key' => trim((string) env('AHREFS_ANALYTICS_KEY', '')),
+    ],
+
     'doku' => [
         'client_id' => trim((string) env('DOKU_CLIENT_ID', '')),
         'secret_key' => trim((string) env('DOKU_SECRET_KEY', '')),

@@ -22,6 +22,8 @@
     $currentUrl = $canonical ?? url()->current();
     // Default OG image (gunakan logo atau ilustrasi premium)
     $metaImage = $image ?? asset('images/og-default.jpg');
+
+    $ahrefsKey = (string) config('services.ahrefs.analytics_key');
 @endphp
 
 <!-- Meta Tags Dasar -->
@@ -65,4 +67,15 @@
             {!! json_encode($schemaItem, JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE | JSON_PRETTY_PRINT) !!}
         </script>
     @endforeach
+@endif
+
+@if ($ahrefsKey !== '')
+    <!-- Ahrefs Web Analytics -->
+    <script>
+        var ahrefs_analytics_script = document.createElement('script');
+        ahrefs_analytics_script.async = true;
+        ahrefs_analytics_script.src = 'https://analytics.ahrefs.com/analytics.js';
+        ahrefs_analytics_script.setAttribute('data-key', @json($ahrefsKey, JSON_UNESCAPED_SLASHES));
+        document.getElementsByTagName('head')[0].appendChild(ahrefs_analytics_script);
+    </script>
 @endif
