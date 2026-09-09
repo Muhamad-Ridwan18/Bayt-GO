@@ -55,6 +55,7 @@ final class NavigationComposer
                 'admin.whatsapp-broadcast.*',
                 'admin.whatsapp-notify-settings.*',
                 'admin.mailjet-test.*',
+                'admin.seo-meta-settings.*',
                 'log-viewer.*',
             ]);
         }

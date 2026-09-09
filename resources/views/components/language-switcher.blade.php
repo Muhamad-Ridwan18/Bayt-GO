@@ -4,13 +4,22 @@
 
 @php
     $current = app()->getLocale();
+
+    // Halaman dengan URL per bahasa (artikel) diarahkan langsung ke padanannya,
+    // supaya berganti bahasa tidak berhenti di URL yang bahasanya terkunci.
+    $switchUrl = function (string $locale): string {
+        $url = route('locale.switch', ['locale' => $locale]);
+        $next = \App\Support\ArticleUrl::currentAlternate($locale);
+
+        return $next !== null ? $url.'?next='.urlencode($next) : $url;
+    };
 @endphp
 
 <div {{ $attributes->merge(['class' => $variant === 'compact' ? 'inline-flex' : 'inline-flex items-stretch']) }} role="group" aria-label="{{ __('nav.language') }}">
     @if ($variant === 'segment-dark')
         <div class="inline-flex flex-wrap justify-end gap-1 rounded-xl border border-white/20 bg-white/10 p-1 shadow-inner backdrop-blur-sm">
             <a
-                href="{{ route('locale.switch', ['locale' => 'id']) }}"
+                href="{{ $switchUrl('id') }}"
                 @class([
                     'rounded-lg px-2.5 py-1.5 text-xs font-bold tracking-wide transition-all duration-200 min-w-[2.5rem] text-center',
                     'bg-white text-brand-900 shadow-md ring-1 ring-white/30' => $current === 'id',
@@ -20,7 +29,7 @@
                 title="{{ __('nav.lang_id') }}"
             >ID</a>
             <a
-                href="{{ route('locale.switch', ['locale' => 'en']) }}"
+                href="{{ $switchUrl('en') }}"
                 @class([
                     'rounded-lg px-2.5 py-1.5 text-xs font-bold tracking-wide transition-all duration-200 min-w-[2.5rem] text-center',
                     'bg-white text-brand-900 shadow-md ring-1 ring-white/30' => $current === 'en',
@@ -41,14 +50,14 @@
             </summary>
             <div class="absolute right-0 z-50 mt-1.5 min-w-[11rem] overflow-hidden rounded-xl border border-slate-100 bg-white py-1 shadow-lg shadow-slate-900/10">
                 <a
-                    href="{{ route('locale.switch', ['locale' => 'id']) }}"
+                    href="{{ $switchUrl('id') }}"
                     @class([
                         'block px-4 py-2 text-sm font-medium transition-colors',
                         'bg-baytgo/8 text-baytgo' => $current === 'id',
                         'text-slate-700 hover:bg-slate-50' => $current !== 'id',
                     ]) aria-current="{{ $current === 'id' ? 'true' : 'false' }}" title="{{ __('nav.lang_id') }}">{{ __('nav.lang_id') }}</a>
                 <a
-                    href="{{ route('locale.switch', ['locale' => 'en']) }}"
+                    href="{{ $switchUrl('en') }}"
                     @class([
                         'block px-4 py-2 text-sm font-medium transition-colors',
                         'bg-baytgo/8 text-baytgo' => $current === 'en',
@@ -60,7 +69,7 @@
     @elseif ($variant === 'segment')
         <div class="inline-flex flex-wrap gap-1 rounded-xl border border-slate-200 bg-slate-100/90 p-1 shadow-inner">
             <a
-                href="{{ route('locale.switch', ['locale' => 'id']) }}"
+                href="{{ $switchUrl('id') }}"
                 @class([
                     'rounded-lg px-2.5 py-1.5 text-xs font-bold tracking-wide transition-all duration-200 min-w-[2.5rem] text-center',
                     'bg-brand-600 text-white shadow-md shadow-brand-600/30 ring-1 ring-brand-700/20' => $current === 'id',
@@ -70,7 +79,7 @@
                 title="{{ __('nav.lang_id') }}"
             >ID</a>
             <a
-                href="{{ route('locale.switch', ['locale' => 'en']) }}"
+                href="{{ $switchUrl('en') }}"
                 @class([
                     'rounded-lg px-2.5 py-1.5 text-xs font-bold tracking-wide transition-all duration-200 min-w-[2.5rem] text-center',
                     'bg-brand-600 text-white shadow-md shadow-brand-600/30 ring-1 ring-brand-700/20' => $current === 'en',
@@ -84,7 +93,7 @@
     @else
         <div class="flex flex-wrap gap-1.5">
             <a
-                href="{{ route('locale.switch', ['locale' => 'id']) }}"
+                href="{{ $switchUrl('id') }}"
                 @class([
                     'rounded-lg px-2.5 py-1 text-[11px] font-bold transition',
                     'bg-brand-600 text-white shadow' => $current === 'id',
@@ -92,7 +101,7 @@
                 ])
             >ID</a>
             <a
-                href="{{ route('locale.switch', ['locale' => 'en']) }}"
+                href="{{ $switchUrl('en') }}"
                 @class([
                     'rounded-lg px-2.5 py-1 text-[11px] font-bold transition',
                     'bg-brand-600 text-white shadow' => $current === 'en',

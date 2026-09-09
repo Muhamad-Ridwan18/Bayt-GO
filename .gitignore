@@ -30,4 +30,7 @@ frankenphp-worker.php
 
 # local build / temp artifacts
 /scratch/
+
+# n8n workflow exports: berisi API key yang di-hardcode di node code
 My workflow.json
+BaytGo Content Autogen.json

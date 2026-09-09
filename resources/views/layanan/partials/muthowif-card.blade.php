@@ -16,10 +16,12 @@
                 <a href="{{ $card->profileHref }}" class="absolute inset-0 block focus:outline-none focus-visible:ring-2 focus-visible:ring-baytgo focus-visible:ring-inset" tabindex="-1" aria-hidden="true">
                     <img
                         src="{{ $profile->photoUrl() }}"
-                        alt=""
+                        alt="{{ __('common.alt_muthowif_photo', ['name' => $profile->user->name]) }}"
                         class="h-full w-full object-cover object-[center_28%] transition duration-500 group-hover/card:scale-[1.02]"
                         loading="lazy"
                         decoding="async"
+                        width="200"
+                        height="200"
                         onerror="this.onerror=null; this.src={!! json_encode($card->fallbackSvg) !!}"
                     />
                 </a>

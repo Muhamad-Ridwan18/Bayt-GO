@@ -29,6 +29,11 @@ class Article extends Model
         ];
     }
 
+    public function getRouteKeyName(): string
+    {
+        return 'slug';
+    }
+
     /**
      * @param  Builder<Article>  $query
      * @return Builder<Article>
@@ -51,6 +56,19 @@ class Article extends Model
             ->orderByDesc('is_featured')
             ->orderBy('sort_order')
             ->orderByDesc('published_at');
+    }
+
+    /**
+     * Batasi ke artikel yang punya terjemahan asli pada bahasa tertentu.
+     *
+     * @param  Builder<Article>  $query
+     * @return Builder<Article>
+     */
+    public function scopeTranslatedIn(Builder $query, string $locale): Builder
+    {
+        return $query
+            ->where('translations->'.$locale.'->title', '!=', '')
+            ->where('translations->'.$locale.'->body', '!=', '');
     }
 
     /**
@@ -85,6 +103,18 @@ class Article extends Model
         $block = $this->translationBlock();
 
         return (string) ($block[$key] ?? '');
+    }
+
+    /**
+     * Terjemahan dianggap ada hanya jika judul dan isi terisi, supaya URL per bahasa
+     * tidak pernah menyajikan konten hasil fallback bahasa lain.
+     */
+    public function hasTranslation(string $locale): bool
+    {
+        $block = $this->translationBlock($locale);
+
+        return trim((string) ($block['title'] ?? '')) !== ''
+            && trim(strip_tags((string) ($block['body'] ?? ''))) !== '';
     }
 
     public function coverImageUrl(): ?string

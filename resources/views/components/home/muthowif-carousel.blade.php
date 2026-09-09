@@ -25,7 +25,7 @@
                     <article class="w-[15rem] shrink-0 snap-start overflow-hidden rounded-2xl border border-slate-100 bg-white shadow-sm transition hover:-translate-y-0.5 hover:shadow-md sm:w-[16.5rem]">
                         <a href="{{ $card['href'] }}" class="block h-full focus:outline-none focus-visible:ring-2 focus-visible:ring-baytgo focus-visible:ring-offset-2">
                             <div class="relative aspect-[4/5] overflow-hidden bg-slate-100">
-                                <img src="{{ $card['photo'] }}" alt="" class="h-full w-full object-cover object-top" loading="lazy" decoding="async" />
+                                <img src="{{ $card['photo'] }}" alt="{{ __('common.alt_muthowif_photo', ['name' => $card['name']]) }}" class="h-full w-full object-cover object-top" loading="lazy" decoding="async" width="264" height="330" />
                                 <span class="absolute left-2.5 top-2.5 inline-flex items-center gap-1 rounded-full bg-white/95 px-2 py-0.5 text-[10px] font-bold text-emerald-700 shadow-sm">
                                     <svg class="h-3 w-3" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true"><path fill-rule="evenodd" d="M16.704 4.153a.75.75 0 01.143 1.052l-8 10.5a.75.75 0 01-1.127.075l-4.5-4.5a.75.75 0 011.06-1.06l3.894 3.893 7.48-9.817a.75.75 0 011.05-.143z" clip-rule="evenodd" /></svg>
                                     {{ __('dashboard.customer_verified_badge') }}

@@ -6,6 +6,7 @@ use App\Http\Middleware\CaptureAffiliateReferral;
 use App\Http\Middleware\EnsureCustomerOrMuthowif;
 use App\Http\Middleware\EnsureUserRole;
 use App\Http\Middleware\EnsureVerifiedMuthowif;
+use App\Http\Middleware\ForceLocale;
 use App\Http\Middleware\SetLocale;
 use App\Support\RedirectExpiredSession;
 use App\Support\WhatsAppNotifySettings;
@@ -68,6 +69,7 @@ return Application::configure(basePath: dirname(__DIR__))
             'reporter' => EnsureCustomerOrMuthowif::class,
             'verified.muthowif' => EnsureVerifiedMuthowif::class,
             'articles.api' => AuthenticateArticlesApi::class,
+            'locale' => ForceLocale::class,
         ]);
     })
     ->withExceptions(function (Exceptions $exceptions): void {

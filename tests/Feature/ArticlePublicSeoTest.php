@@ -61,4 +61,50 @@ class ArticlePublicSeoTest extends TestCase
             ->assertSee(__('articles.related_articles_title'), false)
             ->assertSee('Tips Memilih Muthowif');
     }
+
+    public function test_article_index_is_paginated_and_self_canonicalises_each_page(): void
+    {
+        foreach (range(1, 15) as $i) {
+            Article::query()->create([
+                'slug' => 'artikel-'.$i,
+                'is_published' => true,
+                'is_featured' => false,
+                'sort_order' => $i,
+                'published_at' => now()->subDays($i),
+                'translations' => [
+                    'id' => [
+                        'title' => 'Artikel Nomor '.$i,
+                        'excerpt' => 'Ringkasan artikel nomor '.$i.'.',
+                        'category' => 'Umroh',
+                        'author' => 'BaytGo',
+                        'body' => '<p>Isi artikel '.$i.'.</p>',
+                        'body_json' => '',
+                        'body_md' => '',
+                    ],
+                ],
+            ]);
+        }
+
+        $this->get(route('articles.index'))
+            ->assertOk()
+            ->assertSee('rel="canonical" href="'.route('articles.index').'"', false)
+            ->assertSee(route('articles.index').'?page=2', false);
+
+        $this->get(route('articles.index', ['page' => 2]))
+            ->assertOk()
+            ->assertSee('rel="canonical" href="'.route('articles.index').'?page=2"', false)
+            ->assertSee(__('pagination.page', ['page' => 2]), false);
+    }
+
+    public function test_pages_without_translated_urls_expose_no_hreflang_and_resolvable_og_image(): void
+    {
+        $this->assertFileExists(public_path('images/og-default.jpg'));
+        $this->assertFileExists(public_path('images/logo.png'));
+
+        // Hanya artikel yang punya URL per bahasa; sisanya tidak boleh mengumumkan alternatif.
+        $this->get(route('welcome'))
+            ->assertOk()
+            ->assertDontSee('hreflang', false)
+            ->assertSee('og:image" content="'.asset('images/og-default.jpg').'"', false);
+    }
 }

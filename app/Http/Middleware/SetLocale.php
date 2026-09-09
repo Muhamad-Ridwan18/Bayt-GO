@@ -38,6 +38,6 @@ class SetLocale
             return $fallback;
         }
 
-        return 'en';
+        return 'id';
     }
 }

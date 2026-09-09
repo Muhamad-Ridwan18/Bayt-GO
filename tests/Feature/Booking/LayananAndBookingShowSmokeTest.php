@@ -77,7 +77,27 @@ class LayananAndBookingShowSmokeTest extends TestCase
 
         $response->assertOk();
         $response->assertSee('Ustadz Smoke Test', false);
-        $response->assertSee('Packages', false);
+        $response->assertSee(__('marketplace.show.packages_heading'));
+    }
+
+    public function test_layanan_show_redirects_uuid_url_to_canonical_slug(): void
+    {
+        ['profile' => $profile] = $this->approvedMarketplaceProfile();
+
+        $this->get('/layanan/'.$profile->getKey())
+            ->assertRedirect(route('layanan.show', ['publicProfile' => $profile->slug]))
+            ->assertStatus(301);
+
+        $this->get('/layanan/'.$profile->getKey().'?start_date=2030-01-01')
+            ->assertRedirect(route('layanan.show', ['publicProfile' => $profile->slug]).'?start_date=2030-01-01');
+    }
+
+    public function test_unknown_public_url_renders_branded_404(): void
+    {
+        $this->get('/artikel/slug-yang-tidak-ada')
+            ->assertNotFound()
+            ->assertSee(__('common.not_found_headline'), false)
+            ->assertSee(route('layanan.index'), false);
     }
 
     public function test_layanan_show_page_data_builds_without_error(): void

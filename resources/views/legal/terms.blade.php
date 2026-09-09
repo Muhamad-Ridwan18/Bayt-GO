@@ -9,9 +9,9 @@
     <head>
         <meta charset="utf-8">
         <meta name="viewport" content="width=device-width, initial-scale=1">
-        <x-seo-meta 
-            :title="__('terms.page_title') . ' — Aturan Penggunaan'" 
-            description="Syarat dan Ketentuan penggunaan layanan platform Bayt-GO untuk jamaah, Muthowif, dan asisten tour guide ibadah Umroh & Haji." 
+        <x-seo-meta
+            :title="\App\Support\SeoMetaOverrides::title('terms', __('terms.page_title').' — '.__('seo.terms_title_suffix'))"
+            :description="\App\Support\SeoMetaOverrides::description('terms', __('seo.terms_description'))"
         />
         <link rel="preconnect" href="https://fonts.bunny.net">
         <link href="https://fonts.bunny.net/css?family=plus-jakarta-sans:400,500,600,700&display=swap" rel="stylesheet" />

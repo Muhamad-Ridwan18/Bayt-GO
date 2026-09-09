@@ -8,6 +8,7 @@ use App\Support\MarketplaceProfileCache;
 use App\Support\StoredImageResponse;
 use App\ViewModels\Layanan\LayananIndexPageData;
 use Carbon\Carbon;
+use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Facades\Validator;
@@ -25,8 +26,12 @@ class MuthowifDirectoryController extends Controller
         ]);
     }
 
-    public function show(Request $request, MuthowifProfile $publicProfile): View
+    public function show(Request $request, MuthowifProfile $publicProfile): View|RedirectResponse
     {
+        if ($redirect = $this->redirectToCanonicalSlug($request, $publicProfile)) {
+            return $redirect;
+        }
+
         $publicProfile = MarketplaceProfileCache::forShow($publicProfile);
 
         $startDate = (string) $request->query('start_date', '');
@@ -66,6 +71,24 @@ class MuthowifDirectoryController extends Controller
                 $endDate,
             ),
         ]);
+    }
+
+    /**
+     * Profil dapat di-resolve lewat UUID maupun slug; arahkan UUID ke slug agar tidak duplikat di indeks mesin pencari.
+     */
+    private function redirectToCanonicalSlug(Request $request, MuthowifProfile $profile): ?RedirectResponse
+    {
+        $segment = (string) $request->segment(2);
+
+        if (! filled($profile->slug) || $segment === '' || $segment === $profile->slug) {
+            return null;
+        }
+
+        return redirect()->to(
+            route('layanan.show', ['publicProfile' => $profile->slug]).
+            ($request->getQueryString() ? '?'.$request->getQueryString() : ''),
+            301,
+        );
     }
 
     /**

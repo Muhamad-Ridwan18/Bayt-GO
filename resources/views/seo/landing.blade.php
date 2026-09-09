@@ -1,6 +1,8 @@
 @php
     $title = $landing['title'];
     $description = $landing['subtitle'];
+    $metaTitle = $landing['meta_title'] ?? $title;
+    $metaDescription = $landing['meta_description'] ?? $description;
     $schema = [
         '@context' => 'https://schema.org',
         '@type' => 'WebPage',
@@ -10,11 +12,11 @@
     ];
 @endphp
 
-<x-layouts.marketing-public :title="$title" :meta-description="$description" :schema="$schema" active-nav="layanan">
+<x-layouts.marketing-public :title="$metaTitle" :meta-description="$metaDescription" :schema="$schema" active-nav="layanan">
     <section class="bg-gradient-to-b from-welcomeCanvas to-white pb-16 pt-10">
         <x-page-container>
             <div class="text-center">
-                <p class="text-sm font-semibold uppercase tracking-[0.3em] text-baytgo/90">Muthowif</p>
+                <p class="text-sm font-semibold uppercase tracking-[0.3em] text-baytgo/90">{{ __('seo.landing_kicker') }}</p>
                 <h1 class="mt-4 text-4xl font-bold tracking-tight text-slate-900 sm:text-5xl">{{ $landing['title'] }}</h1>
                 <p class="mx-auto mt-5 max-w-2xl text-lg leading-8 text-slate-600">{{ $landing['subtitle'] }}</p>
             </div>
@@ -24,9 +26,9 @@
                     <x-marketplace.profile-card :profile="$service" />
                 @empty
                     <div class="rounded-3xl border border-slate-200 bg-white p-8 text-center">
-                        <p class="text-lg font-semibold text-slate-900">Tidak ada muthowif tersedia saat ini.</p>
-                        <p class="mt-3 text-sm text-slate-600">Silakan kembali beberapa saat lagi atau gunakan fitur pencarian untuk menemukan muthowif yang sesuai.</p>
-                        <a href="{{ route('layanan.index') }}" class="mt-6 inline-flex rounded-full bg-baytgo px-6 py-3 text-sm font-bold text-white shadow-md shadow-baytgo/25">Telusuri Semua Layanan</a>
+                        <p class="text-lg font-semibold text-slate-900">{{ __('seo.landing_empty_title') }}</p>
+                        <p class="mt-3 text-sm text-slate-600">{{ __('seo.landing_empty_body') }}</p>
+                        <a href="{{ route('layanan.index') }}" class="mt-6 inline-flex rounded-full bg-baytgo px-6 py-3 text-sm font-bold text-white shadow-md shadow-baytgo/25">{{ __('seo.landing_empty_cta') }}</a>
                     </div>
                 @endforelse
             </div>

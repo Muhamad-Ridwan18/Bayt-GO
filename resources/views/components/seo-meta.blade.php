@@ -4,20 +4,22 @@
     'image' => null,
     'type' => 'website',
     'schema' => null,
+    'canonical' => null,
+    'alternates' => null,
 ])
 
 @php
     $siteName = config('app.name', 'Bayt-GO');
     
     // Optimasi judul dengan keyword utama jika tidak ada judul spesifik
-    $defaultTitle = "Bayt-GO — Jasa Tour Guide Ibadah Umroh & Haji | Muthowif Terpercaya";
+    $defaultTitle = __('seo.default_title');
     $fullTitle = $title ? "$title | $siteName" : $defaultTitle;
     
     // Deskripsi meta dengan keyword utama
-    $fallbackDesc = "Temukan layanan Muthowif terbaik dan jasa tour guide ibadah Umroh & Haji terpercaya di Bayt-GO. Bandingkan profil, rating ulasan, harga, dan pesan langsung asisten ibadah Anda demi kenyamanan maksimal.";
+    $fallbackDesc = __('seo.default_description');
     $metaDesc = \Illuminate\Support\Str::limit(strip_tags($description ?? $fallbackDesc), 155, '');
     
-    $currentUrl = request()->url();
+    $currentUrl = $canonical ?? url()->current();
     // Default OG image (gunakan logo atau ilustrasi premium)
     $metaImage = $image ?? asset('images/og-default.jpg');
 @endphp
@@ -28,12 +30,15 @@
 <meta name="robots" content="index, follow">
 <link rel="canonical" href="{{ $currentUrl }}">
 
-<!-- Alternatif Bahasa (Multibahasa SEO) -->
-@foreach(['id', 'en', 'ar'] as $lang)
-    <link rel="alternate" hreflang="{{ $lang }}" href="{{ route('locale.switch', ['locale' => $lang]) }}?next={{ urlencode(request()->getPathInfo()) }}">
-@endforeach
-<link rel="alternate" hreflang="x-default" href="{{ url('/') }}">
-
+{{-- Hanya halaman yang benar-benar punya versi per bahasa yang mengirim alternates. --}}
+@if (filled($alternates))
+    @foreach ($alternates as $altLocale => $altUrl)
+        <link rel="alternate" hreflang="{{ $altLocale }}" href="{{ $altUrl }}">
+    @endforeach
+    @if (isset($alternates['id']))
+        <link rel="alternate" hreflang="x-default" href="{{ $alternates['id'] }}">
+    @endif
+@endif
 <!-- Open Graph / Facebook / WhatsApp -->
 <meta property="og:type" content="{{ $type }}">
 <meta property="og:title" content="{{ $title ?? $fullTitle }}">

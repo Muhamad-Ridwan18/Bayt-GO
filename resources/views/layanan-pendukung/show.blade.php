@@ -9,9 +9,47 @@
         'starts_at' => $startsAtInput !== '' ? $startsAtInput : null,
     ]);
     $bookUrl = route('layanan-pendukung.book', array_merge(['supportPackage' => $package], $catalogQuery));
+
+    $packageSchema = [
+        [
+            '@context' => 'https://schema.org',
+            '@type' => 'Product',
+            'name' => $package->name,
+            'description' => $package->description ?: $package->name,
+            'category' => $package->category?->label(),
+            'brand' => [
+                '@type' => 'Organization',
+                'name' => config('app.name', 'Bayt-GO'),
+            ],
+            'offers' => [
+                '@type' => 'Offer',
+                'url' => url()->current(),
+                'price' => $price,
+                'priceCurrency' => 'IDR',
+                'availability' => 'https://schema.org/InStock',
+                'seller' => [
+                    '@type' => 'Person',
+                    'name' => $profile?->user?->name,
+                ],
+            ],
+        ],
+        [
+            '@context' => 'https://schema.org',
+            '@type' => 'BreadcrumbList',
+            'itemListElement' => [
+                ['@type' => 'ListItem', 'position' => 1, 'name' => config('app.name', 'Bayt-GO'), 'item' => url('/')],
+                ['@type' => 'ListItem', 'position' => 2, 'name' => __('layanan_pendukung.page_title'), 'item' => route('layanan-pendukung.index')],
+                ['@type' => 'ListItem', 'position' => 3, 'name' => $package->name, 'item' => url()->current()],
+            ],
+        ],
+    ];
 @endphp
 
-<x-marketplace-layout :title="$package->name.' | '.__('layanan_pendukung.page_title')" :meta-description="$package->description">
+<x-marketplace-layout
+    :title="$package->name.' | '.__('layanan_pendukung.page_title')"
+    :meta-description="$package->description"
+    :schema="$packageSchema"
+>
     <div class="ui-stack-compact">
         <a href="{{ route('layanan-pendukung.index', $catalogQuery) }}" class="inline-flex items-center gap-2 text-sm font-semibold text-brand-700 hover:text-brand-800">
             ← {{ __('layanan_pendukung.back_to_catalog') }}

@@ -1,8 +1,16 @@
-<x-app-layout>
-    @section('title', $campaign->title . ' - BaytGO')
-    @php
-        $themeColor = $campaign->theme_color ?? '#10b981';
-    @endphp
+@php
+    $themeColor = $campaign->theme_color ?? '#10b981';
+    $campaignBanner = $campaign->desktop_banner ? url(Storage::url($campaign->desktop_banner)) : null;
+    $campaignDescription = $campaign->body
+        ? \Illuminate\Support\Str::limit(strip_tags($campaign->body), 155, '')
+        : $campaign->title;
+@endphp
+
+<x-layouts.marketing-public
+    :title="$campaign->title"
+    :meta-description="$campaignDescription"
+    :image="$campaignBanner"
+>
 
     <div class="relative bg-slate-50 min-h-screen pb-12">
         {{-- Banner Section --}}
@@ -99,4 +107,4 @@
         });
     </script>
     @endpush
-</x-app-layout>
+</x-layouts.marketing-public>

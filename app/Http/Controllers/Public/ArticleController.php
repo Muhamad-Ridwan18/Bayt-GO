@@ -5,6 +5,8 @@ namespace App\Http\Controllers\Public;
 use App\Http\Controllers\Controller;
 use App\Models\Article;
 use App\Models\MuthowifProfile;
+use App\Support\ArticleUrl;
+use App\Support\SeoMetaOverrides;
 use Illuminate\Contracts\View\View;
 use Illuminate\Database\Eloquent\ModelNotFoundException;
 use Illuminate\Support\Collection;
@@ -12,17 +14,25 @@ use Illuminate\Support\Str;
 
 class ArticleController extends Controller
 {
+    private const PER_PAGE = 12;
+
     public function index(): View
     {
-        $articles = Article::query()->published()->ordered()->get();
-
-        $seoTitle = 'Tips & Panduan Ibadah Umroh & Haji Terpercaya';
-        $seoDesc = 'Kumpulan artikel edukasi terbaru, tips praktis, panduan ibadah Umroh dan Haji, serta panduan memilih asisten Muthowif & jasa tour guide terbaik dari Bayt-GO.';
+        $articles = Article::query()
+            ->published()
+            ->translatedIn(app()->getLocale())
+            ->ordered()
+            ->paginate(self::PER_PAGE)
+            ->withQueryString();
 
         return view('articles.index', [
             'articles' => $articles,
-            'title' => $seoTitle,
-            'metaDescription' => $seoDesc,
+            'title' => SeoMetaOverrides::title('articles', __('articles.index_title')),
+            'metaDescription' => SeoMetaOverrides::description('articles', __('seo.articles_description')),
+            'canonical' => $articles->currentPage() > 1
+                ? $articles->url($articles->currentPage())
+                : ArticleUrl::index(),
+            'alternates' => ArticleUrl::indexAlternates(),
         ]);
     }
 
@@ -37,11 +47,18 @@ class ArticleController extends Controller
             throw (new ModelNotFoundException)->setModel(Article::class, [$slug]);
         }
 
+        $locale = app()->getLocale();
+
+        // Tanpa terjemahan asli, URL bahasa ini hanya akan menyajikan ulang bahasa lain.
+        if (! $article->hasTranslation($locale)) {
+            throw (new ModelNotFoundException)->setModel(Article::class, [$slug]);
+        }
+
         $title = $article->localized('title');
         $author = $article->localized('author') ?: 'BaytGo';
         $metaDescription = $article->seoDescription();
         $coverImage = $article->coverImageUrl();
-        $canonicalUrl = route('articles.show', $article->slug);
+        $canonicalUrl = ArticleUrl::show($article, $locale);
         $relatedArticles = $this->relatedArticlesFor($article);
         $relatedServices = $this->relatedServicesForArticle($article);
 
@@ -71,7 +88,7 @@ class ArticleController extends Controller
                 ],
             ],
             'url' => $canonicalUrl,
-            'articleSection' => $article->localized('category') ?: 'Umroh',
+            'articleSection' => $article->localized('category') ?: __('seo.article_default_section'),
             'wordCount' => str_word_count(strip_tags($article->localized('body'))),
         ];
 
@@ -93,7 +110,7 @@ class ArticleController extends Controller
                     '@type' => 'ListItem',
                     'position' => 2,
                     'name' => __('articles.index_title'),
-                    'item' => route('articles.index'),
+                    'item' => ArticleUrl::index($locale),
                 ],
                 [
                     '@type' => 'ListItem',
@@ -112,6 +129,8 @@ class ArticleController extends Controller
             'schema' => [$articleSchema, $breadcrumbSchema],
             'relatedArticles' => $relatedArticles,
             'relatedServices' => $relatedServices,
+            'canonical' => $canonicalUrl,
+            'alternates' => ArticleUrl::showAlternates($article),
         ]);
     }
 
@@ -124,6 +143,7 @@ class ArticleController extends Controller
 
         $candidates = Article::query()
             ->published()
+            ->translatedIn(app()->getLocale())
             ->whereKeyNot($article->getKey())
             ->ordered()
             ->limit(24)

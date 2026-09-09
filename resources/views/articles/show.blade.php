@@ -9,6 +9,8 @@
     :meta-description="$metaDescription"
     :schema="$schema"
     :image="$coverImage"
+    :canonical="$canonical"
+    :alternates="$alternates"
     type="article"
     active-nav="articles"
 >
@@ -18,7 +20,7 @@
                 <ol class="flex flex-wrap items-center gap-2">
                     <li><a href="{{ route('welcome') }}" class="font-medium hover:text-baytgo">{{ __('nav.home') }}</a></li>
                     <li aria-hidden="true" class="text-slate-300">/</li>
-                    <li><a href="{{ route('articles.index') }}" class="font-medium hover:text-baytgo">{{ __('articles.index_title') }}</a></li>
+                    <li><a href="{{ \App\Support\ArticleUrl::index() }}" class="font-medium hover:text-baytgo">{{ __('articles.index_title') }}</a></li>
                     <li aria-hidden="true" class="text-slate-300">/</li>
                     <li class="max-w-[12rem] truncate font-semibold text-slate-700 sm:max-w-none" title="{{ $title }}">{{ $title }}</li>
                 </ol>
@@ -53,14 +55,14 @@
                         <p class="text-sm font-semibold uppercase tracking-[0.24em] text-baytgo">{{ __('articles.related_articles_kicker') }}</p>
                         <h2 id="related-articles-heading" class="mt-2 text-2xl font-bold text-slate-900">{{ __('articles.related_articles_title') }}</h2>
                     </div>
-                    <a href="{{ route('articles.index') }}" class="text-sm font-semibold text-baytgo hover:text-baytgo-700">{{ __('articles.back_to_list') }}</a>
+                    <a href="{{ \App\Support\ArticleUrl::index() }}" class="text-sm font-semibold text-baytgo hover:text-baytgo-700">{{ __('articles.back_to_list') }}</a>
                 </div>
                 <div class="mt-8 grid gap-5 sm:grid-cols-2 lg:grid-cols-4">
                     @foreach ($relatedArticles as $related)
                         <article class="group flex flex-col rounded-2xl border border-slate-200 bg-white p-5 shadow-sm transition hover:border-baytgo/30 hover:shadow-md">
                             <span class="text-xs font-bold uppercase tracking-wide text-baytgo/80">{{ $related->localized('category') }}</span>
                             <h3 class="mt-2 text-base font-bold leading-snug text-slate-900 transition group-hover:text-baytgo">
-                                <a href="{{ route('articles.show', $related->slug) }}" class="rounded-md focus:outline-none focus-visible:ring-2 focus-visible:ring-baytgo/30">
+                                <a href="{{ \App\Support\ArticleUrl::show($related) }}" class="rounded-md focus:outline-none focus-visible:ring-2 focus-visible:ring-baytgo/30">
                                     {{ $related->localized('title') }}
                                 </a>
                             </h3>

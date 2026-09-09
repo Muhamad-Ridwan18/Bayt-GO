@@ -12,6 +12,7 @@ use App\Http\Controllers\Admin\CampaignsAdminController;
 use App\Http\Controllers\Admin\CompanyApprovalController;
 use App\Http\Controllers\Admin\FinanceController;
 use App\Http\Controllers\Admin\MootaApiSettingsController;
+use App\Http\Controllers\Admin\SeoMetaSettingsController;
 use App\Http\Controllers\Admin\MootaWebhookHistoriesLiveController;
 use App\Http\Controllers\Admin\MuthowifReferralMonitorController;
 use App\Http\Controllers\Admin\MuthowifVerificationController;
@@ -128,8 +129,19 @@ Route::get('/layanan-pendukung/{supportPackage}', [SupportCatalogController::cla
 Route::get('/layanan-pendukung/{supportPackage}/pesan', [SupportCatalogController::class, 'book'])->name('layanan-pendukung.book');
 
 Route::get('/terms', TermsController::class)->name('terms');
-Route::get('/artikel', [ArticleController::class, 'index'])->name('articles.index');
-Route::get('/artikel/{slug}', [ArticleController::class, 'show'])->name('articles.show');
+/**
+ * Artikel adalah satu-satunya konten dengan terjemahan asli, jadi tiap bahasa punya
+ * URL sendiri. Bahasa dikunci dari URL agar satu URL = satu bahasa untuk mesin pencari.
+ */
+Route::middleware('locale:id')->group(function () {
+    Route::get('/artikel', [ArticleController::class, 'index'])->name('articles.index');
+    Route::get('/artikel/{slug}', [ArticleController::class, 'show'])->name('articles.show');
+});
+
+Route::middleware('locale:en')->prefix('en')->name('en.')->group(function () {
+    Route::get('/artikel', [ArticleController::class, 'index'])->name('articles.index');
+    Route::get('/artikel/{slug}', [ArticleController::class, 'show'])->name('articles.show');
+});
 Route::get('/campaign/{slug}', [CampaignController::class, 'show'])->name('campaigns.show');
 
 Route::get('/locale/{locale}', [LocaleController::class, 'switch'])->name('locale.switch');
@@ -340,6 +352,8 @@ Route::middleware('auth')->group(function () {
         Route::post('pengaturan/mailjet-uji/kirim', [MailjetTestController::class, 'send'])->name('mailjet-test.send');
         Route::get('pengaturan/moota-api', [MootaApiSettingsController::class, 'edit'])->name('moota-api-settings.edit');
         Route::post('pengaturan/moota-api', [MootaApiSettingsController::class, 'update'])->name('moota-api-settings.update');
+        Route::get('pengaturan/meta-seo', [SeoMetaSettingsController::class, 'edit'])->name('seo-meta-settings.edit');
+        Route::post('pengaturan/meta-seo', [SeoMetaSettingsController::class, 'update'])->name('seo-meta-settings.update');
         Route::get('whatsapp-broadcast', [WhatsAppBroadcastController::class, 'index'])->name('whatsapp-broadcast.index');
         Route::post('whatsapp-broadcast/kirim', [WhatsAppBroadcastController::class, 'send'])->name('whatsapp-broadcast.send');
         Route::post('artikel/ckeditor/unggah', [ArticlesAdminController::class, 'ckeditorUpload'])->name('articles.ckeditor_upload');

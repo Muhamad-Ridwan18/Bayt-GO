@@ -7,6 +7,8 @@ use App\Models\Campaign;
 use App\Models\MuthowifPortfolioImage;
 use App\Models\MuthowifProfile;
 use App\Models\User;
+use App\Support\ArticleUrl;
+use App\Support\SeoMetaOverrides;
 use App\Support\WelcomeLanding;
 use App\Support\WelcomePageCache;
 use Illuminate\Support\Collection;
@@ -164,7 +166,7 @@ final class WelcomePageData
             workSteps: $workSteps,
             faqItems: $faqItems,
             layananIndexUrl: route('layanan.index'),
-            articlesIndexUrl: route('articles.index'),
+            articlesIndexUrl: ArticleUrl::index(),
             seo: self::buildSeo(),
         );
     }
@@ -316,7 +318,7 @@ final class WelcomePageData
         return [
             'title' => $article->localized('title'),
             'excerpt' => $article->localized('excerpt'),
-            'href' => route('articles.show', ['slug' => $article->slug]),
+            'href' => ArticleUrl::showBestFor($article),
             'thumbnail' => $thumbnail,
         ];
     }
@@ -341,24 +343,30 @@ final class WelcomePageData
     }
 
     /**
-     * @return array{title: string, description: string, schema: array<string, mixed>}
+     * @return array{title: string, description: string, schema: list<array<string, mixed>>}
      */
     private static function buildSeo(): array
     {
         return [
-            'title' => 'Jasa Tour Guide Ibadah Umroh & Haji | Muthowif Terpercaya',
-            'description' => 'Temukan Muthowif terbaik dan jasa tour guide ibadah Umroh & Haji terpercaya di Bayt-GO. Bandingkan rating, ulasan, harga, dan pesan langsung asisten ibadah terverifikasi Anda secara mudah.',
+            'title' => SeoMetaOverrides::title('home', __('seo.home_title')),
+            'description' => SeoMetaOverrides::description('home', __('seo.home_description')),
             'schema' => [
-                '@context' => 'https://schema.org',
-                '@type' => 'WebSite',
-                'name' => config('app.name', 'Bayt-GO'),
-                'url' => url('/'),
-                'description' => 'Platform penghubung Muthowif profesional terverifikasi & jasa tour guide ibadah Umroh dan Haji.',
-                'potentialAction' => [
-                    '@type' => 'SearchAction',
-                    'target' => url('/layanan').'?q={search_term_string}',
-                    'query-input' => 'required name=search_term_string',
+                [
+                    '@context' => 'https://schema.org',
+                    '@type' => 'WebSite',
+                    'name' => config('app.name', 'Bayt-GO'),
+                    'url' => url('/'),
+                    'description' => __('seo.home_schema_description'),
+                    'potentialAction' => [
+                        '@type' => 'SearchAction',
+                        'target' => url('/layanan').'?q={search_term_string}',
+                        'query-input' => 'required name=search_term_string',
+                    ],
                 ],
+                array_merge(
+                    ['@context' => 'https://schema.org'],
+                    (array) config('seo.schema.organization', []),
+                ),
             ],
         ];
     }

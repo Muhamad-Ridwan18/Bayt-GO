@@ -4,6 +4,7 @@ namespace App\Services\Seo;
 
 use App\Models\Article;
 use App\Models\MuthowifProfile;
+use App\Support\ArticleUrl;
 use Illuminate\Support\Carbon;
 
 class SitemapGenerator
@@ -77,14 +78,16 @@ class SitemapGenerator
 
     protected function homeItems(): array
     {
-        return [
-            [
-                'loc' => route('welcome', [], true),
-                'lastmod' => Carbon::now()->toIso8601String(),
-                'changefreq' => config('seo.sitemap.changefreq.home', 'daily'),
-                'priority' => config('seo.sitemap.priorities.home', '1.0'),
-            ],
-        ];
+        $routes = ['welcome', 'layanan.index', 'layanan-pendukung.index', 'articles.index', 'en.articles.index'];
+
+        return array_map(fn (string $name) => [
+            'loc' => route($name, [], true),
+            'lastmod' => Carbon::now()->toIso8601String(),
+            'changefreq' => config('seo.sitemap.changefreq.home', 'daily'),
+            'priority' => $name === 'welcome'
+                ? config('seo.sitemap.priorities.home', '1.0')
+                : config('seo.sitemap.priorities.categories', '0.9'),
+        ], $routes);
     }
 
     protected function categoryItems(): array
@@ -125,16 +128,27 @@ class SitemapGenerator
     {
         $perPage = config('seo.sitemap.max_urls_per_file', 500);
 
-        return Article::published()
+        $items = [];
+
+        Article::published()
             ->orderByDesc('published_at')
             ->skip(($page - 1) * $perPage)
             ->take($perPage)
             ->get()
-            ->map(fn ($article) => [
-                'loc' => route('articles.show', $article, true),
-                'lastmod' => $article->published_at?->toIso8601String() ?? Carbon::now()->toIso8601String(),
-                'changefreq' => config('seo.sitemap.changefreq.articles', 'monthly'),
-                'priority' => config('seo.sitemap.priorities.articles', '0.6'),
-            ])->toArray();
+            ->each(function (Article $article) use (&$items): void {
+                $lastmod = $article->published_at?->toIso8601String() ?? Carbon::now()->toIso8601String();
+
+                // Satu entri per bahasa yang punya terjemahan asli.
+                foreach (ArticleUrl::showAlternates($article, absolute: true) as $url) {
+                    $items[] = [
+                        'loc' => $url,
+                        'lastmod' => $lastmod,
+                        'changefreq' => config('seo.sitemap.changefreq.articles', 'monthly'),
+                        'priority' => config('seo.sitemap.priorities.articles', '0.6'),
+                    ];
+                }
+            });
+
+        return $items;
     }
 }

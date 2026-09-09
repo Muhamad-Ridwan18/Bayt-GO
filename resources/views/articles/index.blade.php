@@ -1,6 +1,14 @@
+@php
+    $pageTitle = $articles->currentPage() > 1
+        ? $title.' — '.__('pagination.page', ['page' => $articles->currentPage()])
+        : $title;
+@endphp
+
 <x-layouts.marketing-public
-    :title="__('articles.index_title')"
+    :title="$pageTitle"
     :meta-description="$metaDescription"
+    :canonical="$canonical"
+    :alternates="$alternates"
     active-nav="articles"
 >
     <section class="relative overflow-hidden border-b border-slate-100 bg-gradient-to-br from-welcomeCanvas via-white to-brand-50/30">
@@ -18,8 +26,12 @@
             <p class="rounded-2xl border border-slate-200 bg-slate-50 px-6 py-12 text-center text-slate-600">{{ __('articles.empty') }}</p>
         @else
             @php
-                $featured = $articles->firstWhere('is_featured', true) ?? $articles->first();
-                $rest = $articles->filter(fn ($a) => $a->isNot($featured));
+                $featured = $articles->onFirstPage()
+                    ? ($articles->firstWhere('is_featured', true) ?? $articles->first())
+                    : null;
+                $rest = $featured
+                    ? $articles->getCollection()->filter(fn ($a) => $a->isNot($featured))
+                    : $articles->getCollection();
             @endphp
 
             @if ($featured)
@@ -40,7 +52,7 @@
                         </div>
                         <div class="flex flex-col justify-center p-8 lg:col-span-7 lg:p-12">
                             <p class="text-slate-600 leading-relaxed line-clamp-6 lg:line-clamp-none">{{ $featured->localized('excerpt') }}</p>
-                            <a href="{{ route('articles.show', ['slug' => $featured->slug]) }}" class="mt-8 inline-flex w-fit items-center gap-2 rounded-xl bg-gold px-5 py-3 text-sm font-bold text-baytgo-950 shadow-md transition hover:bg-gold-muted">
+                            <a href="{{ \App\Support\ArticleUrl::show($featured) }}" class="mt-8 inline-flex w-fit items-center gap-2 rounded-xl bg-gold px-5 py-3 text-sm font-bold text-baytgo-950 shadow-md transition hover:bg-gold-muted">
                                 {{ __('articles.read_featured') }}
                                 <svg class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 8l4 4m0 0l-4 4m4-4H3"/></svg>
                             </a>
@@ -54,7 +66,7 @@
                     <article class="group flex flex-col rounded-2xl border border-slate-200/90 bg-white p-6 shadow-sm transition hover:border-baytgo/25 hover:shadow-lg hover:shadow-baytgo/5">
                         <span class="text-xs font-bold uppercase tracking-wide text-baytgo/80">{{ $article->localized('category') }}</span>
                         <h2 class="mt-3 text-xl font-bold text-slate-900 group-hover:text-baytgo transition-colors leading-snug">
-                            <a href="{{ route('articles.show', ['slug' => $article->slug]) }}" class="focus:outline-none focus-visible:ring-2 focus-visible:ring-baytgo/30 rounded-md">{{ $article->localized('title') }}</a>
+                            <a href="{{ \App\Support\ArticleUrl::show($article) }}" class="focus:outline-none focus-visible:ring-2 focus-visible:ring-baytgo/30 rounded-md">{{ $article->localized('title') }}</a>
                         </h2>
                         <p class="mt-3 flex-1 text-sm leading-relaxed text-slate-600 line-clamp-3">{{ $article->localized('excerpt') }}</p>
                         <div class="mt-5 flex items-center justify-between border-t border-slate-100 pt-5 text-xs text-slate-500">
@@ -64,6 +76,12 @@
                     </article>
                 @endforeach
             </div>
+
+            @if ($articles->hasPages())
+                <div class="mt-12">
+                    {{ $articles->links() }}
+                </div>
+            @endif
         @endif
     </x-page-container>
 </x-layouts.marketing-public>

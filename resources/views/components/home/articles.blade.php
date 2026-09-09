@@ -15,7 +15,7 @@
                     <a href="{{ $article['href'] }}" class="block">
                         <div class="aspect-[16/10] overflow-hidden bg-slate-100">
                             @if ($article['thumbnail'])
-                                <img src="{{ $article['thumbnail'] }}" alt="" class="h-full w-full object-cover" loading="lazy" />
+                                <img src="{{ $article['thumbnail'] }}" alt="{{ __('common.alt_article_thumbnail', ['title' => $article['title']]) }}" class="h-full w-full object-cover" loading="lazy" width="320" height="200" />
                             @endif
                         </div>
                         <div class="p-4">

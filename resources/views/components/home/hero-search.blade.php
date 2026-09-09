@@ -7,7 +7,7 @@
     x-data="homeSearch(@js($page->searchAlpineConfig()))"
 >
     <div class="pointer-events-none absolute inset-0 overflow-hidden" aria-hidden="true">
-        <img src="{{ $page->heroBgUrl }}" alt="" class="h-full w-full object-cover object-[center_35%]" loading="eager" decoding="async" />
+        <img src="{{ $page->heroBgUrl }}" alt="" class="h-full w-full object-cover object-[center_35%]" loading="eager" decoding="async" fetchpriority="high" />
         <div class="absolute inset-0 bg-gradient-to-b from-baytgo-950/75 via-baytgo-950/55 to-baytgo-950/85"></div>
     </div>
 

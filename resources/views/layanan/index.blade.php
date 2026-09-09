@@ -6,7 +6,7 @@
     <div class="relative min-w-0 overflow-x-hidden">
         <section class="relative left-1/2 mb-0 w-screen max-w-[100vw] -translate-x-1/2 overflow-hidden bg-welcomeCanvas pb-6 sm:pb-12">
             <div class="pointer-events-none absolute inset-0 z-0" aria-hidden="true">
-                <img src="{{ $page->heroBgUrl }}" alt="" class="h-full w-full min-h-[10rem] object-cover object-[74%_30%] sm:min-h-[18rem] lg:min-h-[20rem]" loading="eager" decoding="async" />
+                <img src="{{ $page->heroBgUrl }}" alt="" class="h-full w-full min-h-[10rem] object-cover object-[74%_30%] sm:min-h-[18rem] lg:min-h-[20rem]" loading="eager" decoding="async" fetchpriority="high" />
             </div>
             <div class="pointer-events-none absolute inset-0 z-[1] bg-gradient-to-b from-welcomeCanvas via-welcomeCanvas/95 to-welcomeCanvas/55 sm:hidden" aria-hidden="true"></div>
             <div class="pointer-events-none absolute inset-0 z-[1] hidden bg-gradient-to-r from-welcomeCanvas from-[28%] via-welcomeCanvas/96 via-[55%] to-welcomeCanvas/10 sm:block lg:from-[32%] lg:via-[58%] lg:to-transparent" aria-hidden="true"></div>

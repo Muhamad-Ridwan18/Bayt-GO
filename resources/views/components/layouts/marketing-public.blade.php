@@ -5,6 +5,8 @@
     'schema' => null,
     'image' => null,
     'type' => 'website',
+    'canonical' => null,
+    'alternates' => null,
 ])
 @php
     $rtl = app()->getLocale() === 'ar';
@@ -15,7 +17,8 @@
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
 
-    <x-seo-meta :title="$title" :description="$metaDescription" :image="$image" :type="$type" :schema="$schema" />
+    <x-seo-meta :title="$title" :description="$metaDescription" :image="$image" :type="$type" :schema="$schema" :canonical="$canonical" :alternates="$alternates" />
+    <x-favicons />
 
     <link rel="preconnect" href="https://fonts.bunny.net">
     <link href="https://fonts.bunny.net/css?family=inter:400,500,600,700&family=plus-jakarta-sans:400,500,600,700&display=swap" rel="stylesheet">
@@ -41,7 +44,7 @@
             <div class="flex flex-col sm:items-end gap-3 text-sm">
                 <div class="flex flex-wrap gap-x-4 gap-y-1 text-slate-600">
                     <a href="{{ route('welcome') }}" class="font-medium hover:text-baytgo">{{ __('nav.home') }}</a>
-                    <a href="{{ route('articles.index') }}" class="font-medium hover:text-baytgo">{{ __('nav.articles') }}</a>
+                    <a href="{{ \App\Support\ArticleUrl::index() }}" class="font-medium hover:text-baytgo">{{ __('nav.articles') }}</a>
                     <a href="{{ route('layanan.index') }}" class="font-medium hover:text-baytgo">{{ __('welcome.nav_muthowif') }}</a>
                 </div>
                 <x-language-switcher variant="segment" />
@@ -50,5 +53,6 @@
         </x-page-container>
     </footer>
 </div>
+@stack('scripts')
 </body>
 </html>

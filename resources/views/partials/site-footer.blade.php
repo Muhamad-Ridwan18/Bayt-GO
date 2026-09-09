@@ -42,7 +42,7 @@
                         </a>
                     </li>
                 @endif
-                <li><a href="{{ route('articles.index') }}" class="hover:text-baytgo">{{ __('nav.articles') }}</a></li>
+                <li><a href="{{ \App\Support\ArticleUrl::index() }}" class="hover:text-baytgo">{{ __('nav.articles') }}</a></li>
             </ul>
         </div>
     </x-page-container>

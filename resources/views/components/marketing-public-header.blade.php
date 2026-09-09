@@ -28,7 +28,7 @@
 
         <nav class="hidden lg:flex absolute left-1/2 top-1/2 max-w-none -translate-x-1/2 -translate-y-1/2 items-center gap-0 xl:gap-0.5" aria-label="{{ __('welcome.nav_primary_aria') }}">
             <a href="{{ route('welcome') }}" class="{{ $linkBase }} {{ $active === 'welcome' ? $activeClass : $inactive }}">{{ __('welcome.nav_home') }}</a>
-            <a href="{{ route('articles.index') }}" class="{{ $linkBase }} {{ $active === 'articles' ? $activeClass : $inactive }}">{{ __('nav.articles') }}</a>
+            <a href="{{ \App\Support\ArticleUrl::index() }}" class="{{ $linkBase }} {{ $active === 'articles' ? $activeClass : $inactive }}">{{ __('nav.articles') }}</a>
             <a href="{{ $homeUrl }}#cara-kerja" class="{{ $linkBase }} {{ $inactive }}">{{ __('welcome.nav_how') }}</a>
             <a href="{{ $homeUrl }}#faq" class="{{ $linkBase }} {{ $inactive }}">{{ __('welcome.nav_faq') }}</a>
             <a href="{{ $homeUrl }}#tentang" class="{{ $linkBase }} {{ $inactive }}">{{ __('welcome.nav_about') }}</a>
@@ -105,7 +105,7 @@
                         <x-slot:icon><x-nav-icon name="home" /></x-slot:icon>
                         {{ __('welcome.nav_home') }}
                     </x-mobile-nav-item>
-                    <x-mobile-nav-item :href="route('articles.index')" :active="$active === 'articles'" @click="open = false">
+                    <x-mobile-nav-item :href="\App\Support\ArticleUrl::index()" :active="$active === 'articles'" @click="open = false">
                         <x-slot:icon><x-nav-icon name="clipboard" /></x-slot:icon>
                         {{ __('nav.articles') }}
                     </x-mobile-nav-item>

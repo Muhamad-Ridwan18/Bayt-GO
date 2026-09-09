@@ -3,6 +3,7 @@
 namespace App\ViewModels\Layanan;
 
 use App\Support\MarketplaceSearchCache;
+use App\Support\SeoMetaOverrides;
 use App\Support\WelcomeLanding;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
@@ -147,9 +148,13 @@ final class LayananIndexPageData
         ]);
         $listQueryString = http_build_query($listQuery);
 
-        $seoTitle = __('layanan.page_title').' | Jasa Tour Guide Umroh & Haji Terpercaya';
+        $seoTitle = SeoMetaOverrides::title(
+            'directory',
+            __('layanan.page_title').' | '.__('seo.directory_title_suffix'),
+        );
+        // Halaman hasil pencarian punya judul sendiri, jadi override tidak dipakai di sana.
         if ($searchQuery !== '') {
-            $seoTitle = "Cari Jasa Tour Guide Umroh/Haji '".e($searchQuery)."' — Muthowif Terverifikasi";
+            $seoTitle = __('seo.directory_search_title', ['query' => e($searchQuery)]);
         }
 
         $profileCards = [];
@@ -170,7 +175,7 @@ final class LayananIndexPageData
             listQueryString: $listQueryString,
             heroBgUrl: WelcomeLanding::resolvedHeroImageUrl(),
             seoTitle: $seoTitle,
-            seoDesc: 'Temukan dan sewa jasa Muthowif profesional terverifikasi serta asisten tour guide ibadah Umroh & Haji terbaik di Bayt-GO. Bandingkan tarif harian, rating, dan ulasan.',
+            seoDesc: SeoMetaOverrides::description('directory', __('seo.directory_description')),
             hasActiveFilters: $startDate !== '' || $searchQuery !== '',
             profileCards: $profileCards,
         );
