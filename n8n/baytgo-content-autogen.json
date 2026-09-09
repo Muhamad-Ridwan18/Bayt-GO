@@ -133,13 +133,17 @@
                         {
                             "name": "Authorization",
                             "value": "=Bearer {{ $env.BAYTGO_ARTICLES_TOKEN }}"
+                        },
+                        {
+                            "name": "Accept",
+                            "value": "application/json"
                         }
                     ]
                 },
                 "sendBody": true,
                 "contentType": "raw",
                 "rawContentType": "application/json",
-                "body": "={{ JSON.stringify({ ...$json, auto_publish: true, keywords: $('Data From User').item.json.keywords }) }}",
+                "body": "={{ JSON.stringify({ title: $json.title, slug: $json.slug, excerpt: $json.excerpt, category: $json.category, author: $json.author, body_md: $json.body_md, title_en: $json.title_en, excerpt_en: $json.excerpt_en, category_en: $json.category_en, author_en: $json.author_en, body_md_en: $json.body_md_en, auto_publish: true, is_featured: $json.is_featured, sort_order: $json.sort_order, image_url: $json.image_url, image_urls: $json.image_urls, keywords: $('Data From User').item.json.keywords }) }}",
                 "options": []
             },
             "type": "n8n-nodes-base.httpRequest",
@@ -361,6 +365,10 @@
                         {
                             "name": "Authorization",
                             "value": "=Bearer {{ $env.BAYTGO_ARTICLES_TOKEN }}"
+                        },
+                        {
+                            "name": "Accept",
+                            "value": "application/json"
                         }
                     ]
                 },
@@ -522,6 +530,10 @@
                         {
                             "name": "Authorization",
                             "value": "=Bearer {{ $env.BAYTGO_ARTICLES_TOKEN }}"
+                        },
+                        {
+                            "name": "Accept",
+                            "value": "application/json"
                         }
                     ]
                 },
@@ -681,13 +693,17 @@
                         {
                             "name": "Authorization",
                             "value": "=Bearer {{ $env.BAYTGO_ARTICLES_TOKEN }}"
+                        },
+                        {
+                            "name": "Accept",
+                            "value": "application/json"
                         }
                     ]
                 },
                 "sendBody": true,
                 "contentType": "raw",
                 "rawContentType": "application/json",
-                "body": "={{ JSON.stringify({ ...$json, keywords: $('Data From User').item.json.keywords }) }}",
+                "body": "={{ JSON.stringify({ title: $json.title, slug: $json.slug, excerpt: $json.excerpt, category: $json.category, author: $json.author, body_md: $json.body_md, title_en: $json.title_en, excerpt_en: $json.excerpt_en, category_en: $json.category_en, author_en: $json.author_en, body_md_en: $json.body_md_en, image_url: $json.image_url, image_urls: $json.image_urls, keywords: $('Data From User').item.json.keywords }) }}",
                 "options": []
             },
             "type": "n8n-nodes-base.httpRequest",
@@ -725,7 +741,7 @@
                     ],
                     "combinator": "and"
                 },
-                "options": {}
+                "options": []
             },
             "type": "n8n-nodes-base.if",
             "typeVersion": 2.2,
