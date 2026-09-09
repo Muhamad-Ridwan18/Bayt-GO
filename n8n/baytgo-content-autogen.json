@@ -19,7 +19,7 @@
         },
         {
             "parameters": {
-                "jsCode": "const rotation = [\n  { niche: 'Umroh', target_audience: 'jamaah umroh', content_hint: 'persiapan dan pelaksanaan umroh' },\n  { niche: 'Muthowif', target_audience: 'jamaah yang mencari pendamping ibadah', content_hint: 'memilih muthowif dan peran pendamping' },\n  { niche: 'Travel Umroh', target_audience: 'calon jamaah Indonesia', content_hint: 'tips perjalanan dan itinerary Tanah Suci' },\n  { niche: 'Kesehatan Jamaah', target_audience: 'jamaah lansia dan keluarga', content_hint: 'kesehatan dan stamina saat ibadah' },\n  { niche: 'Etika Ibadah', target_audience: 'jamaah pemula', content_hint: 'adab dan etika di Masjidil Haram dan Nabawi' },\n  { niche: 'Makkah & Madinah', target_audience: 'jamaah umroh', content_hint: 'ziyarah dan lokasi penting di Tanah Suci' },\n  { niche: 'Paket Umroh', target_audience: 'calon jamaah', content_hint: 'memahami komponen paket umroh tanpa hard-sell' }\n];\n\nconst languageInput = $json?.body?.language;\nconst language = Array.isArray(languageInput)\n  ? languageInput\n  : (languageInput ? [String(languageInput)] : ['Indonesia', 'English']);\n\nconst keywords = String($json?.body?.keywords ?? '').trim();\nconst autoTopic = !keywords;\nconst bodyNiche = String($json?.body?.niche ?? '').trim();\n\nlet niche = bodyNiche || 'Umroh';\nlet targetAudience = String($json?.body?.target_audience ?? 'jamaah umroh');\nlet contentHint = String($json?.body?.content_hint ?? '').trim();\n\nif (autoTopic && (!bodyNiche || bodyNiche === 'Umroh')) {\n  const picked = rotation[new Date().getDay() % rotation.length];\n  niche = picked.niche;\n  targetAudience = picked.target_audience;\n  contentHint = picked.content_hint;\n}\n\nreturn [\n  {\n    json: {\n      niche,\n      keywords,\n      target_audience: targetAudience,\n      content_hint: contentHint,\n      language,\n      auto_topic: autoTopic,\n      auto_publish: true,\n      source: String($json?.body?.source ?? $json?.source ?? 'automation')\n    }\n  }\n];"
+                "jsCode": "const rotation = [\n  { niche: 'Umroh', target_audience: 'jamaah umroh', content_hint: 'persiapan dan pelaksanaan umroh' },\n  { niche: 'Muthowif', target_audience: 'jamaah yang mencari pendamping ibadah', content_hint: 'memilih muthowif dan peran pendamping' },\n  { niche: 'Travel Umroh', target_audience: 'calon jamaah Indonesia', content_hint: 'tips perjalanan dan itinerary Tanah Suci' },\n  { niche: 'Kesehatan Jamaah', target_audience: 'jamaah lansia dan keluarga', content_hint: 'kesehatan dan stamina saat ibadah' },\n  { niche: 'Etika Ibadah', target_audience: 'jamaah pemula', content_hint: 'adab dan etika di Masjidil Haram dan Nabawi' },\n  { niche: 'Makkah & Madinah', target_audience: 'jamaah umroh', content_hint: 'ziyarah dan lokasi penting di Tanah Suci' },\n  { niche: 'Paket Umroh', target_audience: 'calon jamaah', content_hint: 'memahami komponen paket umroh tanpa hard-sell' }\n];\n\n// WIB itu UTC+7 tetap dan tidak punya DST, jadi offset tetap lebih aman\n// daripada toLocaleString yang bergantung pada data ICU di kontainer.\nconst nowWib = new Date(Date.now() + 7 * 60 * 60 * 1000);\nconst hourWib = nowWib.getUTCHours();\n\n// Tiga slot harian. Batasnya lebar supaya run yang tertunda tetap masuk slot\n// yang benar.\nconst slot = hourWib < 11 ? 0 : hourWib < 15 ? 1 : 2;\nconst slotName = ['pagi', 'siang', 'sore'][slot];\n\nconst languageInput = $json?.body?.language;\nconst language = Array.isArray(languageInput)\n  ? languageInput\n  : (languageInput ? [String(languageInput)] : ['Indonesia', 'English']);\n\nconst keywords = String($json?.body?.keywords ?? '').trim();\nconst autoTopic = !keywords;\nconst bodyNiche = String($json?.body?.niche ?? '').trim();\n\nlet niche = bodyNiche || 'Umroh';\nlet targetAudience = String($json?.body?.target_audience ?? 'jamaah umroh');\nlet contentHint = String($json?.body?.content_hint ?? '').trim();\n\nif (autoTopic && (!bodyNiche || bodyNiche === 'Umroh')) {\n  // Indeks maju 3 langkah tiap hari lalu digeser per slot, sehingga tiga\n  // artikel dalam satu hari selalu jatuh di niche yang berbeda.\n  const dayIndex = Math.floor(nowWib.getTime() / 86400000);\n  const picked = rotation[(dayIndex * 3 + slot) % rotation.length];\n  niche = picked.niche;\n  targetAudience = picked.target_audience;\n  contentHint = picked.content_hint;\n}\n\nreturn [\n  {\n    json: {\n      niche,\n      keywords,\n      target_audience: targetAudience,\n      content_hint: contentHint,\n      language,\n      auto_topic: autoTopic,\n      auto_publish: true,\n      slot: slotName,\n      hour_wib: hourWib,\n      source: String($json?.body?.source ?? $json?.source ?? 'automation')\n    }\n  }\n];"
             },
             "type": "n8n-nodes-base.code",
             "typeVersion": 2,
@@ -33,7 +33,7 @@
         {
             "parameters": {
                 "mode": "raw",
-                "jsonOutput": "={\n  \"niche\": \"{{ $json.niche }}\",\n  \"keywords\": \"{{ $json.keywords }}\",\n  \"target_audience\": \"{{ $json.target_audience }}\",\n  \"content_hint\": \"{{ $json.content_hint }}\",\n  \"language\": {{ $json.language }},\n  \"auto_topic\": {{ $json.auto_topic }},\n  \"is_published\": {{ $json.is_published }},\n  \"source\": \"{{ $json.source }}\"\n}",
+                "jsonOutput": "={\n  \"niche\": \"{{ $json.niche }}\",\n  \"keywords\": \"{{ $json.keywords }}\",\n  \"target_audience\": \"{{ $json.target_audience }}\",\n  \"content_hint\": \"{{ $json.content_hint }}\",\n  \"language\": {{ $json.language }},\n  \"auto_topic\": {{ $json.auto_topic }},\n  \"auto_publish\": {{ $json.auto_publish }},\n  \"slot\": \"{{ $json.slot }}\",\n  \"source\": \"{{ $json.source }}\"\n}",
                 "options": []
             },
             "type": "n8n-nodes-base.set",
@@ -571,6 +571,12 @@
                     "interval": [
                         {
                             "triggerAtHour": 6
+                        },
+                        {
+                            "triggerAtHour": 12
+                        },
+                        {
+                            "triggerAtHour": 16
                         }
                     ]
                 }
@@ -582,12 +588,12 @@
                 1264
             ],
             "id": "70c6ee19-b3e2-46d0-94e3-9ce62b7d42d5",
-            "name": "Schedule Daily 06:00"
+            "name": "Schedule 3x Harian"
         },
         {
             "parameters": {
                 "mode": "runOnceForEachItem",
-                "jsCode": "// Webhook Discord dibaca dari environment n8n.\nlet DISCORD_WEBHOOK_URL = '';\ntry {\n  DISCORD_WEBHOOK_URL = String($env.DISCORD_WEBHOOK_URL || '');\n} catch (e) {}\n\nconst ADMIN_ARTICLES_URL = 'https://baytgo.id/admin/artikel';\n\nconst payload = $json;\nconst topicNode = $('Parse Proposed Topic').first()?.json || {};\nconst dedupNode = $('Prepare Dedup Context').first()?.json || {};\n\nconst status = String(payload.status || 'unknown');\nconst slug = String(payload.slug || '').trim();\nconst title = String(payload.title || topicNode.topic || '').trim();\nconst message = String(payload.message || '').trim();\n\nconst qa = payload.qa || payload._qa || {};\nconst score = qa.score ?? null;\nconst minScore = qa.min_score ?? null;\nconst published = payload.is_published === true;\nconst liveUrl = String(payload.url || (slug ? `https://baytgo.id/artikel/${slug}` : '')).trim();\n\nconst cut = (text) => String(text).slice(0, 1024);\n\nconst fields = [\n  { name: 'Status', value: published ? 'Terbit' : status, inline: true },\n  { name: 'Skor QA', value: `${score ?? '-'}${minScore !== null ? ` / min ${minScore}` : ''}`, inline: true },\n  { name: 'Niche', value: String(dedupNode.niche || '-'), inline: true }\n];\n\nif (topicNode.topic) {\n  fields.push({ name: 'Topik', value: cut(topicNode.topic), inline: false });\n}\n\nif (message) {\n  fields.push({ name: 'Catatan', value: cut(message), inline: false });\n}\n\n// Tanpa tahap review, alasan kegagalan harus sampai ke Discord supaya tidak\n// perlu membuka n8n untuk tahu kenapa hari ini tidak ada artikel.\nif (!published) {\n  const weak = (qa.notes || []).filter((note) => /\\(\\+0|dari \\d+\\)/.test(String(note)));\n  const reasons = []\n    .concat(qa.hard_fail_reasons || [])\n    .concat(payload.errors || [])\n    .concat(weak);\n\n  if (reasons.length) {\n    fields.push({\n      name: 'Kenapa gagal',\n      value: cut(reasons.slice(0, 6).map((r) => `• ${r}`).join('\\n')),\n      inline: false\n    });\n  }\n}\n\nconst embed = {\n  title: cut((published ? '🚀 ' : status === 'blocked' ? '⛔ ' : 'ℹ️ ') + (title || 'Tanpa judul')).slice(0, 256),\n  color: published ? 3066993 : status === 'blocked' ? 15158332 : 9807270,\n  fields,\n  footer: { text: 'BaytGo Content Bot' },\n  timestamp: new Date().toISOString(),\n  description: published && liveUrl\n    ? `[Buka artikel](${liveUrl}) · [Kelola di admin](${ADMIN_ARTICLES_URL})`\n    : `[Kelola di admin](${ADMIN_ARTICLES_URL})`\n};\n\nif (published && liveUrl) {\n  embed.url = liveUrl;\n}\n\nreturn {\n  json: {\n    ...payload,\n    notify_enabled: DISCORD_WEBHOOK_URL.trim() !== '',\n    discord_webhook_url: DISCORD_WEBHOOK_URL.trim(),\n    discord_payload: { embeds: [embed] }\n  }\n};"
+                "jsCode": "// Webhook Discord dibaca dari environment n8n.\nlet DISCORD_WEBHOOK_URL = '';\ntry {\n  DISCORD_WEBHOOK_URL = String($env.DISCORD_WEBHOOK_URL || '');\n} catch (e) {}\n\nconst ADMIN_ARTICLES_URL = 'https://baytgo.id/admin/artikel';\n\nconst payload = $json;\nconst topicNode = $('Parse Proposed Topic').first()?.json || {};\nconst dedupNode = $('Prepare Dedup Context').first()?.json || {};\n\n// Slot jadwal (pagi/siang/sore) supaya terlihat jadwal mana yang jalan.\nlet slotName = '';\ntry {\n  slotName = String($('Data From User').first()?.json?.slot || '');\n} catch (e) {}\n\nconst status = String(payload.status || 'unknown');\nconst slug = String(payload.slug || '').trim();\nconst title = String(payload.title || topicNode.topic || '').trim();\nconst message = String(payload.message || '').trim();\n\nconst qa = payload.qa || payload._qa || {};\nconst score = qa.score ?? null;\nconst minScore = qa.min_score ?? null;\nconst published = payload.is_published === true;\nconst liveUrl = String(payload.url || (slug ? `https://baytgo.id/artikel/${slug}` : '')).trim();\n\nconst cut = (text) => String(text).slice(0, 1024);\n\nconst fields = [\n  { name: 'Status', value: published ? 'Terbit' : status, inline: true },\n  { name: 'Skor QA', value: `${score ?? '-'}${minScore !== null ? ` / min ${minScore}` : ''}`, inline: true },\n  { name: 'Niche', value: `${dedupNode.niche || '-'}${slotName ? ` · ${slotName}` : ''}`, inline: true }\n];\n\nif (topicNode.topic) {\n  fields.push({ name: 'Topik', value: cut(topicNode.topic), inline: false });\n}\n\nif (message) {\n  fields.push({ name: 'Catatan', value: cut(message), inline: false });\n}\n\n// Tanpa tahap review, alasan kegagalan harus sampai ke Discord supaya tidak\n// perlu membuka n8n untuk tahu kenapa hari ini tidak ada artikel.\nif (!published) {\n  const weak = (qa.notes || []).filter((note) => /\\(\\+0|dari \\d+\\)/.test(String(note)));\n  const reasons = []\n    .concat(qa.hard_fail_reasons || [])\n    .concat(payload.errors || [])\n    .concat(weak);\n\n  if (reasons.length) {\n    fields.push({\n      name: 'Kenapa gagal',\n      value: cut(reasons.slice(0, 6).map((r) => `• ${r}`).join('\\n')),\n      inline: false\n    });\n  }\n}\n\nconst embed = {\n  title: cut((published ? '🚀 ' : status === 'blocked' ? '⛔ ' : 'ℹ️ ') + (title || 'Tanpa judul')).slice(0, 256),\n  color: published ? 3066993 : status === 'blocked' ? 15158332 : 9807270,\n  fields,\n  footer: { text: 'BaytGo Content Bot' },\n  timestamp: new Date().toISOString(),\n  description: published && liveUrl\n    ? `[Buka artikel](${liveUrl}) · [Kelola di admin](${ADMIN_ARTICLES_URL})`\n    : `[Kelola di admin](${ADMIN_ARTICLES_URL})`\n};\n\nif (published && liveUrl) {\n  embed.url = liveUrl;\n}\n\nreturn {\n  json: {\n    ...payload,\n    notify_enabled: DISCORD_WEBHOOK_URL.trim() !== '',\n    discord_webhook_url: DISCORD_WEBHOOK_URL.trim(),\n    discord_payload: { embeds: [embed] }\n  }\n};"
             },
             "type": "n8n-nodes-base.code",
             "typeVersion": 2,
@@ -671,7 +677,7 @@
         {
             "parameters": {
                 "mode": "raw",
-                "jsonOutput": "{\n  \"body\": {\n    \"niche\": \"\",\n    \"keywords\": \"\",\n    \"target_audience\": \"\",\n    \"language\": [\"Indonesia\", \"English\"],\n    \"source\": \"schedule-daily\"\n  }\n}",
+                "jsonOutput": "{\n  \"body\": {\n    \"niche\": \"\",\n    \"keywords\": \"\",\n    \"target_audience\": \"\",\n    \"language\": [\"Indonesia\", \"English\"],\n    \"source\": \"schedule\"\n  }\n}",
                 "options": []
             },
             "type": "n8n-nodes-base.set",
@@ -1018,17 +1024,6 @@
                 ]
             ]
         },
-        "Schedule Daily 06:00": {
-            "main": [
-                [
-                    {
-                        "node": "Schedule Payload",
-                        "type": "main",
-                        "index": 0
-                    }
-                ]
-            ]
-        },
         "Schedule Payload": {
             "main": [
                 [
@@ -1130,13 +1125,25 @@
                     }
                 ]
             ]
+        },
+        "Schedule 3x Harian": {
+            "main": [
+                [
+                    {
+                        "node": "Schedule Payload",
+                        "type": "main",
+                        "index": 0
+                    }
+                ]
+            ]
         }
     },
     "active": false,
     "settings": {
         "executionOrder": "v1",
         "binaryMode": "separate",
-        "availableInMCP": false
+        "availableInMCP": false,
+        "timezone": "Asia/Jakarta"
     },
     "versionId": "3b8facad-2828-4bf0-9399-6a56716f4fb2",
     "meta": {
