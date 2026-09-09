@@ -24,12 +24,16 @@
     $metaImage = $image ?? asset('images/og-default.jpg');
 
     $ahrefsKey = (string) config('services.ahrefs.analytics_key');
+
+    // Staging/dev memakai kode & konten yang sama dengan produksi. Tanpa ini
+    // subdomain non-produksi bisa terindeks dan menggerus peringkat baytgo.id.
+    $isPublicEnv = ! in_array(config('app.env'), ['local', 'development', 'staging'], true);
 @endphp
 
 <!-- Meta Tags Dasar -->
 <title>{{ $fullTitle }}</title>
 <meta name="description" content="{{ $metaDesc }}">
-<meta name="robots" content="index, follow">
+<meta name="robots" content="{{ $isPublicEnv ? 'index, follow' : 'noindex, nofollow' }}">
 <link rel="canonical" href="{{ $currentUrl }}">
 
 {{-- Hanya halaman yang benar-benar punya versi per bahasa yang mengirim alternates. --}}
