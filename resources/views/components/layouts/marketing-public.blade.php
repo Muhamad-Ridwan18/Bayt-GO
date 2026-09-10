@@ -26,6 +26,7 @@
         <link href="https://fonts.bunny.net/css?family=noto-sans-arabic:400,500,600,700&display=swap" rel="stylesheet">
     @endif
     @vite(['resources/css/app.css', 'resources/js/app.js'])
+    @stack('head')
 </head>
 <body class="font-welcome antialiased text-slate-800 bg-white min-h-screen selection:bg-gold-light selection:text-baytgo-950 {{ $rtl ? 'marketing-rtl' : '' }}">
 <div class="min-h-screen flex flex-col">

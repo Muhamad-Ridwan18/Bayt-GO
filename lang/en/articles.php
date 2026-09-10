@@ -17,6 +17,11 @@ return [
     'cta_browse' => 'Explore directory',
     'back_to_list' => 'More articles',
 
+    'aside_kicker' => 'Marketplace',
+    'aside_title' => 'Find a verified muthowif',
+    'aside_sub' => 'Browse availability, languages, and daily rates from companions verified on BaytGo.',
+    'aside_cta' => 'Open directory',
+
     'related_services_title' => 'Related services',
     'related_services_subtitle' => 'Muthowif matches based on this article topic.',
     'view_all_services' => 'View all services',

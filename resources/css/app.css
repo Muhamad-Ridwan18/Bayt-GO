@@ -288,7 +288,7 @@
 }
 
 .article-prose {
-    @apply text-slate-700 text-lg leading-relaxed;
+    @apply text-slate-700 text-lg leading-[1.75];
 }
 
 .article-prose > * + * {
@@ -296,27 +296,27 @@
 }
 
 .article-prose h2 {
-    @apply mt-14 mb-4 text-2xl font-bold tracking-tight text-slate-900 scroll-mt-28;
+    @apply mt-16 mb-5 text-2xl font-bold tracking-tight text-slate-900 scroll-mt-28 sm:text-[1.65rem];
 }
 
 .article-prose h3 {
-    @apply mt-10 mb-3 text-xl font-semibold text-slate-900;
+    @apply mt-12 mb-3 text-xl font-semibold tracking-tight text-slate-900 scroll-mt-28;
 }
 
 .article-prose p {
-    @apply leading-relaxed;
+    @apply leading-[1.75];
 }
 
 .article-prose ul {
-    @apply list-disc ps-6 space-y-2;
+    @apply list-disc ps-6 space-y-2.5;
 }
 
 .article-prose ol {
-    @apply list-decimal ps-6 space-y-2;
+    @apply list-decimal ps-6 space-y-2.5;
 }
 
 .article-prose li {
-    @apply leading-relaxed;
+    @apply leading-[1.75];
 }
 
 .article-prose a {
@@ -365,7 +365,7 @@
 }
 
 .article-prose .article-toc {
-    @apply mb-10 rounded-2xl border border-slate-200/90 bg-gradient-to-br from-slate-50/95 to-white p-6 shadow-sm shadow-slate-900/5;
+    @apply mb-12 rounded-2xl border border-slate-200/90 bg-gradient-to-br from-welcomeCanvas/80 to-white p-6 shadow-sm shadow-slate-900/5;
 }
 
 .article-prose .article-toc ul {

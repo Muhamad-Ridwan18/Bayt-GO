@@ -56,6 +56,8 @@ class ArticlePublicSeoTest extends TestCase
             ->assertOk()
             ->assertSee('og:type" content="article"', false)
             ->assertSee('og:image" content="'.url('/storage/articles/images/cover.jpg').'"', false)
+            ->assertSee('fetchpriority="high"', false)
+            ->assertSee(__('articles.aside_title'), false)
             ->assertSee('"@type": "BlogPosting"', false)
             ->assertSee('"@type": "BreadcrumbList"', false)
             ->assertSee(__('articles.related_articles_title'), false)

@@ -17,6 +17,11 @@ return [
     'cta_browse' => 'Jelajahi direktori',
     'back_to_list' => 'Artikel lainnya',
 
+    'aside_kicker' => 'Marketplace',
+    'aside_title' => 'Cari muthowif terverifikasi',
+    'aside_sub' => 'Lihat ketersediaan, bahasa, dan tarif harian dari pendamping yang sudah diverifikasi BaytGo.',
+    'aside_cta' => 'Buka direktori',
+
     'related_services_title' => 'Layanan relevan',
     'related_services_subtitle' => 'Muthowif yang paling cocok berdasarkan topik artikel ini.',
     'view_all_services' => 'Lihat semua layanan',
