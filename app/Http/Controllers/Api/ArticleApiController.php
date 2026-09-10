@@ -9,6 +9,7 @@ use App\Services\Articles\EditorialQa;
 use App\Services\UploadedImageOptimizer;
 use App\Support\ArticleBodyMarkdown;
 use App\Support\InternalLinkTargets;
+use App\Support\MarketplaceArticleFacts;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Http\UploadedFile;
@@ -61,6 +62,7 @@ class ArticleApiController extends Controller
             // Tujuan tautan internal disajikan terpisah: `data` boleh memuat draft
             // untuk keperluan dedup, tapi menautkan ke draft berarti tautan 404.
             'link_targets' => InternalLinkTargets::all(),
+            'marketplace_facts' => MarketplaceArticleFacts::all(),
             'meta' => [
                 'count' => $articles->count(),
                 'limit' => $limit,
