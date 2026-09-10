@@ -136,7 +136,10 @@ class SitemapGenerator
             ->take($perPage)
             ->get()
             ->each(function (Article $article) use (&$items): void {
-                $lastmod = $article->published_at?->toIso8601String() ?? Carbon::now()->toIso8601String();
+                $lastmod = ($article->updated_at && $article->published_at && $article->updated_at->gt($article->published_at)
+                    ? $article->updated_at
+                    : ($article->published_at ?? $article->updated_at ?? Carbon::now())
+                )->toIso8601String();
 
                 // Satu entri per bahasa yang punya terjemahan asli.
                 foreach (ArticleUrl::showAlternates($article, absolute: true) as $url) {

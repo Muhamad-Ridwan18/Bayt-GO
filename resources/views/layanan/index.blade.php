@@ -124,6 +124,16 @@
             @endif
 
             @include('layanan.partials.marketplace-trust-strip')
+
+            <aside class="mt-10 rounded-3xl border border-baytgo/15 bg-gradient-to-br from-welcomeCanvas via-white to-brand-50/40 p-6 sm:p-8">
+                <p class="text-xs font-bold uppercase tracking-wider text-baytgo">{{ __('nav.articles') }}</p>
+                <h2 class="mt-2 text-xl font-bold text-slate-900">{{ __('articles.index_headline') }}</h2>
+                <p class="mt-2 max-w-2xl text-sm leading-relaxed text-slate-600">{{ __('articles.index_sub') }}</p>
+                <a href="{{ \App\Support\ArticleUrl::index() }}" class="mt-5 inline-flex items-center gap-2 rounded-xl bg-baytgo px-5 py-2.5 text-sm font-semibold text-white shadow-md transition hover:bg-baytgo-800">
+                    {{ __('dashboard.customer_articles_see_all') }}
+                    <span aria-hidden="true">→</span>
+                </a>
+            </aside>
         </div>
     </div>
 </x-marketplace-layout>

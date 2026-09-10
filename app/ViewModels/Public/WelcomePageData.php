@@ -59,7 +59,7 @@ final class WelcomePageData
             guideCards: [],
             muthowifLimit: 14,
             galleryLimit: 16,
-            articleLimit: 4,
+            articleLimit: 8,
         );
     }
 
@@ -111,7 +111,7 @@ final class WelcomePageData
             guideCards: $guideCards,
             muthowifLimit: $muthowifLimit,
             galleryLimit: 16,
-            articleLimit: 4,
+            articleLimit: 8,
         );
     }
 
@@ -126,7 +126,7 @@ final class WelcomePageData
         array $guideCards = [],
         int $muthowifLimit = 14,
         int $galleryLimit = 8,
-        int $articleLimit = 4,
+        int $articleLimit = 8,
     ): self {
         /** @var Collection<int, MuthowifProfile> $featured */
         $featured = collect($cache['featuredMuthowifs'] ?? [])->take($muthowifLimit);

@@ -66,7 +66,7 @@ final class WelcomePageCache
         $latestArticles = Article::query()
             ->published()
             ->orderByDesc('published_at')
-            ->limit(3)
+            ->limit(8)
             ->get();
 
         $landingPages = collect(config('seo.landing_pages', []))

@@ -571,12 +571,6 @@
                     "interval": [
                         {
                             "triggerAtHour": 6
-                        },
-                        {
-                            "triggerAtHour": 12
-                        },
-                        {
-                            "triggerAtHour": 16
                         }
                     ]
                 }
@@ -588,7 +582,7 @@
                 1264
             ],
             "id": "70c6ee19-b3e2-46d0-94e3-9ce62b7d42d5",
-            "name": "Schedule 3x Harian"
+            "name": "Schedule 1x Harian"
         },
         {
             "parameters": {
@@ -1126,7 +1120,7 @@
                 ]
             ]
         },
-        "Schedule 3x Harian": {
+        "Schedule 1x Harian": {
             "main": [
                 [
                     {
