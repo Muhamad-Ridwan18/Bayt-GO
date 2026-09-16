@@ -61,7 +61,9 @@ class ArticlePublicSeoTest extends TestCase
             ->assertSee('"@type": "BlogPosting"', false)
             ->assertSee('"@type": "BreadcrumbList"', false)
             ->assertSee(__('articles.related_articles_title'), false)
-            ->assertSee('Tips Memilih Muthowif');
+            ->assertSee('Tips Memilih Muthowif')
+            ->assertSee('Isi artikel umroh.', false)
+            ->assertDontSee('<img src="/storage/articles/images/cover.jpg"', false);
     }
 
     public function test_article_index_is_paginated_and_self_canonicalises_each_page(): void

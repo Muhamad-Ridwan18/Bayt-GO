@@ -9,6 +9,7 @@ use App\Models\MuthowifBlockedDate;
 use App\Models\MuthowifPortfolio;
 use App\Models\MuthowifProfile;
 use App\Models\MuthowifService;
+use App\Models\MuthowifSupportingDocument;
 use App\Models\User;
 use Illuminate\Database\Eloquent\Collection as EloquentCollection;
 use Illuminate\Support\Facades\Cache;
@@ -84,6 +85,7 @@ final class MarketplaceProfileCache
         $profile->load([
             'user',
             'services.addOns',
+            'supportingDocuments' => fn ($q) => $q->orderBy('sort_order')->orderBy('created_at'),
             'portfolios' => fn ($q) => $q
                 ->with(['images' => fn ($images) => $images->orderBy('sort_order')->limit($portfolioImagesLimit)])
                 ->orderBy('sort_order')
@@ -124,6 +126,7 @@ final class MarketplaceProfileCache
                 'service' => $service->getAttributes(),
                 'add_ons' => $service->addOns->map->getAttributes()->values()->all(),
             ])->values()->all(),
+            'supporting_documents' => $profile->supportingDocuments->map->getAttributes()->values()->all(),
             'portfolios' => $profile->portfolios->map(static fn (MuthowifPortfolio $portfolio): array => [
                 'portfolio' => $portfolio->getAttributes(),
                 'images' => $portfolio->images->map->getAttributes()->values()->all(),
@@ -173,6 +176,14 @@ final class MarketplaceProfileCache
             return $service;
         });
         $profile->setRelation('services', new EloquentCollection($services->all()));
+
+        $documents = collect($snapshot['supporting_documents'] ?? [])->map(static function (array $attrs): MuthowifSupportingDocument {
+            $document = (new MuthowifSupportingDocument)->newFromBuilder($attrs);
+            $document->exists = true;
+
+            return $document;
+        });
+        $profile->setRelation('supportingDocuments', new EloquentCollection($documents->all()));
 
         $portfolios = collect($snapshot['portfolios'] ?? [])->map(static function (array $row): MuthowifPortfolio {
             $portfolio = (new MuthowifPortfolio)->newFromBuilder($row['portfolio']);

@@ -4,13 +4,14 @@ namespace App\Http\Controllers\Public;
 
 use App\Http\Controllers\Controller;
 use App\Models\MuthowifProfile;
+use App\Models\MuthowifSupportingDocument;
 use App\Support\MarketplaceProfileCache;
+use App\Support\PrivateDocumentStorage;
 use App\Support\StoredImageResponse;
 use App\ViewModels\Layanan\LayananIndexPageData;
 use Carbon\Carbon;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Facades\Validator;
 use Illuminate\View\View;
 use Symfony\Component\HttpFoundation\Response;
@@ -181,6 +182,18 @@ class MuthowifDirectoryController extends Controller
         }
 
         return StoredImageResponse::fromDisk('local', $publicProfile->photo_path, visibility: 'public');
+    }
+
+    public function document(MuthowifProfile $publicProfile, MuthowifSupportingDocument $document): Response
+    {
+        abort_unless($publicProfile->isApproved(), 404);
+        abort_unless($document->muthowif_profile_id === $publicProfile->id, 404);
+
+        return PrivateDocumentStorage::response(
+            $document->path,
+            $document->original_name ?? basename((string) $document->path),
+            'inline',
+        );
     }
 
     public function portfolioPhoto(\App\Models\MuthowifPortfolio $portfolio): Response

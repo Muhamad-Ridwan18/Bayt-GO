@@ -1,5 +1,6 @@
 import React from 'react';
 import { Dimensions, Modal, StyleSheet, Text, View } from 'react-native';
+import { WebView } from 'react-native-webview';
 import { LinearGradient } from 'expo-linear-gradient';
 import {
   Bed,
@@ -209,6 +210,45 @@ export function PortfolioLightbox({ visible, images, index, title, onClose, onCh
   );
 }
 
+export function CvDocumentModal({ visible, document, onClose }) {
+  if (!visible || !document) return null;
+
+  const uri = resolveMediaUrl(document.url);
+  const kind = document.kind || (document.is_pdf ? 'pdf' : 'image');
+  const pdfUri = kind === 'pdf' ? `${uri}${uri.includes('#') ? '' : '#toolbar=0&navpanes=0'}` : uri;
+
+  return (
+    <Modal visible={visible} transparent animationType="fade" onRequestClose={onClose}>
+      <View style={styles.cvModalOverlay}>
+        <View style={styles.cvModalCard}>
+          <View style={styles.cvModalHeader}>
+            <Text style={styles.cvModalTitle} numberOfLines={1}>{document.name}</Text>
+            <PressableScale onPress={onClose} haptic="light" style={styles.cvModalClose}>
+              <X size={20} color={colors.slate700} strokeWidth={2.4} />
+            </PressableScale>
+          </View>
+          <View style={styles.cvModalBody}>
+            {kind === 'image' ? (
+              <AppImage uri={uri} style={styles.cvModalImage} rounded={radius.sm} contentFit="contain" />
+            ) : kind === 'pdf' ? (
+              <WebView
+                source={{ uri: pdfUri }}
+                style={styles.cvModalWebView}
+                startInLoadingState
+                scalesPageToFit
+                setSupportMultipleWindows={false}
+                allowsLinkPreview={false}
+              />
+            ) : (
+              <Text style={styles.cvModalUnsupported}>Format ini tidak bisa dipratinjau di sini.</Text>
+            )}
+          </View>
+        </View>
+      </View>
+    </Modal>
+  );
+}
+
 export const styles = StyleSheet.create({
   sectionCard: {
     borderRadius: radius.md + 2,
@@ -358,4 +398,57 @@ export const styles = StyleSheet.create({
     fontWeight: '700',
   },
   lightboxCounter: { marginTop: spacing.sm, ...typography.small, fontSize: 12, color: colors.slate400, fontWeight: '600' },
+
+  cvModalOverlay: {
+    flex: 1,
+    backgroundColor: 'rgba(15,23,42,0.72)',
+    justifyContent: 'center',
+    padding: spacing.lg,
+  },
+  cvModalCard: {
+    backgroundColor: colors.card,
+    borderRadius: radius.md,
+    overflow: 'hidden',
+    maxHeight: '88%',
+    ...shadows.md,
+  },
+  cvModalHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: spacing.md,
+    paddingHorizontal: spacing.lg,
+    paddingVertical: spacing.md,
+    borderBottomWidth: 1,
+    borderBottomColor: colors.slate100,
+  },
+  cvModalTitle: {
+    flex: 1,
+    ...typography.caption,
+    fontFamily: 'PlusJakartaSans_800ExtraBold',
+    color: colors.slate900,
+  },
+  cvModalClose: {
+    padding: spacing.sm,
+  },
+  cvModalBody: {
+    minHeight: 320,
+    maxHeight: SCREEN_W * 1.2,
+    backgroundColor: colors.slate100,
+  },
+  cvModalImage: {
+    width: '100%',
+    height: SCREEN_W * 1.1,
+    backgroundColor: 'transparent',
+  },
+  cvModalWebView: {
+    flex: 1,
+    minHeight: 420,
+    backgroundColor: colors.white,
+  },
+  cvModalUnsupported: {
+    padding: spacing.xl,
+    textAlign: 'center',
+    ...typography.caption,
+    color: colors.slate600,
+  },
 });

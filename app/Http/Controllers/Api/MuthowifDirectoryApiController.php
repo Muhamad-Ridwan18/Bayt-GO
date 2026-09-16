@@ -194,6 +194,13 @@ class MuthowifDirectoryApiController extends Controller
                     : collect([ApiMediaUrl::absolute($portfolio->coverUrl())]),
             ])->values(),
             'portfolios_count' => (int) ($publicProfile->portfolios_count ?? $publicProfile->portfolios->count()),
+            'cv_documents' => $publicProfile->supportingDocuments->map(fn ($document) => [
+                'id' => $document->id,
+                'name' => $document->displayName(),
+                'is_pdf' => $document->isPdf(),
+                'kind' => $document->previewKind(),
+                'url' => ApiMediaUrl::absolute($document->publicUrl($publicProfile)),
+            ])->values(),
             'reviews' => $publicProfile->bookingReviews->map(function ($review) {
                 $customerName = $review->customer->name ?? 'Jamaah';
 

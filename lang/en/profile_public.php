@@ -20,7 +20,7 @@ return [
     'add_supporting_documents' => 'Add supporting documents',
     'supporting_document_item' => 'Document',
     'supporting_document_add' => 'Add document',
-    'supporting_documents_hint' => 'PDF or image. Maximum 10 MB per file.',
+    'supporting_documents_hint' => 'PDF or image. Maximum 10 MB per file. Shown view-only as the CV on the public profile (not downloadable).',
     'open_preview' => 'View preview',
     'delete_document' => 'Delete',
     'delete_document_hint' => 'Tick documents to remove, then save.',

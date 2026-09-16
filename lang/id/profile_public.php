@@ -20,7 +20,7 @@ return [
     'add_supporting_documents' => 'Tambah dokumen pendukung',
     'supporting_document_item' => 'Dokumen',
     'supporting_document_add' => 'Tambah dokumen',
-    'supporting_documents_hint' => 'PDF atau gambar. Maksimal 10 MB per file.',
+    'supporting_documents_hint' => 'PDF atau gambar. Maksimal 10 MB per file. Ditampilkan view-only sebagai CV di profil publik (tidak bisa diunduh).',
     'open_preview' => 'Lihat preview',
     'delete_document' => 'Hapus',
     'delete_document_hint' => 'Centang dokumen yang ingin dihapus, lalu klik simpan.',

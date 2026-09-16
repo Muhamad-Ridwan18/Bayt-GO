@@ -118,6 +118,7 @@ Route::middleware(['moota.ip'])
 
 Route::get('/layanan', [MuthowifDirectoryController::class, 'index'])->name('layanan.index');
 Route::get('/layanan/{publicProfile}/foto', [MuthowifDirectoryController::class, 'photo'])->name('layanan.photo');
+Route::get('/layanan/{publicProfile}/dokumen/{document}', [MuthowifDirectoryController::class, 'document'])->name('layanan.document');
 Route::get('/layanan/portfolio/{portfolio}/foto', [MuthowifDirectoryController::class, 'portfolioPhoto'])->name('layanan.portfolio.photo');
 Route::get('/layanan/portfolio/foto/{image}', [MuthowifDirectoryController::class, 'portfolioImage'])->name('layanan.portfolio.image');
 Route::get('/layanan/{publicProfile}/booking', [MuthowifDirectoryController::class, 'booking'])->name('layanan.book');

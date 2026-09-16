@@ -33,7 +33,7 @@ final class PrivateDocumentStorage
         return false;
     }
 
-    public static function response(?string $path, ?string $name = null): StreamedResponse
+    public static function response(?string $path, ?string $name = null, string $disposition = 'inline'): StreamedResponse
     {
         if (! is_string($path) || $path === '') {
             abort(404);
@@ -42,7 +42,10 @@ final class PrivateDocumentStorage
         foreach (self::disks() as $diskName) {
             $disk = Storage::disk($diskName);
             if ($disk->exists($path)) {
-                return $disk->response($path, $name);
+                return $disk->response($path, $name, [
+                    'X-Content-Type-Options' => 'nosniff',
+                    'Cache-Control' => 'private, no-store',
+                ], $disposition);
             }
         }
 

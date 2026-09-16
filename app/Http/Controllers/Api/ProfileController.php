@@ -10,6 +10,7 @@ use App\Services\MuthowifReferralCodeService;
 use App\Services\UploadedImageOptimizer;
 use App\Models\MuthowifSupportingDocument;
 use App\Support\ApiMediaUrl;
+use App\Support\MarketplaceProfileCache;
 use App\Support\PrivateDocumentStorage;
 use Illuminate\Auth\Notifications\VerifyEmail;
 use Illuminate\Http\Request;
@@ -328,6 +329,9 @@ class ProfileController extends Controller
                 'sort_order' => $muthowif->supportingDocuments()->count() + 1,
             ]);
 
+            $muthowif->touch();
+            MarketplaceProfileCache::forget($muthowif);
+
             return response()->json([
                 'message' => 'Dokumen berhasil diunggah',
                 'document' => [
@@ -367,6 +371,9 @@ class ProfileController extends Controller
         $doc = $muthowif->supportingDocuments()->findOrFail($id);
         PrivateDocumentStorage::delete($doc->path);
         $doc->delete();
+
+        $muthowif->touch();
+        MarketplaceProfileCache::forget($muthowif);
 
         return response()->json(['message' => 'Dokumen berhasil dihapus']);
     }

@@ -140,6 +140,32 @@ class Article extends Model
         return url($src);
     }
 
+    /**
+     * Body untuk halaman baca: gambar pertama dihilangkan bila sudah dipakai sebagai cover.
+     */
+    public function bodyHtmlForReading(): string
+    {
+        $body = $this->localized('body');
+        if ($body === '' || $this->coverImageUrl() === null) {
+            return $body;
+        }
+
+        $patterns = [
+            '/^\s*<figure\b[^>]*>.*?<\/figure>/is',
+            '/^\s*<p\b[^>]*>\s*<img\b[^>]*>\s*<\/p>/is',
+            '/^\s*<img\b[^>]*>/is',
+        ];
+
+        foreach ($patterns as $pattern) {
+            $stripped = preg_replace($pattern, '', $body, 1, $count);
+            if (is_string($stripped) && $count > 0) {
+                return ltrim($stripped);
+            }
+        }
+
+        return $body;
+    }
+
     public function seoDescription(int $limit = 155): string
     {
         $excerpt = trim(strip_tags($this->localized('excerpt')));

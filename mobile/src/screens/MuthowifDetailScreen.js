@@ -7,14 +7,14 @@ import { LinearGradient } from 'expo-linear-gradient';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import {
   AlertCircle, Briefcase, Calendar, ChevronDown, ChevronLeft, ChevronUp,
-  CirclePlus, Headphones, Images, Lock, MapPin, ShieldCheck, Star, User,
+  CirclePlus, FileText, GraduationCap, Headphones, Images, Lock, MapPin, ShieldCheck, Star, User,
 } from 'lucide-react-native';
 import { fetchMuthowifDetail } from '../api/directory';
 import { useAuth } from '../context/AuthContext';
 import { navigateRoot } from '../navigation/rootNavigation';
 import { AppImage, Button, Card, EmptyState, ErrorState, PressableScale, SkeletonList, StickyFooter } from '../ui';
 import {
-  AddOnListItem, PackageCard, PortfolioLightbox, ReviewItem, SectionCard,
+  AddOnListItem, CvDocumentModal, PackageCard, PortfolioLightbox, ReviewItem, SectionCard,
   Stars, StatCell, styles as partStyles,
 } from '../features/muthowif/MuthowifDetailParts';
 import { colors, gradients, layout, radius, spacing, typography } from '../theme/tokens';
@@ -34,10 +34,12 @@ export default function MuthowifDetailScreen({ navigation, route }) {
   const [addOns, setAddOns] = useState([]);
   const [portfolios, setPortfolios] = useState([]);
   const [portfoliosCount, setPortfoliosCount] = useState(0);
+  const [cvDocuments, setCvDocuments] = useState([]);
   const [reviews, setReviews] = useState([]);
   const [blockedDates, setBlockedDates] = useState([]);
   const [bookingIntent, setBookingIntent] = useState(null);
   const [lightbox, setLightbox] = useState({ visible: false, images: [], index: 0, title: '' });
+  const [cvViewer, setCvViewer] = useState({ visible: false, document: null });
   const [showBlocked, setShowBlocked] = useState(false);
 
   const allAddOns = useMemo(() => {
@@ -58,6 +60,7 @@ export default function MuthowifDetailScreen({ navigation, route }) {
       setAddOns(data.add_ons || []);
       setPortfolios(data.portfolios || []);
       setPortfoliosCount(data.portfolios_count || 0);
+      setCvDocuments(data.cv_documents || []);
       setReviews(data.reviews || []);
       setBlockedDates(data.blocked_dates || []);
       setBookingIntent(data.bookingIntent || null);
@@ -282,6 +285,55 @@ export default function MuthowifDetailScreen({ navigation, route }) {
             </SectionCard>
           ) : null}
 
+          {(profile.educations || []).length > 0 || (profile.work_experiences || []).length > 0 ? (
+            <SectionCard title="Studi & Pengalaman" icon={GraduationCap} iconBg={colors.goldLight}>
+              {(profile.educations || []).length > 0 ? (
+                <View style={styles.cvBlock}>
+                  <Text style={styles.cvBlockLabel}>Pendidikan</Text>
+                  {(profile.educations || []).map((item) => (
+                    <Text key={`edu-${item}`} style={styles.cvBlockItem}>{item}</Text>
+                  ))}
+                </View>
+              ) : null}
+              {(profile.work_experiences || []).length > 0 ? (
+                <View style={[styles.cvBlock, (profile.educations || []).length > 0 && styles.cvBlockSpaced]}>
+                  <Text style={styles.cvBlockLabel}>Pengalaman</Text>
+                  {(profile.work_experiences || []).map((item) => (
+                    <Text key={`exp-${item}`} style={styles.cvBlockItem}>{item}</Text>
+                  ))}
+                </View>
+              ) : null}
+            </SectionCard>
+          ) : null}
+
+          <SectionCard
+            title="CV Muthowif"
+            subtitle="Lihat saja — tidak bisa diunduh"
+            icon={FileText}
+            iconBg="#EEF2FF"
+          >
+            {cvDocuments.length === 0 ? (
+              <Text style={partStyles.muted}>Muthowif belum mengunggah CV.</Text>
+            ) : (
+              <View style={styles.cvDocList}>
+                {cvDocuments.map((doc) => (
+                  <PressableScale
+                    key={doc.id}
+                    onPress={() => setCvViewer({ visible: true, document: doc })}
+                    haptic="light"
+                    style={styles.cvDocRow}
+                  >
+                    <View style={styles.cvDocIcon}>
+                      <FileText size={16} color={colors.baytgo} strokeWidth={2.2} />
+                    </View>
+                    <Text style={styles.cvDocName} numberOfLines={1}>{doc.name}</Text>
+                    <Text style={styles.cvDocOpen}>Lihat</Text>
+                  </PressableScale>
+                ))}
+              </View>
+            )}
+          </SectionCard>
+
           {portfolios.length > 0 ? (
             <SectionCard
               title="Galeri Portfolio"
@@ -390,6 +442,12 @@ export default function MuthowifDetailScreen({ navigation, route }) {
         onClose={() => setLightbox((s) => ({ ...s, visible: false }))}
         onChangeIndex={(idx) => setLightbox((s) => ({ ...s, index: idx }))}
       />
+
+      <CvDocumentModal
+        visible={cvViewer.visible}
+        document={cvViewer.document}
+        onClose={() => setCvViewer({ visible: false, document: null })}
+      />
     </View>
   );
 }
@@ -486,4 +544,53 @@ const styles = StyleSheet.create({
   blockedItem: { borderColor: '#FDE68A' },
   blockedDate: { ...typography.caption, fontFamily: 'PlusJakartaSans_800ExtraBold', color: colors.textPrimary },
   blockedNote: { marginTop: 2, ...typography.small, color: colors.textSecondary, fontWeight: '500' },
+  cvBlock: {},
+  cvBlockSpaced: { marginTop: spacing.lg },
+  cvBlockLabel: {
+    ...typography.small,
+    fontFamily: 'PlusJakartaSans_800ExtraBold',
+    color: colors.baytgo,
+    textTransform: 'uppercase',
+    letterSpacing: 0.4,
+    marginBottom: spacing.sm,
+  },
+  cvBlockItem: {
+    ...typography.caption,
+    color: colors.slate700,
+    lineHeight: 20,
+    marginBottom: 4,
+  },
+  cvDocList: { gap: spacing.sm },
+  cvDocRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: spacing.md,
+    backgroundColor: colors.canvas,
+    borderRadius: radius.sm + 4,
+    paddingVertical: spacing.md,
+    paddingHorizontal: spacing.md,
+    borderWidth: 1,
+    borderColor: colors.slate100,
+  },
+  cvDocIcon: {
+    width: 36,
+    height: 36,
+    borderRadius: radius.sm,
+    alignItems: 'center',
+    justifyContent: 'center',
+    backgroundColor: colors.card,
+    borderWidth: 1,
+    borderColor: colors.slate100,
+  },
+  cvDocName: {
+    flex: 1,
+    ...typography.caption,
+    fontFamily: 'PlusJakartaSans_700Bold',
+    color: colors.slate900,
+  },
+  cvDocOpen: {
+    ...typography.small,
+    fontFamily: 'PlusJakartaSans_800ExtraBold',
+    color: colors.baytgo,
+  },
 });
