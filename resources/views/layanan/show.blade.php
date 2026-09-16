@@ -26,7 +26,7 @@
         @include('layanan.partials.profile-show-packages', ['page' => $page])
         @include('layanan.partials.profile-show-reviews', ['page' => $page])
 
-        <details class="group rounded-2xl border border-slate-200/90 bg-white shadow-sm ring-1 ring-slate-100/80 open:ring-brand-200/60">
+        <details open class="group rounded-2xl border border-slate-200/90 bg-white shadow-sm ring-1 ring-slate-100/80 open:ring-brand-200/60">
             <summary class="cursor-pointer list-none px-5 py-4 text-sm font-semibold text-slate-900 marker:content-none [&::-webkit-details-marker]:hidden">
                 <span class="flex items-center justify-between gap-3">
                     <span>{{ __('marketplace.show.more_about_heading') }}</span>
